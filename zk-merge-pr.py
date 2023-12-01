@@ -34,6 +34,7 @@ import subprocess
 import sys
 import urllib.request, urllib.error, urllib.parse
 import getpass
+import requests
 
 try:
     import jira.client
@@ -123,96 +124,72 @@ def get_current_branch():
     return run_cmd("git rev-parse --abbrev-ref HEAD").replace("\n", "")
 
 # merge the requested PR and return the merge hash
-def merge_pr(pr_num, target_ref, title, body, pr_repo_desc):
-    pr_branch_name = "%s_MERGE_PR_%s" % (TEMP_BRANCH_PREFIX, pr_num)
-    target_branch_name = "%s_MERGE_PR_%s_%s" % (TEMP_BRANCH_PREFIX, pr_num, target_ref.upper())
-    run_cmd("git fetch %s pull/%s/head:%s" % (PR_REMOTE_NAME, pr_num, pr_branch_name))
-    run_cmd("git fetch %s %s:%s" % (PUSH_REMOTE_NAME, target_ref, target_branch_name))
-    run_cmd("git checkout %s" % target_branch_name)
+def merge_pr(pr_num, title, pr_repo_desc):
 
-    had_conflicts = False
-    try:
-        run_cmd(['git', 'merge', pr_branch_name, '--squash'])
-    except Exception as e:
-        msg = "Error merging: %s\nWould you like to manually fix-up this merge?" % e
-        continue_maybe(msg)
-        msg = "Okay, please fix any conflicts and 'git add' conflicting files... Finished?"
-        continue_maybe(msg)
-        had_conflicts = True
+    # Retrieve the commits separately.
+    json_commits = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}/commits")
+    merge_message = []
+    if json_commits and isinstance(json_commits, list):
+        for commit in json_commits:
+            commit_message = commit['commit']['message']
+            merge_message += [commit_message]
 
-    commit_authors = run_cmd(['git', 'log', 'HEAD..%s' % pr_branch_name,
-                             '--pretty=format:%an <%ae>']).split("\n")
-    distinct_authors = sorted(set(commit_authors),
-                              key=lambda x: commit_authors.count(x), reverse=True)
-    primary_author = input(
-        "Enter primary author in the format of \"name <email>\" [%s]: " %
-        distinct_authors[0])
-    if primary_author == "":
-        primary_author = distinct_authors[0]
-
-    reviewers = input(
-        "Enter reviewers in the format of \"name1 <email1>, name2 <email2>\": ").strip()
-
-    commits = run_cmd(['git', 'log', 'HEAD..%s' % pr_branch_name,
-                      '--pretty=format:%h [%an] %s']).split("\n")
-
-    if len(commits) > 1:
-        result = input("List pull request commits in squashed commit message? (y/n): ")
-        if result.lower().strip() == "y":
-          should_list_commits = True
-        else:
-          should_list_commits = False
+    # Check for disapproval reviews.
+    json_reviewers = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}/reviews")
+    disapproval_reviews = [review['user']['login'] for review in json_reviewers if review['state'] == 'CHANGES_REQUESTED']
+    if disapproval_reviews:
+        continue_maybe("Warning: There are requested changes. Proceed with merging pull request #%s?" % pr_num)
+    # Verify if there are no approved reviews.
+    approved_reviewers = [review['user']['login'] for review in json_reviewers if review['state'] == 'APPROVED']
+    if not approved_reviewers:
+        continue_maybe("Warning: Pull Request does not have an approved review. Proceed with merging pull request #%s?" % pr_num)
     else:
-        should_list_commits = False
-
-    merge_message_flags = []
-
-    merge_message_flags += ["-m", title]
-    if body is not None:
-        # We remove @ symbols from the body to avoid triggering e-mails
-        # to people every time someone creates a public fork of the project.
-        merge_message_flags += ["-m", body.replace("@", "")]
-
-    authors = "\n".join(["Author: %s" % a for a in distinct_authors])
-
-    merge_message_flags += ["-m", authors]
-
-    if (reviewers != ""):
-        merge_message_flags += ["-m", "Reviewers: %s" % reviewers]
-
-    if had_conflicts:
-        committer_name = run_cmd("git config --get user.name").strip()
-        committer_email = run_cmd("git config --get user.email").strip()
-        message = "This patch had conflicts when merged, resolved by\nCommitter: %s <%s>" % (
-            committer_name, committer_email)
-        merge_message_flags += ["-m", message]
-
-    # The string "Closes #%s" string is required for GitHub to correctly close the PR
+        reviewers_string = ', '.join(approved_reviewers)
+        merge_message += [f"Reviewers: {reviewers_string}"]
+    # Check the author and the closing line.
+    json_pr = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}")
+    primary_author = json_pr["user"]["login"]
+    if primary_author != "":
+        merge_message += [f"Author: {primary_author}"]
     close_line = "Closes #%s from %s" % (pr_num, pr_repo_desc)
-    if should_list_commits:
-        close_line += " and squashes the following commits:"
-    merge_message_flags += ["-m", close_line]
+    merge_message += [close_line]
+    merged_string = '\n'.join(merge_message)
 
-    if should_list_commits:
-        merge_message_flags += ["-m", "\n".join(commits)]
+    # Get the latest commit SHA.
+    latest_commit_sha = json_pr["head"]["sha"]
+    json_status = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/commits/{latest_commit_sha}/check-runs")
+    # Check if all checks have passed on GitHub.
+    all_checks_passed = all(status["conclusion"] == "success" for status in json_status["check_runs"])
+    if all_checks_passed:
+        print("All checks have passed on the github.")
+    else:
+        any_in_progress = any(run["status"] == "in_progress" for run in json_status["check_runs"])
+        if any_in_progress:
+            continue_maybe("Warning: There are pending checks. Would you like to continue the merge?")
+        else:
+            continue_maybe("Warning: Not all checks have passed on GitHub. Would you like to continue the merge?")
 
-    run_cmd(['git', 'commit', '--author="%s"' % primary_author] + merge_message_flags)
+    headers = {
+        "Authorization": f"token {GITHUB_OAUTH_KEY}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    data = {
+        "commit_title": title,
+        "commit_message": merged_string,
+        "merge_method": "squash"
+    }
 
-    continue_maybe("Merge complete (local ref %s). Push to %s?" % (
-        target_branch_name, PUSH_REMOTE_NAME))
+    response = requests.put(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}/merge", headers=headers, json=data)
 
-    try:
-        run_cmd('git push %s %s:%s' % (PUSH_REMOTE_NAME, target_branch_name, target_ref))
-    except Exception as e:
-        clean_up()
-        fail("Exception while pushing: %s" % e)
-
-    merge_hash = run_cmd("git rev-parse %s" % target_branch_name)[:8]
-    clean_up()
-    print(("Pull request #%s merged!" % pr_num))
-    print(("Merge hash: %s" % merge_hash))
-    return merge_hash
-
+    if response.status_code == 200:
+        merge_response_json = response.json()
+        merge_commit_sha = merge_response_json.get("sha")
+        print(f"Pull request #{pr_num} merged. Sha: #{merge_commit_sha}")
+        return merge_commit_sha
+    else:
+        print(f"Failed to merge pull request #{pr_num}. Status code: {response.status_code}")
+        print(response.text)
+        exit()
 
 def cherry_pick(pr_num, merge_hash, default_branch):
     pick_ref = input("Enter a branch name [%s]: " % default_branch)
@@ -221,8 +198,8 @@ def cherry_pick(pr_num, merge_hash, default_branch):
 
     pick_branch_name = "%s_PICK_PR_%s_%s" % (TEMP_BRANCH_PREFIX, pr_num, pick_ref.upper())
 
-    run_cmd("git fetch %s %s:%s" % (PUSH_REMOTE_NAME, pick_ref, pick_branch_name))
-    run_cmd("git checkout %s" % pick_branch_name)
+    run_cmd("git fetch %s" % PUSH_REMOTE_NAME)
+    run_cmd("git checkout -b %s %s/%s" % (pick_branch_name, PUSH_REMOTE_NAME, pick_ref))
 
     try:
         run_cmd("git cherry-pick -sx %s" % merge_hash)
@@ -321,7 +298,7 @@ def resolve_jira_issue(merge_branches, comment, default_jira_id=""):
 
 
 def resolve_jira_issues(title, merge_branches, comment):
-    jira_ids = re.findall("%s-[0-9]{4,5}" % CAPITALIZED_PROJECT_NAME, title)
+    jira_ids = re.findall("%s-[0-9]+" % CAPITALIZED_PROJECT_NAME, title)
 
     if len(jira_ids) == 0:
         resolve_jira_issue(merge_branches, comment)
@@ -446,7 +423,35 @@ def main():
 
     pr_num = input("Which pull request would you like to merge? (e.g. 34): ")
     pr = get_json("%s/pulls/%s" % (GITHUB_API_BASE, pr_num))
-    pr_events = get_json("%s/issues/%s/events" % (GITHUB_API_BASE, pr_num))
+
+    # Check if the pull request has already been closed or merged.
+    pull_request_state = pr.get("state", "")
+    if pull_request_state == "closed":
+        merge_hash = pr.get("merge_commit_sha", "")
+        merged = pr.get("merged")
+        # Verify if the pull request has been merged by the GitHub API.
+        if merged is True:
+            print(f"Pull request #{pr['number']} has already been merged, assuming you want to backport")
+            cherry_pick(pr_num, merge_hash, latest_branch)
+            sys.exit(0)
+        # Some merged pull requests may not appear as merged in the GitHub API,
+        # for example, those closed by an older version of this script.
+        else:
+            pr_events = get_json("%s/issues/%s/events" % (GITHUB_API_BASE, pr_num))
+            for event in pr_events:
+                if event.get("event") == "closed":
+                    commit_id = event.get("commit_id")
+                    if commit_id is not None:
+                        print(f"Pull request #{pr['number']} has already been merged, assuming you want to backport")
+                        cherry_pick(pr_num, merge_hash, latest_branch)
+                        sys.exit(0)
+                    else:
+                        print(f"Pull request #{pr['number']} has already been closed, but not merged, exiting.")
+                        exit()
+
+    if not bool(pr["mergeable"]):
+        print(f"Pull request %s is not mergeable in its current form.\n" % pr_num)
+        exit()
 
     url = pr["url"]
 
@@ -469,35 +474,10 @@ def main():
             print("Using original title:")
         print(commit_title)
 
-    body = pr["body"]
     target_ref = pr["base"]["ref"]
     user_login = pr["user"]["login"]
     base_ref = pr["head"]["ref"]
     pr_repo_desc = "%s/%s" % (user_login, base_ref)
-
-    # Merged pull requests don't appear as merged in the GitHub API;
-    # Instead, they're closed by asfgit.
-    merge_commits = \
-        [e for e in pr_events if e["actor"]["login"] == "asfgit" and e["event"] == "closed"]
-
-    if merge_commits:
-        merge_hash = merge_commits[0]["commit_id"]
-        message = get_json("%s/commits/%s" % (GITHUB_API_BASE, merge_hash))["commit"]["message"]
-
-        print("Pull request %s has already been merged, assuming you want to backport" % pr_num)
-        commit_is_downloaded = run_cmd(['git', 'rev-parse', '--quiet', '--verify',
-                                    "%s^{commit}" % merge_hash]).strip() != ""
-        if not commit_is_downloaded:
-            fail("Couldn't find any merge commit for #%s, you may need to update HEAD." % pr_num)
-
-        print("Found commit %s:\n%s" % (merge_hash, message))
-        cherry_pick(pr_num, merge_hash, latest_branch)
-        sys.exit(0)
-
-    if not bool(pr["mergeable"]):
-        msg = "Pull request %s is not mergeable in its current form.\n" % pr_num + \
-            "Continue? (experts only!)"
-        continue_maybe(msg)
 
     print(("\n=== Pull Request #%s ===" % pr_num))
     print(("PR title\t%s\nCommit title\t%s\nSource\t\t%s\nTarget\t\t%s\nURL\t\t%s" % (
@@ -506,7 +486,7 @@ def main():
 
     merged_refs = [target_ref]
 
-    merge_hash = merge_pr(pr_num, target_ref, commit_title, body, pr_repo_desc)
+    merge_hash = merge_pr(pr_num, commit_title, pr_repo_desc)
 
     pick_prompt = "Would you like to pick %s into another branch?" % merge_hash
     while input("\n%s (y/n): " % pick_prompt).lower().strip() == "y":
