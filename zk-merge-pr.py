@@ -165,9 +165,9 @@ def merge_pr(pr_num, title, pr_repo_desc):
     else:
         any_in_progress = any(run["status"] == "in_progress" for run in json_status["check_runs"])
         if any_in_progress:
-            continue_maybe("Warning: There are pending checks. Would you like to continue the merge? (y/n): ")
+            continue_maybe("Warning: There are pending checks. Would you like to continue the merge?")
         else:
-            continue_maybe("Warning: Not all checks have passed on GitHub. Would you like to continue the merge? (y/n): ")
+            continue_maybe("Warning: Not all checks have passed on GitHub. Would you like to continue the merge?")
 
     headers = {
         "Authorization": f"token {GITHUB_OAUTH_KEY}",
@@ -298,7 +298,7 @@ def resolve_jira_issue(merge_branches, comment, default_jira_id=""):
 
 
 def resolve_jira_issues(title, merge_branches, comment):
-    jira_ids = re.findall("%s-[0-9]{4,5}" % CAPITALIZED_PROJECT_NAME, title)
+    jira_ids = re.findall("%s-[0-9]+" % CAPITALIZED_PROJECT_NAME, title)
 
     if len(jira_ids) == 0:
         resolve_jira_issue(merge_branches, comment)
