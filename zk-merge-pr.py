@@ -126,13 +126,19 @@ def get_current_branch():
 # merge the requested PR and return the merge hash
 def merge_pr(pr_num, title, pr_repo_desc):
 
-    # Retrieve the commits separately.
-    json_commits = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}/commits")
     merge_message = []
-    if json_commits and isinstance(json_commits, list):
-        for commit in json_commits:
-            commit_message = commit['commit']['message']
-            merge_message += [commit_message]
+    result = input("Would you like to squash the commit messages? (y/n): ")
+    if result.lower().strip() == "y":
+        # Retrieve the commits separately.
+        json_commits = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}/commits")
+        if json_commits and isinstance(json_commits, list):
+            for commit in json_commits:
+                commit_message = commit['commit']['message']
+                # Remove empty lines and lines containing "Change-Id:"
+                filtered_lines = [line for line in commit_message.split('\n') if 'Change-Id:' not in line and line.strip()]
+                modified_commit_message = '\n'.join(filtered_lines)
+                if modified_commit_message.strip() != title.strip():
+                    merge_message += [modified_commit_message]
 
     # Check for disapproval reviews.
     json_reviewers = get_json(f"https://api.github.com/repos/{PUSH_REMOTE_NAME}/{PROJECT_NAME}/pulls/{pr_num}/reviews")
