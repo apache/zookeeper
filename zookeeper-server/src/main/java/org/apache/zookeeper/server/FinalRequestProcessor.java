@@ -369,16 +369,15 @@ public class FinalRequestProcessor implements RequestProcessor {
                     throw new KeeperException.BadArgumentsException();
                 }
                 DataNode n = zks.getZKDatabase().getNode(path);
-                if (n == null) {
-                    throw new KeeperException.NoNodeException();
-                }
-                zks.checkACL(
+                if (n != null) {
+                    zks.checkACL(
                         request.cnxn,
                         zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
                         request.authInfo,
                         path,
                         null);
+                }
                 Stat stat = zks.getZKDatabase().statNode(path, existsRequest.getWatch() ? cnxn : null);
                 rsp = new ExistsResponse(stat);
                 requestPathMetricsCollector.registerRequest(request.type, path);
