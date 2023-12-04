@@ -363,11 +363,20 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.exists: {
                 lastOp = "EXIS";
-                // TODO we need to figure out the security requirement for this!
                 ExistsRequest existsRequest = request.readRequestRecord(ExistsRequest::new);
                 path = existsRequest.getPath();
                 if (path.indexOf('\0') != -1) {
                     throw new KeeperException.BadArgumentsException();
+                }
+                DataNode n = zks.getZKDatabase().getNode(path);
+                if (n != null) {
+                    zks.checkACL(
+                        request.cnxn,
+                        zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.READ,
+                        request.authInfo,
+                        path,
+                        null);
                 }
                 Stat stat = zks.getZKDatabase().statNode(path, existsRequest.getWatch() ? cnxn : null);
                 rsp = new ExistsResponse(stat);
