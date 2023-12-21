@@ -364,4 +364,87 @@ public class LearnerTest extends ZKTestCase {
             TestUtils.deleteFileRecursively(tmpFile);
         }
     }
+
+    /* We need this to be a `FollowerZooKeeperServer` instead of a
+     * `LearnerZooKeeperServer` because otherwise it would throw an "Unknown
+     * server type" exception when finishing the sync from the leader.
+     */
+    static class SimpleFollowerZooKeeperServer extends FollowerZooKeeperServer {
+
+        Learner learner;
+
+        public SimpleFollowerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self)
+                throws IOException {
+            super(ftsl, self, new ZKDatabase(ftsl));
+        }
+
+        @Override
+        public Learner getLearner() {
+            return learner;
+        }
+    }
+
+    static class SimpleLearnerWithFollower extends Learner {
+        SimpleLearnerWithFollower(FileTxnSnapLog ftsl) throws IOException {
+            self = new QuorumPeer();
+            self.setTxnFactory(ftsl);
+            zk = new SimpleFollowerZooKeeperServer(ftsl, self);
+            ((SimpleFollowerZooKeeperServer) zk).learner = this;
+        }
+    }
+
+
+    @Test
+    public void diffWithOutstandingProposalsDoesNotNPE() throws Exception {
+        File tmpDir = File.createTempFile("test", ".dir", testData);
+        tmpDir.delete();
+        try {
+            FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpDir, tmpDir);
+            SimpleLearnerWithFollower sl = new SimpleLearnerWithFollower(ftsl);
+
+            // Set up bogus streams
+            sl.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
+            sl.sock = new Socket();
+            sl.bufferedOutput = new BufferedOutputStream(new ByteArrayOutputStream());
+
+            // fake messages from server
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+            oa.writeRecord(new QuorumPacket(Leader.DIFF, 1, null, null), null);
+            TxnHeader hdr = new TxnHeader(0, 1, 1, 0, ZooDefs.OpCode.create);
+            CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
+            ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
+            hdr.serialize(boa, "hdr");
+            txn.serialize(boa, "txn");
+            tbaos.close();
+            oa.writeRecord(new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null), null);
+            oa.writeRecord(new QuorumPacket(Leader.COMMIT, 1, null, null), null);
+
+            hdr = new TxnHeader(0, 2, 2, 0, ZooDefs.OpCode.create);
+            txn = new CreateTxn("/bar", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
+            tbaos = new ByteArrayOutputStream();
+            boa = BinaryOutputArchive.getArchive(tbaos);
+            hdr.serialize(boa, "hdr");
+            txn.serialize(boa, "txn");
+            tbaos.close();
+            oa.writeRecord(new QuorumPacket(Leader.PROPOSAL, 2, tbaos.toByteArray(), null), null);
+            oa.writeRecord(new QuorumPacket(Leader.NEWLEADER, 1, null, null), null);
+            oa.writeRecord(new QuorumPacket(Leader.COMMIT, 2, null, null), null);
+            oa.writeRecord(new QuorumPacket(Leader.UPTODATE, -1, null, null), null);
+            baos.close();
+
+            // setup the messages to be streamed to follower
+            sl.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+
+            try {
+                sl.syncWithLeader(1);
+            } catch (EOFException e) {}
+
+            sl.zk.shutdown();
+            assertEquals(2, sl.zk.getLastProcessedZxid());
+        } finally {
+            TestUtils.deleteFileRecursively(tmpDir);
+        }
+    }
 }
