@@ -25,12 +25,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.test.ClientBase;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.provider.Arguments;
 
 /**
@@ -70,6 +69,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
      * caching makes all test cases after the first one for a given parameter combination complete almost instantly.
      */
     protected static Map<Integer, X509TestContext> cachedTestContexts;
+    @TempDir
     protected static File tempDir;
 
     protected X509TestContext x509TestContext;
@@ -78,7 +78,6 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
     public static void setUpBaseClass() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         cachedTestContexts = new HashMap<>();
-        tempDir = ClientBase.createEmptyTestDir();
     }
 
     @AfterAll
@@ -86,11 +85,6 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
         Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
         cachedTestContexts.clear();
         cachedTestContexts = null;
-        try {
-            FileUtils.deleteDirectory(tempDir);
-        } catch (IOException e) {
-            // ignore
-        }
     }
 
     /**

@@ -28,12 +28,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.zookeeper.server.DataTree;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * This test checks that the server does not create empty snapshot files if the
  * disk is full.
  */
 public class EmptySnapshotTest {
+
+    @TempDir
+    public static File testDir;
 
     static class MockFileSnap extends FileSnap {
 
@@ -51,7 +55,7 @@ public class EmptySnapshotTest {
 
     @Test
     public void testNoEmptySnapshot() throws Exception {
-        File tmpFile = File.createTempFile("empty-snapshot-test", ".junit", new File(System.getProperty("build.test.dir", "build")));
+        File tmpFile = File.createTempFile("empty-snapshot-test", ".junit", testDir);
         File tmpDataDir = new File(tmpFile + ".dir");
         assertFalse(tmpDataDir.exists());
         assertTrue(tmpDataDir.mkdirs());

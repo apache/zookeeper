@@ -54,6 +54,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,9 @@ public class JettyAdminServerTest extends ZKTestCase {
     static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
     private final int jettyAdminPort = PortAssignment.unique();
 
+    @TempDir
+    static File tempDir;
+
     @BeforeEach
     public void enableServer() {
         // Override setting in ZKTestCase
@@ -75,12 +79,10 @@ public class JettyAdminServerTest extends ZKTestCase {
     @BeforeEach
     public void setupEncryption() {
         Security.addProvider(new BouncyCastleProvider());
-        File tmpDir = null;
         X509TestContext x509TestContext = null;
         try {
-            tmpDir = ClientBase.createEmptyTestDir();
             x509TestContext = X509TestContext.newBuilder()
-                                             .setTempDir(tmpDir)
+                                             .setTempDir(tempDir)
                                              .setKeyStorePassword("")
                                              .setKeyStoreKeyType(X509KeyType.EC)
                                              .setTrustStorePassword("")
