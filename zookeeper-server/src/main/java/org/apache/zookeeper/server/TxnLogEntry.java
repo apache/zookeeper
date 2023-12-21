@@ -47,4 +47,10 @@ public final class TxnLogEntry {
     public TxnDigest getDigest() {
         return digest;
     }
+
+    public Request toRequest() {
+        Request request = new Request(header.getClientId(), header.getCxid(), header.getType(), header, txn, header.getZxid());
+        request.setTxnDigest(digest);
+        return request;
+    }
 }

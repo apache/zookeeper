@@ -30,7 +30,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -82,6 +84,9 @@ public class Learner {
         Record rec;
         TxnDigest digest;
 
+        TxnLogEntry toLogEntry() {
+            return new TxnLogEntry(rec, hdr, digest);
+        }
     }
 
     QuorumPeer self;
@@ -750,17 +755,37 @@ public class Learner {
                     //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
 
-                    // ZOOKEEPER-3911: make sure sync the uncommitted logs before commit them (ACK NEWLEADER).
+                    if (zk instanceof FollowerZooKeeperServer && !packetsCommitted.isEmpty()) {
+                        List<TxnLogEntry> entries = new ArrayList<>(packetsCommitted.size());
+                        // Pop log entries from packetsNotCommitted according to packetsCommitted.
+                        // In case of mismatch, log warning and keep packetsNotCommitted untouched.
+                        while (!packetsCommitted.isEmpty()) {
+                            long zxid = packetsCommitted.removeFirst();
+                            pif = packetsNotCommitted.peekFirst();
+                            if (pif == null) {
+                                LOG.warn("Committing 0x{}, but got no proposal", Long.toHexString(zxid));
+                                continue;
+                            } else if (pif.hdr.getZxid() != zxid) {
+                                LOG.warn(
+                                        "Committing 0x{}, but next proposal is 0x{}",
+                                        Long.toHexString(zxid),
+                                        Long.toHexString(pif.hdr.getZxid()));
+                                continue;
+                            }
+                            packetsNotCommitted.removeFirst();
+                            entries.add(pif.toLogEntry());
+                        }
+                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
+                        fzk.syncAndCommitInitialLogEntries(entries);
+                    }
+
+                    // We almost complete the synchronization phase, all that's left is UPTODATE
+                    // which is a client serving valve and interleaved with broadcast phase.
+                    //
+                    // We are ready for broadcast phase on our behalf now except serving client requests.
                     sock.setSoTimeout(self.tickTime * self.syncLimit);
                     self.setSyncMode(QuorumPeer.SyncMode.NONE);
                     zk.startupWithoutServing();
-                    if (zk instanceof FollowerZooKeeperServer) {
-                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-                        for (PacketInFlight p : packetsNotCommitted) {
-                            fzk.logRequest(p.hdr, p.rec, p.digest);
-                        }
-                        packetsNotCommitted.clear();
-                    }
 
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     break;
