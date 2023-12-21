@@ -251,7 +251,7 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
                     super.readPacket(pp);
                     if (injectError && pp.getType() == Leader.UPTODATE) {
                         String type = LearnerHandler.packetToString(pp);
-                        throw new SocketTimeoutException("Socket timeout while reading the packet for operation "
+                        throw new SocketTimeoutException("TEST CODE Socket timeout while reading the packet for operation "
                                 + type);
                     }
                 }
