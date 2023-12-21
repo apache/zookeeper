@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.management.JMException;
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.server.ExitCode;
@@ -86,6 +87,18 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             pendingTxns.add(request);
         }
         syncProcessor.processRequest(request);
+    }
+
+    public Request logRequestBeforeAckNewleader(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
+        Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
+        request.setTxnDigest(digest);
+        if ((request.zxid & 0xffffffffL) != 0) {
+            pendingTxns.add(request);
+        }
+        long startProcessTime = Time.currentElapsedTime();
+        getZKDatabase().append(request);
+        ServerMetrics.getMetrics().SYNC_PROCESS_TIME.add(Time.currentElapsedTime() - startProcessTime);
+        return request;
     }
 
     /**
