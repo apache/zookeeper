@@ -829,6 +829,10 @@ in order to retrieve ACLs of a znode user has to have _READ_ or _ADMIN_
  permission, but without _ADMIN_ permission, digest hash values will be 
 masked out.
 
+As of versions **3.9.2 / 3.8.4 / 3.7.3** the exists() call will now verify ACLs 
+on nodes that exist and the client must have READ permission otherwise
+'Insufficient permission' error will be raised.
+
 <a name="sc_BuiltinACLSchemes"></a>
 
 #### Builtin ACL Schemes
