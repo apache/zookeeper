@@ -18,12 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;

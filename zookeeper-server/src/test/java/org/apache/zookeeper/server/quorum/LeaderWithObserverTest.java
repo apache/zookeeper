@@ -29,7 +29,6 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

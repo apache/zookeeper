@@ -19,7 +19,6 @@
 package org.apache.zookeeper.common;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.HashMap;
