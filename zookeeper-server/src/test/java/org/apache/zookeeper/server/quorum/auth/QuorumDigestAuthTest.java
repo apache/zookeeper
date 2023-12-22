@@ -70,11 +70,6 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         super.tearDown();
     }
 
-    @AfterAll
-    public static void cleanup() {
-        cleanupJaasConfig();
-    }
-
     /**
      * Test to verify that server is able to start with valid credentials
      */

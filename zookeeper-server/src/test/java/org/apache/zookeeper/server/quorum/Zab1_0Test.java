@@ -69,6 +69,7 @@ import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +77,8 @@ public class Zab1_0Test extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);
 
-    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
+    @TempDir
+    static File testData;
 
     @BeforeEach
     public void setUp() {

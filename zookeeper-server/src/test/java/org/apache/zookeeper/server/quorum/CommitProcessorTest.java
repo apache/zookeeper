@@ -47,6 +47,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,14 +81,14 @@ public class CommitProcessorTest extends ZKTestCase {
 
     boolean stopped;
     TestZooKeeperServer zks;
-    File tmpDir;
+    @TempDir
+    static File tmpDir;
     ArrayList<TestClientThread> testClients = new ArrayList<>();
     CommitProcessor commitProcessor;
 
     public void setUp(int numCommitThreads, int numClientThreads, int writePercent) throws Exception {
         stopped = false;
         System.setProperty(CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, Integer.toString(numCommitThreads));
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);
         zks.startup();
@@ -105,7 +106,6 @@ public class CommitProcessorTest extends ZKTestCase {
         int writePercent) throws Exception {
         stopped = false;
         System.setProperty(CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, Integer.toString(numCommitThreads));
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);
         zks.startup();

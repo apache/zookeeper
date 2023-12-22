@@ -64,6 +64,7 @@ import org.apache.zookeeper.txn.SetDataTxn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 
 public class PrepRequestProcessorTest extends ClientBase {
@@ -80,9 +81,11 @@ public class PrepRequestProcessorTest extends ClientBase {
     private boolean isReconfigEnabledPreviously;
     private boolean isStandaloneEnabledPreviously;
 
+    @TempDir
+    static File tmpDir;
+
     @BeforeEach
     public void setup() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(100);

@@ -146,7 +146,6 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         if (keytabFile != null) {
             FileUtils.deleteQuietly(keytabFile);
         }
-        cleanupJaasConfig();
     }
 
     /**

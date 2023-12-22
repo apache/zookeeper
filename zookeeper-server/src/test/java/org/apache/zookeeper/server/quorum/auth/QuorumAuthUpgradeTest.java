@@ -74,11 +74,6 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         super.tearDown();
     }
 
-    @AfterAll
-    public static void cleanup() {
-        cleanupJaasConfig();
-    }
-
     /**
      * Test to verify that servers are able to start without any authentication.
      * peer0 -&gt; quorum.auth.enableSasl=false

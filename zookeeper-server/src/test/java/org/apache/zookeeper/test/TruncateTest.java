@@ -50,27 +50,13 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TruncateTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
-    File dataDir1, dataDir2, dataDir3;
-
-    @BeforeEach
-    public void setUp() throws IOException {
-        dataDir1 = ClientBase.createTmpDir();
-        dataDir2 = ClientBase.createTmpDir();
-        dataDir3 = ClientBase.createTmpDir();
-    }
-
-    @AfterEach
-    public void tearDown() {
-        ClientBase.recursiveDelete(dataDir1);
-        ClientBase.recursiveDelete(dataDir2);
-        ClientBase.recursiveDelete(dataDir3);
-    }
 
     @Test
     public void testTruncationStreamReset() throws Exception {
@@ -112,9 +98,8 @@ public class TruncateTest extends ZKTestCase {
     }
 
     @Test
-    public void testTruncationNullLog() throws Exception {
-        File tmpdir = ClientBase.createTmpDir();
-        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
+    public void testTruncationNullLog(@TempDir File tmpDir) throws Exception {
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
         ZKDatabase zkdb = new ZKDatabase(snaplog);
 
         for (int i = 1; i <= 100; i++) {
@@ -131,8 +116,6 @@ public class TruncateTest extends ZKTestCase {
         } catch (NullPointerException npe) {
             fail("This should not throw NPE!");
         }
-
-        ClientBase.recursiveDelete(tmpdir);
     }
 
     private void append(ZKDatabase zkdb, int i) throws IOException {
@@ -145,7 +128,7 @@ public class TruncateTest extends ZKTestCase {
     }
 
     @Test
-    public void testTruncate() throws Exception {
+    public void testTruncate(@TempDir File dataDir1, @TempDir File dataDir2, @TempDir File dataDir3) throws Exception {
         // Prime the server that is going to come in late with 50 txns
         String hostPort = "127.0.0.1:" + PortAssignment.unique();
         int maxCnxns = 100;

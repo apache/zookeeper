@@ -23,6 +23,7 @@ import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class ZooKeeperServerCreationTest {
 
@@ -31,8 +32,7 @@ public class ZooKeeperServerCreationTest {
      * that all needed fields are initialized properly, etc.
      */
     @Test
-    public void testDefaultConstructor() throws Exception {
-        File tmpDir = ClientBase.createEmptyTestDir();
+    public void testDefaultConstructor(@TempDir File tmpDir) throws Exception {
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"), new File(tmpDir, "data_txnlog"));
 
         ZooKeeperServer zks = new ZooKeeperServer() {
