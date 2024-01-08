@@ -304,8 +304,8 @@ public class Request {
         // make sure this is always synchronized with Zoodefs!!
         switch (type) {
         case OpCode.notification:
-            return false;
         case OpCode.check:
+            return false;
         case OpCode.closeSession:
         case OpCode.create:
         case OpCode.create2:
@@ -361,6 +361,7 @@ public class Request {
         case OpCode.deleteContainer:
         case OpCode.setACL:
         case OpCode.setData:
+        case OpCode.check:
         case OpCode.multi:
         case OpCode.reconfig:
             return true;
