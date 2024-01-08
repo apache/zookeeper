@@ -806,6 +806,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 SetACLRequest setAclRequest = request.readRequestRecord(SetACLRequest::new);
                 pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest);
                 break;
+            case OpCode.check:
+                CheckVersionRequest checkRequest = request.readRequestRecord(CheckVersionRequest::new);
+                pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest);
+                break;
             case OpCode.multi:
                 MultiOperationRecord multiRequest;
                 try {

@@ -181,6 +181,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         case OpCode.reconfig:
         case OpCode.multi:
         case OpCode.setACL:
+        case OpCode.check:
             return true;
         case OpCode.sync:
             return matchSyncs;

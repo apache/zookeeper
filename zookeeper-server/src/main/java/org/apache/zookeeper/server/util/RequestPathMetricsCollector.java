@@ -147,6 +147,7 @@ public class RequestPathMetricsCollector {
         case ZooDefs.OpCode.reconfig:
         case ZooDefs.OpCode.setACL:
         case ZooDefs.OpCode.multi:
+        case ZooDefs.OpCode.check:
             return true;
         }
         return false;
