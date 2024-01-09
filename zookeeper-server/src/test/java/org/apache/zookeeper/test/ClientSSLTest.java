@@ -22,12 +22,18 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import io.netty.handler.ssl.SslProvider;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.stream.Stream;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -42,10 +48,35 @@ import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class ClientSSLTest extends QuorumPeerTestBase {
 
     private ClientX509Util clientX509Util;
+
+    public static Stream<Arguments> positiveTestData() {
+        ArrayList<Arguments> result = new ArrayList<>();
+        for (SslProvider sslProvider : SslProvider.values()) {
+            for (String fipsEnabled : new String[] { "true", "false" }) {
+                for (String hostnameverification : new String[] { "true", "false" }) {
+                    result.add(Arguments.of(sslProvider, fipsEnabled, hostnameverification));
+                }
+            }
+        }
+        return result.stream();
+    }
+
+    public static Stream<Arguments> negativeTestData() {
+        ArrayList<Arguments> result = new ArrayList<>();
+        for (SslProvider sslProvider : SslProvider.values()) {
+            for (String fipsEnabled : new String[] { "true", "false" }) {
+                result.add(Arguments.of(sslProvider, fipsEnabled));
+            }
+        }
+        return result.stream();
+    }
 
     @BeforeEach
     public void setup() {
@@ -73,6 +104,9 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdPathProperty());
+        System.clearProperty(clientX509Util.getFipsModeProperty());
+        System.clearProperty(clientX509Util.getSslHostnameVerificationEnabledProperty());
+        System.clearProperty(clientX509Util.getSslProviderProperty());
         clientX509Util.close();
     }
 
@@ -106,12 +140,40 @@ public class ClientSSLTest extends QuorumPeerTestBase {
      * 2. setting jvm flags for serverCnxn, keystore, truststore.
      * Finally, a zookeeper client should be able to connect to the secure port and
      * communicate with server via secure connection.
-     * <p>
+     * <p/>
      * Note that in this test a ZK server has two ports -- clientPort and secureClientPort.
+     * <p/>
+     * This test covers the positive scenarios for hostname verification.
      */
-    @Test
-    public void testClientServerSSL() throws Exception {
-        testClientServerSSL(true);
+    @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}, hostnameVerification={2}")
+    @MethodSource("positiveTestData")
+    public void testClientServerSSL_positive(SslProvider sslProvider, String fipsEnabled, String hostnameVerification) throws Exception {
+        //Skipping this test for s390x arch as netty-tc-native is not supported
+        assumeFalse(System.getProperty("os.arch").contains("s390x"), " Skipping for s390x arch as netty-tcnative is not yet supported.");
+        // Arrange
+        System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
+        System.setProperty(clientX509Util.getFipsModeProperty(), fipsEnabled);
+        System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), hostnameVerification);
+
+        // Act & Assert
+        testClientServerSSL(hostnameVerification.equals("true") ? "localhost" : InetAddress.getLocalHost().getHostName(),
+            true, CONNECTION_TIMEOUT);
+    }
+
+    /**
+     * This test covers the negative scenarios for hostname verification.
+     */
+    @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}")
+    @MethodSource("negativeTestData")
+    public void testClientServerSSL_negative(SslProvider sslProvider, boolean fipsEnabled) {
+        // Arrange
+        System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
+        System.setProperty(clientX509Util.getFipsModeProperty(), Boolean.toString(fipsEnabled));
+        System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), "true");
+
+        // Act & Assert
+        assertThrows(AssertionError.class, () ->
+            testClientServerSSL(InetAddress.getLocalHost().getHostName(), true, 5000));
     }
 
     @Test
@@ -128,6 +190,10 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     }
 
     public void testClientServerSSL(boolean useSecurePort) throws Exception {
+        testClientServerSSL("localhost", useSecurePort, CONNECTION_TIMEOUT);
+    }
+
+    public void testClientServerSSL(String hostname, boolean useSecurePort, long connectTimeout) throws Exception {
         final int SERVER_COUNT = 3;
         final int[] clientPorts = new int[SERVER_COUNT];
         final Integer[] secureClientPorts = new Integer[SERVER_COUNT];
@@ -159,11 +225,11 @@ public class ClientSSLTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT),
                     "waiting for server " + i + " being up");
             final int port = useSecurePort ? secureClientPorts[i] : clientPorts[i];
-            ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + port, TIMEOUT);
-            // Do a simple operation to make sure the connection is fine.
-            zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            zk.delete("/test", -1);
-            zk.close();
+            try (ZooKeeper zk = ClientBase.createZKClient(hostname + ":" + port, TIMEOUT, connectTimeout)) {
+                // Do a simple operation to make sure the connection is fine.
+                zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.delete("/test", -1);
+            }
         }
 
         for (int i = 0; i < mt.length; i++) {

@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
@@ -47,6 +48,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.TxnLogEntry;
@@ -307,11 +309,13 @@ public class TxnLogToolkit implements Closeable {
     }
 
     /**
-     * get the formatted string from the txn.
+     * Get the formatted string from the txn.
+     *
      * @param txn transaction log data
      * @return the formatted string
      */
-    private static String getFormattedTxnStr(Record txn) throws IOException {
+    // @VisibleForTesting
+    static String getFormattedTxnStr(Record txn) {
         StringBuilder txnData = new StringBuilder();
         if (txn == null) {
             return txnData.toString();
@@ -340,19 +344,24 @@ public class TxnLogToolkit implements Closeable {
             for (int i = 0; i < txnList.size(); i++) {
                 Txn t = txnList.get(i);
                 if (i == 0) {
-                    txnData.append(Request.op2String(t.getType()) + ":" + checkNullToEmpty(t.getData()));
+                    txnData.append(Request.op2String(t.getType())).append(":");
                 } else {
-                    txnData.append(";" + Request.op2String(t.getType()) + ":" + checkNullToEmpty(t.getData()));
+                    txnData.append(";").append(Request.op2String(t.getType())).append(":");
+                }
+                if (t.getType() == ZooDefs.OpCode.error) {
+                    txnData.append(ByteBuffer.wrap(t.getData()).getInt());
+                } else {
+                    txnData.append(checkNullToEmpty(t.getData()));
                 }
             }
         } else {
-            txnData.append(txn.toString());
+            txnData.append(txn);
         }
 
         return txnData.toString();
     }
 
-    private static String checkNullToEmpty(byte[] data) throws IOException {
+    private static String checkNullToEmpty(byte[] data) {
         if (data == null || data.length == 0) {
             return "";
         }

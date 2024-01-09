@@ -19,15 +19,10 @@
 package org.apache.zookeeper.common;
 
 import static java.util.Objects.requireNonNull;
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
-import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SslContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
@@ -49,10 +44,10 @@ public class SSLContextAndOptions {
     private final X509Util x509Util;
     private final String[] enabledProtocols;
     private final String[] cipherSuites;
-    private final List<String> cipherSuitesAsList;
     private final X509Util.ClientAuth clientAuth;
     private final SSLContext sslContext;
     private final int handshakeDetectionTimeoutMillis;
+
 
     /**
      * Note: constructor is intentionally package-private, only the X509Util class should be creating instances of this
@@ -65,9 +60,7 @@ public class SSLContextAndOptions {
         this.x509Util = requireNonNull(x509Util);
         this.sslContext = requireNonNull(sslContext);
         this.enabledProtocols = getEnabledProtocols(requireNonNull(config), sslContext);
-        String[] ciphers = getCipherSuites(config);
-        this.cipherSuites = ciphers;
-        this.cipherSuitesAsList = Collections.unmodifiableList(Arrays.asList(ciphers));
+        this.cipherSuites = getCipherSuites(config);
         this.clientAuth = getClientAuth(config);
         this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(config);
     }
@@ -99,20 +92,6 @@ public class SSLContextAndOptions {
     public SSLServerSocket createSSLServerSocket(int port) throws IOException {
         SSLServerSocket sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
         return configureSSLServerSocket(sslServerSocket);
-    }
-
-    public SslContext createNettyJdkSslContext(SSLContext sslContext, boolean isClientSocket) {
-        return new JdkSslContext(
-                sslContext,
-                isClientSocket,
-                cipherSuitesAsList,
-                IdentityCipherSuiteFilter.INSTANCE,
-                null,
-                isClientSocket
-                        ? X509Util.ClientAuth.NONE.toNettyClientAuth()
-                        : clientAuth.toNettyClientAuth(),
-                enabledProtocols,
-                false);
     }
 
     public int getHandshakeDetectionTimeoutMillis() {
@@ -170,7 +149,10 @@ public class SSLContextAndOptions {
     private String[] getEnabledProtocols(final ZKConfig config, final SSLContext sslContext) {
         String enabledProtocolsInput = config.getProperty(x509Util.getSslEnabledProtocolsProperty());
         if (enabledProtocolsInput == null) {
-            return new String[]{sslContext.getProtocol()};
+            // Use JDK defaults for enabled protocols:
+            // Protocol TLSv1.3 -> enabled protocols TLSv1.3 and TLSv1.2
+            // Protocol TLSv1.2 -> enabled protocols TLSv1.2
+            return sslContext.getDefaultSSLParameters().getProtocols();
         }
         return enabledProtocolsInput.split(",");
     }

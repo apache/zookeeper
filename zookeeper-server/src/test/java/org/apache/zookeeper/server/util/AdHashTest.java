@@ -19,7 +19,7 @@
 package org.apache.zookeeper.server.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -78,7 +78,7 @@ public class AdHashTest extends ZKTestCase {
         addListOfDigests(hashall, bucket3);
         addListOfDigests(hashall, bucket4);
         addListOfDigests(hashall, bucket5);
-        assertFalse(hashall.equals(hash21), "digest of different set not different");
+        assertNotEquals(hashall, hash21, "digest of different set not different");
         removeListOfDigests(hashall, bucket4);
         removeListOfDigests(hashall, bucket5);
         addListOfDigests(hash21, bucket3);

@@ -59,4 +59,6 @@ public interface OutputArchive {
 
     void endMap(TreeMap<?, ?> v, String tag) throws IOException;
 
+    long getDataSize();
+
 }

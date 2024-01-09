@@ -172,23 +172,19 @@ public class Util {
         return null;
     }
 
+
     /**
      * Serializes transaction header and transaction data into a byte buffer.
      *
      * @param hdr transaction header
      * @param txn transaction data
+     * @param digest transaction digest
+     *
      * @return serialized transaction record
-     * @throws IOException
      */
-    public static byte[] marshallTxnEntry(TxnHeader hdr, Record txn) throws IOException {
-        return marshallTxnEntry(hdr, txn, null);
-    }
-
-    public static byte[] marshallTxnEntry(TxnHeader hdr, Record txn, TxnDigest digest)
-            throws IOException {
+    public static byte[] marshallTxnEntry(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputArchive boa = BinaryOutputArchive.getArchive(baos);
-
         hdr.serialize(boa, "hdr");
         if (txn != null) {
             txn.serialize(boa, "txn");

@@ -33,14 +33,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -68,6 +73,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
     private static final String REJECT_CLIENT_RENEGOTIATION_PROPERTY = "jdk.tls.rejectClientInitiatedRenegotiation";
+    private static final String FIPS_MODE_PROPERTY = "zookeeper.fips-mode";
+    public static final String TLS_1_1 = "TLSv1.1";
+    public static final String TLS_1_2 = "TLSv1.2";
+    public static final String TLS_1_3 = "TLSv1.3";
 
     static {
         // Client-initiated renegotiation in TLS is unsafe and
@@ -81,7 +90,32 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    public static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    public static final String DEFAULT_PROTOCOL = defaultTlsProtocol();
+
+    /**
+     * Return TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
+     * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
+     */
+    private static String defaultTlsProtocol() {
+        String defaultProtocol = TLS_1_2;
+        List<String> supported = new ArrayList<>();
+        try {
+            supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
+            if (supported.contains(TLS_1_3)) {
+                defaultProtocol = TLS_1_3;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            // Ignore.
+        }
+        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", defaultProtocol, supported);
+        return defaultProtocol;
+    }
+
+    // ChaCha20 was introduced in OpenJDK 11.0.15 and it is not supported by JDK8.
+    private static String[] getTLSv13Ciphers() {
+        return new String[]{"TLS_AES_256_GCM_SHA384", "TLS_AES_128_GCM_SHA256", "TLS_CHACHA20_POLY1305_SHA256"};
+    }
+
     private static String[] getGCMCiphers() {
         return new String[]{"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"};
     }
@@ -90,18 +124,22 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return new String[]{"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"};
     }
 
-    private static String[] concatArrays(String[] left, String[] right) {
-        String[] result = new String[left.length + right.length];
-        System.arraycopy(left, 0, result, 0, left.length);
-        System.arraycopy(right, 0, result, left.length, right.length);
-        return result;
+    /**
+     * Returns a filtered set of ciphers, where ciphers not supported by the JDK are removed.
+     */
+    private static String[] getSupportedCiphers(String[]... cipherLists) {
+        List<String> supported = Arrays.asList(
+            ((SSLServerSocketFactory) SSLServerSocketFactory.getDefault()).getSupportedCipherSuites());
+
+        return Arrays.stream(cipherLists).flatMap(Arrays::stream).filter(supported::contains).collect(Collectors.toList()).toArray(new String[0]);
     }
 
     // On Java 8, prefer CBC ciphers since AES-NI support is lacking and GCM is slower than CBC.
-    private static final String[] DEFAULT_CIPHERS_JAVA8 = concatArrays(getCBCCiphers(), getGCMCiphers());
+    private static final String[] DEFAULT_CIPHERS_JAVA8 = getSupportedCiphers(getCBCCiphers(), getGCMCiphers(), getTLSv13Ciphers());
     // On Java 9 and later, prefer GCM ciphers due to improved AES-NI support.
     // Note that this performance assumption might not hold true for architectures other than x86_64.
-    private static final String[] DEFAULT_CIPHERS_JAVA9 = concatArrays(getGCMCiphers(), getCBCCiphers());
+    // TLSv1.3 ciphers can be added at the end of the list without impacting the priority of TLSv1.3 vs TLSv1.2.
+    private static final String[] DEFAULT_CIPHERS_JAVA9 = getSupportedCiphers(getGCMCiphers(), getCBCCiphers(), getTLSv13Ciphers());
 
     public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
 
@@ -145,36 +183,30 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    private String sslProtocolProperty = getConfigPrefix() + "protocol";
-    private String sslEnabledProtocolsProperty = getConfigPrefix() + "enabledProtocols";
-    private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
-    private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
-    private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
-    private String sslKeystorePasswdPathProperty = getConfigPrefix() + "keyStore.passwordPath";
-    private String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
-    private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
-    private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
-    private String sslTruststorePasswdPathProperty = getConfigPrefix() + "trustStore.passwordPath";
-    private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
-    private String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
-    private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
-    private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
-    private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
-    private String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
-    private String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
+    private final String sslProtocolProperty = getConfigPrefix() + "protocol";
+    private final String sslEnabledProtocolsProperty = getConfigPrefix() + "enabledProtocols";
+    private final String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
+    private final String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
+    private final String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
+    private final String sslKeystorePasswdPathProperty = getConfigPrefix() + "keyStore.passwordPath";
+    private final String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
+    private final String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
+    private final String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
+    private final String sslTruststorePasswdPathProperty = getConfigPrefix() + "trustStore.passwordPath";
+    private final String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
+    private final String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
+    private final String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
+    private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
+    private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
+    private final String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
-    private ZKConfig zkConfig;
-    private AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
+    private final AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
 
     private FileChangeWatcher keyStoreFileWatcher;
     private FileChangeWatcher trustStoreFileWatcher;
 
     public X509Util() {
-        this(null);
-    }
-
-    public X509Util(ZKConfig zkConfig) {
-        this.zkConfig = zkConfig;
         keyStoreFileWatcher = trustStoreFileWatcher = null;
     }
 
@@ -260,6 +292,22 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslHandshakeDetectionTimeoutMillisProperty;
     }
 
+    public String getFipsModeProperty() {
+        return FIPS_MODE_PROPERTY;
+    }
+
+    public boolean getFipsMode(ZKConfig config) {
+        return config.getBoolean(FIPS_MODE_PROPERTY, true);
+    }
+
+    public boolean isServerHostnameVerificationEnabled(ZKConfig config) {
+        return config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+    }
+
+    public boolean isClientHostnameVerificationEnabled(ZKConfig config) {
+        return isServerHostnameVerificationEnabled(config) && shouldVerifyClientHostname();
+    }
+
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
         return getDefaultSSLContextAndOptions().getSSLContext();
     }
@@ -295,7 +343,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
          * configuration from system property. Reading property from
          * configuration will be same reading from system property
          */
-        return createSSLContextAndOptions(zkConfig == null ? new ZKConfig() : zkConfig);
+        return createSSLContextAndOptions(new ZKConfig());
     }
 
     /**
@@ -375,14 +423,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
-        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
-        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
+        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+        boolean fipsMode = getFipsMode(config);
 
         if (trustStoreLocationProp.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
         } else {
             try {
-                trustManagers = new TrustManager[]{createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
+                trustManagers = new TrustManager[]{
+                    createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled,
+                        sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled,
+                        fipsMode)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
             } catch (IllegalArgumentException e) {
@@ -487,16 +539,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     /**
      * Creates a trust manager by loading the trust store from the given file
      * of the given type, optionally decrypting it using the given password.
-     * @param trustStoreLocation the location of the trust store file.
-     * @param trustStorePassword optional password to decrypt the trust store
-     *                           (only applies to JKS trust stores). If empty,
-     *                           assumes the trust store is not encrypted.
-     * @param trustStoreTypeProp must be JKS, PEM, PKCS12, BCFKS or null. If
-     *                           null, attempts to autodetect the trust store
-     *                           type from the file extension (e.g. .jks / .pem).
-     * @param crlEnabled enable CRL (certificate revocation list) checks.
-     * @param ocspEnabled enable OCSP (online certificate status protocol)
-     *                    checks.
+     *
+     * @param trustStoreLocation                the location of the trust store file.
+     * @param trustStorePassword                optional password to decrypt the trust store
+     *                                          (only applies to JKS trust stores). If empty,
+     *                                          assumes the trust store is not encrypted.
+     * @param trustStoreTypeProp                must be JKS, PEM, PKCS12, BCFKS or null. If
+     *                                          null, attempts to autodetect the trust store
+     *                                          type from the file extension (e.g. .jks / .pem).
+     * @param crlEnabled                        enable CRL (certificate revocation list) checks.
+     * @param ocspEnabled                       enable OCSP (online certificate status protocol)
+     *                                          checks.
      * @param serverHostnameVerificationEnabled if true, verify hostnames of
      *                                          remote servers that client
      *                                          sockets created by this
@@ -516,7 +569,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean crlEnabled,
         boolean ocspEnabled,
         final boolean serverHostnameVerificationEnabled,
-        final boolean clientHostnameVerificationEnabled) throws TrustManagerException {
+        final boolean clientHostnameVerificationEnabled,
+        final boolean fipsMode) throws TrustManagerException {
         if (trustStorePassword == null) {
             trustStorePassword = "";
         }
@@ -540,7 +594,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509ExtendedTrustManager) {
-                    return new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled, clientHostnameVerificationEnabled);
+                    if (fipsMode) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("FIPS mode is ON: selecting standard x509 trust manager {}", tm);
+                        }
+                        return (X509TrustManager) tm;
+                    }
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("FIPS mode is OFF: creating ZKTrustManager");
+                    }
+                    return new ZKTrustManager((X509ExtendedTrustManager) tm, serverHostnameVerificationEnabled,
+                        clientHostnameVerificationEnabled);
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
@@ -606,7 +670,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     public void enableCertFileReloading() throws IOException {
         LOG.info("enabling cert file reloading");
-        ZKConfig config = zkConfig == null ? new ZKConfig() : zkConfig;
+        ZKConfig config = new ZKConfig();
         FileChangeWatcher newKeyStoreFileWatcher = newFileChangeWatcher(config.getProperty(sslKeystoreLocationProperty));
         if (newKeyStoreFileWatcher != null) {
             // stop old watcher if there is one
@@ -633,6 +697,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     @Override
     public void close() {
+        defaultSSLContextAndOptions.set(null);
         if (keyStoreFileWatcher != null) {
             keyStoreFileWatcher.stop();
             keyStoreFileWatcher = null;

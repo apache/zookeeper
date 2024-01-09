@@ -85,7 +85,6 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.reconfig:
                 case OpCode.setACL:
                 case OpCode.multi:
-                case OpCode.check:
                     sendErrorResponse(request);
                     continue;
                 case OpCode.closeSession:

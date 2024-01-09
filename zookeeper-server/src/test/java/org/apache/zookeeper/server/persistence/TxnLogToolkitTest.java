@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.persistence;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
@@ -28,11 +29,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.MultiTxn;
+import org.apache.zookeeper.txn.Txn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,6 +91,31 @@ public class TxnLogToolkitTest {
             File logfile = new File("this_file_should_not_exists");
             TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true);
         });
+    }
+
+    @Test
+    public void testMultiTxnDecode() throws IOException {
+        //MultiTxn with four ops, and the first op error.
+        List<Txn> txns = new ArrayList<>();
+        int type = -1;
+        for (int i = 0; i < 4; i++) {
+            ErrorTxn txn;
+            if (i == 0) {
+                txn = new ErrorTxn(KeeperException.Code.NONODE.intValue());
+            } else {
+                txn = new ErrorTxn(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+            }
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                txn.serialize(boa, "request");
+                ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+                txns.add(new Txn(type, bb.array()));
+            }
+        }
+        MultiTxn multiTxn = new MultiTxn(txns);
+
+        String formattedTxnStr = TxnLogToolkit.getFormattedTxnStr(multiTxn);
+        assertEquals("error:-101;error:-2;error:-2;error:-2", formattedTxnStr);
     }
 
     @Test

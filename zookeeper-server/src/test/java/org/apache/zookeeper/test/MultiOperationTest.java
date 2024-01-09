@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -40,6 +41,7 @@ import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.CreateOptions;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
@@ -445,6 +447,28 @@ public class MultiOperationTest extends ClientBase {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
+    public void testCreate2(boolean useAsync) throws Exception {
+        CreateOptions options = CreateOptions.newBuilder(Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).build();
+        List<Op> ops = Arrays.asList(
+            Op.create("/multi0", new byte[0], options),
+            Op.create("/multi1", new byte[0], options),
+            Op.create("/multi2", new byte[0], options));
+        List<OpResult> results = multi(zk, ops, useAsync);
+        for (int i = 0; i < ops.size(); i++) {
+            CreateResult createResult = (CreateResult) results.get(i);
+            assertEquals(ops.get(i).getPath(), createResult.getPath());
+            assertEquals(ZooDefs.OpCode.create2, createResult.getType(), createResult.getPath());
+            assertNotNull(createResult.getStat(), createResult.getPath());
+            assertNotEquals(0, createResult.getStat().getCzxid(), createResult.getPath());
+        }
+
+        zk.getData("/multi0", false, null);
+        zk.getData("/multi1", false, null);
+        zk.getData("/multi2", false, null);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
     public void testEmpty(boolean useAsync) throws Exception {
         multi(zk, Arrays.asList(), useAsync);
     }
@@ -643,9 +667,9 @@ public class MultiOperationTest extends ClientBase {
 
     private void opEquals(OpResult expected, OpResult value, OpResult near) {
         assertEquals(value, value);
-        assertFalse(value.equals(new Object()));
-        assertFalse(value.equals(near));
-        assertFalse(value.equals(value instanceof CreateResult ? new ErrorResult(1) : new CreateResult("nope2")));
+        assertNotEquals(value, new Object());
+        assertNotEquals(value, near);
+        assertNotEquals(value, (value instanceof CreateResult ? new ErrorResult(1) : new CreateResult("nope2")));
         assertTrue(value.equals(expected));
     }
 

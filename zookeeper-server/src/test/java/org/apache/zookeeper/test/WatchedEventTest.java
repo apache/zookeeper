@@ -61,7 +61,7 @@ public class WatchedEventTest extends ZKTestCase {
         for (EventType et : allTypes) {
             for (KeeperState ks : allStates) {
                 wep = new WatcherEvent(et.getIntValue(), ks.getIntValue(), "blah");
-                we = new WatchedEvent(wep);
+                we = new WatchedEvent(wep, WatchedEvent.NO_ZXID);
                 assertEquals(et, we.getType());
                 assertEquals(ks, we.getState());
                 assertEquals("blah", we.getPath());
@@ -75,7 +75,7 @@ public class WatchedEventTest extends ZKTestCase {
 
         try {
             WatcherEvent wep = new WatcherEvent(-2342, -252352, "foo");
-            new WatchedEvent(wep);
+            new WatchedEvent(wep, WatchedEvent.NO_ZXID);
             fail("Was able to create WatchedEvent from bad wrapper");
         } catch (RuntimeException re) {
             // we're good

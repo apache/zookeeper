@@ -67,7 +67,6 @@ public class ClientReconnectTest extends ZKTestCase {
 
         ClientCnxnSocketNIO nioCnxn = new MockCnxn();
         ClientCnxn clientCnxn = new ClientCnxn(
-            "tmp",
             hostProvider,
             5000,
             zk.getClientConfig(),

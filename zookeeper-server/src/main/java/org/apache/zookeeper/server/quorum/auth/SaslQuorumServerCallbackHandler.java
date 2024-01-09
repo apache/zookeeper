@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum.auth;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
+import org.apache.zookeeper.server.auth.DigestLoginModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +48,8 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SaslQuorumServerCallbackHandler.class);
 
     private String userName;
-    private final Map<String, String> credentials = new HashMap<>();
+    private final boolean isDigestAuthn;
+    private final Map<String, String> credentials;
     private final Set<String> authzHosts;
 
     public SaslQuorumServerCallbackHandler(
@@ -60,18 +63,33 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
             LOG.error(errorMessage);
             throw new IOException(errorMessage);
         }
-        credentials.clear();
+
+        Map<String, String> credentials = new HashMap<>();
+        boolean isDigestAuthn = true;
+
         for (AppConfigurationEntry entry : configurationEntries) {
-            Map<String, ?> options = entry.getOptions();
-            // Populate DIGEST-MD5 user -> password map with JAAS configuration entries from the "QuorumServer" section.
-            // Usernames are distinguished from other options by prefixing the username with a "user_" prefix.
-            for (Map.Entry<String, ?> pair : options.entrySet()) {
-                String key = pair.getKey();
-                if (key.startsWith(USER_PREFIX)) {
-                    String userName = key.substring(USER_PREFIX.length());
-                    credentials.put(userName, (String) pair.getValue());
+            if (entry.getLoginModuleName().equals(DigestLoginModule.class.getName())) {
+                Map<String, ?> options = entry.getOptions();
+                // Populate DIGEST-MD5 user -> password map with JAAS configuration entries from the "QuorumServer" section.
+                // Usernames are distinguished from other options by prefixing the username with a "user_" prefix.
+                for (Map.Entry<String, ?> pair : options.entrySet()) {
+                    String key = pair.getKey();
+                    if (key.startsWith(USER_PREFIX)) {
+                        String userName = key.substring(USER_PREFIX.length());
+                        credentials.put(userName, (String) pair.getValue());
+                    }
                 }
+            } else {
+                isDigestAuthn = false;
             }
+        }
+
+        this.isDigestAuthn = isDigestAuthn;
+        if (isDigestAuthn) {
+            this.credentials = Collections.unmodifiableMap(credentials);
+            LOG.warn("Using DIGEST-MD5 for quorum authorization");
+        } else {
+            this.credentials = Collections.emptyMap();
         }
 
         // authorized host lists
@@ -126,13 +144,15 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
         // 2. Verify whether the connecting host is present in authorized hosts.
         // If not exists, then connecting peer is not authorized to join the
         // ensemble and will reject it.
-        if (authzFlag) {
+        if (!isDigestAuthn && authzFlag) {
             String[] components = authorizationID.split("[/@]");
             if (components.length == 3) {
                 authzFlag = authzHosts.contains(components[1]);
+            } else {
+                authzFlag = false;
             }
             if (!authzFlag) {
-                LOG.error("SASL authorization completed, {} is not authorized to connect", components[1]);
+                LOG.error("SASL authorization completed, {} is not authorized to connect", authorizationID);
             }
         }
 

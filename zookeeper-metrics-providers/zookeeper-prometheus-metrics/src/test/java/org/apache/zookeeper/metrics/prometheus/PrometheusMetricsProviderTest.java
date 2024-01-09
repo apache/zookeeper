@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -56,7 +55,6 @@ import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,14 +63,13 @@ import org.junit.jupiter.api.Test;
  * Tests about Prometheus Metrics Provider. Please note that we are not testing
  * Prometheus but only our integration.
  */
-public class PrometheusMetricsProviderTest {
+public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     private static final String URL_FORMAT = "http://localhost:%d/metrics";
     private PrometheusMetricsProvider provider;
 
     @BeforeEach
     public void setup() throws Exception {
-        CollectorRegistry.defaultRegistry.clear();
         provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
         configuration.setProperty("numWorkerThreads", "0"); // sync behavior for test
@@ -88,7 +85,6 @@ public class PrometheusMetricsProviderTest {
         if (provider != null) {
             provider.stop();
         }
-        CollectorRegistry.defaultRegistry.clear();
     }
 
     @Test
@@ -416,7 +412,7 @@ public class PrometheusMetricsProviderTest {
         HttpURLConnection conn = (HttpURLConnection) new URL(metricsUrl).openConnection();
         conn.setRequestMethod("TRACE");
         conn.connect();
-        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
+        assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
     }
 
     @Test
