@@ -342,6 +342,21 @@ public class QuorumBase extends ClientBase {
       return null;
     }
 
+    public File getLeaderDataDir() {
+        if (s1.getPeerState() == ServerState.LEADING) {
+            return s1dir;
+        } else if (s2.getPeerState() == ServerState.LEADING) {
+            return s2dir;
+        } else if (s3.getPeerState() == ServerState.LEADING) {
+            return s3dir;
+        } else if (s4.getPeerState() == ServerState.LEADING) {
+            return s4dir;
+        } else if (s5.getPeerState() == ServerState.LEADING) {
+            return s5dir;
+        }
+        return null;
+    }
+
     public QuorumPeer getFirstObserver() {
       if (s1.getLearnerType() == LearnerType.OBSERVER) {
         return s1;
