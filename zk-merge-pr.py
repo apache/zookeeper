@@ -54,6 +54,11 @@ PUSH_REMOTE_NAME = os.environ.get("PUSH_REMOTE_NAME", "apache")
 JIRA_USERNAME = os.environ.get("JIRA_USERNAME", "")
 # ASF JIRA password
 JIRA_PASSWORD = os.environ.get("JIRA_PASSWORD", "")
+# ASF JIRA access token
+# If it is configured, username and password are dismissed
+# Go to https://issues.apache.org/jira/secure/ViewProfile.jspa -> Personal Access Tokens for
+# your own token management.
+JIRA_ACCESS_TOKEN = os.environ.get("JIRA_ACCESS_TOKEN")
 # OAuth key used for issuing requests against the GitHub API. If this is not defined, then requests
 # will be unauthenticated. You should only need to configure this if you find yourself regularly
 # exceeding your IP's unauthenticated request rate limit. You can create an OAuth key at
@@ -249,8 +254,12 @@ def fix_version_from_branch(branch, versions):
 
 
 def resolve_jira_issue(merge_branches, comment, default_jira_id=""):
-    asf_jira = jira.client.JIRA({'server': JIRA_API_BASE},
-                                basic_auth=(JIRA_USERNAME, JIRA_PASSWORD))
+    jira_server = {"server": JIRA_API_BASE}
+
+    if JIRA_ACCESS_TOKEN is not None:
+        asf_jira = jira.client.JIRA(jira_server, token_auth=JIRA_ACCESS_TOKEN)
+    else:
+        asf_jira = jira.client.JIRA(jira_server, basic_auth=(JIRA_USERNAME, JIRA_PASSWORD))
 
     jira_id = input("Enter a JIRA id [%s]: " % default_jira_id)
     if jira_id == "":
@@ -400,15 +409,15 @@ def check_jira_env():
     global JIRA_PASSWORD
 
     if JIRA_IMPORTED:
+        if JIRA_ACCESS_TOKEN is None:
+            if JIRA_USERNAME.strip() != "" and JIRA_PASSWORD.strip() == "":
+                inform_pwd = input("JIRA_USERNAME set but JIRA_PASSWORD is not. Want to inform it? ")
+                if inform_pwd.strip() == "y":
+                    JIRA_PASSWORD = getpass.getpass('JIRA PASSWORD: ')
 
-       if JIRA_USERNAME.strip() != "" and JIRA_PASSWORD.strip() == "":
-           inform_pwd = input("JIRA_USERNAME set but JIRA_PASSWORD is not. Want to inform it? ")
-           if inform_pwd.strip() == "y":
-               JIRA_PASSWORD = getpass.getpass('JIRA PASSWORD: ')
-
-       if JIRA_USERNAME.strip() == "" or JIRA_PASSWORD.strip() == "":
-           msg ="JIRA_USERNAME and/or JIRA_PASSWORD are not set. Want to continue? "
-           continue_maybe(msg)
+            if JIRA_USERNAME.strip() == "" or JIRA_PASSWORD.strip() == "":
+                msg ="Neither JIRA_ACCESS_TOKEN nor JIRA_USERNAME and/or JIRA_PASSWORD are set. Want to continue? "
+                continue_maybe(msg)
     else:
         msg = "JIRA lib not installed. Want to continue? "
         continue_maybe(msg)
@@ -499,12 +508,12 @@ def main():
         merged_refs = merged_refs + [cherry_pick(pr_num, merge_hash, latest_branch)]
 
     if JIRA_IMPORTED:
-        if JIRA_USERNAME and JIRA_PASSWORD:
+        if (JIRA_ACCESS_TOKEN is not None) or (JIRA_USERNAME and JIRA_PASSWORD):
             continue_maybe("Would you like to update an associated JIRA?")
             jira_comment = "Issue resolved by pull request %s\n[%s/%s]" % (pr_num, GITHUB_BASE, pr_num)
             resolve_jira_issues(commit_title, merged_refs, jira_comment)
         else:
-            print("JIRA_USERNAME and JIRA_PASSWORD not set")
+            print("Neither JIRA_ACCESS_TOKEN nor JIRA_USERNAME and/or JIRA_PASSWORD are set.")
             print("Exiting without trying to close the associated JIRA.")
     else:
         print("Could not find jira-python library. Run 'sudo pip install jira' to install.")
