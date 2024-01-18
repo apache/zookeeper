@@ -424,7 +424,7 @@ public class FastLeaderElection implements Election {
                                         self.getPeerState(),
                                         response.sid,
                                         v.getPeerEpoch(),
-                                        qv.toString().getBytes());
+                                        qv.toString().getBytes(UTF_8));
                                     sendqueue.offer(notmsg);
                                 }
                             } else {
@@ -460,7 +460,7 @@ public class FastLeaderElection implements Election {
                                         self.getPeerState(),
                                         response.sid,
                                         current.getPeerEpoch(),
-                                        qv.toString().getBytes());
+                                        qv.toString().getBytes(UTF_8));
                                     sendqueue.offer(notmsg);
                                 }
                             }
