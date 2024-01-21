@@ -44,9 +44,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class ZKClientConfigTest {
 
-    @TempDir
-    private static File testDataDir;
-
     @Test
     @Timeout(value = 10)
     public void testDefaultConfiguration() {
@@ -103,7 +100,7 @@ public class ZKClientConfigTest {
 
     @Test
     @Timeout(value = 10)
-    public void testReadConfigurationFile() throws IOException, ConfigException {
+    public void testReadConfigurationFile(@TempDir File testDataDir) throws IOException, ConfigException {
         File file = File.createTempFile("clientConfig", ".conf", testDataDir);
         Properties clientConfProp = new Properties();
         clientConfProp.setProperty(ENABLE_CLIENT_SASL_KEY, "true");
