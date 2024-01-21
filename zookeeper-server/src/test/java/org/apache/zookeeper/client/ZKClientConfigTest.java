@@ -45,7 +45,7 @@ import org.junit.jupiter.api.io.TempDir;
 public class ZKClientConfigTest {
 
     @TempDir
-    static File testDataDir;
+    private static File testDataDir;
 
     @Test
     @Timeout(value = 10)

@@ -125,6 +125,10 @@ public class SnapStreamTest {
         checkInvalidSnapshot(filename, true, tmpDir);
     }
 
+    /*
+        For this test a single tempDirectory will be created but the checkInvalidsnapshot will create
+        multiple files within the directory for the tests.
+     */
     @Test
     public void testInvalidSnapshot(@TempDir File tmpDir) throws IOException {
         assertFalse(SnapStream.isValidSnapshot(null));

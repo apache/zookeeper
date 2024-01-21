@@ -32,11 +32,8 @@ public class ControllerTestBase extends ZKTestCase {
     protected CommandClient commandClient;
     protected ControllerServerConfig config;
 
-    @TempDir
-    static File tempDir;
-
     @Before
-    public void init() throws Exception {
+    public void init(@TempDir File tempDir) throws Exception {
         List<Integer> openPorts = ControllerConfigTest.findNAvailablePorts(2);
 
         config = new ControllerServerConfig(openPorts.get(0), openPorts.get(1), tempDir.getAbsolutePath());

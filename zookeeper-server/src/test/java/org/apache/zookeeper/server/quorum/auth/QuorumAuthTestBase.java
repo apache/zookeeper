@@ -26,13 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.security.auth.login.Configuration;
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +44,11 @@ public class QuorumAuthTestBase extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumAuthTestBase.class);
     protected List<MainThread> mt = new ArrayList<>();
-    @TempDir
     protected static File jaasConfigDir;
 
     public static void setupJaasConfig(String jaasEntries) {
         try {
+            jaasConfigDir = ClientBase.createTmpDir();
             File saslConfFile = new File(jaasConfigDir, "jaas.conf");
             FileWriter fwriter = new FileWriter(saslConfFile);
             fwriter.write(jaasEntries);
@@ -63,6 +63,12 @@ public class QuorumAuthTestBase extends ZKTestCase {
         // refresh the SASL configuration in this JVM (making sure that we use the latest config
         // even if other tests already have been executed and initialized the SASL configs before)
         Configuration.getConfiguration().refresh();
+    }
+
+    public static void cleanupJaasConfig() {
+        if (jaasConfigDir != null) {
+            FileUtils.deleteQuietly(jaasConfigDir);
+        }
     }
 
     @AfterEach

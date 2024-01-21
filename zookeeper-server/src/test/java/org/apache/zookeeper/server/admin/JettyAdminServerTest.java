@@ -66,9 +66,6 @@ public class JettyAdminServerTest extends ZKTestCase {
     static final String HTTPS_URL_FORMAT = "https://localhost:%d/commands";
     private final int jettyAdminPort = PortAssignment.unique();
 
-    @TempDir
-    static File tempDir;
-
     @BeforeEach
     public void enableServer() {
         // Override setting in ZKTestCase
@@ -77,7 +74,7 @@ public class JettyAdminServerTest extends ZKTestCase {
     }
 
     @BeforeEach
-    public void setupEncryption() {
+    public void setupEncryption(@TempDir File tempDir) {
         Security.addProvider(new BouncyCastleProvider());
         X509TestContext x509TestContext = null;
         try {

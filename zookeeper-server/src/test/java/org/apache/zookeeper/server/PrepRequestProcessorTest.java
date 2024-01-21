@@ -81,11 +81,8 @@ public class PrepRequestProcessorTest extends ClientBase {
     private boolean isReconfigEnabledPreviously;
     private boolean isStandaloneEnabledPreviously;
 
-    @TempDir
-    static File tmpDir;
-
     @BeforeEach
-    public void setup() throws Exception {
+    public void setup(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(100);
