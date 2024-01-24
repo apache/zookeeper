@@ -19,6 +19,7 @@
 package org.apache.zookeeper.version;
 
 public interface Info {
+    //asnkdjhaskhfgkjashfghklasjhfgkaslhgfhekjhfk3rgfkjherg
     int MAJOR=${parsedVersion.majorVersion};
     int MINOR=${parsedVersion.minorVersion};
     int MICRO=${parsedVersion.incrementalVersion};
