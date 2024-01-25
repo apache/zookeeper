@@ -29,7 +29,11 @@ public class RuokCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        pw.print("imok");
+        if (!isZKServerRunning()) {
+            pw.println(ZK_NOT_SERVING);
+        } else {
+            pw.print("imok");
+        }
     }
 
 }
