@@ -88,14 +88,60 @@ public class Leader extends LearnerMaster {
 
     public static class Proposal extends SyncedLearnerTracker {
 
-        public QuorumPacket packet;
-        public Request request;
+        private QuorumPacket packet;
+        protected Request request;
+
+        public Proposal() {
+        }
+
+        public Proposal(QuorumPacket packet) {
+            this.packet = packet;
+        }
+
+        public Proposal(Request request, QuorumPacket packet) {
+            this.request = request;
+            this.packet = packet;
+        }
+
+        public QuorumPacket getQuorumPacket() {
+            return packet;
+        }
+
+        public Request getRequest() {
+            return request;
+        }
+
+        public long getZxid() {
+            return packet.getZxid();
+        }
 
         @Override
         public String toString() {
             return packet.getType() + ", " + packet.getZxid() + ", " + request;
         }
+    }
 
+    public static class PureRequestProposal extends Proposal {
+
+        public PureRequestProposal(Request request) {
+            this.request = request;
+        }
+
+        @Override
+        public QuorumPacket getQuorumPacket() {
+            byte[] data = request.getSerializeData();
+            return new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
+        }
+
+        @Override
+        public long getZxid() {
+            return request.zxid;
+        }
+
+        @Override
+        public String toString() {
+            return request.toString();
+        }
     }
 
     // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
@@ -1258,9 +1304,7 @@ public class Leader extends LearnerMaster {
         proposalStats.setLastBufferSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
 
-        Proposal p = new Proposal();
-        p.packet = pp;
-        p.request = request;
+        Proposal p = new Proposal(request, pp);
 
         synchronized (this) {
             p.addQuorumVerifier(self.getQuorumVerifier());

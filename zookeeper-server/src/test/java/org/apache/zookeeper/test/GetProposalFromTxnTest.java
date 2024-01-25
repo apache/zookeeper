@@ -107,7 +107,7 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         while (itr.hasNext()) {
             Proposal proposal = itr.next();
             TxnLogEntry logEntry = SerializeUtils.deserializeTxn(
-                    proposal.packet.getData());
+                    proposal.getQuorumPacket().getData());
             TxnHeader hdr = logEntry.getHeader();
             Record rec = logEntry.getTxn();
             if (hdr.getType() == OpCode.create) {
