@@ -528,7 +528,7 @@ public class NettyServerCnxn extends ServerCnxn {
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
                             LOG.info("Closing connection to {} because the server is not ready",
-                                    getRemoteSocketAddress());
+                                getRemoteSocketAddress(), zks == null ? "null" : zks.getState());
                             close(DisconnectReason.IO_EXCEPTION);
                             return;
                         }
