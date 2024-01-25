@@ -129,7 +129,7 @@ public class QuorumOracleMaj extends QuorumMaj {
                 int i = 0;
                 while (i < outstandingProposal.size()) {
                     p = outstandingProposal.get(i);
-                    if (p.getZxid()> lastCommitted) {
+                    if (p.getZxid() > lastCommitted) {
                         LOG.debug("Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}", Long.toHexString(p.getZxid()), outstandingProposal.size(), Long.toHexString(lastCommitted));
                         if (!self.tryToCommit(p, p.getZxid(), null)) {
                             break;
