@@ -80,12 +80,21 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<Request>();
 
     public void logRequest(TxnHeader hdr, Record txn, TxnDigest digest) {
-        Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
-        request.setTxnDigest(digest);
-        if ((request.zxid & 0xffffffffL) != 0) {
-            pendingTxns.add(request);
-        }
+        final Request request = buildRequestToProcess(hdr, txn, digest);
         syncProcessor.processRequest(request);
+    }
+
+    /**
+     * Build a request for the txn and append it to the transaction log
+     * @param hdr the txn header
+     * @param txn the txn
+     * @param digest the digest of txn
+     * @return a request moving through a chain of RequestProcessors
+     */
+    public Request appendRequest(final TxnHeader hdr, final Record txn, final TxnDigest digest) throws IOException {
+        final Request request = buildRequestToProcess(hdr, txn, digest);
+        getZKDatabase().append(request);
+        return request;
     }
 
     /**
@@ -181,4 +190,19 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     }
 
+    /**
+     * Build a request for the txn
+     * @param hdr the txn header
+     * @param txn the txn
+     * @param digest the digest of txn
+     * @return a request moving through a chain of RequestProcessors
+     */
+    private Request buildRequestToProcess(final TxnHeader hdr, final Record txn, final TxnDigest digest) {
+        final Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
+        request.setTxnDigest(digest);
+        if ((request.zxid & 0xffffffffL) != 0) {
+            pendingTxns.add(request);
+        }
+        return request;
+    }
 }
