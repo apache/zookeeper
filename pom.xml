@@ -502,14 +502,6 @@
               </execution>
             </executions>
           </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.2</version>
-            <configuration>
-              <argLine>${harnessArgLine}  @{argLine} </argLine>
-            </configuration>
-          </plugin>
         </plugins>
       </build>
     </profile>
@@ -587,7 +579,6 @@
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
     <c-client-sasl>yes</c-client-sasl>
-    <harnessArgLine></harnessArgLine>
   </properties>
 
   <dependencyManagement>
