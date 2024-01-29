@@ -38,10 +38,12 @@ public class GetCommand extends CliCommand {
     static {
         options.addOption("s", false, "stats");
         options.addOption("w", false, "watch");
+        options.addOption("b", false, "base64");
+        options.addOption("x", false, "hexdump");
     }
 
     public GetCommand() {
-        super("get", "[-s] [-w] path");
+        super("get", "[-s] [-w] [-b] [-x] path");
     }
 
     @Override
@@ -92,8 +94,15 @@ public class GetCommand extends CliCommand {
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
+        OutputFormatter formatter = PlainOutputFormatter.INSTANCE;
+        if (cl.hasOption("b")) {
+            formatter = Base64OutputFormatter.INSTANCE;
+        }
+        if (cl.hasOption("x")) {
+            formatter = HexDumpOutputFormatter.INSTANCE;
+        }
         data = (data == null) ? "null".getBytes() : data;
-        out.println(new String(data, UTF_8));
+        out.println(formatter.format(data));
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);
         }
