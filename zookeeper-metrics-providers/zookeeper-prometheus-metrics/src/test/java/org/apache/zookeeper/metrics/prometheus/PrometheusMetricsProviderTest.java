@@ -679,6 +679,53 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         provider.getRootContext().registerGaugeSet(name, gaugeSet);
     }
 
+    @Test
+    public void testNamespace() throws Exception {
+        provider.stop();
+        provider = new PrometheusMetricsProvider();
+        Properties configuration = new Properties();
+        configuration.setProperty("httpPort", "0"); // ephemeral port
+        configuration.setProperty("exportJvmInfo", "false");
+        configuration.setProperty("namespace", "zk_test_namespace");
+        provider.configure(configuration);
+        provider.start();
+
+        Summary summary = provider.getRootContext()
+                .getSummary("cc", MetricsContext.DetailLevel.BASIC);
+        summary.add(10);
+        summary.add(10);
+        int[] count = {0};
+        provider.dump((k, v) -> {
+            count[0]++;
+            int value = ((Number) v).intValue();
+
+            switch (k) {
+                case "zk_test_namespace_cc{quantile=\"0.5\"}":
+                    assertEquals(10, value);
+                    break;
+                case "zk_test_namespace_cc_count":
+                    assertEquals(2, value);
+                    break;
+                case "zk_test_namespace_cc_sum":
+                    assertEquals(20, value);
+                    break;
+                default:
+                    fail("unespected key " + k);
+                    break;
+            }
+        }
+        );
+        assertEquals(3, count[0]);
+        count[0] = 0;
+
+        String res = callServlet();
+
+        assertThat(res, containsString("# TYPE zk_test_namespace_cc summary"));
+        assertThat(res, CoreMatchers.containsString("zk_test_namespace_cc_sum 20.0"));
+        assertThat(res, CoreMatchers.containsString("zk_test_namespace_cc_count 2.0"));
+        assertThat(res, CoreMatchers.containsString("zk_test_namespace_cc{quantile=\"0.5\",} 10.0"));
+    }
+
     private void validateWithDump(final Map<String, Number> expectedMetrics) {
         final Map<String, Object> returnedMetrics = new HashMap<>();
         provider.dump(returnedMetrics::put);
