@@ -3984,24 +3984,33 @@ int zoo_awget(zhandle_t *zh, const char *path,
         watcher_fn watcher, void* watcherCtx,
         data_completion_t dc, const void *data)
 {
-    struct oarchive *oa;
-    char *server_path = prepend_string(zh, path);
-    struct RequestHeader h = {get_xid(), ZOO_GETDATA_OP};
-    struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
+    struct oarchive *oa;
+    char *server_path;
+    struct RequestHeader h;
+    struct GetDataRequest req;
+
+    enter_critical(zh);
+    server_path = prepend_string(zh, path);
+    h.xid = get_xid();
+    h.type = ZOO_GETDATA_OP;
+    
+    req.path = server_path;
+    req.watch = watcher != 0;
 
     if (zh==0 || !isValidPath(server_path, 0)) {
+        leave_critical(zh);
         free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
     }
     if (is_unrecoverable(zh)) {
+        leave_critical(zh);
         free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
     }
     oa=create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetDataRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data,
     create_watcher_registration(server_path,data_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
@@ -4026,25 +4035,34 @@ int zoo_agetconfig(zhandle_t *zh, int watch, data_completion_t dc,
 int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
         data_completion_t dc, const void *data)
 {
-    struct oarchive *oa;
-    char *path = ZOO_CONFIG_NODE;
-    char *server_path = ZOO_CONFIG_NODE;
-    struct RequestHeader h = { get_xid(), ZOO_GETDATA_OP };
-    struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
+    struct oarchive *oa;
+    char *path;
+    char *server_path;
+    struct RequestHeader h;
+    struct GetDataRequest req;
+
+    enter_critical(zh);
+    path = ZOO_CONFIG_NODE;
+    server_path = ZOO_CONFIG_NODE;
+    h.xid = get_xid();
+    h.type = ZOO_GETDATA_OP;
+    req.path = server_path;
+    req.watch = watcher != 0;
 
     if (zh==0 || !isValidPath(server_path, 0)) {
+        leave_critical(zh);
         free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
     }
     if (is_unrecoverable(zh)) {
+        leave_critical(zh);
         free_duplicate_path(server_path, path);
         return ZINVALIDSTATE;
     }
     oa=create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetDataRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data,
                                            create_watcher_registration(server_path,data_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
@@ -4063,26 +4081,30 @@ int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
 int zoo_areconfig(zhandle_t *zh, const char *joining, const char *leaving,
        const char *members, int64_t version, data_completion_t dc, const void *data)
 {
+    int rc;
     struct oarchive *oa;
-    struct RequestHeader h = { get_xid(), ZOO_RECONFIG_OP };
     struct ReconfigRequest req;
-   int rc = 0;
+    struct RequestHeader h;
 
     if (zh==0) {
         return ZBADARGUMENTS;
     }
+
     if (is_unrecoverable(zh)) {
         return ZINVALIDSTATE;
     }
 
-   oa=create_buffer_oarchive();
-   req.joiningServers = (char *)joining;
-   req.leavingServers = (char *)leaving;
-   req.newMembers = (char *)members;
-   req.curConfigId = version;
-    rc = serialize_RequestHeader(oa, "header", &h);
-   rc = rc < 0 ? rc : serialize_ReconfigRequest(oa, "req", &req);
     enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_RECONFIG_OP;
+    rc = 0;
+    oa=create_buffer_oarchive();
+    req.joiningServers = (char *)joining;
+    req.leavingServers = (char *)leaving;
+    req.newMembers = (char *)members;
+    req.curConfigId = version;
+    rc = serialize_RequestHeader(oa, "header", &h);
+    rc = rc < 0 ? rc : serialize_ReconfigRequest(oa, "req", &req);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data, NULL);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4114,17 +4136,22 @@ static int SetDataRequest_init(zhandle_t *zh, struct SetDataRequest *req,
 int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
         int version, stat_completion_t dc, const void *data)
 {
+    int rc;
+    struct RequestHeader h;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_SETDATA_OP};
     struct SetDataRequest req;
-    int rc = SetDataRequest_init(zh, &req, path, buffer, buflen, version);
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_SETDATA_OP;
+    rc = SetDataRequest_init(zh, &req, path, buffer, buflen, version);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SetDataRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_stat_completion(zh, h.xid, dc, data,0);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4209,21 +4236,31 @@ int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl_entries, int mode, int64_t ttl,
         string_completion_t completion, const void *data)
 {
-    struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), get_create_op_type(mode, ZOO_CREATE_OP)};
     int rc;
+    struct oarchive *oa;
     char *req_path;
+    struct RequestHeader h;
+
+    if (zh == NULL) {
+        return ZBADARGUMENTS;
+    }
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = get_create_op_type(mode, ZOO_CREATE_OP);
 
     if (ZOOKEEPER_IS_TTL(mode)) {
         struct CreateTTLRequest req;
 
         if (ttl <= 0 || ttl > ZOO_MAX_TTL) {
+            leave_critical(zh);
             return ZBADARGUMENTS;
         }
 
         rc = CreateTTLRequest_init(zh, &req,
                 path, value, valuelen, acl_entries, mode, ttl);
         if (rc != ZOK) {
+            leave_critical(zh);
             return rc;
         }
         oa = create_buffer_oarchive();
@@ -4235,12 +4272,14 @@ int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
         struct CreateRequest req;
 
         if (ttl >= 0) {
+            leave_critical(zh);
             return ZBADARGUMENTS;
         }
 
         rc = CreateRequest_init(zh, &req,
                 path, value, valuelen, acl_entries, mode);
         if (rc != ZOK) {
+            leave_critical(zh);
             return rc;
         }
         oa = create_buffer_oarchive();
@@ -4250,7 +4289,6 @@ int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
         req_path = req.path;
     }
 
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4277,20 +4315,26 @@ int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
         string_stat_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { get_xid(), get_create_op_type(mode, ZOO_CREATE2_OP) };
     int rc;
     char *req_path;
+    struct RequestHeader h;
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = get_create_op_type(mode, ZOO_CREATE2_OP);
 
     if (ZOOKEEPER_IS_TTL(mode)) {
         struct CreateTTLRequest req;
 
         if (ttl <= 0 || ttl > ZOO_MAX_TTL) {
+            leave_critical(zh);
             return ZBADARGUMENTS;
         }
 
         rc = CreateTTLRequest_init(zh, &req,
                 path, value, valuelen, acl_entries, mode, ttl);
         if (rc != ZOK) {
+            leave_critical(zh);
             return rc;
         }
         oa = create_buffer_oarchive();
@@ -4302,11 +4346,13 @@ int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
         struct CreateRequest req;
 
         if (ttl >= 0) {
+            leave_critical(zh);
             return ZBADARGUMENTS;
         }
 
         rc = CreateRequest_init(zh, &req, path, value, valuelen, acl_entries, mode);
         if (rc != ZOK) {
+            leave_critical(zh);
             return rc;
         }
         oa = create_buffer_oarchive();
@@ -4316,7 +4362,6 @@ int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
         req_path = req.path;
     }
 
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_string_stat_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4345,17 +4390,24 @@ int DeleteRequest_init(zhandle_t *zh, struct DeleteRequest *req,
 int zoo_adelete(zhandle_t *zh, const char *path, int version,
         void_completion_t completion, const void *data)
 {
+    int rc;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_DELETE_OP};
     struct DeleteRequest req;
-    int rc = DeleteRequest_init(zh, &req, path, version);
+    struct RequestHeader h;
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_DELETE_OP;
+
+    rc = DeleteRequest_init(zh, &req, path, version);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
+
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_void_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4380,18 +4432,24 @@ int zoo_awexists(zhandle_t *zh, const char *path,
         watcher_fn watcher, void* watcherCtx,
         stat_completion_t completion, const void *data)
 {
+    int rc;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_EXISTS_OP};
     struct ExistsRequest req;
-    int rc = Request_path_watch_init(zh, 0, &req.path, path,
+    struct RequestHeader h;
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_EXISTS_OP;
+
+    rc = Request_path_watch_init(zh, 0, &req.path, path,
             &req.watch, watcher != NULL);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_ExistsRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_stat_completion(zh, h.xid, completion, data,
         create_watcher_registration(req.path,exists_result_checker,
                 watcher,watcherCtx));
@@ -4413,18 +4471,24 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
          strings_completion_t sc,
          const void *data)
 {
+    int rc;
+    struct RequestHeader h;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN_OP};
     struct GetChildrenRequest req ;
-    int rc = Request_path_watch_init(zh, 0, &req.path, path,
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_GETCHILDREN_OP;
+
+    rc = Request_path_watch_init(zh, 0, &req.path, path,
             &req.watch, watcher != NULL);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
+
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildrenRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_completion(zh, h.xid, sc, data,
             create_watcher_registration(req.path,child_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
@@ -4460,18 +4524,24 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
          const void *data)
 {
     /* invariant: (sc == NULL) != (sc == NULL) */
+    int rc;
+    struct RequestHeader h;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN2_OP};
     struct GetChildren2Request req ;
-    int rc = Request_path_watch_init(zh, 0, &req.path, path,
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_GETCHILDREN2_OP;
+
+    rc = Request_path_watch_init(zh, 0, &req.path, path,
             &req.watch, watcher != NULL);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
+
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildren2Request(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_stat_completion(zh, h.xid, ssc, data,
             create_watcher_registration(req.path,child_result_checker,watcher,watcherCtx));
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
@@ -4504,17 +4574,24 @@ int zoo_awget_children2(zhandle_t *zh, const char *path,
 int zoo_async(zhandle_t *zh, const char *path,
         string_completion_t completion, const void *data)
 {
+    int rc;
+    struct RequestHeader h;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_SYNC_OP};
     struct SyncRequest req;
-    int rc = Request_path_init(zh, 0, &req.path, path);
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_SYNC_OP;
+
+    rc = Request_path_init(zh, 0, &req.path, path);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
+
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SyncRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4533,17 +4610,24 @@ int zoo_async(zhandle_t *zh, const char *path,
 int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
         const void *data)
 {
+    int rc;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_GETACL_OP};
     struct GetACLRequest req;
-    int rc = Request_path_init(zh, 0, &req.path, path) ;
+    struct RequestHeader h;
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_GETACL_OP;
+
+    rc = Request_path_init(zh, 0, &req.path, path) ;
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
+
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetACLRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_acl_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4561,19 +4645,26 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
 int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
         struct ACL_vector *acl, void_completion_t completion, const void *data)
 {
+    int rc;
     struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_SETACL_OP};
     struct SetACLRequest req;
-    int rc = Request_path_init(zh, 0, &req.path, path);
+    struct RequestHeader h;
+
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_SETACL_OP;
+    
+    rc = Request_path_init(zh, 0, &req.path, path);
     if (rc != ZOK) {
+        leave_critical(zh);
         return rc;
     }
+
     oa = create_buffer_oarchive();
     req.acl = *acl;
     req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SetACLRequest(oa, "req", &req);
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_void_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4646,14 +4737,25 @@ static int CheckVersionRequest_init(zhandle_t *zh, struct CheckVersionRequest *r
 int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         zoo_op_result_t *results, void_completion_t completion, const void *data)
 {
-    struct RequestHeader h = {get_xid(), ZOO_MULTI_OP};
-    struct MultiHeader mh = {-1, 1, -1};
-    struct oarchive *oa = create_buffer_oarchive();
-    completion_head_t clist = { 0 };
+    int rc, index;
+    struct RequestHeader h;
+    struct MultiHeader mh;
+    struct oarchive *oa;
+    completion_head_t clist;
 
-    int rc = serialize_RequestHeader(oa, "header", &h);
+    /* BEGIN: CRTICIAL SECTION */
+    enter_critical(zh);
+    h.xid = get_xid();
+    h.type = ZOO_MULTI_OP;
+    mh.type = -1;
+    mh.done = 1;
+    mh.err = -1;
+    oa = create_buffer_oarchive();
+    clist.head = 0;
+    clist.last = 0;
 
-    int index = 0;
+    rc = serialize_RequestHeader(oa, "header", &h);
+    index = 0;
     for (index=0; index < count; index++) {
         const zoo_op_t *op = ops+index;
         zoo_op_result_t *result = results+index;
@@ -4674,10 +4776,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
                 result->value = op->create_op.buf;
                 result->valuelen = op->create_op.buflen;
-
-                enter_critical(zh);
                 entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0);
-                leave_critical(zh);
                 free_duplicate_path(req.path, op->create_op.path);
                 break;
             }
@@ -4686,10 +4785,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 struct DeleteRequest req;
                 rc = rc < 0 ? rc : DeleteRequest_init(zh, &req, op->delete_op.path, op->delete_op.version);
                 rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
-
-                enter_critical(zh);
                 entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
-                leave_critical(zh);
                 free_duplicate_path(req.path, op->delete_op.path);
                 break;
             }
@@ -4701,10 +4797,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                                         op->set_op.datalen, op->set_op.version);
                 rc = rc < 0 ? rc : serialize_SetDataRequest(oa, "req", &req);
                 result->stat = op->set_op.stat;
-
-                enter_critical(zh);
                 entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, 0);
-                leave_critical(zh);
                 free_duplicate_path(req.path, op->set_op.path);
                 break;
             }
@@ -4714,15 +4807,13 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 rc = rc < 0 ? rc : CheckVersionRequest_init(zh, &req,
                                         op->check_op.path, op->check_op.version);
                 rc = rc < 0 ? rc : serialize_CheckVersionRequest(oa, "req", &req);
-
-                enter_critical(zh);
                 entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
-                leave_critical(zh);
                 free_duplicate_path(req.path, op->check_op.path);
                 break;
             }
 
             default:
+                leave_critical(zh);
                 LOG_ERROR(LOGCALLBACK(zh), "Unimplemented sub-op type=%d in multi-op", op->type);
                 return ZUNIMPLEMENTED;
         }
@@ -4731,9 +4822,6 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     }
 
     rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
-
-    /* BEGIN: CRTICIAL SECTION */
-    enter_critical(zh);
     rc = rc < 0 ? rc : add_multi_completion(zh, h.xid, completion, data, &clist);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
@@ -4760,15 +4848,19 @@ static int aremove_watches(
         watcher_fn watcher, void *watcherCtx, int local,
         void_completion_t *completion, const void *data, int all)
 {
-    char *server_path = prepend_string(zh, path);
     int rc;
+    int unlocked;
     struct oarchive *oa;
-    struct RequestHeader h = { 
-        get_xid(), 
-        all ? ZOO_REMOVE_WATCHES : ZOO_CHECK_WATCHES 
-    };
     WatchesRequest req;
     watcher_deregistration_t *wdo;
+    char *server_path;
+    struct RequestHeader h;
+
+    enter_critical(zh);
+    unlocked = 0;
+    server_path = prepend_string(zh, path);
+    h.xid = get_xid();
+    h.type = all ? ZOO_REMOVE_WATCHES : ZOO_CHECK_WATCHES;
 
     if (!zh || !isValidPath(server_path, 0)) {
         rc = ZBADARGUMENTS;
@@ -4823,11 +4915,11 @@ static int aremove_watches(
         goto done;
     }
 
-    enter_critical(zh);
     rc = add_completion_deregistration(
         zh, h.xid, COMPLETION_VOID, completion, data, 0, wdo, 0);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
+    unlocked = 1;
     leave_critical(zh);
 
     /* We queued the buffer, so don't free it */
@@ -4839,6 +4931,9 @@ static int aremove_watches(
     rc = nonblocking_send(zh, rc);
 
 done:
+    if (!unlocked) {
+        leave_critical(zh);
+    }
     free_duplicate_path(server_path, path);
     return rc;
 }
