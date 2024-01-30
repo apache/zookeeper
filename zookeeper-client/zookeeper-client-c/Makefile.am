@@ -1,7 +1,7 @@
 # need this for Doxygen integration
 include $(top_srcdir)/aminclude.am
 
-AUTOMAKE_OPTIONS = serial-tests
+AUTOMAKE_OPTIONS = serial-tests subdir-objects
 
 if SOLARIS
   SOLARIS_CPPFLAGS = -D_POSIX_PTHREAD_SEMANTICS
