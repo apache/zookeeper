@@ -277,7 +277,14 @@ public:
         int rc;
         watchctx_t ctx;
         zhandle_t *zk = createClient(&ctx);
-       
+
+        rc = zoo_delete(zk, "/multi1/a", -1);
+        CPPUNIT_ASSERT(rc == ZOK || rc == ZNONODE);
+        rc = zoo_delete(zk, "/multi1/b", -1);
+        CPPUNIT_ASSERT(rc == ZOK || rc == ZNONODE);
+        rc = zoo_delete(zk, "/multi1", -1);
+        CPPUNIT_ASSERT(rc == ZOK || rc == ZNONODE);
+    
         int sz = 512;
         char p1[sz];
         char p2[sz];
