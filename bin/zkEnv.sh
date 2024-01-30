@@ -144,16 +144,16 @@ fi
 
 #echo "CLASSPATH=$CLASSPATH"
 
-# ZK_SERVER_MAXRAMPERCENTAGE has higher precedence over ZK_SERVER_HEAP 
-if [ "x$ZK_SERVER_MAXRAMPERCENTAGE" = "x" ]
-then
-  # default heap for zookeeper server
-  ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
-  export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
-else
-  export SERVER_JVMFLAGS="-XX:MaxRAMPercentage=$ZK_SERVER_MAXRAMPERCENTAGE $SERVER_JVMFLAGS"
+# default heap for zookeeper server
+if [[ -n $ZK_SERVER_HEAP ]]; then
+    echo 'WARNING: ZK_SERVER_HEAP will not be recognized in a future version. Set -Xmx directly using SERVER_JVMFLAGS instead.'
+    SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
 fi
+export SERVER_JVMFLAGS=${SERVER_JVMFLAGS:--Xmx1000m}
 
 # default heap for zookeeper client
-ZK_CLIENT_HEAP="${ZK_CLIENT_HEAP:-256}"
-export CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
+if [[ -n $ZK_CLIENT_HEAP ]]; then
+   echo 'WARNING: ZK_CLIENT_HEAP will not be recognized in a future version. Set -Xmx directly using CLIENT_JVMFLAGS instead.'
+   CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
+fi
+export CLIENT_JVMFLAGS=${CLIENT_JVMFLAGS:--Xmx256m}
