@@ -144,9 +144,15 @@ fi
 
 #echo "CLASSPATH=$CLASSPATH"
 
-# default heap for zookeeper server
-ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
-export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
+# ZK_SERVER_MAXRAMPERCENTAGE has higher precedence over ZK_SERVER_HEAP 
+if [ "x$ZK_SERVER_MAXRAMPERCENTAGE" = "x" ]
+then
+  # default heap for zookeeper server
+  ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
+  export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
+else
+  export SERVER_JVMFLAGS="-XX:MaxRAMPercentage=$ZK_SERVER_MAXRAMPERCENTAGE $SERVER_JVMFLAGS"
+fi
 
 # default heap for zookeeper client
 ZK_CLIENT_HEAP="${ZK_CLIENT_HEAP:-256}"
