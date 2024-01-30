@@ -32,10 +32,6 @@
 #include "zookeeper_log.h"
 #include "zk_hashtable.h"
 
-#ifdef HAVE_CYRUS_SASL_H
-#include "zk_sasl.h"
-#endif /* HAVE_CYRUS_SASL_H */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

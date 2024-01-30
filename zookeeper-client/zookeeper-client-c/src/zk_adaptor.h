@@ -31,6 +31,10 @@
 #include "zk_hashtable.h"
 #include "addrvec.h"
 
+#ifdef HAVE_CYRUS_SASL_H
+#include "zk_sasl.h"
+#endif
+
 /* predefined xid's values recognized as special by the server */
 #define WATCHER_EVENT_XID -1 
 #define PING_XID -2
@@ -183,8 +187,6 @@ typedef struct _auth_list_head {
      pthread_mutex_t lock;
 #endif
 } auth_list_head_t;
-
-typedef struct _zoo_sasl_client zoo_sasl_client_t;
 
 /**
  * This structure represents the connection to zookeeper.
