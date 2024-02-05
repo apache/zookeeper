@@ -2873,7 +2873,7 @@ static void finalize_session_establishment(zhandle_t *zh) {
     PROCESS_SESSION_EVENT(zh, zh->state);
 
     if (has_sasl_client(zh)) {
-        /* some packets might have been delayed during SASL negotiaton. */
+        /* some packets might have been delayed during SASL negotiation. */
         adaptor_send_queue(zh, 0);
     }
 }
@@ -3830,7 +3830,7 @@ int zookeeper_close(zhandle_t *zh)
          * completions from calling zookeeper_close before we have
          * completed the adaptor_finish call below. */
 
-    /* Signal any syncronous completions before joining the threads */
+    /* Signal any synchronous completions before joining the threads */
         enter_critical(zh);
         free_completions(zh,1,ZCLOSING);
         leave_critical(zh);
