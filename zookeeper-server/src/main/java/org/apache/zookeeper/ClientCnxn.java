@@ -1258,9 +1258,9 @@ public class ClientCnxn {
             }
             eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
 
-            if (loginRef.get() != null) {
-                loginRef.get().shutdown();
-                loginRef.set(null);
+            Login l = loginRef.getAndSet(null);
+            if (l != null) {
+                l.shutdown();
             }
             ZooTrace.logTraceMessage(
                 LOG,
