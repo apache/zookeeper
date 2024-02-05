@@ -843,7 +843,7 @@ public class ClientCnxn {
         private final ClientCnxnSocket clientCnxnSocket;
         private boolean isFirstConnect = true;
         private volatile ZooKeeperSaslClient zooKeeperSaslClient;
-        final AtomicReference<Login> loginRef = new AtomicReference<>();
+        private final AtomicReference<Login> loginRef = new AtomicReference<>();
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
@@ -1431,6 +1431,11 @@ public class ClientCnxn {
 
         public ZooKeeperSaslClient getZooKeeperSaslClient() {
             return zooKeeperSaslClient;
+        }
+
+        // VisibleForTesting
+        Login getLogin() {
+            return loginRef.get();
         }
     }
 

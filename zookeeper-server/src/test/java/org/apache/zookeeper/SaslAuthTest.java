@@ -243,7 +243,7 @@ public class SaslAuthTest extends ClientBase {
             eventThread.join(CONNECTION_TIMEOUT);
             // If login is null, this means ZooKeeperSaslClient#shutdown method has been called which in turns
             // means that Login#shutdown has been called.
-            assertNull(sendThread.loginRef.get());
+            assertNull(sendThread.getLogin());
             assertFalse(sendThread.isAlive(), "SendThread did not shutdown after authFail");
             assertFalse(eventThread.isAlive(), "EventThread did not shutdown after authFail");
         } finally {
@@ -269,7 +269,7 @@ public class SaslAuthTest extends ClientBase {
             sendThreadField.setAccessible(true);
             SendThread sendThread = (SendThread) sendThreadField.get(clientCnxn);
 
-            Login l1 = sendThread.loginRef.get();
+            Login l1 = sendThread.getLogin();
             assertNotNull(l1);
 
             stopServer();
@@ -278,7 +278,7 @@ public class SaslAuthTest extends ClientBase {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
             zk.getData("/", false, null);
 
-            assertSame("Login thread should not been recreated on disconnect", l1, sendThread.loginRef.get());
+            assertSame("Login thread should not been recreated on disconnect", l1, sendThread.getLogin());
         } finally {
             if (zk != null) {
                 zk.close();
