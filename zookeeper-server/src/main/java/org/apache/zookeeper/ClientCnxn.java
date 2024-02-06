@@ -1143,7 +1143,7 @@ public class ClientCnxn {
                         startConnect(serverAddress);
                         // Update now to start the connection timer right after we make a connection attempt
                         clientCnxnSocket.updateNow();
-                        clientCnxnSocket.updateLastSendAndHeard();
+//                        clientCnxnSocket.updateLastSendAndHeard();
                     }
 
                     if (state.isConnected()) {
@@ -1190,6 +1190,7 @@ public class ClientCnxn {
                             clientCnxnSocket.getIdleRecv(),
                             Long.toHexString(sessionId));
                         LOG.warn(warnInfo);
+                        changeZkState(States.CLOSED);
                         throw new SessionTimeoutException(warnInfo);
                     }
                     if (state.isConnected()) {
@@ -1256,8 +1257,18 @@ public class ClientCnxn {
             if (state.isAlive()) {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Disconnected, null));
             }
-            eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
+//            eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
 
+            if(state == States.AUTH_FAILED){
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None, KeeperState.AuthFailed, null));
+            }else if (state == States.CLOSED) {
+                // the serving cluster has expired this session.
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None, KeeperState.Expired, null));
+            }else if (closing) {
+                // The client has been closed.
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None, KeeperState.Closed, null));
+            }
+            eventThread.queueEventOfDeath();
             if (zooKeeperSaslClient != null) {
                 zooKeeperSaslClient.shutdown();
             }
@@ -1273,7 +1284,7 @@ public class ClientCnxn {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Disconnected, null));
             }
             clientCnxnSocket.updateNow();
-            clientCnxnSocket.updateLastSendAndHeard();
+//            clientCnxnSocket.updateLastSendAndHeard();
         }
 
         private void pingRwServer() throws RWServerFoundException {
