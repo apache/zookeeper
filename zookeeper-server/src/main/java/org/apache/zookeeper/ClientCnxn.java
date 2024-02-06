@@ -42,6 +42,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
@@ -854,6 +855,7 @@ public class ClientCnxn {
         private final ClientCnxnSocket clientCnxnSocket;
         private boolean isFirstConnect = true;
         private volatile ZooKeeperSaslClient zooKeeperSaslClient;
+        private final AtomicReference<Login> loginRef = new AtomicReference<>();
 
         private String stripChroot(String serverPath) {
             if (serverPath.startsWith(chrootPath)) {
@@ -1136,10 +1138,8 @@ public class ClientCnxn {
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
                 try {
-                    if (zooKeeperSaslClient != null) {
-                        zooKeeperSaslClient.shutdown();
-                    }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(SaslServerPrincipal.getServerPrincipal(addr, clientConfig), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(
+                        SaslServerPrincipal.getServerPrincipal(addr, clientConfig), clientConfig, loginRef);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1307,8 +1307,9 @@ public class ClientCnxn {
             }
             eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
 
-            if (zooKeeperSaslClient != null) {
-                zooKeeperSaslClient.shutdown();
+            Login l = loginRef.getAndSet(null);
+            if (l != null) {
+                l.shutdown();
             }
             ZooTrace.logTraceMessage(
                 LOG,
@@ -1479,6 +1480,11 @@ public class ClientCnxn {
 
         public ZooKeeperSaslClient getZooKeeperSaslClient() {
             return zooKeeperSaslClient;
+        }
+
+        // VisibleForTesting
+        Login getLogin() {
+            return loginRef.get();
         }
     }
 
