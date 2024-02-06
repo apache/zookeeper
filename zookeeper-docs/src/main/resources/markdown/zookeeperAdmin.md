@@ -1859,8 +1859,10 @@ New features that are currently considered experimental.
     (Java system property: **readonlymode.enabled**)
     **New in 3.4.0:**
     Setting this value to true enables Read Only Mode server
-    support (disabled by default). ROM allows clients
-    sessions which requested ROM support to connect to the
+    support (disabled by default).
+    *localSessionsEnabled* has to be activated to serve clients.
+    A downgrade of an existing connections is currently not supported.
+    ROM allows clients sessions which requested ROM support to connect to the
     server even when the server might be partitioned from
     the quorum. In this mode ROM clients can still read
     values from the ZK service, but will be unable to write
