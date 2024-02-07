@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.ExitCode;
@@ -122,8 +121,8 @@ public abstract class Shell {
             return false;
         }
         final String output = FileUtils.readFileToString(f, StandardCharsets.UTF_8.name());
-        return (output != null) &&
-                System.getProperty("os.name").startsWith("Linux") && output.toLowerCase().contains("microsoft");
+        return (output != null)
+                && System.getProperty("os.name").startsWith("Linux") && output.toLowerCase().contains("microsoft");
     }
 
     /** Set to true on Windows platforms */
