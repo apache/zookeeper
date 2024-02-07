@@ -655,7 +655,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (zkDb == null) {
             return 0L;
         }
-        File path = zkDb.snapLog.getDataDir();
+        File path = zkDb.snapLog.getSnapDir();
         return getDirSize(path);
     }
 
@@ -664,7 +664,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (zkDb == null) {
             return 0L;
         }
-        File path = zkDb.snapLog.getSnapDir();
+        File path = zkDb.snapLog.getDataDir();
         return getDirSize(path);
     }
 
