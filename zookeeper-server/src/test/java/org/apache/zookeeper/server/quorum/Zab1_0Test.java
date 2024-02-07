@@ -41,6 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -137,9 +138,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
     @Test
     public void testLeaderInConnectingFollowers() throws Exception {
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         Leader leader = null;
         try {
             QuorumPeer peer = createQuorumPeer(tmpDir);
@@ -191,9 +190,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     @Test
     public void testLastAcceptedEpoch() throws Exception {
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         Leader leader = null;
         LeadThread leadThread = null;
         try {
@@ -229,9 +226,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     @Test
     public void testLeaderInElectingFollowers() throws Exception {
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         Leader leader = null;
         try {
             QuorumPeer peer = createQuorumPeer(tmpDir);
@@ -306,9 +301,7 @@ public class Zab1_0Test extends ZKTestCase {
         Socket[] pair = getSocketPair();
         Socket leaderSocket = pair[0];
         Socket followerSocket = pair[1];
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         LeadThread leadThread = null;
         Leader leader = null;
         try {
@@ -346,9 +339,7 @@ public class Zab1_0Test extends ZKTestCase {
         Socket[] pair = getSocketPair();
         Socket leaderSocket = pair[0];
         Socket followerSocket = pair[1];
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         LeadThread leadThread = null;
         Leader leader = null;
         try {
@@ -409,9 +400,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     public void testFollowerConversation(FollowerConversation conversation) throws Exception {
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         Thread followerThread = null;
         ConversableFollower follower = null;
         QuorumPeer peer = null;
@@ -459,9 +448,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     public void testObserverConversation(ObserverConversation conversation) throws Exception {
-        File tmpDir = File.createTempFile("test", "dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
         Thread observerThread = null;
         ConversableObserver observer = null;
         QuorumPeer peer = null;
@@ -572,9 +559,7 @@ public class Zab1_0Test extends ZKTestCase {
         testFollowerConversation(new FollowerConversation() {
             @Override
             public void converseWithFollower(InputArchive ia, OutputArchive oa, Follower f) throws Exception {
-                File tmpDir = File.createTempFile("test", "dir", testData);
-                tmpDir.delete();
-                tmpDir.mkdir();
+                File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 File logDir = f.fzk.getTxnLogFactory().getDataDir().getParentFile();
                 File snapDir = f.fzk.getTxnLogFactory().getSnapDir().getParentFile();
                 //Spy on ZK so we can check if a snapshot happened or not.
@@ -706,9 +691,7 @@ public class Zab1_0Test extends ZKTestCase {
         testFollowerConversation(new FollowerConversation() {
             @Override
             public void converseWithFollower(InputArchive ia, OutputArchive oa, Follower f) throws Exception {
-                File tmpDir = File.createTempFile("test", "dir", testData);
-                tmpDir.delete();
-                tmpDir.mkdir();
+                File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 File logDir = f.fzk.getTxnLogFactory().getDataDir().getParentFile();
                 File snapDir = f.fzk.getTxnLogFactory().getSnapDir().getParentFile();
                 //Spy on ZK so we can check if a snapshot happened or not.
@@ -937,9 +920,7 @@ public class Zab1_0Test extends ZKTestCase {
         testObserverConversation(new ObserverConversation() {
             @Override
             public void converseWithObserver(InputArchive ia, OutputArchive oa, Observer o) throws Exception {
-                File tmpDir = File.createTempFile("test", "dir", testData);
-                tmpDir.delete();
-                tmpDir.mkdir();
+                File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + "dir").toFile();
                 File logDir = o.zk.getTxnLogFactory().getDataDir().getParentFile();
                 File snapDir = o.zk.getTxnLogFactory().getSnapDir().getParentFile();
                 try {
@@ -1188,9 +1169,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     @Test
     public void testInitialAcceptedCurrent() throws Exception {
-        File tmpDir = File.createTempFile("test", ".dir", testData);
-        tmpDir.delete();
-        tmpDir.mkdir();
+        File tmpDir = Files.createTempDirectory(testData.toPath(), "test" + ".dir").toFile();
         try {
             FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
             File version2 = new File(tmpDir, "version-2");

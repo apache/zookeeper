@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,11 +67,8 @@ public class ZKUtilTest extends ClientBase {
 
     @Test
     public void testValidateFileInputDirectory() throws Exception {
-        File file = File.createTempFile("test", ".junit", testData);
+        File file = Files.createTempDirectory(testData.toPath(), "test" + ".junit").toFile();
         file.deleteOnExit();
-        // delete file, as we need directory not file
-        file.delete();
-        file.mkdir();
         String absolutePath = file.getAbsolutePath();
         String error = ZKUtil.validateFileInput(absolutePath);
         assertNotNull(error);
