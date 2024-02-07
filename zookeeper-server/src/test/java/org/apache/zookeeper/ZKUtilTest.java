@@ -80,8 +80,9 @@ public class ZKUtilTest extends ClientBase {
 
     @Test
     public void testUnreadableFileInput() throws Exception {
-        //skip this test on Windows, coverage on Linux
-        assumeTrue(!org.apache.zookeeper.Shell.WINDOWS);
+        //skip this test on Windows and WSL, coverage on Linux
+        assumeTrue("Skipping this test on Windows and WSL",
+                !(org.apache.zookeeper.Shell.WINDOWS || org.apache.zookeeper.Shell.isWsl()));
         File file = File.createTempFile("test", ".junit", testData);
         file.setReadable(false, false);
         file.deleteOnExit();
