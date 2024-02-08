@@ -551,7 +551,7 @@
 
     <!-- dependency versions -->
     <slf4j.version>1.7.30</slf4j.version>
-    <logback-version>1.2.10</logback-version>
+    <logback-version>1.2.13</logback-version>
     <audience-annotations.version>0.12.0</audience-annotations.version>
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
@@ -559,8 +559,8 @@
     <mockito.version>4.9.0</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.5.0</commons-cli.version>
-    <netty.version>4.1.94.Final</netty.version>
-    <jetty.version>9.4.52.v20230823</jetty.version>
+    <netty.version>4.1.105.Final</netty.version>
+    <jetty.version>9.4.53.v20231009</jetty.version>
     <jackson.version>2.15.2</jackson.version>
     <jline.version>2.14.6</jline.version>
     <snappy.version>1.1.10.5</snappy.version>
