@@ -368,7 +368,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public void reinitialize() throws IOException {
-            File dataDir = main.quorumPeer.getTxnFactory().getDataDir();
+            File dataDir = main.quorumPeer.getTxnFactory().getDataLogDir();
             ClientBase.recursiveDelete(dataDir);
             ClientBase.createInitializeFile(dataDir.getParentFile());
         }

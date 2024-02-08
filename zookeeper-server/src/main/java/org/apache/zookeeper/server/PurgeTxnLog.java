@@ -135,7 +135,7 @@ public class PurgeTxnLog {
 
         }
         // add all non-excluded log files
-        File[] logs = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));
+        File[] logs = txnLog.getDataLogDir().listFiles(new MyFileFilter(PREFIX_LOG));
         List<File> files = new ArrayList<>();
         if (logs != null) {
             files.addAll(Arrays.asList(logs));
