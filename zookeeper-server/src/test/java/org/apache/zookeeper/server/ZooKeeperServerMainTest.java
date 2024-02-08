@@ -198,7 +198,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         // inject problem in server
         ZooKeeperServer zooKeeperServer = main.getCnxnFactory().getZooKeeperServer();
         FileTxnSnapLog snapLog = zooKeeperServer.getTxnLogFactory();
-        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
+        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataLogDir(), snapLog.getSnapDir()) {
             @Override
             public void commit() throws IOException {
                 throw new IOException("Input/output error");
