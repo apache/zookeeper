@@ -575,7 +575,7 @@ public class Zab1_0Test extends ZKTestCase {
                 File tmpDir = File.createTempFile("test", "dir", testData);
                 tmpDir.delete();
                 tmpDir.mkdir();
-                File logDir = f.fzk.getTxnLogFactory().getDataDir().getParentFile();
+                File logDir = f.fzk.getTxnLogFactory().getDataLogDir().getParentFile();
                 File snapDir = f.fzk.getTxnLogFactory().getSnapDir().getParentFile();
                 //Spy on ZK so we can check if a snapshot happened or not.
                 f.zk = spy(f.zk);
@@ -709,7 +709,7 @@ public class Zab1_0Test extends ZKTestCase {
                 File tmpDir = File.createTempFile("test", "dir", testData);
                 tmpDir.delete();
                 tmpDir.mkdir();
-                File logDir = f.fzk.getTxnLogFactory().getDataDir().getParentFile();
+                File logDir = f.fzk.getTxnLogFactory().getDataLogDir().getParentFile();
                 File snapDir = f.fzk.getTxnLogFactory().getSnapDir().getParentFile();
                 //Spy on ZK so we can check if a snapshot happened or not.
                 f.zk = spy(f.zk);
@@ -940,7 +940,7 @@ public class Zab1_0Test extends ZKTestCase {
                 File tmpDir = File.createTempFile("test", "dir", testData);
                 tmpDir.delete();
                 tmpDir.mkdir();
-                File logDir = o.zk.getTxnLogFactory().getDataDir().getParentFile();
+                File logDir = o.zk.getTxnLogFactory().getDataLogDir().getParentFile();
                 File snapDir = o.zk.getTxnLogFactory().getSnapDir().getParentFile();
                 try {
                     assertEquals(0, o.self.getAcceptedEpoch());

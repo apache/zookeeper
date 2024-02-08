@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.proto.ConnectRequest;
@@ -41,6 +42,45 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 
 public class ZooKeeperServerTest extends ZKTestCase {
+
+    @Test
+    public void testDirSize() throws Exception {
+        ZooKeeperServer zks = null;
+        ServerCnxnFactory cnxnFactory = null;
+
+        try {
+            final File dataDir = ClientBase.createTmpDir();
+            final File logDir = ClientBase.createTmpDir();
+
+            zks = new ZooKeeperServer(dataDir, logDir, 3000);
+
+            // validate dir size before server starts
+            assertEquals(0, zks.getDataDirSize());
+            assertEquals(0, zks.getLogDirSize());
+
+            // start server
+            final String hostPort = "127.0.0.1:" + PortAssignment.unique();
+            final int port = Integer.parseInt(hostPort.split(":")[1]);
+            cnxnFactory = ServerCnxnFactory.createFactory(port, -1);
+            cnxnFactory.startup(zks);
+            assertTrue(ClientBase.waitForServerUp(hostPort, 120000));
+
+            // validate data size is greater than 0 as snapshot has been taken when server starts
+            assertTrue(zks.getDataDirSize() > 0);
+
+            // validate log size is 0 as no txn yet
+            assertEquals(0, zks.getLogDirSize());
+        } finally {
+            if (cnxnFactory != null) {
+                cnxnFactory.shutdown();
+            }
+
+            if (zks != null) {
+                zks.shutdown();
+            }
+        }
+    }
+
 
     @Test
     public void testSortDataDirAscending() {
