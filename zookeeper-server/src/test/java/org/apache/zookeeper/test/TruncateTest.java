@@ -121,7 +121,7 @@ public class TruncateTest extends ZKTestCase {
             append(zkdb, i);
         }
         zkdb.close();
-        File[] logs = snaplog.getDataDir().listFiles();
+        File[] logs = snaplog.getDataLogDir().listFiles();
         for (int i = 0; i < logs.length; i++) {
             LOG.debug("Deleting: {}", logs[i].getName());
             assertTrue(logs[i].delete(), "Failed to delete log file: " + logs[i].getName());

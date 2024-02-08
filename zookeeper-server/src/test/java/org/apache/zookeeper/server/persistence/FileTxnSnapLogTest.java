@@ -177,7 +177,7 @@ public class FileTxnSnapLogTest {
 
         assertTrue(logDir.exists());
         assertTrue(snapDir.exists());
-        assertTrue(fileTxnSnapLog.getDataDir().exists());
+        assertTrue(fileTxnSnapLog.getDataLogDir().exists());
         assertTrue(fileTxnSnapLog.getSnapDir().exists());
     }
 
