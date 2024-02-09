@@ -108,11 +108,10 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testNettyIpAuthDefault() throws Exception {
+    public void testNettyIpAuthDefault(@TempDir File tmpDir) throws Exception {
         String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         ClientBase.setupTestEnv();
-        File tmpDir = ClientBase.createTmpDir();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -267,8 +266,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testDisconnectedAddAuth() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testDisconnectedAddAuth(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
@@ -298,8 +296,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
      * node is actually working.
      */
     @Test
-    public void testAcls() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testAcls(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
@@ -388,8 +385,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testNullACL() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testNullACL(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -429,8 +425,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testNullValueACL() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testNullValueACL(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -474,8 +469,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testExistACLCheck() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testExistACLCheck(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -524,8 +518,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testExistACLCheckAtRootPath() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testExistACLCheckAtRootPath(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);

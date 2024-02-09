@@ -50,12 +50,12 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class LearnerTest extends ZKTestCase {
 
@@ -269,56 +269,52 @@ public class LearnerTest extends ZKTestCase {
     }
 
     @Test
-    public void syncTest() throws Exception {
-        File tmpFile = File.createTempFile("test", ".dir", testData);
+    public void syncTest(@TempDir File tmpDir) throws Exception {
+        File tmpFile = File.createTempFile("test", ".dir", tmpDir);
         tmpFile.delete();
+        FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
+        SimpleLearner sl = new SimpleLearner(ftsl);
+        long startZxid = sl.zk.getLastProcessedZxid();
+
+        // Set up bogus streams
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        sl.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
+
+        // make streams and socket do something innocuous
+        sl.bufferedOutput = new BufferedOutputStream(System.out);
+        sl.sock = new Socket();
+
+        // fake messages from the server
+        QuorumPacket qp = new QuorumPacket(Leader.SNAP, 0, null, null);
+        oa.writeRecord(qp, null);
+        sl.zk.getZKDatabase().serializeSnapshot(oa);
+        oa.writeString("BenWasHere", "signature");
+        TxnHeader hdr = new TxnHeader(0, 0, 0, 0, ZooDefs.OpCode.create);
+        CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
+        ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
+        hdr.serialize(boa, "hdr");
+        txn.serialize(boa, "txn");
+        tbaos.close();
+        qp = new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null);
+        oa.writeRecord(qp, null);
+
+        // setup the messages to be streamed to follower
+        sl.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+
         try {
-            FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
-            SimpleLearner sl = new SimpleLearner(ftsl);
-            long startZxid = sl.zk.getLastProcessedZxid();
-
-            // Set up bogus streams
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-            sl.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
-
-            // make streams and socket do something innocuous
-            sl.bufferedOutput = new BufferedOutputStream(System.out);
-            sl.sock = new Socket();
-
-            // fake messages from the server
-            QuorumPacket qp = new QuorumPacket(Leader.SNAP, 0, null, null);
-            oa.writeRecord(qp, null);
-            sl.zk.getZKDatabase().serializeSnapshot(oa);
-            oa.writeString("BenWasHere", "signature");
-            TxnHeader hdr = new TxnHeader(0, 0, 0, 0, ZooDefs.OpCode.create);
-            CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
-            ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
-            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
-            hdr.serialize(boa, "hdr");
-            txn.serialize(boa, "txn");
-            tbaos.close();
-            qp = new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null);
-            oa.writeRecord(qp, null);
-
-            // setup the messages to be streamed to follower
-            sl.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
-
-            try {
-                sl.syncWithLeader(3);
-            } catch (EOFException e) {
-            }
-
-            sl.zk.shutdown();
-            sl = new SimpleLearner(ftsl);
-            assertEquals(startZxid, sl.zk.getLastProcessedZxid());
-        } finally {
-            TestUtils.deleteFileRecursively(tmpFile);
+            sl.syncWithLeader(3);
+        } catch (EOFException e) {
         }
+
+        sl.zk.shutdown();
+        sl = new SimpleLearner(ftsl);
+        assertEquals(startZxid, sl.zk.getLastProcessedZxid());
     }
 
     @Test
-    public void truncFailTest() throws Exception {
+    public void truncFailTest(@TempDir File tmpDir) throws Exception {
         final boolean[] exitProcCalled = {false};
 
         ServiceUtils.setSystemExitProcedure(new Consumer<Integer>() {
@@ -329,39 +325,35 @@ public class LearnerTest extends ZKTestCase {
             }
         });
 
-        File tmpFile = File.createTempFile("test", ".dir", testData);
+        File tmpFile = File.createTempFile("test", ".dir", tmpDir);
         tmpFile.delete();
+        FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpFile, tmpFile);
+        SimpleLearner sl = new SimpleLearner(txnSnapLog);
+        long startZxid = sl.zk.getLastProcessedZxid();
+
+        // Set up bogus streams
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        sl.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
+
+        // make streams and socket do something innocuous
+        sl.bufferedOutput = new BufferedOutputStream(System.out);
+        sl.sock = new Socket();
+
+        // fake messages from the server
+        QuorumPacket qp = new QuorumPacket(Leader.TRUNC, 0, null, null);
+        oa.writeRecord(qp, null);
+
+        // setup the messages to be streamed to follower
+        sl.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+
         try {
-            FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpFile, tmpFile);
-            SimpleLearner sl = new SimpleLearner(txnSnapLog);
-            long startZxid = sl.zk.getLastProcessedZxid();
-
-            // Set up bogus streams
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-            sl.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
-
-            // make streams and socket do something innocuous
-            sl.bufferedOutput = new BufferedOutputStream(System.out);
-            sl.sock = new Socket();
-
-            // fake messages from the server
-            QuorumPacket qp = new QuorumPacket(Leader.TRUNC, 0, null, null);
-            oa.writeRecord(qp, null);
-
-            // setup the messages to be streamed to follower
-            sl.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
-
-            try {
-                sl.syncWithLeader(3);
-            } catch (EOFException e) {
-            }
-
-            sl.zk.shutdown();
-
-            assertThat("System.exit() should have been called", exitProcCalled[0], is(true));
-        } finally {
-            TestUtils.deleteFileRecursively(tmpFile);
+            sl.syncWithLeader(3);
+        } catch (EOFException e) {
         }
+
+        sl.zk.shutdown();
+
+        assertThat("System.exit() should have been called", exitProcCalled[0], is(true));
     }
 }

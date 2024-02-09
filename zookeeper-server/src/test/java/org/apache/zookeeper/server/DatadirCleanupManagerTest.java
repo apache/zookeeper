@@ -24,22 +24,23 @@ import static org.apache.zookeeper.server.DatadirCleanupManager.PurgeTaskStatus.
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class DatadirCleanupManagerTest extends ZKTestCase {
 
     private DatadirCleanupManager purgeMgr;
+    @TempDir
+    File tmpDir;
     private File snapDir;
     private File dataLogDir;
 
     @BeforeEach
     public void setUp() throws Exception {
-        File dataDir = ClientBase.createTmpDir();
-        snapDir = dataDir;
-        dataLogDir = dataDir;
+        snapDir = tmpDir;
+        dataLogDir = tmpDir;
     }
 
     @Test

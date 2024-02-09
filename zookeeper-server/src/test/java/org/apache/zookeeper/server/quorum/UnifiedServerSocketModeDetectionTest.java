@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.ClientX509Util;
@@ -42,11 +41,11 @@ import org.apache.zookeeper.common.KeyStoreFileType;
 import org.apache.zookeeper.common.X509KeyType;
 import org.apache.zookeeper.common.X509TestContext;
 import org.apache.zookeeper.common.X509Util;
-import org.apache.zookeeper.test.ClientBase;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
@@ -60,8 +59,8 @@ import org.slf4j.LoggerFactory;
 public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocketModeDetectionTest.class);
-
-    private static File tempDir;
+    @TempDir
+    static File tempDir;
     private static X509TestContext x509TestContext;
 
     private X509Util x509Util;
@@ -75,17 +74,11 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     @BeforeAll
     public static void setUpClass() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
-        tempDir = ClientBase.createEmptyTestDir();
         x509TestContext = X509TestContext.newBuilder().setTempDir(tempDir).setKeyStoreKeyType(X509KeyType.EC).setTrustStoreKeyType(X509KeyType.EC).build();
     }
 
     @AfterAll
     public static void tearDownClass() {
-        try {
-            FileUtils.deleteDirectory(tempDir);
-        } catch (IOException e) {
-            // ignore
-        }
         Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
     }
 

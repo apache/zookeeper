@@ -54,6 +54,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,8 +91,7 @@ public class FileTxnLogTest extends ZKTestCase {
     }
 
     @Test
-    public void testPreAllocSizeSmallerThanTxnData() throws IOException {
-        File logDir = ClientBase.createTmpDir();
+    public void testPreAllocSizeSmallerThanTxnData(@TempDir File logDir) throws IOException {
         FileTxnLog fileTxnLog = new FileTxnLog(logDir);
 
         // Set a small preAllocSize (.5 MB)
@@ -182,9 +182,8 @@ public class FileTxnLogTest extends ZKTestCase {
      * Test that log size get update correctly
      */
     @Test
-    public void testGetCurrentLogSize() throws Exception {
+    public void testGetCurrentLogSize(@TempDir File tmpDir) throws Exception {
         FileTxnLog.setTxnLogSizeLimit(-1);
-        File tmpDir = ClientBase.createTmpDir();
         FileTxnLog log = new FileTxnLog(tmpDir);
         FileTxnLog.setPreallocSize(PREALLOCATE);
         CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE], ZooDefs.Ids.OPEN_ACL_UNSAFE, 0);
@@ -234,8 +233,7 @@ public class FileTxnLogTest extends ZKTestCase {
      * txnlogs per snapshot
      */
     @Test
-    public void testLogSizeLimit() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testLogSizeLimit(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
 
         // Need to override preallocate set by setupTestEnv()
