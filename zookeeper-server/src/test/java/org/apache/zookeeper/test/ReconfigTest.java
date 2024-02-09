@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
@@ -74,6 +75,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
 
     @BeforeEach
     public void setup() {
+        System.setProperty("zookeeper.quorumSync", "true");
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
     }
@@ -83,6 +85,17 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         closeAllHandles(zkArr, zkAdminArr);
         if (qu != null) {
             qu.tearDown();
+        }
+    }
+
+    private static void syncClient(ZooKeeper zk) throws KeeperException {
+        CompletableFuture<KeeperException.Code> future = new CompletableFuture<>();
+        zk.sync("/", (int rc, String path, Object ctx) -> {
+            future.complete(KeeperException.Code.get(rc));
+        }, null);
+        KeeperException.Code rc = future.join();
+        if (rc != KeeperException.Code.OK) {
+            throw KeeperException.create(rc);
         }
     }
 
@@ -140,17 +153,10 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
         ZooKeeper zk,
         List<String> joiningServers,
         List<String> leavingServers) throws KeeperException, InterruptedException {
-        boolean testNodeExists = false;
         byte[] config = null;
         for (int j = 0; j < 30; j++) {
             try {
-                if (!testNodeExists) {
-                    createZNode(zk, "/dummy", "dummy");
-                    testNodeExists = true;
-                }
-                // Use setData instead of sync API to force a view update.
-                // Check ZOOKEEPER-2137 for details.
-                zk.setData("/dummy", "dummy".getBytes(), -1);
+                syncClient(zk);
                 config = zk.getConfig(false, new Stat());
                 break;
             } catch (KeeperException.ConnectionLossException e) {
@@ -189,15 +195,12 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             try {
                 if (createNodes) {
                     createZNode(writer, "/test", "test");
-                    createZNode(reader, "/dummy", "dummy");
                     createNodes = false;
                 }
 
                 String data = "test" + j;
                 writer.setData("/test", data.getBytes(), -1);
-                // Use setData instead of sync API to force a view update.
-                // Check ZOOKEEPER-2137 for details.
-                reader.setData("/dummy", "dummy".getBytes(), -1);
+                syncClient(reader);
                 byte[] res = reader.getData("/test", null, new Stat());
                 assertEquals(data, new String(res));
                 break;

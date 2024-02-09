@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
@@ -66,15 +67,13 @@ public class ProposalRequestProcessor implements RequestProcessor {
     }
 
     public void processRequest(Request request) throws RequestProcessorException {
-        /* In the following IF-THEN-ELSE block, we process syncs on the leader.
-         * If the sync is coming from a follower, then the follower
-         * handler adds it to syncHandler. Otherwise, if it is a client of
-         * the leader that issued the sync command, then syncHandler won't
-         * contain the handler. In this case, we add it to syncHandler, and
-         * call processRequest on the next processor.
-         */
-        if (request instanceof LearnerSyncRequest) {
-            zks.getLeader().processSync((LearnerSyncRequest) request);
+        if (request.type == ZooDefs.OpCode.sync) {
+            if (!request.isFromLearner()) {
+                // Submit to commit processor first since no-quorum-sync could
+                // commit sync immediately without a consensus.
+                nextProcessor.processRequest(request);
+            }
+            zks.getLeader().processSync(request);
         } else {
             if (shouldForwardToNextProcessor(request)) {
                 nextProcessor.processRequest(request);

@@ -79,7 +79,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         int numWorkerThreads;
 
         public TestCommitProcessor(RequestProcessor finalProcessor, int numWorkerThreads) {
-            super(finalProcessor, "1", true, null);
+            super(finalProcessor, "1", null);
             this.numWorkerThreads = numWorkerThreads;
         }
 
