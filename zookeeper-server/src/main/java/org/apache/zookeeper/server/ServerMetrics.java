@@ -88,6 +88,7 @@ public final class ServerMetrics {
         DIFF_COUNT = metricsContext.getCounter("diff_count");
         SNAP_COUNT = metricsContext.getCounter("snap_count");
         COMMIT_COUNT = metricsContext.getCounter("commit_count");
+        SKIP_COUNT = metricsContext.getCounter("skip_count");
         CONNECTION_REQUEST_COUNT = metricsContext.getCounter("connection_request_count");
         CONNECTION_TOKEN_DEFICIT = metricsContext.getSummary("connection_token_deficit", DetailLevel.BASIC);
         CONNECTION_REJECTED = metricsContext.getCounter("connection_rejected");
@@ -210,8 +211,10 @@ public final class ServerMetrics {
         PROPOSAL_LATENCY = metricsContext.getSummary("proposal_latency", DetailLevel.ADVANCED);
         PROPOSAL_ACK_CREATION_LATENCY = metricsContext.getSummary("proposal_ack_creation_latency", DetailLevel.ADVANCED);
         COMMIT_PROPAGATION_LATENCY = metricsContext.getSummary("commit_propagation_latency", DetailLevel.ADVANCED);
+        SKIP_PROPAGATION_LATENCY = metricsContext.getSummary("skip_propagation_latency", DetailLevel.ADVANCED);
         LEARNER_PROPOSAL_RECEIVED_COUNT = metricsContext.getCounter("learner_proposal_received_count");
         LEARNER_COMMIT_RECEIVED_COUNT = metricsContext.getCounter("learner_commit_received_count");
+        LEARNER_SKIP_RECEIVED_COUNT = metricsContext.getCounter("learner_skip_received_count");
 
         /**
          * Learner handler quorum packet metrics.
@@ -339,6 +342,7 @@ public final class ServerMetrics {
     public final Counter DIFF_COUNT;
     public final Counter SNAP_COUNT;
     public final Counter COMMIT_COUNT;
+    public final Counter SKIP_COUNT;
     public final Counter CONNECTION_REQUEST_COUNT;
 
     public final Counter REVALIDATE_COUNT;
@@ -376,8 +380,10 @@ public final class ServerMetrics {
     public final Summary PROPOSAL_LATENCY;
     public final Summary PROPOSAL_ACK_CREATION_LATENCY;
     public final Summary COMMIT_PROPAGATION_LATENCY;
+    public final Summary SKIP_PROPAGATION_LATENCY;
     public final Counter LEARNER_PROPOSAL_RECEIVED_COUNT;
     public final Counter LEARNER_COMMIT_RECEIVED_COUNT;
+    public final Counter LEARNER_SKIP_RECEIVED_COUNT;
 
     public final Summary STARTUP_TXNS_LOADED;
     public final Summary STARTUP_TXNS_LOAD_TIME;

@@ -83,6 +83,7 @@ import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,8 +109,27 @@ public class FinalRequestProcessor implements RequestProcessor {
         this.requestPathMetricsCollector = zks.getRequestPathMetricsCollector();
     }
 
+    private ProcessTxnResult processTxn(Request request) {
+        // Guard against error txn from leader with skip error txn disabled and old version quorum peer
+        // in rolling upgrade.
+        //
+        // Concurrency safety: this is the only write request processor to data tree.
+        if (request.isErrorTxn() && request.zxid <= zks.getZKDatabase().getDataTreeLastProcessedZxid()) {
+            ProcessTxnResult rc = new ProcessTxnResult();
+            TxnHeader hdr = request.getHdr();
+            rc.clientId = hdr.getClientId();
+            rc.cxid = hdr.getCxid();
+            rc.zxid = hdr.getZxid();
+            rc.type = hdr.getType();
+            rc.err = ((ErrorTxn) request.getTxn()).getErr();
+            LOG.debug("Skip process error txn: {}", request);
+            return rc;
+        }
+        return zks.processTxn(request);
+    }
+
     private ProcessTxnResult applyRequest(Request request) {
-        ProcessTxnResult rc = zks.processTxn(request);
+        ProcessTxnResult rc = processTxn(request);
 
         // ZOOKEEPER-558:
         // In some cases the server does not close the connection (e.g., closeconn buffer

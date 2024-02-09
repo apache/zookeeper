@@ -113,6 +113,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         rootContext.registerGauge("pending_syncs", gaugeWithLeader(
                 (leader) -> leader.getNumPendingSyncs()
         ));
+        rootContext.registerGauge("pending_skips", gaugeWithLeader(Leader::getNumPendingSkips));
         rootContext.registerGauge("leader_uptime", gaugeWithLeader(
                 (leader) -> leader.getUptime()
         ));

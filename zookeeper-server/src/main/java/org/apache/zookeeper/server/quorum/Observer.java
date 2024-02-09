@@ -199,6 +199,9 @@ public class Observer extends Learner {
         case Leader.SYNC:
             ((ObserverZooKeeperServer) zk).sync();
             break;
+        case Leader.SKIP:
+            zk.skip(qp);
+            break;
         case Leader.INFORM:
             ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             logEntry = SerializeUtils.deserializeTxn(qp.getData());

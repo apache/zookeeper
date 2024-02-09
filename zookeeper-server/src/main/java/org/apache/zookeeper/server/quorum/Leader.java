@@ -33,7 +33,6 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,6 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.security.sasl.SaslException;
@@ -61,6 +61,7 @@ import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
@@ -90,6 +91,7 @@ public class Leader extends LearnerMaster {
 
         public QuorumPacket packet;
         public Request request;
+        public List<Request> pendingRequests = new ArrayList<>();
 
         @Override
         public String toString() {
@@ -215,11 +217,12 @@ public class Leader extends LearnerMaster {
         }
     }
 
-    // Pending sync requests. Must access under 'this' lock.
-    private final Map<Long, List<LearnerSyncRequest>> pendingSyncs = new HashMap<>();
+    public int getNumPendingSyncs() {
+        return pendingSyncs.get();
+    }
 
-    public synchronized int getNumPendingSyncs() {
-        return pendingSyncs.size();
+    public int getNumPendingSkips() {
+        return pendingSkips.get();
     }
 
     //Follower counter
@@ -433,9 +436,17 @@ public class Leader extends LearnerMaster {
      */
     static final int INFORMANDACTIVATE = 19;
 
+    /**
+     * This message type is sent by a leader to request owner to abort that mutation request.
+     */
+    static final int SKIP = 20;
+
     final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<>();
 
     private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<>();
+
+    private final AtomicInteger pendingSyncs = new AtomicInteger(0);
+    private final AtomicInteger pendingSkips = new AtomicInteger(0);
 
     // VisibleForTesting
     protected final Proposal newLeaderProposal = new Proposal();
@@ -980,11 +991,7 @@ public class Leader extends LearnerMaster {
             inform(p);
         }
         zk.commitProcessor.commit(p.request);
-        if (pendingSyncs.containsKey(zxid)) {
-            for (LearnerSyncRequest r : pendingSyncs.remove(zxid)) {
-                sendSync(r);
-            }
-        }
+        sendPendings(p);
 
         return true;
     }
@@ -1284,16 +1291,48 @@ public class Leader extends LearnerMaster {
     }
 
     /**
+     * Abort mutation request without a proposal.
+     *
+     * <p> This method is supposed to be called from {@link ProposalRequestProcessor}, so there is no
+     * concurrent proposing and aborting. But {@link #processAck(long, long, SocketAddress)} is competing
+     * with us, so we have to lock most of this method still to order response, just like {@link #propose(Request)}.
+     */
+    public void skip(Request request) {
+        synchronized (this) {
+            Proposal proposal = outstandingProposals.get(request.zxid);
+            if (proposal == null) {
+                sendSkip(request);
+            } else {
+                proposal.pendingRequests.add(request);
+                pendingSkips.incrementAndGet();
+            }
+        }
+        ServerMetrics.getMetrics().SKIP_COUNT.add(1);
+    }
+
+    private void sendSkip(Request request) {
+        Object owner = request.getOwner();
+        if (owner instanceof LearnerHandler) {
+            byte[] data = request.getSerializeData();
+            QuorumPacket pp = new QuorumPacket(Leader.SKIP, request.zxid, data, null);
+            ((LearnerHandler) owner).queuePacket(pp);
+        } else if (owner == ServerCnxn.me) {
+            zk.commitProcessor.commit(request);
+        }
+    }
+
+    /**
      * Process sync requests
      *
      * @param r the request
      */
-
     public synchronized void processSync(LearnerSyncRequest r) {
-        if (outstandingProposals.isEmpty()) {
+        Proposal proposal = outstandingProposals.get(lastProposed);
+        if (proposal == null) {
             sendSync(r);
         } else {
-            pendingSyncs.computeIfAbsent(lastProposed, k -> new ArrayList<>()).add(r);
+            proposal.pendingRequests.add(r);
+            pendingSyncs.incrementAndGet();
         }
     }
 
@@ -1303,6 +1342,18 @@ public class Leader extends LearnerMaster {
     public void sendSync(LearnerSyncRequest r) {
         QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
         r.fh.queuePacket(qp);
+    }
+
+    public void sendPendings(Proposal proposal) {
+        for (Request request : proposal.pendingRequests) {
+            if (request instanceof LearnerSyncRequest) {
+                sendSync((LearnerSyncRequest) request);
+                pendingSyncs.decrementAndGet();
+            } else if (request.isErrorTxn()) {
+                sendSkip(request);
+                pendingSkips.decrementAndGet();
+            }
+        }
     }
 
     /**

@@ -35,6 +35,7 @@ import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
+import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -338,6 +339,13 @@ public class Request {
         default:
             return false;
         }
+    }
+
+    public boolean isErrorTxn() {
+        return hdr != null
+            && hdr.getType() == OpCode.error
+            && txn instanceof ErrorTxn
+            && ((ErrorTxn) txn).getErr() != 0;
     }
 
     public boolean isQuorum() {

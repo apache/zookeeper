@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -112,6 +113,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final String ENABLE_EAGER_ACL_CHECK = "zookeeper.enableEagerACLCheck";
     public static final String SKIP_ACL = "zookeeper.skipACL";
     public static final String ENFORCE_QUOTA = "zookeeper.enforceQuota";
+    public static final String SKIP_ERROR_TXN = "zookeeper.skipErrorTxn";
 
     // When enabled, will check ACL constraints appertained to the requests first,
     // before sending the requests to the quorum.
@@ -120,6 +122,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static final boolean skipACL;
 
     public static final boolean enforceQuota;
+
+    private static final boolean skipErrorTxn;
 
     public static final String SASL_SUPER_USER = "zookeeper.superUser";
 
@@ -158,6 +162,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.info("{} = {}, Quota Enforce enables", ENFORCE_QUOTA, enforceQuota);
         }
 
+        skipErrorTxn = Boolean.parseBoolean(System.getProperty(SKIP_ERROR_TXN, "false"));
+        LOG.info("{} = {}", SKIP_ERROR_TXN, skipErrorTxn);
+
         digestEnabled = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DIGEST_ENABLED, "true"));
         LOG.info("{} = {}", ZOOKEEPER_DIGEST_ENABLED, digestEnabled);
 
@@ -167,6 +174,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         setSerializeLastProcessedZxidEnabled(Boolean.parseBoolean(
                 System.getProperty(ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED, "true")));
+    }
+
+    public static boolean skipErrorTxn() {
+        return skipErrorTxn;
     }
 
     // @VisibleForTesting
@@ -691,8 +702,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return sessionTracker;
     }
 
-    long getNextZxid() {
-        return hzxid.incrementAndGet();
+    long peekNextZxid() {
+        return hzxid.get() + 1;
+    }
+
+    void commitNextZxid(long nextZxid) {
+        long prevZxid = nextZxid - 1;
+        if (!hzxid.compareAndSet(prevZxid, nextZxid)) {
+            String msg = String.format("expect current zxid %d, got %d", prevZxid, hzxid.get());
+            throw new ConcurrentModificationException(msg);
+        }
     }
 
     public void setZxid(long zxid) {

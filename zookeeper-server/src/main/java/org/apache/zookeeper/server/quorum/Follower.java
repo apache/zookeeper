@@ -159,6 +159,22 @@ public class Follower extends Learner {
         case Leader.PING:
             ping(qp);
             break;
+        case Leader.SKIP:
+            // It is sad that we have no breadcrumbs to route packet back to origin. Basically, we have choices:
+            // 1. Attach breadcrumbs to outstanding request.
+            //    This request protocol changes and protocol version bumping.
+            // 2. Cache all outstanding requests just like how we handle SYNC.
+            //    This increase memory pressure on learner master.
+            // 3. Send SKIP blindly to all learners including self.
+            //    This thunder learners and waste network traffics.
+            //
+            // Given that it is optional feature caching sounds overkill. Fallback to blindly send for a moment.
+            // Let's evaluate protocol change later.
+            zk.skip(qp);
+            if (om != null) {
+                om.proposalSkipped(qp);
+            }
+            break;
         case Leader.PROPOSAL:
             ServerMetrics.getMetrics().LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
             TxnLogEntry logEntry = SerializeUtils.deserializeTxn(qp.getData());

@@ -22,6 +22,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
         syncProcessor.start();
     }
 
+    @Override
     public void processRequest(Request request) throws RequestProcessorException {
         /* In the following IF-THEN-ELSE block, we process syncs on the leader.
          * If the sync is coming from a follower, then the follower
@@ -80,6 +82,10 @@ public class ProposalRequestProcessor implements RequestProcessor {
                 nextProcessor.processRequest(request);
             }
             if (request.getHdr() != null) {
+                if (request.isErrorTxn() && ZooKeeperServer.skipErrorTxn()) {
+                    zks.getLeader().skip(request);
+                    return;
+                }
                 // We need to sync and get consensus on any transactions
                 try {
                     zks.getLeader().propose(request);
