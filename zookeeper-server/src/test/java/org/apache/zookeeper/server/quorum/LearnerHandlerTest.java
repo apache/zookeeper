@@ -86,14 +86,14 @@ public class LearnerHandlerTest extends ZKTestCase {
 
         public long getmaxCommittedLog() {
             if (!committedLog.isEmpty()) {
-                return committedLog.getLast().packet.getZxid();
+                return committedLog.getLast().getZxid();
             }
             return 0;
         }
 
         public long getminCommittedLog() {
             if (!committedLog.isEmpty()) {
-                return committedLog.getFirst().packet.getZxid();
+                return committedLog.getFirst().getZxid();
             }
             return 0;
         }
@@ -107,7 +107,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         }
 
         public Iterator<Proposal> getProposalsFromTxnLog(long peerZxid, long limit) {
-            if (peerZxid >= txnLog.peekFirst().packet.getZxid()) {
+            if (peerZxid >= txnLog.peekFirst().getZxid()) {
                 return txnLog.iterator();
             } else {
                 return Collections.emptyIterator();
@@ -150,10 +150,10 @@ public class LearnerHandlerTest extends ZKTestCase {
     }
 
     Proposal createProposal(long zxid) {
-        Proposal p = new Proposal();
-        p.packet = new QuorumPacket();
-        p.packet.setZxid(zxid);
-        p.packet.setType(Leader.PROPOSAL);
+        QuorumPacket packet = new QuorumPacket();
+        packet.setZxid(zxid);
+        packet.setType(Leader.PROPOSAL);
+        Proposal p = new Proposal(packet);
         return p;
     }
 
