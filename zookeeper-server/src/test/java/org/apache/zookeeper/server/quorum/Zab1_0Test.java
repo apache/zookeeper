@@ -69,14 +69,13 @@ import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Zab1_0Test extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);
-
-    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
 
     @BeforeEach
     public void setUp() {
@@ -136,7 +135,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     }
     @Test
-    public void testLeaderInConnectingFollowers() throws Exception {
+    public void testLeaderInConnectingFollowers(@TempDir File testData) throws Exception {
         File tmpDir = File.createTempFile("test", "dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();
@@ -190,7 +189,7 @@ public class Zab1_0Test extends ZKTestCase {
      */
 
     @Test
-    public void testLastAcceptedEpoch() throws Exception {
+    public void testLastAcceptedEpoch(@TempDir File testData) throws Exception {
         File tmpDir = File.createTempFile("test", "dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();
@@ -228,7 +227,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     @Test
-    public void testLeaderInElectingFollowers() throws Exception {
+    public void testLeaderInElectingFollowers(@TempDir File testData) throws Exception {
         File tmpDir = File.createTempFile("test", "dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();
@@ -302,7 +301,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     }
 
-    public void testLeaderConversation(LeaderConversation conversation) throws Exception {
+    public void testLeaderConversation(LeaderConversation conversation, File testData) throws Exception {
         Socket[] pair = getSocketPair();
         Socket leaderSocket = pair[0];
         Socket followerSocket = pair[1];
@@ -342,7 +341,7 @@ public class Zab1_0Test extends ZKTestCase {
         }
     }
 
-    public void testPopulatedLeaderConversation(PopulatedLeaderConversation conversation, int ops) throws Exception {
+    public void testPopulatedLeaderConversation(PopulatedLeaderConversation conversation, int ops, File testData) throws Exception {
         Socket[] pair = getSocketPair();
         Socket leaderSocket = pair[0];
         Socket followerSocket = pair[1];
@@ -408,7 +407,7 @@ public class Zab1_0Test extends ZKTestCase {
         }
     }
 
-    public void testFollowerConversation(FollowerConversation conversation) throws Exception {
+    public void testFollowerConversation(FollowerConversation conversation, File testData) throws Exception {
         File tmpDir = File.createTempFile("test", "dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();
@@ -458,7 +457,7 @@ public class Zab1_0Test extends ZKTestCase {
         }
     }
 
-    public void testObserverConversation(ObserverConversation conversation) throws Exception {
+    public void testObserverConversation(ObserverConversation conversation, File testData) throws Exception {
         File tmpDir = File.createTempFile("test", "dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();
@@ -508,7 +507,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     @Test
-    public void testUnnecessarySnap() throws Exception {
+    public void testUnnecessarySnap(@TempDir File testData) throws Exception {
         testPopulatedLeaderConversation(new PopulatedLeaderConversation() {
             @Override
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, long zxid) throws Exception {
@@ -540,7 +539,7 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(Leader.DIFF, qp.getType());
 
             }
-        }, 2);
+        }, 2, testData);
     }
 
     // We want to track the change with a callback rather than depending on timing
@@ -568,7 +567,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     @Test
-    public void testNormalFollowerRun() throws Exception {
+    public void testNormalFollowerRun(@TempDir File testData) throws Exception {
         testFollowerConversation(new FollowerConversation() {
             @Override
             public void converseWithFollower(InputArchive ia, OutputArchive oa, Follower f) throws Exception {
@@ -698,11 +697,11 @@ public class Zab1_0Test extends ZKTestCase {
                 boa.writeRecord(sdt, null);
                 qp.setData(baos.toByteArray());
             }
-        });
+        }, testData);
     }
 
     @Test
-    public void testNormalFollowerRunWithDiff() throws Exception {
+    public void testNormalFollowerRunWithDiff(@TempDir File testData) throws Exception {
         testFollowerConversation(new FollowerConversation() {
             @Override
             public void converseWithFollower(InputArchive ia, OutputArchive oa, Follower f) throws Exception {
@@ -819,11 +818,11 @@ public class Zab1_0Test extends ZKTestCase {
                 boa.writeRecord(cst, null);
                 qp.setData(baos.toByteArray());
             }
-        });
+        }, testData);
     }
 
     @Test
-    public void testNormalRun() throws Exception {
+    public void testNormalRun(@TempDir File testData) throws Exception {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
                 assertEquals(0, l.self.getAcceptedEpoch());
@@ -861,11 +860,11 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.UPTODATE, qp.getType());
             }
-        });
+        }, testData);
     }
 
     @Test
-    public void testTxnTimeout() throws Exception {
+    public void testTxnTimeout(@TempDir File testData) throws Exception {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException, org.apache.zookeeper.server.quorum.Leader.XidRolloverException {
                 assertEquals(0, l.self.getAcceptedEpoch());
@@ -922,7 +921,7 @@ public class Zab1_0Test extends ZKTestCase {
                 }
                 fail("Connection hasn't been closed by leader after transaction times out.");
             }
-        });
+        }, testData);
     }
 
     private void deserializeSnapshot(InputArchive ia) throws IOException {
@@ -933,7 +932,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     @Test
-    public void testNormalObserverRun() throws Exception {
+    public void testNormalObserverRun(@TempDir File testData) throws Exception {
         testObserverConversation(new ObserverConversation() {
             @Override
             public void converseWithObserver(InputArchive ia, OutputArchive oa, Observer o) throws Exception {
@@ -1066,11 +1065,11 @@ public class Zab1_0Test extends ZKTestCase {
                 boa.writeRecord(sdt, null);
                 qp.setData(baos.toByteArray());
             }
-        });
+        }, testData);
     }
 
     @Test
-    public void testLeaderBehind() throws Exception {
+    public void testLeaderBehind(@TempDir File testData) throws Exception {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
                 /* we test a normal run. everything should work out well. */
@@ -1098,7 +1097,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.UPTODATE, qp.getType());
             }
-        });
+        }, testData);
     }
 
     /**
@@ -1108,7 +1107,7 @@ public class Zab1_0Test extends ZKTestCase {
      * @throws Exception
      */
     @Test
-    public void testAbandonBeforeACKEpoch() throws Exception {
+    public void testAbandonBeforeACKEpoch(@TempDir File testData) throws Exception {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException {
                 /* we test a normal run. everything should work out well. */
@@ -1126,7 +1125,7 @@ public class Zab1_0Test extends ZKTestCase {
                 // The leader didn't get a quorum of acks - make sure that leader's current epoch is not advanced
                 assertEquals(0, l.self.getCurrentEpoch());
             }
-        });
+        }, testData);
     }
 
     static class ConversableFollower extends Follower {
@@ -1187,7 +1186,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     @Test
-    public void testInitialAcceptedCurrent() throws Exception {
+    public void testInitialAcceptedCurrent(@TempDir File testData) throws Exception {
         File tmpDir = File.createTempFile("test", ".dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();

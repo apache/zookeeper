@@ -38,20 +38,11 @@ import java.util.Map;
 import java.util.Properties;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.io.TempDir;
 
 public class ZKClientConfigTest {
-
-    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
-
-    @BeforeAll
-    public static void init() {
-        if (!testData.exists()) {
-            testData.mkdirs();
-        }
-    }
 
     @Test
     @Timeout(value = 10)
@@ -109,9 +100,8 @@ public class ZKClientConfigTest {
 
     @Test
     @Timeout(value = 10)
-    public void testReadConfigurationFile() throws IOException, ConfigException {
-        File file = File.createTempFile("clientConfig", ".conf", testData);
-        file.deleteOnExit();
+    public void testReadConfigurationFile(@TempDir File testDataDir) throws IOException, ConfigException {
+        File file = File.createTempFile("clientConfig", ".conf", testDataDir);
         Properties clientConfProp = new Properties();
         clientConfProp.setProperty(ENABLE_CLIENT_SASL_KEY, "true");
         clientConfProp.setProperty(ZK_SASL_CLIENT_USERNAME, "ZK");
@@ -132,10 +122,6 @@ public class ZKClientConfigTest {
         assertEquals(conf.getProperty(LOGIN_CONTEXT_NAME_KEY), "MyClient");
         assertEquals(conf.getProperty(ZOOKEEPER_SERVER_REALM), "HADOOP.COM");
         assertEquals(conf.getProperty("dummyProperty"), "dummyValue");
-
-        // try to delete it now as we have done with the created file, why to
-        // wait for deleteOnExit() deletion
-        file.delete();
     }
 
     @Test

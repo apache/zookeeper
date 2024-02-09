@@ -43,6 +43,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +53,10 @@ public class ClientSSLReloadTest extends ZKTestCase {
     private X509TestContext x509TestContext1;
     private X509TestContext x509TestContext2;
 
-    private File dir1;
-    private File dir2;
+    @TempDir
+    File dir1;
+    @TempDir
+    File dir2;
 
     private File keyStoreFile1;
     private File trustStoreFile1;
@@ -63,9 +66,6 @@ public class ClientSSLReloadTest extends ZKTestCase {
 
     @BeforeEach
     public void setup() throws Exception {
-
-        dir1 = ClientBase.createEmptyTestDir();
-        dir2 = ClientBase.createEmptyTestDir();
 
         Security.addProvider(new BouncyCastleProvider());
 
@@ -92,12 +92,6 @@ public class ClientSSLReloadTest extends ZKTestCase {
 
     @AfterEach
     public void teardown() throws Exception {
-        try {
-            FileUtils.deleteDirectory(dir1);
-            FileUtils.deleteDirectory(dir2);
-        } catch (IOException e) {
-            // ignore
-        }
         Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
     }
 
