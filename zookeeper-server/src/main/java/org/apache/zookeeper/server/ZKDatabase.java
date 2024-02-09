@@ -352,8 +352,8 @@ public class ZKDatabase {
             committedLog.add(p);
             maxCommittedLog = p.getZxid();
             totalCommittLogSize.addAndGet(request.getApproximateSize());
-            while (committedLog.size() > 0 &&
-                    (committedLog.size() > commitLogCount || totalCommittLogSize.get() > commitLogSize)) {
+            while (committedLog.size() > 0
+                    && (committedLog.size() > commitLogCount || totalCommittLogSize.get() > commitLogSize)) {
                 committedLog.remove();
                 Proposal peek = committedLog.peek();
                 if (peek == null) {
