@@ -37,6 +37,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +62,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
      * that the server is down (ping) then the op will throw connectionloss.
      */
     @Test
-    public void testRecovery() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testRecovery(@TempDir File tmpDir) throws Exception {
 
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);

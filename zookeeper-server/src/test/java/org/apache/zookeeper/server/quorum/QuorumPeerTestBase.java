@@ -318,6 +318,18 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             currentThread.start();
         }
 
+        /**
+         * start the QuorumPeer with the passed TestQPMain
+         *
+         * @param testQPMain the TestQPMain to use
+         */
+
+        public synchronized void start(final TestQPMain testQPMain) {
+            main = testQPMain;
+            currentThread = new Thread(this);
+            currentThread.start();
+        }
+
         public TestQPMain getTestQPMain() {
             return new TestQPMain();
         }
@@ -356,7 +368,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public void reinitialize() throws IOException {
-            File dataDir = main.quorumPeer.getTxnFactory().getDataDir();
+            File dataDir = main.quorumPeer.getTxnFactory().getDataLogDir();
             ClientBase.recursiveDelete(dataDir);
             ClientBase.createInitializeFile(dataDir.getParentFile());
         }

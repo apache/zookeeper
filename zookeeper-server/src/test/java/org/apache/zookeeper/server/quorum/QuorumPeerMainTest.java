@@ -935,7 +935,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             // Assert
             FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
-            assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataDir().getAbsolutePath());
+            assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataLogDir().getAbsolutePath());
             assertEquals(Paths.get(dataDir.getAbsolutePath(), "version-2").toString(), txnFactory.getSnapDir().getAbsolutePath());
         } finally {
             FileUtils.deleteDirectory(dataDir);

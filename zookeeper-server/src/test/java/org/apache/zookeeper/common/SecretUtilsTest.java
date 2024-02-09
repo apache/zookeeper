@@ -21,15 +21,19 @@ package org.apache.zookeeper.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class SecretUtilsTest {
+
+    @TempDir
+    static File tempDir;
 
     @ParameterizedTest
     @ValueSource (strings = {"test secret", ""})
@@ -58,13 +62,13 @@ public class SecretUtilsTest {
     }
 
     public static Path createSecretFile(final String secretTxt) throws IOException {
-        final Path path = Files.createTempFile("test_", ".secrete");
+        final File tempFile = File.createTempFile("test_", ".secrete", tempDir);
+        final Path path = tempFile.toPath();
 
         final BufferedWriter writer = new BufferedWriter(new FileWriter(path.toString()));
         writer.append(secretTxt);
         writer.close();
 
-        path.toFile().deleteOnExit();
         return path;
     }
 }

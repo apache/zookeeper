@@ -18,31 +18,25 @@
 
 package org.apache.zookeeper.server.controller;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.jupiter.api.io.TempDir;
 
 public class ControllerTestBase extends ZKTestCase {
 
     protected ControllerService controllerService;
     protected CommandClient commandClient;
-    private File tempDirectory;
     protected ControllerServerConfig config;
 
     @Before
-    public void init() throws Exception {
+    public void init(@TempDir File tempDir) throws Exception {
         List<Integer> openPorts = ControllerConfigTest.findNAvailablePorts(2);
-        File tmpFile = File.createTempFile("test", ".junit", testBaseDir);
-        tempDirectory = new File(tmpFile + ".dir");
-        assertFalse(tempDirectory.exists());
-        assertTrue(tempDirectory.mkdirs());
 
-        config = new ControllerServerConfig(openPorts.get(0), openPorts.get(1), tempDirectory.getAbsolutePath());
+        config = new ControllerServerConfig(openPorts.get(0), openPorts.get(1), tempDir.getAbsolutePath());
         controllerService = new ControllerService();
         controllerService.start(config);
 
@@ -69,10 +63,6 @@ public class ControllerTestBase extends ZKTestCase {
 
         if (commandClient != null) {
             commandClient.close();
-        }
-
-        if (tempDirectory != null) {
-            tempDirectory.delete();
         }
     }
 }

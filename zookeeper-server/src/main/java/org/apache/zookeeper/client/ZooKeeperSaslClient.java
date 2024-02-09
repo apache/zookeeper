@@ -21,6 +21,7 @@ package org.apache.zookeeper.client;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.security.auth.Subject;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
@@ -64,7 +65,6 @@ public class ZooKeeperSaslClient {
      */
     @Deprecated
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
-    private volatile boolean initializedLogin = false;
 
     /**
      * Returns true if the SASL client is enabled. By default, the client
@@ -112,7 +112,7 @@ public class ZooKeeperSaslClient {
         return null;
     }
 
-    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig) throws LoginException {
+    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig, AtomicReference<Login> loginRef) throws LoginException {
         /**
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
@@ -136,7 +136,8 @@ public class ZooKeeperSaslClient {
         }
         if (entries != null) {
             this.configStatus = "Will attempt to SASL-authenticate using Login Context section '" + clientSection + "'";
-            this.saslClient = createSaslClient(serverPrincipal, clientSection);
+            this.saslClient = createSaslClient(serverPrincipal, clientSection, loginRef);
+            this.login = loginRef.get();
         } else {
             // Handle situation of clientSection's being null: it might simply because the client does not intend to
             // use SASL, so not necessarily an error.
@@ -234,26 +235,25 @@ public class ZooKeeperSaslClient {
 
     private SaslClient createSaslClient(
         final String servicePrincipal,
-        final String loginContext) throws LoginException {
+        final String loginContext,
+        final AtomicReference<Login> loginRef) throws LoginException {
         try {
-            if (!initializedLogin) {
-                synchronized (this) {
-                    if (login == null) {
-                        LOG.debug("JAAS loginContext is: {}", loginContext);
-                        // note that the login object is static: it's shared amongst all zookeeper-related connections.
-                        // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
-                        login = new Login(loginContext, new SaslClientCallbackHandler(null, "Client"), clientConfig);
-                        login.startThreadIfNeeded();
-                        initializedLogin = true;
-                    }
+            if (loginRef.get() == null) {
+                LOG.debug("JAAS loginContext is: {}", loginContext);
+                // note that the login object is static: it's shared amongst all zookeeper-related connections.
+                // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
+                Login l = new Login(loginContext, new SaslClientCallbackHandler(null, "Client"), clientConfig);
+                if (loginRef.compareAndSet(null, l)) {
+                    l.startThreadIfNeeded();
                 }
             }
-            return SecurityUtils.createSaslClient(login.getSubject(), servicePrincipal, "zookeeper", "zk-sasl-md5", LOG, "Client");
+            return SecurityUtils.createSaslClient(loginRef.get().getSubject(),
+                servicePrincipal, "zookeeper", "zk-sasl-md5", LOG, "Client");
         } catch (LoginException e) {
             // We throw LoginExceptions...
             throw e;
         } catch (Exception e) {
-            // ..but consume (with a log message) all other types of exceptions.
+            // ...but consume (with a log message) all other types of exceptions.
             LOG.error("Exception while trying to create SASL client.", e);
             return null;
         }
@@ -451,15 +451,4 @@ public class ZooKeeperSaslClient {
             return false;
         }
     }
-
-    /**
-     * close login thread if running
-     */
-    public void shutdown() {
-        if (null != login) {
-            login.shutdown();
-            login = null;
-        }
-    }
-
 }

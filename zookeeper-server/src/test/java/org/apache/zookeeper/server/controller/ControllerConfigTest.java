@@ -30,8 +30,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class ControllerConfigTest {
+
+    @TempDir
+    static File configDir;
     File configFile;
 
     private static final int AnyTickTime = 1234;
@@ -39,7 +43,7 @@ public class ControllerConfigTest {
     private static final String AnyDataDir = "temp";
 
     public static File createTempFile() throws IOException {
-        return File.createTempFile("temp", "cfg", new File(System.getProperty("user.dir")));
+        return File.createTempFile("temp", "cfg", configDir);
     }
 
     public static List<Integer> findNAvailablePorts(int n) throws IOException {
