@@ -123,18 +123,18 @@ public class QuorumOracleMaj extends QuorumMaj {
         LOG.debug("Start Revalidation outstandingProposals");
         try {
             while (outstandingProposal.size() >= 1) {
-                outstandingProposal.sort((o1, o2) -> (int) (o1.packet.getZxid() - o2.packet.getZxid()));
+                outstandingProposal.sort((o1, o2) -> (int) (o1.getZxid() - o2.getZxid()));
 
                 Leader.Proposal p;
                 int i = 0;
                 while (i < outstandingProposal.size()) {
                     p = outstandingProposal.get(i);
-                    if (p.request.zxid > lastCommitted) {
-                        LOG.debug("Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}", Long.toHexString(p.request.zxid), outstandingProposal.size(), Long.toHexString(lastCommitted));
-                        if (!self.tryToCommit(p, p.request.zxid, null)) {
+                    if (p.getZxid() > lastCommitted) {
+                        LOG.debug("Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}", Long.toHexString(p.getZxid()), outstandingProposal.size(), Long.toHexString(lastCommitted));
+                        if (!self.tryToCommit(p, p.getZxid(), null)) {
                             break;
                         } else {
-                            lastCommitted = p.request.zxid;
+                            lastCommitted = p.getZxid();
                             outstandingProposal.remove(p);
                         }
                     }
