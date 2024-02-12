@@ -15,6 +15,29 @@ limitations under the License.
 //-->
 
 
+# Release Notes - ZooKeeper - Version 3.8.4
+
+## Sub-task
+* [ZOOKEEPER-910](https://issues.apache.org/jira/browse/ZOOKEEPER-910) - Use SelectionKey.isXYZ() methods instead of complicated binary logic
+* [ZOOKEEPER-4728](https://issues.apache.org/jira/browse/ZOOKEEPER-4728) - Zookeepr cannot bind to itself forever if DNS is not ready when startup
+
+## Bug
+* [ZOOKEEPER-2590](https://issues.apache.org/jira/browse/ZOOKEEPER-2590) - exists() should check read ACL permission
+* [ZOOKEEPER-4236](https://issues.apache.org/jira/browse/ZOOKEEPER-4236) - Java Client SendThread create many unnecessary Login objects
+* [ZOOKEEPER-4758](https://issues.apache.org/jira/browse/ZOOKEEPER-4758) - Upgrade snappy-java to 1.1.10.4 to fix CVE-2023-43642
+* [ZOOKEEPER-4762](https://issues.apache.org/jira/browse/ZOOKEEPER-4762) - Update netty jars to 4.1.99+ to fix CVE-2023-4586
+* [ZOOKEEPER-4787](https://issues.apache.org/jira/browse/ZOOKEEPER-4787) - Failed to establish connection between zookeeper
+
+## Improvement
+* [ZOOKEEPER-4756](https://issues.apache.org/jira/browse/ZOOKEEPER-4756) - Merge script should use GitHub api to merge pull requests
+* [ZOOKEEPER-4764](https://issues.apache.org/jira/browse/ZOOKEEPER-4764) - Tune the log of refuse session request.
+* [ZOOKEEPER-4778](https://issues.apache.org/jira/browse/ZOOKEEPER-4778) - Patch jetty, netty, and logback to remove high severity vulnerabilities
+* [ZOOKEEPER-4799](https://issues.apache.org/jira/browse/ZOOKEEPER-4799) - Refactor ACL check in addWatch command
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.8.3
 
 ## Bug
