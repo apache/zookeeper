@@ -93,7 +93,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
 
         // inject problem in leader
         FileTxnSnapLog snapLog = leader.getActiveServer().getTxnLogFactory();
-        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
+        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataLogDir(), snapLog.getSnapDir()) {
             @Override
             public void commit() throws IOException {
                 throw new IOException("Input/output error");

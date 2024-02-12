@@ -102,7 +102,7 @@ public class WatchLeakTest {
         QuorumPeer quorumPeer = mock(QuorumPeer.class);
         FileTxnSnapLog logfactory = mock(FileTxnSnapLog.class);
         // Directories are not used but we need it to avoid NPE
-        when(logfactory.getDataDir()).thenReturn(new File(""));
+        when(logfactory.getDataLogDir()).thenReturn(new File(""));
         when(logfactory.getSnapDir()).thenReturn(new File(""));
         FollowerZooKeeperServer fzks = null;
 
