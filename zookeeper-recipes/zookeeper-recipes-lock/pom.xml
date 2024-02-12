@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-recipes</artifactId>
-    <version>3.9.2-SNAPSHOT</version>
+    <version>3.9.2</version>
   </parent>
 
   <artifactId>zookeeper-recipes-lock</artifactId>
