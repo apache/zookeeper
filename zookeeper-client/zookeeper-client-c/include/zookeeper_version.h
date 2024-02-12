@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#define ZOO_VERSION "3.9.2"
+#define ZOO_VERSION "3.9.3"
 
 #ifdef __cplusplus
 }
