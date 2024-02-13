@@ -209,8 +209,20 @@ def cherry_pick(pr_num, merge_hash, default_branch):
 
     pick_branch_name = "%s_PICK_PR_%s_%s" % (TEMP_BRANCH_PREFIX, pr_num, pick_ref.upper())
 
-    run_cmd("git fetch %s" % PUSH_REMOTE_NAME)
+    run_cmd("git fetch %s" % PR_REMOTE_NAME)
     run_cmd("git checkout -b %s %s/%s" % (pick_branch_name, PUSH_REMOTE_NAME, pick_ref))
+
+    current_attempt = 0
+    max_attempts = 6
+    # Check if the merge hash exists
+    while not run_cmd("git rev-parse --verify %s" % merge_hash):
+        if current_attempt >= max_attempts:
+            print("Error: The commit hash does not exist in the local repository.")
+            exit()
+        current_attempt += 1
+        print("Waiting for the merge hash to become available...(10 sec)")
+        time.sleep(10)
+        run_cmd("git fetch %s" % PR_REMOTE_NAME)
 
     try:
         run_cmd("git cherry-pick -sx %s" % merge_hash)
