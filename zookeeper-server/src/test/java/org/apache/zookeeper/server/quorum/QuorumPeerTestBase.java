@@ -318,6 +318,18 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             currentThread.start();
         }
 
+        /**
+         * start the QuorumPeer with the passed TestQPMain
+         *
+         * @param testQPMain the TestQPMain to use
+         */
+
+        public synchronized void start(final TestQPMain testQPMain) {
+            main = testQPMain;
+            currentThread = new Thread(this);
+            currentThread.start();
+        }
+
         public TestQPMain getTestQPMain() {
             return new TestQPMain();
         }
