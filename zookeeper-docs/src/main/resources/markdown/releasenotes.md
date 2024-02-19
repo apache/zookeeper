@@ -14,6 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+# Release Notes - ZooKeeper - Version 3.7.3
+
+## Sub-task
+* [ZOOKEEPER-910](https://issues.apache.org/jira/browse/ZOOKEEPER-910) - Use SelectionKey.isXYZ() methods instead of complicated binary logic
+
+## Bug
+* [ZOOKEEPER-2590](https://issues.apache.org/jira/browse/ZOOKEEPER-2590) - exists() should check read ACL permission
+
+## Improvement
+* [ZOOKEEPER-4756](https://issues.apache.org/jira/browse/ZOOKEEPER-4756) - Merge script should use GitHub api to merge pull requests
+* [ZOOKEEPER-4764](https://issues.apache.org/jira/browse/ZOOKEEPER-4764) - Tune the log of refuse session request.
+* [ZOOKEEPER-4778](https://issues.apache.org/jira/browse/ZOOKEEPER-4778) - Patch jetty, netty, and logback to remove high severity vulnerabilities
+* [ZOOKEEPER-4799](https://issues.apache.org/jira/browse/ZOOKEEPER-4799) - Refactor ACL check in addWatch command
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.7.2
 
 ## Sub-task
