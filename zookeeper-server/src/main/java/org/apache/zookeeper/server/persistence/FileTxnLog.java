@@ -228,6 +228,13 @@ public class FileTxnLog implements TxnLog, Closeable {
     }
 
     /**
+     * Get log size limit
+     */
+    public static long getTxnLogSizeLimit() {
+        return txnLogSizeLimit;
+    }
+
+    /**
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
@@ -701,14 +708,26 @@ public class FileTxnLog implements TxnLog, Closeable {
 
         /**
          * go to the next logfile
+         *
          * @return true if there is one and false if there is no
          * new file to be read
-         * @throws IOException
          */
         private boolean goToNextLog() throws IOException {
-            if (storedFiles.size() > 0) {
+            if (!storedFiles.isEmpty()) {
                 this.logFile = storedFiles.remove(storedFiles.size() - 1);
-                ia = createInputArchive(this.logFile);
+                try {
+                    ia = createInputArchive(this.logFile);
+                } catch (EOFException ex) {
+                    // If this file is the last log file in the database and is empty,
+                    // it means that the last time the file was created
+                    // before the header was written.
+                    if (storedFiles.isEmpty() && this.logFile.length() == 0) {
+                        boolean deleted = this.logFile.delete();
+                        LOG.warn("Delete empty log file at the tail to recover from corruption. file: {}, deleted: {}",
+                                this.logFile.getName(), deleted);
+                    }
+                    throw ex;
+                }
                 return true;
             }
             return false;
