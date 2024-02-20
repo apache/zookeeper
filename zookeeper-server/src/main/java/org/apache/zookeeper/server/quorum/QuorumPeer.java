@@ -1894,10 +1894,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.maxClientCnxns = maxClientCnxns;
     }
 
-    public void setSecureClientAddrFromStatic(boolean secureClientAddrFromStatic) {
-        isSecureClientAddrFromStatic = secureClientAddrFromStatic;
-    }
-
     /**
      * Get the number of ticks that the initial synchronization phase can take
      */
@@ -2356,14 +2352,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             return false;
         }
 
-        LOG.info("Reconfiguring with {}, {}, {}, {}", qv, suggestedLeaderId, zxid, restartLE ? "restart leader election" : "no restart of leader election");
-
         InetSocketAddress oldClientAddr = getClientAddress();
         InetSocketAddress oldSecureClientAddr = getSecureClientAddress();
-        LOG.info("processReconfig::oldClientAddr: {}", oldClientAddr);
-        LOG.info("processReconfig::oldSecureClientAddr: {}", oldSecureClientAddr);
-        LOG.info("processReconfig::isClientAddrFromStatic: {}", isClientAddrFromStatic);
-        LOG.info("processReconfig::isSecureClientAddrFromStatic: {}", isSecureClientAddrFromStatic);
 
         // update last committed quorum verifier, write the new config to disk
         // and restart leader election if config changed.
