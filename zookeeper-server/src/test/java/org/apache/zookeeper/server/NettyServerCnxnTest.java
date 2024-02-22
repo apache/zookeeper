@@ -41,16 +41,19 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.ClientCnxnSocketNetty;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.BufferStats;
@@ -58,6 +61,7 @@ import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.SSLAuthTest;
 import org.apache.zookeeper.test.TestByteBufAllocator;
+import org.apache.zookeeper.test.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -323,6 +327,39 @@ public class NettyServerCnxnTest extends ClientBase {
         runEnableDisableThrottling(false, false);
     }
 
+    @Test
+    public void testNettyUsesDaemonThreads() throws Exception {
+        assertTrue(serverFactory instanceof NettyServerCnxnFactory,
+                "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
+
+        // Use Netty in the client to check the threads on both the client and server side
+        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, ClientCnxnSocketNetty.class.getName());
+        try {
+            final ZooKeeper zk = createClient();
+            final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
+            final String path = "/a";
+            try {
+                // make sure connection is established
+                zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+                List<Thread> threads = TestUtils.getAllThreads();
+                boolean foundThread = false;
+                for (Thread t : threads) {
+                    if (t.getName().startsWith("zkNetty")) {
+                        foundThread = true;
+                        assertTrue(t.isDaemon(), "All Netty threads started by ZK must deamon threads");
+                    }
+                }
+                assertTrue(foundThread, "Did not find any Netty ZK Threads");
+            } finally {
+                zk.close();
+                zkServer.shutdown();
+            }
+        } finally {
+            System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        }
+    }
+
     private void runEnableDisableThrottling(boolean secure, boolean randomDisableEnable) throws Exception {
         ClientX509Util x509Util = null;
         if (secure) {
@@ -432,5 +469,6 @@ public class NettyServerCnxnTest extends ClientBase {
             }
         }
     }
+
 
 }
