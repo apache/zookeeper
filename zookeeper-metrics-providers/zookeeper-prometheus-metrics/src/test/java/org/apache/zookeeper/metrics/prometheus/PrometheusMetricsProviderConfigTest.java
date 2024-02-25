@@ -59,4 +59,37 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
         provider.start();
     }
 
+    @Test
+    public void testValidSslConfig() throws MetricsProviderLifeCycleException {
+        PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
+        Properties configuration = new Properties();
+        String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
+        configuration.setProperty("httpHost", "127.0.0.1");
+        configuration.setProperty("httpsPort", "50513");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_KEYSTORE_LOCATION,
+                testDataPath + "/ssl/testTrustStore.jks");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_KEYSTORE_PASSWORD, "testpass");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_TRUSTSTORE_LOCATION,
+                testDataPath + "/ssl/testKeyStore.jks");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_TRUSTSTORE_PASSWORD, "testpass");
+        provider.configure(configuration);
+        provider.start();
+    }
+
+    @Test
+    public void testInvalidSslConfig() throws MetricsProviderLifeCycleException {
+        assertThrows(MetricsProviderLifeCycleException.class, () -> {
+            PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
+            Properties configuration = new Properties();
+            String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
+            configuration.setProperty("httpsPort", "50514");
+            //keystore missing
+            configuration.setProperty(PrometheusMetricsProvider.SSL_KEYSTORE_PASSWORD, "testpass");
+            configuration.setProperty(PrometheusMetricsProvider.SSL_TRUSTSTORE_LOCATION,
+                    testDataPath + "/ssl/testKeyStore.jks");
+            configuration.setProperty(PrometheusMetricsProvider.SSL_TRUSTSTORE_PASSWORD, "testpass");
+            provider.configure(configuration);
+            provider.start();
+        });
+    }
 }

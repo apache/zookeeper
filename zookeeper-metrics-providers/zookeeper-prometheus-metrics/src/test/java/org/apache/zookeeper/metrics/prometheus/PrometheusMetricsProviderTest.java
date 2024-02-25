@@ -669,6 +669,52 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                 () -> provider.getRootContext().unregisterGaugeSet(null));
     }
 
+    @Test
+    void testSSLResponce() throws Exception  {
+        PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
+        Properties configuration = new Properties();
+        configuration.setProperty("httpHost", "0.0.0.0");
+        configuration.setProperty("httpsPort", "4443");
+        configuration.setProperty("exportJvmInfo", "false");
+        String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_KEYSTORE_LOCATION,
+                testDataPath + "/ssl/testTrustStore.jks");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_KEYSTORE_PASSWORD, "testpass");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_TRUSTSTORE_LOCATION,
+                testDataPath + "/ssl/testKeyStore.jks");
+        configuration.setProperty(PrometheusMetricsProvider.SSL_TRUSTSTORE_PASSWORD, "testpass");
+        provider.configure(configuration);
+        provider.start();
+
+        Counter counter = provider.getRootContext().getCounter("cc");
+        counter.add(10);
+        int[] count = {0};
+        provider.dump((k, v) -> {
+            assertEquals("cc", k);
+            assertEquals(10, ((Number) v).intValue());
+            count[0]++;
+        }
+        );
+        assertEquals(1, count[0]);
+        count[0] = 0;
+
+        counter.add(-1);
+
+        provider.dump((k, v) -> {
+            assertEquals("cc", k);
+            assertEquals(10, ((Number) v).intValue());
+            count[0]++;
+        }
+        );
+        assertEquals(1, count[0]);
+
+        assertSame(counter, provider.getRootContext().getCounter("cc"));
+
+        String res = callServlet();
+        assertThat(res, CoreMatchers.containsString("# TYPE cc counter"));
+        assertThat(res, CoreMatchers.containsString("cc 10.0"));
+    }
+
     private void createAndRegisterGaugeSet(final String name,
                                            final Map<String, Number> metricsMap,
                                            final AtomicInteger callCount) {
