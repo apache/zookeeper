@@ -687,7 +687,7 @@ public class NIOServerCnxn extends ServerCnxn {
     public int sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat, int opCode) {
         int responseSize = 0;
         try {
-            ByteBuffer[] bb = serialize(h, r, tag, cacheKey, stat, opCode);
+            ByteBuffer[] bb = serialize(h, r, cacheKey, stat, opCode);
             responseSize = bb[0].getInt();
             bb[0].rewind();
             sendBuffer(bb);

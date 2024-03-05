@@ -53,9 +53,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
-import org.apache.zookeeper.server.ByteBufferOutputStream;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -517,8 +517,7 @@ public class Zab1_0Test extends ZKTestCase {
 
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
-                byte[] liBytes = new byte[20];
-                ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
+                byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 1, liBytes, null);
                 oa.writeRecord(qp, null);
 
@@ -830,8 +829,7 @@ public class Zab1_0Test extends ZKTestCase {
 
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
-                byte[] liBytes = new byte[20];
-                ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
+                byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
                 oa.writeRecord(qp, null);
 
@@ -871,8 +869,7 @@ public class Zab1_0Test extends ZKTestCase {
                 assertEquals(0, l.self.getCurrentEpoch());
 
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
-                byte[] liBytes = new byte[20];
-                ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
+                byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
                 oa.writeRecord(qp, null);
 
@@ -1074,8 +1071,7 @@ public class Zab1_0Test extends ZKTestCase {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
-                byte[] liBytes = new byte[20];
-                ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
+                byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
                 /* we are going to say we last acked epoch 20 */
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, ZxidUtils.makeZxid(20, 0), liBytes, null);
                 oa.writeRecord(qp, null);
@@ -1112,8 +1108,7 @@ public class Zab1_0Test extends ZKTestCase {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException {
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
-                byte[] liBytes = new byte[20];
-                ByteBufferOutputStream.record2ByteBuffer(li, ByteBuffer.wrap(liBytes));
+                byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
                 QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
                 oa.writeRecord(qp, null);
                 readPacketSkippingPing(ia, qp);
