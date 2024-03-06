@@ -94,15 +94,15 @@ and secure client port is the port on which the server accepts TLS client connec
 Starting with 3.5.0 the
 _clientPort_ and _clientPortAddress_ configuration parameters should no longer be used in zoo.cfg. 
 
-Starting with 3.9.2 the
+Starting with 3.10.0 the
 _secureClientPort_ and _secureClientPortAddress_ configuration parameters should no longer be used in zoo.cfg.
 
 Instead, this information is now part of the server keyword specification, which
 becomes as follows:
 
-    server.<positive id> = <address1>:<port1>:<port2>[:role];[[<client port address>:]<client port>][;[<secure client port address>:]<secure client port>]
+    server.<positive id> = <address1>:<quorum port>:<leader election port>[:role];[[<client port address>:]<client port>][;[<secure client port address>:]<secure client port>]
 
-- [New in ZK 3.9.2] The client port specification is optional and is to the right of the
+- [New in ZK 3.10.0] The client port specification is optional and is to the right of the
   first semicolon. The secure client port specification is also optional and is to the right
   of the second semicolon. However, both the client port and secure client port specification
   cannot be omitted, at least one of them should be present. If the user intends to omit client
