@@ -28,6 +28,7 @@
     <!-- no parent resolution -->
   </parent>
   <groupId>org.apache.zookeeper</groupId>
+
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -B release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
