@@ -20,6 +20,7 @@ package org.apache.zookeeper.compat;
 
 import java.io.IOException;
 import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
 
@@ -117,5 +118,9 @@ public final class ProtocolManager {
         response.setPasswd(inputArchive.readBuffer("passwd"));
         inputArchive.endRecord("connect");
         return response;
+    }
+
+    public void serializeConnectResponse(final ConnectResponse response, OutputArchive outputArchive) throws IOException {
+        response.serialize(outputArchive, "connect");
     }
 }
