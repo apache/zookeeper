@@ -708,7 +708,15 @@ public class FileTxnLog implements TxnLog, Closeable {
         private boolean goToNextLog() throws IOException {
             if (storedFiles.size() > 0) {
                 this.logFile = storedFiles.remove(storedFiles.size() - 1);
-                ia = createInputArchive(this.logFile);
+                try {
+                    ia = createInputArchive(this.logFile);
+                } catch (IOException e) {
+                    if (storedFiles.isEmpty()) {
+                        LOG.warn("The last log file {} create input archive failed.", logFile.getName(), e);
+                        return false;
+                    }
+                    throw e;
+                }
                 return true;
             }
             return false;
