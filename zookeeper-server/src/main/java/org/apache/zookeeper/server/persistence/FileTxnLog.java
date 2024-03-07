@@ -710,9 +710,10 @@ public class FileTxnLog implements TxnLog, Closeable {
                 this.logFile = storedFiles.remove(storedFiles.size() - 1);
                 try {
                     ia = createInputArchive(this.logFile);
-                } catch (IOException e) {
+                } catch (EOFException e) {
                     if (storedFiles.isEmpty()) {
-                        LOG.warn("The last log file {} create input archive failed.", logFile.getName(), e);
+                        LOG.warn("The last log file {} EOF when create input archive, delete it.", logFile.getName(), e);
+                        logFile.deleteOnExit();
                         return false;
                     }
                     throw e;
