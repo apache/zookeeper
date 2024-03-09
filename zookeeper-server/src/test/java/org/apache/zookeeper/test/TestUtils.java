@@ -21,6 +21,10 @@ package org.apache.zookeeper.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.zookeeper.WatchedEvent;
 
 /**
@@ -70,5 +74,28 @@ public class TestUtils {
         assertEquals(expected.getType(), actual.getType());
         assertEquals(expected.getPath(), actual.getPath());
         assertEquals(expected.getZxid(), actual.getZxid());
+    }
+
+    /**
+     * Return all threads
+     *
+     * Code based on commons-lang3 ThreadUtils
+     *
+     * @return all active threads
+     */
+    public static List<Thread> getAllThreads() {
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        while (threadGroup != null && threadGroup.getParent() != null) {
+            threadGroup = threadGroup.getParent();
+        }
+
+        int count = threadGroup.activeCount();
+        Thread[] threads;
+        do {
+            threads = new Thread[count + count / 2 + 1]; //slightly grow the array size
+            count = threadGroup.enumerate(threads, true);
+            //return value of enumerate() must be strictly less than the array size according to javadoc
+        } while (count >= threads.length);
+        return Collections.unmodifiableList(Stream.of(threads).limit(count).collect(Collectors.toList()));
     }
 }
