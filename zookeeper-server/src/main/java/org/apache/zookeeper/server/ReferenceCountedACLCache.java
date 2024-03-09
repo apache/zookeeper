@@ -95,6 +95,19 @@ public class ReferenceCountedACLCache {
         return acls;
     }
 
+    /**
+     * checks if longval is cached (convertLong can convert it to ACLs).
+     *
+     * @param longVal
+     * @return true if it's cached.
+     */
+    public synchronized boolean isLongCached(long longVal) {
+        if (longVal == OPEN_UNSAFE_ACL_ID) {
+            return true;
+        }
+        return longKeyMap.containsKey(longVal);
+    }
+
     private long incrementIndex() {
         return ++aclIndex;
     }

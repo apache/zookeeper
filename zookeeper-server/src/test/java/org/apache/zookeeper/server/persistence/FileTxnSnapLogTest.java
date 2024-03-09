@@ -45,6 +45,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -333,6 +334,14 @@ public class FileTxnSnapLogTest {
     @Test
     public void testACLCreatedDuringFuzzySnapshotSync() throws IOException {
         DataTree leaderDataTree = new DataTree();
+        // Populate the initial ACL cache with some entries before snapshotting.
+        TxnHeader hdr1 = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
+        Record txn1 = new CreateTxn("/a1", "foo".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, -1);
+        leaderDataTree.processTxn(hdr1, txn1);
+
+        TxnHeader hdr2 = new TxnHeader(1, 2, 3, 2, ZooDefs.OpCode.delete);
+        Record txn2 = new DeleteTxn("/a1");
+        leaderDataTree.processTxn(hdr2, txn2);
 
         // Start the simulated snap-sync by serializing ACL cache.
         File file = File.createTempFile("snapshot", "zk");
@@ -341,9 +350,9 @@ public class FileTxnSnapLogTest {
         leaderDataTree.serializeAcls(oa);
 
         // Add couple of transaction in-between.
-        TxnHeader hdr1 = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
-        Record txn1 = new CreateTxn("/a1", "foo".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
-        leaderDataTree.processTxn(hdr1, txn1);
+        TxnHeader hdr3 = new TxnHeader(1, 2, 4, 2, ZooDefs.OpCode.create);
+        Record txn3 = new CreateTxn("/a1", "foo".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
+        leaderDataTree.processTxn(hdr3, txn3);
 
         // Finish the snapshot.
         leaderDataTree.serializeNodes(oa);
@@ -354,13 +363,16 @@ public class FileTxnSnapLogTest {
         InputArchive ia = BinaryInputArchive.getArchive(is);
         DataTree followerDataTree = new DataTree();
         followerDataTree.deserialize(ia, "tree");
-        followerDataTree.processTxn(hdr1, txn1);
+        is.close();
+        followerDataTree.processTxn(hdr3, txn3);
 
-        DataNode a1 = leaderDataTree.getNode("/a1");
-        assertNotNull(a1);
-        assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, leaderDataTree.getACL(a1));
+        DataNode a1FromLeader = leaderDataTree.getNode("/a1");
+        assertNotNull(a1FromLeader);
+        assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, leaderDataTree.getACL(a1FromLeader));
 
-        assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, followerDataTree.getACL(a1));
+        DataNode a1FromFollower = followerDataTree.getNode("/a1");
+        assertNotNull(a1FromFollower);
+        assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, followerDataTree.getACL(a1FromFollower));
     }
 
     @Test
