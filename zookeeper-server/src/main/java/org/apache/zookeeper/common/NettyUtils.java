@@ -45,19 +45,19 @@ import org.slf4j.LoggerFactory;
  */
 public class NettyUtils {
 
+    public static final String THREAD_POOL_NAME_PREFIX = "zkNetty-";
     private static final Logger LOG = LoggerFactory.getLogger(NettyUtils.class);
-
     private static final int DEFAULT_INET_ADDRESS_COUNT = 1;
 
     /**
      * Returns a ThreadFactory which generates daemon threads, and uses
      * the passed class's name to generate the thread names.
      *
-     * @param clazz Class to use for generating thread names
+     * @param clazz Class name to use for generating thread names
      * @return Netty DefaultThreadFactory configured to create daemon threads
      */
-    private static ThreadFactory createThreadFactory(Class<? extends Object> clazz) {
-        String poolName = "zkNetty" + clazz.getSimpleName();
+    private static ThreadFactory createThreadFactory(String clazz) {
+        final String poolName = THREAD_POOL_NAME_PREFIX + clazz;
         return new DefaultThreadFactory(poolName, true);
     }
 
@@ -69,11 +69,7 @@ public class NettyUtils {
      * @return a new {@link EventLoopGroup}.
      */
     public static EventLoopGroup newNioOrEpollEventLoopGroup() {
-        if (Epoll.isAvailable()) {
-            return new EpollEventLoopGroup(createThreadFactory(EpollEventLoopGroup.class));
-        } else {
-            return new NioEventLoopGroup(createThreadFactory(NioEventLoopGroup.class));
-        }
+        return newNioOrEpollEventLoopGroup(0);
     }
 
     /**
@@ -86,9 +82,13 @@ public class NettyUtils {
      */
     public static EventLoopGroup newNioOrEpollEventLoopGroup(int nThreads) {
         if (Epoll.isAvailable()) {
-            return new EpollEventLoopGroup(nThreads, createThreadFactory(EpollEventLoopGroup.class));
+            final String clazz = EpollEventLoopGroup.class.getSimpleName();
+            final ThreadFactory factory = createThreadFactory(clazz);
+            return new EpollEventLoopGroup(nThreads, factory);
         } else {
-            return new NioEventLoopGroup(nThreads, createThreadFactory(NioEventLoopGroup.class));
+            final String clazz = NioEventLoopGroup.class.getSimpleName();
+            final ThreadFactory factory = createThreadFactory(clazz);
+            return new NioEventLoopGroup(nThreads, factory);
         }
     }
 
@@ -159,7 +159,7 @@ public class NettyUtils {
                 }
             }
             LOG.debug("Detected {} local network addresses: {}", validInetAddresses.size(), validInetAddresses);
-            return validInetAddresses.size() > 0 ? validInetAddresses.size() : DEFAULT_INET_ADDRESS_COUNT;
+            return !validInetAddresses.isEmpty() ? validInetAddresses.size() : DEFAULT_INET_ADDRESS_COUNT;
         } catch (SocketException ex) {
             LOG.warn("Failed to list all network interfaces, assuming 1", ex);
             return DEFAULT_INET_ADDRESS_COUNT;

@@ -55,6 +55,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.NettyUtils;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
@@ -335,24 +336,22 @@ public class NettyServerCnxnTest extends ClientBase {
         // Use Netty in the client to check the threads on both the client and server side
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, ClientCnxnSocketNetty.class.getName());
         try {
-            final ZooKeeper zk = createClient();
             final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
-            final String path = "/a";
-            try {
+            try (ZooKeeper zk = createClient()) {
+                final String path = "/a";
                 // make sure connection is established
                 zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
                 List<Thread> threads = TestUtils.getAllThreads();
                 boolean foundThread = false;
                 for (Thread t : threads) {
-                    if (t.getName().startsWith("zkNetty")) {
+                    if (t.getName().startsWith(NettyUtils.THREAD_POOL_NAME_PREFIX)) {
                         foundThread = true;
-                        assertTrue(t.isDaemon(), "All Netty threads started by ZK must deamon threads");
+                        assertTrue(t.isDaemon(), "All Netty threads started by ZK must daemon threads");
                     }
                 }
                 assertTrue(foundThread, "Did not find any Netty ZK Threads");
             } finally {
-                zk.close();
                 zkServer.shutdown();
             }
         } finally {
@@ -469,6 +468,4 @@ public class NettyServerCnxnTest extends ClientBase {
             }
         }
     }
-
-
 }
