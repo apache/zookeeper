@@ -60,14 +60,17 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
     @AfterEach
     public void tearDown() throws Exception {
-        if (servers == null || servers.mt == null) {
+        if (servers == null) {
             LOG.info("No servers to shutdown!");
             return;
         }
-        for (int i = 0; i < numServers; i++) {
-            if (i < servers.mt.length) {
-                servers.mt[i].shutdown();
-            }
+
+        if (servers.zk != null) {
+            servers.shutdownAllClients();
+        }
+
+        if (servers.mt != null) {
+            servers.shutDownAllServers();
         }
     }
 
@@ -424,6 +427,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         public void shutDownAllServers() throws InterruptedException {
             for (MainThread t : mt) {
                 t.shutdown();
+            }
+        }
+
+        public void shutdownAllClients() throws InterruptedException {
+            for (ZooKeeper zk : zk) {
+                zk.close(5000);
             }
         }
 

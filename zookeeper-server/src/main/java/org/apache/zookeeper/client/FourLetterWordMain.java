@@ -91,7 +91,29 @@ public class FourLetterWordMain {
         String cmd,
         boolean secure,
         int timeout) throws IOException, SSLContextException {
-        LOG.info("connecting to {} {}", host, port);
+        return send4LetterWord(host, port, cmd, secure, timeout, null);
+    }
+
+    /**
+     * Send the 4letterword
+     * @param host the destination host
+     * @param port the destination port
+     * @param cmd the 4letterword
+     * @param secure whether to use SSL
+     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
+     * @param sslContext SSL context
+     * @return server response
+     * @throws java.io.IOException
+     * @throws SSLContextException
+     */
+    public static String send4LetterWord(
+        String host,
+        int port,
+        String cmd,
+        boolean secure,
+        int timeout,
+        SSLContext sslContext) throws IOException, SSLContextException {
+        LOG.info("connecting to {}:{} (secure={})", host, port, secure);
 
         Socket sock = null;
         BufferedReader reader = null;
@@ -101,14 +123,16 @@ public class FourLetterWordMain {
                 : new InetSocketAddress(InetAddress.getByName(null), port);
             if (secure) {
                 LOG.info("using secure socket");
-                try (X509Util x509Util = new ClientX509Util()) {
-                    SSLContext sslContext = x509Util.getDefaultSSLContext();
-                    SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-                    SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
-                    sslSock.connect(hostaddress, timeout);
-                    sslSock.startHandshake();
-                    sock = sslSock;
+                if (sslContext == null) {
+                    try (X509Util x509Util = new ClientX509Util()) {
+                        sslContext = x509Util.getDefaultSSLContext();
+                    }
                 }
+                SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+                SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
+                sslSock.connect(hostaddress, timeout);
+                sslSock.startHandshake();
+                sock = sslSock;
             } else {
                 sock = new Socket();
                 sock.connect(hostaddress, timeout);
