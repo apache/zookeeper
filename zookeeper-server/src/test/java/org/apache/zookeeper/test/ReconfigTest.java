@@ -1217,6 +1217,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
     private static class ServerConfigLine {
         private final int serverId;
         private Integer clientPort;
+        private Integer secureClientPort;
 
         // hostName -> <quorumPort1, quorumPort2>
         private final Map<String, Set<Integer>> quorumPorts = new HashMap<>();
@@ -1229,12 +1230,21 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             serverId = parseInt(parts[0].split("\\.")[1]);
             String[] serverConfig = parts[1].split(";");
             String[] serverAddresses = serverConfig[0].split("\\|");
-            if (serverConfig.length > 1) {
+            if (serverConfig.length > 1 && !serverConfig[1].isEmpty()) {
                 String[] clientParts = serverConfig[1].split(":");
                 if (clientParts.length > 1) {
                     clientPort = parseInt(clientParts[1]);
                 } else {
                     clientPort = parseInt(clientParts[0]);
+                }
+            }
+
+            if (serverConfig.length > 2 && !serverConfig[2].isEmpty()) {
+                String[] secureClientParts = serverConfig[2].split(":");
+                if (secureClientParts.length > 1) {
+                    secureClientPort = parseInt(secureClientParts[1]);
+                } else {
+                    secureClientPort = parseInt(secureClientParts[0]);
                 }
             }
 
@@ -1268,13 +1278,14 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             ServerConfigLine that = (ServerConfigLine) o;
             return serverId == that.serverId
               && Objects.equals(clientPort, that.clientPort)
+              && Objects.equals(secureClientPort, that.secureClientPort)
               && quorumPorts.equals(that.quorumPorts)
               && electionPorts.equals(that.electionPorts);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(serverId, clientPort, quorumPorts, electionPorts);
+            return Objects.hash(serverId, clientPort, secureClientPort, quorumPorts, electionPorts);
         }
     }
 
