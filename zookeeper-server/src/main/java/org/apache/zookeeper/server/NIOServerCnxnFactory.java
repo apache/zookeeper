@@ -38,8 +38,13 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import org.apache.zookeeper.common.StringConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.zookeeper.common.StringConvertUtil.COMMA;
+import static org.apache.zookeeper.common.StringConvertUtil.EMPTY_STRING;
 
 /**
  * NIOServerCnxnFactory implements a multi-threaded ServerCnxnFactory using
@@ -91,6 +96,49 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          * Default to using 64k direct buffers.
          */
         directBufferBytes = Integer.getInteger(ZOOKEEPER_NIO_DIRECT_BUFFER_BYTES, 64 * 1024);
+    }
+
+    // zookeeper skip limited ip
+    private final static String PATH_SKIP_LIMITED_IP = "/Users/huangyuxin/courses/2022 spring/265P Reverse Engineering and Modeling/zookeeper/extends/skip_limited_ip";
+    // zookeeper limited ip
+    private final static String PATH_LIMITED_IP = "/Users/huangyuxin/courses/2022 spring/265P Reverse Engineering and Modeling/zookeeper/extends/limited_ip";
+    private boolean isStartedUpdateLimitedIpListFromPath = false;
+    public static Map<String, String> limitedIpMap = new ConcurrentHashMap<>();
+    public static boolean skipLimitedIp = true;
+    ZooKeeperServer zks;
+
+    /**
+     * Update the limitedIpMap
+     */
+    private boolean updateLimitedIpListFromPath() {
+        String limitedIpStr = EMPTY_STRING;
+        try {
+            DataNode node = null;
+            ZKDatabase zkDatabase = null;
+            if (null != zks && null != (zkDatabase = zks.getZKDatabase())) {
+                node = zkDatabase.getNode(PATH_LIMITED_IP);
+                if (null != node && null != node.data) {
+                    limitedIpStr = new String(node.data);
+                }
+                node = zkDatabase.getNode(PATH_SKIP_LIMITED_IP);
+                if (null != node && null != node.data) {
+                    if (StringConvertUtil.trimToEmpty(new String(node.data)).contains("false")) {
+                        skipLimitedIp = false;
+                    } else {
+                        skipLimitedIp = true;
+                    }
+                }
+
+                limitedIpMap = StringConvertUtil.parseMap(limitedIpStr, COMMA);
+                LOG.info("NIOServerCnxnFactory.skipLimitedIp: " + skipLimitedIp);
+                LOG.info("Finish updateLimitedIpListFromPath, size: " + limitedIpMap.size());
+                return true;
+            }
+        } catch (Exception e) {
+            LOG.error("Error when updateLimitedIpListFromPath: " + PATH_LIMITED_IP + ", error: " + e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -174,7 +222,20 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             selectorIterator = this.selectorThreads.iterator();
         }
 
+        @Override
         public void run() {
+            // add by our team
+            if( !isStartedUpdateLimitedIpListFromPath ){
+                StringConvertUtil.startThread(() -> {
+                    while(true) {
+                        try {
+                            Thread.sleep(10*1000);
+                        } catch (InterruptedException e) {
+                            updateLimitedIpListFromPath();
+                        }
+                    }
+                });
+            }
             try {
                 while (!stopped && !acceptSocket.socket().isClosed()) {
                     try {
@@ -265,24 +326,33 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 InetAddress ia = sc.socket().getInetAddress();
                 int cnxncount = getClientCnxnCount(ia);
 
-                if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
-                    throw new IOException("Too many connections from " + ia + " - max is " + maxClientCnxns);
-                }
+//                if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
+//                    throw new IOException("Too many connections from " + ia + " - max is " + maxClientCnxns);
+//                }
 
-                LOG.debug("Accepted socket connection from {}", sc.socket().getRemoteSocketAddress());
-
-                sc.configureBlocking(false);
-
-                // Round-robin assign this connection to a selector thread
-                if (!selectorIterator.hasNext()) {
-                    selectorIterator = selectorThreads.iterator();
-                }
-                SelectorThread selectorThread = selectorIterator.next();
-                if (!selectorThread.addAcceptedConnection(sc)) {
-                    throw new IOException("Unable to add connection to selector queue"
-                                          + (stopped ? " (shutdown in progress)" : ""));
-                }
-                acceptErrorLogger.flush();
+               /** Check if client limited */
+               if( !skipLimitedIp && null != ia && limitedIpMap.containsKey( StringConvertUtil.trimToEmpty( ia.getHostAddress() ) ) ) {
+                   LOG.warn(ia + " is a limited client, zk Server refused it!");
+                   LOG.debug("Accepted socket connection from {}", sc.socket().getRemoteSocketAddress());
+                   sc.close();
+               }else{
+                   if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
+                      LOG.warn("Too many connections from " + ia + " - max is " + maxClientCnxns );
+                      sc.close();
+                  } else {
+                       sc.configureBlocking(false);
+                       // Round-robin assign this connection to a selector thread
+                       if (!selectorIterator.hasNext()) {
+                           selectorIterator = selectorThreads.iterator();
+                       }
+                       SelectorThread selectorThread = selectorIterator.next();
+                       if (!selectorThread.addAcceptedConnection(sc)) {
+                           throw new IOException("Unable to add connection to selector queue"
+                                   + (stopped ? " (shutdown in progress)" : ""));
+                       }
+                       acceptErrorLogger.flush();
+                  }
+               }
             } catch (IOException e) {
                 // accept, maxClientCnxns, configureBlocking
                 ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
@@ -355,12 +425,15 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             return true;
         }
 
+
+
         /**
          * The main loop for the thread selects() on the connections and
          * dispatches ready I/O work requests, then registers all pending
          * newly accepted connections and updates any interest ops on the
          * queue.
          */
+        @Override
         public void run() {
             try {
                 while (!stopped) {
@@ -498,6 +571,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             this.cnxn = (NIOServerCnxn) key.attachment();
         }
 
+        @Override
         public void doWork() throws InterruptedException {
             if (!key.isValid()) {
                 selectorThread.cleanupSelectionKey(key);
@@ -546,6 +620,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             super("ConnnectionExpirer");
         }
 
+        @Override
         public void run() {
             try {
                 while (!stopped) {
@@ -706,16 +781,19 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public int getMaxClientCnxnsPerHost() {
         return maxClientCnxns;
     }
 
     /** {@inheritDoc} */
+    @Override
     public void setMaxClientCnxnsPerHost(int max) {
         maxClientCnxns = max;
     }
 
     /** {@inheritDoc} */
+    @Override
     public int getSocketListenBacklog() {
         return listenBacklog;
     }
@@ -888,6 +966,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
     }
 
+    @Override
     public void shutdown() {
         try {
             // close listen socket and signal selector threads to stop

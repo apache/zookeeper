@@ -18,26 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.CancelledKeyException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
-import java.security.cert.Certificate;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.StringConvertUtil;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ConnectRequest;
@@ -51,6 +37,27 @@ import org.apache.zookeeper.server.command.NopCommand;
 import org.apache.zookeeper.server.command.SetTraceMaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.security.cert.Certificate;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.zookeeper.common.StringConvertUtil.COMMA;
+import static org.apache.zookeeper.common.StringConvertUtil.EMPTY_STRING;
 
 /**
  * This class handles communication with clients using NIO. There is one per
@@ -117,6 +124,7 @@ public class NIOServerCnxn extends ServerCnxn {
     /**
      * send buffer without using the asynchronous
      * calls to selector and then close the socket
+     *
      * @param bb
      */
     void sendBufferSync(ByteBuffer bb) {
@@ -167,13 +175,15 @@ public class NIOServerCnxn extends ServerCnxn {
         setStale();
         ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
         throw new EndOfStreamException("Unable to read additional data from client,"
-                                       + " it probably closed the socket:"
-                                       + " address = " + sock.socket().getRemoteSocketAddress() + ","
-                                       + " session = 0x" + Long.toHexString(sessionId),
-                                       DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
+                + " it probably closed the socket:"
+                + " address = " + sock.socket().getRemoteSocketAddress() + ","
+                + " session = 0x" + Long.toHexString(sessionId),
+                DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
     }
 
-    /** Read the request payload (everything following the length prefix) */
+    /**
+     * Read the request payload (everything following the length prefix)
+     */
     private void readPayload() throws IOException, InterruptedException, ClientCnxnLimitException {
         if (incomingBuffer.remaining() != 0) { // have we read length bytes?
             int rc = sock.read(incomingBuffer); // sock is non-blocking, so ok
@@ -454,6 +464,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
         /**
          * Check if we are ready to send another chunk.
+         *
          * @param force force sending, even if not a full chunk
          */
         private void checkFlush(boolean force) {
@@ -485,7 +496,10 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
     }
-    /** Return if four letter word found and responded to, otw false **/
+
+    /**
+     * Return if four letter word found and responded to, otw false
+     **/
     private boolean checkFourLetterWord(final SelectionKey k, final int len) throws IOException {
         // We take advantage of the limited size of the length to look
         // for cmds. They are all 4-bytes which fits inside of an int
@@ -519,9 +533,9 @@ public class NIOServerCnxn extends ServerCnxn {
         if (!FourLetterCommands.isEnabled(cmd)) {
             LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
             NopCommand nopCmd = new NopCommand(
-                pwriter,
-                this,
-                cmd + " is not executed because it is not in the whitelist.");
+                    pwriter,
+                    this,
+                    cmd + " is not executed because it is not in the whitelist.");
             nopCmd.start();
             return true;
         }
@@ -546,8 +560,9 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
 
-    /** Reads the first 4 bytes of lenBuffer, which could be true length or
-     *  four letter word.
+    /**
+     * Reads the first 4 bytes of lenBuffer, which could be true length or
+     * four letter word.
      *
      * @param k selection key
      * @return true if length read, otw false (wasn't really the length)
@@ -561,7 +576,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
         if (len < 0 || len > BinaryInputArchive.maxBuffer) {
             throw new IOException("Len error. "
-                    + "A message from " +  this.getRemoteSocketAddress() + " with advertised length of " + len
+                    + "A message from " + this.getRemoteSocketAddress() + " with advertised length of " + len
                     + " is either a malformed message or too large to process"
                     + " (length is greater than jute.maxbuffer=" + BinaryInputArchive.maxBuffer + ")");
         }
@@ -632,12 +647,12 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         String logMsg = String.format(
-            "Closed socket connection for client %s %s",
-            sock.socket().getRemoteSocketAddress(),
-            sessionId != 0
-                ? "which had sessionid 0x" + Long.toHexString(sessionId)
-                : "(no session established for client)"
-            );
+                "Closed socket connection for client %s %s",
+                sock.socket().getRemoteSocketAddress(),
+                sessionId != 0
+                        ? "which had sessionid 0x" + Long.toHexString(sessionId)
+                        : "(no session established for client)"
+        );
         LOG.debug(logMsg);
 
         closeSock(sock);
@@ -708,9 +723,9 @@ public class NIOServerCnxn extends ServerCnxn {
         ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire
@@ -797,5 +812,6 @@ public class NIOServerCnxn extends ServerCnxn {
     public void setClientCertificateChain(Certificate[] chain) {
         throw new UnsupportedOperationException("SSL is unsupported in NIOServerCnxn");
     }
+
 
 }

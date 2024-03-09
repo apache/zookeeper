@@ -1804,4 +1804,13 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
     }
 
+
+    /**
+     * Verify the ability to start a cluster.
+     */
+    @Test
+    public void testQuorumLocal() throws Exception {
+        testQuorumInternal("localhost");
+    }
+
 }
