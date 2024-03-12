@@ -34,13 +34,13 @@ from the official Apache Archives.
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.9.1 is our current release, and 3.8.4 our latest stable release.
+Apache ZooKeeper 3.9.2 is our current release, and 3.8.4 our latest stable release.
 
-### Apache ZooKeeper 3.9.1
+### Apache ZooKeeper 3.9.2
 
-[Apache ZooKeeper 3.9.1](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.1/apache-zookeeper-3.9.1-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.1/apache-zookeeper-3.9.1-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.1/apache-zookeeper-3.9.1-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.9.2](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.9.1 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.1/apache-zookeeper-3.9.1.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.1/apache-zookeeper-3.9.1.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.1/apache-zookeeper-3.9.1.tar.gz.sha512))
+[Apache ZooKeeper 3.9.2 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.2/apache-zookeeper-3.9.2.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.8.4 (latest stable release)
 
@@ -72,6 +72,11 @@ You can verify the integrity of a downloaded release using release-signing [KEYS
 
 <a name="news"></a>
 ## News
+
+### 12 Mar, 2024: release 3.9.2 available
+This is a bugfix release for 3.9 branch.
+
+See [ZooKeeper 3.9.2 Release Notes](https://zookeeper.apache.org/doc/r3.9.2/releasenotes.html) for details.
 
 ### 5 Mar, 2024: release 3.8.4 available
 This is a bugfix release for 3.8 branch.
