@@ -25,26 +25,27 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class LeaderWithObserverTest {
 
     QuorumPeer peer;
     Leader leader;
+    @TempDir
     File tmpDir;
     long participantId;
     long observerId;
 
     @BeforeEach
     public void setUp() throws Exception {
-        tmpDir = ClientBase.createTmpDir();
         peer = createQuorumPeer(tmpDir);
         participantId = 1;
         Map<Long, QuorumPeer.QuorumServer> peers = peer.getQuorumVerifier().getAllMembers();
@@ -60,7 +61,6 @@ public class LeaderWithObserverTest {
     @AfterEach
     public void tearDown() {
         leader.shutdown("end of test");
-        tmpDir.delete();
     }
 
     @Test
@@ -144,7 +144,9 @@ public class LeaderWithObserverTest {
         long zxid = leader.zk.getZxid();
 
         // things needed for waitForNewLeaderAck to run (usually in leader.lead(), but we're not running leader here)
-        leader.newLeaderProposal.packet = new QuorumPacket(0, zxid, null, null);
+        Field field = Leader.Proposal.class.getDeclaredField("packet");
+        field.setAccessible(true);
+        field.set(leader.newLeaderProposal, new QuorumPacket(0, zxid, null, null));
         leader.newLeaderProposal.addQuorumVerifier(peer.getQuorumVerifier());
 
         Set<Long> ackSet = leader.newLeaderProposal.qvAcksetPairs.get(0).getAckset();

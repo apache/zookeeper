@@ -27,12 +27,12 @@ import java.net.InetSocketAddress;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class ZooKeeperServerBeanTest {
 
@@ -47,9 +47,8 @@ public class ZooKeeperServerBeanTest {
     }
 
     @Test
-    public void testTxnLogElapsedSyncTime() throws IOException {
+    public void testTxnLogElapsedSyncTime(@TempDir File tmpDir) throws IOException {
 
-        File tmpDir = ClientBase.createEmptyTestDir();
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"), new File(tmpDir, "data_txnlog"));
 
         ZooKeeperServer zks = new ZooKeeperServer();

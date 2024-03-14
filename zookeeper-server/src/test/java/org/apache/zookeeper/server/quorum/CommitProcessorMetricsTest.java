@@ -48,7 +48,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     CountDownLatch requestScheduled = null;
     CountDownLatch requestProcessed = null;
     CountDownLatch commitSeen = null;
-    CountDownLatch poolEmpytied = null;
+    CountDownLatch poolEmptied = null;
 
     @BeforeEach
     public void setup() {
@@ -126,8 +126,8 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
                 commitSeen.countDown();
             }
             super.waitForEmptyPool();
-            if (poolEmpytied != null) {
-                poolEmpytied.countDown();
+            if (poolEmptied != null) {
+                poolEmptied.countDown();
             }
         }
 
@@ -365,9 +365,9 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         requestScheduled.await(5, TimeUnit.SECONDS);
 
         //add a commit request to trigger waitForEmptyPool
-        poolEmpytied = new CountDownLatch(1);
+        poolEmptied = new CountDownLatch(1);
         commitProcessor.commit(createWriteRequest(1L, 1));
-        poolEmpytied.await(5, TimeUnit.SECONDS);
+        poolEmptied.await(5, TimeUnit.SECONDS);
 
         long actual = (long) MetricsUtils.currentServerMetrics().get("max_time_waiting_empty_pool_in_commit_processor_read_ms");
         //since each request takes 1000ms to process, so the waiting shouldn't be more than three times of that
@@ -387,9 +387,9 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         requestScheduled.await(5, TimeUnit.SECONDS);
 
         //add a commit request to trigger waitForEmptyPool, which will record number of requests being proccessed
-        poolEmpytied = new CountDownLatch(1);
+        poolEmptied = new CountDownLatch(1);
         commitProcessor.commit(createWriteRequest(1L, 1));
-        poolEmpytied.await(5, TimeUnit.SECONDS);
+        poolEmptied.await(5, TimeUnit.SECONDS);
 
         //this will change after we upstream batch write in CommitProcessor
         Map<String, Object> values = MetricsUtils.currentServerMetrics();

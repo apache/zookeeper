@@ -702,14 +702,14 @@ public class FastLeaderElection implements Election {
                 qv.toString().getBytes(UTF_8));
 
             LOG.debug(
-                "Sending Notification: {} (n.leader), 0x{} (n.zxid), 0x{} (n.round), {} (recipient),"
-                    + " {} (myid), 0x{} (n.peerEpoch) ",
+                "Sending Notification: {} (n.leader), 0x{} (n.peerEpoch), 0x{} (n.zxid), 0x{} (n.round), {} (recipient),"
+                    + " {} (myid) ",
                 proposedLeader,
                 Long.toHexString(proposedZxid),
+                Long.toHexString(proposedEpoch),
                 Long.toHexString(logicalclock.get()),
                 sid,
-                self.getMyId(),
-                Long.toHexString(proposedEpoch));
+                self.getMyId());
 
             sendqueue.offer(notmsg);
         }
@@ -722,12 +722,13 @@ public class FastLeaderElection implements Election {
      */
     protected boolean totalOrderPredicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch) {
         LOG.debug(
-            "id: {}, proposed id: {}, zxid: 0x{}, proposed zxid: 0x{}",
+            "id: {}, proposed id: {}, zxid: 0x{}, proposed zxid: 0x{}, epoch: 0x{}, proposed epoch: 0x{}",
             newId,
             curId,
             Long.toHexString(newZxid),
-            Long.toHexString(curZxid));
-
+            Long.toHexString(curZxid),
+            Long.toHexString(newEpoch),
+            Long.toHexString(curEpoch));
         if (self.getQuorumVerifier().getWeight(newId) == 0) {
             return false;
         }

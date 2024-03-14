@@ -570,9 +570,11 @@ public class QuorumPeerConfig {
      * it will remove them.
      * If it needs to erase client port information left by the old config,
      * "eraseClientPortAddress" should be set true.
+     * If it needs to erase secure client port information left by the old config,
+     * "eraseSecureClientPortAddress" should be set true.
      * It should also updates dynamic file pointer on reconfig.
      */
-    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr, final boolean eraseClientPortAddress) throws IOException {
+    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr, final boolean eraseClientPortAddress, final boolean eraseSecureClientPortAddress) throws IOException {
         // Some tests may not have a static config file.
         if (configFileStr == null) {
             return;
@@ -604,7 +606,10 @@ public class QuorumPeerConfig {
                         || key.startsWith("peerType")
                         || (eraseClientPortAddress
                             && (key.startsWith("clientPort")
-                                || key.startsWith("clientPortAddress")))) {
+                                || key.startsWith("clientPortAddress")))
+                        || (eraseSecureClientPortAddress
+                            && (key.startsWith("secureClientPort")
+                                || key.startsWith("secureClientPortAddress")))) {
                         // not writing them back to static file
                         continue;
                     }
@@ -659,6 +664,7 @@ public class QuorumPeerConfig {
         quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode, oraclePath);
         setupMyId();
         setupClientPort();
+        setupSecureClientPort();
         setupPeerType();
         checkValidity();
     }
@@ -762,6 +768,29 @@ public class QuorumPeerConfig {
         if (qs != null && qs.clientAddr == null) {
             qs.clientAddr = clientPortAddress;
             qs.isClientAddrFromStatic = true;
+        }
+    }
+
+    private void setupSecureClientPort() throws ConfigException {
+        if (serverId == UNSET_SERVERID) {
+            return;
+        }
+        QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
+        if (secureClientPortAddress != null && qs != null && qs.secureClientAddr != null) {
+            if ((!secureClientPortAddress.getAddress().isAnyLocalAddress() && !secureClientPortAddress.equals(qs.secureClientAddr)) || (
+                secureClientPortAddress.getAddress().isAnyLocalAddress()
+                    && secureClientPortAddress.getPort() != qs.secureClientAddr.getPort())) {
+                throw new ConfigException("secure client address for this server (id = " + serverId
+                    + ") in static config file is " + secureClientPortAddress
+                    + " is different from secure client address found in dynamic file: " + qs.secureClientAddr);
+            }
+        }
+        if (qs != null && qs.secureClientAddr != null) {
+            secureClientPortAddress = qs.secureClientAddr;
+        }
+        if (qs != null && qs.secureClientAddr == null) {
+            qs.secureClientAddr = secureClientPortAddress;
+            qs.isSecureClientAddrFromStatic = true;
         }
     }
 

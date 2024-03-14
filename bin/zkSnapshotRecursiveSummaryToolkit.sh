@@ -33,7 +33,7 @@ else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-"$JAVA" -cp "$CLASSPATH" "$JVMFLAGS" \
+"$JAVA" -cp "$CLASSPATH" $JVMFLAGS \
      org.apache.zookeeper.server.SnapshotRecursiveSummary "$@"
 
 

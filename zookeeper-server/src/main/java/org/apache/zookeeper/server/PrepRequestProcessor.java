@@ -18,10 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +30,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DeleteContainerRequest;
@@ -485,8 +482,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                             // extract server id x from first part of joiner: server.x
                             Long sid = Long.parseLong(parts[0].substring(parts[0].lastIndexOf('.') + 1));
                             QuorumServer qs = new QuorumServer(sid, parts[1]);
-                            if (qs.clientAddr == null || qs.electionAddr == null || qs.addr == null) {
-                                throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have 3 ports specified");
+                            if ((qs.clientAddr == null && qs.secureClientAddr == null) || qs.electionAddr == null || qs.addr == null) {
+                                throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have at least 3 ports specified");
                             }
 
                             // check duplication of addresses and ports
@@ -868,12 +865,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     // TODO: I don't want to have to serialize it here and then
                     //       immediately deserialize in next processor. But I'm
                     //       not sure how else to get the txn stored into our list.
-                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                        txn.serialize(boa, "request");
-                        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-                        txns.add(new Txn(type, bb.array()));
-                    }
+                    byte[] bb = RequestRecord.fromRecord(txn).readBytes();
+                    txns.add(new Txn(type, bb));
                 }
 
                 request.setTxn(new MultiTxn(txns));

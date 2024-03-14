@@ -44,6 +44,7 @@ import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,8 +103,7 @@ public class CRCTest extends ZKTestCase {
      * @throws Exception
      */
     @Test
-    public void testChecksums() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testChecksums(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(150);

@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ConfigUtilsTest {
 
@@ -110,6 +112,36 @@ public class ConfigUtilsTest {
 
         // cleanUp
         clearProp(newProp, oldProp);
+    }
+
+    /**
+     * Tests the ConfigUtils.getClientConfigStr(String) method with version.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "version=1.2.3\n",
+            "version = 1.2.3\n",
+            "version=1.2.3\nfoo=bar\n",
+            "foo=bar\nversion=1.2.3\n"
+    })
+    public void testGetClientConfigStrWithVersion(String configData) {
+        String result = ConfigUtils.getClientConfigStr(configData);
+        assertEquals("1.2.3 ", result);
+    }
+
+    /**
+     * Tests the ConfigUtils.getClientConfigStr(String) method without version.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "versions=1.2.3\n",
+            "versions = 1.2.3\n",
+            "foo=bar\n",
+            "version=\n"
+    })
+    public void testGetClientConfigStrWithoutVersion(String configData) {
+        String result = ConfigUtils.getClientConfigStr(configData);
+        assertEquals(" ", result);
     }
 
     private void clearProp(String newProp, String oldProp) {

@@ -54,9 +54,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener;
 import org.apache.zookeeper.server.persistence.SnapStream;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
-import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
-import org.apache.zookeeper.server.quorum.QuorumPacket;
+import org.apache.zookeeper.server.quorum.Leader.PureRequestProposal;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnDigest;
@@ -323,19 +322,15 @@ public class ZKDatabase {
             wl.lock();
             if (committedLog.size() > commitLogCount) {
                 committedLog.remove();
-                minCommittedLog = committedLog.peek().packet.getZxid();
+                minCommittedLog = committedLog.peek().getZxid();
             }
             if (committedLog.isEmpty()) {
                 minCommittedLog = request.zxid;
                 maxCommittedLog = request.zxid;
             }
-            byte[] data = request.getSerializeData();
-            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
-            Proposal p = new Proposal();
-            p.packet = pp;
-            p.request = request;
+            PureRequestProposal p = new PureRequestProposal(request);
             committedLog.add(p);
-            maxCommittedLog = p.packet.getZxid();
+            maxCommittedLog = p.getZxid();
         } finally {
             wl.unlock();
         }

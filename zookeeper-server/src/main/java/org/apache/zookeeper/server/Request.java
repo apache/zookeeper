@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -169,24 +168,16 @@ public class Request {
                 && this.type != OpCode.createSession;
     }
 
-    private transient byte[] serializeData;
-
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP")
     public byte[] getSerializeData() {
         if (this.hdr == null) {
             return null;
         }
-
-        if (this.serializeData == null) {
-            try {
-                this.serializeData = Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
-            } catch (IOException e) {
-                LOG.error("This really should be impossible.", e);
-                this.serializeData = new byte[32];
-            }
+        try {
+            return Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
+        } catch (IOException e) {
+            LOG.error("This really should be impossible.", e);
+            return new byte[32];
         }
-
-        return this.serializeData;
     }
 
     /**
