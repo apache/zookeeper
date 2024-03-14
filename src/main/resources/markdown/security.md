@@ -30,11 +30,40 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 
 ## Vulnerability reports
 
+* [CVE-2024-23944: Information disclosure in persistent watcher handling](#CVE-2024-23944)
 * [CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication](#CVE-2023-44981)
 * [CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper](#CVE-2019-0201)
 * [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+<a name="CVE-2024-23944"></a>
+### CVE-2024-23944: Information disclosure in persistent watcher handling
+
+Severity: critical
+
+Affected versions:
+
+- Apache ZooKeeper 3.9.0 through 3.9.1
+- Apache ZooKeeper 3.8.0 through 3.8.3
+- Apache ZooKeeper 3.6.0 through 3.7.2
+
+Description:
+
+Information disclosure in persistent watchers handling in Apache ZooKeeper due to missing ACL check. It allows an attacker to monitor child znodes by attaching a persistent watcher (addWatch command) to a parent which the attacker has already access to. ZooKeeper server doesn't do ACL check when the persistent watcher is triggered and as a consequence, the full path of znodes that a watch event gets triggered upon is exposed to the owner of the watcher. It's important to note that only the path is exposed by this vulnerability, not the data of znode, but since znode path can contain sensitive information like user name or login ID, this issue is potentially critical.
+
+Users are recommended to upgrade to version 3.9.2, 3.8.4 which fixes the issue.
+
+Credit:
+
+周吉安(寒泉) <zhoujian.zja@alibaba-inc.com> (reporter)
+
+References:
+
+[https://zookeeper.apache.org/](https://zookeeper.apache.org/)
+[https://www.cve.org/CVERecord?id=CVE-2024-23944](https://www.cve.org/CVERecord?id=CVE-2024-23944)
+
 
 
 <a name="CVE-2023-44981"></a>
