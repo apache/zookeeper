@@ -702,7 +702,7 @@ public class FastLeaderElection implements Election {
                 qv.toString().getBytes(UTF_8));
 
             LOG.debug(
-                "Sending Notification: {} (n.leader), 0x{} (n.peerEpoch), 0x{} (n.zxid), 0x{} (n.round), {} (recipient),"
+                "Sending Notification: {} (n.leader), 0x{} (n.zxid), 0x{} (n.peerEpoch), 0x{} (n.round), {} (recipient),"
                     + " {} (myid) ",
                 proposedLeader,
                 Long.toHexString(proposedZxid),
