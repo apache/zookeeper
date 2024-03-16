@@ -21,8 +21,7 @@ package org.apache.zookeeper.metrics;
 /**
  * A counter refers to a value which can only increase.
  * Usually the value is reset when the process starts.
- *
- *  A CounterSet is a set of {@link Counter} grouped by keys.
+ * A CounterSet is a set of {@link Counter} grouped by keys.
  */
 
 public interface CounterSet {

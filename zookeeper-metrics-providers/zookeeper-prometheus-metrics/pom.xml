@@ -37,13 +37,9 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
-      <!-- we can create a metrics-providers-api package
-           once we get rid of ant based build
-           https://issues.apache.org/jira/browse/ZOOKEEPER-3376
-      -->
-      <artifactId>zookeeper</artifactId>
+      <artifactId>zookeeper-metrics-api</artifactId>
       <version>${project.version}</version>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient</artifactId>
