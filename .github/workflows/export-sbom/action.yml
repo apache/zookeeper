@@ -1,0 +1,19 @@
+name: Export SBOM
+description: Export the Software Bill of Materials (SBOM) using the GitHub Dependency Graph API
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install requests library
+      run: pip install requests
+
+    - name: Export SBOM
+      run: |
+        python export_sbom.py
