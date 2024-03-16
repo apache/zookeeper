@@ -1452,13 +1452,20 @@ zhandle_t *zookeeper_init2(const char *host, watcher_fn watcher,
 zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn watcher,
         int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
+    return zookeeper_init2_ssl(host, cert, watcher, recv_timeout, clientid, context, flags, NULL);
+}
+
+zhandle_t *zookeeper_init2_ssl(const char *host, const char *cert, watcher_fn watcher,
+        int recv_timeout, const clientid_t *clientid, void *context, int flags,
+        log_callback_fn log_callback)
+{
     zcert_t zcert;
     zcert.certstr = strdup(cert);
     zcert.ca = strtok(strdup(cert), ",");
     zcert.cert = strtok(NULL, ",");
     zcert.key = strtok(NULL, ",");
-    zcert.passwd = strtok(NULL, ",");       
-    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL, &zcert, NULL);
+    zcert.passwd = strtok(NULL, ",");
+    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, log_callback, &zcert, NULL);
 }
 #endif
 
