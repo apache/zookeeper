@@ -30,6 +30,7 @@ import java.util.Properties;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.junit.jupiter.api.Test;
 
 public class QuorumPeerConfigTest {
@@ -194,7 +195,41 @@ public class QuorumPeerConfigTest {
         zkProp.setProperty("localSessionsEnabled", "yes");
         try {
             quorumPeerConfig.parseProperties(zkProp);
-            fail("Must throw exception as 'yes' is not accpetable for parseBoolean!");
+            fail("Must throw exception as 'yes' is not acceptable for parseBoolean!");
+        } catch (ConfigException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testParseInt() throws IOException, ConfigException {
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty(QuorumPeerConfigConstant.TICK_TIME, "1234");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(1234, quorumPeerConfig.getTickTime());
+
+        try {
+            zkProp.setProperty(QuorumPeerConfigConstant.TICK_TIME, "");
+            quorumPeerConfig.parseProperties(zkProp);
+            fail("Must throw exception as 'yes' is not acceptable for parseInt");
+        } catch (ConfigException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testLong() throws ConfigException, IOException {
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty(JvmPauseMonitor.INFO_THRESHOLD_KEY, "1234");
+        quorumPeerConfig.parseProperties(zkProp);
+        assertEquals(1234, quorumPeerConfig.getJvmPauseInfoThresholdMs());
+
+        try {
+            zkProp.setProperty(JvmPauseMonitor.INFO_THRESHOLD_KEY, "");
+            quorumPeerConfig.parseProperties(zkProp);
+            fail("Must throw exception as 'yes' is not acceptable for parseLong");
         } catch (ConfigException e) {
             // expected
         }
