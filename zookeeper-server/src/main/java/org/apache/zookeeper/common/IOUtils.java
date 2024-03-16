@@ -68,6 +68,7 @@ public class IOUtils {
 
     /**
      * Copies from one stream to another.
+     * Deprecated. No longer used in ZK.
      *
      * @param in
      *            InputStrem to read from
