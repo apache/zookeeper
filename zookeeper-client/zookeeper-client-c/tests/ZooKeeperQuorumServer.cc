@@ -197,6 +197,7 @@ getCluster(uint32_t numServers) {
         }
     }
     assert(!"The cluster didn't start for 10 seconds");
+    return {};
 }
 
 std::vector<ZooKeeperQuorumServer*> ZooKeeperQuorumServer::
