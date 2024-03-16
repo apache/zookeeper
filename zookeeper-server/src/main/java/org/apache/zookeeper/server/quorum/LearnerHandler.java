@@ -733,7 +733,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 syncThrottler = null;
             }
             String remoteAddr = getRemoteAddress();
-            LOG.warn("******* GOODBYE {} ********", remoteAddr);
+            LOG.warn("******* GOODBYE sid:{} {} ********", getSid(), remoteAddr);
             messageTracker.dumpToLog(remoteAddr);
             shutdown();
         }
