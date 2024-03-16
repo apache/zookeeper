@@ -33,7 +33,7 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         SaslServerPrincipal.WrapperInetSocketAddress addr = mock(SaslServerPrincipal.WrapperInetSocketAddress.class);
         SaslServerPrincipal.WrapperInetAddress ia = mock(SaslServerPrincipal.WrapperInetAddress.class);
 
-        when(addr.getHostName()).thenReturn("zookeeper.apache.org");
+        when(addr.getHostString()).thenReturn("zookeeper.apache.org");
         when(addr.getAddress()).thenReturn(ia);
         when(ia.getCanonicalHostName()).thenReturn("zk1.apache.org");
         when(ia.getHostAddress()).thenReturn("127.0.0.1");
@@ -48,7 +48,7 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         SaslServerPrincipal.WrapperInetSocketAddress addr = mock(SaslServerPrincipal.WrapperInetSocketAddress.class);
         SaslServerPrincipal.WrapperInetAddress ia = mock(SaslServerPrincipal.WrapperInetAddress.class);
 
-        when(addr.getHostName()).thenReturn("zookeeper.apache.org");
+        when(addr.getHostString()).thenReturn("zookeeper.apache.org");
         when(addr.getAddress()).thenReturn(ia);
         when(ia.getCanonicalHostName()).thenReturn("zk1.apache.org");
         when(ia.getHostAddress()).thenReturn("127.0.0.1");
@@ -64,7 +64,7 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         SaslServerPrincipal.WrapperInetSocketAddress addr = mock(SaslServerPrincipal.WrapperInetSocketAddress.class);
         SaslServerPrincipal.WrapperInetAddress ia = mock(SaslServerPrincipal.WrapperInetAddress.class);
 
-        when(addr.getHostName()).thenReturn("zookeeper.apache.org");
+        when(addr.getHostString()).thenReturn("zookeeper.apache.org");
         when(addr.getAddress()).thenReturn(ia);
         when(ia.getCanonicalHostName()).thenReturn("127.0.0.1");
         when(ia.getHostAddress()).thenReturn("127.0.0.1");
