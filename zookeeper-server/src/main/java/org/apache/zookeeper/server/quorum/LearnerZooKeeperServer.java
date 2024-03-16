@@ -172,4 +172,18 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
         }
     }
 
+    @Override
+    public void shutdown(boolean fullyShutDown) {
+        if (shutdownZKServer(fullyShutDown)) {
+            try {
+                if (syncProcessor != null) {
+                    syncProcessor.shutdown();
+                }
+            } catch (Exception e) {
+                LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
+            }
+            updateZKDatabase(fullyShutDown);
+        }
+    }
+
 }
