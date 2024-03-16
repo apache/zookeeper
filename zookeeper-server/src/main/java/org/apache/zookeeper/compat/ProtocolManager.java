@@ -20,6 +20,7 @@ package org.apache.zookeeper.compat;
 
 import java.io.IOException;
 import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
 
@@ -117,5 +118,39 @@ public final class ProtocolManager {
         response.setPasswd(inputArchive.readBuffer("passwd"));
         inputArchive.endRecord("connect");
         return response;
+    }
+
+    /**
+     * The serialization of {@link ConnectResponse} has to be handled
+     * specially as clients earlier than 3.5 might not expect the
+     * {@code readOnly} flag.
+     *
+     * @param response the response to serialize
+     * @param outputArchive the serialization destination
+     * @see #deserializeConnectRequest(InputArchive)
+     */
+    public void serializeConnectResponse(final ConnectResponse response, OutputArchive outputArchive) throws IOException {
+        serializeConnectResponse(response, outputArchive, isReadonlyAvailable());
+    }
+
+    private static void serializeConnectResponse(final ConnectResponse response, OutputArchive outputArchive, boolean withReadonly) throws IOException {
+        if (withReadonly) {
+            serializeConnectResponseWithReadonly(response, outputArchive);
+        } else {
+            serializeConnectResponseWithoutReadonly(response, outputArchive);
+        }
+    }
+
+    private static void serializeConnectResponseWithReadonly(ConnectResponse response, OutputArchive outputArchive) throws IOException {
+        response.serialize(outputArchive, "connect");
+    }
+
+    private static void serializeConnectResponseWithoutReadonly(ConnectResponse response, OutputArchive outputArchive) throws IOException {
+        outputArchive.startRecord(response, "connect");
+        outputArchive.writeInt(response.getProtocolVersion(), "protocolVersion");
+        outputArchive.writeInt(response.getTimeOut(), "timeOut");
+        outputArchive.writeLong(response.getSessionId(), "sessionId");
+        outputArchive.writeBuffer(response.getPasswd(), "passwd");
+        outputArchive.endRecord(response, "connect");
     }
 }
