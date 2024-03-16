@@ -359,6 +359,7 @@ unsigned __stdcall do_io( void * v)
 void *do_io(void *v)
 #endif
 {
+    log_callback_fn log_fn;
     zhandle_t *zh = (zhandle_t*)v;
 #ifndef WIN32
     struct pollfd fds[2];
@@ -456,8 +457,9 @@ void *do_io(void *v)
         if(is_unrecoverable(zh))
             break;
     }
-    api_epilog(zh, 0);    
-    LOG_DEBUG(LOGCALLBACK(zh), "IO thread terminated");
+    log_fn = LOGCALLBACK(zh);
+    api_epilog(zh, 0);
+    LOG_DEBUG(log_fn, "IO thread terminated");
     return 0;
 }
 
@@ -468,6 +470,7 @@ void *do_completion(void *v)
 #endif
 {
     zhandle_t *zh = v;
+    log_callback_fn fn;
     api_prolog(zh);
     notify_thread_ready(zh);
     LOG_DEBUG(LOGCALLBACK(zh), "started completion thread");
@@ -479,8 +482,9 @@ void *do_completion(void *v)
         pthread_mutex_unlock(&zh->completions_to_process.lock);
         process_completions(zh);
     }
-    api_epilog(zh, 0);    
-    LOG_DEBUG(LOGCALLBACK(zh), "completion thread terminated");
+    fn = LOGCALLBACK(zh);
+    api_epilog(zh, 0);
+    LOG_DEBUG(fn, "completion thread terminated");
     return 0;
 }
 
