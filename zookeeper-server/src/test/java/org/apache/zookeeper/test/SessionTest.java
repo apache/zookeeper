@@ -243,21 +243,8 @@ public class SessionTest extends ZKTestCase {
                                                                                           % hostPorts.length], CONNECTION_TIMEOUT, new MyWatcher(Integer.toString(
                     i
                             + 1)), zk.getSessionId(), zk.getSessionPasswd());
-            final int[] result = new int[1];
-            result[0] = Integer.MAX_VALUE;
-            zknew.sync("/", (rc, path, ctx) -> {
-                synchronized (result) {
-                    result[0] = rc;
-                    result.notify();
-                }
-            }, null);
-            synchronized (result) {
-                if (result[0] == Integer.MAX_VALUE) {
-                    result.wait(5000);
-                }
-            }
-            LOG.info("{} Sync returned {}", hostPorts[(i + 1) % hostPorts.length], result[0]);
-            assertTrue(result[0] == KeeperException.Code.OK.intValue());
+            zknew.sync("/");
+            LOG.info("{} Sync succeed", hostPorts[(i + 1) % hostPorts.length]);
             zknew.setData("/", new byte[1], -1);
             try {
                 zk.setData("/", new byte[1], -1);
@@ -270,6 +257,7 @@ public class SessionTest extends ZKTestCase {
         }
         zk.close();
     }
+
     /**
      * This test makes sure that duplicate state changes are not communicated
      * to the client watcher. For example we should not notify state as

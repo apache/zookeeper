@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
@@ -179,4 +181,15 @@ public class QuorumRequestPipelineTest extends QuorumBase {
         assertTrue(complete, String.format("%s Sync completed", serverState));
     }
 
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testSynchronousSync(ServerState serverState) throws Exception {
+        setUp(serverState);
+        create2EmptyNode(zkClient, PARENT_PATH);
+        ForkJoinTask<Void> task = ForkJoinPool.commonPool().submit(() -> {
+            zkClient.sync(PARENT_PATH);
+            return null;
+        });
+        task.get(30, TimeUnit.SECONDS);
+    }
 }

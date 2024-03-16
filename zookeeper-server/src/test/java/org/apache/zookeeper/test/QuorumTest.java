@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
 import org.apache.zookeeper.KeeperException;
@@ -182,15 +183,24 @@ public class QuorumTest extends ZKTestCase {
     }
 
     /**
-     * Make sure that we can change sessions
-     *  from follower to leader.
-     *
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws KeeperException
+     * Make sure that we can change sessions among servers and maintain consistent view
+     * using {@link ZooKeeper#sync(String)}.
      */
     @Test
-    public void testSessionMoved() throws Exception {
+    public void testSessionMovedWithSynchronousSync() throws Exception {
+        testSessionMoved(true);
+    }
+
+    /**
+     * Make sure that we can change sessions among servers and maintain consistent view
+     * using {@link ZooKeeper#sync(String, AsyncCallback.VoidCallback, Object)}.
+     */
+    @Test
+    public void testSessionMovedWithAsynchronousSync() throws Exception {
+        testSessionMoved(false);
+    }
+
+    public void testSessionMoved(boolean synchronous_sync) throws Exception {
         String[] hostPorts = qb.hostPort.split(",");
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
             hostPorts[0],
@@ -208,21 +218,8 @@ public class QuorumTest extends ZKTestCase {
                 zk.getSessionId(),
                 zk.getSessionPasswd());
             zknew.setData("/", new byte[1], -1);
-            final int[] result = new int[1];
-            result[0] = Integer.MAX_VALUE;
-            zknew.sync("/", (rc, path, ctx) -> {
-                synchronized (result) {
-                    result[0] = rc;
-                    result.notify();
-                }
-            }, null);
-            synchronized (result) {
-                if (result[0] == Integer.MAX_VALUE) {
-                    result.wait(5000);
-                }
-            }
-            LOG.info("{} Sync returned {}", hostPorts[(i + 1) % hostPorts.length], result[0]);
-            assertTrue(result[0] == KeeperException.Code.OK.intValue());
+            syncClient(zknew, synchronous_sync);
+            LOG.info("{} Sync succeed", hostPorts[(i + 1) % hostPorts.length]);
             try {
                 zk.setData("/", new byte[1], -1);
                 fail("Should have lost the connection");
