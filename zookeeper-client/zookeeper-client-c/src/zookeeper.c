@@ -730,7 +730,7 @@ static void setup_random()
             /* Assert we either read something or we were interrupted due to a
              * signal (errno == EINTR) in which case we need to retry.
              */
-            int rc = read(fd, &seed + seed_len, sizeof(seed) - seed_len);
+            int rc = read(fd, (char *)&seed + seed_len, sizeof(seed) - seed_len);
             assert(rc > 0 || errno == EINTR);
             if (rc > 0) {
                 seed_len += rc;
