@@ -569,7 +569,6 @@
     <commons-collections.version>4.4</commons-collections.version>
     <dropwizard.version>4.1.12.1</dropwizard.version>
     <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
-    <checkstyle.version>8.39</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.11.0</commons-io.version>
     <burningwave.mockdns.version>0.25.4</burningwave.mockdns.version>
@@ -887,28 +886,6 @@
           <artifactId>dependency-check-maven</artifactId>
           <version>8.3.1</version>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.1.1</version>
-          <dependencies>
-            <dependency>
-              <groupId>com.puppycrawl.tools</groupId>
-              <artifactId>checkstyle</artifactId>
-              <version>${checkstyle.version}</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <configLocation>checkstyle-strict.xml</configLocation>
-            <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
-            <encoding>UTF-8</encoding>
-            <consoleOutput>true</consoleOutput>
-            <failOnViolation>true</failOnViolation>
-            <includeResources>false</includeResources>
-            <includeTestResources>false</includeTestResources>
-            <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          </configuration>
-        </plugin>
         <!-- we don't need this plugin-->
         <plugin>
           <artifactId>maven-remote-resources-plugin</artifactId>
@@ -1068,7 +1045,6 @@
           <excludes>
             <exclude>**/README.md</exclude>
             <exclude>**/findbugsExcludeFile.xml</exclude>
-            <exclude>**/checkstyle-noframes-sorted.xsl</exclude>
             <exclude>**/configure.ac</exclude>
             <exclude>**/Makefile.am</exclude>
             <exclude>conf/zoo_sample.cfg</exclude>

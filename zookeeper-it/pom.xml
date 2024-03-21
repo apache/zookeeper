@@ -37,7 +37,6 @@
   <properties>
     <skipTests>true</skipTests>
     <spotbugs.skip>true</spotbugs.skip>
-    <checkstyle.skip>true</checkstyle.skip>
   </properties>
 
   <dependencies>

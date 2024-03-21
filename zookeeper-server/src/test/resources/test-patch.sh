@@ -389,39 +389,6 @@ $JIRA_COMMENT_FOOTER"
 }
 
 ###############################################################################
-### Check there are no changes in the number of Checkstyle warnings
-checkStyle () {
-  echo ""
-  echo ""
-  echo "======================================================================"
-  echo "======================================================================"
-  echo "    Determining number of patched checkstyle warnings."
-  echo "======================================================================"
-  echo "======================================================================"
-  echo ""
-  echo ""
-  echo "THIS IS NOT IMPLEMENTED YET"
-  echo ""
-  echo ""
-  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= checkstyle"
-  $ANT_HOME/bin/ant -DZookeeperPatchProcess= checkstyle
-  JIRA_COMMENT_FOOTER="Checkstyle results: $BUILD_URL/artifact/trunk/build/test/checkstyle-errors.html
-$JIRA_COMMENT_FOOTER"
-  ### TODO: calculate actual patchStyleErrors
-#  patchStyleErrors=0
-#  if [[ $patchStyleErrors != 0 ]] ; then
-#    JIRA_COMMENT="$JIRA_COMMENT
-#
-#    -1 checkstyle.  The patch generated $patchStyleErrors code style errors."
-#    return 1
-#  fi
-#  JIRA_COMMENT="$JIRA_COMMENT
-#
-#    +1 checkstyle.  The patch generated 0 code style errors."
-  return 0
-}
-
-###############################################################################
 ### Check there are no changes in the number of Findbugs warnings
 checkFindbugsWarnings () {
   findbugs_version=`${FINDBUGS_HOME}/bin/findbugs -version`
@@ -626,9 +593,6 @@ checkJavadocWarnings
 (( RESULT = RESULT + $? ))
 checkJavacWarnings
 (( RESULT = RESULT + $? ))
-### Checkstyle not implemented yet
-#checkStyle
-#(( RESULT = RESULT + $? ))
 checkFindbugsWarnings
 (( RESULT = RESULT + $? ))
 checkReleaseAuditWarnings
