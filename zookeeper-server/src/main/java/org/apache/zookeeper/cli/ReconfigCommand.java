@@ -70,12 +70,14 @@ public class ReconfigCommand extends CliCommand {
     }
 
     public ReconfigCommand() {
-        super("reconfig", "[-s] "
-                          + "[-v version] "
-                          + "[[-file path] | "
-                          + "[-members serverID=host:port1:port2;port3[,...]*]] | "
-                          + "[-add serverId=host:port1:port2;port3[,...]]* "
-                          + "[-remove serverId[,...]*]");
+        super(
+                "reconfig",
+                "[-s] "
+                        + "[-v version] "
+                        + "[[-file path] | "
+                        + "[-members serverID=host:port1:port2;port3[,...]*]] | "
+                        + "[-add serverId=host:port1:port2;port3[,...]]* "
+                        + "[-remove serverId[,...]*]");
     }
 
     @Override
@@ -105,7 +107,7 @@ public class ReconfigCommand extends CliCommand {
         // Simple error checking for conflicting modes
         if ((cl.hasOption("file") || cl.hasOption("members")) && (cl.hasOption("add") || cl.hasOption("remove"))) {
             throw new CliParseException("Can't use -file or -members together with -add or -remove (mixing incremental"
-                                        + " and non-incremental modes is not allowed)");
+                    + " and non-incremental modes is not allowed)");
         }
         if (cl.hasOption("file") && cl.hasOption("members")) {
             throw new CliParseException("Can't use -file and -members together (conflicting non-incremental modes)");
@@ -127,10 +129,11 @@ public class ReconfigCommand extends CliCommand {
                 try (FileInputStream inConfig = new FileInputStream(cl.getOptionValue("file"))) {
                     dynamicCfg.load(inConfig);
                 }
-                //check that membership makes sense; leader will make these checks again
-                //don't check for leader election ports since
-                //client doesn't know what leader election alg is used
-                members = QuorumPeerConfig.parseDynamicConfig(dynamicCfg, 0, true, false, null).toString();
+                // check that membership makes sense; leader will make these checks again
+                // don't check for leader election ports since
+                // client doesn't know what leader election alg is used
+                members = QuorumPeerConfig.parseDynamicConfig(dynamicCfg, 0, true, false, null)
+                        .toString();
             } catch (Exception e) {
                 throw new CliParseException("Error processing " + cl.getOptionValue("file") + e.getMessage());
             }
@@ -162,5 +165,4 @@ public class ReconfigCommand extends CliCommand {
         }
         return false;
     }
-
 }

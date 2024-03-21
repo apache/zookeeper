@@ -57,12 +57,10 @@ public class CheckTest extends ClientBase {
     }
 
     @Override
-    public void setUp() throws Exception {
-    }
+    public void setUp() throws Exception {}
 
     @Override
-    public void tearDown() throws Exception {
-    }
+    public void tearDown() throws Exception {}
 
     private static void checkVersion(TestableZooKeeper zk, String path, int version) throws Exception {
         RequestHeader header = new RequestHeader();
@@ -114,7 +112,8 @@ public class CheckTest extends ClientBase {
         } finally {
             try {
                 qb.tearDown();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -142,7 +141,8 @@ public class CheckTest extends ClientBase {
         } finally {
             try {
                 qb.tearDown();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 }

@@ -156,7 +156,8 @@ public class ReconfigExceptionTest extends ZKTestCase {
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
             // There is ACL however the permission is wrong - need WRITE permission at leaste.
-            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(
+                    ZooDefs.Perms.READ, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0=" /* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -174,7 +175,9 @@ public class ReconfigExceptionTest extends ZKTestCase {
 
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(ZooDefs.Perms.WRITE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */))));
+            ArrayList<ACL> acls = new ArrayList<>(Collections.singletonList(new ACL(
+                    ZooDefs.Perms.WRITE,
+                    new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0=" /* password is test */))));
             zkAdmin.setACL(ZooDefs.CONFIG_NODE, acls, -1);
             resetZKAdmin();
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -215,13 +218,12 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
         int followerId = leaderId == 1 ? 2 : 1;
         joiningServers.add("server." + followerId + "=localhost:"
-                           + qu.getPeer(followerId).peer.getQuorumAddress().getAllPorts().get(0) /*quorum port*/
-                           + ":"
-                           + qu.getPeer(followerId).peer.getElectionAddress().getAllPorts().get(0) /*election port*/
-                           + ":participant;localhost:"
-                           + PortAssignment.unique()/* new client port */);
+                + qu.getPeer(followerId).peer.getQuorumAddress().getAllPorts().get(0) /*quorum port*/
+                + ":"
+                + qu.getPeer(followerId).peer.getElectionAddress().getAllPorts().get(0) /*election port*/
+                + ":participant;localhost:"
+                + PortAssignment.unique() /* new client port */);
         zkAdmin.reconfigure(joiningServers, null, null, -1, new Stat());
         return true;
     }
-
 }

@@ -62,7 +62,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
         int paramIndex = 0;
         for (X509KeyType caKeyType : X509KeyType.values()) {
             for (X509KeyType certKeyType : X509KeyType.values()) {
-                for (Boolean hostnameVerification : new Boolean[]{true, false}) {
+                for (Boolean hostnameVerification : new Boolean[] {true, false}) {
                     result.add(Arguments.of(caKeyType, certKeyType, hostnameVerification, paramIndex++));
                 }
             }
@@ -82,10 +82,18 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     private boolean handshakeCompleted = false;
 
     public void init(
-            final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex) {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex) {
         super.init(paramIndex, () -> {
             try {
-                return X509TestContext.newBuilder().setTempDir(tempDir).setKeyStoreKeyType(certKeyType).setTrustStoreKeyType(caKeyType).setHostnameVerification(hostnameVerification).build();
+                return X509TestContext.newBuilder()
+                        .setTempDir(tempDir)
+                        .setKeyStoreKeyType(certKeyType)
+                        .setTrustStoreKeyType(caKeyType)
+                        .setHostnameVerification(hostnameVerification)
+                        .build();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -131,7 +139,9 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
         private ExecutorService workerPool;
         private UnifiedServerSocket serverSocket;
 
-        UnifiedServerThread(X509Util x509Util, InetSocketAddress bindAddress, boolean allowInsecureConnection, byte[] dataToClient) throws IOException {
+        UnifiedServerThread(
+                X509Util x509Util, InetSocketAddress bindAddress, boolean allowInsecureConnection, byte[] dataToClient)
+                throws IOException {
             this.dataToClient = dataToClient;
             dataFromClients = new ArrayList<>();
             workerPool = Executors.newCachedThreadPool();
@@ -201,7 +211,6 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
         synchronized boolean receivedAnyDataFromClient() {
             return !dataFromClients.isEmpty();
         }
-
     }
 
     private SSLSocket connectWithSSL() throws IOException, X509Exception, InterruptedException {
@@ -267,8 +276,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testConnectWithSSLToNonStrictServer(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         UnifiedServerThread serverThread = new UnifiedServerThread(x509Util, localServerAddress, true, DATA_TO_CLIENT);
@@ -302,8 +314,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testConnectWithSSLToStrictServer(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         UnifiedServerThread serverThread = new UnifiedServerThread(x509Util, localServerAddress, false, DATA_TO_CLIENT);
@@ -338,8 +353,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testConnectWithoutSSLToNonStrictServer(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         UnifiedServerThread serverThread = new UnifiedServerThread(x509Util, localServerAddress, true, DATA_TO_CLIENT);
@@ -369,8 +387,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testConnectWithoutSSLToNonStrictServerPartialWrite(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         UnifiedServerThread serverThread = new UnifiedServerThread(x509Util, localServerAddress, true, DATA_TO_CLIENT);
@@ -403,8 +424,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testConnectWithoutSSLToStrictServer(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         UnifiedServerThread serverThread = new UnifiedServerThread(x509Util, localServerAddress, false, DATA_TO_CLIENT);
@@ -449,8 +473,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testTLSDetectionNonBlockingNonStrictServerIdleClient(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         Socket badClientSocket = null;
@@ -505,8 +532,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testTLSDetectionNonBlockingStrictServerIdleClient(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         Socket badClientSocket = null;
@@ -546,8 +576,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testTLSDetectionNonBlockingNonStrictServerDisconnectedClient(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         Socket clientSocket = null;
@@ -601,8 +634,11 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testTLSDetectionNonBlockingStrictServerDisconnectedClient(
-        final X509KeyType caKeyType, final X509KeyType certKeyType, final Boolean hostnameVerification, final Integer paramIndex
-    ) throws Exception {
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final Boolean hostnameVerification,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, hostnameVerification, paramIndex);
         setUp();
         Socket secureClientSocket = null;
@@ -633,5 +669,4 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
             serverThread.shutdown(TIMEOUT);
         }
     }
-
 }

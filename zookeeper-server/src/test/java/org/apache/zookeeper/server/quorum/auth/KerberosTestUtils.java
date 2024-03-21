@@ -30,7 +30,10 @@ public class KerberosTestUtils {
 
     private static final boolean IBM_JAVA = System.getProperty("java.vendor").contains("IBM");
 
-    private static String keytabFile = new File(System.getProperty("build.test.dir", "build"), UUID.randomUUID().toString()).getAbsolutePath();
+    private static String keytabFile = new File(
+                    System.getProperty("build.test.dir", "build"),
+                    UUID.randomUUID().toString())
+            .getAbsolutePath();
 
     public static String getRealm() {
         return "EXAMPLE.COM";
@@ -71,8 +74,8 @@ public class KerberosTestUtils {
     public static String replaceHostPattern(String principal) {
         String[] components = principal.split("[/@]");
         if (components == null
-                    || components.length < 2
-                    || !components[1].equals(SecurityUtils.QUORUM_HOSTNAME_PATTERN)) {
+                || components.length < 2
+                || !components[1].equals(SecurityUtils.QUORUM_HOSTNAME_PATTERN)) {
             return principal;
         } else {
             return replacePattern(components, "localhost");
@@ -109,8 +112,8 @@ public class KerberosTestUtils {
 
         private static String getKrb5LoginModuleName() {
             return System.getProperty("java.vendor").contains("IBM")
-              ? "com.ibm.security.auth.module.Krb5LoginModule"
-              : "com.sun.security.auth.module.Krb5LoginModule";
+                    ? "com.ibm.security.auth.module.Krb5LoginModule"
+                    : "com.sun.security.auth.module.Krb5LoginModule";
         }
 
         @Override
@@ -136,10 +139,10 @@ public class KerberosTestUtils {
             }
             options.put("debug", "true");
 
-            return new AppConfigurationEntry[]{new AppConfigurationEntry(getKrb5LoginModuleName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options)};
+            return new AppConfigurationEntry[] {
+                new AppConfigurationEntry(
+                        getKrb5LoginModuleName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options)
+            };
         }
-
     }
-
-
 }

@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A class for streaming data out.
  */
-public class StreamOutputter implements CommandOutputter{
+public class StreamOutputter implements CommandOutputter {
     private static final Logger LOG = LoggerFactory.getLogger(StreamOutputter.class);
     private final String clientIP;
 
@@ -43,7 +43,7 @@ public class StreamOutputter implements CommandOutputter{
 
     @Override
     public void output(final CommandResponse response, final OutputStream os) {
-        try (final InputStream is = response.getInputStream()){
+        try (final InputStream is = response.getInputStream()) {
             IOUtils.copyBytes(is, os, 1024, true);
         } catch (final IOException e) {
             LOG.warn("Exception streaming out data to {}", clientIP, e);

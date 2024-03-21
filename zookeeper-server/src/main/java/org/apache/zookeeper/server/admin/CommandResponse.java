@@ -60,9 +60,8 @@ public class CommandResponse {
      * @param statusCode http status code
      */
     public CommandResponse(String command, String error, int statusCode) {
-       this(command, error, statusCode, null);
+        this(command, error, statusCode, null);
     }
-
 
     /**
      * Creates a new response.
@@ -72,7 +71,8 @@ public class CommandResponse {
      * @param statusCode http status code
      * @param inputStream inputStream to send out data (may be null)
      */
-    public CommandResponse(final String command, final String error, final int statusCode, final InputStream inputStream) {
+    public CommandResponse(
+            final String command, final String error, final int statusCode, final InputStream inputStream) {
         this.command = command;
         this.error = error;
         data = new LinkedHashMap<>();
@@ -128,7 +128,7 @@ public class CommandResponse {
      * Sets the InputStream
      */
     public void setInputStream(final InputStream inputStream) {
-         this.inputStream = inputStream;
+        this.inputStream = inputStream;
     }
 
     /**
@@ -183,5 +183,4 @@ public class CommandResponse {
         m.putAll(data);
         return m;
     }
-
 }

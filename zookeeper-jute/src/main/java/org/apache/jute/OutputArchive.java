@@ -42,8 +42,7 @@ public interface OutputArchive {
 
     void writeString(String s, String tag) throws IOException;
 
-    void writeBuffer(byte[] buf, String tag)
-            throws IOException;
+    void writeBuffer(byte[] buf, String tag) throws IOException;
 
     void writeRecord(Record r, String tag) throws IOException;
 
@@ -60,5 +59,4 @@ public interface OutputArchive {
     void endMap(TreeMap<?, ?> v, String tag) throws IOException;
 
     long getDataSize();
-
 }

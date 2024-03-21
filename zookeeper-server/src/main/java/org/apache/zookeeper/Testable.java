@@ -40,6 +40,5 @@ public interface Testable {
     /**
      * Close the ClientCnxn socket for testing purposes
      */
-    default void closeSocket() throws IOException { }
-
+    default void closeSocket() throws IOException {}
 }

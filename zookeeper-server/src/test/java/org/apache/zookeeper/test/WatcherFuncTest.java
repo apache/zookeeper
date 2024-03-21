@@ -82,7 +82,6 @@ public class WatcherFuncTest extends ClientBase {
             }
             events.clear();
         }
-
     }
 
     private SimpleWatcher client_dwatch;
@@ -142,9 +141,7 @@ public class WatcherFuncTest extends ClientBase {
     private long delete(String path) throws InterruptedException, KeeperException {
         client.delete(path, -1);
         int lastSlash = path.lastIndexOf('/');
-        String parent = (lastSlash == 0)
-            ? "/"
-            : path.substring(0, lastSlash);
+        String parent = (lastSlash == 0) ? "/" : path.substring(0, lastSlash);
         // the deletion's zxid will be reflected in the parent's Pzxid
         return client.exists(parent, false).getPzxid();
     }
@@ -490,5 +487,4 @@ public class WatcherFuncTest extends ClientBase {
         expected.clear();
         e2.clear();
     }
-
 }

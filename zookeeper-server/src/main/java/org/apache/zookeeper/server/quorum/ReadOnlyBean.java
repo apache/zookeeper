@@ -34,5 +34,4 @@ public class ReadOnlyBean extends ZooKeeperServerBean {
     public String getName() {
         return "ReadOnlyServer";
     }
-
 }

@@ -64,7 +64,8 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         int observer = 0;
         clientPorts[observer] = PortAssignment.unique();
-        sb.append("server." + observer + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":observer\n");
+        sb.append("server." + observer + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                + ":observer\n");
         for (int i = 1; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + "\n");
@@ -80,7 +81,8 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         // start the observer
         Map<String, String> observerConfig = new HashMap<>();
         observerConfig.put("peerType", "observer");
-        mt[observer] = new QuorumPeerTestBase.MainThread(observer, clientPorts[observer], quorumCfgSection, observerConfig);
+        mt[observer] =
+                new QuorumPeerTestBase.MainThread(observer, clientPorts[observer], quorumCfgSection, observerConfig);
         mt[observer].start();
 
         // connect to the observer node and wait for CONNECTED state
@@ -90,7 +92,6 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
 
         // creating a node
         zk_client.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
 
         // there are two proposals by now, one for the global client session creation, one for the create request
 
@@ -117,5 +118,4 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
     }
-
 }

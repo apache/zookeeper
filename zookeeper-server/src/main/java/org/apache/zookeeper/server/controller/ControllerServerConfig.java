@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import java.io.File;
@@ -38,6 +37,7 @@ public class ControllerServerConfig extends QuorumPeerConfig {
     public static final String CONTROLLER_PORT_KEY = "zookeeper.controllerPort";
     public static final String CLIENT_PORT_KEY = "zookeeper.clientPortAddress";
     private InetSocketAddress controllerAddress;
+
     public InetSocketAddress getControllerAddress() {
         return controllerAddress;
     }
@@ -144,11 +144,7 @@ public class ControllerServerConfig extends QuorumPeerConfig {
         randomSocket2.close();
 
         QuorumPeer.QuorumServer selfAsPeer = new QuorumPeer.QuorumServer(
-                0,
-                new InetSocketAddress(quorumPort),
-                new InetSocketAddress(electionPort),
-                this.clientPortAddress
-        );
+                0, new InetSocketAddress(quorumPort), new InetSocketAddress(electionPort), this.clientPortAddress);
         Map<Long, QuorumPeer.QuorumServer> peers = new HashMap<>();
         peers.put(selfAsPeer.id, selfAsPeer);
         this.quorumVerifier = new QuorumMaj(peers);

@@ -117,5 +117,4 @@ public class AvgMinMaxCounter extends Metric implements Summary {
         m.put("sum_" + name, this.getTotal());
         return m;
     }
-
 }

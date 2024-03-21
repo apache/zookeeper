@@ -83,7 +83,8 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getQuorumAddress() {
-        return peer.getQuorumAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
+        return peer.getQuorumAddress().getAllAddresses().stream()
+                .map(NetUtils::formatInetAddr)
                 .collect(Collectors.joining("|"));
     }
 
@@ -92,7 +93,8 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getElectionAddress() {
-        return peer.getElectionAddress().getAllAddresses().stream().map(NetUtils::formatInetAddr)
+        return peer.getElectionAddress().getAllAddresses().stream()
+                .map(NetUtils::formatInetAddr)
                 .collect(Collectors.joining("|"));
     }
 

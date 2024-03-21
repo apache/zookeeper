@@ -207,5 +207,4 @@ public class DataNode implements Record {
     public synchronized byte[] getData() {
         return data;
     }
-
 }

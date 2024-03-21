@@ -37,8 +37,7 @@ public class JaasConfiguration extends javax.security.auth.login.Configuration {
 
     private final Map<String, AppConfigurationEntry[]> sections = new HashMap<>();
 
-    public JaasConfiguration() {
-    }
+    public JaasConfiguration() {}
 
     /**
      * Add a section to the jaas.conf
@@ -71,5 +70,4 @@ public class JaasConfiguration extends javax.security.auth.login.Configuration {
     public AppConfigurationEntry[] getAppConfigurationEntry(String appName) {
         return sections.get(appName);
     }
-
 }

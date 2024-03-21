@@ -74,5 +74,4 @@ public interface FollowerMXBean extends ZooKeeperServerMXBean {
      * @param maxConcurrentDiffSyncs Number of concurrent diff syncs permitted to send to observers
      */
     void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs);
-
 }

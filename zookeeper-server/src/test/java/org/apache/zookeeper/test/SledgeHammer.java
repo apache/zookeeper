@@ -45,7 +45,8 @@ public class SledgeHammer extends Thread {
     public void run() {
         try {
             Stat stat = new Stat();
-            String path = zk.create("/hammers/hammer-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            String path =
+                    zk.create("/hammers/hammer-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             byte[] tag = (path + " was here!").getBytes();
             synchronized (this) {
                 String startPath = "/hammers/start";
@@ -102,5 +103,4 @@ public class SledgeHammer extends Thread {
         h.start();
         System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
-
 }

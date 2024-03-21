@@ -32,5 +32,4 @@ public class ClientSkipACLTest extends ClientTest {
     public static void teardown() {
         System.clearProperty("zookeeper.skipACL");
     }
-
 }

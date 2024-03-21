@@ -35,13 +35,18 @@ public class ZKClientConfig extends ZKConfig {
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";
     public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME = "zookeeper.sasl.client.canonicalize.hostname";
     public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT = "true";
+
     @SuppressWarnings("deprecation")
     public static final String LOGIN_CONTEXT_NAME_KEY = ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY;
+
     public static final String LOGIN_CONTEXT_NAME_KEY_DEFAULT = "Client";
+
     @SuppressWarnings("deprecation")
     public static final String ENABLE_CLIENT_SASL_KEY = ZooKeeperSaslClient.ENABLE_CLIENT_SASL_KEY;
+
     @SuppressWarnings("deprecation")
     public static final String ENABLE_CLIENT_SASL_DEFAULT = ZooKeeperSaslClient.ENABLE_CLIENT_SASL_DEFAULT;
+
     public static final String ZOOKEEPER_SERVER_REALM = "zookeeper.server.realm";
     /**
      * This controls whether automatic watch resetting is enabled. Clients
@@ -50,6 +55,7 @@ public class ZKClientConfig extends ZKConfig {
      * "zookeeper.disableAutoWatchReset" to "true"
      */
     public static final String DISABLE_AUTO_WATCH_RESET = "zookeeper.disableAutoWatchReset";
+
     @SuppressWarnings("deprecation")
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = ZooKeeper.ZOOKEEPER_CLIENT_CNXN_SOCKET;
     /**
@@ -57,6 +63,7 @@ public class ZKClientConfig extends ZKConfig {
      */
     @SuppressWarnings("deprecation")
     public static final String SECURE_CLIENT = ZooKeeper.SECURE_CLIENT;
+
     public static final int CLIENT_MAX_PACKET_LENGTH_DEFAULT = 0xfffff; /* 1 MB */
     public static final String ZOOKEEPER_REQUEST_TIMEOUT = "zookeeper.request.timeout";
     public static final String ZOOKEEPER_SERVER_PRINCIPAL = "zookeeper.server.principal";
@@ -141,5 +148,4 @@ public class ZKClientConfig extends ZKConfig {
         }
         return defaultValue;
     }
-
 }

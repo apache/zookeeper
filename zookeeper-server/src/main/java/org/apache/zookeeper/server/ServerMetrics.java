@@ -112,12 +112,14 @@ public final class ServerMetrics {
         ADD_DEAD_WATCHER_STALL_TIME = metricsContext.getCounter("add_dead_watcher_stall_time");
         DEAD_WATCHERS_QUEUED = metricsContext.getCounter("dead_watchers_queued");
         DEAD_WATCHERS_CLEARED = metricsContext.getCounter("dead_watchers_cleared");
-        DEAD_WATCHERS_CLEANER_LATENCY = metricsContext.getSummary("dead_watchers_cleaner_latency", DetailLevel.ADVANCED);
+        DEAD_WATCHERS_CLEANER_LATENCY =
+                metricsContext.getSummary("dead_watchers_cleaner_latency", DetailLevel.ADVANCED);
 
         RESPONSE_PACKET_CACHE_HITS = metricsContext.getCounter("response_packet_cache_hits");
         RESPONSE_PACKET_CACHE_MISSING = metricsContext.getCounter("response_packet_cache_misses");
         RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS = metricsContext.getCounter("response_packet_get_children_cache_hits");
-        RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING = metricsContext.getCounter("response_packet_get_children_cache_misses");
+        RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING =
+                metricsContext.getCounter("response_packet_get_children_cache_misses");
 
         ENSEMBLE_AUTH_SUCCESS = metricsContext.getCounter("ensemble_auth_success");
 
@@ -153,18 +155,25 @@ public final class ServerMetrics {
         /*
          * Consecutive number of read requests that are in the session queue right after a commit request.
          */
-        READS_AFTER_WRITE_IN_SESSION_QUEUE = metricsContext.getSummary("reads_after_write_in_session_queue", DetailLevel.BASIC);
-        READ_ISSUED_FROM_SESSION_QUEUE = metricsContext.getSummary("reads_issued_from_session_queue", DetailLevel.BASIC);
+        READS_AFTER_WRITE_IN_SESSION_QUEUE =
+                metricsContext.getSummary("reads_after_write_in_session_queue", DetailLevel.BASIC);
+        READ_ISSUED_FROM_SESSION_QUEUE =
+                metricsContext.getSummary("reads_issued_from_session_queue", DetailLevel.BASIC);
         SESSION_QUEUES_DRAINED = metricsContext.getSummary("session_queues_drained", DetailLevel.BASIC);
 
-        TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ = metricsContext.getSummary("time_waiting_empty_pool_in_commit_processor_read_ms", DetailLevel.BASIC);
-        WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR = metricsContext.getSummary("write_batch_time_in_commit_processor", DetailLevel.BASIC);
+        TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ =
+                metricsContext.getSummary("time_waiting_empty_pool_in_commit_processor_read_ms", DetailLevel.BASIC);
+        WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR =
+                metricsContext.getSummary("write_batch_time_in_commit_processor", DetailLevel.BASIC);
 
-        CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR = metricsContext.getSummary("concurrent_request_processing_in_commit_processor", DetailLevel.BASIC);
+        CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR =
+                metricsContext.getSummary("concurrent_request_processing_in_commit_processor", DetailLevel.BASIC);
 
         READS_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("read_commit_proc_req_queued", DetailLevel.BASIC);
-        WRITES_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("write_commit_proc_req_queued", DetailLevel.BASIC);
-        COMMITS_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("commit_commit_proc_req_queued", DetailLevel.BASIC);
+        WRITES_QUEUED_IN_COMMIT_PROCESSOR =
+                metricsContext.getSummary("write_commit_proc_req_queued", DetailLevel.BASIC);
+        COMMITS_QUEUED_IN_COMMIT_PROCESSOR =
+                metricsContext.getSummary("commit_commit_proc_req_queued", DetailLevel.BASIC);
         COMMITS_QUEUED = metricsContext.getCounter("request_commit_queued");
         READS_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("read_commit_proc_issued", DetailLevel.BASIC);
         WRITES_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("write_commit_proc_issued", DetailLevel.BASIC);
@@ -208,7 +217,8 @@ public final class ServerMetrics {
         WRITE_FINAL_PROC_TIME = metricsContext.getSummary("write_final_proc_time_ms", DetailLevel.ADVANCED);
 
         PROPOSAL_LATENCY = metricsContext.getSummary("proposal_latency", DetailLevel.ADVANCED);
-        PROPOSAL_ACK_CREATION_LATENCY = metricsContext.getSummary("proposal_ack_creation_latency", DetailLevel.ADVANCED);
+        PROPOSAL_ACK_CREATION_LATENCY =
+                metricsContext.getSummary("proposal_ack_creation_latency", DetailLevel.ADVANCED);
         COMMIT_PROPAGATION_LATENCY = metricsContext.getSummary("commit_propagation_latency", DetailLevel.ADVANCED);
         LEARNER_PROPOSAL_RECEIVED_COUNT = metricsContext.getCounter("learner_proposal_received_count");
         LEARNER_COMMIT_RECEIVED_COUNT = metricsContext.getCounter("learner_commit_received_count");
@@ -223,11 +233,13 @@ public final class ServerMetrics {
         STARTUP_TXNS_LOAD_TIME = metricsContext.getSummary("startup_txns_load_time", DetailLevel.BASIC);
         STARTUP_SNAP_LOAD_TIME = metricsContext.getSummary("startup_snap_load_time", DetailLevel.BASIC);
 
-        SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME = metricsContext.getSummary("sync_processor_queue_and_flush_time_ms", DetailLevel.ADVANCED);
+        SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME =
+                metricsContext.getSummary("sync_processor_queue_and_flush_time_ms", DetailLevel.ADVANCED);
         SYNC_PROCESSOR_QUEUE_SIZE = metricsContext.getSummary("sync_processor_queue_size", DetailLevel.BASIC);
         SYNC_PROCESSOR_QUEUED = metricsContext.getCounter("sync_processor_request_queued");
         SYNC_PROCESSOR_QUEUE_TIME = metricsContext.getSummary("sync_processor_queue_time_ms", DetailLevel.ADVANCED);
-        SYNC_PROCESSOR_FLUSH_TIME = metricsContext.getSummary("sync_processor_queue_flush_time_ms", DetailLevel.ADVANCED);
+        SYNC_PROCESSOR_FLUSH_TIME =
+                metricsContext.getSummary("sync_processor_queue_flush_time_ms", DetailLevel.ADVANCED);
         SYNC_PROCESS_TIME = metricsContext.getSummary("sync_process_time", DetailLevel.BASIC);
 
         BATCH_SIZE = metricsContext.getSummary("sync_processor_batch_size", DetailLevel.BASIC);
@@ -248,7 +260,8 @@ public final class ServerMetrics {
 
         DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
 
-        LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE = metricsContext.getSummary("learner_request_processor_queue_size", DetailLevel.BASIC);
+        LEARNER_REQUEST_PROCESSOR_QUEUE_SIZE =
+                metricsContext.getSummary("learner_request_processor_queue_size", DetailLevel.BASIC);
 
         UNSUCCESSFUL_HANDSHAKE = metricsContext.getCounter("unsuccessful_handshake");
         INSECURE_ADMIN = metricsContext.getCounter("insecure_admin_count");
@@ -256,19 +269,21 @@ public final class ServerMetrics {
 
         CNXN_CLOSED_WITHOUT_ZK_SERVER_RUNNING = metricsContext.getCounter("cnxn_closed_without_zk_server_running");
 
-        SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT = metricsContext.getCounter("skip_learner_request_to_next_processor_count");
+        SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT =
+                metricsContext.getCounter("skip_learner_request_to_next_processor_count");
 
         SOCKET_CLOSING_TIME = metricsContext.getSummary("socket_closing_time", DetailLevel.BASIC);
 
-        REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR = metricsContext.getCounter(
-                "requests_not_forwarded_to_commit_processor");
+        REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR =
+                metricsContext.getCounter("requests_not_forwarded_to_commit_processor");
 
         RESPONSE_BYTES = metricsContext.getCounter("response_bytes");
         WATCH_BYTES = metricsContext.getCounter("watch_bytes");
 
         JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
 
-        QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
+        QUOTA_EXCEEDED_ERROR_PER_NAMESPACE =
+                metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
     }
 
     /**
@@ -401,6 +416,7 @@ public final class ServerMetrics {
      * Fired watcher stats.
      */
     public final Summary NODE_CREATED_WATCHER;
+
     public final Summary NODE_DELETED_WATCHER;
     public final Summary NODE_CHANGED_WATCHER;
     public final Summary NODE_CHILDREN_WATCHER;
@@ -425,6 +441,7 @@ public final class ServerMetrics {
      * Learner handler quorum packet metrics.
      */
     public final SummarySet LEARNER_HANDLER_QP_SIZE;
+
     public final SummarySet LEARNER_HANDLER_QP_TIME;
 
     /*
@@ -482,12 +499,14 @@ public final class ServerMetrics {
      * Observer Master processing metrics.
      */
     public final Summary OM_PROPOSAL_PROCESS_TIME;
+
     public final Summary OM_COMMIT_PROCESS_TIME;
 
     /**
      * Time spent by the final processor. This is tracked in the commit processor.
      */
     public final Summary READ_FINAL_PROC_TIME;
+
     public final Summary WRITE_FINAL_PROC_TIME;
 
     /*
@@ -541,6 +560,7 @@ public final class ServerMetrics {
      *  Number of response/watch bytes written to clients.
      */
     public final Counter RESPONSE_BYTES;
+
     public final Counter WATCH_BYTES;
 
     public final Summary JVM_PAUSE_TIME;
@@ -556,5 +576,4 @@ public final class ServerMetrics {
     public MetricsProvider getMetricsProvider() {
         return metricsProvider;
     }
-
 }

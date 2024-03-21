@@ -59,15 +59,18 @@ public class ObserverLETest extends ZKTestCase {
         for (QuorumPeer server : Arrays.asList(qb.s1, qb.s2, qb.s3)) {
             if (server.getServerState().equals(QuorumStats.Provider.FOLLOWING_STATE)) {
                 server.shutdown();
-                assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + server.getClientPort(), ClientBase.CONNECTION_TIMEOUT),
+                assertTrue(
+                        ClientBase.waitForServerDown(
+                                "127.0.0.1:" + server.getClientPort(), ClientBase.CONNECTION_TIMEOUT),
                         "Waiting for server down");
             } else {
                 assertNull(leader, "More than one leader found");
                 leader = server;
             }
         }
-        assertTrue(ClientBase.waitForServerState(leader, ClientBase.CONNECTION_TIMEOUT, QuorumStats.Provider.LOOKING_STATE),
+        assertTrue(
+                ClientBase.waitForServerState(
+                        leader, ClientBase.CONNECTION_TIMEOUT, QuorumStats.Provider.LOOKING_STATE),
                 "Leader is not in Looking state");
     }
-
 }

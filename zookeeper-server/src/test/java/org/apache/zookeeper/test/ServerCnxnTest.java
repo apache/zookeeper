@@ -72,8 +72,7 @@ public class ServerCnxnTest extends ClientBase {
         return send4LetterWord(hpobj.host, hpobj.port, cmd, delay);
     }
 
-    private static String send4LetterWord(
-            String host, int port, String cmd, int delay) throws IOException {
+    private static String send4LetterWord(String host, int port, String cmd, int delay) throws IOException {
         LOG.info("connecting to {} {}", host, port);
         Socket sock = new Socket(host, port);
         BufferedReader reader = null;
@@ -118,5 +117,4 @@ public class ServerCnxnTest extends ClientBase {
         }
         return sb;
     }
-
 }

@@ -57,7 +57,6 @@ public class FLERestartTest extends ZKTestCase {
         TestVote(int id, long leader) {
             this.leader = leader;
         }
-
     }
 
     int countVotes(HashSet<TestVote> hs, long id) {
@@ -99,6 +98,7 @@ public class FLERestartTest extends ZKTestCase {
             this.peer = peer;
             LOG.info("Constructor: {}", getName());
         }
+
         public void run() {
             try {
                 Vote v = null;
@@ -118,45 +118,44 @@ public class FLERestartTest extends ZKTestCase {
                     peer.setCurrentVote(v);
 
                     LOG.info("Finished election: {}, {}", i, v.getId());
-                    //votes[i] = v;
+                    // votes[i] = v;
 
                     switch (i) {
-                    case 0:
-                        if (peerRound == 0) {
-                            LOG.info("First peer, shutting it down");
-                            QuorumBase.shutdown(peer);
-                            restartThreads.get(i).peer.getElectionAlg().shutdown();
+                        case 0:
+                            if (peerRound == 0) {
+                                LOG.info("First peer, shutting it down");
+                                QuorumBase.shutdown(peer);
+                                restartThreads.get(i).peer.getElectionAlg().shutdown();
 
-                            peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
-                            peer.startLeaderElection();
-                            peerRound++;
-                        } else {
-                            finish.release(2);
+                                peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i], port[i], 3, i, 1000, 2, 2, 2);
+                                peer.startLeaderElection();
+                                peerRound++;
+                            } else {
+                                finish.release(2);
+                                return;
+                            }
+
+                            break;
+                        case 1:
+                            LOG.info("Second entering case");
+                            finish.acquire();
+                            // if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
+                            LOG.info("Release");
+
                             return;
-                        }
+                        case 2:
+                            LOG.info("First peer, do nothing, just join");
+                            finish.acquire();
+                            // if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
+                            LOG.info("Release");
 
-                        break;
-                    case 1:
-                        LOG.info("Second entering case");
-                        finish.acquire();
-                        //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
-                        LOG.info("Release");
-
-                        return;
-                    case 2:
-                        LOG.info("First peer, do nothing, just join");
-                        finish.acquire();
-                        //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
-                        LOG.info("Release");
-
-                        return;
+                            return;
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
     }
 
     @Test
@@ -164,7 +163,12 @@ public class FLERestartTest extends ZKTestCase {
 
         LOG.info("TestLE: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
-            peers.put((long) i, new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+            peers.put(
+                    (long) i,
+                    new QuorumServer(
+                            i,
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }
@@ -182,8 +186,6 @@ public class FLERestartTest extends ZKTestCase {
             if (restartThreads.get(i).isAlive()) {
                 fail("Threads didn't join");
             }
-
         }
     }
-
 }

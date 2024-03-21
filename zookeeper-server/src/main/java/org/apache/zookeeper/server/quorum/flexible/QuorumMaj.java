@@ -160,5 +160,4 @@ public class QuorumMaj implements QuorumVerifier {
     public void setVersion(long ver) {
         version = ver;
     }
-
 }

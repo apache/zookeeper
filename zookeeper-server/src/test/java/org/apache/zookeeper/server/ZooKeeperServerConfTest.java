@@ -26,10 +26,12 @@ import org.junit.jupiter.api.Test;
 public class ZooKeeperServerConfTest extends ZKTestCase {
 
     private ZooKeeperServerConf c;
+
     @BeforeEach
     public void setUp() {
         c = new ZooKeeperServerConf(1, "a", "b", 2, 3, 4, 5, 6L, 7);
     }
+
     @Test
     public void testGetters() {
         assertEquals(1, c.getClientPort());
@@ -42,6 +44,7 @@ public class ZooKeeperServerConfTest extends ZKTestCase {
         assertEquals(6L, c.getServerId());
         assertEquals(7, c.getClientPortListenBacklog());
     }
+
     @Test
     public void testToMap() {
         Map<String, Object> m = c.toMap();
@@ -56,5 +59,4 @@ public class ZooKeeperServerConfTest extends ZKTestCase {
         assertEquals(Long.valueOf(6L), m.get(ZooKeeperServerConf.KEY_SERVER_ID));
         assertEquals(Integer.valueOf(7), m.get(ZooKeeperServerConf.KEY_CLIENT_PORT_LISTEN_BACKLOG));
     }
-
 }

@@ -48,7 +48,7 @@ pipeline {
                 stage('BuildAndTest') {
                     steps {
                         sh "git clean -fxd"
-                        sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
+                        sh "mvn verify spotbugs:check -Pfull-build -Dsurefire-forkcount=4"
                     }
                     post {
                         always {

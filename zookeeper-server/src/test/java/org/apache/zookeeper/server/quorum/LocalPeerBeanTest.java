@@ -100,5 +100,4 @@ public class LocalPeerBeanTest {
         LocalPeerBean localPeerBean = new LocalPeerBean(peer);
         assertFalse(localPeerBean.isLeader());
     }
-
 }

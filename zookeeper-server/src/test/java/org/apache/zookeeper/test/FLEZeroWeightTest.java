@@ -64,17 +64,17 @@ public class FLEZeroWeightTest extends ZKTestCase {
         port = new int[count];
 
         String config = "group.1=0:1:2\n"
-                                + "group.2=3:4:5\n"
-                                + "group.3=6:7:8\n"
-                                + "weight.0=1\n"
-                                + "weight.1=1\n"
-                                + "weight.2=1\n"
-                                + "weight.3=0\n"
-                                + "weight.4=0\n"
-                                + "weight.5=0\n"
-                                + "weight.6=0\n"
-                                + "weight.7=0\n"
-                                + "weight.8=0";
+                + "group.2=3:4:5\n"
+                + "group.3=6:7:8\n"
+                + "weight.0=1\n"
+                + "weight.1=1\n"
+                + "weight.2=1\n"
+                + "weight.3=0\n"
+                + "weight.4=0\n"
+                + "weight.5=0\n"
+                + "weight.6=0\n"
+                + "weight.7=0\n"
+                + "weight.8=0";
 
         ByteArrayInputStream is = new ByteArrayInputStream(config.getBytes());
         this.qp = new Properties();
@@ -110,7 +110,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
                 fail = false;
                 while (true) {
 
-                    //while(true) {
+                    // while(true) {
                     peer.setPeerState(ServerState.LOOKING);
                     LOG.info("Going to call leader election.");
                     v = peer.getElectionAlg().lookForLeader();
@@ -132,8 +132,8 @@ public class FLEZeroWeightTest extends ZKTestCase {
                         fail = true;
                     }
 
-                    if ((peer.getPeerState() == ServerState.FOLLOWING) || (peer.getPeerState()
-                                                                                   == ServerState.LEADING)) {
+                    if ((peer.getPeerState() == ServerState.FOLLOWING)
+                            || (peer.getPeerState() == ServerState.LEADING)) {
                         break;
                     }
                 }
@@ -142,7 +142,6 @@ public class FLEZeroWeightTest extends ZKTestCase {
                 e.printStackTrace();
             }
         }
-
     }
 
     @Test
@@ -179,5 +178,4 @@ public class FLEZeroWeightTest extends ZKTestCase {
             }
         }
     }
-
 }

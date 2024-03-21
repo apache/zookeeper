@@ -58,5 +58,4 @@ public class NettyNettySuiteBase {
         TestByteBufAllocatorTestHelper.clearTestAllocator();
         TestByteBufAllocator.checkForLeaks();
     }
-
 }

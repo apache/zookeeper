@@ -50,5 +50,4 @@ public class QuorumHammerTest extends ZKTestCase {
     public void testHammerBasic() throws Throwable {
         cht.testHammerBasic();
     }
-
 }

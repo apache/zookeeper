@@ -54,14 +54,16 @@ public class SerializeUtilsTest {
         // Arrange
         TxnHeader header = mock(TxnHeader.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        OutputArchive oa = (OutputArchive) args[0];
+                        oa.writeString("header", "test");
+                        return null;
+                    }
+                })
+                .when(header)
+                .serialize(any(OutputArchive.class), anyString());
         Request request = new Request(1, 2, 3, header, null, 4);
 
         // Act
@@ -82,24 +84,28 @@ public class SerializeUtilsTest {
         // Arrange
         TxnHeader header = mock(TxnHeader.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        OutputArchive oa = (OutputArchive) args[0];
+                        oa.writeString("header", "test");
+                        return null;
+                    }
+                })
+                .when(header)
+                .serialize(any(OutputArchive.class), anyString());
         Record txn = mock(Record.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("record", "test");
-                return null;
-            }
-        }).when(txn).serialize(any(OutputArchive.class), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        OutputArchive oa = (OutputArchive) args[0];
+                        oa.writeString("record", "test");
+                        return null;
+                    }
+                })
+                .when(txn)
+                .serialize(any(OutputArchive.class), anyString());
         Request request = new Request(1, 2, 3, header, txn, 4);
 
         // Act
@@ -117,5 +123,4 @@ public class SerializeUtilsTest {
         baos.close();
         assertArrayEquals(baos.toByteArray(), data);
     }
-
 }

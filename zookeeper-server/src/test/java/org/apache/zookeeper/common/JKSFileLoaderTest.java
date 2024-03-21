@@ -29,122 +29,150 @@ public class JKSFileLoaderTest extends BaseX509ParameterizedTestCase {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLoadKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void testLoadKeyStore(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
-        KeyStore ks = new JKSFileLoader.Builder().setKeyStorePath(path).setKeyStorePassword(x509TestContext.getKeyStorePassword()).build().loadKeyStore();
+        KeyStore ks = new JKSFileLoader.Builder()
+                .setKeyStorePath(path)
+                .setKeyStorePassword(x509TestContext.getKeyStorePassword())
+                .build()
+                .loadKeyStore();
         assertEquals(1, ks.size());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(Exception.class, () -> {
             String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
-            new JKSFileLoader.Builder().setKeyStorePath(path).setKeyStorePassword("wrong password").build().loadKeyStore();
+            new JKSFileLoader.Builder()
+                    .setKeyStorePath(path)
+                    .setKeyStorePassword("wrong password")
+                    .build()
+                    .loadKeyStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
-            new JKSFileLoader.Builder().setKeyStorePath(path
-                    + ".does_not_exist").setKeyStorePassword(x509TestContext.getKeyStorePassword()).build().loadKeyStore();
+            new JKSFileLoader.Builder()
+                    .setKeyStorePath(path + ".does_not_exist")
+                    .setKeyStorePassword(x509TestContext.getKeyStorePassword())
+                    .build()
+                    .loadKeyStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithNullFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
-            new JKSFileLoader.Builder().setKeyStorePassword(x509TestContext.getKeyStorePassword()).build().loadKeyStore();
+            new JKSFileLoader.Builder()
+                    .setKeyStorePassword(x509TestContext.getKeyStorePassword())
+                    .build()
+                    .loadKeyStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             // Trying to load a PEM file with JKS loader should fail
             String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
-            new JKSFileLoader.Builder().setKeyStorePath(path).setKeyStorePassword(x509TestContext.getKeyStorePassword()).build().loadKeyStore();
+            new JKSFileLoader.Builder()
+                    .setKeyStorePath(path)
+                    .setKeyStorePassword(x509TestContext.getKeyStorePassword())
+                    .build()
+                    .loadKeyStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
-        KeyStore ts = new JKSFileLoader.Builder().setTrustStorePath(path).setTrustStorePassword(x509TestContext.getTrustStorePassword()).build().loadTrustStore();
+        KeyStore ts = new JKSFileLoader.Builder()
+                .setTrustStorePath(path)
+                .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                .build()
+                .loadTrustStore();
         assertEquals(1, ts.size());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(Exception.class, () -> {
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
-            new JKSFileLoader.Builder().setTrustStorePath(path).setTrustStorePassword("wrong password").build().loadTrustStore();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
+            new JKSFileLoader.Builder()
+                    .setTrustStorePath(path)
+                    .setTrustStorePassword("wrong password")
+                    .build()
+                    .loadTrustStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
-            new JKSFileLoader.Builder().setTrustStorePath(path
-                    + ".does_not_exist").setTrustStorePassword(x509TestContext.getTrustStorePassword()).build().loadTrustStore();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
+            new JKSFileLoader.Builder()
+                    .setTrustStorePath(path + ".does_not_exist")
+                    .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                    .build()
+                    .loadTrustStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithNullFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
-            new JKSFileLoader.Builder().setTrustStorePassword(x509TestContext.getTrustStorePassword()).build().loadTrustStore();
+            new JKSFileLoader.Builder()
+                    .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                    .build()
+                    .loadTrustStore();
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             // Trying to load a PEM file with JKS loader should fail
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
-            new JKSFileLoader.Builder().setTrustStorePath(path).setTrustStorePassword(x509TestContext.getTrustStorePassword()).build().loadTrustStore();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
+            new JKSFileLoader.Builder()
+                    .setTrustStorePath(path)
+                    .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                    .build()
+                    .loadTrustStore();
         });
     }
-
 }

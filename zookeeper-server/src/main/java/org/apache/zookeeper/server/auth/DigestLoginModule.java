@@ -36,10 +36,7 @@ public class DigestLoginModule implements LoginModule {
     }
 
     public void initialize(
-        Subject subject,
-        CallbackHandler callbackHandler,
-        Map<String, ?> sharedState,
-        Map<String, ?> options) {
+            Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState, Map<String, ?> options) {
         if (options.containsKey("username")) {
             // Zookeeper client: get username and password from JAAS conf (only used if using DIGEST-MD5).
             this.subject = subject;
@@ -56,11 +53,9 @@ public class DigestLoginModule implements LoginModule {
     }
 
     public boolean login() {
-        // Unlike with Krb5LoginModule, we don't do any actual login or credential passing here: authentication to Zookeeper
+        // Unlike with Krb5LoginModule, we don't do any actual login or credential passing here: authentication to
+        // Zookeeper
         // is done later, through the SASLClient object.
         return true;
     }
-
 }
-
-

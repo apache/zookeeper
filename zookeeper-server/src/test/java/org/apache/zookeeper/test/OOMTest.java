@@ -67,38 +67,37 @@ public class OOMTest extends ZKTestCase {
         System.err.println("OOM Stage 0");
         utestPrep(PORT);
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
-                               + " total = " + Runtime.getRuntime().totalMemory()
-                               + " max = " + Runtime.getRuntime().maxMemory());
+                + " total = " + Runtime.getRuntime().totalMemory()
+                + " max = " + Runtime.getRuntime().maxMemory());
         System.err.println("OOM Stage 1");
         for (int i = 0; i < 1000; i++) {
             System.out.println(i);
             utestExists(PORT);
         }
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
-                               + " total = " + Runtime.getRuntime().totalMemory()
-                               + " max = " + Runtime.getRuntime().maxMemory());
+                + " total = " + Runtime.getRuntime().totalMemory()
+                + " max = " + Runtime.getRuntime().maxMemory());
         System.err.println("OOM Stage 2");
         for (int i = 0; i < 1000; i++) {
             System.out.println(i);
             utestGet(PORT);
         }
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
-                               + " total = " + Runtime.getRuntime().totalMemory()
-                               + " max = " + Runtime.getRuntime().maxMemory());
+                + " total = " + Runtime.getRuntime().totalMemory()
+                + " max = " + Runtime.getRuntime().maxMemory());
         System.err.println("OOM Stage 3");
         for (int i = 0; i < 1000; i++) {
             System.out.println(i);
             utestChildren(PORT);
         }
         System.out.println("Free = " + Runtime.getRuntime().freeMemory()
-                               + " total = " + Runtime.getRuntime().totalMemory()
-                               + " max = " + Runtime.getRuntime().maxMemory());
+                + " total = " + Runtime.getRuntime().totalMemory()
+                + " max = " + Runtime.getRuntime().maxMemory());
         hog.get(0)[0] = (byte) 1;
 
         f.shutdown();
         zks.shutdown();
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT),
-                "waiting for server down");
+        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT), "waiting for server down");
     }
 
     private void utestExists(int port) throws IOException, InterruptedException, KeeperException {
@@ -133,5 +132,4 @@ public class OOMTest extends ZKTestCase {
         }
         zk.close();
     }
-
 }

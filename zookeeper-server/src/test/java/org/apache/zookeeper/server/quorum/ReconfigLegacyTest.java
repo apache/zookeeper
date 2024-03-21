@@ -51,7 +51,6 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-
 public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
     private static final int SERVER_COUNT = 3;
@@ -63,10 +62,10 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         Security.addProvider(new BouncyCastleProvider());
         tempDir = ClientBase.createEmptyTestDir();
         x509TestContext = X509TestContext.newBuilder()
-            .setTempDir(tempDir)
-            .setKeyStoreKeyType(X509KeyType.EC)
-            .setTrustStoreKeyType(X509KeyType.EC)
-            .build();
+                .setTempDir(tempDir)
+                .setKeyStoreKeyType(X509KeyType.EC)
+                .setTrustStoreKeyType(X509KeyType.EC)
+                .build();
     }
 
     @AfterAll
@@ -83,7 +82,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
     public void setup() {
         ClientBase.setupTestEnv();
         QuorumPeerConfig.setReconfigEnabled(true);
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
     }
 
     /**
@@ -102,7 +103,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                + ":participant;localhost:" + clientPorts[i];
+                    + ":participant;localhost:" + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
         }
@@ -123,8 +124,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // Check that the static config was split into static and dynamic files correctly.
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                "waiting for server " + i + " being up");
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             File[] dynamicFiles = mt[i].getDynamicFiles();
 
@@ -161,8 +162,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         }
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                "waiting for server " + i + " being up");
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
         }
@@ -228,19 +229,31 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         Map<String, String> configMap = getServerTLSConfigs(x509TestContext);
         StringBuilder configBuilder = new StringBuilder();
         for (Map.Entry<String, String> entry : configMap.entrySet()) {
-            configBuilder.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+            configBuilder
+                    .append(entry.getKey())
+                    .append("=")
+                    .append(entry.getValue())
+                    .append("\n");
         }
 
         // Start the servers with a static config file, without a dynamic config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
             if (isSecure) {
-                mt[i] = new MainThread(i, MainThread.UNSET_STATIC_CLIENTPORT, adminServerPorts[i], secureClientPorts[i], quorumCfgSection, configBuilder.toString(), null, false, null);
+                mt[i] = new MainThread(
+                        i,
+                        MainThread.UNSET_STATIC_CLIENTPORT,
+                        adminServerPorts[i],
+                        secureClientPorts[i],
+                        quorumCfgSection,
+                        configBuilder.toString(),
+                        null,
+                        false,
+                        null);
             } else {
                 mt[i] = new MainThread(i, clientPorts[i], adminServerPorts[i], quorumCfgSection, null, null, false);
             }
             mt[i].start();
         }
-
 
         ZKClientConfig clientConfig;
         if (isSecure) {
@@ -254,8 +267,8 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             String cnxnString = "127.0.0.1:" + (isSecure ? secureClientPorts[i] : clientPorts[i]);
             assertTrue(
-                ClientBase.waitForServerUp(cnxnString, CONNECTION_TIMEOUT, isSecure, clientConfig),
-                "waiting for server " + i + " being up");
+                    ClientBase.waitForServerUp(cnxnString, CONNECTION_TIMEOUT, isSecure, clientConfig),
+                    "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient(cnxnString, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, clientConfig);
             zkAdmin[i] = new ZooKeeperAdmin(cnxnString, ClientBase.CONNECTION_TIMEOUT, this, clientConfig);
             zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
@@ -269,7 +282,6 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             } else {
                 assertTrue(cfg.containsKey("clientPort"));
             }
-
         }
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
 
@@ -327,7 +339,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                + ":participant;127.0.0.1:" + clientPorts[i];
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -340,8 +352,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                "waiting for server " + i + " being up");
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
 
         ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
@@ -360,8 +373,9 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         mt[1].start();
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                "waiting for server " + i + " being up");
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
         zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
@@ -373,5 +387,4 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
     }
-
 }

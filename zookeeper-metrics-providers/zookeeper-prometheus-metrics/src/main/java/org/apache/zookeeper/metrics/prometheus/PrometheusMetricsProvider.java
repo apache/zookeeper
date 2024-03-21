@@ -99,6 +99,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * </p>
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
+
     private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
     private String host = "0.0.0.0";
     private int port = 7000;
@@ -117,20 +118,20 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         this.host = configuration.getProperty("httpHost", "0.0.0.0");
         this.port = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
-        this.numWorkerThreads = Integer.parseInt(
-                configuration.getProperty(NUM_WORKER_THREADS, "1"));
-        this.maxQueueSize = Integer.parseInt(
-                configuration.getProperty(MAX_QUEUE_SIZE, "1000000"));
-        this.workerShutdownTimeoutMs = Long.parseLong(
-                configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
+        this.numWorkerThreads = Integer.parseInt(configuration.getProperty(NUM_WORKER_THREADS, "1"));
+        this.maxQueueSize = Integer.parseInt(configuration.getProperty(MAX_QUEUE_SIZE, "1000000"));
+        this.workerShutdownTimeoutMs = Long.parseLong(configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
     }
 
     @Override
     public void start() throws MetricsProviderLifeCycleException {
         this.executorOptional = createExecutor();
         try {
-            LOG.info("Starting /metrics HTTP endpoint at host: {}, port: {}, exportJvmInfo: {}",
-                    host, port, exportJvmInfo);
+            LOG.info(
+                    "Starting /metrics HTTP endpoint at host: {}, port: {}, exportJvmInfo: {}",
+                    host,
+                    port,
+                    exportJvmInfo);
             if (exportJvmInfo) {
                 DefaultExports.initialize();
             }
@@ -227,11 +228,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * internal components and the value is not held by Prometheus structures.
      */
     private void sampleGauges() {
-        rootContext.gauges.values()
-                .forEach(PrometheusGaugeWrapper::sample);
+        rootContext.gauges.values().forEach(PrometheusGaugeWrapper::sample);
 
-        rootContext.gaugeSets.values()
-                .forEach(PrometheusLabelledGaugeWrapper::sample);
+        rootContext.gaugeSets.values().forEach(PrometheusLabelledGaugeWrapper::sample);
     }
 
     @Override
@@ -296,8 +295,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public void registerGauge(String name, Gauge gauge) {
             Objects.requireNonNull(name);
-            gauges.compute(name, (id, prev) ->
-                    new PrometheusGaugeWrapper(id, gauge, prev != null ? prev.inner : null));
+            gauges.compute(name, (id, prev) -> new PrometheusGaugeWrapper(id, gauge, prev != null ? prev.inner : null));
         }
 
         @Override
@@ -313,8 +311,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             Objects.requireNonNull(name, "Cannot register a GaugeSet with null name");
             Objects.requireNonNull(gaugeSet, "Cannot register a null GaugeSet for " + name);
 
-            gaugeSets.compute(name, (id, prev) ->
-                new PrometheusLabelledGaugeWrapper(name, gaugeSet, prev != null ? prev.inner : null));
+            gaugeSets.compute(
+                    name,
+                    (id, prev) -> new PrometheusLabelledGaugeWrapper(name, gaugeSet, prev != null ? prev.inner : null));
         }
 
         @Override
@@ -364,7 +363,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 });
             }
         }
-
     }
 
     private class PrometheusCounter implements Counter {
@@ -374,9 +372,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         public PrometheusCounter(String name) {
             this.name = name;
-            this.inner = io.prometheus.client.Counter
-                    .build(name, name)
-                    .register(collectorRegistry);
+            this.inner = io.prometheus.client.Counter.build(name, name).register(collectorRegistry);
         }
 
         @Override
@@ -396,7 +392,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             // we are never setting non-integer values
             return (long) inner.get();
         }
-
     }
 
     private class PrometheusLabelledCounter implements CounterSet {
@@ -405,8 +400,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         public PrometheusLabelledCounter(final String name) {
             this.name = name;
-            this.inner = io.prometheus.client.Counter
-                    .build(name, name)
+            this.inner = io.prometheus.client.Counter.build(name, name)
                     .labelNames(LABELS)
                     .register(collectorRegistry);
         }
@@ -430,10 +424,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         public PrometheusGaugeWrapper(String name, Gauge gauge, io.prometheus.client.Gauge prev) {
             this.name = name;
             this.gauge = gauge;
-            this.inner = prev != null ? prev
-                    : io.prometheus.client.Gauge
-                    .build(name, name)
-                    .register(collectorRegistry);
+            this.inner = prev != null
+                    ? prev
+                    : io.prometheus.client.Gauge.build(name, name).register(collectorRegistry);
         }
 
         /**
@@ -458,13 +451,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         private final GaugeSet gaugeSet;
         private final io.prometheus.client.Gauge inner;
 
-        private PrometheusLabelledGaugeWrapper(final String name,
-                                               final GaugeSet gaugeSet,
-                                               final io.prometheus.client.Gauge prev) {
+        private PrometheusLabelledGaugeWrapper(
+                final String name, final GaugeSet gaugeSet, final io.prometheus.client.Gauge prev) {
             this.gaugeSet = gaugeSet;
-            this.inner = prev != null ? prev :
-                    io.prometheus.client.Gauge
-                            .build(name, name)
+            this.inner = prev != null
+                    ? prev
+                    : io.prometheus.client.Gauge.build(name, name)
                             .labelNames(LABELS)
                             .register(collectorRegistry);
         }
@@ -474,8 +466,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
          * This method is called when the server is polling for a value.
          */
         private void sample() {
-            gaugeSet.values().forEach((key, value) ->
-                this.inner.labels(key).set(value != null ? value.doubleValue() : 0));
+            gaugeSet.values()
+                    .forEach((key, value) -> this.inner.labels(key).set(value != null ? value.doubleValue() : 0));
         }
 
         private void unregister() {
@@ -491,15 +483,13 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         public PrometheusSummary(String name, MetricsContext.DetailLevel level) {
             this.name = name;
             if (level == MetricsContext.DetailLevel.ADVANCED) {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
+                this.inner = io.prometheus.client.Summary.build(name, name)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
                         .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
                         .register(collectorRegistry);
             } else {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
+                this.inner = io.prometheus.client.Summary.build(name, name)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .register(collectorRegistry);
             }
@@ -527,16 +517,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         public PrometheusLabelledSummary(String name, MetricsContext.DetailLevel level) {
             this.name = name;
             if (level == MetricsContext.DetailLevel.ADVANCED) {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
+                this.inner = io.prometheus.client.Summary.build(name, name)
                         .labelNames(LABELS)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
                         .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
                         .register(collectorRegistry);
             } else {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
+                this.inner = io.prometheus.client.Summary.build(name, name)
                         .labelNames(LABELS)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .register(collectorRegistry);
@@ -555,7 +543,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
             }
         }
-
     }
 
     class MetricsServletImpl extends MetricsServlet {
@@ -577,12 +564,15 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
 
         final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(maxQueueSize);
-        final ThreadPoolExecutor executor = new ThreadPoolExecutor(numWorkerThreads,
+        final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                numWorkerThreads,
                 numWorkerThreads,
                 0L,
                 TimeUnit.MILLISECONDS,
-                queue, new PrometheusWorkerThreadFactory());
-        LOG.info("Executor service was created with numWorkerThreads {} and maxQueueSize {}",
+                queue,
+                new PrometheusWorkerThreadFactory());
+        LOG.info(
+                "Executor service was created with numWorkerThreads {} and maxQueueSize {}",
                 numWorkerThreads,
                 maxQueueSize);
         return Optional.of(executor);
@@ -595,7 +585,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             executor.shutdown();
             try {
                 if (!executor.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
-                    LOG.error("Not all the Prometheus worker threads terminated properly after {} timeout",
+                    LOG.error(
+                            "Not all the Prometheus worker threads terminated properly after {} timeout",
                             workerShutdownTimeoutMs);
                     executor.shutdownNow();
                 }
@@ -623,8 +614,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             try {
                 executorOptional.get().submit(task);
             } catch (final RejectedExecutionException e) {
-                rateLogger.rateLimitLog("Prometheus metrics reporting task queue size exceeded the max",
-                        String.valueOf(maxQueueSize));
+                rateLogger.rateLimitLog(
+                        "Prometheus metrics reporting task queue size exceeded the max", String.valueOf(maxQueueSize));
             }
         } else {
             task.run();

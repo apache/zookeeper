@@ -57,8 +57,7 @@ public class ZookeeperServerEmbeddedTest {
         configZookeeper.put("clientPort", clientPort + "");
         configZookeeper.put("host", "localhost");
         configZookeeper.put("ticktime", "4000");
-        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
-                .builder()
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded.builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
@@ -78,8 +77,7 @@ public class ZookeeperServerEmbeddedTest {
         }
 
         // restart (all ports should be closed and the restart should always work)
-        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
-                .builder()
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded.builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
@@ -97,16 +95,15 @@ public class ZookeeperServerEmbeddedTest {
             assertTrue(status.isLeader());
             assertTrue(status.isStandaloneMode());
         }
-
     }
 
     @Test
     public void testBindPortZero() throws Exception {
         final Properties configZookeeper = new Properties();
         final ZooKeeperServerEmbedded.ZookKeeperServerEmbeddedBuilder builder = ZooKeeperServerEmbedded.builder()
-            .baseDir(baseDir)
-            .configuration(configZookeeper)
-            .exitHandler(ExitHandler.LOG_ONLY);
+                .baseDir(baseDir)
+                .configuration(configZookeeper)
+                .exitHandler(ExitHandler.LOG_ONLY);
 
         // Unconfigured client port will still fail
         try (ZooKeeperServerEmbedded zkServer = builder.build()) {

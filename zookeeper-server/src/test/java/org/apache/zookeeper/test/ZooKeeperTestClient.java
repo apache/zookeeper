@@ -58,7 +58,6 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             Thread.sleep(5000);
         }
         return event;
-
     }
 
     private void deleteZKDir(ZooKeeper zk, String nodeName) throws IOException, InterruptedException, KeeperException {
@@ -156,7 +155,6 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         }
         deleteZKDir(zk, nodeName);
         zk.close();
-
     }
 
     private void enode_test_2() throws IOException, InterruptedException, KeeperException {
@@ -286,16 +284,11 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         if (event == null) {
             throw new Error("First event was not delivered promptly");
         }
-        if (!((event.getType() == EventType.NodeChildrenChanged && event.getPath().equalsIgnoreCase(parentName)) || (
-                event.getType() == EventType.NodeDeleted
-                        && event.getPath().equalsIgnoreCase(nodeName)))) {
-            System.out.print(parentName
-                                     + " "
-                                     + EventType.NodeChildrenChanged
-                                     + " "
-                                     + nodeName
-                                     + " "
-                                     + EventType.NodeDeleted);
+        if (!((event.getType() == EventType.NodeChildrenChanged
+                        && event.getPath().equalsIgnoreCase(parentName))
+                || (event.getType() == EventType.NodeDeleted && event.getPath().equalsIgnoreCase(nodeName)))) {
+            System.out.print(
+                    parentName + " " + EventType.NodeChildrenChanged + " " + nodeName + " " + EventType.NodeDeleted);
             fail("Unexpected first event was delivered: " + event.toString());
         }
 
@@ -304,16 +297,11 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
         if (event == null) {
             throw new Error("Second event was not delivered promptly");
         }
-        if (!((event.getType() == EventType.NodeChildrenChanged && event.getPath().equalsIgnoreCase(parentName)) || (
-                event.getType() == EventType.NodeDeleted
-                        && event.getPath().equalsIgnoreCase(nodeName)))) {
-            System.out.print(parentName
-                                     + " "
-                                     + EventType.NodeChildrenChanged
-                                     + " "
-                                     + nodeName
-                                     + " "
-                                     + EventType.NodeDeleted);
+        if (!((event.getType() == EventType.NodeChildrenChanged
+                        && event.getPath().equalsIgnoreCase(parentName))
+                || (event.getType() == EventType.NodeDeleted && event.getPath().equalsIgnoreCase(nodeName)))) {
+            System.out.print(
+                    parentName + " " + EventType.NodeChildrenChanged + " " + nodeName + " " + EventType.NodeDeleted);
             fail("Unexpected second event was delivered: " + event.toString());
         }
 
@@ -450,5 +438,4 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
             e.printStackTrace();
         }
     }
-
 }

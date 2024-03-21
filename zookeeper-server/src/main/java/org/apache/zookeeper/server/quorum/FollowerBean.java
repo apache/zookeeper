@@ -91,5 +91,4 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
             om.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
         }
     }
-
 }

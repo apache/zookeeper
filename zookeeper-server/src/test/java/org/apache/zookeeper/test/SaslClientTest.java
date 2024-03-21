@@ -59,5 +59,4 @@ public class SaslClientTest extends ZKTestCase {
             assertFalse(new ZKClientConfig().isSaslClientEnabled(), "SASL client disabled");
         }
     }
-
 }

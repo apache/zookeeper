@@ -58,5 +58,4 @@ public class VersionCommand extends CliCommand {
 
         return false;
     }
-
 }

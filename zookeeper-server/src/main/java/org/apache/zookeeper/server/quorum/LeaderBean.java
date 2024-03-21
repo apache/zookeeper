@@ -105,5 +105,4 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     public void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs) {
         leader.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
     }
-
 }

@@ -51,12 +51,10 @@ public class DefaultMetricsProvider implements MetricsProvider {
     private final DefaultMetricsContext rootMetricsContext = new DefaultMetricsContext();
 
     @Override
-    public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
-    }
+    public void configure(Properties configuration) throws MetricsProviderLifeCycleException {}
 
     @Override
-    public void start() throws MetricsProviderLifeCycleException {
-    }
+    public void start() throws MetricsProviderLifeCycleException {}
 
     @Override
     public MetricsContext getRootContext() {
@@ -180,13 +178,11 @@ public class DefaultMetricsProvider implements MetricsProvider {
                 }
             });
 
-            gaugeSets.forEach((name, gaugeSet) ->
-                gaugeSet.values().forEach((key, value) -> {
-                    if (key != null) {
-                        sink.accept(key + "_" + name, value != null ? value : 0);
-                    }
-                })
-            );
+            gaugeSets.forEach((name, gaugeSet) -> gaugeSet.values().forEach((key, value) -> {
+                if (key != null) {
+                    sink.accept(key + "_" + name, value != null ? value : 0);
+                }
+            }));
 
             counters.values().forEach(metric -> {
                 metric.values().forEach(sink);
@@ -229,7 +225,5 @@ public class DefaultMetricsProvider implements MetricsProvider {
             });
             // no need to reset gauges
         }
-
     }
-
 }

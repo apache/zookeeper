@@ -49,7 +49,8 @@ public class RepeatStartupTest extends ZKTestCase {
         QuorumBase.shutdown(qb.s4);
         QuorumBase.shutdown(qb.s5);
         String hp = qb.hostPort.split(",")[0];
-        ZooKeeperServer zks = new ZooKeeperServer(qb.s1.getTxnFactory().getSnapDir(), qb.s1.getTxnFactory().getDataLogDir(), 3000);
+        ZooKeeperServer zks = new ZooKeeperServer(
+                qb.s1.getTxnFactory().getSnapDir(), qb.s1.getTxnFactory().getDataLogDir(), 3000);
         final int PORT = Integer.parseInt(hp.split(":")[1]);
         ServerCnxnFactory factory = ServerCnxnFactory.createFactory(PORT, -1);
 
@@ -65,5 +66,4 @@ public class RepeatStartupTest extends ZKTestCase {
                 "waiting for server down");
         System.out.println("Comment: shutting down standalone");
     }
-
 }

@@ -22,8 +22,7 @@ public interface AuditLogger {
     /**
      * Called during initialization of the logger.
      */
-    default void initialize() {
-    }
+    default void initialize() {}
 
     /**
      * Called to log an audit event.

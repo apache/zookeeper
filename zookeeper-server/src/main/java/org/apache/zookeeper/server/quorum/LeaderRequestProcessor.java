@@ -79,5 +79,4 @@ public class LeaderRequestProcessor implements RequestProcessor {
         LOG.info("Shutting down");
         nextProcessor.shutdown();
     }
-
 }

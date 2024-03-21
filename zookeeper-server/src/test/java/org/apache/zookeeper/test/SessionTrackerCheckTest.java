@@ -53,13 +53,11 @@ public class SessionTrackerCheckTest extends ZKTestCase {
             this.sid = sid;
         }
 
-        public void expire(Session session) {
-        }
+        public void expire(Session session) {}
 
         public long getServerId() {
             return sid;
         }
-
     }
 
     @BeforeEach
@@ -68,14 +66,14 @@ public class SessionTrackerCheckTest extends ZKTestCase {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
-    }
+    public void tearDown() throws Exception {}
 
     @Test
     public void testLearnerSessionTracker() throws Exception {
         Expirer expirer = new Expirer(1);
         // With local session on
-        LearnerSessionTracker tracker = new LearnerSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, true, testZKSListener());
+        LearnerSessionTracker tracker = new LearnerSessionTracker(
+                expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, true, testZKSListener());
 
         // Unknown session
         long sessionId = 0xb100ded;
@@ -111,7 +109,8 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // With local session off
-        tracker = new LearnerSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, false, testZKSListener());
+        tracker = new LearnerSessionTracker(
+                expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Should be noop
         sessionId = 0xdeadbeef;
@@ -120,14 +119,14 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         } catch (Exception e) {
             fail("Should not get any exception");
         }
-
     }
 
     @Test
     public void testLeaderSessionTracker() throws Exception {
         Expirer expirer = new Expirer(2);
         // With local session on
-        LeaderSessionTracker tracker = new LeaderSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, true, testZKSListener());
+        LeaderSessionTracker tracker = new LeaderSessionTracker(
+                expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, true, testZKSListener());
 
         // Local session from other server
         long sessionId = ((expirer.sid + 1) << 56) + 1;
@@ -172,7 +171,8 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // With local session off
-        tracker = new LeaderSessionTracker(expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, false, testZKSListener());
+        tracker = new LeaderSessionTracker(
+                expirer, sessionsWithTimeouts, TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Global session
         sessionId = 0xdeadbeef;
@@ -205,17 +205,13 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         } catch (SessionExpiredException e) {
             // Got expected exception
         }
-
     }
 
     ZooKeeperServerListener testZKSListener() {
         return new ZooKeeperServerListener() {
 
             @Override
-            public void notifyStopping(String errMsg, int exitCode) {
-
-            }
+            public void notifyStopping(String errMsg, int exitCode) {}
         };
     }
-
 }

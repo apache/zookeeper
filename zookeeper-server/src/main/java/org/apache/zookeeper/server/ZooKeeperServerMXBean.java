@@ -109,58 +109,76 @@ public interface ZooKeeperServerMXBean {
     void setMaxSessionTimeout(int max);
 
     boolean getResponseCachingEnabled();
+
     void setResponseCachingEnabled(boolean isEnabled);
 
     /* Connection throttling settings */
     int getConnectionMaxTokens();
+
     void setConnectionMaxTokens(int val);
 
     int getConnectionTokenFillTime();
+
     void setConnectionTokenFillTime(int val);
 
     int getConnectionTokenFillCount();
+
     void setConnectionTokenFillCount(int val);
 
     int getConnectionFreezeTime();
+
     void setConnectionFreezeTime(int val);
 
     double getConnectionDropIncrease();
+
     void setConnectionDropIncrease(double val);
 
     double getConnectionDropDecrease();
+
     void setConnectionDropDecrease(double val);
 
     double getConnectionDecreaseRatio();
+
     void setConnectionDecreaseRatio(double val);
 
     int getCommitProcMaxReadBatchSize();
+
     void setCommitProcMaxReadBatchSize(int size);
 
     int getCommitProcMaxCommitBatchSize();
+
     void setCommitProcMaxCommitBatchSize(int size);
 
     int getRequestThrottleLimit();
+
     void setRequestThrottleLimit(int requests);
 
     int getRequestThrottleStallTime();
+
     void setRequestThrottleStallTime(int time);
 
     boolean getRequestThrottleDropStale();
+
     void setRequestThrottleDropStale(boolean drop);
 
     int getThrottledOpWaitTime();
+
     void setThrottledOpWaitTime(int val);
 
     boolean getRequestStaleLatencyCheck();
+
     void setRequestStaleLatencyCheck(boolean check);
 
     boolean getRequestStaleConnectionCheck();
+
     void setRequestStaleConnectionCheck(boolean check);
 
     int getLargeRequestMaxBytes();
+
     void setLargeRequestMaxBytes(int bytes);
 
     int getLargeRequestThreshold();
+
     void setLargeRequestThreshold(int threshold);
 
     /**
@@ -236,17 +254,19 @@ public interface ZooKeeperServerMXBean {
     int getMaxClientResponseSize();
 
     long getFlushDelay();
+
     void setFlushDelay(long delay);
 
     long getMaxWriteQueuePollTime();
+
     void setMaxWriteQueuePollTime(long delay);
 
     int getMaxBatchSize();
+
     void setMaxBatchSize(int size);
 
     /**
      * @return Current maxCnxns allowed to a single ZooKeeper server
      */
-   int getMaxCnxns();
-
+    int getMaxCnxns();
 }

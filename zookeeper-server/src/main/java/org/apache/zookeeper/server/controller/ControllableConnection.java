@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -44,8 +43,13 @@ public class ControllableConnection extends NIOServerCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(ControllableConnection.class);
     private final ControllableConnectionFactory controller;
 
-    public ControllableConnection(ZooKeeperServer zk, SocketChannel sock, SelectionKey sk, NIOServerCnxnFactory factory,
-                                  NIOServerCnxnFactory.SelectorThread selectorThread) throws IOException {
+    public ControllableConnection(
+            ZooKeeperServer zk,
+            SocketChannel sock,
+            SelectionKey sk,
+            NIOServerCnxnFactory factory,
+            NIOServerCnxnFactory.SelectorThread selectorThread)
+            throws IOException {
         super(zk, sock, sk, factory, selectorThread);
         controller = (ControllableConnectionFactory) factory;
     }
@@ -71,8 +75,7 @@ public class ControllableConnection extends NIOServerCnxn {
             BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(buffer));
             RequestHeader h = new RequestHeader();
             h.deserialize(bia, "header");
-            super.sendResponse(new ReplyHeader(h.getXid(), 0, KeeperException.Code.APIERROR.intValue()),
-                    null, null);
+            super.sendResponse(new ReplyHeader(h.getXid(), 0, KeeperException.Code.APIERROR.intValue()), null, null);
         } else {
             controller.delayRequestIfNeeded();
             super.readRequest();

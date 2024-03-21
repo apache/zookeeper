@@ -46,5 +46,4 @@ public class StatPrinter {
         out.println("dataLength = " + stat.getDataLength());
         out.println("numChildren = " + stat.getNumChildren());
     }
-
 }

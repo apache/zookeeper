@@ -95,29 +95,29 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                 // of the sync operations this Observer has pending, so we
                 // add it to pendingSyncs.
                 switch (request.type) {
-                case OpCode.sync:
-                    zks.pendingSyncs.add(request);
-                    zks.getObserver().request(request);
-                    break;
-                case OpCode.create:
-                case OpCode.create2:
-                case OpCode.createTTL:
-                case OpCode.createContainer:
-                case OpCode.delete:
-                case OpCode.deleteContainer:
-                case OpCode.setData:
-                case OpCode.reconfig:
-                case OpCode.setACL:
-                case OpCode.multi:
-                    zks.getObserver().request(request);
-                    break;
-                case OpCode.createSession:
-                case OpCode.closeSession:
-                    // Don't forward local sessions to the leader.
-                    if (!request.isLocalSession()) {
+                    case OpCode.sync:
+                        zks.pendingSyncs.add(request);
                         zks.getObserver().request(request);
-                    }
-                    break;
+                        break;
+                    case OpCode.create:
+                    case OpCode.create2:
+                    case OpCode.createTTL:
+                    case OpCode.createContainer:
+                    case OpCode.delete:
+                    case OpCode.deleteContainer:
+                    case OpCode.setData:
+                    case OpCode.reconfig:
+                    case OpCode.setACL:
+                    case OpCode.multi:
+                        zks.getObserver().request(request);
+                        break;
+                    case OpCode.createSession:
+                    case OpCode.closeSession:
+                        // Don't forward local sessions to the leader.
+                        if (!request.isLocalSession()) {
+                            zks.getObserver().request(request);
+                        }
+                        break;
                 }
             }
         } catch (RuntimeException e) { // spotbugs require explicit catch of RuntimeException
@@ -163,5 +163,4 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
         queuedRequests.add(Request.requestOfDeath);
         nextProcessor.shutdown();
     }
-
 }

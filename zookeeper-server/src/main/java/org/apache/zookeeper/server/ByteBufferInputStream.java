@@ -78,5 +78,4 @@ public class ByteBufferInputStream extends InputStream {
         ia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
         record.deserialize(ia, "request");
     }
-
 }

@@ -72,18 +72,25 @@ public class CommandsTest extends ClientBase {
      * @throws IOException
      * @throws InterruptedException
      */
-    private void testCommand(String cmdName, Map<String, String> kwargs, InputStream inputStream,
-                             String authInfo,
-                             Map<String, String> expectedHeaders, int expectedStatusCode,
-                             Field... fields) throws IOException, InterruptedException {
+    private void testCommand(
+            String cmdName,
+            Map<String, String> kwargs,
+            InputStream inputStream,
+            String authInfo,
+            Map<String, String> expectedHeaders,
+            int expectedStatusCode,
+            Field... fields)
+            throws IOException, InterruptedException {
         ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         final CommandResponse commandResponse = inputStream == null
-        ? Commands.runGetCommand(cmdName, zks, kwargs, authInfo, null) : Commands.runPostCommand(cmdName, zks, inputStream, authInfo, null);
+                ? Commands.runGetCommand(cmdName, zks, kwargs, authInfo, null)
+                : Commands.runPostCommand(cmdName, zks, inputStream, authInfo, null);
         assertNotNull(commandResponse);
         assertEquals(expectedStatusCode, commandResponse.getStatusCode());
         try (final InputStream responseStream = commandResponse.getInputStream()) {
             if (Boolean.parseBoolean(kwargs.getOrDefault(REQUEST_QUERY_PARAM_STREAMING, "false"))) {
-                assertNotNull(responseStream, "InputStream in the response of command " + cmdName + " should not be null");
+                assertNotNull(
+                        responseStream, "InputStream in the response of command " + cmdName + " should not be null");
             } else {
                 Map<String, Object> result = commandResponse.toMap();
                 assertTrue(result.containsKey("command"));
@@ -94,13 +101,15 @@ public class CommandsTest extends ClientBase {
 
                 for (Field field : fields) {
                     String k = field.key;
-                    assertTrue(result.containsKey(k),
+                    assertTrue(
+                            result.containsKey(k),
                             "Result from command " + cmdName + " missing field \"" + k + "\"" + "\n" + result);
                     Class<?> t = field.type;
                     Object v = result.remove(k);
-                    assertTrue(t.isAssignableFrom(v.getClass()),
-                            "\"" + k + "\" field from command " + cmdName
-                                    + " should be of type " + t + ", is actually of type " + v.getClass());
+                    assertTrue(
+                            t.isAssignableFrom(v.getClass()),
+                            "\"" + k + "\" field from command " + cmdName + " should be of type " + t
+                                    + ", is actually of type " + v.getClass());
                 }
 
                 assertTrue(result.isEmpty(), "Result from command " + cmdName + " contains extra fields: " + result);
@@ -117,6 +126,7 @@ public class CommandsTest extends ClientBase {
 
         String key;
         Class<?> type;
+
         Field(String key, Class<?> type) {
             this.key = key;
             this.type = type;
@@ -125,12 +135,25 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testConfiguration() throws IOException, InterruptedException {
-        testCommand("configuration", new Field("client_port", Integer.class), new Field("data_dir", String.class), new Field("data_log_dir", String.class), new Field("tick_time", Integer.class), new Field("max_client_cnxns", Integer.class), new Field("min_session_timeout", Integer.class), new Field("max_session_timeout", Integer.class), new Field("server_id", Long.class), new Field("client_port_listen_backlog", Integer.class));
+        testCommand(
+                "configuration",
+                new Field("client_port", Integer.class),
+                new Field("data_dir", String.class),
+                new Field("data_log_dir", String.class),
+                new Field("tick_time", Integer.class),
+                new Field("max_client_cnxns", Integer.class),
+                new Field("min_session_timeout", Integer.class),
+                new Field("max_session_timeout", Integer.class),
+                new Field("server_id", Long.class),
+                new Field("client_port_listen_backlog", Integer.class));
     }
 
     @Test
     public void testConnections() throws IOException, InterruptedException {
-        testCommand("connections", new Field("connections", Iterable.class), new Field("secure_connections", Iterable.class));
+        testCommand(
+                "connections",
+                new Field("connections", Iterable.class),
+                new Field("secure_connections", Iterable.class));
     }
 
     @Test
@@ -150,12 +173,34 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testDump() throws IOException, InterruptedException {
-        testCommand("dump", new Field("expiry_time_to_session_ids", Map.class), new Field("session_id_to_ephemeral_paths", Map.class));
+        testCommand(
+                "dump",
+                new Field("expiry_time_to_session_ids", Map.class),
+                new Field("session_id_to_ephemeral_paths", Map.class));
     }
 
     @Test
     public void testEnvironment() throws IOException, InterruptedException {
-        testCommand("environment", new Field("zookeeper.version", String.class), new Field("host.name", String.class), new Field("java.version", String.class), new Field("java.vendor", String.class), new Field("java.home", String.class), new Field("java.class.path", String.class), new Field("java.library.path", String.class), new Field("java.io.tmpdir", String.class), new Field("java.compiler", String.class), new Field("os.name", String.class), new Field("os.arch", String.class), new Field("os.version", String.class), new Field("user.name", String.class), new Field("user.home", String.class), new Field("user.dir", String.class), new Field("jvm.memory.free", String.class), new Field("jvm.memory.max", String.class), new Field("jvm.memory.total", String.class));
+        testCommand(
+                "environment",
+                new Field("zookeeper.version", String.class),
+                new Field("host.name", String.class),
+                new Field("java.version", String.class),
+                new Field("java.vendor", String.class),
+                new Field("java.home", String.class),
+                new Field("java.class.path", String.class),
+                new Field("java.library.path", String.class),
+                new Field("java.io.tmpdir", String.class),
+                new Field("java.compiler", String.class),
+                new Field("os.name", String.class),
+                new Field("os.arch", String.class),
+                new Field("os.version", String.class),
+                new Field("user.name", String.class),
+                new Field("user.home", String.class),
+                new Field("user.dir", String.class),
+                new Field("jvm.memory.free", String.class),
+                new Field("jvm.memory.max", String.class),
+                new Field("jvm.memory.total", String.class));
     }
 
     @Test
@@ -201,8 +246,7 @@ public class CommandsTest extends ClientBase {
                 new Field("global_sessions", Long.class),
                 new Field("local_sessions", Long.class),
                 new Field("connection_drop_probability", Double.class),
-                new Field("outstanding_tls_handshake", Integer.class)
-        ));
+                new Field("outstanding_tls_handshake", Integer.class)));
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
         for (String metric : metrics.keySet()) {
@@ -232,11 +276,17 @@ public class CommandsTest extends ClientBase {
     public void testRestore_invalidInputStream() throws IOException, InterruptedException {
         setupForRestoreCommand();
 
-        try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes())){
+        try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes())) {
             final Map<String, String> kwargs = new HashMap<>();
             final Map<String, String> expectedHeaders = new HashMap<>();
             final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
-            testCommand("restore", kwargs, inputStream, authInfo, expectedHeaders, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            testCommand(
+                    "restore",
+                    kwargs,
+                    inputStream,
+                    authInfo,
+                    expectedHeaders,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             clearForRestoreCommand();
         }
@@ -253,10 +303,10 @@ public class CommandsTest extends ClientBase {
             assertNotNull(commandResponse);
             assertEquals(HttpServletResponse.SC_BAD_REQUEST, commandResponse.getStatusCode());
         } finally {
-          clearForRestoreCommand();
-          if (zks != null) {
-              zks.shutdown();
-          }
+            clearForRestoreCommand();
+            if (zks != null) {
+                zks.shutdown();
+            }
         }
     }
 
@@ -272,26 +322,40 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testServerStats() throws IOException, InterruptedException {
-        testCommand("server_stats", new Field("version", String.class), new Field("read_only", Boolean.class), new Field("server_stats", ServerStats.class), new Field("node_count", Integer.class), new Field("client_response", BufferStats.class));
+        testCommand(
+                "server_stats",
+                new Field("version", String.class),
+                new Field("read_only", Boolean.class),
+                new Field("server_stats", ServerStats.class),
+                new Field("node_count", Integer.class),
+                new Field("client_response", BufferStats.class));
     }
 
     @Test
     public void testSetTraceMask() throws IOException, InterruptedException {
         Map<String, String> kwargs = new HashMap<>();
         kwargs.put("traceMask", "1");
-        testCommand("set_trace_mask", kwargs, null, null, new HashMap<>(), HttpServletResponse.SC_OK, new Field("tracemask", Long.class));
+        testCommand(
+                "set_trace_mask",
+                kwargs,
+                null,
+                null,
+                new HashMap<>(),
+                HttpServletResponse.SC_OK,
+                new Field("tracemask", Long.class));
     }
 
     @Test
     public void testStat() throws IOException, InterruptedException {
-        testCommand("stats",
-                    new Field("version", String.class),
-                    new Field("read_only", Boolean.class),
-                    new Field("server_stats", ServerStats.class),
-                    new Field("node_count", Integer.class),
-                    new Field("connections", Iterable.class),
-                    new Field("secure_connections", Iterable.class),
-                    new Field("client_response", BufferStats.class));
+        testCommand(
+                "stats",
+                new Field("version", String.class),
+                new Field("read_only", Boolean.class),
+                new Field("server_stats", ServerStats.class),
+                new Field("node_count", Integer.class),
+                new Field("connections", Iterable.class),
+                new Field("secure_connections", Iterable.class),
+                new Field("client_response", BufferStats.class));
     }
 
     @Test
@@ -311,13 +375,16 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testWatchSummary() throws IOException, InterruptedException {
-        testCommand("watch_summary", new Field("num_connections", Integer.class), new Field("num_paths", Integer.class), new Field("num_total_watches", Integer.class));
+        testCommand(
+                "watch_summary",
+                new Field("num_connections", Integer.class),
+                new Field("num_paths", Integer.class),
+                new Field("num_total_watches", Integer.class));
     }
 
     @Test
     public void testVotingViewCommand() throws IOException, InterruptedException {
-        testCommand("voting_view",
-                    new Field("current_config", Map.class));
+        testCommand("voting_view", new Field("current_config", Map.class));
     }
 
     @Test

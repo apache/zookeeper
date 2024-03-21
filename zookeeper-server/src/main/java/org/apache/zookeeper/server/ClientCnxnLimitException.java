@@ -28,5 +28,4 @@ public class ClientCnxnLimitException extends Exception {
     public ClientCnxnLimitException() {
         super("Connection throttle rejected connection");
     }
-
 }

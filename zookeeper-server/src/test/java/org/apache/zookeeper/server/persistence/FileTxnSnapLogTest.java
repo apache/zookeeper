@@ -126,10 +126,8 @@ public class FileTxnSnapLogTest {
         return createFileTxnSnapLogWithAutoCreateDataDir(logDir, snapDir, "false");
     }
 
-    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDataDir(
-        File logDir,
-        File snapDir,
-        String autoCreateValue) throws IOException {
+    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDataDir(File logDir, File snapDir, String autoCreateValue)
+            throws IOException {
         String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
         System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, autoCreateValue);
         FileTxnSnapLog fileTxnSnapLog;
@@ -145,10 +143,8 @@ public class FileTxnSnapLogTest {
         return fileTxnSnapLog;
     }
 
-    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDB(
-        File logDir,
-        File snapDir,
-        String autoCreateValue) throws IOException {
+    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDB(File logDir, File snapDir, String autoCreateValue)
+            throws IOException {
         String priorAutocreateDBValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
         System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, autoCreateValue);
         FileTxnSnapLog fileTxnSnapLog;
@@ -204,11 +200,8 @@ public class FileTxnSnapLogTest {
     }
 
     private void attemptAutoCreateDB(
-        File dataDir,
-        File snapDir,
-        Map<Long, Integer> sessions,
-        String autoCreateValue,
-        long expectedValue) throws IOException {
+            File dataDir, File snapDir, Map<Long, Integer> sessions, String autoCreateValue, long expectedValue)
+            throws IOException {
         sessions.clear();
 
         FileTxnSnapLog fileTxnSnapLog = createFileTxnSnapLogWithAutoCreateDB(dataDir, snapDir, autoCreateValue);
@@ -372,7 +365,7 @@ public class FileTxnSnapLogTest {
 
         ZooKeeperServer.setDigestEnabled(true);
         snaplog.save(dataTree, sessions, true);
-        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
+        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {});
 
         assertNull(dataTree.getDigestFromLoadedSnapshot());
     }
@@ -409,7 +402,7 @@ public class FileTxnSnapLogTest {
         // (for example, datatree, digest, lastProcessedZxid) is setup as expected for backward
         // compatibility test.
         ZooKeeperServer.setSerializeLastProcessedZxidEnabled(!digestEnabled);
-        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {  });
+        snaplog.restore(dataTree, sessions, (hdr, rec, digest) -> {});
         assertEquals(expectedNodeCount, dataTree.getNodeCount());
     }
 }

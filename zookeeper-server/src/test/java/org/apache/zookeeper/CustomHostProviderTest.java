@@ -39,19 +39,20 @@ public class CustomHostProviderTest extends ZKTestCase {
         public int size() {
             return 1;
         }
+
         @Override
         public InetSocketAddress next(long spinDelay) {
             return new InetSocketAddress("127.0.0.1", 2181);
         }
+
         @Override
-        public void onConnected() {
-        }
+        public void onConnected() {}
+
         @Override
         public boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
             counter.decrementAndGet();
             return false;
         }
-
     }
 
     @Test
@@ -61,11 +62,8 @@ public class CustomHostProviderTest extends ZKTestCase {
         int expectedCounter = 3;
         counter.set(expectedCounter);
 
-        ZooKeeper zkDefaults = new ZooKeeper(
-            "127.0.0.1:" + CLIENT_PORT,
-            ClientBase.CONNECTION_TIMEOUT,
-            DummyWatcher.INSTANCE,
-            false);
+        ZooKeeper zkDefaults =
+                new ZooKeeper("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT, DummyWatcher.INSTANCE, false);
 
         ZooKeeper zkSpecial = new ZooKeeper(
                 "127.0.0.1:" + CLIENT_PORT,
@@ -82,5 +80,4 @@ public class CustomHostProviderTest extends ZKTestCase {
         expectedCounter--;
         assertTrue(counter.get() == expectedCounter);
     }
-
 }

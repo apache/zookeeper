@@ -33,6 +33,7 @@ public class WatchesPathReportTest extends ZKTestCase {
 
     private Map<String, Set<Long>> m;
     private WatchesPathReport r;
+
     @BeforeEach
     public void setUp() {
         m = new HashMap<String, Set<Long>>();
@@ -45,12 +46,14 @@ public class WatchesPathReportTest extends ZKTestCase {
         m.put("path2", s);
         r = new WatchesPathReport(m);
     }
+
     @Test
     public void testHasSessions() {
         assertTrue(r.hasSessions("path1"));
         assertTrue(r.hasSessions("path2"));
         assertFalse(r.hasSessions("path3"));
     }
+
     @Test
     public void testGetSessions() {
         Set<Long> s = r.getSessions("path1");
@@ -62,9 +65,9 @@ public class WatchesPathReportTest extends ZKTestCase {
         assertTrue(s.contains(201L));
         assertNull(r.getSessions("path3"));
     }
+
     @Test
     public void testToMap() {
         assertEquals(m, r.toMap());
     }
-
 }

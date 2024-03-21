@@ -68,7 +68,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         os = loggerTestTool.getOutputStream();
         mt = startQuorum();
         zk = ClientBase.createZKClient("127.0.0.1:" + mt[0].getQuorumPeer().getClientPort());
-        //Verify start audit log here itself
+        // Verify start audit log here itself
         String expectedAuditLog = getStartLog();
         List<String> logs = readAuditLog(os, SERVER_COUNT);
         verifyLogs(expectedAuditLog, logs);
@@ -80,35 +80,26 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
     }
 
     @Test
-    public void testCreateAuditLogs()
-            throws KeeperException, InterruptedException, IOException {
+    public void testCreateAuditLogs() throws KeeperException, InterruptedException, IOException {
         String path = "/createPath";
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         // success log
         String createMode = CreateMode.PERSISTENT.toString().toLowerCase();
-        verifyLog(
-                getAuditLog(AuditConstants.OP_CREATE, path, Result.SUCCESS,
-                        null, createMode), readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, path, Result.SUCCESS, null, createMode), readAuditLog(os));
         try {
-            zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+            zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } catch (KeeperException exception) {
             Code code = exception.code();
             assertEquals(Code.NODEEXISTS, code);
         }
         // Verify create operation log
-        verifyLog(
-                getAuditLog(AuditConstants.OP_CREATE, path, Result.FAILURE,
-                        null, createMode), readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, path, Result.FAILURE, null, createMode), readAuditLog(os));
     }
 
     @Test
-    public void testDeleteAuditLogs()
-            throws InterruptedException, IOException, KeeperException {
+    public void testDeleteAuditLogs() throws InterruptedException, IOException, KeeperException {
         String path = "/deletePath";
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         os.reset();
         try {
             zk.delete(path, -100);
@@ -116,20 +107,15 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
             Code code = exception.code();
             assertEquals(Code.BADVERSION, code);
         }
-        verifyLog(getAuditLog(AuditConstants.OP_DELETE, path,
-                Result.FAILURE),
-                readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, path, Result.FAILURE), readAuditLog(os));
         zk.delete(path, -1);
-        verifyLog(getAuditLog(AuditConstants.OP_DELETE, path),
-                readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, path), readAuditLog(os));
     }
 
     @Test
-    public void testSetDataAuditLogs()
-            throws InterruptedException, IOException, KeeperException {
+    public void testSetDataAuditLogs() throws InterruptedException, IOException, KeeperException {
         String path = "/setDataPath";
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         os.reset();
         try {
             zk.setData(path, "newData".getBytes(), -100);
@@ -137,21 +123,16 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
             Code code = exception.code();
             assertEquals(Code.BADVERSION, code);
         }
-        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, path,
-                Result.FAILURE),
-                readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, path, Result.FAILURE), readAuditLog(os));
         zk.setData(path, "newdata".getBytes(), -1);
-        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, path),
-                readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, path), readAuditLog(os));
     }
 
     @Test
-    public void testSetACLAuditLogs()
-            throws InterruptedException, IOException, KeeperException {
+    public void testSetACLAuditLogs() throws InterruptedException, IOException, KeeperException {
         ArrayList<ACL> openAclUnsafe = ZooDefs.Ids.OPEN_ACL_UNSAFE;
         String path = "/aclPath";
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         os.reset();
         try {
             zk.setACL(path, openAclUnsafe, -100);
@@ -160,23 +141,20 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
             assertEquals(Code.BADVERSION, code);
         }
         verifyLog(
-                getAuditLog(AuditConstants.OP_SETACL, path, Result.FAILURE,
-                        ZKUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
+                getAuditLog(AuditConstants.OP_SETACL, path, Result.FAILURE, ZKUtil.aclToString(openAclUnsafe), null),
+                readAuditLog(os));
         zk.setACL(path, openAclUnsafe, -1);
         verifyLog(
-                getAuditLog(AuditConstants.OP_SETACL, path, Result.SUCCESS,
-                        ZKUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
+                getAuditLog(AuditConstants.OP_SETACL, path, Result.SUCCESS, ZKUtil.aclToString(openAclUnsafe), null),
+                readAuditLog(os));
     }
 
     @Test
-    public void testMultiOperationAuditLogs()
-            throws InterruptedException, KeeperException, IOException {
+    public void testMultiOperationAuditLogs() throws InterruptedException, KeeperException, IOException {
         List<Op> ops = new ArrayList<>();
 
         String multiop = "/b";
-        Op create = Op.create(multiop, "".getBytes(),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        Op create = Op.create(multiop, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         Op setData = Op.setData(multiop, "newData".getBytes(), -1);
         // check does nothing so it is audit logged
         Op check = Op.check(multiop, -1);
@@ -192,13 +170,9 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         zk.multi(ops);
         List<String> multiOpLogs = readAuditLog(os, 3);
         // verify that each multi operation success is logged
-        verifyLog(getAuditLog(AuditConstants.OP_CREATE, multiop,
-                Result.SUCCESS, null, createMode),
-                multiOpLogs.get(0));
-        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, multiop),
-                multiOpLogs.get(1));
-        verifyLog(getAuditLog(AuditConstants.OP_DELETE, multiop),
-                multiOpLogs.get(2));
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, multiop, Result.SUCCESS, null, createMode), multiOpLogs.get(0));
+        verifyLog(getAuditLog(AuditConstants.OP_SETDATA, multiop), multiOpLogs.get(1));
+        verifyLog(getAuditLog(AuditConstants.OP_DELETE, multiop), multiOpLogs.get(2));
 
         ops = new ArrayList<>();
         ops.add(create);
@@ -212,43 +186,50 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
 
         // Verify that multi operation failure is logged, and there is no path
         // mentioned in the audit log
-        verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null,
-                Result.FAILURE),
-                readAuditLog(os));
+        verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null, Result.FAILURE), readAuditLog(os));
     }
 
     @Test
-    public void testEphemralZNodeAuditLogs()
-            throws Exception {
+    public void testEphemralZNodeAuditLogs() throws Exception {
         String ephemralPath = "/ephemral";
         CountdownWatcher watcher2 = new CountdownWatcher();
         ZooKeeper zk2 = new ZooKeeper(
-                "127.0.0.1:" + mt[0].getQuorumPeer().getClientPort(),
-                ClientBase.CONNECTION_TIMEOUT, watcher2);
+                "127.0.0.1:" + mt[0].getQuorumPeer().getClientPort(), ClientBase.CONNECTION_TIMEOUT, watcher2);
         watcher2.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk2.create(ephemralPath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        zk2.create(ephemralPath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         String session2 = "0x" + Long.toHexString(zk2.getSessionId());
-        verifyLog(getAuditLog(AuditConstants.OP_CREATE, ephemralPath,
-                Result.SUCCESS, null,
-                CreateMode.EPHEMERAL.toString().toLowerCase(),
-                session2), readAuditLog(os));
+        verifyLog(
+                getAuditLog(
+                        AuditConstants.OP_CREATE,
+                        ephemralPath,
+                        Result.SUCCESS,
+                        null,
+                        CreateMode.EPHEMERAL.toString().toLowerCase(),
+                        session2),
+                readAuditLog(os));
         zk2.close();
         waitForDeletion(zk, ephemralPath);
         // verify that ephemeral node deletion on session close are captured
         // in audit log
         // Because these operations are done by ZooKeeper server itself,
         // there are no IP user is zkServer user, not any client user
-        verifyLogs(getAuditLog(AuditConstants.OP_DEL_EZNODE_EXP, ephemralPath,
-                Result.SUCCESS, null, null, session2,
-                ZKAuditProvider.getZKUser(), null), readAuditLog(os, SERVER_COUNT));
+        verifyLogs(
+                getAuditLog(
+                        AuditConstants.OP_DEL_EZNODE_EXP,
+                        ephemralPath,
+                        Result.SUCCESS,
+                        null,
+                        null,
+                        session2,
+                        ZKAuditProvider.getZKUser(),
+                        null),
+                readAuditLog(os, SERVER_COUNT));
     }
-
 
     private static String getStartLog() {
         // user=userName operation=ZooKeeperServer start  result=success
-        AuditEvent logEvent = ZKAuditProvider.createLogEvent(ZKAuditProvider.getZKUser(),
-                AuditConstants.OP_START, Result.SUCCESS);
+        AuditEvent logEvent =
+                ZKAuditProvider.createLogEvent(ZKAuditProvider.getZKUser(), AuditConstants.OP_START, Result.SUCCESS);
         return logEvent.toString();
     }
 
@@ -260,27 +241,31 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         return getAuditLog(operation, znode, result, null, null);
     }
 
-    private String getAuditLog(String operation, String znode, Result result,
-                               String acl, String createMode) {
+    private String getAuditLog(String operation, String znode, Result result, String acl, String createMode) {
         String session = getSession();
         return getAuditLog(operation, znode, result, acl, createMode, session);
     }
 
-    private String getAuditLog(String operation, String znode, Result result,
-                               String acl, String createMode, String session) {
+    private String getAuditLog(
+            String operation, String znode, Result result, String acl, String createMode, String session) {
         String user = getUser();
         String ip = getIp();
-        return getAuditLog(operation, znode, result, acl, createMode, session,
-                user, ip);
+        return getAuditLog(operation, znode, result, acl, createMode, session, user, ip);
     }
 
-    private String getAuditLog(String operation, String znode, Result result,
-                               String acl, String createMode, String session, String user, String ip) {
-        AuditEvent logEvent = ZKAuditProvider.createLogEvent(user, operation, znode, acl, createMode, session, ip,
-                result);
+    private String getAuditLog(
+            String operation,
+            String znode,
+            Result result,
+            String acl,
+            String createMode,
+            String session,
+            String user,
+            String ip) {
+        AuditEvent logEvent =
+                ZKAuditProvider.createLogEvent(user, operation, znode, acl, createMode, session, ip, result);
         String auditLog = logEvent.toString();
-        LOG.info("expected audit log for operation '" + operation + "' is '"
-                + auditLog + "'");
+        LOG.info("expected audit log for operation '" + operation + "' is '" + auditLog + "'");
         return auditLog;
     }
 
@@ -301,9 +286,8 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
     }
 
     private ServerCnxn getServerCnxn() {
-        Iterable<ServerCnxn> connections = mt[0].getQuorumPeer()
-                .getActiveServer()
-                .getServerCnxnFactory().getConnections();
+        Iterable<ServerCnxn> connections =
+                mt[0].getQuorumPeer().getActiveServer().getServerCnxnFactory().getConnections();
         return connections.iterator().next();
     }
 
@@ -324,32 +308,25 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         return readAuditLog(os, 1).get(0);
     }
 
-    private static List<String> readAuditLog(ByteArrayOutputStream os,
-                                             int numberOfLogEntry)
-            throws IOException {
+    private static List<String> readAuditLog(ByteArrayOutputStream os, int numberOfLogEntry) throws IOException {
         return readAuditLog(os, numberOfLogEntry, false);
     }
 
-    private static List<String> readAuditLog(ByteArrayOutputStream os,
-                                             int numberOfLogEntry,
-                                             boolean skipEphemralDeletion) throws IOException {
+    private static List<String> readAuditLog(
+            ByteArrayOutputStream os, int numberOfLogEntry, boolean skipEphemralDeletion) throws IOException {
         List<String> logs = new ArrayList<>();
-        LineNumberReader r = new LineNumberReader(
-                new StringReader(os.toString()));
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
         String line;
         while ((line = r.readLine()) != null) {
-            if (skipEphemralDeletion
-                    && line.contains(AuditConstants.OP_DEL_EZNODE_EXP)) {
+            if (skipEphemralDeletion && line.contains(AuditConstants.OP_DEL_EZNODE_EXP)) {
                 continue;
             }
             logs.add(line);
         }
         os.reset();
-        assertEquals(numberOfLogEntry, logs.size(),
-                "Expected number of log entries are not generated. Logs are "
-                        + logs);
+        assertEquals(
+                numberOfLogEntry, logs.size(), "Expected number of log entries are not generated. Logs are " + logs);
         return logs;
-
     }
 
     private static MainThread[] startQuorum() throws IOException {
@@ -373,21 +350,20 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
 
         // start all the servers
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
-                    false);
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
             mt[i].start();
         }
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            Assertions.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
-                    CONNECTION_TIMEOUT), "waiting for server " + i + " being up");
+            Assertions.assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
         return mt;
     }
 
-    private void waitForDeletion(ZooKeeper zooKeeper, String path)
-            throws Exception {
+    private void waitForDeletion(ZooKeeper zooKeeper, String path) throws Exception {
         long elapsedTime = 0;
         long waitInterval = 10;
         int timeout = 100;

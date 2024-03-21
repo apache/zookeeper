@@ -73,5 +73,4 @@ public class JvmPauseMonitorTest {
     public void teardown() {
         pauseMonitor.serviceStop();
     }
-
 }

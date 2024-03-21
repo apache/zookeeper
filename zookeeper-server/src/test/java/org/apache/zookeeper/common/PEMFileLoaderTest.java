@@ -30,24 +30,22 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLoadKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void testLoadKeyStore(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
         KeyStore ks = new PEMFileLoader.Builder()
-            .setKeyStorePath(path)
-            .setKeyStorePassword(x509TestContext.getKeyStorePassword())
-            .build()
-            .loadKeyStore();
+                .setKeyStorePath(path)
+                .setKeyStorePassword(x509TestContext.getKeyStorePassword())
+                .build()
+                .loadKeyStore();
         assertEquals(1, ks.size());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(Exception.class, () -> {
             String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
@@ -62,8 +60,7 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
@@ -78,8 +75,7 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithNullFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
             new PEMFileLoader.Builder()
@@ -92,8 +88,7 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(KeyStoreException.class, () -> {
             // Trying to load a JKS file with PEM loader should fail
@@ -109,26 +104,25 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
         KeyStore ts = new PEMFileLoader.Builder()
-            .setTrustStorePath(path)
-            .setTrustStorePassword(x509TestContext.getTrustStorePassword())
-            .build()
-            .loadTrustStore();
+                .setTrustStorePath(path)
+                .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                .build()
+                .loadTrustStore();
         assertEquals(1, ts.size());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
             new PEMFileLoader.Builder()
                     .setTrustStorePath(path + ".does_not_exist")
                     .setTrustStorePassword(x509TestContext.getTrustStorePassword())
@@ -140,8 +134,7 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithNullFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
             new PEMFileLoader.Builder()
@@ -154,17 +147,15 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Trying to load a JKS file with PEM loader should fail
         String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath();
         KeyStore ts = new PEMFileLoader.Builder()
-            .setTrustStorePath(path)
-            .setTrustStorePassword(x509TestContext.getTrustStorePassword())
-            .build()
-            .loadTrustStore();
+                .setTrustStorePath(path)
+                .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                .build()
+                .loadTrustStore();
         assertEquals(0, ts.size());
     }
-
 }

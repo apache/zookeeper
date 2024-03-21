@@ -36,13 +36,13 @@ public class QuorumRestartTest extends ZKTestCase {
     @BeforeEach
     public void setUp() throws Exception {
         System.setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
 
         // starting a 3 node ensemble without observers
         qu = new QuorumUtil(1, 2);
         qu.startAll();
     }
-
 
     /**
      * A basic test for rolling restart. We are restarting the ZooKeeper servers one by one,
@@ -56,12 +56,15 @@ public class QuorumRestartTest extends ZKTestCase {
             LOG.info("***** restarting: " + serverToRestart);
             qu.shutdown(serverToRestart);
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerDown(
+                            "127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT),
                     String.format("Timeout during waiting for server %d to go down", serverToRestart));
 
             qu.restart(serverToRestart);
 
-            final String errorMessage = "Not all the quorum members are connected after restarting server " + serverToRestart;
+            final String errorMessage =
+                    "Not all the quorum members are connected after restarting server " + serverToRestart;
             waitFor(errorMessage, () -> qu.allPeersAreConnected(), 30);
 
             LOG.info("***** Restart {} succeeded", serverToRestart);
@@ -79,18 +82,20 @@ public class QuorumRestartTest extends ZKTestCase {
             LOG.info("***** restarting: " + serverToRestart);
             qu.shutdown(serverToRestart);
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerDown(
+                            "127.0.0.1:" + qu.getPeer(serverToRestart).clientPort, ClientBase.CONNECTION_TIMEOUT),
                     String.format("Timeout during waiting for server %d to go down", serverToRestart));
 
             qu.restart(serverToRestart);
 
-            final String errorMessage = "Not all the quorum members are connected after restarting server " + serverToRestart;
+            final String errorMessage =
+                    "Not all the quorum members are connected after restarting server " + serverToRestart;
             waitFor(errorMessage, () -> qu.allPeersAreConnected(), 30);
 
             LOG.info("***** Restart {} succeeded", serverToRestart);
         }
     }
-
 
     /**
      * Testing one of the errors reported in ZOOKEEPER-2164, when some servers can not
@@ -104,7 +109,9 @@ public class QuorumRestartTest extends ZKTestCase {
             LOG.info("***** new leader: " + leaderId);
             qu.shutdown(leaderId);
 
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerDown(
+                            "127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT),
                     "Timeout during waiting for current leader to go down");
 
             String errorMessage = "No new leader was elected";
@@ -119,15 +126,10 @@ public class QuorumRestartTest extends ZKTestCase {
         }
     }
 
-
     @AfterEach
     public void tearDown() throws Exception {
         qu.shutdownAll();
         System.clearProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
     }
-
-
-
-
 }

@@ -39,9 +39,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         }
 
         @Override
-        public void shutdown() {
-        }
-
+        public void shutdown() {}
     }
 
     private class MyPrepRequestProcessor extends PrepRequestProcessor {
@@ -55,7 +53,6 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
             super.run();
             processed.countDown();
         }
-
     }
 
     @Test
@@ -66,7 +63,8 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         PrepRequestProcessor processor = new MyPrepRequestProcessor();
         processor.start();
 
-        processor.processRequest(new Request(null, 1L, 1, ZooDefs.OpCode.setData, RequestRecord.fromBytes(new byte[10]), null));
+        processor.processRequest(
+                new Request(null, 1L, 1, ZooDefs.OpCode.setData, RequestRecord.fromBytes(new byte[10]), null));
         processed.await();
 
         processor.shutdown();
@@ -87,5 +85,4 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         assertEquals(1L, values.get("unrecoverable_error_count"));
     }
-
 }

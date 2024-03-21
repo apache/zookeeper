@@ -31,5 +31,4 @@ public class SnapshotInfo {
         this.zxid = zxid;
         this.timestamp = timestamp;
     }
-
 }

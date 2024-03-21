@@ -66,7 +66,6 @@ public class LearnerHandlerTest extends ZKTestCase {
         protected boolean shouldSendMarkerPacketForLogging() {
             return false;
         }
-
     }
 
     class MockZKDatabase extends ZKDatabase {
@@ -112,13 +111,11 @@ public class LearnerHandlerTest extends ZKTestCase {
             } else {
                 return Collections.emptyIterator();
             }
-
         }
 
         public long calculateTxnLogSizeLimit() {
             return 1;
         }
-
     }
 
     private MockLearnerHandler learnerHandler;
@@ -138,12 +135,13 @@ public class LearnerHandlerTest extends ZKTestCase {
 
         // Intercept when startForwarding is called
         leader = mock(Leader.class);
-        when(leader.startForwarding(ArgumentMatchers.any(LearnerHandler.class), ArgumentMatchers.anyLong())).thenAnswer(new Answer<Long>() {
-            public Long answer(InvocationOnMock invocation) {
-                currentZxid = invocation.getArgument(1);
-                return 0L;
-            }
-        });
+        when(leader.startForwarding(ArgumentMatchers.any(LearnerHandler.class), ArgumentMatchers.anyLong()))
+                .thenAnswer(new Answer<Long>() {
+                    public Long answer(InvocationOnMock invocation) {
+                        currentZxid = invocation.getArgument(1);
+                        return 0L;
+                    }
+                });
         when(leader.getZKDatabase()).thenReturn(db);
 
         learnerHandler = new MockLearnerHandler(sock, leader);
@@ -194,7 +192,8 @@ public class LearnerHandlerTest extends ZKTestCase {
     }
 
     void assertZxidEquals(long expected, long value) {
-        assertEquals(expected, value, "Expected 0x" + Long.toHexString(expected) + " but was 0x" + Long.toHexString(value));
+        assertEquals(
+                expected, value, "Expected 0x" + Long.toHexString(expected) + " but was 0x" + Long.toHexString(value));
     }
 
     /**
@@ -233,7 +232,6 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertTrue(learnerHandler.syncFollower(peerZxid, leader));
         assertEquals(0, learnerHandler.getQueuedPackets().size());
         reset();
-
     }
 
     /**
@@ -257,7 +255,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.TRUNC, 3, 5);
         // DIFF + 1 proposals + 1 commit
         assertEquals(3, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{5});
+        queuedPacketMatches(new long[] {5});
         reset();
 
         // Peer is within committedLog range
@@ -267,7 +265,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.DIFF, db.getmaxCommittedLog(), db.getmaxCommittedLog());
         // DIFF + 2 proposals + 2 commit
         assertEquals(5, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{3, 5});
+        queuedPacketMatches(new long[] {3, 5});
         reset();
 
         // Peer miss the committedLog and txnlog is disabled
@@ -305,7 +303,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.TRUNC, 3, db.getmaxCommittedLog());
         // DIFF + 4 proposals + 4 commit
         assertEquals(9, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{5, 6, 7, 8});
+        queuedPacketMatches(new long[] {5, 6, 7, 8});
         reset();
 
         // Peer zxid is in txnlog range
@@ -315,9 +313,8 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.DIFF, db.getmaxCommittedLog(), db.getmaxCommittedLog());
         // DIFF + 4 proposals + 4 commit
         assertEquals(9, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{5, 6, 7, 8});
+        queuedPacketMatches(new long[] {5, 6, 7, 8});
         reset();
-
     }
 
     /**
@@ -369,7 +366,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.TRUNC, 3, db.lastProcessedZxid);
         // DIFF + 3 proposals + 3 commit
         assertEquals(7, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{5, 6, 7});
+        queuedPacketMatches(new long[] {5, 6, 7});
         reset();
 
         // Peer has zxid in txnlog range
@@ -379,7 +376,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.DIFF, db.lastProcessedZxid, db.lastProcessedZxid);
         // DIFF + 4 proposals + 4 commit
         assertEquals(9, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{3, 5, 6, 7});
+        queuedPacketMatches(new long[] {3, 5, 6, 7});
         reset();
 
         // Peer miss the txnlog
@@ -420,7 +417,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.TRUNC, getZxid(0xf, 3), db.getmaxCommittedLog());
         // DIFF + 4 proposals + 4 commit
         assertEquals(9, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{getZxid(0xf, 5), getZxid(0xf, 6), getZxid(0xf, 7), getZxid(0xf, 8)});
+        queuedPacketMatches(new long[] {getZxid(0xf, 5), getZxid(0xf, 6), getZxid(0xf, 7), getZxid(0xf, 8)});
         reset();
 
         // Peer zxid is in txnlog range
@@ -430,7 +427,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.DIFF, db.getmaxCommittedLog(), db.getmaxCommittedLog());
         // DIFF + 4 proposals + 4 commit
         assertEquals(9, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{getZxid(0xf, 5), getZxid(0xf, 6), getZxid(0xf, 7), getZxid(0xf, 8)});
+        queuedPacketMatches(new long[] {getZxid(0xf, 5), getZxid(0xf, 6), getZxid(0xf, 7), getZxid(0xf, 8)});
         reset();
     }
 
@@ -465,7 +462,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.DIFF, getZxid(1, 2), getZxid(1, 2));
         // DIFF + 2 proposals + 2 commit
         assertEquals(5, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{getZxid(1, 1), getZxid(1, 2)});
+        queuedPacketMatches(new long[] {getZxid(1, 1), getZxid(1, 2)});
         reset();
 
         // Peer has zxid of epoch 2, so it is already sync
@@ -476,7 +473,6 @@ public class LearnerHandlerTest extends ZKTestCase {
         // DIFF only
         assertEquals(1, learnerHandler.getQueuedPackets().size());
         reset();
-
     }
 
     /**
@@ -507,9 +503,8 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertOpType(Leader.DIFF, getZxid(1, 2), getZxid(1, 2));
         // DIFF + 2 proposals + 2 commit
         assertEquals(5, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[]{getZxid(1, 1), getZxid(1, 2)});
+        queuedPacketMatches(new long[] {getZxid(1, 1), getZxid(1, 2)});
         reset();
-
     }
 
     /**
@@ -555,5 +550,4 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertTrue(learnerHandler.syncFollower(peerZxid, leader));
         reset();
     }
-
 }

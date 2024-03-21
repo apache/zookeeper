@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.common;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -149,8 +148,7 @@ public class ZKHostnameVerifierTest {
         impl.verify("www.company.com", x509);
     }
 
-    private void exceptionPlease(final ZKHostnameVerifier hv, final String host,
-                                 final X509Certificate x509) {
+    private void exceptionPlease(final ZKHostnameVerifier hv, final String host, final X509Certificate x509) {
         try {
             hv.verify(host, x509);
             fail("HostnameVerifier shouldn't allow [" + host + "]");

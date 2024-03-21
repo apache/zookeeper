@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.watch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -134,8 +133,7 @@ public class RecursiveWatchQtyTest {
             threadPool.shutdownNow();
         }
 
-        int expectedRecursiveQty = (int) manager.getWatch2Paths().values()
-                .stream()
+        int expectedRecursiveQty = (int) manager.getWatch2Paths().values().stream()
                 .flatMap(paths -> paths.values().stream())
                 .filter(stats -> stats.hasMode(WatcherMode.PERSISTENT_RECURSIVE))
                 .count();
@@ -147,7 +145,7 @@ public class RecursiveWatchQtyTest {
         try {
             for (int i = 0; i < iterations; ++i) {
                 String path = "/" + random.nextInt(clientQty);
-                boolean doSet = random.nextInt(100) > 33;    // 2/3 will be sets
+                boolean doSet = random.nextInt(100) > 33; // 2/3 will be sets
                 if (doSet) {
                     WatcherMode mode = WatcherMode.values()[random.nextInt(WatcherMode.values().length)];
                     manager.addWatch(path, new DummyWatcher(), mode);

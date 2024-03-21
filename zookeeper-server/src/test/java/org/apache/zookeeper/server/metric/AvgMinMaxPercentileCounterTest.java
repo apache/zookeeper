@@ -76,5 +76,4 @@ public class AvgMinMaxPercentileCounterTest extends ZKTestCase {
         assertEquals(990L, values.get("p99_test"), "should have p99=990");
         assertEquals(999L, values.get("p999_test"), "should have p999=999");
     }
-
 }

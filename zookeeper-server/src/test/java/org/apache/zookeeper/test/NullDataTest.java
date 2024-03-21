@@ -70,11 +70,9 @@ public class NullDataTest extends ClientBase implements StatCallback {
                 zk.close();
             }
         }
-
     }
 
     public void processResult(int rc, String path, Object ctx, Stat stat) {
         cn.countDown();
     }
-
 }

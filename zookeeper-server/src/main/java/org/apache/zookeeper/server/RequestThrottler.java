@@ -96,14 +96,14 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
      * request latency higher than the sessionTimeout. The staleness of
      * a request is tunable property, @see Request for details.
      */
-    private static volatile boolean dropStaleRequests = Boolean.parseBoolean(System.getProperty("zookeeper.request_throttle_drop_stale", "true"));
+    private static volatile boolean dropStaleRequests =
+            Boolean.parseBoolean(System.getProperty("zookeeper.request_throttle_drop_stale", "true"));
 
     protected boolean shouldThrottleOp(Request request, long elapsedTime) {
         return request.isThrottlable()
                 && ZooKeeperServer.getThrottledOpWaitTime() > 0
                 && elapsedTime > ZooKeeperServer.getThrottledOpWaitTime();
     }
-
 
     public RequestThrottler(ZooKeeperServer zks) {
         super("RequestThrottler", zks.getZooKeeperServerListener());
@@ -182,8 +182,8 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
                     final long elapsedTime = Time.currentElapsedTime() - request.requestThrottleQueueTime;
                     ServerMetrics.getMetrics().REQUEST_THROTTLE_QUEUE_TIME.add(elapsedTime);
                     if (shouldThrottleOp(request, elapsedTime)) {
-                      request.setIsThrottled(true);
-                      ServerMetrics.getMetrics().THROTTLED_OPS.add(1);
+                        request.setIsThrottled(true);
+                        ServerMetrics.getMetrics().THROTTLED_OPS.add(1);
                     }
                     zks.submitRequestNow(request);
                 }
@@ -195,14 +195,15 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         LOG.info("RequestThrottler shutdown. Dropped {} requests", dropped);
     }
 
-
     // @VisibleForTesting
     synchronized void throttleSleep(int stallTime) throws InterruptedException {
         ServerMetrics.getMetrics().REQUEST_THROTTLE_WAIT_COUNT.add(1);
         this.wait(stallTime);
     }
 
-    @SuppressFBWarnings(value = "NN_NAKED_NOTIFY", justification = "state change is in ZooKeeperServer.decInProgress() ")
+    @SuppressFBWarnings(
+            value = "NN_NAKED_NOTIFY",
+            justification = "state change is in ZooKeeperServer.decInProgress() ")
     public synchronized void throttleWake() {
         this.notify();
     }
@@ -269,9 +270,8 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             this.join();
         } catch (InterruptedException e) {
             LOG.warn("Interrupted while waiting for {} to finish", this);
-            //TODO apply ZOOKEEPER-575 and remove this line.
+            // TODO apply ZOOKEEPER-575 and remove this line.
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
-
 }

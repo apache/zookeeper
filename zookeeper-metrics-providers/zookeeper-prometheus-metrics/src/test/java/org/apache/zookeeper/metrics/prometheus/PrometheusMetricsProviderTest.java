@@ -96,8 +96,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             assertEquals("cc", k);
             assertEquals(10, ((Number) v).intValue());
             count[0]++;
-        }
-        );
+        });
         assertEquals(1, count[0]);
         count[0] = 0;
 
@@ -108,8 +107,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             assertEquals("cc", k);
             assertEquals(10, ((Number) v).intValue());
             count[0]++;
-        }
-        );
+        });
         assertEquals(1, count[0]);
 
         // we always must get the same object
@@ -157,8 +155,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     public void testCounterSet_multiple() throws Exception {
         final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
 
-        final String[] names = new String[]{name + "_1", name + "_2"};
-        final String[] keys = new String[]{"ns21", "ns22"};
+        final String[] names = new String[] {name + "_1", name + "_2"};
+        final String[] keys = new String[] {"ns21", "ns22"};
         final int[] counts = new int[] {3, 5};
 
         final int length = names.length;
@@ -188,15 +186,14 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         final List<String> expectedMetrics = new ArrayList<>();
         for (int i = 0; i < length; i++) {
             expectedNames.add(String.format("# TYPE %s count", names[i]));
-            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", names[i], keys[i], counts[i]  * 1.0));
+            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", names[i], keys[i], counts[i] * 1.0));
         }
         validateWithServletCall(expectedNames, expectedMetrics);
     }
 
     @Test
     public void testCounterSet_registerWithNullName() {
-        assertThrows(NullPointerException.class,
-                () -> provider.getRootContext().getCounterSet(null));
+        assertThrows(NullPointerException.class, () -> provider.getRootContext().getCounterSet(null));
     }
 
     @Test
@@ -239,8 +236,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             assertEquals("gg", k);
             assertEquals(values[0], ((Number) v).intValue());
             count[0]++;
-        }
-        );
+        });
         assertEquals(1, callCounts[0]);
         assertEquals(0, callCounts[1]);
         assertEquals(1, count[0]);
@@ -252,8 +248,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         provider.getRootContext().unregisterGauge("gg");
         provider.dump((k, v) -> {
             count[0]++;
-        }
-        );
+        });
         assertEquals(2, callCounts[0]);
         assertEquals(0, callCounts[1]);
         assertEquals(0, count[0]);
@@ -266,8 +261,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             assertEquals("gg", k);
             assertEquals(values[1], ((Number) v).intValue());
             count[0]++;
-        }
-        );
+        });
         assertEquals(2, callCounts[0]);
         assertEquals(1, callCounts[1]);
         assertEquals(1, count[0]);
@@ -285,8 +279,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
         provider.dump((k, v) -> {
             count[0]++;
-        }
-        );
+        });
         assertEquals(1, count[0]);
         assertEquals(3, callCounts[0]);
         assertEquals(2, callCounts[1]);
@@ -294,8 +287,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testBasicSummary() throws Exception {
-        Summary summary = provider.getRootContext()
-                .getSummary("cc", MetricsContext.DetailLevel.BASIC);
+        Summary summary = provider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.BASIC);
         summary.add(10);
         summary.add(10);
         int[] count = {0};
@@ -317,18 +309,15 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                     fail("unespected key " + k);
                     break;
             }
-        }
-        );
+        });
         assertEquals(3, count[0]);
         count[0] = 0;
 
         // we always must get the same object
-        assertSame(summary, provider.getRootContext()
-                .getSummary("cc", MetricsContext.DetailLevel.BASIC));
+        assertSame(summary, provider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.BASIC));
 
         try {
-            provider.getRootContext()
-                    .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
+            provider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
             fail("Can't get the same summary with a different DetailLevel");
         } catch (IllegalArgumentException err) {
             assertThat(err.getMessage(), containsString("Already registered"));
@@ -343,8 +332,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testAdvancedSummary() throws Exception {
-        Summary summary = provider.getRootContext()
-                .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
+        Summary summary = provider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
         summary.add(10);
         summary.add(10);
         int[] count = {0};
@@ -372,18 +360,15 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                     fail("unespected key " + k);
                     break;
             }
-        }
-        );
+        });
         assertEquals(5, count[0]);
         count[0] = 0;
 
         // we always must get the same object
-        assertSame(summary, provider.getRootContext()
-                .getSummary("cc", MetricsContext.DetailLevel.ADVANCED));
+        assertSame(summary, provider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.ADVANCED));
 
         try {
-            provider.getRootContext()
-                    .getSummary("cc", MetricsContext.DetailLevel.BASIC);
+            provider.getRootContext().getSummary("cc", MetricsContext.DetailLevel.BASIC);
             fail("Can't get the same summary with a different DetailLevel");
         } catch (IllegalArgumentException err) {
             assertThat(err.getMessage(), containsString("Already registered"));
@@ -437,7 +422,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             }
         } finally {
             if (metricsProvider != null) {
-               metricsProvider.stop();
+                metricsProvider.stop();
             }
         }
     }
@@ -449,8 +434,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         final double count = 3.0;
 
         // create and register a SummarySet
-        final SummarySet summarySet = provider.getRootContext()
-                .getSummarySet(name, MetricsContext.DetailLevel.BASIC);
+        final SummarySet summarySet = provider.getRootContext().getSummarySet(name, MetricsContext.DetailLevel.BASIC);
 
         // update the SummarySet multiple times
         for (int i = 0; i < count; i++) {
@@ -477,13 +461,11 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         validateWithServletCall(expectedNames, expectedMetrics);
 
         // validate registering with same name, no overwriting
-        assertSame(summarySet, provider.getRootContext()
-                .getSummarySet(name, MetricsContext.DetailLevel.BASIC));
+        assertSame(summarySet, provider.getRootContext().getSummarySet(name, MetricsContext.DetailLevel.BASIC));
 
         // validate registering with different DetailLevel, not allowed
         try {
-            provider.getRootContext()
-                    .getSummarySet(name, MetricsContext.DetailLevel.ADVANCED);
+            provider.getRootContext().getSummarySet(name, MetricsContext.DetailLevel.ADVANCED);
             fail("Can't get the same summarySet with a different DetailLevel");
         } catch (final IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("Already registered"));
@@ -549,12 +531,11 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testGaugeSet_multipleGaugeSets() throws Exception {
         final String[] names = new String[] {
-                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE,
-                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
+            QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE, QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
         };
 
         final Number[] values = new Number[] {20.0, 200.0};
-        final String[] keys = new String[]{"ns21", "ns22"};
+        final String[] keys = new String[] {"ns21", "ns22"};
         final int count = names.length;
         final AtomicInteger[] callCounts = new AtomicInteger[count];
 
@@ -610,12 +591,11 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testGaugeSet_overwriteRegister() {
         final String[] names = new String[] {
-                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE,
-                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
+            QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE, QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
         };
 
         final int count = names.length;
-        final Number[] values = new Number[]{30.0, 300.0};
+        final Number[] values = new Number[] {30.0, 300.0};
         final String[] keys = new String[] {"ns31", "ns32"};
         final AtomicInteger[] callCounts = new AtomicInteger[count];
 
@@ -656,22 +636,18 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testGaugeSet_registerWithNullGaugeSet() {
-        assertThrows(NullPointerException.class,
-                () -> provider.getRootContext().registerGaugeSet("name", null));
+        assertThrows(NullPointerException.class, () -> provider.getRootContext().registerGaugeSet("name", null));
 
-        assertThrows(NullPointerException.class,
-                () -> provider.getRootContext().registerGaugeSet(null, HashMap::new));
+        assertThrows(NullPointerException.class, () -> provider.getRootContext().registerGaugeSet(null, HashMap::new));
     }
 
     @Test
     public void testGaugeSet_unregisterNull() {
-        assertThrows(NullPointerException.class,
-                () -> provider.getRootContext().unregisterGaugeSet(null));
+        assertThrows(NullPointerException.class, () -> provider.getRootContext().unregisterGaugeSet(null));
     }
 
-    private void createAndRegisterGaugeSet(final String name,
-                                           final Map<String, Number> metricsMap,
-                                           final AtomicInteger callCount) {
+    private void createAndRegisterGaugeSet(
+            final String name, final Map<String, Number> metricsMap, final AtomicInteger callCount) {
         final GaugeSet gaugeSet = () -> {
             callCount.addAndGet(1);
             return metricsMap;
@@ -686,8 +662,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         expectedMetrics.forEach((key, value) -> assertEquals(value, returnedMetrics.get(key)));
     }
 
-    private void validateWithServletCall(final List<String> expectedNames,
-                                         final List<String> expectedMetrics) throws Exception {
+    private void validateWithServletCall(final List<String> expectedNames, final List<String> expectedMetrics)
+            throws Exception {
         final String response = callServlet();
         if (expectedNames.isEmpty() && expectedMetrics.isEmpty()) {
             assertTrue(response.isEmpty());

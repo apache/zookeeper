@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,6 +47,7 @@ public class ThrottledOpHelper {
             everyNthOp = n;
             opCounter = 0;
         }
+
         private static int everyNthOp = 0;
         private static int opCounter = 0;
 
@@ -65,7 +65,8 @@ public class ThrottledOpHelper {
         new RequestThrottleMock();
     }
 
-    public void testThrottledOp(ZooKeeper zk, ZooKeeperServer zs) throws IOException, InterruptedException, KeeperException {
+    public void testThrottledOp(ZooKeeper zk, ZooKeeperServer zs)
+            throws IOException, InterruptedException, KeeperException {
         final int N = 5; // must be greater than 3
         final int COUNT = 100;
         RequestThrottleMock.throttleEveryNthOp(N);
@@ -75,22 +76,31 @@ public class ThrottledOpHelper {
             String nodeName = "/ivailo" + i;
             if (opCount % N == N - 1) {
                 try {
-                    zk.create(nodeName, "".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                        (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
+                    zk.create(
+                            nodeName,
+                            "".getBytes(),
+                            Ids.OPEN_ACL_UNSAFE,
+                            (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
                     fail("Should have gotten ThrottledOp exception");
                 } catch (KeeperException.ThrottledOpException e) {
                     // anticipated outcome
                     Stat stat = zk.exists(nodeName, null);
                     assertNull(stat);
-                    zk.create(nodeName, "".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                        (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
+                    zk.create(
+                            nodeName,
+                            "".getBytes(),
+                            Ids.OPEN_ACL_UNSAFE,
+                            (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
                 } catch (KeeperException e) {
                     fail("Should have gotten ThrottledOp exception");
                 }
                 opCount += 3; // three ops issued
             } else {
-                zk.create(nodeName, "".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
+                zk.create(
+                        nodeName,
+                        "".getBytes(),
+                        Ids.OPEN_ACL_UNSAFE,
+                        (i % 2 == 0) ? CreateMode.PERSISTENT : CreateMode.EPHEMERAL);
                 opCount++; // one op issued
             }
             if (opCount % N == N - 1) {
@@ -187,12 +197,13 @@ public class ThrottledOpHelper {
     public void testThrottledAcl(ZooKeeper zk, ZooKeeperServer zs) throws Exception {
         RequestThrottleMock.throttleEveryNthOp(0);
 
-        final ArrayList<ACL> ACL_PERMS =
-          new ArrayList<ACL>() { {
-            add(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
-            add(new ACL(ZooDefs.Perms.WRITE, ZooDefs.Ids.ANYONE_ID_UNSAFE));
-            add(new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS));
-        }};
+        final ArrayList<ACL> ACL_PERMS = new ArrayList<ACL>() {
+            {
+                add(new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+                add(new ACL(ZooDefs.Perms.WRITE, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+                add(new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS));
+            }
+        };
         String path = "/path1";
         zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.addAuthInfo("digest", "pat:test".getBytes());
@@ -202,8 +213,7 @@ public class ThrottledOpHelper {
         RequestThrottleMock.throttleEveryNthOp(2);
 
         path = "/path2";
-        zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
-            CreateMode.PERSISTENT);
+        zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         try {
             zk.setACL(path, ACL_PERMS, -1);
             fail("Should have gotten ThrottledOp exception");
@@ -218,8 +228,7 @@ public class ThrottledOpHelper {
         RequestThrottleMock.throttleEveryNthOp(0);
 
         path = "/path3";
-        zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
-            CreateMode.PERSISTENT);
+        zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.setACL(path, ACL_PERMS, -1);
         acls = zk.getACL(path, null);
         assertEquals(3, acls.size());

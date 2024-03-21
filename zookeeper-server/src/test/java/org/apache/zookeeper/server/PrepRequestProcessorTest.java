@@ -66,7 +66,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-
 public class PrepRequestProcessorTest extends ClientBase {
 
     private static final int CONNECTION_TIMEOUT = 3000;
@@ -118,7 +117,10 @@ public class PrepRequestProcessorTest extends ClientBase {
         Request foo = new Request(null, 1L, 1, OpCode.create, RequestRecord.fromBytes(new byte[3]), null);
         processor.pRequest(foo);
 
-        assertEquals(new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()), outcome.getTxn(), "Request should have marshalling error");
+        assertEquals(
+                new ErrorTxn(KeeperException.Code.MARSHALLINGERROR.intValue()),
+                outcome.getTxn(),
+                "Request should have marshalling error");
         assertTrue(pLatch.await(5, TimeUnit.SECONDS), "request hasn't been processed in chain");
     }
 
@@ -194,17 +196,19 @@ public class PrepRequestProcessorTest extends ClientBase {
         ZooKeeperServer.setDigestEnabled(true);
         processor = new PrepRequestProcessor(lzks, new MyRequestProcessor());
 
-        Record record = new CreateRequest("/foo", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag());
+        Record record =
+                new CreateRequest("/foo", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag());
         pLatch = new CountDownLatch(1);
         processor.pRequest(createRequest(record, OpCode.create, false));
         assertTrue(pLatch.await(5, TimeUnit.SECONDS), "request hasn't been processed in chain");
 
-        String newMember = "server.0=localhost:" + PortAssignment.unique()  + ":" + PortAssignment.unique() + ":participant";
+        String newMember =
+                "server.0=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant";
         record = new ReconfigRequest(null, null, newMember, 0);
         pLatch = new CountDownLatch(1);
         processor.pRequest(createRequest(record, OpCode.reconfig, true));
         assertTrue(pLatch.await(5, TimeUnit.SECONDS), "request hasn't been processed in chain");
-        assertEquals(outcome.getHdr().getType(), OpCode.reconfig);   // Verifies that there was no error.
+        assertEquals(outcome.getHdr().getType(), OpCode.reconfig); // Verifies that there was no error.
     }
 
     /**
@@ -300,12 +304,12 @@ public class PrepRequestProcessorTest extends ClientBase {
             outcome = request;
             pLatch.countDown();
         }
+
         @Override
         public void shutdown() {
             // TODO Auto-generated method stub
 
         }
-
     }
 
     private class MySessionTracker implements SessionTracker {
@@ -315,66 +319,81 @@ public class PrepRequestProcessorTest extends ClientBase {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public boolean commitSession(long id, int to) {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public void checkSession(long sessionId, Object owner) throws SessionExpiredException, SessionMovedException {
             // TODO Auto-generated method stub
         }
+
         @Override
         public long createSession(int sessionTimeout) {
             // TODO Auto-generated method stub
             return 0;
         }
+
         @Override
         public void dumpSessions(PrintWriter pwriter) {
             // TODO Auto-generated method stub
 
         }
+
         @Override
         public void removeSession(long sessionId) {
             // TODO Auto-generated method stub
 
         }
+
         public int upgradeSession(long sessionId) {
             // TODO Auto-generated method stub
             return 0;
         }
+
         @Override
         public void setOwner(long id, Object owner) throws SessionExpiredException {
             // TODO Auto-generated method stub
 
         }
+
         @Override
         public void shutdown() {
             // TODO Auto-generated method stub
 
         }
+
         @Override
         public boolean touchSession(long sessionId, int sessionTimeout) {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
         public void setSessionClosing(long sessionId) {
             // TODO Auto-generated method stub
         }
+
         @Override
         public boolean isTrackingSession(long sessionId) {
             // TODO Auto-generated method stub
             return false;
         }
+
         @Override
-        public void checkGlobalSession(long sessionId, Object owner) throws SessionExpiredException, SessionMovedException {
+        public void checkGlobalSession(long sessionId, Object owner)
+                throws SessionExpiredException, SessionMovedException {
             // TODO Auto-generated method stub
         }
+
         @Override
         public Map<Long, Set<Long>> getSessionExpiryMap() {
             return new HashMap<>();
         }
+
         @Override
         public long getLocalSessionCount() {
             return 0;
@@ -430,6 +449,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         SetDataTxn setDataTxn = (SetDataTxn) outcome.getTxn();
         assertEquals(Integer.MIN_VALUE, setDataTxn.getVersion());
     }
+
     @Test
     public void testCheckAndIncVersionWithNegativeNumber() throws Exception {
         zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);

@@ -58,7 +58,14 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
+        super(
+                logFactory,
+                self.tickTime,
+                self.minSessionTimeout,
+                self.maxSessionTimeout,
+                self.clientPortListenBacklog,
+                zkDb,
+                self);
         this.pendingSyncs = new ConcurrentLinkedQueue<>();
     }
 
@@ -69,7 +76,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
+        commitProcessor =
+                new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
         commitProcessor.start();
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         ((FollowerRequestProcessor) firstProcessor).start();
@@ -110,8 +118,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         }
         long firstElementZxid = pendingTxns.element().zxid;
         if (firstElementZxid != zxid) {
-            LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
-                      + " but next pending txn 0x" + Long.toHexString(firstElementZxid));
+            LOG.error("Committing zxid 0x" + Long.toHexString(zxid) + " but next pending txn 0x"
+                    + Long.toHexString(firstElementZxid));
             ServiceUtils.requestSystemExit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
@@ -175,19 +183,19 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     protected void registerMetrics() {
         super.registerMetrics();
 
-        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
+        MetricsContext rootContext =
+                ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
-
     }
 
     @Override
     protected void unregisterMetrics() {
         super.unregisterMetrics();
 
-        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
+        MetricsContext rootContext =
+                ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
         rootContext.unregisterGauge("synced_observers");
-
     }
 
     /**

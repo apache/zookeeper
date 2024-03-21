@@ -37,13 +37,11 @@ public class AtomicFileWritingIdiom {
     public interface OutputStreamStatement {
 
         void write(OutputStream os) throws IOException;
-
     }
 
     public interface WriterStatement {
 
         void write(Writer os) throws IOException;
-
     }
 
     public AtomicFileWritingIdiom(File targetFile, OutputStreamStatement osStmt) throws IOException {
@@ -54,10 +52,8 @@ public class AtomicFileWritingIdiom {
         this(targetFile, null, wStmt);
     }
 
-    private AtomicFileWritingIdiom(
-        File targetFile,
-        OutputStreamStatement osStmt,
-        WriterStatement wStmt) throws IOException {
+    private AtomicFileWritingIdiom(File targetFile, OutputStreamStatement osStmt, WriterStatement wStmt)
+            throws IOException {
         AtomicFileOutputStream out = null;
         boolean triedToClose = false;
         try {
@@ -87,5 +83,4 @@ public class AtomicFileWritingIdiom {
             }
         }
     }
-
 }

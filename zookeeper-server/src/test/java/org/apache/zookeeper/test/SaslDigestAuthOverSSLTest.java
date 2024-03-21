@@ -40,7 +40,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
 public class SaslDigestAuthOverSSLTest extends ClientBase {
 
     private ClientX509Util clientX509Util;
@@ -62,7 +61,6 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
         super.setUp();
     }
 
-
     @AfterEach
     @Override
     public void tearDown() throws Exception {
@@ -70,7 +68,6 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
         clearSslSetting(clientX509Util);
         clearSaslConfig();
     }
-
 
     @Test
     public void testAuth() throws Exception {
@@ -84,7 +81,6 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
             zk.close();
         }
     }
-
 
     public void initSaslConfig() {
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
@@ -121,7 +117,8 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
 
     public ClientX509Util setUpSSLWithNoAuth() {
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty("zookeeper.ssl.clientAuth", "none");
@@ -148,5 +145,4 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
         System.clearProperty("zookeeper.ssl.quorum.clientAuth");
         clientX509Util.close();
     }
-
 }

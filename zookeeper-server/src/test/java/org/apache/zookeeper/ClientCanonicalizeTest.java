@@ -40,7 +40,10 @@ public class ClientCanonicalizeTest extends ZKTestCase {
 
         ZKClientConfig conf = new ZKClientConfig();
         String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
-        assertEquals("zookeeper/zk1.apache.org", principal, "The computed principal does not appear to have been canonicalized");
+        assertEquals(
+                "zookeeper/zk1.apache.org",
+                principal,
+                "The computed principal does not appear to have been canonicalized");
     }
 
     @Test
@@ -56,7 +59,10 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         ZKClientConfig conf = new ZKClientConfig();
         conf.setProperty(ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME, "false");
         String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
-        assertEquals("zookeeper/zookeeper.apache.org", principal, "The computed principal does appears to have been canonicalized incorrectly");
+        assertEquals(
+                "zookeeper/zookeeper.apache.org",
+                principal,
+                "The computed principal does appears to have been canonicalized incorrectly");
     }
 
     @Test
@@ -71,7 +77,10 @@ public class ClientCanonicalizeTest extends ZKTestCase {
 
         ZKClientConfig conf = new ZKClientConfig();
         String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
-        assertEquals("zookeeper/zookeeper.apache.org", principal, "The computed principal does appear to have falled back to the original host name");
+        assertEquals(
+                "zookeeper/zookeeper.apache.org",
+                principal,
+                "The computed principal does appear to have falled back to the original host name");
     }
 
     @Test
@@ -84,5 +93,4 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         String serverPrincipal = SaslServerPrincipal.getServerPrincipal((InetSocketAddress) null, config);
         assertEquals(configuredPrincipal, serverPrincipal);
     }
-
 }

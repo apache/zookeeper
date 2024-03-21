@@ -38,7 +38,8 @@ public class QuorumPeerConfigTest {
      * test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2264
      */
     @Test
-    public void testErrorMessageWhensecureClientPortNotSetButsecureClientPortAddressSet() throws IOException, ConfigException {
+    public void testErrorMessageWhensecureClientPortNotSetButsecureClientPortAddressSet()
+            throws IOException, ConfigException {
         QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
         try {
             Properties zkProp = getDefaultZKProperties();
@@ -124,7 +125,6 @@ public class QuorumPeerConfigTest {
         public MockQuorumPeerConfig(long serverId) {
             this.serverId = serverId;
         }
-
     }
 
     /**
@@ -206,5 +206,4 @@ public class QuorumPeerConfigTest {
         zkProp.setProperty("oraclePath", new File("mastership").getAbsolutePath());
         return zkProp;
     }
-
 }

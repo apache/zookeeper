@@ -158,5 +158,4 @@ public class BitHashSet implements Iterable<Integer> {
     public synchronized boolean isEmpty() {
         return elementCount == 0;
     }
-
 }

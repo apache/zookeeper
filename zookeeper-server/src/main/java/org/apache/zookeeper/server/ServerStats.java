@@ -53,12 +53,16 @@ public class ServerStats {
     public interface Provider {
 
         long getOutstandingRequests();
-        long getLastProcessedZxid();
-        String getState();
-        int getNumAliveConnections();
-        long getDataDirSize();
-        long getLogDirSize();
 
+        long getLastProcessedZxid();
+
+        String getState();
+
+        int getNumAliveConnections();
+
+        long getDataDirSize();
+
+        long getLogDirSize();
     }
 
     public ServerStats(Provider provider) {
@@ -237,5 +241,4 @@ public class ServerStats {
     public BufferStats getClientResponseStats() {
         return clientResponseStats;
     }
-
 }

@@ -108,9 +108,7 @@ class ProtocolSupport {
      * Allow derived classes to perform
      * some custom closing operations to release resources.
      */
-    protected void doClose() {
-
-    }
+    protected void doClose() {}
 
     /**
      * Perform the given operation, retrying if the connection fails.
@@ -118,8 +116,7 @@ class ProtocolSupport {
      * @return object. it needs to be cast to the callee's expected
      * return type.
      */
-    protected Object retryOperation(ZooKeeperOperation operation)
-        throws KeeperException, InterruptedException {
+    protected Object retryOperation(ZooKeeperOperation operation) throws KeeperException, InterruptedException {
         KeeperException exception = null;
         for (int i = 0; i < RETRY_COUNT; i++) {
             try {
@@ -156,11 +153,7 @@ class ProtocolSupport {
      * @param acl
      * @param flags
      */
-    protected void ensureExists(
-        final String path,
-        final byte[] data,
-        final List<ACL> acl,
-        final CreateMode flags) {
+    protected void ensureExists(final String path, final byte[] data, final List<ACL> acl, final CreateMode flags) {
         try {
             retryOperation(() -> {
                 Stat stat = zookeeper.exists(path, false);
@@ -198,5 +191,4 @@ class ProtocolSupport {
             }
         }
     }
-
 }

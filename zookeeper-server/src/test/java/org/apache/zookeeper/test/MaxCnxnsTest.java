@@ -95,7 +95,6 @@ public class MaxCnxnsTest extends ClientBase {
                 // "Connection reset by peer"
             }
         }
-
     }
 
     /**
@@ -124,5 +123,4 @@ public class MaxCnxnsTest extends ClientBase {
         }
         assertSame(numCnxns, numConnected.get());
     }
-
 }

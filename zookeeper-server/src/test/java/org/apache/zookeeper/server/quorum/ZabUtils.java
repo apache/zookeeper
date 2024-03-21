@@ -36,8 +36,7 @@ import org.apache.zookeeper.test.ClientBase;
 
 public class ZabUtils {
 
-    private ZabUtils() {
-    }
+    private ZabUtils() {}
 
     public static final int SYNC_LIMIT = 2;
 
@@ -48,9 +47,27 @@ public class ZabUtils {
         peer.initLimit = 2;
         peer.tickTime = 2000;
 
-        peers.put(0L, new QuorumPeer.QuorumServer(0, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
-        peers.put(1L, new QuorumPeer.QuorumServer(1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
-        peers.put(2L, new QuorumPeer.QuorumServer(2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(
+                0L,
+                new QuorumPeer.QuorumServer(
+                        0,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(
+                1L,
+                new QuorumPeer.QuorumServer(
+                        1,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(
+                2L,
+                new QuorumPeer.QuorumServer(
+                        2,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
 
         peer.setQuorumVerifier(new QuorumMaj(peers), false);
         peer.setCnxnFactory(new NullServerCnxnFactory());
@@ -66,17 +83,20 @@ public class ZabUtils {
         return peer;
     }
 
-    public static Leader createLeader(File tmpDir, QuorumPeer peer) throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
+    public static Leader createLeader(File tmpDir, QuorumPeer peer)
+            throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new Leader(peer, zk);
     }
 
-    public static Leader createMockLeader(File tmpDir, QuorumPeer peer) throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
+    public static Leader createMockLeader(File tmpDir, QuorumPeer peer)
+            throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new MockLeader(peer, zk);
     }
 
-    private static LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer) throws IOException, NoSuchFieldException, IllegalAccessException {
+    private static LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer)
+            throws IOException, NoSuchFieldException, IllegalAccessException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
@@ -86,56 +106,62 @@ public class ZabUtils {
 
     private static final class NullServerCnxnFactory extends ServerCnxnFactory {
 
-        public void startup(ZooKeeperServer zkServer, boolean startServer) throws IOException, InterruptedException {
-        }
-        public void start() {
-        }
-        public void shutdown() {
-        }
-        public void setMaxClientCnxnsPerHost(int max) {
-        }
-        public void join() throws InterruptedException {
-        }
+        public void startup(ZooKeeperServer zkServer, boolean startServer) throws IOException, InterruptedException {}
+
+        public void start() {}
+
+        public void shutdown() {}
+
+        public void setMaxClientCnxnsPerHost(int max) {}
+
+        public void join() throws InterruptedException {}
+
         public int getMaxClientCnxnsPerHost() {
             return 0;
         }
+
         public int getSocketListenBacklog() {
             return -1;
         }
+
         public int getLocalPort() {
             return 0;
         }
+
         public InetSocketAddress getLocalAddress() {
             return null;
         }
+
         public Iterable<ServerCnxn> getConnections() {
             return null;
         }
-        public void configure(InetSocketAddress addr, int maxcc, int listenBacklog, boolean secure) throws IOException {
-        }
+
+        public void configure(InetSocketAddress addr, int maxcc, int listenBacklog, boolean secure)
+                throws IOException {}
 
         @Override
         public boolean closeSession(long sessionId, ServerCnxn.DisconnectReason reason) {
             return false;
         }
+
         @Override
-        public void closeAll(ServerCnxn.DisconnectReason reason) {
-        }
+        public void closeAll(ServerCnxn.DisconnectReason reason) {}
+
         @Override
         public int getNumAliveConnections() {
             return 0;
         }
+
         @Override
-        public void reconfigure(InetSocketAddress addr) {
-        }
+        public void reconfigure(InetSocketAddress addr) {}
+
         @Override
-        public void resetAllConnectionStats() {
-        }
+        public void resetAllConnectionStats() {}
+
         @Override
         public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
             return null;
         }
-
     }
 
     public static final class MockLeader extends Leader {
@@ -154,7 +180,5 @@ public class ZabUtils {
         public long getCurrentEpochToPropose() {
             return epoch;
         }
-
     }
-
 }

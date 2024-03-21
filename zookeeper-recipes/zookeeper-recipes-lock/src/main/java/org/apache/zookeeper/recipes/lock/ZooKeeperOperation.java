@@ -36,5 +36,4 @@ public interface ZooKeeperOperation {
      * @throws InterruptedException
      */
     boolean execute() throws KeeperException, InterruptedException;
-
 }

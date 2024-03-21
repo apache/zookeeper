@@ -39,17 +39,15 @@ public class ReadOnlyZooKeeperServerTest {
      */
     @Test
     public void testReadOnlyZookeeperServer() {
-        ReadOnlyZooKeeperServer readOnlyZooKeeperServer = new ReadOnlyZooKeeperServer(
-                mock(FileTxnSnapLog.class),
-                mock(QuorumPeer.class),
-                mock(ZKDatabase.class));
+        ReadOnlyZooKeeperServer readOnlyZooKeeperServer =
+                new ReadOnlyZooKeeperServer(mock(FileTxnSnapLog.class), mock(QuorumPeer.class), mock(ZKDatabase.class));
 
         final ConnectRequest request = new ConnectRequest();
         request.setProtocolVersion(1);
         request.setLastZxidSeen(99L);
         request.setTimeOut(500);
         request.setSessionId(123L);
-        request.setPasswd(new byte[]{ 1 });
+        request.setPasswd(new byte[] {1});
         request.setReadOnly(false);
 
         ServerCnxn.CloseRequestException e = assertThrows(
@@ -57,6 +55,4 @@ public class ReadOnlyZooKeeperServerTest {
                 () -> readOnlyZooKeeperServer.processConnectRequest(new MockServerCnxn(), request));
         assertEquals(e.getReason(), ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
     }
-
-
 }

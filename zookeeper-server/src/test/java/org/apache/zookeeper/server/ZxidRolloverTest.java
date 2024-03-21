@@ -71,10 +71,8 @@ public class ZxidRolloverTest extends ZKTestCase {
         for (int i = 0; i < zkClients.length; i++) {
             zkClientWatchers[i] = new CountdownWatcher();
             PeerStruct peer = qu.getPeer(i + 1);
-            zkClients[i] = new ZooKeeper(
-                    "127.0.0.1:" + peer.clientPort,
-                    ClientTest.CONNECTION_TIMEOUT,
-                    zkClientWatchers[i]);
+            zkClients[i] =
+                    new ZooKeeper("127.0.0.1:" + peer.clientPort, ClientTest.CONNECTION_TIMEOUT, zkClientWatchers[i]);
         }
         waitForClientsConnected();
     }
@@ -117,7 +115,8 @@ public class ZxidRolloverTest extends ZKTestCase {
             // in the try, this catches that case and waits for the server
             // to come back
             PeerStruct peer = qu.getPeer(idx);
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT),
                     "Waiting for server down");
 
             assertNull(zk.exists("/foofoofoo-connected", false));
@@ -157,6 +156,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         // all clients should be connected
         checkClientsConnected();
     }
+
     private void start(int idx) throws Exception {
         qu.start(idx);
         for (String hp : qu.getConnString().split(",")) {
@@ -189,7 +189,8 @@ public class ZxidRolloverTest extends ZKTestCase {
 
         // leader will shutdown, remaining followers will elect a new leader
         PeerStruct peer = qu.getPeer(idx);
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT),
                 "Waiting for server down");
 
         // if idx is the the leader then everyone will get disconnected,
@@ -248,7 +249,9 @@ public class ZxidRolloverTest extends ZKTestCase {
         LOG.info("Validating nodes {} thru {}", start, (start + count));
         for (int i = start; i < start + count; i++) {
             assertNotNull(zk.exists("/foo" + i, false));
-            LOG.error("Exists zxid:{}", Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
+            LOG.error(
+                    "Exists zxid:{}",
+                    Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
         }
         assertNull(zk.exists("/foo" + (start + count), false));
     }
@@ -445,5 +448,4 @@ public class ZxidRolloverTest extends ZKTestCase {
         assertTrue(countCreated > 0);
         assertTrue(countCreated < 70);
     }
-
 }

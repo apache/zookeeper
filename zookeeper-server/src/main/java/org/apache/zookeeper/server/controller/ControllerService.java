@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import java.io.IOException;
@@ -150,7 +149,6 @@ public class ControllerService {
         } catch (Exception ex) {
             LOG.error("Failed to start ControllerService.", ex);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
-
         }
         runServices();
         cleanup();

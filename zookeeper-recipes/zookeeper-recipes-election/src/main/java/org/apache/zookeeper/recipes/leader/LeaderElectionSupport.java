@@ -123,13 +123,11 @@ public class LeaderElectionSupport implements Watcher {
         LOG.info("Starting leader election support");
 
         if (zooKeeper == null) {
-            throw new IllegalStateException(
-                "No instance of zookeeper provided. Hint: use setZooKeeper()");
+            throw new IllegalStateException("No instance of zookeeper provided. Hint: use setZooKeeper()");
         }
 
         if (hostName == null) {
-            throw new IllegalStateException(
-                "No hostname provided. Hint: use setHostName()");
+            throw new IllegalStateException("No hostname provided. Hint: use setHostName()");
         }
 
         try {
@@ -171,9 +169,11 @@ public class LeaderElectionSupport implements Watcher {
         synchronized (this) {
             newLeaderOffer.setHostName(hostName);
             hostnameBytes = hostName.getBytes();
-            newLeaderOffer.setNodePath(zooKeeper.create(rootNodeName + "/" + "n_",
-                                                        hostnameBytes, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                                                        CreateMode.EPHEMERAL_SEQUENTIAL));
+            newLeaderOffer.setNodePath(zooKeeper.create(
+                    rootNodeName + "/" + "n_",
+                    hostnameBytes,
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.EPHEMERAL_SEQUENTIAL));
             leaderOffer = newLeaderOffer;
         }
         LOG.debug("Created leader offer {}", leaderOffer);
@@ -224,13 +224,12 @@ public class LeaderElectionSupport implements Watcher {
         }
     }
 
-    private void becomeReady(LeaderOffer neighborLeaderOffer)
-        throws KeeperException, InterruptedException {
+    private void becomeReady(LeaderOffer neighborLeaderOffer) throws KeeperException, InterruptedException {
 
         LOG.info(
-            "{} not elected leader. Watching node: {}",
-            getLeaderOffer().getNodePath(),
-            neighborLeaderOffer.getNodePath());
+                "{} not elected leader. Watching node: {}",
+                getLeaderOffer().getNodePath(),
+                neighborLeaderOffer.getNodePath());
 
         /*
          * Make sure to pass an explicit Watcher because we could be sharing this
@@ -241,8 +240,8 @@ public class LeaderElectionSupport implements Watcher {
         if (stat != null) {
             dispatchEvent(EventType.READY_START);
             LOG.debug(
-                "We're behind {} in line and they're alive. Keeping an eye on them.",
-                neighborLeaderOffer.getNodePath());
+                    "We're behind {} in line and they're alive. Keeping an eye on them.",
+                    neighborLeaderOffer.getNodePath());
             state = State.READY;
             dispatchEvent(EventType.READY_COMPLETE);
         } else {
@@ -251,11 +250,10 @@ public class LeaderElectionSupport implements Watcher {
              * getChildren() and exists(). We need to try and become the leader.
              */
             LOG.info(
-                "We were behind {} but it looks like they died. Back to determination.",
-                neighborLeaderOffer.getNodePath());
+                    "We were behind {} but it looks like they died. Back to determination.",
+                    neighborLeaderOffer.getNodePath());
             determineElectionStatus();
         }
-
     }
 
     private void becomeLeader() {
@@ -297,8 +295,7 @@ public class LeaderElectionSupport implements Watcher {
         return null;
     }
 
-    private List<LeaderOffer> toLeaderOffers(List<String> strings)
-        throws KeeperException, InterruptedException {
+    private List<LeaderOffer> toLeaderOffers(List<String> strings) throws KeeperException, InterruptedException {
 
         List<LeaderOffer> leaderOffers = new ArrayList<>(strings.size());
 
@@ -310,8 +307,7 @@ public class LeaderElectionSupport implements Watcher {
             String hostName = new String(zooKeeper.getData(rootNodeName + "/" + offer, false, null));
 
             leaderOffers.add(new LeaderOffer(
-                Integer.valueOf(offer.substring("n_".length())),
-                rootNodeName + "/" + offer, hostName));
+                    Integer.valueOf(offer.substring("n_".length())), rootNodeName + "/" + offer, hostName));
         }
 
         /*
@@ -326,11 +322,8 @@ public class LeaderElectionSupport implements Watcher {
     @Override
     public void process(WatchedEvent event) {
         if (event.getType().equals(Watcher.Event.EventType.NodeDeleted)) {
-            if (!event.getPath().equals(getLeaderOffer().getNodePath())
-                && state != State.STOP) {
-                LOG.debug(
-                    "Node {} deleted. Need to run through the election process.",
-                    event.getPath());
+            if (!event.getPath().equals(getLeaderOffer().getNodePath()) && state != State.STOP) {
+                LOG.debug("Node {} deleted. Need to run through the election process.", event.getPath());
                 try {
                     determineElectionStatus();
                 } catch (KeeperException | InterruptedException e) {
@@ -373,12 +366,12 @@ public class LeaderElectionSupport implements Watcher {
     @Override
     public String toString() {
         return "{"
-            + " state:" + state
-            + " leaderOffer:" + getLeaderOffer()
-            + " zooKeeper:" + zooKeeper
-            + " hostName:" + getHostName()
-            + " listeners:" + listeners
-            + " }";
+                + " state:" + state
+                + " leaderOffer:" + getLeaderOffer()
+                + " zooKeeper:" + zooKeeper
+                + " hostName:" + getHostName()
+                + " listeners:" + listeners
+                + " }";
     }
 
     /**
@@ -467,5 +460,4 @@ public class LeaderElectionSupport implements Watcher {
         FAILED,
         STOP
     }
-
 }

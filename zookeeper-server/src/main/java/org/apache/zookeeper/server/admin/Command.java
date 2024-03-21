@@ -86,5 +86,5 @@ public interface Command {
      *    - "command" key containing the command's primary name
      *    - "error" key containing a String error message or null if no error
      */
-     CommandResponse runPost(ZooKeeperServer zkServer, InputStream inputStream);
+    CommandResponse runPost(ZooKeeperServer zkServer, InputStream inputStream);
 }

@@ -145,7 +145,9 @@ public class RemoveWatchesCmdTest extends ClientBase {
         assertTrue(zkMain.processZKCmd(zkMain.cl), "Removewatches cmd fails to remove pre-create watches");
         myWatcher1.matches();
         assertEquals(1, zk.getExistWatches().size(), "Failed to remove pre-create watches :" + zk.getExistWatches());
-        assertTrue(zk.getExistWatches().contains("/testnode1/testnode2"), "Failed to remove pre-create watches :" + zk.getExistWatches());
+        assertTrue(
+                zk.getExistWatches().contains("/testnode1/testnode2"),
+                "Failed to remove pre-create watches :" + zk.getExistWatches());
 
         String cmdstring2 = "removewatches /testnode1/testnode2 -d";
         LOG.info("Remove watchers using shell command : {}", cmdstring2);
@@ -203,7 +205,9 @@ public class RemoveWatchesCmdTest extends ClientBase {
         myWatcher.matches();
         assertEquals(1, zk.getChildWatches().size(), "Failed to remove child watches : " + zk.getChildWatches());
 
-        assertTrue(zk.getChildWatches().contains("/testnode1/testnode2"), "Failed to remove child watches :" + zk.getChildWatches());
+        assertTrue(
+                zk.getChildWatches().contains("/testnode1/testnode2"),
+                "Failed to remove child watches :" + zk.getChildWatches());
 
         // verify node delete watcher
         zk.delete("/testnode1/testnode2", -1);
@@ -238,21 +242,22 @@ public class RemoveWatchesCmdTest extends ClientBase {
             @Override
             public void process(WatchedEvent event) {
                 switch (event.getType()) {
-                case ChildWatchRemoved:
-                case DataWatchRemoved:
-                    addWatchNotifications(pathVsEvent, event);
-                    watcherLatch.countDown();
-                    break;
-                case NodeChildrenChanged:
-                case NodeDataChanged:
-                    addWatchNotifications(pathVsEvent, event);
-                    break;
+                    case ChildWatchRemoved:
+                    case DataWatchRemoved:
+                        addWatchNotifications(pathVsEvent, event);
+                        watcherLatch.countDown();
+                        break;
+                    case NodeChildrenChanged:
+                    case NodeDataChanged:
+                        addWatchNotifications(pathVsEvent, event);
+                        break;
                 }
             }
 
             private void addWatchNotifications(Map<String, List<EventType>> pathVsEvent, WatchedEvent event) {
-                pathVsEvent.computeIfAbsent(event.getPath(), k -> new ArrayList<>())
-                           .add(event.getType());
+                pathVsEvent
+                        .computeIfAbsent(event.getPath(), k -> new ArrayList<>())
+                        .add(event.getType());
             }
         };
         zk.create("/testnode1", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -271,8 +276,12 @@ public class RemoveWatchesCmdTest extends ClientBase {
         LOG.info("Waiting for the WatchRemoved events");
         watcherLatch.await(10, TimeUnit.SECONDS);
         assertEquals(1, pathVsEvent.size(), "Didn't receives WatchRemoved events!");
-        assertTrue(pathVsEvent.get("/testnode1").contains(EventType.DataWatchRemoved), "Didn't receives DataWatchRemoved!");
-        assertTrue(pathVsEvent.get("/testnode1").contains(EventType.ChildWatchRemoved), "Didn't receives ChildWatchRemoved!");
+        assertTrue(
+                pathVsEvent.get("/testnode1").contains(EventType.DataWatchRemoved),
+                "Didn't receives DataWatchRemoved!");
+        assertTrue(
+                pathVsEvent.get("/testnode1").contains(EventType.ChildWatchRemoved),
+                "Didn't receives ChildWatchRemoved!");
     }
 
     private static class MyWatcher implements Watcher {
@@ -304,7 +313,5 @@ public class RemoveWatchesCmdTest extends ClientBase {
             LOG.debug("Client path : {} eventPath : {}", path, eventPath);
             return path.equals(eventPath);
         }
-
     }
-
 }

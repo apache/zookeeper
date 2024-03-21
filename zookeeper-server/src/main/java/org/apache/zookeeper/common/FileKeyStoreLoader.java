@@ -49,8 +49,7 @@ abstract class FileKeyStoreLoader implements KeyStoreLoader {
         String keyStorePassword;
         String trustStorePassword;
 
-        Builder() {
-        }
+        Builder() {}
 
         Builder<T> setKeyStorePath(String keyStorePath) {
             this.keyStorePath = Objects.requireNonNull(keyStorePath);
@@ -73,7 +72,5 @@ abstract class FileKeyStoreLoader implements KeyStoreLoader {
         }
 
         abstract T build();
-
     }
-
 }

@@ -42,7 +42,6 @@ public class FLETestUtils extends ZKTestCase {
             this.i = i;
             this.peer = peer;
             LOG.info("Constructor: {}", getName());
-
         }
 
         public void run() {
@@ -70,7 +69,6 @@ public class FLETestUtils extends ZKTestCase {
             }
             LOG.info("Joining");
         }
-
     }
 
     /*
@@ -79,5 +77,4 @@ public class FLETestUtils extends ZKTestCase {
     static ByteBuffer createMsg(int state, long leader, long zxid, long epoch) {
         return FastLeaderElection.buildMsg(state, leader, zxid, 1, epoch);
     }
-
 }

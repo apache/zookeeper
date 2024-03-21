@@ -34,8 +34,7 @@ abstract class JCompType extends JType {
             String javaType,
             String suffix,
             String wrapper,
-            String csharpWrapper
-    ) {
+            String csharpWrapper) {
         super(cType, cppType, csharpType, javaType, suffix, wrapper, csharpWrapper, null);
     }
 

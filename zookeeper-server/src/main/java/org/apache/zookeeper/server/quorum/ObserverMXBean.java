@@ -47,5 +47,4 @@ public interface ObserverMXBean extends ZooKeeperServerMXBean {
      * @param learnerMaster address of the desired learner master
      */
     void setLearnerMaster(String learnerMaster);
-
 }

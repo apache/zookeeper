@@ -75,8 +75,7 @@ class ZNodeName implements Comparable<ZNodeName> {
 
     @Override
     public String toString() {
-      return "ZNodeName [name=" + name + ", prefix=" + prefix + ", sequence="
-          + sequence + "]";
+        return "ZNodeName [name=" + name + ", prefix=" + prefix + ", sequence=" + sequence + "]";
     }
 
     @Override
@@ -140,5 +139,4 @@ class ZNodeName implements Comparable<ZNodeName> {
     public String getPrefix() {
         return prefix;
     }
-
 }

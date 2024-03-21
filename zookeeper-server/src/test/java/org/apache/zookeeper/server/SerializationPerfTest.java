@@ -36,10 +36,10 @@ public class SerializationPerfTest extends ZKTestCase {
         public void write(int b) {
             // do nothing - exclude persistence from perf
         }
-
     }
 
-    static int createNodes(DataTree tree, String path, int depth, int childcount, int parentCVersion, byte[] data) throws KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    static int createNodes(DataTree tree, String path, int depth, int childcount, int parentCVersion, byte[] data)
+            throws KeeperException.NodeExistsException, KeeperException.NoNodeException {
         path += "node" + depth;
         tree.createNode(path, data, null, -1, ++parentCVersion, 1, 1);
 
@@ -57,7 +57,9 @@ public class SerializationPerfTest extends ZKTestCase {
         return count;
     }
 
-    private static void serializeTree(int depth, int width, int len) throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    private static void serializeTree(int depth, int width, int len)
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         DataTree tree = new DataTree();
         createNodes(tree, "/", depth, width, tree.getNode("/").stat.getCversion(), new byte[len]);
         int count = tree.getNodeCount();
@@ -70,53 +72,68 @@ public class SerializationPerfTest extends ZKTestCase {
         long durationms = (end - start) / 1000000L;
         long pernodeus = ((end - start) / 1000L) / count;
         LOG.info(
-            "Serialized {} nodes in {} ms ({}us/node), depth={} width={} datalen={}",
-            count,
-            durationms,
-            pernodeus,
-            depth,
-            width,
-            len);
+                "Serialized {} nodes in {} ms ({}us/node), depth={} width={} datalen={}",
+                count,
+                durationms,
+                pernodeus,
+                depth,
+                width,
+                len);
     }
 
     @Test
-    public void testSingleSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void testSingleSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(1, 0, 20);
     }
 
     @Test
-    public void testWideSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void testWideSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(2, 10000, 20);
     }
 
     @Test
-    public void testDeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void testDeepSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(400, 1, 20);
     }
 
     @Test
-    public void test10Wide5DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void test10Wide5DeepSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(5, 10, 20);
     }
 
     @Test
-    public void test15Wide5DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void test15Wide5DeepSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(5, 15, 20);
     }
 
     @Test
-    public void test25Wide4DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void test25Wide4DeepSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(4, 25, 20);
     }
 
     @Test
-    public void test40Wide4DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void test40Wide4DeepSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(4, 40, 20);
     }
 
     @Test
-    public void test300Wide3DeepSerialize() throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+    public void test300Wide3DeepSerialize()
+            throws InterruptedException, IOException, KeeperException.NodeExistsException,
+                    KeeperException.NoNodeException {
         serializeTree(3, 300, 20);
     }
-
 }

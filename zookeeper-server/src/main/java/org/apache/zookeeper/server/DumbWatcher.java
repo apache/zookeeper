@@ -49,8 +49,7 @@ public class DumbWatcher extends ServerCnxn {
     }
 
     @Override
-    void setSessionTimeout(int sessionTimeout) {
-    }
+    void setSessionTimeout(int sessionTimeout) {}
 
     @Override
     public void process(WatchedEvent event, List<ACL> znodeAcl) {
@@ -71,25 +70,22 @@ public class DumbWatcher extends ServerCnxn {
         return mostRecentZxid;
     }
 
-
     @Override
     int getSessionTimeout() {
         return 0;
     }
 
     @Override
-    public void close(DisconnectReason reason) {
-    }
+    public void close(DisconnectReason reason) {}
 
     @Override
-    public int sendResponse(ReplyHeader h, Record r, String tag,
-                             String cacheKey, Stat stat, int opCode) throws IOException {
+    public int sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat, int opCode)
+            throws IOException {
         return 0;
     }
 
     @Override
-    public void sendCloseSession() {
-    }
+    public void sendCloseSession() {}
 
     @Override
     public long getSessionId() {
@@ -97,20 +93,16 @@ public class DumbWatcher extends ServerCnxn {
     }
 
     @Override
-    void setSessionId(long sessionId) {
-    }
+    void setSessionId(long sessionId) {}
 
     @Override
-    void sendBuffer(ByteBuffer... closeConn) {
-    }
+    void sendBuffer(ByteBuffer... closeConn) {}
 
     @Override
-    void enableRecv() {
-    }
+    void enableRecv() {}
 
     @Override
-    void disableRecv(boolean waitDisableRecv) {
-    }
+    void disableRecv(boolean waitDisableRecv) {}
 
     @Override
     protected ServerStats serverStats() {
@@ -143,7 +135,5 @@ public class DumbWatcher extends ServerCnxn {
     }
 
     @Override
-    public void setClientCertificateChain(Certificate[] chain) {
-    }
-
+    public void setClientCertificateChain(Certificate[] chain) {}
 }

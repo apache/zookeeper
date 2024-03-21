@@ -60,7 +60,13 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
 
     private final ConcurrentMap<Long, Integer> globalSessionsWithTimeouts;
 
-    public LearnerSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
+    public LearnerSessionTracker(
+            SessionExpirer expirer,
+            ConcurrentMap<Long, Integer> sessionsWithTimeouts,
+            int tickTime,
+            long id,
+            boolean localSessionsEnabled,
+            ZooKeeperServerListener listener) {
         this.expirer = expirer;
         this.touchTable.set(new ConcurrentHashMap<>());
         this.globalSessionsWithTimeouts = sessionsWithTimeouts;

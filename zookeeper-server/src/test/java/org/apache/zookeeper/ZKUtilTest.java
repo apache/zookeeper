@@ -80,8 +80,9 @@ public class ZKUtilTest extends ClientBase {
 
     @Test
     public void testUnreadableFileInput() throws Exception {
-        //skip this test on Windows and WSL, coverage on Linux
-        assumeTrue("Skipping this test on Windows and WSL",
+        // skip this test on Windows and WSL, coverage on Linux
+        assumeTrue(
+                "Skipping this test on Windows and WSL",
                 !(org.apache.zookeeper.Shell.WINDOWS || org.apache.zookeeper.Shell.isWsl()));
         File file = File.createTempFile("test", ".junit", testData);
         file.setReadable(false, false);
@@ -137,15 +138,15 @@ public class ZKUtilTest extends ClientBase {
 
     // batchSize>0 is async mode otherwise it is sync mode
     private void testDeleteRecursiveInSyncAsyncMode(int batchSize)
-        throws IOException, InterruptedException, KeeperException {
+            throws IOException, InterruptedException, KeeperException {
         TestableZooKeeper zk = createClient();
         String parentPath = "/a";
         zk.create(parentPath, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         int numberOfNodes = 50;
         List<Op> ops = new ArrayList<>();
         for (int i = 0; i < numberOfNodes; i++) {
-            ops.add(Op.create(parentPath + "/a" + i, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT));
+            ops.add(Op.create(
+                    parentPath + "/a" + i, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
         }
         zk.multi(ops);
         ops.clear();
@@ -157,8 +158,7 @@ public class ZKUtilTest extends ClientBase {
         // create one more level of z nodes
         String subNode = "/a/a0";
         for (int i = 0; i < numberOfNodes; i++) {
-            ops.add(Op.create(subNode + "/b" + i, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT));
+            ops.add(Op.create(subNode + "/b" + i, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
         }
         zk.multi(ops);
 

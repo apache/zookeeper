@@ -68,5 +68,4 @@ public interface SnapShot {
      * @throws IOException
      */
     void close() throws IOException;
-
 }

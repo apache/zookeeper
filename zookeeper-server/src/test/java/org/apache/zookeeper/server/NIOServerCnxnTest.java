@@ -55,8 +55,9 @@ public class NIOServerCnxnTest extends ClientBase {
             assertNotNull(zk.exists(path, false), "Didn't create znode:" + path);
             // Defaults ServerCnxnFactory would be instantiated with
             // NIOServerCnxnFactory
-            assertTrue(serverFactory instanceof NIOServerCnxnFactory,
-                "Didn't instantiate ServerCnxnFactory with NIOServerCnxnFactory!");
+            assertTrue(
+                    serverFactory instanceof NIOServerCnxnFactory,
+                    "Didn't instantiate ServerCnxnFactory with NIOServerCnxnFactory!");
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
             for (ServerCnxn serverCnxn : connections) {
                 serverCnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
@@ -75,13 +76,19 @@ public class NIOServerCnxnTest extends ClientBase {
     @Test
     public void testClientResponseStatsUpdate() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
-            BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
-            assertThat("Last client response size should be initialized with INIT_VALUE", clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
+            BufferStats clientResponseStats =
+                    serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+            assertThat(
+                    "Last client response size should be initialized with INIT_VALUE",
+                    clientResponseStats.getLastBufferSize(),
+                    equalTo(BufferStats.INIT_VALUE));
 
             zk.create("/a", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            assertThat("Last client response size should be greater then zero after client request was performed", clientResponseStats.getLastBufferSize(), greaterThan(0));
+            assertThat(
+                    "Last client response size should be greater then zero after client request was performed",
+                    clientResponseStats.getLastBufferSize(),
+                    greaterThan(0));
         }
     }
-
 }

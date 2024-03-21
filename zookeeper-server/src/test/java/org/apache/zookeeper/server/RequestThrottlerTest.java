@@ -143,7 +143,7 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         @Override
         public void requestFinished(Request request) {
-            if (null != finished){
+            if (null != finished) {
                 finished.countDown();
             }
             super.requestFinished(request);
@@ -191,7 +191,6 @@ public class RequestThrottlerTest extends ZKTestCase {
 
             super.pRequest(request);
         }
-
     }
 
     @Test
@@ -211,9 +210,13 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // send 5 requests asynchronously
         for (int i = 0; i < TOTAL_REQUESTS; i++) {
-            zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
-                                                               + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
-            }, null);
+            zk.create(
+                    "/request_throttle_test- " + i,
+                    ("/request_throttle_test- " + i).getBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    (rc, path, ctx, name) -> {},
+                    null);
         }
 
         // make sure the server received all 5 requests
@@ -254,9 +257,13 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // send 5 requests asynchronously
         for (int i = 0; i < TOTAL_REQUESTS; i++) {
-            zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
-                                                               + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
-            }, null);
+            zk.create(
+                    "/request_throttle_test- " + i,
+                    ("/request_throttle_test- " + i).getBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    (rc, path, ctx, name) -> {},
+                    null);
         }
 
         // make sure the server received all 5 requests
@@ -331,8 +338,13 @@ public class RequestThrottlerTest extends ZKTestCase {
 
         // send requests asynchronously
         for (int i = 0; i < number_requests; i++) {
-            zk.create("/request_throttle_test- " + i , data,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, createCallback, null);
+            zk.create(
+                    "/request_throttle_test- " + i,
+                    data,
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    createCallback,
+                    null);
         }
 
         // make sure the server received all requests
@@ -369,20 +381,29 @@ public class RequestThrottlerTest extends ZKTestCase {
             int totalRequests = 10;
 
             for (int i = 0; i < totalRequests; i++) {
-                zk.create("/request_throttle_test- " + i, ("/request_throttle_test- "
-                        + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
-                }, null);
+                zk.create(
+                        "/request_throttle_test- " + i,
+                        ("/request_throttle_test- " + i).getBytes(),
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT,
+                        (rc, path, ctx, name) -> {},
+                        null);
             }
 
             // We should start throttling instead of queuing more requests.
             //
-            // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing pipeline
-            // before throttling. For the next request, we will throttle by disabling receiving future requests but we still
-            // allow this single request coming in. Ideally, the total number of queued requests in processing pipeline would
+            // We always allow up to GLOBAL_OUTSTANDING_LIMIT + 1 number of requests coming in request processing
+            // pipeline
+            // before throttling. For the next request, we will throttle by disabling receiving future requests but we
+            // still
+            // allow this single request coming in. Ideally, the total number of queued requests in processing pipeline
+            // would
             // be GLOBAL_OUTSTANDING_LIMIT + 2.
             //
             // But due to leak of consistent view of number of outstanding requests, the number could be larger.
-            waitForMetric("prep_processor_request_queued", greaterThanOrEqualTo(Long.parseLong(GLOBAL_OUTSTANDING_LIMIT) + 2));
+            waitForMetric(
+                    "prep_processor_request_queued",
+                    greaterThanOrEqualTo(Long.parseLong(GLOBAL_OUTSTANDING_LIMIT) + 2));
 
             resumeProcess.countDown();
         } catch (Exception e) {

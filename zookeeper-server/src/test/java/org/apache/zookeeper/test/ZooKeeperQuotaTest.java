@@ -110,7 +110,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         assertTrue(qst.getBytes() == 8L, "bytes are set");
         assertTrue(qst.getCount() == 2, "count is set");
 
-        //force server to restart and load from snapshot, not txn log
+        // force server to restart and load from snapshot, not txn log
         stopServer();
         startServer();
         stopServer();
@@ -133,20 +133,20 @@ public class ZooKeeperQuotaTest extends ClientBase {
         quota.setBytes(bytes);
         SetQuotaCommand.createQuota(zk, path, quota);
 
-        //check the limit
+        // check the limit
         String absoluteLimitPath = Quotas.limitPath(path);
         byte[] data = zk.getData(absoluteLimitPath, false, null);
         StatsTrack st = new StatsTrack(data);
         assertEquals(bytes, st.getBytes());
         assertEquals(count, st.getCount());
-        //check the stats
+        // check the stats
         String absoluteStatPath = Quotas.statPath(path);
         data = zk.getData(absoluteStatPath, false, null);
         st = new StatsTrack(data);
         assertEquals(nodeData.length(), st.getBytes());
         assertEquals(1, st.getCount());
 
-        //create another node
+        // create another node
         String path2 = "/c1/c2";
         String nodeData2 = "bar";
         zk.create(path2, nodeData2.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -154,13 +154,14 @@ public class ZooKeeperQuotaTest extends ClientBase {
         absoluteStatPath = Quotas.statPath(path);
         data = zk.getData(absoluteStatPath, false, null);
         st = new StatsTrack(data);
-        //check the stats
+        // check the stats
         assertEquals(nodeData.length() + nodeData2.length(), st.getBytes());
         assertEquals(2, st.getCount());
     }
 
     @Test
-    public void testSetQuotaWhenSetQuotaOnParentOrChildPath() throws IOException, InterruptedException, KeeperException, MalformedPathException {
+    public void testSetQuotaWhenSetQuotaOnParentOrChildPath()
+            throws IOException, InterruptedException, KeeperException, MalformedPathException {
 
         zk.create("/c1", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/c1/c2", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -168,7 +169,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         zk.create("/c1/c2/c3/c4", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/c1/c2/c3/c4/c5", "some".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        //set the quota on the path:/c1/c2/c3
+        // set the quota on the path:/c1/c2/c3
         StatsTrack quota = new StatsTrack();
         quota.setCount(5);
         quota.setBytes(10);
@@ -194,8 +195,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
 
         final String namespace = UUID.randomUUID().toString();
         final String path = "/" + namespace;
-        zk.create(path, "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         StatsTrack st = new StatsTrack();
         st.setBytes(5L);
         SetQuotaCommand.createQuota(zk, path, st);
@@ -215,8 +215,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
 
         final String namespace = UUID.randomUUID().toString();
         final String path = "/" + namespace;
-        zk.create(path, "12345".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "12345".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         StatsTrack st = new StatsTrack();
         st.setByteHardLimit(5L);
         SetQuotaCommand.createQuota(zk, path, st);
@@ -225,7 +224,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.setData(path, "123456".getBytes(), -1);
             fail("should not set data which exceeds the hard byte quota");
         } catch (QuotaExceededException e) {
-           //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -248,7 +247,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
                     zk.create(sb.toString(), "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     fail("should not set quota when exceeds hard bytes quota");
                 } catch (QuotaExceededException e) {
-                    //expected
+                    // expected
                     validateQuotaExceededMetrics(namespace);
                 }
             } else {
@@ -271,7 +270,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.setData(path, "123456".getBytes(), -1);
             fail("should not set quota when exceeds hard bytes quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -292,7 +291,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.setData(path + "/data", "567891".getBytes(), -1);
             fail("should not set data when exceed hard byte quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -312,7 +311,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.create(path + "/data", "567891".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("should not set data when exceed hard byte quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -353,7 +352,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.create(path + "/c2" + "/c3", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("should not set quota when exceeds hard count quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -373,10 +372,10 @@ public class ZooKeeperQuotaTest extends ClientBase {
             sb.append("/c" + i);
             if (i == count) {
                 try {
-                    zk.create(sb.toString() , "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    zk.create(sb.toString(), "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     fail("should not set quota when exceeds hard count quota");
                 } catch (QuotaExceededException e) {
-                    //expected
+                    // expected
                     validateQuotaExceededMetrics(namespace);
                 }
             } else {
@@ -401,7 +400,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.create(path + "/c3", "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("should not set quota when exceeds hard count quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -421,7 +420,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.create(path + "/c2", "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("should give priority to CountQuotaExceededException when both meets the count and bytes quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
     }
@@ -440,8 +439,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         SetQuotaCommand.createQuota(zk, path, st);
 
         final List<Op> ops = Arrays.asList(
-            Op.create(subPath, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-            Op.setData(subPath, data13b, -1));
+                Op.create(subPath, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData(subPath, data13b, -1));
 
         zk.multi(ops);
     }
@@ -460,14 +458,13 @@ public class ZooKeeperQuotaTest extends ClientBase {
         SetQuotaCommand.createQuota(zk, path, st);
 
         final List<Op> ops = Arrays.asList(
-            Op.create(subPath, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-            Op.setData(subPath, data13b, -1));
+                Op.create(subPath, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData(subPath, data13b, -1));
 
         try {
             zk.multi(ops);
             fail("should fail transaction when hard quota is exceeded");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
         }
 
         assertNull(zk.exists(subPath, null));
@@ -487,11 +484,11 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.setData(path, "123456".getBytes(), -1);
             fail("should not set data which exceeds the hard byte quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
 
-        //delete the Byte Hard Quota
+        // delete the Byte Hard Quota
         st = new StatsTrack();
         st.setByteHardLimit(1);
         DelQuotaCommand.delQuota(zk, path, st);
@@ -516,11 +513,11 @@ public class ZooKeeperQuotaTest extends ClientBase {
             zk.create(path + "/c2" + "/c3", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("should not set quota when exceeds hard count quota");
         } catch (QuotaExceededException e) {
-            //expected
+            // expected
             validateQuotaExceededMetrics(namespace);
         }
 
-        //delete the Count Hard Quota
+        // delete the Count Hard Quota
         st = new StatsTrack();
         st.setCountHardLimit(1);
         DelQuotaCommand.delQuota(zk, path, st);
@@ -560,7 +557,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
                 assertEquals(-1, st.getByteHardLimit());
             }
         }
-        //delete the Byte Hard Quota
+        // delete the Byte Hard Quota
         st = new StatsTrack();
         st.setByteHardLimit(1);
         st.setBytes(1);
@@ -589,15 +586,22 @@ public class ZooKeeperQuotaTest extends ClientBase {
         final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
         final Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
-        assertEquals(1, metrics.keySet().stream().filter(
-                key -> key.contains(String.format("%s_%s", namespace, name))).count());
+        assertEquals(
+                1,
+                metrics.keySet().stream()
+                        .filter(key -> key.contains(String.format("%s_%s", namespace, name)))
+                        .count());
 
         assertEquals(1L, metrics.get(String.format("%s_%s", namespace, name)));
     }
 
     static void validateNoQuotaExceededMetrics(final String namespace) {
         final Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-        assertEquals(0, metrics.keySet().stream().filter(
-                key -> key.contains(String.format("%s_%s", namespace, QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE))).count());
+        assertEquals(
+                0,
+                metrics.keySet().stream()
+                        .filter(key -> key.contains(String.format(
+                                "%s_%s", namespace, QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE)))
+                        .count());
     }
 }

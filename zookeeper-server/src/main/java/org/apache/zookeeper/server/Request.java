@@ -51,11 +51,13 @@ public class Request {
 
     // Considers a request stale if the request's connection has closed. Enabled
     // by default.
-    private static volatile boolean staleConnectionCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_connection_check", "true"));
+    private static volatile boolean staleConnectionCheck =
+            Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_connection_check", "true"));
 
     // Considers a request stale if the request latency is higher than its
     // associated session timeout. Disabled by default.
-    private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
+    private static volatile boolean staleLatencyCheck =
+            Boolean.parseBoolean(System.getProperty("zookeeper.request_stale_latency_check", "false"));
 
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type, RequestRecord request, List<Id> authInfo) {
         this.cnxn = cnxn;
@@ -155,17 +157,15 @@ public class Request {
     private boolean isThrottledFlag = false;
 
     public boolean isThrottled() {
-      return isThrottledFlag;
+        return isThrottledFlag;
     }
 
     public void setIsThrottled(boolean val) {
-      isThrottledFlag = val;
+        isThrottledFlag = val;
     }
 
     public boolean isThrottlable() {
-        return this.type != OpCode.ping
-                && this.type != OpCode.closeSession
-                && this.type != OpCode.createSession;
+        return this.type != OpCode.ping && this.type != OpCode.closeSession && this.type != OpCode.createSession;
     }
 
     public byte[] getSerializeData() {
@@ -294,72 +294,72 @@ public class Request {
     static boolean isValid(int type) {
         // make sure this is always synchronized with Zoodefs!!
         switch (type) {
-        case OpCode.notification:
-            return false;
-        case OpCode.check:
-        case OpCode.closeSession:
-        case OpCode.create:
-        case OpCode.create2:
-        case OpCode.createTTL:
-        case OpCode.createContainer:
-        case OpCode.createSession:
-        case OpCode.delete:
-        case OpCode.deleteContainer:
-        case OpCode.exists:
-        case OpCode.getACL:
-        case OpCode.getChildren:
-        case OpCode.getAllChildrenNumber:
-        case OpCode.getChildren2:
-        case OpCode.getData:
-        case OpCode.getEphemerals:
-        case OpCode.multi:
-        case OpCode.multiRead:
-        case OpCode.ping:
-        case OpCode.reconfig:
-        case OpCode.setACL:
-        case OpCode.setData:
-        case OpCode.setWatches:
-        case OpCode.setWatches2:
-        case OpCode.sync:
-        case OpCode.checkWatches:
-        case OpCode.removeWatches:
-        case OpCode.addWatch:
-        case OpCode.whoAmI:
-            return true;
-        default:
-            return false;
+            case OpCode.notification:
+                return false;
+            case OpCode.check:
+            case OpCode.closeSession:
+            case OpCode.create:
+            case OpCode.create2:
+            case OpCode.createTTL:
+            case OpCode.createContainer:
+            case OpCode.createSession:
+            case OpCode.delete:
+            case OpCode.deleteContainer:
+            case OpCode.exists:
+            case OpCode.getACL:
+            case OpCode.getChildren:
+            case OpCode.getAllChildrenNumber:
+            case OpCode.getChildren2:
+            case OpCode.getData:
+            case OpCode.getEphemerals:
+            case OpCode.multi:
+            case OpCode.multiRead:
+            case OpCode.ping:
+            case OpCode.reconfig:
+            case OpCode.setACL:
+            case OpCode.setData:
+            case OpCode.setWatches:
+            case OpCode.setWatches2:
+            case OpCode.sync:
+            case OpCode.checkWatches:
+            case OpCode.removeWatches:
+            case OpCode.addWatch:
+            case OpCode.whoAmI:
+                return true;
+            default:
+                return false;
         }
     }
 
     public boolean isQuorum() {
         switch (this.type) {
-        case OpCode.exists:
-        case OpCode.getACL:
-        case OpCode.getChildren:
-        case OpCode.getAllChildrenNumber:
-        case OpCode.getChildren2:
-        case OpCode.getData:
-        case OpCode.getEphemerals:
-        case OpCode.multiRead:
-        case OpCode.whoAmI:
-            return false;
-        case OpCode.create:
-        case OpCode.create2:
-        case OpCode.createTTL:
-        case OpCode.createContainer:
-        case OpCode.error:
-        case OpCode.delete:
-        case OpCode.deleteContainer:
-        case OpCode.setACL:
-        case OpCode.setData:
-        case OpCode.multi:
-        case OpCode.reconfig:
-            return true;
-        case OpCode.closeSession:
-        case OpCode.createSession:
-            return !this.isLocalSession;
-        default:
-            return false;
+            case OpCode.exists:
+            case OpCode.getACL:
+            case OpCode.getChildren:
+            case OpCode.getAllChildrenNumber:
+            case OpCode.getChildren2:
+            case OpCode.getData:
+            case OpCode.getEphemerals:
+            case OpCode.multiRead:
+            case OpCode.whoAmI:
+                return false;
+            case OpCode.create:
+            case OpCode.create2:
+            case OpCode.createTTL:
+            case OpCode.createContainer:
+            case OpCode.error:
+            case OpCode.delete:
+            case OpCode.deleteContainer:
+            case OpCode.setACL:
+            case OpCode.setData:
+            case OpCode.multi:
+            case OpCode.reconfig:
+                return true;
+            case OpCode.closeSession:
+            case OpCode.createSession:
+                return !this.isLocalSession;
+            default:
+                return false;
         }
     }
 
@@ -439,19 +439,24 @@ public class Request {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("sessionid:0x").append(Long.toHexString(sessionId))
-          .append(" type:").append(op2String(type))
-          .append(" cxid:0x").append(Long.toHexString(cxid))
-          .append(" zxid:0x").append(Long.toHexString(hdr == null ? -2 : hdr.getZxid()))
-          .append(" txntype:").append(hdr == null ? "unknown" : "" + hdr.getType());
+        sb.append("sessionid:0x")
+                .append(Long.toHexString(sessionId))
+                .append(" type:")
+                .append(op2String(type))
+                .append(" cxid:0x")
+                .append(Long.toHexString(cxid))
+                .append(" zxid:0x")
+                .append(Long.toHexString(hdr == null ? -2 : hdr.getZxid()))
+                .append(" txntype:")
+                .append(hdr == null ? "unknown" : "" + hdr.getType());
 
         // best effort to print the path assoc with this request
         String path = "n/a";
         if (type != OpCode.createSession
-            && type != OpCode.setWatches
-            && type != OpCode.setWatches2
-            && type != OpCode.closeSession
-            && request != null) {
+                && type != OpCode.setWatches
+                && type != OpCode.setWatches2
+                && type != OpCode.closeSession
+                && request != null) {
             try {
                 // make sure we don't mess with request itself
                 byte[] bytes = request.readBytes();

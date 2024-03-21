@@ -65,7 +65,7 @@ public class CRCTest extends ZKTestCase {
         byte[] b = "mahadev".getBytes();
         long writeLen = 500L;
         raf.seek(writeLen);
-        //corrupting the data
+        // corrupting the data
         raf.write(b);
         raf.close();
     }
@@ -126,7 +126,7 @@ public class CRCTest extends ZKTestCase {
 
         File versionDir = new File(tmpDir, "version-2");
         File[] list = versionDir.listFiles();
-        //there should be only two files
+        // there should be only two files
         // one the snapshot and the other logFile
         File snapFile = null;
         File logFile = null;
@@ -139,7 +139,7 @@ public class CRCTest extends ZKTestCase {
         }
         FileTxnLog flog = new FileTxnLog(versionDir);
         TxnIterator itr = flog.read(1);
-        //we will get a checksum failure
+        // we will get a checksum failure
         try {
             while (itr.next()) {
                 // no op
@@ -158,7 +158,7 @@ public class CRCTest extends ZKTestCase {
         try {
             cfile = getCheckSum(snapFile);
         } catch (IOException ie) {
-            //the last snapshot seems incomplete
+            // the last snapshot seems incomplete
             // corrupt the last but one
             // and use that
             snapFile = snapFiles.get(1);
@@ -167,5 +167,4 @@ public class CRCTest extends ZKTestCase {
         }
         assertTrue(cfile);
     }
-
 }

@@ -87,14 +87,16 @@ public class RemoveWatchesTest extends ClientBase {
     }
 
     private void removeWatches(
-        ZooKeeper zk,
-        String path,
-        Watcher watcher,
-        WatcherType watcherType,
-        boolean local,
-        KeeperException.Code rc,
-        boolean useAsync) throws InterruptedException, KeeperException {
-        LOG.info("Sending removeWatches req using zk {} path: {} type: {} watcher: {} ", zk, path, watcherType, watcher);
+            ZooKeeper zk,
+            String path,
+            Watcher watcher,
+            WatcherType watcherType,
+            boolean local,
+            KeeperException.Code rc,
+            boolean useAsync)
+            throws InterruptedException, KeeperException {
+        LOG.info(
+                "Sending removeWatches req using zk {} path: {} type: {} watcher: {} ", zk, path, watcherType, watcher);
         if (useAsync) {
             MyCallback c1 = new MyCallback(rc.intValue(), path);
             zk.removeWatches(path, watcher, watcherType, local, c1, null);
@@ -116,12 +118,13 @@ public class RemoveWatchesTest extends ClientBase {
     }
 
     private void removeAllWatches(
-        ZooKeeper zk,
-        String path,
-        WatcherType watcherType,
-        boolean local,
-        KeeperException.Code rc,
-        boolean useAsync) throws InterruptedException, KeeperException {
+            ZooKeeper zk,
+            String path,
+            WatcherType watcherType,
+            boolean local,
+            KeeperException.Code rc,
+            boolean useAsync)
+            throws InterruptedException, KeeperException {
         LOG.info("Sending removeWatches req using zk {} path: {} type: {} ", zk, path, watcherType);
         if (useAsync) {
             MyCallback c1 = new MyCallback(rc.intValue(), path);
@@ -323,7 +326,8 @@ public class RemoveWatchesTest extends ClientBase {
         // waiting for child watchers to be notified
         int count = 10;
         while (count > 0) {
-            if (w1.getEventsAfterWatchRemoval().size() > 0 && w2.getEventsAfterWatchRemoval().size() > 0) {
+            if (w1.getEventsAfterWatchRemoval().size() > 0
+                    && w2.getEventsAfterWatchRemoval().size() > 0) {
                 break;
             }
             count--;
@@ -366,7 +370,8 @@ public class RemoveWatchesTest extends ClientBase {
         // waiting for child watchers to be notified
         int count = 10;
         while (count > 0) {
-            if (w1.getEventsAfterWatchRemoval().size() > 0 && w2.getEventsAfterWatchRemoval().size() > 0) {
+            if (w1.getEventsAfterWatchRemoval().size() > 0
+                    && w2.getEventsAfterWatchRemoval().size() > 0) {
                 break;
             }
             count--;
@@ -413,8 +418,10 @@ public class RemoveWatchesTest extends ClientBase {
         removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.Data, false, Code.NOWATCHER, useAsync);
         removeWatches(zk2, "/node1", persistentWatcher1, WatcherType.Children, false, Code.NOWATCHER, useAsync);
         removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.Children, false, Code.NOWATCHER, useAsync);
-        removeWatches(zk2, "/node1", persistentWatcher1, WatcherType.PersistentRecursive, false, Code.NOWATCHER, useAsync);
-        removeWatches(zk2, "/node1", persistentWatcher2, WatcherType.PersistentRecursive, false, Code.NOWATCHER, useAsync);
+        removeWatches(
+                zk2, "/node1", persistentWatcher1, WatcherType.PersistentRecursive, false, Code.NOWATCHER, useAsync);
+        removeWatches(
+                zk2, "/node1", persistentWatcher2, WatcherType.PersistentRecursive, false, Code.NOWATCHER, useAsync);
 
         zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk1.setData("/node1", null, -1);
@@ -435,7 +442,8 @@ public class RemoveWatchesTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
-    public void testRemoveAllPersistentRecursiveWatchers(boolean useAsync) throws InterruptedException, KeeperException {
+    public void testRemoveAllPersistentRecursiveWatchers(boolean useAsync)
+            throws InterruptedException, KeeperException {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         BlockingDeque<WatchedEvent> recursiveEvents1 = new LinkedBlockingDeque<>();
         BlockingDeque<WatchedEvent> recursiveEvents2 = new LinkedBlockingDeque<>();
@@ -791,7 +799,8 @@ public class RemoveWatchesTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
-    public void testNoWatcherServerException(boolean useAsync) throws KeeperException, InterruptedException, IOException, TimeoutException {
+    public void testNoWatcherServerException(boolean useAsync)
+            throws KeeperException, InterruptedException, IOException, TimeoutException {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = spy(new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher));
         MyWatchManager watchManager = new MyWatchManager(false, watcher);
@@ -810,7 +819,8 @@ public class RemoveWatchesTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Timeout(value = 90)
-    public void testRemoveAllNoWatcherException(boolean useAsync) throws IOException, InterruptedException, KeeperException {
+    public void testRemoveAllNoWatcherException(boolean useAsync)
+            throws IOException, InterruptedException, KeeperException {
         zk1.create("/node1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         removeAllWatches(zk2, "/node1", WatcherType.Any, false, Code.NOWATCHER, useAsync);
     }
@@ -867,7 +877,8 @@ public class RemoveWatchesTest extends ClientBase {
 
         zk1.setData("/node1", "test".getBytes(), -1);
         LOG.info("Waiting for data watchers to be notified");
-        assertTrue(dataWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't get data watch notification!");
+        assertTrue(
+                dataWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't get data watch notification!");
     }
 
     /**
@@ -902,7 +913,9 @@ public class RemoveWatchesTest extends ClientBase {
 
         zk1.create("/node1/node2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         LOG.info("Waiting for child watchers to be notified");
-        assertTrue(childWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Didn't get child watch notification!");
+        assertTrue(
+                childWatchCount.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS),
+                "Didn't get child watch notification!");
     }
 
     /**
@@ -1258,12 +1271,12 @@ public class RemoveWatchesTest extends ClientBase {
 
         @Override
         protected boolean removeWatches(
-            Map<String, Set<Watcher>> pathVsWatcher,
-            Watcher watcher,
-            String path,
-            boolean local,
-            int rc,
-            Set<Watcher> removedWatchers) {
+                Map<String, Set<Watcher>> pathVsWatcher,
+                Watcher watcher,
+                String path,
+                boolean local,
+                int rc,
+                Set<Watcher> removedWatchers) {
             lastReturnCode = rc;
             return false;
         }
@@ -1275,6 +1288,7 @@ public class RemoveWatchesTest extends ClientBase {
         private String eventPath;
         private CountDownLatch latch;
         private List<EventType> eventsAfterWatchRemoval = new ArrayList<>();
+
         MyWatcher(String path, int count) {
             this.path = path;
             latch = new CountDownLatch(count);
@@ -1314,7 +1328,6 @@ public class RemoveWatchesTest extends ClientBase {
         public List<EventType> getEventsAfterWatchRemoval() {
             return eventsAfterWatchRemoval;
         }
-
     }
 
     private class MyCallback implements AsyncCallback.VoidCallback {
@@ -1352,7 +1365,6 @@ public class RemoveWatchesTest extends ClientBase {
             }
             return path.equals(eventPath) && rc == eventRc;
         }
-
     }
 
     /**
@@ -1368,7 +1380,11 @@ public class RemoveWatchesTest extends ClientBase {
         CollectionUtils.addAll(cnxns, serverFactory.getConnections().iterator());
         for (ServerCnxn cnxn : cnxns) {
             if (cnxn.getSessionId() == sessionId) {
-                return serverFactory.getZooKeeperServer().getZKDatabase().getDataTree().containsWatcher(path, type, cnxn);
+                return serverFactory
+                        .getZooKeeperServer()
+                        .getZKDatabase()
+                        .getDataTree()
+                        .containsWatcher(path, type, cnxn);
             }
         }
         return false;

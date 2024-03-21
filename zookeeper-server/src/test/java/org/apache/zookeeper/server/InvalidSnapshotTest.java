@@ -77,5 +77,4 @@ public class InvalidSnapshotTest extends ClientBase {
             zk.close();
         }
     }
-
 }

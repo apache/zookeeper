@@ -24,6 +24,4 @@ import org.junit.runners.Suite;
  * Run tests with: Netty Client against Netty server
  */
 @Suite.SuiteClasses({AsyncHammerTest.class})
-public class NettyNettySuiteHammerTest extends NettyNettySuiteBase {
-
-}
+public class NettyNettySuiteHammerTest extends NettyNettySuiteBase {}

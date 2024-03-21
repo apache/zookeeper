@@ -58,5 +58,4 @@ public class WatcherOrBitSet {
         }
         return 0;
     }
-
 }

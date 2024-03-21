@@ -43,20 +43,20 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
 
     static {
         String jaasEntries = "QuorumServer {\n"
-                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                             + "       user_test=\"mypassword\";\n"
-                             + "};\n"
-                             + "QuorumLearner {\n"
-                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                             + "       username=\"test\"\n"
-                             + "       password=\"mypassword\";\n"
-                             + "};\n"
-                             + "QuorumLearnerInvalid {\n"
-                             + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                             + "       username=\"test\"\n"
-                             + "       password=\"invalid\";\n"
-                             + "};"
-                             + "\n";
+                + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                + "       user_test=\"mypassword\";\n"
+                + "};\n"
+                + "QuorumLearner {\n"
+                + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                + "       username=\"test\"\n"
+                + "       password=\"mypassword\";\n"
+                + "};\n"
+                + "QuorumLearnerInvalid {\n"
+                + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                + "       username=\"test\"\n"
+                + "       password=\"invalid\";\n"
+                + "};"
+                + "\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -156,7 +156,8 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         int serverCount = 2;
         final int[] clientPorts = startQuorum(serverCount, new StringBuilder(), authConfigs, serverCount, false);
         for (int i = 0; i < serverCount; i++) {
-            boolean waitForServerUp = ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], QuorumPeerTestBase.TIMEOUT);
+            boolean waitForServerUp =
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], QuorumPeerTestBase.TIMEOUT);
             assertFalse(waitForServerUp, "Shouldn't start server with invalid credentials");
         }
     }
@@ -180,7 +181,8 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         try {
             new QuorumPeerMain() {
                 @Override
-                protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
+                protected void initializeAndRun(String[] args)
+                        throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -211,7 +213,8 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         try {
             new QuorumPeerMain() {
                 @Override
-                protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
+                protected void initializeAndRun(String[] args)
+                        throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -226,7 +229,8 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         try {
             new QuorumPeerMain() {
                 @Override
-                protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServer.AdminServerException {
+                protected void initializeAndRun(String[] args)
+                        throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -235,5 +239,4 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             // expected
         }
     }
-
 }

@@ -113,5 +113,4 @@ public abstract class CliCommand {
      * @throws CliException
      */
     public abstract boolean exec() throws CliException;
-
 }

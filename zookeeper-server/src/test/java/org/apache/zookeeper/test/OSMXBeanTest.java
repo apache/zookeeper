@@ -67,5 +67,4 @@ public class OSMXBeanTest extends ZKTestCase {
         }
         assertFalse((mfdc < 0), "The max file descriptor number is negative");
     }
-
 }

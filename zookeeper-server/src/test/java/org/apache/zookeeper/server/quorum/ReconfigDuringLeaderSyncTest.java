@@ -53,7 +53,9 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
     private static boolean bakAsyncSending;
 
     public void setup(boolean asyncSending) {
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
         Learner.setAsyncSending(asyncSending);
         QuorumPeerConfig.setReconfigEnabled(true);
     }
@@ -79,7 +81,6 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
      * not invoked on the newly added node, and zoo.cfg.dynamic.next wasn't
      * deleted.
      */
-
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testDuringLeaderSync(boolean asyncSending) throws Exception {
@@ -91,7 +92,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             serverConfig[i] = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                              + ":participant;127.0.0.1:" + clientPorts[i];
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(serverConfig[i] + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -105,22 +106,21 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
         CountdownWatcher watch = new CountdownWatcher();
-        ZooKeeperAdmin preReconfigClient = new ZooKeeperAdmin(
-            "127.0.0.1:" + clientPorts[0],
-            ClientBase.CONNECTION_TIMEOUT,
-            watch);
+        ZooKeeperAdmin preReconfigClient =
+                new ZooKeeperAdmin("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT, watch);
         preReconfigClient.addAuthInfo("digest", "super:test".getBytes());
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         // new server joining
         int joinerId = SERVER_COUNT;
         clientPorts[joinerId] = PortAssignment.unique();
-        serverConfig[joinerId] = "server." + joinerId + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                                 + ":participant;127.0.0.1:" + clientPorts[joinerId];
+        serverConfig[joinerId] = "server." + joinerId + "=127.0.0.1:" + PortAssignment.unique() + ":"
+                + PortAssignment.unique() + ":participant;127.0.0.1:" + clientPorts[joinerId];
 
         // Find leader id.
         int leaderId = -1;
@@ -173,10 +173,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
             }
         }
         watch = new CountdownWatcher();
-        ZooKeeper postReconfigClient = new ZooKeeper(
-                "127.0.0.1:" + clientPorts[joinerId],
-                ClientBase.CONNECTION_TIMEOUT,
-                watch);
+        ZooKeeper postReconfigClient =
+                new ZooKeeper("127.0.0.1:" + clientPorts[joinerId], ClientBase.CONNECTION_TIMEOUT, watch);
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         // do one successful operation on the newly added node
         postReconfigClient.create("/reconfigIssue", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -184,7 +182,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
         // verify that joiner has up-to-date config, including all four servers.
         for (long j = 0; j <= SERVER_COUNT; j++) {
-            assertNotNull(qp.getQuorumVerifier().getVotingMembers().get(j),
+            assertNotNull(
+                    qp.getQuorumVerifier().getVotingMembers().get(j),
                     "server " + j + " is not present in the new quorum");
         }
 
@@ -226,8 +225,31 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
         private boolean newLeaderMessage = false;
 
-        public CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, int electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit) throws IOException {
-            super(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false, ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1), new QuorumMaj(quorumPeers));
+        public CustomQuorumPeer(
+                Map<Long, QuorumServer> quorumPeers,
+                File snapDir,
+                File logDir,
+                int clientPort,
+                int electionAlg,
+                long myid,
+                int tickTime,
+                int initLimit,
+                int syncLimit,
+                int connectToLearnerMasterLimit)
+                throws IOException {
+            super(
+                    quorumPeers,
+                    snapDir,
+                    logDir,
+                    electionAlg,
+                    myid,
+                    tickTime,
+                    initLimit,
+                    syncLimit,
+                    connectToLearnerMasterLimit,
+                    false,
+                    ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
+                    new QuorumMaj(quorumPeers));
         }
 
         /**
@@ -264,14 +286,23 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
                 }
             };
         }
-
     }
 
     private static class MockTestQPMain extends TestQPMain {
 
         @Override
         public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
-            quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(), config.getDataDir(), config.getDataLogDir(), config.getClientPortAddress().getPort(), config.getElectionAlg(), config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit(), config.getConnectToLearnerMasterLimit());
+            quorumPeer = new CustomQuorumPeer(
+                    config.getQuorumVerifier().getAllMembers(),
+                    config.getDataDir(),
+                    config.getDataLogDir(),
+                    config.getClientPortAddress().getPort(),
+                    config.getElectionAlg(),
+                    config.getServerId(),
+                    config.getTickTime(),
+                    config.getInitLimit(),
+                    config.getSyncLimit(),
+                    config.getConnectToLearnerMasterLimit());
             quorumPeer.setConfigFileName(config.getConfigFilename());
             quorumPeer.start();
             try {
@@ -280,7 +311,5 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
                 LOG.warn("Quorum Peer interrupted", e);
             }
         }
-
     }
-
 }

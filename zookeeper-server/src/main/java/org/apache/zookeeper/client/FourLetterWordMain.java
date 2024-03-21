@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Public
 public class FourLetterWordMain {
 
-    //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
+    // in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
     private static final int DEFAULT_SOCKET_TIMEOUT = 5000;
     protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordMain.class);
     /**
@@ -66,11 +66,8 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(
-        String host,
-        int port,
-        String cmd,
-        boolean secure) throws IOException, SSLContextException {
+    public static String send4LetterWord(String host, int port, String cmd, boolean secure)
+            throws IOException, SSLContextException {
         return send4LetterWord(host, port, cmd, secure, DEFAULT_SOCKET_TIMEOUT);
     }
 
@@ -85,12 +82,8 @@ public class FourLetterWordMain {
      * @throws java.io.IOException
      * @throws SSLContextException
      */
-    public static String send4LetterWord(
-        String host,
-        int port,
-        String cmd,
-        boolean secure,
-        int timeout) throws IOException, SSLContextException {
+    public static String send4LetterWord(String host, int port, String cmd, boolean secure, int timeout)
+            throws IOException, SSLContextException {
         return send4LetterWord(host, port, cmd, secure, timeout, null);
     }
 
@@ -107,20 +100,16 @@ public class FourLetterWordMain {
      * @throws SSLContextException
      */
     public static String send4LetterWord(
-        String host,
-        int port,
-        String cmd,
-        boolean secure,
-        int timeout,
-        SSLContext sslContext) throws IOException, SSLContextException {
+            String host, int port, String cmd, boolean secure, int timeout, SSLContext sslContext)
+            throws IOException, SSLContextException {
         LOG.info("connecting to {}:{} (secure={})", host, port, secure);
 
         Socket sock = null;
         BufferedReader reader = null;
         try {
             InetSocketAddress hostaddress = host != null
-                ? new InetSocketAddress(host, port)
-                : new InetSocketAddress(InetAddress.getByName(null), port);
+                    ? new InetSocketAddress(host, port)
+                    : new InetSocketAddress(InetAddress.getByName(null), port);
             if (secure) {
                 LOG.info("using secure socket");
                 if (sslContext == null) {
@@ -171,10 +160,10 @@ public class FourLetterWordMain {
         if (args.length == 3) {
             System.out.println(send4LetterWord(args[0], Integer.parseInt(args[1]), args[2]));
         } else if (args.length == 4) {
-            System.out.println(send4LetterWord(args[0], Integer.parseInt(args[1]), args[2], Boolean.parseBoolean(args[3])));
+            System.out.println(
+                    send4LetterWord(args[0], Integer.parseInt(args[1]), args[2], Boolean.parseBoolean(args[3])));
         } else {
             System.out.println("Usage: FourLetterWordMain <host> <port> <cmd> <secure(optional)>");
         }
     }
-
 }

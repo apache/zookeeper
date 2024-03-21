@@ -51,5 +51,4 @@ public interface RemotePeerMXBean {
      * @return true if the peer is the current leader
      */
     boolean isLeader();
-
 }

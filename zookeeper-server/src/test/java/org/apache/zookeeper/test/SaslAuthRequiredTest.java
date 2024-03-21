@@ -58,5 +58,4 @@ public class SaslAuthRequiredTest extends ClientBase {
             }
         }
     }
-
 }

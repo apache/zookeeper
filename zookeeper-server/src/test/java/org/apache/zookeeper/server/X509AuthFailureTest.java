@@ -39,10 +39,11 @@ public class X509AuthFailureTest extends ZKTestCase {
     public static int CONNECTION_TIMEOUT = 30000;
 
     @BeforeEach
-    public void setup() throws Exception{
+    public void setup() throws Exception {
         clientX509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
@@ -72,21 +73,20 @@ public class X509AuthFailureTest extends ZKTestCase {
         final Integer CLIENT_PORT = PortAssignment.unique();
         final Integer SECURE_CLIENT_PORT = PortAssignment.unique();
 
-        ZooKeeperServerMainTest.MainThread mt = new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, SECURE_CLIENT_PORT, true, null);
+        ZooKeeperServerMainTest.MainThread mt =
+                new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, SECURE_CLIENT_PORT, true, null);
         mt.start();
-        assertTrue(
-            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT));
 
         try {
             ZooKeeper zk = createZKClnt("127.0.0.1:" + SECURE_CLIENT_PORT);
             fail("should not be reached");
-        } catch (Exception e){
-            //Expected
+        } catch (Exception e) {
+            // Expected
         }
         ServerStats serverStats = mt.getSecureCnxnFactory().getZooKeeperServer().serverStats();
         assertTrue(serverStats.getAuthFailedCount() >= 1);
         mt.shutdown();
-
     }
 
     private ZooKeeper createZKClnt(String cxnString) throws Exception {
@@ -95,5 +95,4 @@ public class X509AuthFailureTest extends ZKTestCase {
         watcher.waitForConnected(CONNECTION_TIMEOUT);
         return zk;
     }
-
 }

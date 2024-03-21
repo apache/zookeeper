@@ -47,5 +47,4 @@ public interface Counter {
      * @return the current value
      */
     long get();
-
 }

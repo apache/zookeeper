@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
 
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumMajorityTest.class);
@@ -48,16 +47,18 @@ public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
             Long electionTimeTaken = -1L;
             String bean = "";
             if (qp.getPeerState() == QuorumPeer.ServerState.FOLLOWING) {
-                bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower", MBeanRegistry.DOMAIN, i, i);
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower", MBeanRegistry.DOMAIN, i, i);
             } else if (qp.getPeerState() == QuorumPeer.ServerState.LEADING) {
-                bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader", MBeanRegistry.DOMAIN, i, i);
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader", MBeanRegistry.DOMAIN, i, i);
             }
             electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean, "ElectionTimeTaken");
             assertTrue(electionTimeTaken >= 0, "Wrong electionTimeTaken value!");
         }
 
         tearDown();
-        //setup servers 1-2 to be followers
+        // setup servers 1-2 to be followers
         // id=1, oracle is false; id=2, oracle is true
         setUp();
 
@@ -72,12 +73,10 @@ public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
         noDropConectionTest(s);
 
         dropConnectionTest(s, leader);
-
     }
 
     private void noDropConectionTest(QuorumPeer s) {
         Leader.Proposal p = new Leader.Proposal();
-
 
         p.addQuorumVerifier(s.getQuorumVerifier());
 
@@ -92,9 +91,7 @@ public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
         // 2 followers out of 2 is good
         p.addAck(Long.valueOf(2));
         assertEquals(true, p.hasAllQuorums());
-
     }
-
 
     private void dropConnectionTest(QuorumPeer s, int leader) {
         Leader.Proposal p = new Leader.Proposal();
@@ -113,7 +110,6 @@ public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
         s.getQuorumVerifier().updateNeedOracle(fake);
         // lose all of followers, the oracle should take place
         assertEquals(true, s.getQuorumVerifier().getNeedOracle());
-
 
         // when leader is 1, we expect false.
         // when leader is 2, we expect true.

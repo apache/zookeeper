@@ -49,7 +49,6 @@ public class LeaderMetricsTest extends ZKTestCase {
         public void process(WatchedEvent e) {
             createdLatch.countDown();
         }
-
     }
 
     @BeforeEach
@@ -69,7 +68,7 @@ public class LeaderMetricsTest extends ZKTestCase {
 
         ServerMetrics.getMetrics().resetAll();
 
-        QuorumUtil util = new QuorumUtil(1); //creating a quorum of 3 servers
+        QuorumUtil util = new QuorumUtil(1); // creating a quorum of 3 servers
         util.startAll();
 
         ZooKeeper zk = ClientBase.createZKClient(util.getConnString());
@@ -101,5 +100,4 @@ public class LeaderMetricsTest extends ZKTestCase {
         zk.close();
         util.shutdownAll();
     }
-
 }

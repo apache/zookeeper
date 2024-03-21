@@ -95,5 +95,4 @@ public class WatchesSummary {
         summary.put(KEY_NUM_TOTAL_WATCHES, totalWatches);
         return summary;
     }
-
 }

@@ -133,10 +133,7 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
                 if (bang) {
                     failed = true;
                     LOG.error(
-                        "Create failed for 0x{} with rc:{} path:{}",
-                        Long.toHexString(zk.getSessionId()),
-                        rc,
-                        path);
+                            "Create failed for 0x{} with rc:{} path:{}", Long.toHexString(zk.getSessionId()), rc, path);
                 }
                 decOutstanding();
                 return;
@@ -157,14 +154,10 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
                 if (bang) {
                     failed = true;
                     LOG.error(
-                        "Delete failed for 0x{} with rc:{} path:{}",
-                        Long.toHexString(zk.getSessionId()),
-                        rc,
-                        path);
+                            "Delete failed for 0x{} with rc:{} path:{}", Long.toHexString(zk.getSessionId()), rc, path);
                 }
             }
         }
-
     }
 
     @Test
@@ -242,5 +235,4 @@ public class AsyncHammerTest extends ZKTestCase implements StringCallback, VoidC
             ctx.notifyAll();
         }
     }
-
 }

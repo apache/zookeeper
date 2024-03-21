@@ -127,5 +127,4 @@ public class KeyAuthClientTest extends ClientBase {
         validAuth();
         validAuth2();
     }
-
 }

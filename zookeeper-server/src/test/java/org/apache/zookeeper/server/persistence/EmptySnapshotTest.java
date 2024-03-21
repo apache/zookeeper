@@ -45,12 +45,12 @@ public class EmptySnapshotTest {
             super(snapDir);
         }
 
-        public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync) throws IOException {
+        public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync)
+                throws IOException {
             // Create empty new file.
             assertTrue(snapShot.createNewFile());
             throw new IOException("Created empty snapshot file from " + "MockFileSnap::serialize()");
         }
-
     }
 
     @Test
@@ -80,5 +80,4 @@ public class EmptySnapshotTest {
         snapLog.save(tree, new ConcurrentHashMap<>(), false);
         assertEquals(1, ((FileSnap) snapLog.snapLog).findNRecentSnapshots(10).size());
     }
-
 }

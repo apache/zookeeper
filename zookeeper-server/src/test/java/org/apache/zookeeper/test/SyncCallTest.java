@@ -38,7 +38,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.jupiter.api.Test;
 
-public class SyncCallTest extends ClientBase implements ChildrenCallback, Children2Callback, StringCallback, VoidCallback, Create2Callback {
+public class SyncCallTest extends ClientBase
+        implements ChildrenCallback, Children2Callback, StringCallback, VoidCallback, Create2Callback {
 
     private CountDownLatch opsCount;
 
@@ -54,11 +55,23 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
 
             LOG.info("Beginning test:{}", (new Date()).toString());
             for (int i = 0; i < 50; i++) {
-                zk.create("/test" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (StringCallback) this, results);
+                zk.create(
+                        "/test" + i,
+                        new byte[0],
+                        Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT,
+                        (StringCallback) this,
+                        results);
             }
 
             for (int i = 50; i < 100; i++) {
-                zk.create("/test" + i, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (Create2Callback) this, results);
+                zk.create(
+                        "/test" + i,
+                        new byte[0],
+                        Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT,
+                        (Create2Callback) this,
+                        results);
             }
             zk.sync("/test", this, results);
             for (int i = 0; i < 100; i++) {
@@ -101,7 +114,6 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
     public void processResult(int rc, String path, Object ctx, String name) {
         ((List<Integer>) ctx).add(rc);
         opsCount.countDown();
-
     }
 
     @SuppressWarnings("unchecked")
@@ -109,7 +121,6 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
     public void processResult(int rc, String path, Object ctx) {
         ((List<Integer>) ctx).add(rc);
         opsCount.countDown();
-
     }
 
     @SuppressWarnings("unchecked")
@@ -118,5 +129,4 @@ public class SyncCallTest extends ClientBase implements ChildrenCallback, Childr
         ((List<Integer>) ctx).add(rc);
         opsCount.countDown();
     }
-
 }

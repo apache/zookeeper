@@ -35,6 +35,7 @@ public abstract class CommandBase implements Command {
     protected CommandBase(List<String> names) {
         this(names, true);
     }
+
     protected CommandBase(List<String> names, boolean serverRequired) {
         this(names, serverRequired, null);
     }
@@ -59,7 +60,6 @@ public abstract class CommandBase implements Command {
         return names;
     }
 
-
     @Override
     public boolean isServerRequired() {
         return serverRequired;
@@ -78,5 +78,4 @@ public abstract class CommandBase implements Command {
     protected CommandResponse initializeResponse() {
         return new CommandResponse(primaryName);
     }
-
 }

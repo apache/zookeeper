@@ -68,7 +68,6 @@ public final class AuditLogPerfReading {
 
     @Override
     public String toString() {
-        return "create=" + create + ", setData=" + setData + ", delete="
-                + delete;
+        return "create=" + create + ", setData=" + setData + ", delete=" + delete;
     }
 }

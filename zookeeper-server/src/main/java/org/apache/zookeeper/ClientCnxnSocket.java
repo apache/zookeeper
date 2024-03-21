@@ -63,6 +63,7 @@ abstract class ClientCnxnSocket {
      * readLength() to receive the full message.
      */
     protected ByteBuffer incomingBuffer = lenBuffer;
+
     protected final AtomicLong sentCount = new AtomicLong(0L);
     protected final AtomicLong recvCount = new AtomicLong(0L);
     protected long lastHeard;
@@ -202,10 +203,8 @@ abstract class ClientCnxnSocket {
      * @throws IOException
      * @throws InterruptedException
      */
-    abstract void doTransport(
-        int waitTimeOut,
-        Queue<Packet> pendingQueue,
-        ClientCnxn cnxn) throws IOException, InterruptedException;
+    abstract void doTransport(int waitTimeOut, Queue<Packet> pendingQueue, ClientCnxn cnxn)
+            throws IOException, InterruptedException;
 
     /**
      * Close the socket.
@@ -227,18 +226,14 @@ abstract class ClientCnxnSocket {
 
     protected void initProperties() throws IOException {
         try {
-            packetLen = clientConfig.getInt(
-                ZKConfig.JUTE_MAXBUFFER,
-                ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
+            packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
             LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER, packetLen);
         } catch (NumberFormatException e) {
             String msg = MessageFormat.format(
-                "Configured value {0} for property {1} can not be parsed to int",
-                clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
-                ZKConfig.JUTE_MAXBUFFER);
+                    "Configured value {0} for property {1} can not be parsed to int",
+                    clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER), ZKConfig.JUTE_MAXBUFFER);
             LOG.error(msg);
             throw new IOException(msg);
         }
     }
-
 }

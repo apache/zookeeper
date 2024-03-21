@@ -65,8 +65,8 @@ public final class PortAssignment {
         if (portRange == null) {
             Integer threadId = Integer.getInteger("zookeeper.junit.threadid");
             portRange = setupPortRange(
-                System.getProperty("test.junit.threads"),
-                threadId != null ? "threadid=" + threadId : System.getProperty("sun.java.command"));
+                    System.getProperty("test.junit.threads"),
+                    threadId != null ? "threadid=" + threadId : System.getProperty("sun.java.command"));
             nextPort = portRange.getMinimum();
         }
         int candidatePort = nextPort;
@@ -77,8 +77,7 @@ public final class PortAssignment {
             }
             if (candidatePort == nextPort) {
                 throw new IllegalStateException(String.format(
-                    "Could not assign port from range %s.  The entire range has been exhausted.",
-                    portRange));
+                        "Could not assign port from range %s.  The entire range has been exhausted.", portRange));
             }
             try {
                 ServerSocket s = new ServerSocket(candidatePort);
@@ -88,10 +87,7 @@ public final class PortAssignment {
                 return nextPort;
             } catch (IOException e) {
                 LOG.debug(
-                    "Could not bind to port {} from range {}.  Attempting next port.",
-                    candidatePort,
-                    portRange,
-                    e);
+                        "Could not bind to port {} from range {}.  Attempting next port.", candidatePort, portRange, e);
             }
         }
     }
@@ -203,13 +199,10 @@ public final class PortAssignment {
         public String toString() {
             return String.format("%d - %d", minimum, maximum);
         }
-
     }
 
     /**
      * There is no reason to instantiate this class.
      */
-    private PortAssignment() {
-    }
-
+    private PortAssignment() {}
 }

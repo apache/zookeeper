@@ -59,22 +59,23 @@ public abstract class Shell {
     public static final String USER_NAME_COMMAND = "whoami";
     /** a Unix command to get the current user's groups list */
     public static String[] getGroupsCommand() {
-        return new String[]{"bash", "-c", "groups"};
+        return new String[] {"bash", "-c", "groups"};
     }
     /** a Unix command to get a given user's groups list */
     public static String[] getGroupsForUserCommand(final String user) {
-        //'groups username' command return is non-consistent across different unixes
-        return new String[]{"bash", "-c", "id -Gn " + user};
+        // 'groups username' command return is non-consistent across different unixes
+        return new String[] {"bash", "-c", "id -Gn " + user};
     }
     /** a Unix command to set permission */
     public static final String SET_PERMISSION_COMMAND = "chmod";
     /** a Unix command to set owner */
     public static final String SET_OWNER_COMMAND = "chown";
+
     public static final String SET_GROUP_COMMAND = "chgrp";
     /** Return a Unix command to get permission information. */
     public static String[] getGET_PERMISSION_COMMAND() {
-        //force /bin/ls, except on windows.
-        return new String[]{(WINDOWS ? "ls" : "/bin/ls"), "-ld"};
+        // force /bin/ls, except on windows.
+        return new String[] {(WINDOWS ? "ls" : "/bin/ls"), "-ld"};
     }
 
     /**Time after which the executing script would be timedout*/
@@ -104,7 +105,7 @@ public abstract class Shell {
             return null;
         }
 
-        return new String[]{ULIMIT_COMMAND, "-v", String.valueOf(memoryLimit)};
+        return new String[] {ULIMIT_COMMAND, "-v", String.valueOf(memoryLimit)};
     }
 
     /**
@@ -122,14 +123,16 @@ public abstract class Shell {
         }
         final String output = FileUtils.readFileToString(f, StandardCharsets.UTF_8.name());
         return (output != null)
-                && System.getProperty("os.name").startsWith("Linux") && output.toLowerCase().contains("microsoft");
+                && System.getProperty("os.name").startsWith("Linux")
+                && output.toLowerCase().contains("microsoft");
     }
 
     /** Set to true on Windows platforms */
-    public static final boolean WINDOWS /* borrowed from Path.WINDOWS */ = System.getProperty("os.name").startsWith("Windows");
+    public static final boolean WINDOWS /* borrowed from Path.WINDOWS */ =
+            System.getProperty("os.name").startsWith("Windows");
 
-    private long interval;   // refresh interval in msec
-    private long lastTime;   // last time the command was performed
+    private long interval; // refresh interval in msec
+    private long lastTime; // last time the command was performed
     private Map<String, String> environment; // env for the command execution
     private File dir;
     private Process process; // sub process used to execute the command
@@ -193,7 +196,7 @@ public abstract class Shell {
         if (timeOutInterval > 0) {
             timeOutTimer = new Timer();
             timeoutTimerTask = new ShellTimeoutTimerTask(this);
-            //One time scheduling.
+            // One time scheduling.
             timeOutTimer.schedule(timeoutTimerTask, timeOutInterval);
         }
         final BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -237,8 +240,8 @@ public abstract class Shell {
                 LOG.warn("Interrupted while reading the error stream", ie);
             }
             completed.set(true);
-            //the timeout thread handling
-            //taken care in finally block
+            // the timeout thread handling
+            // taken care in finally block
             if (exitCode != ExitCode.EXECUTION_FINISHED.getValue()) {
                 throw new ExitCodeException(exitCode, errMsg.toString());
             }
@@ -303,7 +306,6 @@ public abstract class Shell {
         public int getExitCode() {
             return exitCode;
         }
-
     }
 
     /**
@@ -399,7 +401,6 @@ public abstract class Shell {
             }
             return builder.toString();
         }
-
     }
 
     /**
@@ -440,7 +441,6 @@ public abstract class Shell {
      * @param timeout time in milliseconds after which script should be marked timeout
      * @return the output of the executed command.o
      */
-
     public static String execCommand(Map<String, String> env, String[] cmd, long timeout) throws IOException {
         ShellCommandExecutor exec = new ShellCommandExecutor(cmd, null, env, timeout);
         exec.execute();
@@ -476,16 +476,14 @@ public abstract class Shell {
             try {
                 p.exitValue();
             } catch (Exception e) {
-                //Process has not terminated.
-                //So check if it has completed
-                //if not just destroy it.
+                // Process has not terminated.
+                // So check if it has completed
+                // if not just destroy it.
                 if (p != null && !shell.completed.get()) {
                     shell.setTimedOut();
                     p.destroy();
                 }
             }
         }
-
     }
-
 }

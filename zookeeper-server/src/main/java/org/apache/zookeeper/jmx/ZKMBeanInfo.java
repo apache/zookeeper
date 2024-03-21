@@ -34,5 +34,4 @@ public interface ZKMBeanInfo {
      * @return true if the MBean is hidden.
      */
     boolean isHidden();
-
 }

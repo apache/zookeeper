@@ -303,7 +303,10 @@ public abstract class Op {
         }
 
         private Create(String path, byte[] data, List<ACL> acl, int flags, int defaultOpCode) {
-            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT), defaultOpCode), path, OpKind.TRANSACTION);
+            super(
+                    getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT), defaultOpCode),
+                    path,
+                    OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = flags;
@@ -353,10 +356,10 @@ public abstract class Op {
                 }
             }
             return !i.hasNext()
-                   && getType() == op.getType()
-                   && Arrays.equals(data, op.data)
-                   && flags == op.flags
-                   && aclEquals;
+                    && getType() == op.getType()
+                    && Arrays.equals(data, op.data)
+                    && flags == op.flags
+                    && aclEquals;
         }
 
         @Override
@@ -380,7 +383,6 @@ public abstract class Op {
             PathUtils.validatePath(getPath(), createMode.isSequential());
             EphemeralType.validateTTL(createMode, -1);
         }
-
     }
 
     public static class CreateTTL extends Create {
@@ -423,7 +425,6 @@ public abstract class Op {
             PathUtils.validatePath(getPath(), createMode.isSequential());
             EphemeralType.validateTTL(createMode, ttl);
         }
-
     }
 
     public static class Delete extends Op {
@@ -446,7 +447,9 @@ public abstract class Op {
 
             Delete op = (Delete) o;
 
-            return getType() == op.getType() && version == op.version && getPath().equals(op.getPath());
+            return getType() == op.getType()
+                    && version == op.version
+                    && getPath().equals(op.getPath());
         }
 
         @Override
@@ -463,7 +466,6 @@ public abstract class Op {
         Op withChroot(String path) {
             return new Delete(path, version);
         }
-
     }
 
     public static class SetData extends Op {
@@ -489,9 +491,9 @@ public abstract class Op {
             SetData op = (SetData) o;
 
             return getType() == op.getType()
-                   && version == op.version
-                   && getPath().equals(op.getPath())
-                   && Arrays.equals(data, op.data);
+                    && version == op.version
+                    && getPath().equals(op.getPath())
+                    && Arrays.equals(data, op.data);
         }
 
         @Override
@@ -508,7 +510,6 @@ public abstract class Op {
         Op withChroot(String path) {
             return new SetData(path, data, version);
         }
-
     }
 
     public static class Check extends Op {
@@ -548,7 +549,6 @@ public abstract class Op {
         Op withChroot(String path) {
             return new Check(path, version);
         }
-
     }
 
     public static class GetChildren extends Op {
@@ -585,7 +585,6 @@ public abstract class Op {
         Op withChroot(String path) {
             return new GetChildren(path);
         }
-
     }
 
     public static class GetData extends Op {
@@ -622,7 +621,5 @@ public abstract class Op {
         Op withChroot(String path) {
             return new GetData(path);
         }
-
     }
-
 }

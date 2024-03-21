@@ -87,5 +87,4 @@ public class RateLogger {
             LOG.warn("Message:{} Value:{}", msg, value);
         }
     }
-
 }

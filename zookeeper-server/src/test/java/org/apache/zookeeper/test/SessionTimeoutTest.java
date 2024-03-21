@@ -84,7 +84,8 @@ public class SessionTimeoutTest extends ClientBase {
         };
         zk.exists("/foo/bar", watcher);
 
-        WatchedEvent event = new WatchedEvent(Watcher.Event.EventType.NodeDataChanged, Watcher.Event.KeeperState.SyncConnected, "/foo/bar");
+        WatchedEvent event = new WatchedEvent(
+                Watcher.Event.EventType.NodeDataChanged, Watcher.Event.KeeperState.SyncConnected, "/foo/bar");
         zk.getTestable().queueEvent(event);
         assertTrue(eventLatch.await(5, TimeUnit.SECONDS));
     }
@@ -133,5 +134,4 @@ public class SessionTimeoutTest extends ClientBase {
 
         assertNotNull(zk.exists("/sdeath", null), "Ephemeral node should be present when server restarted");
     }
-
 }

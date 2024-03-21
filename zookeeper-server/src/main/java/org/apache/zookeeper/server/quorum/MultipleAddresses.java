@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
 import static java.util.Arrays.asList;
@@ -104,7 +103,10 @@ public final class MultipleAddresses {
      * @return list of all hosts
      */
     public List<String> getAllHostStrings() {
-        return addresses.stream().map(InetSocketAddress::getHostString).distinct().collect(Collectors.toList());
+        return addresses.stream()
+                .map(InetSocketAddress::getHostString)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     public void addAddress(InetSocketAddress address) {
@@ -122,9 +124,9 @@ public final class MultipleAddresses {
     public InetSocketAddress getReachableAddress() throws NoRouteToHostException {
         // using parallelStream() + findAny() will help to minimize the time spent on network operations
         return addresses.parallelStream()
-          .filter(this::checkIfAddressIsReachable)
-          .findAny()
-          .orElseThrow(() -> new NoRouteToHostException("No valid address among " + addresses));
+                .filter(this::checkIfAddressIsReachable)
+                .findAny()
+                .orElseThrow(() -> new NoRouteToHostException("No valid address among " + addresses));
     }
 
     /**
@@ -135,8 +137,8 @@ public final class MultipleAddresses {
     public Set<InetSocketAddress> getAllReachableAddresses() {
         // using parallelStream() will help to minimize the time spent on network operations
         return addresses.parallelStream()
-          .filter(this::checkIfAddressIsReachable)
-          .collect(Collectors.toSet());
+                .filter(this::checkIfAddressIsReachable)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -189,8 +191,8 @@ public final class MultipleAddresses {
      */
     public void recreateSocketAddresses() {
         addresses = addresses.parallelStream()
-          .map(this::recreateSocketAddress)
-          .collect(Collectors.toCollection(MultipleAddresses::newConcurrentHashSet));
+                .map(this::recreateSocketAddress)
+                .collect(Collectors.toCollection(MultipleAddresses::newConcurrentHashSet));
     }
 
     /**
@@ -202,7 +204,6 @@ public final class MultipleAddresses {
     public InetSocketAddress getOne() {
         return addresses.iterator().next();
     }
-
 
     /**
      * Returns the number of addresses in the set.

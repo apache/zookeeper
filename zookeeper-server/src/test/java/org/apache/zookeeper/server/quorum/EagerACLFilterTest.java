@@ -67,8 +67,8 @@ public class EagerACLFilterTest extends QuorumBase {
     @BeforeEach
     @Override
     public void setUp() {
-        //since parameterized test methods need a parameterized setUp method
-        //the inherited method has to be overridden with an empty function body
+        // since parameterized test methods need a parameterized setUp method
+        // the inherited method has to be overridden with an empty function body
     }
 
     public void setUp(ServerState serverState, boolean checkEnabled) throws Exception {
@@ -97,13 +97,16 @@ public class EagerACLFilterTest extends QuorumBase {
 
     void syncClient(ZooKeeper zk) {
         CompletableFuture<Void> synced = new CompletableFuture<>();
-        zk.sync("/", (rc, path, ctx) -> {
-            if (rc == 0) {
-                synced.complete(null);
-            } else {
-                synced.completeExceptionally(KeeperException.create(KeeperException.Code.get(rc)));
-            }
-        }, null);
+        zk.sync(
+                "/",
+                (rc, path, ctx) -> {
+                    if (rc == 0) {
+                        synced.complete(null);
+                    } else {
+                        synced.completeExceptionally(KeeperException.create(KeeperException.Code.get(rc)));
+                    }
+                },
+                null);
         synced.join();
     }
 
@@ -310,5 +313,4 @@ public class EagerACLFilterTest extends QuorumBase {
         assertTransactionState("invalid ACL", zkConnected, lastxid);
         assertTransactionState("invalid ACL", zkLeader, lastxid);
     }
-
 }

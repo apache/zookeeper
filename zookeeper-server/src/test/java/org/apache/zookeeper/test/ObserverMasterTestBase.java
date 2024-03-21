@@ -57,16 +57,17 @@ public class ObserverMasterTestBase extends QuorumPeerTestBase implements Watche
 
         OM_PORT = PortAssignment.unique();
 
-        String quorumCfgSection =
-                "server.1=127.0.0.1:" + (PORT_QP1)
-                        + ":" + (PORT_QP_LE1) + ";" +  CLIENT_PORT_QP1
-                        + "\nserver.2=127.0.0.1:" + (PORT_QP2)
-                        + ":" + (PORT_QP_LE2) + ";" + CLIENT_PORT_QP2
-                        + "\nserver.3=127.0.0.1:" + (PORT_OBS)
-                        + ":" + (PORT_OBS_LE) + ":observer" + ";" + CLIENT_PORT_OBS;
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PORT_QP1)
+                + ":" + (PORT_QP_LE1) + ";" + CLIENT_PORT_QP1
+                + "\nserver.2=127.0.0.1:" + (PORT_QP2)
+                + ":" + (PORT_QP_LE2) + ";" + CLIENT_PORT_QP2
+                + "\nserver.3=127.0.0.1:" + (PORT_OBS)
+                + ":" + (PORT_OBS_LE) + ":observer" + ";" + CLIENT_PORT_OBS;
 
         String extraCfgs = testObserverMaster ? String.format("observerMasterPort=%d%n", OM_PORT) : "";
-        String extraCfgsObs = testObserverMaster ? String.format("observerMasterPort=%d%n", omProxyPort <= 0 ? OM_PORT : omProxyPort) : "";
+        String extraCfgsObs = testObserverMaster
+                ? String.format("observerMasterPort=%d%n", omProxyPort <= 0 ? OM_PORT : omProxyPort)
+                : "";
 
         PortForwarder forwarder = null;
         if (testObserverMaster && omProxyPort >= 0) {
@@ -78,9 +79,11 @@ public class ObserverMasterTestBase extends QuorumPeerTestBase implements Watche
         q3 = new MainThread(3, CLIENT_PORT_OBS, quorumCfgSection, extraCfgsObs);
         q1.start();
         q2.start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, CONNECTION_TIMEOUT),
                 "waiting for server 1 being up");
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT),
                 "waiting for server 2 being up");
         return forwarder;
     }
@@ -94,11 +97,14 @@ public class ObserverMasterTestBase extends QuorumPeerTestBase implements Watche
         q2.shutdown();
         q3.shutdown();
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                 "Waiting for server 1 to shut down");
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                 "Waiting for server 2 to shut down");
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT),
                 "Waiting for server 3 to shut down");
     }
 

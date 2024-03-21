@@ -68,7 +68,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#setACL(String, List, int, AsyncCallback.StatCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, Stat stat);
-
     }
 
     /**
@@ -87,7 +86,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#getAllChildrenNumber(String, AsyncCallback.AllChildrenNumberCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, int number);
-
     }
 
     /**
@@ -119,7 +117,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#getConfig(Watcher, AsyncCallback.DataCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, byte[] data, Stat stat);
-
     }
 
     /**
@@ -148,7 +145,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#getACL(String, Stat, AsyncCallback.ACLCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<ACL> acl, Stat stat);
-
     }
 
     /**
@@ -177,7 +173,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#getChildren(String, Watcher, AsyncCallback.ChildrenCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<String> children);
-
     }
 
     /**
@@ -200,7 +195,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#getChildren(String, Watcher, AsyncCallback.Children2Callback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<String> children, Stat stat);
-
     }
 
     /**
@@ -225,7 +219,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#create(String, byte[], List, CreateMode, AsyncCallback.Create2Callback, Object, long)
          */
         void processResult(int rc, String path, Object ctx, String name, Stat stat);
-
     }
 
     /**
@@ -260,7 +253,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#create(String, byte[], List, CreateMode, AsyncCallback.StringCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, String name);
-
     }
 
     /**
@@ -297,7 +289,6 @@ public interface AsyncCallback {
          *
          */
         void processResult(int rc, String path, Object ctx);
-
     }
 
     /**
@@ -326,7 +317,6 @@ public interface AsyncCallback {
          * @see ZooKeeper#multi(Iterable, AsyncCallback.MultiCallback, Object)
          */
         void processResult(int rc, String path, Object ctx, List<OpResult> opResults);
-
     }
 
     /**
@@ -345,7 +335,5 @@ public interface AsyncCallback {
          * @param paths   The path that we passed to asynchronous calls.
          */
         void processResult(int rc, Object ctx, List<String> paths);
-
     }
-
 }

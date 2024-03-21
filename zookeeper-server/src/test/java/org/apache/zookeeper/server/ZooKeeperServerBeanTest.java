@@ -38,7 +38,8 @@ public class ZooKeeperServerBeanTest {
 
     @BeforeEach
     public void setup() {
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
     }
 
     @AfterEach
@@ -92,7 +93,6 @@ public class ZooKeeperServerBeanTest {
          * case 2: When secure client is configured GetSecureClientPort should
          * return configured port
          */
-
         ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
         int secureClientPort = 8443;
         InetSocketAddress address = new InetSocketAddress(secureClientPort);
@@ -104,7 +104,6 @@ public class ZooKeeperServerBeanTest {
 
         // cleanup
         cnxnFactory.shutdown();
-
     }
 
     @Test
@@ -122,7 +121,6 @@ public class ZooKeeperServerBeanTest {
          * case 2: When secure client is configured getSecureClientAddress
          * should return configured SecureClientAddress
          */
-
         ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
         int secureClientPort = 8443;
         InetSocketAddress address = new InetSocketAddress(secureClientPort);
@@ -137,5 +135,4 @@ public class ZooKeeperServerBeanTest {
         // cleanup
         cnxnFactory.shutdown();
     }
-
 }

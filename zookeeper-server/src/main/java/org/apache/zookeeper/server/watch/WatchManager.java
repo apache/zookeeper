@@ -137,7 +137,8 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet supress) {
+    public WatcherOrBitSet triggerWatch(
+            String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet supress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
         Set<Watcher> watchers = new HashSet<>();
         synchronized (this) {
@@ -220,7 +221,10 @@ public class WatchManager implements IWatchManager {
     public synchronized String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(watch2Paths.size()).append(" connections watching ").append(watchTable.size()).append(" paths\n");
+        sb.append(watch2Paths.size())
+                .append(" connections watching ")
+                .append(watchTable.size())
+                .append(" paths\n");
 
         int total = 0;
         for (Map<String, WatchStats> paths : watch2Paths.values()) {
@@ -360,7 +364,9 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public void shutdown() { /* do nothing */ }
+    public void shutdown() {
+        /* do nothing */
+    }
 
     // VisibleForTesting
     synchronized int getRecursiveWatchQty() {

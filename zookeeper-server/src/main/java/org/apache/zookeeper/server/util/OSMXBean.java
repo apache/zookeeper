@@ -104,14 +104,14 @@ public class OSMXBean {
         }
 
         try {
-            //need to get the PID number of the process first
+            // need to get the PID number of the process first
             RuntimeMXBean rtmbean = ManagementFactory.getRuntimeMXBean();
             String rtname = rtmbean.getName();
             String[] pidhost = rtname.split("@");
 
-            //using linux bash commands to retrieve info
+            // using linux bash commands to retrieve info
             Process p = Runtime.getRuntime()
-                               .exec(new String[]{"bash", "-c", "ls /proc/" + pidhost[0] + "/fdinfo | wc -l"});
+                    .exec(new String[] {"bash", "-c", "ls /proc/" + pidhost[0] + "/fdinfo | wc -l"});
             InputStream in = p.getInputStream();
             BufferedReader output = new BufferedReader(new InputStreamReader(in));
 
@@ -146,8 +146,8 @@ public class OSMXBean {
         }
 
         try {
-            //using linux bash commands to retrieve info
-            Process p = Runtime.getRuntime().exec(new String[]{"bash", "-c", "ulimit -n"});
+            // using linux bash commands to retrieve info
+            Process p = Runtime.getRuntime().exec(new String[] {"bash", "-c", "ulimit -n"});
             InputStream in = p.getInputStream();
             BufferedReader output = new BufferedReader(new InputStreamReader(in));
 
@@ -166,5 +166,4 @@ public class OSMXBean {
         }
         return -1;
     }
-
 }

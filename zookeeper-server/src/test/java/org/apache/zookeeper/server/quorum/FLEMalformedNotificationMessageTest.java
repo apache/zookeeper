@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -49,7 +48,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
     FLETestUtils.LEThread leaderElectionThread;
     QuorumPeer peerRunningLeaderElection;
 
-
     @BeforeEach
     public void setUp() throws Exception {
         count = 3;
@@ -61,10 +59,10 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         LOG.info("FLEMalformedNotificationMessageTest: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
-            peers.put((long) i,
-                      new QuorumServer(i,
-                                       new InetSocketAddress(clientport),
-                                       new InetSocketAddress(PortAssignment.unique())));
+            peers.put(
+                    (long) i,
+                    new QuorumServer(
+                            i, new InetSocketAddress(clientport), new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }
@@ -78,13 +76,11 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         leaderElectionThread.start();
     }
 
-
     @AfterEach
     public void tearDown() throws Exception {
         peerRunningLeaderElection.shutdown();
         mockCnxManager.halt();
     }
-
 
     @Test
     public void testTooShortPartialNotificationMessage() throws Exception {
@@ -97,8 +93,8 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         byte requestBytes[] = new byte[12];
         ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
         requestBuffer.clear();
-        requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
-        requestBuffer.putLong(0);                              // leader
+        requestBuffer.putInt(ServerState.LOOKING.ordinal()); // state
+        requestBuffer.putLong(0); // leader
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*
@@ -111,7 +107,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
             fail("Leader election thread didn't join, something went wrong.");
         }
     }
-
 
     @Test
     public void testNotificationMessageWithNegativeConfigLength() throws Exception {
@@ -123,13 +118,13 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         byte requestBytes[] = new byte[48];
         ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
         requestBuffer.clear();
-        requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
-        requestBuffer.putLong(0);                              // leader
-        requestBuffer.putLong(0);                              // zxid
-        requestBuffer.putLong(0);                              // electionEpoch
-        requestBuffer.putLong(0);                              // epoch
-        requestBuffer.putInt(FastLeaderElection.Notification.CURRENTVERSION);   // version
-        requestBuffer.putInt(-123);                            // configData.length
+        requestBuffer.putInt(ServerState.LOOKING.ordinal()); // state
+        requestBuffer.putLong(0); // leader
+        requestBuffer.putLong(0); // zxid
+        requestBuffer.putLong(0); // electionEpoch
+        requestBuffer.putLong(0); // epoch
+        requestBuffer.putInt(FastLeaderElection.Notification.CURRENTVERSION); // version
+        requestBuffer.putInt(-123); // configData.length
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*
@@ -142,7 +137,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
             fail("Leader election thread didn't join, something went wrong.");
         }
     }
-
 
     @Test
     public void testNotificationMessageWithInvalidConfigLength() throws Exception {
@@ -155,14 +149,14 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         byte requestBytes[] = new byte[48 + CONFIG_BYTES_LENGTH];
         ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
         requestBuffer.clear();
-        requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
-        requestBuffer.putLong(0);                              // leader
-        requestBuffer.putLong(0);                              // zxid
-        requestBuffer.putLong(0);                              // electionEpoch
-        requestBuffer.putLong(0);                              // epoch
-        requestBuffer.putInt(FastLeaderElection.Notification.CURRENTVERSION);   // version
-        requestBuffer.putInt(10000);                           // configData.length
-        requestBuffer.put(CONFIG_BYTES);                       // configData
+        requestBuffer.putInt(ServerState.LOOKING.ordinal()); // state
+        requestBuffer.putLong(0); // leader
+        requestBuffer.putLong(0); // zxid
+        requestBuffer.putLong(0); // electionEpoch
+        requestBuffer.putLong(0); // epoch
+        requestBuffer.putInt(FastLeaderElection.Notification.CURRENTVERSION); // version
+        requestBuffer.putInt(10000); // configData.length
+        requestBuffer.put(CONFIG_BYTES); // configData
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*
@@ -175,7 +169,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
             fail("Leader election thread didn't join, something went wrong.");
         }
     }
-
 
     @Test
     public void testNotificationMessageWithInvalidConfig() throws Exception {
@@ -199,7 +192,6 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         }
     }
 
-
     @Test
     public void testNotificationMessageWithBadProtocol() throws Exception {
 
@@ -212,12 +204,12 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         byte requestBytes[] = new byte[30];
         ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
         requestBuffer.clear();
-        requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
-        requestBuffer.putLong(1);                              // leader
-        requestBuffer.putLong(0);                              // zxid
-        requestBuffer.putLong(0);                              // electionEpoch
-        requestBuffer.putShort((short) 0);                      // this is the first two bytes of a proper
-                                                               // 8 bytes Long we should send here
+        requestBuffer.putInt(ServerState.LOOKING.ordinal()); // state
+        requestBuffer.putLong(1); // leader
+        requestBuffer.putLong(0); // zxid
+        requestBuffer.putLong(0); // electionEpoch
+        requestBuffer.putShort((short) 0); // this is the first two bytes of a proper
+        // 8 bytes Long we should send here
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*
@@ -231,18 +223,15 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         }
     }
 
-
     void startMockServer(int sid) throws IOException {
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[sid], tmpdir[sid], port[sid], 3, sid, 1000, 2, 2, 2);
         mockCnxManager = peer.createCnxnManager();
         mockCnxManager.listener.start();
     }
 
-
     void sendValidNotifications(int fromSid, int toSid) throws InterruptedException {
         mockCnxManager.toSend((long) toSid, FLETestUtils.createMsg(ServerState.LOOKING.ordinal(), fromSid, 0, 0));
         mockCnxManager.recvQueue.take();
         mockCnxManager.toSend((long) toSid, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), toSid, 0, 0));
     }
-
 }

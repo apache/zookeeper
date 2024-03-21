@@ -53,9 +53,11 @@ public abstract class LearnerMaster {
     private volatile int maxConcurrentSnapSyncs = DEFAULT_CONCURRENT_SNAPSYNCS;
     private volatile int maxConcurrentDiffSyncs = DEFAULT_CONCURRENT_DIFF_SYNCS;
 
-    private final LearnerSyncThrottler learnerSnapSyncThrottler = new LearnerSyncThrottler(maxConcurrentSnapSyncs, LearnerSyncThrottler.SyncType.SNAP);
+    private final LearnerSyncThrottler learnerSnapSyncThrottler =
+            new LearnerSyncThrottler(maxConcurrentSnapSyncs, LearnerSyncThrottler.SyncType.SNAP);
 
-    private final LearnerSyncThrottler learnerDiffSyncThrottler = new LearnerSyncThrottler(maxConcurrentDiffSyncs, LearnerSyncThrottler.SyncType.DIFF);
+    private final LearnerSyncThrottler learnerDiffSyncThrottler =
+            new LearnerSyncThrottler(maxConcurrentDiffSyncs, LearnerSyncThrottler.SyncType.DIFF);
 
     public int getMaxConcurrentSnapSyncs() {
         return maxConcurrentSnapSyncs;
@@ -250,5 +252,4 @@ public abstract class LearnerMaster {
      * @param learnerHandler handler
      */
     abstract void unregisterLearnerHandlerBean(LearnerHandler learnerHandler);
-
 }

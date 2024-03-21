@@ -63,8 +63,8 @@ public class CreateTTLTest extends ClientBase {
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
         System.setProperty(
-            EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY,
-            disabledTests.contains(testInfo.getTestMethod().get().getName()) ? "false" : "true");
+                EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY,
+                disabledTests.contains(testInfo.getTestMethod().get().getName()) ? "false" : "true");
         super.setUpWithServerId(254);
         zk = createClient();
     }
@@ -98,15 +98,19 @@ public class CreateTTLTest extends ClientBase {
         RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
 
         String path = "/bad_ttl";
-        CreateTTLRequest request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL.toFlag(), -100);
+        CreateTTLRequest request = new CreateTTLRequest(
+                path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL.toFlag(), -100);
         CreateResponse response = new CreateResponse();
         ReplyHeader r = zk.submitRequest(h, request, response, null);
         assertEquals(r.getErr(), Code.BADARGUMENTS.intValue(), "An invalid CreateTTLRequest should throw BadArguments");
         assertNull(zk.exists(path, false), "An invalid CreateTTLRequest should not result in znode creation");
 
-        request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL.toFlag(),
-                                       EphemeralType.TTL.maxValue()
-                                               + 1);
+        request = new CreateTTLRequest(
+                path,
+                new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_WITH_TTL.toFlag(),
+                EphemeralType.TTL.maxValue() + 1);
         response = new CreateResponse();
         r = zk.submitRequest(h, request, response, null);
         assertEquals(r.getErr(), Code.BADARGUMENTS.intValue(), "An invalid CreateTTLRequest should throw BadArguments");
@@ -118,7 +122,12 @@ public class CreateTTLTest extends ClientBase {
         RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
 
         String path = "/bad_ttl";
-        CreateTTLRequest request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL.toFlag(), EphemeralType.TTL.maxValue());
+        CreateTTLRequest request = new CreateTTLRequest(
+                path,
+                new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_WITH_TTL.toFlag(),
+                EphemeralType.TTL.maxValue());
         CreateResponse response = new CreateResponse();
         ReplyHeader r = zk.submitRequest(h, request, response, null);
         assertEquals(r.getErr(), Code.OK.intValue(), "EphemeralType.getMaxTTL() should succeed");
@@ -128,7 +137,8 @@ public class CreateTTLTest extends ClientBase {
     @Test
     public void testCreateSequential() throws KeeperException, InterruptedException {
         Stat stat = new Stat();
-        String path = zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, stat, 100);
+        String path = zk.create(
+                "/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, stat, 100);
         assertEquals(0, stat.getEphemeralOwner());
 
         final AtomicLong fakeElapsed = new AtomicLong(0);
@@ -146,7 +156,8 @@ public class CreateTTLTest extends ClientBase {
         AsyncCallback.Create2Callback callback = (rc, path, ctx, name, stat) -> {
             // NOP
         };
-        zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, callback, null, 100);
+        zk.create(
+                "/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, callback, null, 100);
 
         final AtomicLong fakeElapsed = new AtomicLong(0);
         ContainerManager containerManager = newContainerManager(fakeElapsed);
@@ -183,20 +194,25 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testMulti() throws KeeperException, InterruptedException {
-        CreateOptions options = CreateOptions
-                .newBuilder(ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL)
+        CreateOptions options = CreateOptions.newBuilder(ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL)
                 .withTtl(100)
                 .build();
-        CreateOptions sequentialOptions = CreateOptions
-                .newBuilder(ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL)
+        CreateOptions sequentialOptions = CreateOptions.newBuilder(
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL)
                 .withTtl(200)
                 .build();
         Op createTtl = Op.create("/a", new byte[0], options.getAcl(), options.getCreateMode(), options.getTtl());
         Op createTtl2 = Op.create("/a2", new byte[0], options);
-        Op createTtlSequential = Op.create("/b", new byte[0], sequentialOptions.getAcl(), sequentialOptions.getCreateMode(), sequentialOptions.getTtl());
+        Op createTtlSequential = Op.create(
+                "/b",
+                new byte[0],
+                sequentialOptions.getAcl(),
+                sequentialOptions.getCreateMode(),
+                sequentialOptions.getTtl());
         Op createTtlSequential2 = Op.create("/b2", new byte[0], sequentialOptions);
         Op createNonTtl = Op.create("/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        List<OpResult> results = zk.multi(Arrays.asList(createTtl, createTtl2, createTtlSequential, createTtlSequential2, createNonTtl));
+        List<OpResult> results =
+                zk.multi(Arrays.asList(createTtl, createTtl2, createTtlSequential, createTtlSequential2, createNonTtl));
         String sequentialPath = ((OpResult.CreateResult) results.get(2)).getPath();
         String sequentialPath2 = ((OpResult.CreateResult) results.get(3)).getPath();
 
@@ -230,7 +246,13 @@ public class CreateTTLTest extends ClientBase {
     public void testBadUsage() throws KeeperException, InterruptedException {
         for (CreateMode createMode : CreateMode.values()) {
             try {
-                zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode, new Stat(), createMode.isTTL() ? 0 : 100);
+                zk.create(
+                        "/foo",
+                        new byte[0],
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                        createMode,
+                        new Stat(),
+                        createMode.isTTL() ? 0 : 100);
                 fail("should have thrown IllegalArgumentException");
             } catch (IllegalArgumentException dummy) {
                 // correct
@@ -242,7 +264,14 @@ public class CreateTTLTest extends ClientBase {
                 // NOP
             };
             try {
-                zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode, callback, null, createMode.isTTL() ? 0 : 100);
+                zk.create(
+                        "/foo",
+                        new byte[0],
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                        createMode,
+                        callback,
+                        null,
+                        createMode.isTTL() ? 0 : 100);
                 fail("should have thrown IllegalArgumentException");
             } catch (IllegalArgumentException dummy) {
                 // correct
@@ -257,7 +286,8 @@ public class CreateTTLTest extends ClientBase {
             // correct
         }
         try {
-            Op op = Op.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, 0);
+            Op op = Op.create(
+                    "/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, 0);
             zk.multi(Collections.singleton(op));
             fail("should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException dummy) {
@@ -269,17 +299,21 @@ public class CreateTTLTest extends ClientBase {
     public void testDisabled() throws KeeperException, InterruptedException {
         assertThrows(KeeperException.UnimplementedException.class, () -> {
             // note, setUp() enables this test based on the test name
-            zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
+            zk.create(
+                    "/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
         });
     }
 
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {
-        return new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+        return new ContainerManager(
+                serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor,
+                1,
+                100) {
             @Override
             protected long getElapsed(DataNode node) {
                 return fakeElapsed.get();
             }
         };
     }
-
 }

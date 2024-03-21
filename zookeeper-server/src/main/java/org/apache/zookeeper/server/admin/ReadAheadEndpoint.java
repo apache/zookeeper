@@ -42,86 +42,107 @@ public class ReadAheadEndpoint implements EndPoint {
     public InetSocketAddress getLocalAddress() {
         return endPoint.getLocalAddress();
     }
+
     @Override
     public InetSocketAddress getRemoteAddress() {
         return endPoint.getRemoteAddress();
     }
+
     @Override
     public boolean isOpen() {
         return endPoint.isOpen();
     }
+
     @Override
     public long getCreatedTimeStamp() {
         return endPoint.getCreatedTimeStamp();
     }
+
     @Override
     public boolean isOutputShutdown() {
         return endPoint.isOutputShutdown();
     }
+
     @Override
     public boolean isInputShutdown() {
         return endPoint.isInputShutdown();
     }
+
     @Override
     public void shutdownOutput() {
         endPoint.shutdownOutput();
     }
+
     @Override
     public void close() {
         endPoint.close();
     }
+
     @Override
     public Object getTransport() {
         return endPoint.getTransport();
     }
+
     @Override
     public long getIdleTimeout() {
         return endPoint.getIdleTimeout();
     }
+
     @Override
     public Connection getConnection() {
         return endPoint.getConnection();
     }
+
     @Override
     public void onOpen() {
         endPoint.onOpen();
     }
+
     @Override
     public void onClose() {
         endPoint.onClose();
     }
+
     @Override
     public boolean isOptimizedForDirectBuffers() {
         return endPoint.isOptimizedForDirectBuffers();
     }
+
     @Override
     public boolean isFillInterested() {
         return endPoint.isFillInterested();
     }
+
     @Override
     public boolean tryFillInterested(Callback v) {
         return endPoint.tryFillInterested(v);
     }
+
     @Override
     public boolean flush(ByteBuffer... v) throws IOException {
         return endPoint.flush(v);
     }
+
     @Override
     public void setIdleTimeout(long v) {
         endPoint.setIdleTimeout(v);
     }
+
     @Override
     public void write(Callback v, ByteBuffer... b) throws WritePendingException {
         endPoint.write(v, b);
     }
+
     @Override
     public void setConnection(Connection v) {
         endPoint.setConnection(v);
     }
+
     @Override
     public void upgrade(Connection v) {
         endPoint.upgrade(v);
     }
+
     @Override
     public void fillInterested(Callback v) throws ReadPendingException {
         endPoint.fillInterested(v);
@@ -205,5 +226,4 @@ public class ReadAheadEndpoint implements EndPoint {
             throw e;
         }
     }
-
 }

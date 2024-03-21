@@ -53,7 +53,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
         int paramIndex = 0;
         for (X509KeyType caKeyType : X509KeyType.values()) {
             for (X509KeyType certKeyType : X509KeyType.values()) {
-                for (String keyPassword : new String[]{KEY_EMPTY_PASSWORD, KEY_NON_EMPTY_PASSWORD}) {
+                for (String keyPassword : new String[] {KEY_EMPTY_PASSWORD, KEY_NON_EMPTY_PASSWORD}) {
                     result.add(Arguments.of(caKeyType, certKeyType, keyPassword, paramIndex++));
                 }
             }
@@ -68,6 +68,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
      * caching makes all test cases after the first one for a given parameter combination complete almost instantly.
      */
     protected static Map<Integer, X509TestContext> cachedTestContexts;
+
     @TempDir
     protected static File tempDir;
 
@@ -93,8 +94,7 @@ public abstract class BaseX509ParameterizedTestCase extends ZKTestCase {
      * @param contextSupplier a function that creates and returns the X509TestContext
      *                        for the current index if one is not already cached.
      */
-    protected void init(
-            Integer paramIndex, java.util.function.Supplier<X509TestContext> contextSupplier) {
+    protected void init(Integer paramIndex, java.util.function.Supplier<X509TestContext> contextSupplier) {
         if (cachedTestContexts.containsKey(paramIndex)) {
             x509TestContext = cachedTestContexts.get(paramIndex);
         } else {

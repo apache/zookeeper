@@ -27,8 +27,7 @@ import org.apache.jute.Record;
 public class DeleteContainerRequest implements Record {
     private String path;
 
-    public DeleteContainerRequest() {
-    }
+    public DeleteContainerRequest() {}
 
     public DeleteContainerRequest(String path) {
         this.path = path;

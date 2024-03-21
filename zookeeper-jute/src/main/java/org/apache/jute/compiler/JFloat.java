@@ -37,5 +37,4 @@ public class JFloat extends JType {
     public String genJavaHashCode(String fname) {
         return "    ret = java.lang.Float.hashCode(" + fname + ");\n";
     }
-
 }

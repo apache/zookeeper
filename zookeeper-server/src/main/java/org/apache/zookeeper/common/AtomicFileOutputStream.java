@@ -120,5 +120,4 @@ public class AtomicFileOutputStream extends FilterOutputStream {
             LOG.warn("Unable to delete tmp file during abort {}", tmpFile);
         }
     }
-
 }

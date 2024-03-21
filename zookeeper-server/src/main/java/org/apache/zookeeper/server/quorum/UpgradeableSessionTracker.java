@@ -40,12 +40,13 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
     protected LocalSessionTracker localSessionTracker;
     protected boolean localSessionsEnabled;
 
-    public void start() {
-    }
+    public void start() {}
 
-    public void createLocalSessionTracker(SessionExpirer expirer, int tickTime, long id, ZooKeeperServerListener listener) {
+    public void createLocalSessionTracker(
+            SessionExpirer expirer, int tickTime, long id, ZooKeeperServerListener listener) {
         this.localSessionsWithTimeouts = new ConcurrentHashMap<>();
-        this.localSessionTracker = new LocalSessionTracker(expirer, this.localSessionsWithTimeouts, tickTime, id, listener);
+        this.localSessionTracker =
+                new LocalSessionTracker(expirer, this.localSessionsWithTimeouts, tickTime, id, listener);
         this.upgradingSessions = new ConcurrentHashMap<>();
     }
 
@@ -114,7 +115,7 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
     }
 
     public void checkGlobalSession(long sessionId, Object owner)
-        throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
+            throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException {
         throw new UnsupportedOperationException();
     }
 
@@ -126,7 +127,6 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
     }
 
     public Set<Long> localSessions() {
-        return (localSessionTracker == null) ? Collections.<Long>emptySet()
-            : localSessionTracker.localSessions();
+        return (localSessionTracker == null) ? Collections.<Long>emptySet() : localSessionTracker.localSessions();
     }
 }

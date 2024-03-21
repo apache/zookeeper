@@ -48,8 +48,14 @@ public class JMap extends JCompType {
      * Creates a new instance of JMap.
      */
     public JMap(JType t1, JType t2) {
-        super("#error", " ::std::map<" + t1.getCppType() + "," + t2.getCppType() + ">",
-                "System.Collections.Generic.SortedDictionary<string, string>", "java.util.TreeMap", "Map", "System.Collections.Generic.SortedDictionary<string, string>", "java.util.TreeMap");
+        super(
+                "#error",
+                " ::std::map<" + t1.getCppType() + "," + t2.getCppType() + ">",
+                "System.Collections.Generic.SortedDictionary<string, string>",
+                "java.util.TreeMap",
+                "Map",
+                "System.Collections.Generic.SortedDictionary<string, string>",
+                "java.util.TreeMap");
         mKey = t1;
         mValue = t2;
     }
@@ -59,8 +65,7 @@ public class JMap extends JCompType {
     }
 
     public String genJavaCompareTo(String fname) {
-        return "    throw new UnsupportedOperationException(\"comparing "
-                + fname + " is unimplemented\");\n";
+        return "    throw new UnsupportedOperationException(\"comparing " + fname + " is unimplemented\");\n";
     }
 
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
@@ -92,10 +97,14 @@ public class JMap extends JCompType {
         incrLevel();
         ret.append("      a_.startMap(" + fname + ",\"" + tag + "\");\n");
         ret.append("      java.util.Set " + getId("es") + " = " + fname + ".entrySet();\n");
-        ret.append("      for(java.util.Iterator " + getId("midx") + " = " + getId("es") + ".iterator(); " + getId("midx") + ".hasNext(); ) {\n");
-        ret.append("        java.util.Map.Entry " + getId("me") + " = (java.util.Map.Entry) " + getId("midx") + ".next();\n");
-        ret.append("        " + mKey.getJavaWrapperType() + " " + getId("k") + " = (" + mKey.getJavaWrapperType() + ") " + getId("me") + ".getKey();\n");
-        ret.append("        " + mValue.getJavaWrapperType() + " " + getId("v") + " = (" + mValue.getJavaWrapperType() + ") " + getId("me") + ".getValue();\n");
+        ret.append("      for(java.util.Iterator " + getId("midx") + " = " + getId("es") + ".iterator(); "
+                + getId("midx") + ".hasNext(); ) {\n");
+        ret.append("        java.util.Map.Entry " + getId("me") + " = (java.util.Map.Entry) " + getId("midx")
+                + ".next();\n");
+        ret.append("        " + mKey.getJavaWrapperType() + " " + getId("k") + " = (" + mKey.getJavaWrapperType() + ") "
+                + getId("me") + ".getKey();\n");
+        ret.append("        " + mValue.getJavaWrapperType() + " " + getId("v") + " = (" + mValue.getJavaWrapperType()
+                + ") " + getId("me") + ".getValue();\n");
         ret.append(mKey.genJavaWriteWrapper(getId("k"), getId("k")));
         ret.append(mValue.genJavaWriteWrapper(getId("v"), getId("v")));
         ret.append("      }\n");
@@ -114,10 +123,14 @@ public class JMap extends JCompType {
         incrLevel();
         ret.append("      a_.StartMap(" + fname + ",\"" + tag + "\");\n");
         ret.append("      java.util.Set " + getId("es") + " = " + fname + ".entrySet();\n");
-        ret.append("      for(java.util.Iterator " + getId("midx") + " = " + getId("es") + ".iterator(); " + getId("midx") + ".hasNext(); ) {\n");
-        ret.append("        java.util.Map.Entry " + getId("me") + " = (java.util.Map.Entry) " + getId("midx") + ".next();\n");
-        ret.append("        " + mKey.getCsharpWrapperType() + " " + getId("k") + " = (" + mKey.getCsharpWrapperType() + ") " + getId("me") + ".getKey();\n");
-        ret.append("        " + mValue.getCsharpWrapperType() + " " + getId("v") + " = (" + mValue.getCsharpWrapperType() + ") " + getId("me") + ".getValue();\n");
+        ret.append("      for(java.util.Iterator " + getId("midx") + " = " + getId("es") + ".iterator(); "
+                + getId("midx") + ".hasNext(); ) {\n");
+        ret.append("        java.util.Map.Entry " + getId("me") + " = (java.util.Map.Entry) " + getId("midx")
+                + ".next();\n");
+        ret.append("        " + mKey.getCsharpWrapperType() + " " + getId("k") + " = (" + mKey.getCsharpWrapperType()
+                + ") " + getId("me") + ".getKey();\n");
+        ret.append("        " + mValue.getCsharpWrapperType() + " " + getId("v") + " = ("
+                + mValue.getCsharpWrapperType() + ") " + getId("me") + ".getValue();\n");
         ret.append(mKey.genCsharpWriteWrapper(getId("k"), getId("k")));
         ret.append(mValue.genCsharpWriteWrapper(getId("v"), getId("v")));
         ret.append("      }\n");
@@ -150,7 +163,6 @@ public class JMap extends JCompType {
         ret.append("    }\n");
         return ret.toString();
     }
-
 
     String genCsharpReadMethod(String fname, int tag) {
         return genCsharpReadWrapper(fname, tag, false);

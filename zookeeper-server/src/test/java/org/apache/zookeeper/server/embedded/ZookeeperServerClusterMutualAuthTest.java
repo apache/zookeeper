@@ -39,8 +39,9 @@ public class ZookeeperServerClusterMutualAuthTest {
 
     @BeforeAll
     public static void setUpEnvironment() {
-        System.setProperty("java.security.auth.login.config", new File("src/test/resources/embedded/test_jaas_server_auth.conf")
-                .getAbsolutePath());
+        System.setProperty(
+                "java.security.auth.login.config",
+                new File("src/test/resources/embedded/test_jaas_server_auth.conf").getAbsolutePath());
         Configuration.getConfiguration().refresh();
         System.setProperty("zookeeper.admin.enableServer", "false");
         System.setProperty("zookeeper.4lw.commands.whitelist", "*");
@@ -112,9 +113,21 @@ public class ZookeeperServerClusterMutualAuthTest {
         Files.createDirectories(baseDir3.resolve("data"));
         Files.write(baseDir3.resolve("data").resolve("myid"), "3".getBytes("ASCII"));
 
-        try (ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper1).baseDir(baseDir1).exitHandler(ExitHandler.LOG_ONLY).build();
-                ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper2).baseDir(baseDir2).exitHandler(ExitHandler.LOG_ONLY).build();
-                ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper3).baseDir(baseDir3).exitHandler(ExitHandler.LOG_ONLY).build();) {
+        try (ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder()
+                        .configuration(configZookeeper1)
+                        .baseDir(baseDir1)
+                        .exitHandler(ExitHandler.LOG_ONLY)
+                        .build();
+                ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder()
+                        .configuration(configZookeeper2)
+                        .baseDir(baseDir2)
+                        .exitHandler(ExitHandler.LOG_ONLY)
+                        .build();
+                ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder()
+                        .configuration(configZookeeper3)
+                        .baseDir(baseDir3)
+                        .exitHandler(ExitHandler.LOG_ONLY)
+                        .build(); ) {
             zkServer1.start();
             zkServer2.start();
             zkServer3.start();
@@ -126,7 +139,9 @@ public class ZookeeperServerClusterMutualAuthTest {
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("ReplicatedServer*");
                 System.out.println("status:" + status);
-                if (status.isLeader() && !status.isStandaloneMode() && status.getPeers().size() == 3) {
+                if (status.isLeader()
+                        && !status.isStandaloneMode()
+                        && status.getPeers().size() == 3) {
                     break;
                 }
                 Thread.sleep(100);
@@ -137,5 +152,4 @@ public class ZookeeperServerClusterMutualAuthTest {
             assertEquals(3, status.getPeers().size());
         }
     }
-
 }

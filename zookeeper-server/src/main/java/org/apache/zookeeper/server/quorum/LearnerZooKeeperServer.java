@@ -40,7 +40,15 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     protected CommitProcessor commitProcessor;
     protected SyncRequestProcessor syncProcessor;
 
-    public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, int listenBacklog, ZKDatabase zkDb, QuorumPeer self) throws IOException {
+    public LearnerZooKeeperServer(
+            FileTxnSnapLog logFactory,
+            int tickTime,
+            int minSessionTimeout,
+            int maxSessionTimeout,
+            int listenBacklog,
+            ZKDatabase zkDb,
+            QuorumPeer self)
+            throws IOException {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb, self);
     }
 
@@ -77,12 +85,12 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public void createSessionTracker() {
         sessionTracker = new LearnerSessionTracker(
-            this,
-            getZKDatabase().getSessionWithTimeOuts(),
-            this.tickTime,
-            self.getMyId(),
-            self.areLocalSessionsEnabled(),
-            getZooKeeperServerListener());
+                this,
+                getZKDatabase().getSessionWithTimeOuts(),
+                this.tickTime,
+                self.getMyId(),
+                self.areLocalSessionsEnabled(),
+                getZooKeeperServerListener());
     }
 
     @Override
@@ -171,5 +179,4 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
             LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
         }
     }
-
 }

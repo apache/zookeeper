@@ -60,27 +60,33 @@ public class FileTxnLogTest extends ZKTestCase {
 
     @Test
     public void testInvalidPreallocSize() {
-        assertEquals(10 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, 0),
-                "file should not be padded");
-        assertEquals(10 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, -1),
-                "file should not be padded");
+        assertEquals(
+                10 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, 0), "file should not be padded");
+        assertEquals(
+                10 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, -1), "file should not be padded");
     }
 
     @Test
     public void testCalculateFileSizeWithPaddingWhenNotToCurrentSize() {
-        assertEquals(10 * KB, FilePadding.calculateFileSizeWithPadding(5 * KB, 10 * KB, 10 * KB),
+        assertEquals(
+                10 * KB,
+                FilePadding.calculateFileSizeWithPadding(5 * KB, 10 * KB, 10 * KB),
                 "file should not be padded");
     }
 
     @Test
     public void testCalculateFileSizeWithPaddingWhenCloseToCurrentSize() {
-        assertEquals(20 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, 10 * KB),
+        assertEquals(
+                20 * KB,
+                FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, 10 * KB),
                 "file should be padded an additional 10 KB");
     }
 
     @Test
     public void testFileSizeGreaterThanPosition() {
-        assertEquals(40 * KB, FilePadding.calculateFileSizeWithPadding(31 * KB, 10 * KB, 10 * KB),
+        assertEquals(
+                40 * KB,
+                FilePadding.calculateFileSizeWithPadding(31 * KB, 10 * KB, 10 * KB),
                 "file should be padded to 40 KB");
     }
 
@@ -93,24 +99,30 @@ public class FileTxnLogTest extends ZKTestCase {
         FilePadding.setPreallocSize(preAllocSize);
 
         // Create dummy txn larger than preAllocSize
-        // Since the file padding inserts a 0, we will fill the data with 0xff to ensure we corrupt the data if we put the 0 in the data
+        // Since the file padding inserts a 0, we will fill the data with 0xff to ensure we corrupt the data if we put
+        // the 0 in the data
         byte[] data = new byte[2 * preAllocSize];
         Arrays.fill(data, (byte) 0xff);
 
         // Append and commit 2 transactions to the log
         // Prior to ZOOKEEPER-2249, attempting to pad in association with the second transaction will corrupt the first
 
-
-        fileTxnLog.append(new Request(0, 0, 0,
+        fileTxnLog.append(new Request(
+                0,
+                0,
+                0,
                 new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
                 new CreateTxn("/testPreAllocSizeSmallerThanTxnData1", data, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
                 0));
         fileTxnLog.commit();
 
-        fileTxnLog.append(new Request(0, 0, 0,
+        fileTxnLog.append(new Request(
+                0,
+                0,
+                0,
                 new TxnHeader(1, 1, 2, 2, ZooDefs.OpCode.create),
-                new CreateTxn("/testPreAllocSizeSmallerThanTxnData2", new byte[]{},
-                        ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
+                new CreateTxn(
+                        "/testPreAllocSizeSmallerThanTxnData2", new byte[] {}, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
                 0));
         fileTxnLog.commit();
         fileTxnLog.close();
@@ -125,7 +137,7 @@ public class FileTxnLogTest extends ZKTestCase {
         // Verify the data in the second transaction
         fileTxnIterator.next();
         createTxn = (CreateTxn) fileTxnIterator.getTxn();
-        assertTrue(Arrays.equals(createTxn.getData(), new byte[]{}));
+        assertTrue(Arrays.equals(createTxn.getData(), new byte[] {}));
     }
 
     @Test
@@ -150,13 +162,15 @@ public class FileTxnLogTest extends ZKTestCase {
         // Verify serverStats is 0 before any commit
         assertEquals(0L, serverStats.getFsyncThresholdExceedCount());
 
-
         // When ...
         for (int i = 0; i < 50; i++) {
-            fileTxnLog.append(new Request(0, 0, 0,
+            fileTxnLog.append(new Request(
+                    0,
+                    0,
+                    0,
                     new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
-                    new CreateTxn("/testFsyncThresholdCountIncreased", new byte[]{},
-                            ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
+                    new CreateTxn(
+                            "/testFsyncThresholdCountIncreased", new byte[] {}, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0),
                     0));
             fileTxnLog.commit(); // only 1 commit, otherwise it will be flaky
             // Then ... verify serverStats is updated to the number of commits (as threshold is set to 0)
@@ -198,7 +212,7 @@ public class FileTxnLogTest extends ZKTestCase {
         }
         log.commit();
         TxnHeader mockHeader = new TxnHeader(0, 0, 0, 0, 0);
-        int totalSize =  fileHeaderSize + calculateSingleRecordLength(mockHeader, record) * 4;
+        int totalSize = fileHeaderSize + calculateSingleRecordLength(mockHeader, record) * 4;
         assertEquals(totalSize, log.getCurrentLogSize());
         assertEquals(totalSize, log.filePosition);
         assertTrue(log.getCurrentLogSize() > (zxid - 1) * NODE_SIZE);
@@ -303,5 +317,4 @@ public class FileTxnLogTest extends ZKTestCase {
         int endFlagLength = 1;
         return crcLength + dataLength + recordLength + endFlagLength;
     }
-
 }

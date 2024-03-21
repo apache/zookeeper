@@ -79,18 +79,18 @@ public class JettyAdminServerTest extends ZKTestCase {
         X509TestContext x509TestContext = null;
         try {
             x509TestContext = X509TestContext.newBuilder()
-                                             .setTempDir(tempDir)
-                                             .setKeyStorePassword("")
-                                             .setKeyStoreKeyType(X509KeyType.EC)
-                                             .setTrustStorePassword("")
-                                             .setTrustStoreKeyType(X509KeyType.EC)
-                                             .build();
+                    .setTempDir(tempDir)
+                    .setKeyStorePassword("")
+                    .setKeyStoreKeyType(X509KeyType.EC)
+                    .setTrustStorePassword("")
+                    .setTrustStoreKeyType(X509KeyType.EC)
+                    .build();
             System.setProperty(
-                "zookeeper.ssl.quorum.keyStore.location",
-                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
+                    "zookeeper.ssl.quorum.keyStore.location",
+                    x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
             System.setProperty(
-                "zookeeper.ssl.quorum.trustStore.location",
-                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
+                    "zookeeper.ssl.quorum.trustStore.location",
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath());
         } catch (Exception e) {
             LOG.info("Problems encountered while setting up encryption for Jetty admin server test", e);
         }
@@ -101,15 +101,17 @@ public class JettyAdminServerTest extends ZKTestCase {
         System.setProperty("zookeeper.admin.portUnification", "true");
 
         // Create a trust manager that does not validate certificate chains
-        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                return null;
+        TrustManager[] trustAllCerts = new TrustManager[] {
+            new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {}
             }
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-            }
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-            }
-        }};
+        };
 
         // Create all-trusting trust manager
         SSLContext sc = null;
@@ -156,7 +158,8 @@ public class JettyAdminServerTest extends ZKTestCase {
      * Tests that we can start and query a JettyAdminServer.
      */
     @Test
-    public void testJettyAdminServer() throws AdminServerException, IOException, SSLContextException, GeneralSecurityException {
+    public void testJettyAdminServer()
+            throws AdminServerException, IOException, SSLContextException, GeneralSecurityException {
         JettyAdminServer server = new JettyAdminServer();
         try {
             server.start();
@@ -179,14 +182,16 @@ public class JettyAdminServerTest extends ZKTestCase {
         ZooKeeperServerMainTest.MainThread main = new ZooKeeperServerMainTest.MainThread(CLIENT_PORT, false, null);
         main.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server being up");
 
         queryAdminServer(jettyAdminPort);
 
         main.shutdown();
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server down");
     }
 
@@ -204,14 +209,15 @@ public class JettyAdminServerTest extends ZKTestCase {
         final int ADMIN_SERVER_PORT2 = PortAssignment.unique();
 
         String quorumCfgSection = String.format(
-            "server.1=127.0.0.1:%d:%d;%d\nserver.2=127.0.0.1:%d:%d;%d",
-            PortAssignment.unique(),
-            PortAssignment.unique(),
-            CLIENT_PORT_QP1,
-            PortAssignment.unique(),
-            PortAssignment.unique(),
-            CLIENT_PORT_QP2);
-        QuorumPeerTestBase.MainThread q1 = new QuorumPeerTestBase.MainThread(1, CLIENT_PORT_QP1, ADMIN_SERVER_PORT1, quorumCfgSection, null);
+                "server.1=127.0.0.1:%d:%d;%d\nserver.2=127.0.0.1:%d:%d;%d",
+                PortAssignment.unique(),
+                PortAssignment.unique(),
+                CLIENT_PORT_QP1,
+                PortAssignment.unique(),
+                PortAssignment.unique(),
+                CLIENT_PORT_QP2);
+        QuorumPeerTestBase.MainThread q1 =
+                new QuorumPeerTestBase.MainThread(1, CLIENT_PORT_QP1, ADMIN_SERVER_PORT1, quorumCfgSection, null);
         q1.start();
 
         // Since JettyAdminServer reads a system property to determine its port,
@@ -219,14 +225,17 @@ public class JettyAdminServerTest extends ZKTestCase {
         // again with the second port number
         Thread.sleep(500);
 
-        QuorumPeerTestBase.MainThread q2 = new QuorumPeerTestBase.MainThread(2, CLIENT_PORT_QP2, ADMIN_SERVER_PORT2, quorumCfgSection, null);
+        QuorumPeerTestBase.MainThread q2 =
+                new QuorumPeerTestBase.MainThread(2, CLIENT_PORT_QP2, ADMIN_SERVER_PORT2, quorumCfgSection, null);
         q2.start();
 
         Thread.sleep(500);
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server 1 being up");
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server 2 being up");
 
         queryAdminServer(ADMIN_SERVER_PORT1);
@@ -235,9 +244,11 @@ public class JettyAdminServerTest extends ZKTestCase {
         q1.shutdown();
         q2.shutdown();
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server 1 down");
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                 "waiting for server 2 down");
     }
 
@@ -274,7 +285,7 @@ public class JettyAdminServerTest extends ZKTestCase {
             queryAdminServer(String.format(URL_FORMAT, jettyAdminPort), false);
             fail("http call should have failed since forceHttps=true");
         } catch (SocketException se) {
-            //good
+            // good
         } finally {
             server.shutdown();
         }
@@ -310,8 +321,8 @@ public class JettyAdminServerTest extends ZKTestCase {
      * Using TRACE method to visit admin server
      */
     private void traceAdminServer(int port) throws IOException {
-      traceAdminServer(String.format(URL_FORMAT, port));
-      traceAdminServer(String.format(HTTPS_URL_FORMAT, port));
+        traceAdminServer(String.format(URL_FORMAT, port));
+        traceAdminServer(String.format(HTTPS_URL_FORMAT, port));
     }
 
     /**

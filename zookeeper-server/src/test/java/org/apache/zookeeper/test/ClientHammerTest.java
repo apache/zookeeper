@@ -46,7 +46,6 @@ public class ClientHammerTest extends ClientBase {
             super(name);
             this.count = count;
         }
-
     }
 
     private static class BasicHammerThread extends HammerThread {
@@ -78,7 +77,6 @@ public class ClientHammerTest extends ClientBase {
                 }
             }
         }
-
     }
 
     private static class SuperHammerThread extends HammerThread {
@@ -111,7 +109,6 @@ public class ClientHammerTest extends ClientBase {
                 LOG.error("Client create operation failed", t);
             }
         }
-
     }
 
     /**
@@ -183,7 +180,8 @@ public class ClientHammerTest extends ClientBase {
         }
     }
 
-    public void verifyHammer(long start, HammerThread[] threads, int childCount) throws IOException, InterruptedException, KeeperException {
+    public void verifyHammer(long start, HammerThread[] threads, int childCount)
+            throws IOException, InterruptedException, KeeperException {
         // look for the clients to finish their create operations
         LOG.info("Starting check for completed hammers");
         int workingCount = threads.length;
@@ -209,10 +207,8 @@ public class ClientHammerTest extends ClientBase {
 
         for (HammerThread h : threads) {
             final int safetyFactor = 3;
-            verifyThreadTerminated(h, (long) threads.length
-                                              * (long) childCount
-                                              * HAMMERTHREAD_LATENCY
-                                              * (long) safetyFactor);
+            verifyThreadTerminated(
+                    h, (long) threads.length * (long) childCount * HAMMERTHREAD_LATENCY * (long) safetyFactor);
         }
         LOG.info("{} Total time {}", new Date(), (Time.currentElapsedTime() - start));
 
@@ -236,5 +232,4 @@ public class ClientHammerTest extends ClientBase {
             zk.close();
         }
     }
-
 }

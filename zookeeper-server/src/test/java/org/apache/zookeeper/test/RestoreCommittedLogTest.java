@@ -67,7 +67,6 @@ public class RestoreCommittedLogTest extends ZKTestCase {
         SyncRequestProcessor.setSnapSizeInBytes(minTxnsToSnap * data.length);
 
         testRestoreCommittedLog(numTransactions, data, minExpectedSnapshots);
-
     }
 
     /**
@@ -91,7 +90,8 @@ public class RestoreCommittedLogTest extends ZKTestCase {
      * test the purge
      * @throws Exception an exception might be thrown here
      */
-    private void testRestoreCommittedLog(int totalTransactions, byte[] data, int minExpectedSnapshots) throws Exception {
+    private void testRestoreCommittedLog(int totalTransactions, byte[] data, int minExpectedSnapshots)
+            throws Exception {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -107,7 +107,9 @@ public class RestoreCommittedLogTest extends ZKTestCase {
         } finally {
             zk.close();
         }
-        final int numSnaps = zks.getTxnLogFactory().findNRecentSnapshots(10 * minExpectedSnapshots).size();
+        final int numSnaps = zks.getTxnLogFactory()
+                .findNRecentSnapshots(10 * minExpectedSnapshots)
+                .size();
         LOG.info("number of snapshots taken {}", numSnaps);
 
         f.shutdown();
@@ -126,5 +128,4 @@ public class RestoreCommittedLogTest extends ZKTestCase {
         assertTrue((logsize != 0), "log size != 0");
         zks.shutdown();
     }
-
 }

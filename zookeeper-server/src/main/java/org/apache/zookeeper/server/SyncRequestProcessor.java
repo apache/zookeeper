@@ -67,6 +67,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
      * Random numbers used to vary snapshot timing
      */
     private int randRoll;
+
     private long randSize;
 
     private final BlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<>();
@@ -83,6 +84,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
      * invoked after flush returns successfully.
      */
     private final Queue<Request> toFlush;
+
     private long lastFlushTime;
 
     public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
@@ -144,7 +146,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         int logCount = zks.getZKDatabase().getTxnCount();
         long logSize = zks.getZKDatabase().getTxnSize();
         return (logCount > (snapCount / 2 + randRoll))
-               || (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
+                || (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
     }
 
     private void resetSnapshotStats() {
@@ -277,5 +279,4 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         queuedRequests.add(request);
         ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUED.add(1);
     }
-
 }

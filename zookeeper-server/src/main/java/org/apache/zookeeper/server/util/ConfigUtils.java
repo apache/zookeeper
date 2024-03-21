@@ -89,7 +89,7 @@ public class ConfigUtils {
                 System.arraycopy(sa, 0, nsa, 1, sa.length);
                 return nsa;
             }
-            return new String[]{s.replaceAll("\\[|\\]", "")};
+            return new String[] {s.replaceAll("\\[|\\]", "")};
         } else {
             return s.split(":");
         }
@@ -119,5 +119,4 @@ public class ConfigUtils {
         }
         return null;
     }
-
 }

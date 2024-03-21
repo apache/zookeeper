@@ -43,7 +43,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
     // If this property is set, requests from Learners won't be forwarded
     // to the CommitProcessor in order to save resources
     public static final String FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED =
-          "zookeeper.forward_learner_requests_to_commit_processor_disabled";
+            "zookeeper.forward_learner_requests_to_commit_processor_disabled";
     private final boolean forwardLearnerRequestsToCommitProcessorDisabled;
 
     public ProposalRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
@@ -52,9 +52,11 @@ public class ProposalRequestProcessor implements RequestProcessor {
         AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
         syncProcessor = new SyncRequestProcessor(zks, ackProcessor);
 
-        forwardLearnerRequestsToCommitProcessorDisabled = Boolean.getBoolean(
-                FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED);
-        LOG.info("{} = {}", FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED,
+        forwardLearnerRequestsToCommitProcessorDisabled =
+                Boolean.getBoolean(FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED);
+        LOG.info(
+                "{} = {}",
+                FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED,
                 forwardLearnerRequestsToCommitProcessorDisabled);
     }
 
@@ -102,7 +104,9 @@ public class ProposalRequestProcessor implements RequestProcessor {
             return true;
         }
         if (request.getOwner() instanceof LearnerHandler) {
-            ServerMetrics.getMetrics().REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR.add(1);
+            ServerMetrics.getMetrics()
+                    .REQUESTS_NOT_FORWARDED_TO_COMMIT_PROCESSOR
+                    .add(1);
             return false;
         }
         return true;

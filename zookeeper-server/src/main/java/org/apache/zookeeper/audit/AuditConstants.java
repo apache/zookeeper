@@ -19,7 +19,7 @@ package org.apache.zookeeper.audit;
 
 public final class AuditConstants {
     private AuditConstants() {
-        //Utility classes should not have public constructors
+        // Utility classes should not have public constructors
     }
 
     static final String OP_START = "serverStart";

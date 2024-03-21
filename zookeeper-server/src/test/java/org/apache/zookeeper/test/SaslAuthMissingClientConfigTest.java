@@ -43,19 +43,18 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
             FileWriter fwriter = new FileWriter(saslConfFile);
 
             fwriter.write(""
-                                  + "Server {\n"
-                                  + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                  + "          user_myuser=\"mypassword\";\n"
-                                  + "};\n"
-                                  + "Client {\n"
-                                  + /* this 'Client' section has the correct password, but we're not configured
-                                  to  use it - we're configured instead by the above
-                                  System.setProperty(...LOGIN_CONTEXT_NAME_KEY...) to
-                                  use the (nonexistent) 'MyZookeeperClient' section. */
-                                  "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                                  + "       username=\"myuser\"\n"
-                                  + "       password=\"mypassword\";\n"
-                                  + "};\n");
+                    + "Server {\n"
+                    + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                    + "          user_myuser=\"mypassword\";\n"
+                    + "};\n"
+                    + "Client {\n"
+                    + /* this 'Client' section has the correct password, but we're not configured
+                      to  use it - we're configured instead by the above
+                      System.setProperty(...LOGIN_CONTEXT_NAME_KEY...) to
+                      use the (nonexistent) 'MyZookeeperClient' section. */ "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                    + "       username=\"myuser\"\n"
+                    + "       password=\"mypassword\";\n"
+                    + "};\n");
             fwriter.close();
             System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
         } catch (IOException e) {
@@ -76,5 +75,4 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
             zk.close();
         }
     }
-
 }

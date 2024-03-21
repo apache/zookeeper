@@ -42,7 +42,5 @@ public class UnimplementedRequestProcessor implements RequestProcessor {
         request.cnxn.sendCloseSession();
     }
 
-    public void shutdown() {
-    }
-
+    public void shutdown() {}
 }

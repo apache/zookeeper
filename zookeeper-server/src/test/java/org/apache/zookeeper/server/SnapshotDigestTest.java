@@ -135,7 +135,7 @@ public class SnapshotDigestTest extends ClientBase {
         // take a full snapshot
         server.takeSnapshot();
 
-        //increment the digest version
+        // increment the digest version
         int newVersion = currentVersion + 1;
         DigestCalculator newVersionDigestCalculator = Mockito.spy(DigestCalculator.class);
         Mockito.when(newVersionDigestCalculator.getDigestVersion()).thenReturn(newVersion);
@@ -203,5 +203,4 @@ public class SnapshotDigestTest extends ClientBase {
         // reset the digestFromLoadedSnapshot after comparing
         assertNull(server.getZKDatabase().getDataTree().getDigestFromLoadedSnapshot());
     }
-
 }

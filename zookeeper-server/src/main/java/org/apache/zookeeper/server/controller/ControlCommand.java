@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 /**
@@ -25,7 +24,7 @@ package org.apache.zookeeper.server.controller;
 public class ControlCommand {
     /**
      * Actions available to the controller
-      */
+     */
     public enum Action {
         // Simple "are you there" ping to confirm the controller is up and running.
         PING,
@@ -63,11 +62,13 @@ public class ControlCommand {
     public static final String ENDPOINT_PREFIX = ENDPOINT + "/";
 
     private Action action;
+
     public Action getAction() {
         return action;
     }
 
     private String parameter;
+
     protected String getParameter() {
         return parameter;
     }

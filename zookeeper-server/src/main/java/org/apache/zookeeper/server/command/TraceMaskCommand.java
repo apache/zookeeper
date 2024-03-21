@@ -33,5 +33,4 @@ public class TraceMaskCommand extends AbstractFourLetterCommand {
         long traceMask = ZooTrace.getTextTraceLevel();
         pw.print(traceMask);
     }
-
 }

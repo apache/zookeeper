@@ -60,7 +60,7 @@ public class RequestPathMetricsCollectorTest {
 
     @Test
     public void testTrimPath() {
-        //normal cases
+        // normal cases
         String trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 1);
         assertTrue(trimedPath.equalsIgnoreCase("/p1"));
         trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 2);
@@ -69,7 +69,7 @@ public class RequestPathMetricsCollectorTest {
         assertTrue(trimedPath.equalsIgnoreCase("/p1/p2/p3"));
         trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 4);
         assertTrue(trimedPath.equalsIgnoreCase("/p1/p2/p3"));
-        //some extra symbols
+        // some extra symbols
         trimedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 3);
         assertTrue(trimedPath.equalsIgnoreCase("/p1 next/p2.index/p3:next"));
         trimedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 2);
@@ -81,7 +81,8 @@ public class RequestPathMetricsCollectorTest {
     @Test
     public void testQueueMapReduce() throws InterruptedException {
         RequestPathMetricsCollector requestPathMetricsCollector = new RequestPathMetricsCollector();
-        RequestPathMetricsCollector.PathStatsQueue pathStatsQueue = requestPathMetricsCollector.new PathStatsQueue(create2);
+        RequestPathMetricsCollector.PathStatsQueue pathStatsQueue =
+                requestPathMetricsCollector.new PathStatsQueue(create2);
         Thread path7 = new Thread(() -> {
             for (int i = 0; i < 1000000; i++) {
                 pathStatsQueue.registerRequest("/path1/path2/path3/path4/path5/path6/path7" + "_" + i);
@@ -115,29 +116,29 @@ public class RequestPathMetricsCollectorTest {
         Map<String, Integer> newSlot = pathStatsQueue.mapReducePaths(1, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 1);
         assertTrue(newSlot.get("/path1").compareTo(1111111) == 0);
-        //cut up to 2
+        // cut up to 2
         newSlot = pathStatsQueue.mapReducePaths(2, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 12);
         assertTrue(newSlot.get("/path1").compareTo(1) == 0);
         assertTrue(newSlot.get("/path1/path2").compareTo(1111100) == 0);
-        //cut up to 3
+        // cut up to 3
         newSlot = pathStatsQueue.mapReducePaths(3, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 112);
         assertTrue(newSlot.get("/path1").compareTo(1) == 0);
         assertTrue(newSlot.get("/path1/path2/path3").compareTo(1111000) == 0);
-        //cut up to 4
+        // cut up to 4
         newSlot = pathStatsQueue.mapReducePaths(4, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 1112);
         assertTrue(newSlot.get("/path1/path2/path3/path4").compareTo(1110000) == 0);
-        //cut up to 5
+        // cut up to 5
         newSlot = pathStatsQueue.mapReducePaths(5, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 11112);
         assertTrue(newSlot.get("/path1/path2/path3/path4/path5").compareTo(1100000) == 0);
-        //cut up to 6
+        // cut up to 6
         newSlot = pathStatsQueue.mapReducePaths(6, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 111111);
         assertTrue(newSlot.get("/path1/path2/path3/path4/path5/path6").compareTo(1000001) == 0);
-        //cut up to 7
+        // cut up to 7
         newSlot = pathStatsQueue.mapReducePaths(7, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.size() == 1111111);
     }
@@ -145,7 +146,8 @@ public class RequestPathMetricsCollectorTest {
     @Test
     public void testCollectEmptyStats() throws InterruptedException {
         RequestPathMetricsCollector requestPathMetricsCollector = new RequestPathMetricsCollector();
-        RequestPathMetricsCollector.PathStatsQueue pathStatsQueue = requestPathMetricsCollector.new PathStatsQueue(getChildren);
+        RequestPathMetricsCollector.PathStatsQueue pathStatsQueue =
+                requestPathMetricsCollector.new PathStatsQueue(getChildren);
         Thread.sleep(5000);
         Map<String, Integer> newSlot = pathStatsQueue.mapReducePaths(3, pathStatsQueue.getCurrentSlot());
         assertTrue(newSlot.isEmpty());
@@ -163,7 +165,8 @@ public class RequestPathMetricsCollectorTest {
     @Disabled
     public void testCollectStats() throws InterruptedException {
         RequestPathMetricsCollector requestPathMetricsCollector = new RequestPathMetricsCollector(true);
-        RequestPathMetricsCollector.PathStatsQueue pathStatsQueue = requestPathMetricsCollector.new PathStatsQueue(getChildren);
+        RequestPathMetricsCollector.PathStatsQueue pathStatsQueue =
+                requestPathMetricsCollector.new PathStatsQueue(getChildren);
         pathStatsQueue.start();
         Thread path7 = new Thread(() -> {
             for (int i = 0; i < 10; i++) {
@@ -217,25 +220,25 @@ public class RequestPathMetricsCollectorTest {
         Map<String, Integer> newSlot = pathStatsQueue.collectStats(1);
         assertEquals(newSlot.size(), 1);
         assertEquals(newSlot.get("/path1").intValue(), 1111112);
-        //cut up to 2
+        // cut up to 2
         newSlot = pathStatsQueue.collectStats(2);
         assertEquals(newSlot.size(), 12);
         assertEquals(newSlot.get("/path1").intValue(), 1);
         assertEquals(newSlot.get("/path1/path2").intValue(), 1111101);
-        //cut up to 3
+        // cut up to 3
         newSlot = pathStatsQueue.collectStats(3);
         assertEquals(newSlot.size(), 112);
         assertEquals(newSlot.get("/path1").intValue(), 1);
         assertEquals(newSlot.get("/path1/path2/path3").intValue(), 1111001);
-        //cut up to 4
+        // cut up to 4
         newSlot = pathStatsQueue.collectStats(4);
         assertEquals(newSlot.size(), 1112);
         assertEquals(newSlot.get("/path1/path2/path3/path4").intValue(), 1110001);
-        //cut up to 5
+        // cut up to 5
         newSlot = pathStatsQueue.collectStats(5);
         assertEquals(newSlot.size(), 11112);
         assertEquals(newSlot.get("/path1/path2/path3/path4/path5").intValue(), 1100001);
-        //cut up to 6
+        // cut up to 6
         newSlot = pathStatsQueue.collectStats(6);
         assertEquals(newSlot.size(), 111112);
         assertEquals(newSlot.get("/path1/path2/path3/path4/path5/path6").intValue(), 1000001);
@@ -252,11 +255,8 @@ public class RequestPathMetricsCollectorTest {
                     e.printStackTrace();
                 }
                 for (int j = 0; j < 100000; j++) {
-                    requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path3/path4/path5/path6/path7"
-                                                                                 + "_"
-                                                                                 + i
-                                                                                 + "_"
-                                                                                 + j);
+                    requestPathMetricsCollector.registerRequest(
+                            getData, "/path1/path2/path3/path4/path5/path6/path7" + "_" + i + "_" + j);
                 }
             }
         });
@@ -270,11 +270,8 @@ public class RequestPathMetricsCollectorTest {
                     e.printStackTrace();
                 }
                 for (int j = 0; j < 10000; j++) {
-                    requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path3/path4/path5/path6"
-                                                                                     + "_"
-                                                                                     + i
-                                                                                     + "_"
-                                                                                     + j);
+                    requestPathMetricsCollector.registerRequest(
+                            getChildren, "/path1/path2/path3/path4/path5/path6" + "_" + i + "_" + j);
                 }
             }
         });
@@ -300,36 +297,36 @@ public class RequestPathMetricsCollectorTest {
         assertEquals(newSlot.size(), 12);
         assertEquals(newSlot.get("/path1").intValue(), 1);
         assertEquals(newSlot.get("/path1/path2").intValue(), 1111101);
-        //cut up to 3
+        // cut up to 3
         newSlot = requestPathMetricsCollector.aggregatePaths(3, queue -> true);
         assertEquals(newSlot.size(), 112);
         assertEquals(newSlot.get("/path1").intValue(), 1);
         assertEquals(newSlot.get("/path1/path2/path3").intValue(), 1111001);
-        //cut up to 4
+        // cut up to 4
         newSlot = requestPathMetricsCollector.aggregatePaths(4, queue -> true);
         assertEquals(newSlot.size(), 1112);
         assertEquals(newSlot.get("/path1/path2/path3/path4").intValue(), 1110001);
-        //cut up to 5
+        // cut up to 5
         newSlot = requestPathMetricsCollector.aggregatePaths(5, queue -> true);
         assertEquals(newSlot.size(), 11112);
         assertEquals(newSlot.get("/path1/path2/path3/path4/path5").intValue(), 1100001);
-        //cut up to 6
+        // cut up to 6
         newSlot = requestPathMetricsCollector.aggregatePaths(6, queue -> true);
         assertEquals(newSlot.size(), 111112);
         assertEquals(newSlot.get("/path1/path2/path3/path4/path5/path6").intValue(), 1000001);
-        //cut up to 7 but the initial mapReduce kept only 6
+        // cut up to 7 but the initial mapReduce kept only 6
         newSlot = requestPathMetricsCollector.aggregatePaths(7, queue -> true);
         assertEquals(newSlot.size(), 111112);
         assertEquals(newSlot.get("/path1/path2/path3/path4/path5/path6").intValue(), 1000001);
-        //test predicate
-        //cut up to 4 for all the reads
+        // test predicate
+        // cut up to 4 for all the reads
         newSlot = requestPathMetricsCollector.aggregatePaths(4, queue -> !queue.isWriteOperation());
         assertEquals(newSlot.size(), 1);
         assertEquals(newSlot.get("/path1/path2/path3/path4").intValue(), 1110001);
-        //cut up to 4 for all the write
+        // cut up to 4 for all the write
         newSlot = requestPathMetricsCollector.aggregatePaths(4, queue -> queue.isWriteOperation());
         assertEquals(newSlot.size(), 1111);
-        //cut up to 3 for all the write
+        // cut up to 3 for all the write
         newSlot = requestPathMetricsCollector.aggregatePaths(3, queue -> queue.isWriteOperation());
         assertEquals(newSlot.size(), 112);
         assertEquals(newSlot.get("/path1/path2/path3").intValue(), 1000);
@@ -346,11 +343,8 @@ public class RequestPathMetricsCollectorTest {
                     e.printStackTrace();
                 }
                 for (int j = 0; j < 100000; j++) {
-                    requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path3/path4/path5/path6/path7"
-                                                                                 + "_"
-                                                                                 + i
-                                                                                 + "_"
-                                                                                 + j);
+                    requestPathMetricsCollector.registerRequest(
+                            getData, "/path1/path2/path3/path4/path5/path6/path7" + "_" + i + "_" + j);
                 }
             }
         });
@@ -364,11 +358,8 @@ public class RequestPathMetricsCollectorTest {
                     e.printStackTrace();
                 }
                 for (int j = 0; j < 10000; j++) {
-                    requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path3/path4/path5/path6"
-                                                                                     + "_"
-                                                                                     + i
-                                                                                     + "_"
-                                                                                     + j);
+                    requestPathMetricsCollector.registerRequest(
+                            getChildren, "/path1/path2/path3/path4/path5/path6" + "_" + i + "_" + j);
                 }
             }
         });
@@ -392,24 +383,18 @@ public class RequestPathMetricsCollectorTest {
         path7.join();
         StringBuilder sb1 = new StringBuilder();
         Map<String, Integer> newSlot = requestPathMetricsCollector.aggregatePaths(3, queue -> queue.isWriteOperation());
-        requestPathMetricsCollector.logTopPaths(newSlot, entry -> sb1.append(entry.getKey()
-                                                                                     + " : "
-                                                                                     + entry.getValue()
-                                                                                     + "\n"));
+        requestPathMetricsCollector.logTopPaths(
+                newSlot, entry -> sb1.append(entry.getKey() + " : " + entry.getValue() + "\n"));
         assertTrue(sb1.toString().startsWith("/path1/path2/path3 : 1000"));
         StringBuilder sb2 = new StringBuilder();
         newSlot = requestPathMetricsCollector.aggregatePaths(3, queue -> !queue.isWriteOperation());
-        requestPathMetricsCollector.logTopPaths(newSlot, entry -> sb2.append(entry.getKey()
-                                                                                     + " : "
-                                                                                     + entry.getValue()
-                                                                                     + "\n"));
+        requestPathMetricsCollector.logTopPaths(
+                newSlot, entry -> sb2.append(entry.getKey() + " : " + entry.getValue() + "\n"));
         assertTrue(sb2.toString().startsWith("/path1/path2/path3 : 1110001"));
         StringBuilder sb3 = new StringBuilder();
         newSlot = requestPathMetricsCollector.aggregatePaths(4, queue -> true);
-        requestPathMetricsCollector.logTopPaths(newSlot, entry -> sb3.append(entry.getKey()
-                                                                                     + " : "
-                                                                                     + entry.getValue()
-                                                                                     + "\n"));
+        requestPathMetricsCollector.logTopPaths(
+                newSlot, entry -> sb3.append(entry.getKey() + " : " + entry.getValue() + "\n"));
         assertTrue(sb3.toString().startsWith("/path1/path2/path3/path4 : 1110001"));
     }
 
@@ -419,33 +404,32 @@ public class RequestPathMetricsCollectorTest {
         Random rand = new Random(System.currentTimeMillis());
         Long startTime = System.currentTimeMillis();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        //call 100k get Data
+        // call 100k get Data
         for (int i = 0; i < 100000; i++) {
             executor.submit(
-                () -> requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path" + rand.nextInt(10)));
+                    () -> requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path" + rand.nextInt(10)));
         }
-        //5K create
+        // 5K create
         for (int i = 0; i < 5000; i++) {
             executor.submit(
-                () -> requestPathMetricsCollector.registerRequest(create2, "/path1/path2/path" + rand.nextInt(10)));
+                    () -> requestPathMetricsCollector.registerRequest(create2, "/path1/path2/path" + rand.nextInt(10)));
         }
-        //5K delete
+        // 5K delete
         for (int i = 0; i < 5000; i++) {
             executor.submit(
-                () -> requestPathMetricsCollector.registerRequest(delete, "/path1/path2/path" + rand.nextInt(10)));
+                    () -> requestPathMetricsCollector.registerRequest(delete, "/path1/path2/path" + rand.nextInt(10)));
         }
-        //40K getChildren
+        // 40K getChildren
         for (int i = 0; i < 40000; i++) {
-            executor.submit(
-                () -> requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path" + rand.nextInt(10)));
+            executor.submit(() ->
+                    requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path" + rand.nextInt(10)));
         }
         executor.shutdown();
-        //wait for at most 10 mill seconds
+        // wait for at most 10 mill seconds
         executor.awaitTermination(10, TimeUnit.MILLISECONDS);
         assertTrue(executor.isTerminated());
         Long endTime = System.currentTimeMillis();
-        //less than 2 seconds total time
+        // less than 2 seconds total time
         assertTrue(TimeUnit.MILLISECONDS.toSeconds(endTime - startTime) < 3);
     }
-
 }

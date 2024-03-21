@@ -95,7 +95,6 @@ public class AvgMinMaxPercentileCounter extends Metric implements Summary {
             count.set(0);
             values = new AtomicLongArray(DEFAULT_SIZE);
         }
-
     }
 
     public AvgMinMaxPercentileCounter(String name) {
@@ -134,5 +133,4 @@ public class AvgMinMaxPercentileCounter extends Metric implements Summary {
         m.put("p999_" + name, Math.round(this.histogram.getSnapshot().get999thPercentile()));
         return m;
     }
-
 }

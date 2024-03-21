@@ -162,5 +162,4 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
             threadPool.shutdown();
         }
     }
-
 }

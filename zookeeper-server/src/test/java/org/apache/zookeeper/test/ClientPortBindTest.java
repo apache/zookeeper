@@ -97,5 +97,4 @@ public class ClientPortBindTest extends ZKTestCase {
             assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
-
 }

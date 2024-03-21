@@ -26,6 +26,7 @@ public class StateSummary {
 
     private long currentEpoch;
     private long lastZxid;
+
     public StateSummary(long currentEpoch, long lastZxid) {
         this.currentEpoch = currentEpoch;
         this.lastZxid = lastZxid;
@@ -42,6 +43,7 @@ public class StateSummary {
     public boolean isMoreRecentThan(StateSummary ss) {
         return (currentEpoch > ss.currentEpoch) || (currentEpoch == ss.currentEpoch && lastZxid > ss.lastZxid);
     }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof StateSummary)) {
@@ -55,5 +57,4 @@ public class StateSummary {
     public int hashCode() {
         return (int) (currentEpoch ^ lastZxid);
     }
-
 }

@@ -77,5 +77,4 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
     public void shutdown() {
         // Nothing needed
     }
-
 }

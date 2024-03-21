@@ -91,5 +91,4 @@ public class WatchedEventTest extends ZKTestCase {
         assertEquals(KeeperState.Expired.getIntValue(), wew.getState());
         assertEquals("blah", wew.getPath());
     }
-
 }

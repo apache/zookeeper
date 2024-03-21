@@ -65,8 +65,6 @@ public class StringUtilTest extends ZKTestCase {
     @Test
     public void testStringJoin() {
         final String expected = "a,B,null,d";
-        assertEquals(expected,
-            StringUtils.joinStrings(Arrays.asList("a", "B", null, "d"), ","));
+        assertEquals(expected, StringUtils.joinStrings(Arrays.asList("a", "B", null, "d"), ","));
     }
-
 }

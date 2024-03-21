@@ -97,7 +97,8 @@ public class SessionUpgradeTest extends ZKTestCase {
         // server.  This should fail since it is a local sesion.
         try {
             watcher.reset();
-            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
+            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(
+                    hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
 
             zknew.create(nodePrefix + "5", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("Connection on the same session ID should fail.");
@@ -110,7 +111,8 @@ public class SessionUpgradeTest extends ZKTestCase {
         if (!testLeader) {
             try {
                 watcher.reset();
-                DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[leaderIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
+                DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(
+                        hostPorts[leaderIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
 
                 zknew.create(nodePrefix + "5", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 fail("Connection on the same session ID should fail.");
@@ -125,7 +127,8 @@ public class SessionUpgradeTest extends ZKTestCase {
         zk.disconnect();
 
         watcher.reset();
-        zk = new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
+        zk = new DisconnectableZooKeeper(
+                hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         zk.create(nodePrefix + "6", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -135,7 +138,8 @@ public class SessionUpgradeTest extends ZKTestCase {
         zk.close();
         try {
             watcher.reset();
-            zk = new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
+            zk = new DisconnectableZooKeeper(
+                    hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
 
             zk.create(nodePrefix + "7", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("Reconnecting to a closed session ID should fail.");
@@ -179,7 +183,8 @@ public class SessionUpgradeTest extends ZKTestCase {
 
         zk.disconnect();
         watcher.reset();
-        zk = new DisconnectableZooKeeper(hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
+        zk = new DisconnectableZooKeeper(
+                hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         // The created ephemeral nodes are still around.
@@ -193,7 +198,8 @@ public class SessionUpgradeTest extends ZKTestCase {
 
         try {
             watcher.reset();
-            zk = new DisconnectableZooKeeper(hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
+            zk = new DisconnectableZooKeeper(
+                    hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);
             zk.exists(nodePrefix + "0", null);
             fail("Reconnecting to a closed session ID should fail.");
         } catch (KeeperException.SessionExpiredException e) {
@@ -207,5 +213,4 @@ public class SessionUpgradeTest extends ZKTestCase {
             assertNull(zk.exists(nodePrefix + i, null));
         }
     }
-
 }

@@ -51,11 +51,9 @@ public class WriteLockTest extends ClientBase {
             latch.countDown();
         }
 
-        public void lockReleased() {
-
-        }
-
+        public void lockReleased() {}
     }
+
     protected void runTest(int count) throws Exception {
         nodes = new WriteLock[count];
         for (int i = 0; i < count; i++) {
@@ -89,7 +87,7 @@ public class WriteLockTest extends ClientBase {
                 latch = new CountDownLatch(1);
                 first.unlock();
                 latch.await(30, TimeUnit.SECONDS);
-                //Thread.sleep(10000);
+                // Thread.sleep(10000);
                 WriteLock second = nodes[1];
                 dumpNodes(count);
                 // lets assert that the first election is the leader
@@ -151,7 +149,5 @@ public class WriteLockTest extends ClientBase {
         }
         System.out.println("Now lets stop the server");
         super.tearDown();
-
     }
-
 }

@@ -54,5 +54,4 @@ public class ToStringTest extends ZKTestCase {
             assertEquals(field.getName(), opString);
         }
     }
-
 }

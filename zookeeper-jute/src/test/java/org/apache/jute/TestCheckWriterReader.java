@@ -39,8 +39,7 @@ interface TestInputArchive {
 class TestCheckWriterReader {
 
     static void checkWriterAndReader(
-            TestOutputArchive output, TestInputArchive input,
-            TestWriter writer, TestReader reader) {
+            TestOutputArchive output, TestInputArchive input, TestWriter writer, TestReader reader) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             OutputArchive oa = output.getArchive(baos);
@@ -56,5 +55,4 @@ class TestCheckWriterReader {
             fail("Should not throw IOException while reading back");
         }
     }
-
 }

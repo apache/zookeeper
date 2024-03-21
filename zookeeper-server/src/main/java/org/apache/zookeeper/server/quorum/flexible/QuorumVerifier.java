@@ -33,24 +33,31 @@ import org.apache.zookeeper.server.quorum.SyncedLearnerTracker;
  * identifiers constitutes a quorum.
  *
  */
-
 public interface QuorumVerifier {
 
     long getWeight(long id);
+
     boolean containsQuorum(Set<Long> set);
+
     long getVersion();
+
     void setVersion(long ver);
+
     Map<Long, QuorumServer> getAllMembers();
+
     Map<Long, QuorumServer> getVotingMembers();
+
     Map<Long, QuorumServer> getObservingMembers();
+
     boolean equals(Object o);
     /*
-    * Only QuorumOracleMaj will implement these methods. Other class will raise warning if the methods are called and
-    * return false always.
-    * */
+     * Only QuorumOracleMaj will implement these methods. Other class will raise warning if the methods are called and
+     * return false always.
+     * */
     default boolean updateNeedOracle(List<LearnerHandler> forwardingFollowers) {
         return false;
     }
+
     default boolean getNeedOracle() {
         return false;
     }
@@ -63,7 +70,8 @@ public interface QuorumVerifier {
         return false;
     }
 
-    default boolean revalidateOutstandingProp(Leader self, ArrayList<Leader.Proposal> outstandingProposal, long lastCommitted) {
+    default boolean revalidateOutstandingProp(
+            Leader self, ArrayList<Leader.Proposal> outstandingProposal, long lastCommitted) {
         return false;
     }
 
@@ -73,8 +81,8 @@ public interface QuorumVerifier {
 
     default String getOraclePath() {
         return null;
-    };
+    }
+    ;
 
     String toString();
-
 }

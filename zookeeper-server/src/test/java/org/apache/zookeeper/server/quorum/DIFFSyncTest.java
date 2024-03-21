@@ -59,7 +59,7 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
     }
 
     @AfterEach
-    public void tearDown() throws Exception{
+    public void tearDown() throws Exception {
         for (final ZooKeeper zk : zkClients) {
             try {
                 if (zk != null) {
@@ -108,7 +108,8 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
         // currentEpoch and sends NEWLEADER ACK but fails to persist and commit txns afterwards
         // in DIFF sync
         mt[0].start(new MockTestQPMain());
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
                 "waiting for server 0 being up");
         LOG.info("S0 restarted.");
         logEpochsAndLastLoggedTxnForAllServers();
@@ -124,7 +125,8 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
 
         // start S1 and trigger a leader election (currentEpoch=3)
         mt[1].start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[1], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[1], CONNECTION_TIMEOUT),
                 "waiting for server 1 being up");
         LOG.info("S1 restarted.");
         logEpochsAndLastLoggedTxnForAllServers();
@@ -140,7 +142,8 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
 
         // start S2 which is the old leader
         mt[2].start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT),
                 "waiting for server " + 2 + " being up");
         LOG.info("S2 restarted.");
         logEpochsAndLastLoggedTxnForAllServers();
@@ -174,7 +177,8 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
 
         // restart S0 and trigger a new leader election and DIFF sync (currentEpoch=2)
         mt[0].start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
                 "waiting for server 0 being up");
         LOG.info("S0 restarted.");
 
@@ -182,7 +186,7 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
         createNode(zkClients[2], PATH_PREFIX + "2");
 
         // validate quorum is up without additional round of leader election
-        for (int  i = 0; i < SERVER_COUNT; i++) {
+        for (int i = 0; i < SERVER_COUNT; i++) {
             if (i != 1) {
                 final QuorumPeer qp = mt[i].getQuorumPeer();
                 assertNotNull(qp);
@@ -243,25 +247,27 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
     }
 
     private static class TestQuorumPeer extends QuorumPeer {
-        public TestQuorumPeer() throws SaslException {
-        }
+        public TestQuorumPeer() throws SaslException {}
 
         @Override
         protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
-            final FollowerZooKeeperServer followerZookeeperServer = new FollowerZooKeeperServer(logFactory, this, this.getZkDb()) {
-                @Override
-                protected void setupRequestProcessors() {
-                    RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-                    commitProcessor = new MockCommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
-                    commitProcessor.start();
+            final FollowerZooKeeperServer followerZookeeperServer =
+                    new FollowerZooKeeperServer(logFactory, this, this.getZkDb()) {
+                        @Override
+                        protected void setupRequestProcessors() {
+                            RequestProcessor finalProcessor = new FinalRequestProcessor(this);
+                            commitProcessor = new MockCommitProcessor(
+                                    finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
+                            commitProcessor.start();
 
-                    firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
-                    ((FollowerRequestProcessor) firstProcessor).start();
-                    syncProcessor = new MockSyncRequestProcessor(this, new SendAckRequestProcessor(getFollower()));
+                            firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
+                            ((FollowerRequestProcessor) firstProcessor).start();
+                            syncProcessor =
+                                    new MockSyncRequestProcessor(this, new SendAckRequestProcessor(getFollower()));
 
-                    syncProcessor.start();
-                }
-            };
+                            syncProcessor.start();
+                        }
+                    };
             return new Follower(this, followerZookeeperServer);
         }
     }
@@ -273,35 +279,45 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
 
         @Override
         public void processRequest(final Request request) {
-            LOG.info("Sync request for zxid {} is dropped", Long.toHexString(request.getHdr().getZxid()));
+            LOG.info(
+                    "Sync request for zxid {} is dropped",
+                    Long.toHexString(request.getHdr().getZxid()));
         }
     }
 
     private static class MockCommitProcessor extends CommitProcessor {
-        public MockCommitProcessor(final RequestProcessor nextProcessor, final String id,
-                                   final boolean matchSyncs, final ZooKeeperServerListener listener) {
+        public MockCommitProcessor(
+                final RequestProcessor nextProcessor,
+                final String id,
+                final boolean matchSyncs,
+                final ZooKeeperServerListener listener) {
 
             super(nextProcessor, id, matchSyncs, listener);
         }
 
         @Override
         public void commit(final Request request) {
-            LOG.info("Commit request for zxid {} is dropped", Long.toHexString(request.getHdr().getZxid()));
+            LOG.info(
+                    "Commit request for zxid {} is dropped",
+                    Long.toHexString(request.getHdr().getZxid()));
         }
     }
 
     private void logEpochsAndLastLoggedTxnForAllServers() throws Exception {
-        for (int  i = 0; i < SERVER_COUNT; i++) {
+        for (int i = 0; i < SERVER_COUNT; i++) {
             final QuorumPeer qp = mt[i].getQuorumPeer();
             if (qp != null) {
-                LOG.info(String.format("server id=%d, acceptedEpoch=%d, currentEpoch=%d, lastLoggedTxn=%s",
-                        qp.getMyId(), qp.getAcceptedEpoch(),
-                        qp.getCurrentEpoch(), Long.toHexString(qp.getLastLoggedZxid())));
+                LOG.info(String.format(
+                        "server id=%d, acceptedEpoch=%d, currentEpoch=%d, lastLoggedTxn=%s",
+                        qp.getMyId(),
+                        qp.getAcceptedEpoch(),
+                        qp.getCurrentEpoch(),
+                        Long.toHexString(qp.getLastLoggedZxid())));
             }
         }
     }
 
-    private void validateDataFromAllClients(final List<String> paths) throws Exception{
+    private void validateDataFromAllClients(final List<String> paths) throws Exception {
         for (int i = 0; i < SERVER_COUNT; i++) {
             if (zkClients[i] == null) {
                 createZKClient(i);

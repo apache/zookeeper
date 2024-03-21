@@ -27,8 +27,7 @@ public class MetricsProviderLifeCycleException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
-    public MetricsProviderLifeCycleException() {
-    }
+    public MetricsProviderLifeCycleException() {}
 
     public MetricsProviderLifeCycleException(String message) {
         super(message);
@@ -41,5 +40,4 @@ public class MetricsProviderLifeCycleException extends Exception {
     public MetricsProviderLifeCycleException(Throwable cause) {
         super(cause);
     }
-
 }

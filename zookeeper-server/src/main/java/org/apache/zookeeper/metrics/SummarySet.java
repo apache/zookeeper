@@ -33,5 +33,4 @@ public interface SummarySet {
      * @param value current value
      */
     void add(String key, long value);
-
 }

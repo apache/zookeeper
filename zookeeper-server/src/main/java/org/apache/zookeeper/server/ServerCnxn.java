@@ -177,33 +177,28 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
      *               used to decide which cache (e.g. read response cache,
      *               list of children response cache, ...) object to look up to when applicable.
      */
-    public abstract int sendResponse(
-            ReplyHeader h,
-            Record r,
-            String tag,
-            String cacheKey,
-            Stat stat,
-            int opCode
-    ) throws IOException;
+    public abstract int sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat, int opCode)
+            throws IOException;
 
     public int sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
         return sendResponse(h, r, tag, null, null, -1);
     }
 
-    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String cacheKey, Stat stat, int opCode) throws IOException {
+    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String cacheKey, Stat stat, int opCode)
+            throws IOException {
         byte[] header = RequestRecord.fromRecord(h).readBytes();
         byte[] data = null;
         if (r != null) {
             ResponseCache cache = null;
             Counter cacheHit = null, cacheMiss = null;
             switch (opCode) {
-                case OpCode.getData : {
+                case OpCode.getData: {
                     cache = zkServer.getReadResponseCache();
                     cacheHit = ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_HITS;
                     cacheMiss = ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_MISSING;
                     break;
                 }
-                case OpCode.getChildren2 : {
+                case OpCode.getChildren2: {
                     cache = zkServer.getGetChildrenResponseCache();
                     cacheHit = ServerMetrics.getMetrics().RESPONSE_PACKET_GET_CHILDREN_CACHE_HITS;
                     cacheMiss = ServerMetrics.getMetrics().RESPONSE_PACKET_GET_CHILDREN_CACHE_MISSING;
@@ -300,10 +295,10 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
             super(msg);
             this.reason = reason;
         }
+
         public DisconnectReason getReason() {
             return reason;
         }
-
     }
 
     protected static class EndOfStreamException extends IOException {
@@ -319,10 +314,10 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
         public String toString() {
             return "EndOfStreamException: " + getMessage();
         }
+
         public DisconnectReason getReason() {
             return reason;
         }
-
     }
 
     public boolean isStale() {
@@ -491,9 +486,13 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
     }
 
     public abstract InetSocketAddress getRemoteSocketAddress();
+
     public abstract int getInterestOps();
+
     public abstract boolean isSecure();
+
     public abstract Certificate[] getClientCertificateChain();
+
     public abstract void setClientCertificateChain(Certificate[] chain);
 
     /**

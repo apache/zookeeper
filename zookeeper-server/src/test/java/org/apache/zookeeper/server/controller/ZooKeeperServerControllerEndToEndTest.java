@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import java.io.IOException;
@@ -74,13 +73,11 @@ public class ZooKeeperServerControllerEndToEndTest extends ControllerTestBase {
         // Force a disconnection through the controller and ensure we get the events in order:
         // 1: Disconnected
         // 2: SyncConnected
-        watcher.reset(
-                new Watcher.Event.KeeperState[] {
-                        Watcher.Event.KeeperState.Disconnected,
-                        Watcher.Event.KeeperState.SyncConnected
-                });
-        Assert.assertTrue(commandClient
-                .trySendCommand(ControlCommand.Action.CLOSECONNECTION, String.valueOf(zkClient.getSessionId())));
+        watcher.reset(new Watcher.Event.KeeperState[] {
+            Watcher.Event.KeeperState.Disconnected, Watcher.Event.KeeperState.SyncConnected
+        });
+        Assert.assertTrue(commandClient.trySendCommand(
+                ControlCommand.Action.CLOSECONNECTION, String.valueOf(zkClient.getSessionId())));
         watcher.waitForEvent();
     }
 
@@ -94,13 +91,11 @@ public class ZooKeeperServerControllerEndToEndTest extends ControllerTestBase {
         // Force an expiration.
         // 1: Disconnected
         // 2: Expired
-        watcher.reset(
-                new Watcher.Event.KeeperState[] {
-                        Watcher.Event.KeeperState.Disconnected,
-                        Watcher.Event.KeeperState.Expired
-                });
-        Assert.assertTrue(commandClient
-                .trySendCommand(ControlCommand.Action.EXPIRESESSION, String.valueOf(zkClient.getSessionId())));
+        watcher.reset(new Watcher.Event.KeeperState[] {
+            Watcher.Event.KeeperState.Disconnected, Watcher.Event.KeeperState.Expired
+        });
+        Assert.assertTrue(commandClient.trySendCommand(
+                ControlCommand.Action.EXPIRESESSION, String.valueOf(zkClient.getSessionId())));
         watcher.waitForEvent();
     }
 
@@ -115,8 +110,8 @@ public class ZooKeeperServerControllerEndToEndTest extends ControllerTestBase {
         BlockingPathWatcher pathWatcher = new BlockingPathWatcher(AnyPath, Watcher.Event.EventType.NodeCreated);
 
         zkClient.exists(AnyPath, pathWatcher);
-        Assert.assertEquals(AnyPath,
-                zkClient.create(AnyPath, AnyData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
+        Assert.assertEquals(
+                AnyPath, zkClient.create(AnyPath, AnyData, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
         pathWatcher.waitForEvent();
 
         // Force expire all sessions.
@@ -374,11 +369,11 @@ public class ZooKeeperServerControllerEndToEndTest extends ControllerTestBase {
         @Override
         public void process(WatchedEvent event) {
             LOG.info("WatchEvent {} for path {}", event.getType(), event.getPath());
-            if (pathToNotifyOn != null && event.getType() == requiredEventType
+            if (pathToNotifyOn != null
+                    && event.getType() == requiredEventType
                     && pathToNotifyOn.equalsIgnoreCase(event.getPath())) {
                 notifyListener();
             }
         }
     }
-
 }

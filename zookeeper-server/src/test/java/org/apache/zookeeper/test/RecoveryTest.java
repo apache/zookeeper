@@ -91,8 +91,8 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                     zk.create(subpath, (subpath + "!").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     for (int k = 0; k < 20; k++) {
                         String subsubpath = subpath + "/" + k;
-                        zk.create(subsubpath, (subsubpath
-                                                       + "!").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                        zk.create(
+                                subsubpath, (subsubpath + "!").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     }
                 }
             }
@@ -130,7 +130,8 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             f.shutdown();
             zks.shutdown();
 
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
             f = ServerCnxnFactory.createFactory(PORT, -1);
@@ -180,5 +181,4 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             startSignal.countDown();
         }
     }
-
 }

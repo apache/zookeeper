@@ -32,29 +32,27 @@ public abstract class MetricsProviderBootstrap {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetricsProviderBootstrap.class);
 
-    public static MetricsProvider startMetricsProvider(
-        String metricsProviderClassName,
-        Properties configuration) throws MetricsProviderLifeCycleException {
+    public static MetricsProvider startMetricsProvider(String metricsProviderClassName, Properties configuration)
+            throws MetricsProviderLifeCycleException {
         try {
             Class<?> clazz = Class.forName(
-                metricsProviderClassName,
-                true,
-                Thread.currentThread().getContextClassLoader());
-            MetricsProvider metricsProvider = (MetricsProvider) clazz.getConstructor().newInstance();
+                    metricsProviderClassName, true, Thread.currentThread().getContextClassLoader());
+            MetricsProvider metricsProvider =
+                    (MetricsProvider) clazz.getConstructor().newInstance();
             metricsProvider.configure(configuration);
             metricsProvider.start();
             return metricsProvider;
         } catch (ClassNotFoundException
-            | IllegalAccessException
-            | InvocationTargetException
-            | NoSuchMethodException
-            | InstantiationException error) {
+                | IllegalAccessException
+                | InvocationTargetException
+                | NoSuchMethodException
+                | InstantiationException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
-            throw new MetricsProviderLifeCycleException("Cannot boot MetricsProvider " + metricsProviderClassName, error);
+            throw new MetricsProviderLifeCycleException(
+                    "Cannot boot MetricsProvider " + metricsProviderClassName, error);
         } catch (MetricsProviderLifeCycleException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
             throw error;
         }
     }
-
 }

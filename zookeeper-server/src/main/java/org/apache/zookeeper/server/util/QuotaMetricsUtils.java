@@ -33,12 +33,17 @@ public final class QuotaMetricsUtils {
     public static final String QUOTA_BYTES_USAGE_PER_NAMESPACE = "quota_bytes_usage_per_namespace";
     public static final String QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = "quota_exceeded_error_per_namespace";
 
-    enum QUOTA_LIMIT_USAGE_METRIC_TYPE {QUOTA_COUNT_LIMIT, QUOTA_BYTES_LIMIT, QUOTA_COUNT_USAGE, QUOTA_BYTES_USAGE}
+    enum QUOTA_LIMIT_USAGE_METRIC_TYPE {
+        QUOTA_COUNT_LIMIT,
+        QUOTA_BYTES_LIMIT,
+        QUOTA_COUNT_USAGE,
+        QUOTA_BYTES_USAGE
+    }
+
     static final String LIMIT_END_STRING = "/" + Quotas.limitNode;
     static final String STATS_END_STRING = "/" + Quotas.statNode;
 
-    private QuotaMetricsUtils() {
-    }
+    private QuotaMetricsUtils() {}
 
     /**
      * Traverse the quota subtree and return per namespace quota count limit
@@ -85,8 +90,8 @@ public final class QuotaMetricsUtils {
     }
 
     // traverse the quota subtree and read the quota limit or usage data
-    private static Map<String, Number> getQuotaLimitOrUsage(final DataTree dataTree,
-                                                            final QUOTA_LIMIT_USAGE_METRIC_TYPE type) {
+    private static Map<String, Number> getQuotaLimitOrUsage(
+            final DataTree dataTree, final QUOTA_LIMIT_USAGE_METRIC_TYPE type) {
         final Map<String, Number> metricsMap = new ConcurrentHashMap<>();
         if (dataTree != null) {
             getQuotaLimitOrUsage(Quotas.quotaZookeeper, metricsMap, type, dataTree);
@@ -94,10 +99,11 @@ public final class QuotaMetricsUtils {
         return metricsMap;
     }
 
-    private static void getQuotaLimitOrUsage(final String path,
-                                     final Map<String, Number> metricsMap,
-                                     final QUOTA_LIMIT_USAGE_METRIC_TYPE type,
-                                     final DataTree dataTree) {
+    private static void getQuotaLimitOrUsage(
+            final String path,
+            final Map<String, Number> metricsMap,
+            final QUOTA_LIMIT_USAGE_METRIC_TYPE type,
+            final DataTree dataTree) {
         final DataNode node = dataTree.getNode(path);
         if (node == null) {
             return;
@@ -119,15 +125,18 @@ public final class QuotaMetricsUtils {
 
     static boolean shouldCollect(final String path, final QUOTA_LIMIT_USAGE_METRIC_TYPE type) {
         return path.endsWith(LIMIT_END_STRING)
-                && (QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT == type || QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT == type)
+                        && (QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT == type
+                                || QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT == type)
                 || path.endsWith(STATS_END_STRING)
-                && (QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE == type || QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE == type);
+                        && (QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE == type
+                                || QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE == type);
     }
 
-    static void collectQuotaLimitOrUsage(final String path,
-                                         final DataNode node,
-                                         final Map<String, Number> metricsMap,
-                                         final QUOTA_LIMIT_USAGE_METRIC_TYPE type) {
+    static void collectQuotaLimitOrUsage(
+            final String path,
+            final DataNode node,
+            final Map<String, Number> metricsMap,
+            final QUOTA_LIMIT_USAGE_METRIC_TYPE type) {
         final String namespace = PathUtils.getTopNamespace(Quotas.trimQuotaPath(path));
         if (namespace == null) {
             return;
@@ -139,10 +148,12 @@ public final class QuotaMetricsUtils {
         final StatsTrack statsTrack = new StatsTrack(data);
         switch (type) {
             case QUOTA_COUNT_LIMIT:
-                aggregateQuotaLimitOrUsage(namespace, metricsMap, getQuotaLimit(statsTrack.getCountHardLimit(), statsTrack.getCount()));
+                aggregateQuotaLimitOrUsage(
+                        namespace, metricsMap, getQuotaLimit(statsTrack.getCountHardLimit(), statsTrack.getCount()));
                 break;
             case QUOTA_BYTES_LIMIT:
-                aggregateQuotaLimitOrUsage(namespace, metricsMap, getQuotaLimit(statsTrack.getByteHardLimit(), statsTrack.getBytes()));
+                aggregateQuotaLimitOrUsage(
+                        namespace, metricsMap, getQuotaLimit(statsTrack.getByteHardLimit(), statsTrack.getBytes()));
                 break;
             case QUOTA_COUNT_USAGE:
                 aggregateQuotaLimitOrUsage(namespace, metricsMap, statsTrack.getCount());
@@ -159,9 +170,8 @@ public final class QuotaMetricsUtils {
         return hardLimit > -1 ? hardLimit : limit;
     }
 
-    private static void aggregateQuotaLimitOrUsage(final String namespace,
-                                           final Map<String, Number> metricsMap,
-                                           final long limitOrUsage) {
+    private static void aggregateQuotaLimitOrUsage(
+            final String namespace, final Map<String, Number> metricsMap, final long limitOrUsage) {
         metricsMap.put(namespace, metricsMap.getOrDefault(namespace, 0).longValue() + limitOrUsage);
     }
 }

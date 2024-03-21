@@ -61,7 +61,6 @@ public class ClientCnxnSocketTest {
         } catch (IOException e) {
             assertTrue(e.getMessage().contains(value));
         }
-
     }
 
     /*

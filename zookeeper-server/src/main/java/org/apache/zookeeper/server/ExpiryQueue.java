@@ -181,6 +181,4 @@ public class ExpiryQueue<E> {
     public Map<Long, Set<E>> getExpiryMap() {
         return Collections.unmodifiableMap(expiryMap);
     }
-
 }
-

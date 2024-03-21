@@ -96,5 +96,4 @@ public final class ConnectStringParser {
     public ArrayList<InetSocketAddress> getServerAddresses() {
         return serverAddresses;
     }
-
 }

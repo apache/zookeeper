@@ -50,7 +50,6 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
      * Support limiting the maximum number of connections/clients to a ZooKeeper server.
      * </pre>
      */
-
     @Test
     @Timeout(value = 120)
     public void testMaxZooKeeperClientsWithNIOServerCnxnFactory() throws Exception {
@@ -75,8 +74,8 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":"
-                    + PortAssignment.unique() + ":participant;127.0.0.1:" + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -90,7 +89,8 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
 
@@ -135,8 +135,7 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
         cdw.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         // verify some basic operation
-        String create = extraClient.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        String create = extraClient.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertEquals("/test", create);
 
         // cleanup

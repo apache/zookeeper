@@ -106,8 +106,8 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         // Get zxid of create requests
         while (itr.hasNext()) {
             Proposal proposal = itr.next();
-            TxnLogEntry logEntry = SerializeUtils.deserializeTxn(
-                    proposal.getQuorumPacket().getData());
+            TxnLogEntry logEntry =
+                    SerializeUtils.deserializeTxn(proposal.getQuorumPacket().getData());
             TxnHeader hdr = logEntry.getHeader();
             Record rec = logEntry.getTxn();
             if (hdr.getType() == OpCode.create) {
@@ -132,5 +132,4 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         f.shutdown();
         zks.shutdown();
     }
-
 }

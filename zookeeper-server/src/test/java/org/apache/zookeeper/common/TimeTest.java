@@ -57,11 +57,11 @@ public class TimeTest extends ClientBase {
         System.out.print("After construct\n");
         test.setUp();
         ZooKeeper zk = test.createClient();
-        zk.create("/ephemeral", new byte[]{1, 2, 3}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk.create("/ephemeral", new byte[] {1, 2, 3}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         while (Time.currentElapsedTime() - nt0 < 100000) {
-            System.out.printf("%d\t%s\n",
-                              discrepancy(),
-                              zk.exists("/ephemeral", watchCount.get() == 0 ? createWatcher() : null) != null);
+            System.out.printf(
+                    "%d\t%s\n",
+                    discrepancy(), zk.exists("/ephemeral", watchCount.get() == 0 ? createWatcher() : null) != null);
             waitByYielding(500);
         }
     }
@@ -72,7 +72,6 @@ public class TimeTest extends ClientBase {
             watchCount.decrementAndGet();
             System.out.printf("%d event = %s\n", discrepancy(), event);
         };
-
     }
 
     private static void waitByYielding(long delay) {
@@ -100,5 +99,4 @@ public class TimeTest extends ClientBase {
 
         assertEquals(calculatedDate, realDate);
     }
-
 }

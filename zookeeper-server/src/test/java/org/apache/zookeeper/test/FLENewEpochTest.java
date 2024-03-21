@@ -85,7 +85,6 @@ public class FLENewEpochTest extends ZKTestCase {
             this.i = i;
             this.peer = peer;
             LOG.info("Constructor: {}", getName());
-
         }
 
         public void run() {
@@ -108,44 +107,43 @@ public class FLENewEpochTest extends ZKTestCase {
                     peer.setCurrentVote(v);
 
                     LOG.info("Finished election: {}, {}", i, v.getId());
-                    //votes[i] = v;
+                    // votes[i] = v;
 
                     switch (i) {
-                    case 0:
-                        LOG.info("First peer, do nothing, just join");
-                        if (finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)) {
-                            //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
-                            LOG.info("Setting flag to false");
+                        case 0:
+                            LOG.info("First peer, do nothing, just join");
+                            if (finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+                                // if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
+                                LOG.info("Setting flag to false");
+                                flag = false;
+                            }
+                            break;
+                        case 1:
+                            LOG.info("Second entering case");
+                            if (round[1] != 0) {
+                                finish0.release();
+                                flag = false;
+                            } else {
+                                finish3.acquire();
+                                start0.release();
+                            }
+                            LOG.info("Second is going to start second round");
+                            round[1]++;
+                            break;
+                        case 2:
+                            LOG.info("Third peer, shutting it down");
+                            QuorumBase.shutdown(peer);
                             flag = false;
-                        }
-                        break;
-                    case 1:
-                        LOG.info("Second entering case");
-                        if (round[1] != 0) {
-                            finish0.release();
-                            flag = false;
-                        } else {
-                            finish3.acquire();
-                            start0.release();
-                        }
-                        LOG.info("Second is going to start second round");
-                        round[1]++;
-                        break;
-                    case 2:
-                        LOG.info("Third peer, shutting it down");
-                        QuorumBase.shutdown(peer);
-                        flag = false;
-                        round[2] = 1;
-                        finish3.release();
-                        LOG.info("Third leaving");
-                        break;
+                            round[2] = 1;
+                            finish3.release();
+                            LOG.info("Third leaving");
+                            break;
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
     }
 
     @Test
@@ -153,7 +151,12 @@ public class FLENewEpochTest extends ZKTestCase {
 
         LOG.info("TestLE: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+            peers.put(
+                    Long.valueOf(i),
+                    new QuorumServer(
+                            i,
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }
@@ -182,8 +185,6 @@ public class FLENewEpochTest extends ZKTestCase {
             if (threads.get(i).isAlive()) {
                 fail("Threads didn't join");
             }
-
         }
     }
-
 }

@@ -147,7 +147,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 NIOServerCnxn.closeSock(sc);
             }
         }
-
     }
 
     /**
@@ -166,7 +165,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         private Iterator<SelectorThread> selectorIterator;
         private volatile boolean reconfiguring = false;
 
-        public AcceptThread(ServerSocketChannel ss, InetSocketAddress addr, Set<SelectorThread> selectorThreads) throws IOException {
+        public AcceptThread(ServerSocketChannel ss, InetSocketAddress addr, Set<SelectorThread> selectorThreads)
+                throws IOException {
             super("NIOServerCxnFactory.AcceptThread:" + addr);
             this.acceptSocket = ss;
             this.acceptKey = acceptSocket.register(selector, SelectionKey.OP_ACCEPT);
@@ -279,8 +279,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
                 SelectorThread selectorThread = selectorIterator.next();
                 if (!selectorThread.addAcceptedConnection(sc)) {
-                    throw new IOException("Unable to add connection to selector queue"
-                                          + (stopped ? " (shutdown in progress)" : ""));
+                    throw new IOException(
+                            "Unable to add connection to selector queue" + (stopped ? " (shutdown in progress)" : ""));
                 }
                 acceptErrorLogger.flush();
             } catch (IOException e) {
@@ -291,7 +291,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             }
             return accepted;
         }
-
     }
 
     /**
@@ -479,7 +478,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
             }
         }
-
     }
 
     /**
@@ -533,7 +531,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         public void cleanup() {
             cnxn.close(ServerCnxn.DisconnectReason.CLEAN_UP);
         }
-
     }
 
     /**
@@ -555,7 +552,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                         continue;
                     }
                     for (NIOServerCnxn conn : cnxnExpiryQueue.poll()) {
-                        ServerMetrics.getMetrics().SESSIONLESS_CONNECTIONS_EXPIRED.add(1);
+                        ServerMetrics.getMetrics()
+                                .SESSIONLESS_CONNECTIONS_EXPIRED
+                                .add(1);
                         conn.close(ServerCnxn.DisconnectReason.CONNECTION_EXPIRED);
                     }
                 }
@@ -564,7 +563,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 LOG.info("ConnnectionExpirerThread interrupted");
             }
         }
-
     }
 
     ServerSocketChannel ss;
@@ -607,8 +605,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * of concurrent connections from each client (up to the file descriptor
      * limits of the operating system). startup(zks) must be called subsequently.
      */
-    public NIOServerCnxnFactory() {
-    }
+    public NIOServerCnxnFactory() {}
 
     private volatile boolean stopped = true;
     private ConnectionExpirerThread expirerThread;
@@ -635,8 +632,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         int numCores = Runtime.getRuntime().availableProcessors();
         // 32 cores sweet spot seems to be 4 selector threads
         numSelectorThreads = Integer.getInteger(
-            ZOOKEEPER_NIO_NUM_SELECTOR_THREADS,
-            Math.max((int) Math.sqrt((float) numCores / 2), 1));
+                ZOOKEEPER_NIO_NUM_SELECTOR_THREADS, Math.max((int) Math.sqrt((float) numCores / 2), 1));
         if (numSelectorThreads < 1) {
             throw new IOException("numSelectorThreads must be at least 1");
         }
@@ -645,10 +641,12 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         workerShutdownTimeoutMS = Long.getLong(ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT, 5000);
 
         String logMsg = "Configuring NIO connection handler with "
-            + (sessionlessCnxnTimeout / 1000) + "s sessionless connection timeout, "
-            + numSelectorThreads + " selector thread(s), "
-            + (numWorkerThreads > 0 ? numWorkerThreads : "no") + " worker threads, and "
-            + (directBufferBytes == 0 ? "gathered writes." : ("" + (directBufferBytes / 1024) + " kB direct buffers."));
+                + (sessionlessCnxnTimeout / 1000) + "s sessionless connection timeout, "
+                + numSelectorThreads + " selector thread(s), "
+                + (numWorkerThreads > 0 ? numWorkerThreads : "no") + " worker threads, and "
+                + (directBufferBytes == 0
+                        ? "gathered writes."
+                        : ("" + (directBufferBytes / 1024) + " kB direct buffers."));
         LOG.info(logMsg);
         for (int i = 0; i < numSelectorThreads; ++i) {
             selectorThreads.add(new SelectorThread(i));
@@ -823,7 +821,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         touchCnxn(cnxn);
     }
 
-    protected NIOServerCnxn createConnection(SocketChannel sock, SelectionKey sk, SelectorThread selectorThread) throws IOException {
+    protected NIOServerCnxn createConnection(SocketChannel sock, SelectionKey sk, SelectorThread selectorThread)
+            throws IOException {
         return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
     }
 
@@ -848,10 +847,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 // This will remove the cnxn from cnxns
                 cnxn.close(reason);
             } catch (Exception e) {
-                LOG.warn(
-                    "Ignoring exception closing cnxn session id 0x{}",
-                    Long.toHexString(cnxn.getSessionId()),
-                    e);
+                LOG.warn("Ignoring exception closing cnxn session id 0x{}", Long.toHexString(cnxn.getSessionId()), e);
             }
         }
     }
@@ -953,5 +949,4 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
         return info;
     }
-
 }

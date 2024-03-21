@@ -141,6 +141,7 @@ public class DistributedQueueTest extends ClientBase {
     public void testRemove2() throws Exception {
         createNremoveMtest("/testRemove2", 10, 2);
     }
+
     @Test
     public void testRemove3() throws Exception {
         createNremoveMtest("/testRemove3", 1000, 1000);
@@ -267,6 +268,4 @@ public class DistributedQueueTest extends ClientBase {
             assertEquals(new String(takeResult[0], UTF_8), threadTestString);
         }
     }
-
 }
-

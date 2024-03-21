@@ -47,11 +47,11 @@ public final class FileChangeWatcher {
     private static final Logger LOG = LoggerFactory.getLogger(FileChangeWatcher.class);
 
     public enum State {
-        NEW,      // object created but start() not called yet
+        NEW, // object created but start() not called yet
         STARTING, // start() called but background thread has not entered main loop
-        RUNNING,  // background thread is running
+        RUNNING, // background thread is running
         STOPPING, // stop() called but background thread has not exited main loop
-        STOPPED   // stop() called and background thread has exited, or background thread crashed
+        STOPPED // stop() called and background thread has exited, or background thread crashed
     }
 
     private final WatcherThread watcherThread;
@@ -71,7 +71,12 @@ public final class FileChangeWatcher {
 
         LOG.debug("Registering with watch service: {}", dirPath);
 
-        dirPath.register(watchService, new WatchEvent.Kind<?>[]{StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.OVERFLOW});
+        dirPath.register(watchService, new WatchEvent.Kind<?>[] {
+            StandardWatchEventKinds.ENTRY_CREATE,
+            StandardWatchEventKinds.ENTRY_DELETE,
+            StandardWatchEventKinds.ENTRY_MODIFY,
+            StandardWatchEventKinds.OVERFLOW
+        });
         state = State.NEW;
         this.watcherThread = new WatcherThread(watchService, callback);
         this.watcherThread.setDaemon(true);
@@ -157,7 +162,7 @@ public final class FileChangeWatcher {
      * Tells the background thread to stop. Does not wait for it to exit.
      */
     public void stop() {
-        if (compareAndSetState(new State[]{State.RUNNING, State.STARTING}, State.STOPPING)) {
+        if (compareAndSetState(new State[] {State.RUNNING, State.STARTING}, State.STOPPING)) {
             watcherThread.interrupt();
         }
     }
@@ -234,7 +239,5 @@ public final class FileChangeWatcher {
                 }
             }
         }
-
     }
-
 }

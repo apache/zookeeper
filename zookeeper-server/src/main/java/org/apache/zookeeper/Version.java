@@ -44,7 +44,9 @@ public class Version implements org.apache.zookeeper.version.Info {
         return BUILD_DATE;
     }
 
-    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE", justification = "Missing QUALIFIER causes redundant null-check")
+    @SuppressFBWarnings(
+            value = "RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE",
+            justification = "Missing QUALIFIER causes redundant null-check")
     public static String getVersion() {
         return MAJOR + "." + MINOR + "." + MICRO + (QUALIFIER == null ? "" : "-" + QUALIFIER);
     }
@@ -59,8 +61,8 @@ public class Version implements org.apache.zookeeper.version.Info {
 
     public static void printUsage() {
         System.out.print("Usage:\tjava -cp ... org.apache.zookeeper.Version "
-                         + "[--full | --short | --revision],\n\tPrints --full version "
-                         + "info if no arg specified.");
+                + "[--full | --short | --revision],\n\tPrints --full version "
+                + "info if no arg specified.");
         ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 
@@ -92,5 +94,4 @@ public class Version implements org.apache.zookeeper.version.Info {
         }
         ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
     }
-
 }

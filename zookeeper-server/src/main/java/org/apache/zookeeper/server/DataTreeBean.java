@@ -58,5 +58,4 @@ public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     public String getLastZxid() {
         return "0x" + Long.toHexString(dataTree.lastProcessedZxid);
     }
-
 }

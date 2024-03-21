@@ -24,7 +24,6 @@ package org.apache.zookeeper.metrics;
  *
  *  A CounterSet is a set of {@link Counter} grouped by keys.
  */
-
 public interface CounterSet {
     /**
      * Increment the value by one for the given key

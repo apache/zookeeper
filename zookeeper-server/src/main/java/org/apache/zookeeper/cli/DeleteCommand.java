@@ -61,8 +61,8 @@ public class DeleteCommand extends CliCommand {
 
     private void retainCompatibility(String[] cmdArgs) throws CliParseException {
         if (args.length > 2) {
-            err.println("'delete path [version]' has been deprecated. "
-                        + "Please use 'delete [-v version] path' instead.");
+            err.println(
+                    "'delete path [version]' has been deprecated. " + "Please use 'delete [-v version] path' instead.");
             DefaultParser parser = new DefaultParser();
             try {
                 cl = parser.parse(options, cmdArgs);
@@ -92,5 +92,4 @@ public class DeleteCommand extends CliCommand {
         }
         return false;
     }
-
 }

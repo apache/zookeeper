@@ -61,19 +61,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     private X509Util x509Util;
-    private static final String[] customCipherSuites = new String[]{
-        "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
-        "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"
-    };
+    private static final String[] customCipherSuites =
+            new String[] {"SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"};
 
-    public void init(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void init(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         super.init(caKeyType, certKeyType, keyPassword, paramIndex);
         try (X509Util x509util = new ClientX509Util()) {
             x509TestContext.setSystemProperties(x509util, KeyStoreFileType.JKS, KeyStoreFileType.JKS);
         }
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         x509Util = new ClientX509Util();
     }
@@ -99,24 +97,27 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLContextWithoutCustomProtocol(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         SSLContext sslContext = x509Util.getDefaultSSLContext();
         assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
 
         // Check that TLSv1.3 is selected in JDKs that support it (OpenJDK 8u272 and later).
-        List<String> supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
+        List<String> supported = Arrays.asList(
+                SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
         if (supported.contains(X509Util.TLS_1_3)) {
             // SSLContext protocol.
             assertEquals(X509Util.TLS_1_3, sslContext.getProtocol());
             // Enabled protocols.
-            List<String> protos = Arrays.asList(sslContext.getDefaultSSLParameters().getProtocols());
+            List<String> protos =
+                    Arrays.asList(sslContext.getDefaultSSLParameters().getProtocols());
             assertTrue(protos.contains(X509Util.TLS_1_2));
             assertTrue(protos.contains(X509Util.TLS_1_3));
         } else {
             assertEquals(X509Util.TLS_1_2, sslContext.getProtocol());
-            assertArrayEquals(new String[]{X509Util.TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
+            assertArrayEquals(
+                    new String[] {X509Util.TLS_1_2},
+                    sslContext.getDefaultSSLParameters().getProtocols());
         }
     }
 
@@ -124,8 +125,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLContextWithCustomProtocol(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         final String protocol = X509Util.TLS_1_1;
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.setProperty(x509Util.getSslProtocolProperty(), protocol);
@@ -137,8 +137,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLContextWithoutKeyStoreLocation(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.clearProperty(x509Util.getSslKeystoreLocationProperty());
         x509Util.getDefaultSSLContext();
@@ -148,8 +147,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLContextWithoutKeyStorePassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.SSLContextException.class, () -> {
             if (!x509TestContext.isKeyStoreEncrypted()) {
@@ -163,39 +161,42 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testCreateSSLContext_withKeyStorePasswordFromFile(final X509KeyType caKeyType,
-                                                                 final X509KeyType certKeyType,
-                                                                 final String keyPassword,
-                                                                 final Integer paramIndex) throws Exception {
+    public void testCreateSSLContext_withKeyStorePasswordFromFile(
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final String keyPassword,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
 
-        testCreateSSLContext_withPasswordFromFile(keyPassword,
-                x509Util.getSslKeystorePasswdProperty(),
-                x509Util.getSslKeystorePasswdPathProperty());
-    }
-
-
-    @ParameterizedTest
-    @MethodSource("data")
-    @Timeout(value = 5)
-    public void testCreateSSLContext_withTrustStorePasswordFromFile(final X509KeyType caKeyType,
-                                                                   final X509KeyType certKeyType,
-                                                                   final String keyPassword,
-                                                                   final Integer paramIndex) throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-
-        testCreateSSLContext_withPasswordFromFile(keyPassword,
-                x509Util.getSslTruststorePasswdProperty(),
-                x509Util.getSslTruststorePasswdPathProperty());
+        testCreateSSLContext_withPasswordFromFile(
+                keyPassword, x509Util.getSslKeystorePasswdProperty(), x509Util.getSslKeystorePasswdPathProperty());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testCreateSSLContext_withWrongKeyStorePasswordFromFile(final X509KeyType caKeyType,
-                                                                      final X509KeyType certKeyType,
-                                                                      final String keyPassword,
-                                                                      final Integer paramIndex) throws Exception {
+    public void testCreateSSLContext_withTrustStorePasswordFromFile(
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final String keyPassword,
+            final Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+
+        testCreateSSLContext_withPasswordFromFile(
+                keyPassword, x509Util.getSslTruststorePasswdProperty(), x509Util.getSslTruststorePasswdPathProperty());
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContext_withWrongKeyStorePasswordFromFile(
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final String keyPassword,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         testCreateSSLContext_withWrongPasswordFromFile(keyPassword, x509Util.getSslKeystorePasswdPathProperty());
     }
@@ -203,10 +204,12 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testCreateSSLContext_withWrongTrustStorePasswordFromFile(final X509KeyType caKeyType,
-                                                                         final X509KeyType certKeyType,
-                                                                         final String keyPassword,
-                                                                         final Integer paramIndex) throws Exception {
+    public void testCreateSSLContext_withWrongTrustStorePasswordFromFile(
+            final X509KeyType caKeyType,
+            final X509KeyType certKeyType,
+            final String keyPassword,
+            final Integer paramIndex)
+            throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         testCreateSSLContext_withWrongPasswordFromFile(keyPassword, x509Util.getSslTruststorePasswdPathProperty());
     }
@@ -215,8 +218,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLContextWithCustomCipherSuites(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         setCustomCipherSuites();
         SSLSocket sslSocket = x509Util.createSSLSocket();
@@ -228,8 +230,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testCRLEnabled(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void testCRLEnabled(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.setProperty(x509Util.getSslCrlEnabledProperty(), "true");
@@ -242,8 +243,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testCRLDisabled(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void testCRLDisabled(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         x509Util.getDefaultSSLContext();
@@ -255,8 +255,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testOCSPEnabled(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void testOCSPEnabled(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
@@ -270,8 +269,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLSocket(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         setCustomCipherSuites();
         SSLSocket sslSocket = x509Util.createSSLSocket();
@@ -282,8 +280,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLServerSocketWithoutPort(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         setCustomCipherSuites();
         SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket();
@@ -295,8 +292,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @MethodSource("data")
     @Timeout(value = 5)
     public void testCreateSSLServerSocketWithPort(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         setCustomCipherSuites();
         int port = PortAssignment.unique();
@@ -309,50 +305,46 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a key manager from the PEM file on disk
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
-            x509TestContext.getKeyStorePassword(),
-            KeyStoreFileType.PEM.getPropertyValue());
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                KeyStoreFileType.PEM.getPropertyValue());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMKeyStoreNullPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         if (!x509TestContext.getKeyStorePassword().isEmpty()) {
             return;
         }
         // Make sure that empty password and null password are treated the same
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
-            null,
-            KeyStoreFileType.PEM.getPropertyValue());
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                null,
+                KeyStoreFileType.PEM.getPropertyValue());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMKeyStoreAutodetectStoreFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a key manager from the PEM file on disk
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
-            x509TestContext.getKeyStorePassword(),
-            null /* null StoreFileType means 'autodetect from file extension' */);
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                null /* null StoreFileType means 'autodetect from file extension' */);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.KeyManagerException.class, () -> {
             // Attempting to load with the wrong key password should fail
@@ -366,107 +358,100 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a trust manager from the PEM file on disk
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
-            x509TestContext.getTrustStorePassword(), KeyStoreFileType.PEM.getPropertyValue(),
-            false,
-            false,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                KeyStoreFileType.PEM.getPropertyValue(),
+                false,
+                false,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMTrustStoreNullPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         if (!x509TestContext.getTrustStorePassword().isEmpty()) {
             return;
         }
         // Make sure that empty password and null password are treated the same
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
-            null,
-            KeyStoreFileType.PEM.getPropertyValue(),
-            false,
-            false,
-            true,
-            true,
-            false);
-
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                null,
+                KeyStoreFileType.PEM.getPropertyValue(),
+                false,
+                false,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPEMTrustStoreAutodetectStoreFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a trust manager from the PEM file on disk
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
-            x509TestContext.getTrustStorePassword(),
-            null,  // null StoreFileType means 'autodetect from file extension'
-            false,
-            false,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                null, // null StoreFileType means 'autodetect from file extension'
+                false,
+                false,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a key manager from the JKS file on disk
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
-            x509TestContext.getKeyStorePassword(),
-            KeyStoreFileType.JKS.getPropertyValue());
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                KeyStoreFileType.JKS.getPropertyValue());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSKeyStoreNullPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         if (!x509TestContext.getKeyStorePassword().isEmpty()) {
             return;
         }
         // Make sure that empty password and null password are treated the same
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
-            null,
-            KeyStoreFileType.JKS.getPropertyValue());
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                null,
+                KeyStoreFileType.JKS.getPropertyValue());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSKeyStoreAutodetectStoreFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a key manager from the JKS file on disk
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
-            x509TestContext.getKeyStorePassword(),
-            null /* null StoreFileType means 'autodetect from file extension' */);
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                null /* null StoreFileType means 'autodetect from file extension' */);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.KeyManagerException.class, () -> {
             // Attempting to load with the wrong key password should fail
@@ -480,65 +465,61 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a trust manager from the JKS file on disk
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
-            x509TestContext.getTrustStorePassword(),
-            KeyStoreFileType.JKS.getPropertyValue(),
-            true,
-            true,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                KeyStoreFileType.JKS.getPropertyValue(),
+                true,
+                true,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSTrustStoreNullPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         if (!x509TestContext.getTrustStorePassword().isEmpty()) {
             return;
         }
         // Make sure that empty password and null password are treated the same
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
-            null,
-            KeyStoreFileType.JKS.getPropertyValue(),
-            false,
-            false,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                null,
+                KeyStoreFileType.JKS.getPropertyValue(),
+                false,
+                false,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSTrustStoreAutodetectStoreFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a trust manager from the JKS file on disk
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
-            x509TestContext.getTrustStorePassword(),
-            null,  // null StoreFileType means 'autodetect from file extension'
-            true,
-            true,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                null, // null StoreFileType means 'autodetect from file extension'
+                true,
+                true,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadJKSTrustStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.TrustManagerException.class, () -> {
             // Attempting to load with the wrong key password should fail
@@ -557,50 +538,46 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12KeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a key manager from the PKCS12 file on disk
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
-            x509TestContext.getKeyStorePassword(),
-            KeyStoreFileType.PKCS12.getPropertyValue());
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                KeyStoreFileType.PKCS12.getPropertyValue());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12KeyStoreNullPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         if (!x509TestContext.getKeyStorePassword().isEmpty()) {
             return;
         }
         // Make sure that empty password and null password are treated the same
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
-            null,
-            KeyStoreFileType.PKCS12.getPropertyValue());
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+                null,
+                KeyStoreFileType.PKCS12.getPropertyValue());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12KeyStoreAutodetectStoreFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a key manager from the PKCS12 file on disk
         X509KeyManager km = X509Util.createKeyManager(
-            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
-            x509TestContext.getKeyStorePassword(),
-            null /* null StoreFileType means 'autodetect from file extension' */);
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                null /* null StoreFileType means 'autodetect from file extension' */);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12KeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.KeyManagerException.class, () -> {
             // Attempting to load with the wrong key password should fail
@@ -614,64 +591,61 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12TrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a trust manager from the PKCS12 file on disk
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
-            x509TestContext.getTrustStorePassword(), KeyStoreFileType.PKCS12.getPropertyValue(),
-            true,
-            true,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                KeyStoreFileType.PKCS12.getPropertyValue(),
+                true,
+                true,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12TrustStoreNullPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         if (!x509TestContext.getTrustStorePassword().isEmpty()) {
             return;
         }
         // Make sure that empty password and null password are treated the same
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
-            null,
-            KeyStoreFileType.PKCS12.getPropertyValue(),
-            false,
-            false,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+                null,
+                KeyStoreFileType.PKCS12.getPropertyValue(),
+                false,
+                false,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12TrustStoreAutodetectStoreFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         // Make sure we can instantiate a trust manager from the PKCS12 file on disk
         X509TrustManager tm = X509Util.createTrustManager(
-            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
-            x509TestContext.getTrustStorePassword(),
-            null,  // null StoreFileType means 'autodetect from file extension'
-            true,
-            true,
-            true,
-            true,
-            false);
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                null, // null StoreFileType means 'autodetect from file extension'
+                true,
+                true,
+                true,
+                true,
+                false);
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPKCS12TrustStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.TrustManagerException.class, () -> {
             // Attempting to load with the wrong key password should fail
@@ -690,34 +664,35 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetSslHandshakeDetectionTimeoutMillisProperty(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertEquals(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS, x509Util.getSslHandshakeTimeoutMillis());
         // Note: need to create a new ClientX509Util each time to pick up modified property value
         String newPropertyString = Integer.toString(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS + 1);
         System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), newPropertyString);
         try (X509Util tempX509Util = new ClientX509Util()) {
-            assertEquals(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS
-                                        + 1, tempX509Util.getSslHandshakeTimeoutMillis());
+            assertEquals(
+                    X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS + 1,
+                    tempX509Util.getSslHandshakeTimeoutMillis());
         }
         // 0 value not allowed, will return the default
         System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), "0");
         try (X509Util tempX509Util = new ClientX509Util()) {
-            assertEquals(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS, tempX509Util.getSslHandshakeTimeoutMillis());
+            assertEquals(
+                    X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS, tempX509Util.getSslHandshakeTimeoutMillis());
         }
         // Negative value not allowed, will return the default
         System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), "-1");
         try (X509Util tempX509Util = new ClientX509Util()) {
-            assertEquals(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS, tempX509Util.getSslHandshakeTimeoutMillis());
+            assertEquals(
+                    X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS, tempX509Util.getSslHandshakeTimeoutMillis());
         }
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testCreateSSLContext_invalidCustomSSLContextClass(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(X509Exception.SSLContextException.class, () -> {
             ZKConfig zkConfig = new ZKConfig();
@@ -730,8 +705,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testCreateSSLContext_validCustomSSLContextClass(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         ZKConfig zkConfig = new ZKConfig();
         ClientX509Util clientX509Util = new ClientX509Util();
@@ -766,8 +740,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testClientRenegotiationFails(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Throwable {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Throwable {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(SSLHandshakeException.class, () -> {
             int port = PortAssignment.unique();
@@ -785,7 +758,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     @Override
                     public SSLSocket call() throws Exception {
                         SSLSocket sslSocket = (SSLSocket) listeningSocket.accept();
-                        sslSocket.setEnabledProtocols(new String[]{X509Util.TLS_1_2});
+                        sslSocket.setEnabledProtocols(new String[] {X509Util.TLS_1_2});
                         sslSocket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
                             @Override
                             public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
@@ -832,8 +805,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetDefaultCipherSuitesJava8(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("1.8");
         // Java 8 default should have the CBC suites first
@@ -843,8 +815,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetDefaultCipherSuitesJava9(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("9");
         // Java 9+ default should have the GCM suites first
@@ -854,8 +825,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetDefaultCipherSuitesJava10(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("10");
         // Java 9+ default should have the GCM suites first
@@ -865,8 +835,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetDefaultCipherSuitesJava11(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("11");
         // Java 9+ default should have the GCM suites first
@@ -876,8 +845,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetDefaultCipherSuitesUnknownVersion(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("notaversion");
         // If version can't be parsed, use the more conservative Java 8 default
@@ -887,8 +855,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testGetDefaultCipherSuitesNullVersion(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
             X509Util.getDefaultCipherSuitesForJavaVersion(null);
@@ -912,12 +879,10 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                 throw new RuntimeException(e);
             }
         }
-
     }
 
-    private void testCreateSSLContext_withPasswordFromFile(final String keyPassword,
-                                                           final String propertyName,
-                                                           final String pathPropertyName) throws Exception {
+    private void testCreateSSLContext_withPasswordFromFile(
+            final String keyPassword, final String propertyName, final String pathPropertyName) throws Exception {
 
         final Path secretFile = SecretUtilsTest.createSecretFile(keyPassword);
 
@@ -927,8 +892,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         x509Util.getDefaultSSLContext();
     }
 
-    private void testCreateSSLContext_withWrongPasswordFromFile(final String keyPassword,
-                                                                final String pathPropertyName) throws Exception {
+    private void testCreateSSLContext_withWrongPasswordFromFile(final String keyPassword, final String pathPropertyName)
+            throws Exception {
 
         final Path secretFile = SecretUtilsTest.createSecretFile(keyPassword + "_wrong");
 

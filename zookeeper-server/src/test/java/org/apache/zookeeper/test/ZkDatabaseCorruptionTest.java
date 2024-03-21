@@ -77,9 +77,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
     private class NoopStringCallback implements AsyncCallback.StringCallback {
 
         @Override
-        public void processResult(int rc, String path, Object ctx, String name) {
-        }
-
+        public void processResult(int rc, String path, Object ctx, String name) {}
     }
 
     @Test
@@ -89,14 +87,19 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         ZooKeeper zk = ClientBase.createZKClient(qb.hostPort, 10000);
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 0; i < 2000; i++) {
-            zk.create("/0-"
-                              + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new NoopStringCallback(), null);
+            zk.create(
+                    "/0-" + i,
+                    new byte[0],
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    new NoopStringCallback(),
+                    null);
         }
         zk.close();
 
         long leaderSid = 1;
         QuorumPeer leader = null;
-        //find out who is the leader and kill it
+        // find out who is the leader and kill it
         for (QuorumPeer quorumPeer : Arrays.asList(qb.s1, qb.s2, qb.s3, qb.s4, qb.s5)) {
             if (quorumPeer.getPeerState() == ServerState.LEADING) {
                 leader = quorumPeer;
@@ -111,7 +114,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         // now corrupt the leader's database
         FileTxnSnapLog snapLog = leader.getTxnFactory();
         File snapDir = snapLog.getSnapDir();
-        //corrupt all the snapshot in the snapshot directory
+        // corrupt all the snapshot in the snapshot directory
         corruptAllSnapshots(snapDir);
         qb.shutdownServers();
         qb.setupServers();
@@ -148,7 +151,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         } catch (RuntimeException re) {
             LOG.info("Got an error: expected", re);
         }
-        //wait for servers to be up
+        // wait for servers to be up
         String[] list = qb.hostPort.split(",");
         for (int i = 0; i < 5; i++) {
             if (leaderSid != (i + 1)) {
@@ -163,8 +166,13 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         zk = qb.createClient();
         SyncRequestProcessor.setSnapCount(100);
         for (int i = 2000; i < 4000; i++) {
-            zk.create("/0-"
-                              + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, new NoopStringCallback(), null);
+            zk.create(
+                    "/0-" + i,
+                    new byte[0],
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    new NoopStringCallback(),
+                    null);
         }
         zk.close();
 
@@ -195,5 +203,4 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         });
         assertEquals(0, zkDatabase.calculateTxnLogSizeLimit());
     }
-
 }

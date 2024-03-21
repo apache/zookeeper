@@ -55,7 +55,6 @@ public class DisconnectedWatcherTest extends ClientBase {
                 }
             }
         }
-
     }
 
     private CountdownWatcher watcher1;
@@ -247,7 +246,7 @@ public class DisconnectedWatcherTest extends ClientBase {
                 assertEquals(EventType.NodeCreated, e.getType());
                 assertEquals(path + "/foo", e.getPath());
             } else if (i % 3 == 2) {
-                zk1.setData(path, new byte[] { 1, 2, 3 }, -1);
+                zk1.setData(path, new byte[] {1, 2, 3}, -1);
 
                 WatchedEvent e = childWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
                 assertNotNull(e);
@@ -258,5 +257,4 @@ public class DisconnectedWatcherTest extends ClientBase {
             i++;
         }
     }
-
 }

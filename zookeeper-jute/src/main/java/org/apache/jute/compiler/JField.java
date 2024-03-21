@@ -109,7 +109,6 @@ public class JField {
         return mType.genCsharpHashCode(getCsharpName());
     }
 
-
     public String genJavaGetSet(int fIdx) {
         return mType.genJavaGetSet(mName, fIdx);
     }
@@ -137,5 +136,4 @@ public class JField {
     public String genJavaConstructorSet(String fname) {
         return mType.genJavaConstructorSet(mName, fname);
     }
-
 }

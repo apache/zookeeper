@@ -55,5 +55,4 @@ public interface InputArchive {
     Index startMap(String tag) throws IOException;
 
     void endMap(String tag) throws IOException;
-
 }

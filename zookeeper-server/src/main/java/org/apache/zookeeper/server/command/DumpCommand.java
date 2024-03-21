@@ -38,11 +38,10 @@ public class DumpCommand extends AbstractFourLetterCommand {
             pw.println("ephemeral nodes dump:");
             zkServer.dumpEphemerals(pw);
             pw.println("Connections dump:");
-            //dumpConnections connection is implemented only in NIOServerCnxnFactory
+            // dumpConnections connection is implemented only in NIOServerCnxnFactory
             if (factory instanceof NIOServerCnxnFactory) {
                 ((NIOServerCnxnFactory) factory).dumpConnections(pw);
             }
         }
     }
-
 }

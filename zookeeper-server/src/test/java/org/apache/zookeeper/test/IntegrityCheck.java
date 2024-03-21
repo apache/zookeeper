@@ -31,7 +31,6 @@ package org.apache.zookeeper.test;
  * a value that we have previously read or set. (Each time we set a value, the
  * value will be one more than the previous set.)
  */
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,7 +108,6 @@ public class IntegrityCheck implements StatCallback, DataCallback {
             zk.getData(cpath, false, this, null);
             incOutstanding();
         }
-
     }
 
     void doCreate() throws InterruptedException, KeeperException {
@@ -200,8 +198,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
         decOutstanding();
     }
 
-    public void processResult(
-            int rc, String path, Object ctx, byte[] data, Stat stat) {
+    public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
         if (rc == KeeperException.Code.OK.intValue()) {
             String string = new String(data);
             String lastString = null;
@@ -217,5 +214,4 @@ public class IntegrityCheck implements StatCallback, DataCallback {
         }
         decOutstanding();
     }
-
 }

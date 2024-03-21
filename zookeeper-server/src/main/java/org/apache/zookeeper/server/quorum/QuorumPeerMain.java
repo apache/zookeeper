@@ -127,10 +127,7 @@ public class QuorumPeerMain {
 
         // Start and schedule the the purge task
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(
-            config.getDataDir(),
-            config.getDataLogDir(),
-            config.getSnapRetainCount(),
-            config.getPurgeInterval());
+                config.getDataDir(), config.getDataLogDir(), config.getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
@@ -153,8 +150,7 @@ public class QuorumPeerMain {
         final MetricsProvider metricsProvider;
         try {
             metricsProvider = MetricsProviderBootstrap.startMetricsProvider(
-                config.getMetricsProviderClassName(),
-                config.getMetricsProviderConfiguration());
+                    config.getMetricsProviderClassName(), config.getMetricsProviderConfiguration());
         } catch (MetricsProviderLifeCycleException error) {
             throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
         }
@@ -166,19 +162,27 @@ public class QuorumPeerMain {
 
             if (config.getClientPortAddress() != null) {
                 cnxnFactory = ServerCnxnFactory.createFactory();
-                cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), false);
+                cnxnFactory.configure(
+                        config.getClientPortAddress(),
+                        config.getMaxClientCnxns(),
+                        config.getClientPortListenBacklog(),
+                        false);
             }
 
             if (config.getSecureClientPortAddress() != null) {
                 secureCnxnFactory = ServerCnxnFactory.createFactory();
-                secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
+                secureCnxnFactory.configure(
+                        config.getSecureClientPortAddress(),
+                        config.getMaxClientCnxns(),
+                        config.getClientPortListenBacklog(),
+                        true);
             }
 
             quorumPeer = getQuorumPeer();
             quorumPeer.setTxnFactory(new FileTxnSnapLog(config.getDataLogDir(), config.getDataDir()));
             quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
             quorumPeer.enableLocalSessionsUpgrading(config.isLocalSessionsUpgradingEnabled());
-            //quorumPeer.setQuorumPeers(config.getAllMembers());
+            // quorumPeer.setQuorumPeers(config.getAllMembers());
             quorumPeer.setElectionType(config.getElectionAlg());
             quorumPeer.setMyid(config.getServerId());
             quorumPeer.setTickTime(config.getTickTime());
@@ -265,5 +269,4 @@ public class QuorumPeerMain {
         QuorumPeer peer = quorumPeer;
         return peer == null ? "" : peer.toString();
     }
-
 }

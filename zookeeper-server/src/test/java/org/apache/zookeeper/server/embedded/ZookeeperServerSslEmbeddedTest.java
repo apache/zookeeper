@@ -80,8 +80,7 @@ public class ZookeeperServerSslEmbeddedTest {
         System.setProperty("zookeeper.ssl.trustStore.password", "testpass");
         System.setProperty("zookeeper.ssl.trustStore.type", "JKS");
 
-        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
-                .builder()
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded.builder()
                 .baseDir(baseDir)
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
@@ -103,19 +102,22 @@ public class ZookeeperServerSslEmbeddedTest {
             ZKClientConfig zKClientConfig = new ZKClientConfig();
             zKClientConfig.setProperty("zookeeper.client.secure", "true");
             // only netty supports TLS
-            zKClientConfig.setProperty("zookeeper.clientCnxnSocket", org.apache.zookeeper.ClientCnxnSocketNetty.class.getName());
-            try (ZooKeeper zk = new ZooKeeper(zkServer.getSecureConnectionString(), 60000, (WatchedEvent event) -> {
-                switch (event.getState()) {
-                    case SyncConnected:
-                        l.countDown();
-                        break;
-                }
-            }, zKClientConfig)) {
+            zKClientConfig.setProperty(
+                    "zookeeper.clientCnxnSocket", org.apache.zookeeper.ClientCnxnSocketNetty.class.getName());
+            try (ZooKeeper zk = new ZooKeeper(
+                    zkServer.getSecureConnectionString(),
+                    60000,
+                    (WatchedEvent event) -> {
+                        switch (event.getState()) {
+                            case SyncConnected:
+                                l.countDown();
+                                break;
+                        }
+                    },
+                    zKClientConfig)) {
                 assertTrue(zk.getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT));
                 assertTrue(l.await(10, TimeUnit.SECONDS));
             }
-
         }
     }
-
 }

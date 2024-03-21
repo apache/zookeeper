@@ -41,8 +41,14 @@ public class JRecord extends JCompType {
      * Creates a new instance of JRecord.
      */
     public JRecord(String name, ArrayList<JField> flist) {
-        super("struct " + name.substring(name.lastIndexOf('.') + 1),
-                name.replaceAll("\\.", "::"), getCsharpFQName(name), name, "Record", name, getCsharpFQName("IRecord"));
+        super(
+                "struct " + name.substring(name.lastIndexOf('.') + 1),
+                name.replaceAll("\\.", "::"),
+                getCsharpFQName(name),
+                name,
+                "Record",
+                name,
+                getCsharpFQName("IRecord"));
         mFQName = name;
         int idx = name.lastIndexOf('.');
         mName = name.substring(idx + 1);
@@ -78,7 +84,8 @@ public class JRecord extends JCompType {
         String[] parts = mModule.split("\\.");
         StringBuffer namespace = new StringBuffer();
         for (int i = 0; i < parts.length; i++) {
-            String capitalized = parts[i].substring(0, 1).toUpperCase() + parts[i].substring(1).toLowerCase();
+            String capitalized = parts[i].substring(0, 1).toUpperCase()
+                    + parts[i].substring(1).toLowerCase();
             namespace.append(capitalized);
             if (i != parts.length - 1) {
                 namespace.append(".");
@@ -125,7 +132,7 @@ public class JRecord extends JCompType {
     }
 
     String genCsharpReadMethod(String fname, String tag) {
-        //return "    "+capitalize(fname)+"=a_.Read"+mMethodSuffix+"(" + capitalize(fname) + ",\""+tag+"\");\n";
+        // return "    "+capitalize(fname)+"=a_.Read"+mMethodSuffix+"(" + capitalize(fname) + ",\""+tag+"\");\n";
         return genCsharpReadWrapper(capitalize(fname), tag, false);
     }
 
@@ -153,9 +160,12 @@ public class JRecord extends JCompType {
                 String structName = JVector.extractVectorName(jvType);
                 if (vectorStructs.get(structName) == null) {
                     vectorStructs.put(structName, structName);
-                    h.write("struct " + structName + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + "\n};\n");
-                    h.write("int serialize_" + structName + "(struct oarchive *out, const char *tag, struct " + structName + " *v);\n");
-                    h.write("int deserialize_" + structName + "(struct iarchive *in, const char *tag, struct " + structName + " *v);\n");
+                    h.write("struct " + structName + " {\n    int32_t count;\n"
+                            + jv.getElementType().genCDecl("*data") + "\n};\n");
+                    h.write("int serialize_" + structName + "(struct oarchive *out, const char *tag, struct "
+                            + structName + " *v);\n");
+                    h.write("int deserialize_" + structName + "(struct iarchive *in, const char *tag, struct "
+                            + structName + " *v);\n");
                     h.write("int allocate_" + structName + "(struct " + structName + " *v, int32_t len);\n");
                     h.write("int deallocate_" + structName + "(struct " + structName + " *v);\n");
                     c.write("int allocate_" + structName + "(struct " + structName + " *v, int32_t len) {\n");
@@ -179,7 +189,8 @@ public class JRecord extends JCompType {
                     c.write("    }\n");
                     c.write("    return 0;\n");
                     c.write("}\n");
-                    c.write("int serialize_" + structName + "(struct oarchive *out, const char *tag, struct " + structName + " *v)\n");
+                    c.write("int serialize_" + structName + "(struct oarchive *out, const char *tag, struct "
+                            + structName + " *v)\n");
                     c.write("{\n");
                     c.write("    int32_t count = v->count;\n");
                     c.write("    int rc = 0;\n");
@@ -191,7 +202,8 @@ public class JRecord extends JCompType {
                     c.write("    rc = rc ? rc : out->end_vector(out, tag);\n");
                     c.write("    return rc;\n");
                     c.write("}\n");
-                    c.write("int deserialize_" + structName + "(struct iarchive *in, const char *tag, struct " + structName + " *v)\n");
+                    c.write("int deserialize_" + structName + "(struct iarchive *in, const char *tag, struct "
+                            + structName + " *v)\n");
                     c.write("{\n");
                     c.write("    int rc = 0;\n");
                     c.write("    int32_t i;\n");
@@ -203,7 +215,6 @@ public class JRecord extends JCompType {
                     c.write("    rc = in->end_vector(in, tag);\n");
                     c.write("    return rc;\n");
                     c.write("}\n");
-
                 }
             }
         }
@@ -243,7 +254,8 @@ public class JRecord extends JCompType {
                 c.write("    deallocate_" + extractStructName(f.getType()) + "(&v->" + f.getName() + ");\n");
             } else if (f.getType() instanceof JVector) {
                 JVector vt = (JVector) f.getType();
-                c.write("    deallocate_" + JVector.extractVectorName(vt.getElementType()) + "(&v->" + f.getName() + ");\n");
+                c.write("    deallocate_" + JVector.extractVectorName(vt.getElementType()) + "(&v->" + f.getName()
+                        + ");\n");
             } else if (f.getType() instanceof JCompType) {
                 c.write("    deallocate_" + extractMethodSuffix(f.getType()) + "(&v->" + f.getName() + ");\n");
             }
@@ -253,21 +265,27 @@ public class JRecord extends JCompType {
 
     private void genSerialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? rc : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + extractStructName(type) + "(out, \"" + tag + "\", &v->" + name
+                    + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? rc : serialize_" + JVector.extractVectorName(((JVector) type).getElementType()) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : serialize_" + JVector.extractVectorName(((JVector) type).getElementType())
+                    + "(out, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? rc : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : out->serialize_" + extractMethodSuffix(type) + "(out, \"" + tag + "\", &v->"
+                    + name + ");\n");
         }
     }
 
     private void genDeserialize(FileWriter c, JType type, String tag, String name) throws IOException {
         if (type instanceof JRecord) {
-            c.write("    rc = rc ? rc : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + extractStructName(type) + "(in, \"" + tag + "\", &v->" + name
+                    + ");\n");
         } else if (type instanceof JVector) {
-            c.write("    rc = rc ? rc : deserialize_" + JVector.extractVectorName(((JVector) type).getElementType()) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : deserialize_" + JVector.extractVectorName(((JVector) type).getElementType())
+                    + "(in, \"" + tag + "\", &v->" + name + ");\n");
         } else {
-            c.write("    rc = rc ? rc : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->" + name + ");\n");
+            c.write("    rc = rc ? rc : in->deserialize_" + extractMethodSuffix(type) + "(in, \"" + tag + "\", &v->"
+                    + name + ");\n");
         }
     }
 
@@ -288,8 +306,7 @@ public class JRecord extends JCompType {
         return type.substring("struct ".length());
     }
 
-    public void genCppCode(FileWriter hh, FileWriter cc)
-            throws IOException {
+    public void genCppCode(FileWriter hh, FileWriter cc) throws IOException {
         String[] ns = getCppNameSpace().split("::");
         for (int i = 0; i < ns.length; i++) {
             hh.write("namespace " + ns[i] + " {\n");
@@ -397,7 +414,6 @@ public class JRecord extends JCompType {
         cc.write("  static const ::std::string sig_(\"" + getSignature() + "\");\n");
         cc.write("  return sig_;\n");
         cc.write("}\n");
-
     }
 
     public void genJavaCode(File outputDirectory) throws IOException {
@@ -434,7 +450,8 @@ public class JRecord extends JCompType {
             jj.write("\n");
             jj.write("package " + getJavaPackage() + ";\n\n");
             jj.write("import org.apache.jute.*;\n");
-            jj.write("import org.apache.jute.Record; // JDK14 needs explicit import due to clash with java.lang.Record\n");
+            jj.write(
+                    "import org.apache.jute.Record; // JDK14 needs explicit import due to clash with java.lang.Record\n");
             jj.write("import org.apache.yetus.audience.InterfaceAudience;\n");
             jj.write("@InterfaceAudience.Public\n");
             jj.write("public class " + getName() + " implements Record {\n");
@@ -518,14 +535,13 @@ public class JRecord extends JCompType {
             jj.write("  public int compareTo (Object peer_) throws ClassCastException {\n");
             boolean unimplemented = false;
             for (JField f : mFields) {
-                if ((f.getType() instanceof JMap)
-                        || (f.getType() instanceof JVector)) {
+                if ((f.getType() instanceof JMap) || (f.getType() instanceof JVector)) {
                     unimplemented = true;
                 }
             }
             if (unimplemented) {
-                jj.write("    throw new UnsupportedOperationException(\"comparing "
-                        + getName() + " is unimplemented\");\n");
+                jj.write("    throw new UnsupportedOperationException(\"comparing " + getName()
+                        + " is unimplemented\");\n");
             } else {
                 jj.write("    if (!(peer_ instanceof " + getName() + ")) {\n");
                 jj.write("      throw new ClassCastException(\"Comparing different types of records.\");\n");
@@ -586,7 +602,7 @@ public class JRecord extends JCompType {
             throw new IOException(outputDirectory + " is not a directory.");
         }
 
-        try (FileWriter cs = new FileWriter(new File(outputDirectory, getName() + ".cs"));) {
+        try (FileWriter cs = new FileWriter(new File(outputDirectory, getName() + ".cs")); ) {
             cs.write("// File generated by hadoop record compiler. Do not edit.\n");
             cs.write("/**\n");
             cs.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -663,7 +679,8 @@ public class JRecord extends JCompType {
             cs.write("    try {\n");
             cs.write("      System.IO.MemoryStream ms = new System.IO.MemoryStream();\n");
             cs.write("      MiscUtil.IO.EndianBinaryWriter writer =\n");
-            cs.write("        new MiscUtil.IO.EndianBinaryWriter(MiscUtil.Conversion.EndianBitConverter.Big, ms, System.Text.Encoding.UTF8);\n");
+            cs.write(
+                    "        new MiscUtil.IO.EndianBinaryWriter(MiscUtil.Conversion.EndianBitConverter.Big, ms, System.Text.Encoding.UTF8);\n");
             cs.write("      BinaryOutputArchive a_ = \n");
             cs.write("        new BinaryOutputArchive(writer);\n");
             cs.write("      a_.StartRecord(this,\"\");\n");
@@ -694,14 +711,13 @@ public class JRecord extends JCompType {
             cs.write("  public int CompareTo (object peer_) {\n");
             boolean unimplemented = false;
             for (JField f : mFields) {
-                if ((f.getType() instanceof JMap)
-                        || (f.getType() instanceof JVector)) {
+                if ((f.getType() instanceof JMap) || (f.getType() instanceof JVector)) {
                     unimplemented = true;
                 }
             }
             if (unimplemented) {
-                cs.write("    throw new InvalidOperationException(\"comparing "
-                        + getCsharpName() + " is unimplemented\");\n");
+                cs.write("    throw new InvalidOperationException(\"comparing " + getCsharpName()
+                        + " is unimplemented\");\n");
             } else {
                 cs.write("    if (!(peer_ is " + getCsharpName() + ")) {\n");
                 cs.write("      throw new InvalidOperationException(\"Comparing different types of records.\");\n");

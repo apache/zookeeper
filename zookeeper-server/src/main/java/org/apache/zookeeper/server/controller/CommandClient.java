@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import java.io.IOException;
@@ -92,7 +91,7 @@ public class CommandClient {
      * @param commandParameter The command parameter, in the form of command/action/parameter.
      * @return true if we received a good (200) response and false otherwise.
      */
-    public boolean trySendCommand(ControlCommand.Action action, String commandParameter)  {
+    public boolean trySendCommand(ControlCommand.Action action, String commandParameter) {
         try {
             if (!started) {
                 client.start();
@@ -118,12 +117,14 @@ public class CommandClient {
      * @param commandParameter The command parameter, in the form of command/action/parameter.
      * @return The full response body from the CommandListener server.
      */
-    public ContentResponse sendCommand(ControlCommand.Action action,
-                                       String commandParameter) throws Exception {
-        String command = String.format("%s%s:%s/%s", "http://",
-            this.hostName, this.hostPort, ControlCommand.createCommandUri(action, commandParameter));
-        ContentResponse response = this.client.newRequest(command).timeout(this.requestTimeoutInMs,
-            TimeUnit.MILLISECONDS).send();
+    public ContentResponse sendCommand(ControlCommand.Action action, String commandParameter) throws Exception {
+        String command = String.format(
+                "%s%s:%s/%s",
+                "http://", this.hostName, this.hostPort, ControlCommand.createCommandUri(action, commandParameter));
+        ContentResponse response = this.client
+                .newRequest(command)
+                .timeout(this.requestTimeoutInMs, TimeUnit.MILLISECONDS)
+                .send();
         LOG.info("Sent command {}", command);
         LOG.info("Response body {}", new String(response.getContent(), StandardCharsets.UTF_8));
         return response;

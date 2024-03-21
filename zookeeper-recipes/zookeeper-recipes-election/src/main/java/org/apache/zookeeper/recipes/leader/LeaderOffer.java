@@ -42,11 +42,7 @@ public class LeaderOffer {
 
     @Override
     public String toString() {
-        return "{"
-            + " id:" + id
-            + " nodePath:" + nodePath
-            + " hostName:" + hostName
-            + " }";
+        return "{" + " id:" + id + " nodePath:" + nodePath + " hostName:" + hostName + " }";
     }
 
     public Integer getId() {
@@ -77,14 +73,11 @@ public class LeaderOffer {
      * Compare two instances of {@link LeaderOffer} using only the {code}id{code}
      * member.
      */
-    public static class IdComparator
-        implements Comparator<LeaderOffer>, Serializable {
+    public static class IdComparator implements Comparator<LeaderOffer>, Serializable {
 
         @Override
         public int compare(LeaderOffer o1, LeaderOffer o2) {
             return o1.getId().compareTo(o2.getId());
         }
-
     }
-
 }

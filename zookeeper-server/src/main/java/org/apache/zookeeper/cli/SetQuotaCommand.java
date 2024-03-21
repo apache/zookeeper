@@ -95,8 +95,7 @@ public class SetQuotaCommand extends CliCommand {
             return false;
         }
 
-        boolean flagSet = (cl.hasOption("n") || cl.hasOption("N")
-                || cl.hasOption("b") || cl.hasOption("B"));
+        boolean flagSet = (cl.hasOption("n") || cl.hasOption("N") || cl.hasOption("b") || cl.hasOption("B"));
         if (flagSet) {
             try {
                 createQuota(zk, path, quota);
@@ -194,10 +193,10 @@ public class SetQuotaCommand extends CliCommand {
         // is an ancestor of some path that
         // already has quota
 
-        //check if the child node has a quota.
+        // check if the child node has a quota.
         checkIfChildQuota(zk, path);
 
-        //check for any parent that has been quota
+        // check for any parent that has been quota
         checkIfParentQuota(zk, path);
 
         // this is valid node for quota
@@ -221,10 +220,9 @@ public class SetQuotaCommand extends CliCommand {
             quotaPath = sb.toString();
             if (zk.exists(quotaPath, false) == null) {
                 try {
-                    zk.create(quotaPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT);
+                    zk.create(quotaPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 } catch (KeeperException.NodeExistsException ne) {
-                    //do nothing
+                    // do nothing
                 }
             }
         }
@@ -233,15 +231,13 @@ public class SetQuotaCommand extends CliCommand {
         byte[] data;
 
         if (zk.exists(quotaPath, false) == null) {
-            zk.create(quotaPath, quota.getStatsBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(quotaPath, quota.getStatsBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             StatsTrack stats = new StatsTrack();
             stats.setCount(0);
             stats.setBytes(0L);
 
-            zk.create(statPath, stats.getStatsBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(statPath, stats.getStatsBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             data = zk.getData(quotaPath, false, new Stat());
             StatsTrack quotaStrack = new StatsTrack(data);
@@ -278,13 +274,15 @@ public class SetQuotaCommand extends CliCommand {
     }
 
     private static void checkQuota(StatsTrack quotaStrack, StatsTrack statStrack) {
-        if ((quotaStrack.getCount() > -1 && quotaStrack.getCount() < statStrack.getCount()) || (quotaStrack.getCountHardLimit() > -1
-                && quotaStrack.getCountHardLimit() < statStrack.getCount())) {
-            System.out.println("[Warning]: the count quota you create is less than the existing count:" + statStrack.getCount());
+        if ((quotaStrack.getCount() > -1 && quotaStrack.getCount() < statStrack.getCount())
+                || (quotaStrack.getCountHardLimit() > -1 && quotaStrack.getCountHardLimit() < statStrack.getCount())) {
+            System.out.println(
+                    "[Warning]: the count quota you create is less than the existing count:" + statStrack.getCount());
         }
-        if ((quotaStrack.getBytes() > -1 && quotaStrack.getBytes() < statStrack.getBytes()) || (quotaStrack.getByteHardLimit() > -1
-                && quotaStrack.getByteHardLimit() < statStrack.getBytes())) {
-            System.out.println("[Warning]: the bytes quota you create is less than the existing bytes:" + statStrack.getBytes());
+        if ((quotaStrack.getBytes() > -1 && quotaStrack.getBytes() < statStrack.getBytes())
+                || (quotaStrack.getByteHardLimit() > -1 && quotaStrack.getByteHardLimit() < statStrack.getBytes())) {
+            System.out.println(
+                    "[Warning]: the bytes quota you create is less than the existing bytes:" + statStrack.getBytes());
         }
     }
 
@@ -308,7 +306,8 @@ public class SetQuotaCommand extends CliCommand {
                 }
                 for (String child : children) {
                     if (!quotaPath.equals(Quotas.quotaZookeeper + path) && Quotas.limitNode.equals(child)) {
-                        throw new IllegalArgumentException(path + " has a child " + Quotas.trimQuotaPath(quotaPath) + " which has a quota");
+                        throw new IllegalArgumentException(
+                                path + " has a child " + Quotas.trimQuotaPath(quotaPath) + " which has a quota");
                     }
                 }
             });
@@ -339,7 +338,8 @@ public class SetQuotaCommand extends CliCommand {
             }
             for (String child : children) {
                 if (!quotaPath.equals(Quotas.quotaPath(path)) && Quotas.limitNode.equals(child)) {
-                    throw new IllegalArgumentException(path + " has a parent " + Quotas.trimQuotaPath(quotaPath) + " which has a quota");
+                    throw new IllegalArgumentException(
+                            path + " has a parent " + Quotas.trimQuotaPath(quotaPath) + " which has a quota");
                 }
             }
         }

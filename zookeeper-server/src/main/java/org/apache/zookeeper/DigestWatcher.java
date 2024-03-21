@@ -29,5 +29,4 @@ public interface DigestWatcher {
      * @param mismatchZxid the zxid when the digest mismatch happened.
      */
     void process(long mismatchZxid);
-
 }

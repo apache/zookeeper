@@ -95,7 +95,7 @@ public class TxnLogToolkitTest {
 
     @Test
     public void testMultiTxnDecode() throws IOException {
-        //MultiTxn with four ops, and the first op error.
+        // MultiTxn with four ops, and the first op error.
         List<Txn> txns = new ArrayList<>();
         int type = -1;
         for (int i = 0; i < 4; i++) {
@@ -140,7 +140,9 @@ public class TxnLogToolkitTest {
 
         // Assert
         String output = outContent.toString();
-        Pattern p = Pattern.compile("^CRC ERROR.*session 0x8061fac5ddeb0000 cxid 0x0 zxid 0x8800000002 createSession 30000$", Pattern.MULTILINE);
+        Pattern p = Pattern.compile(
+                "^CRC ERROR.*session 0x8061fac5ddeb0000 cxid 0x0 zxid 0x8800000002 createSession 30000$",
+                Pattern.MULTILINE);
         Matcher m = p.matcher(output);
         assertTrue(m.find(), "Output doesn't indicate CRC error for the broken session id: " + output);
     }
@@ -188,5 +190,4 @@ public class TxnLogToolkitTest {
         output = outContent.toString();
         assertThat(output, not(containsString("CRC ERROR")));
     }
-
 }

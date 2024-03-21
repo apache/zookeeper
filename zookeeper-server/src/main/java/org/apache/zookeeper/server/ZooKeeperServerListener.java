@@ -33,5 +33,4 @@ public interface ZooKeeperServerListener {
      *            - error code
      */
     void notifyStopping(String threadName, int errorCode);
-
 }

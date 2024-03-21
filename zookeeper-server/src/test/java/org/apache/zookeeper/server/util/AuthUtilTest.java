@@ -30,10 +30,10 @@ public class AuthUtilTest {
     @BeforeAll
     public static void beforeClassSetUp() {
         ProviderRegistry.reset();
-        System.setProperty("zookeeper.authProvider.sasl",
-                "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
-        System.setProperty("zookeeper.authProvider.x509",
-                "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
+        System.setProperty(
+                "zookeeper.authProvider.sasl", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        System.setProperty(
+                "zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
     }
 
     @AfterAll

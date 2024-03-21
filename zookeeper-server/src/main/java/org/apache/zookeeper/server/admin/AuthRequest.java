@@ -58,9 +58,6 @@ public class AuthRequest {
 
     @Override
     public String toString() {
-        return "AuthRequest{"
-        + "permission=" + permission
-        + ", path='" + path + '\''
-        + '}';
+        return "AuthRequest{" + "permission=" + permission + ", path='" + path + '\'' + '}';
     }
 }

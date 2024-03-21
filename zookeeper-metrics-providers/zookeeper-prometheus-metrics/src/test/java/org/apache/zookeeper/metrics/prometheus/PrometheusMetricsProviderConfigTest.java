@@ -23,7 +23,6 @@ import java.util.Properties;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.junit.jupiter.api.Test;
 
-
 public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBase {
 
     @Test
@@ -58,5 +57,4 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
         provider.configure(configuration);
         provider.start();
     }
-
 }

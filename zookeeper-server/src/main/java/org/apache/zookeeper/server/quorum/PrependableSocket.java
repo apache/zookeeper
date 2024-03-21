@@ -60,5 +60,4 @@ public class PrependableSocket extends Socket {
         pushbackInputStream.unread(bytes, offset, length);
         this.pushbackInputStream = pushbackInputStream;
     }
-
 }

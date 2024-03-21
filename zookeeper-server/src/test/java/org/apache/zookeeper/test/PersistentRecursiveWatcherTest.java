@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
@@ -57,8 +56,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testBasic()
-            throws IOException, InterruptedException, KeeperException {
+    public void testBasic() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE);
             internalTestBasic(zk);
@@ -66,8 +64,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testBasicAsync()
-            throws IOException, InterruptedException, KeeperException {
+    public void testBasicAsync() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
@@ -101,15 +98,18 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
         assertEvent(events, EventType.NodeDataChanged, "/a/b/c/d/e", stat);
 
         zk.delete("/a/b/c/d/e", -1);
-        assertEvent(events, EventType.NodeDeleted, "/a/b/c/d/e", zk.exists("/a/b/c/d", false).getPzxid());
+        assertEvent(
+                events,
+                EventType.NodeDeleted,
+                "/a/b/c/d/e",
+                zk.exists("/a/b/c/d", false).getPzxid());
 
         zk.create("/a/b/c/d/e", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, stat);
         assertEvent(events, EventType.NodeCreated, "/a/b/c/d/e", stat);
     }
 
     @Test
-    public void testRemoval()
-            throws IOException, InterruptedException, KeeperException {
+    public void testRemoval() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT_RECURSIVE);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -161,9 +161,9 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testMultiClient()
-            throws IOException, InterruptedException, KeeperException {
-        try (ZooKeeper zk1 = createClient(new CountdownWatcher(), hostPort); ZooKeeper zk2 = createClient(new CountdownWatcher(), hostPort)) {
+    public void testMultiClient() throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk1 = createClient(new CountdownWatcher(), hostPort);
+                ZooKeeper zk2 = createClient(new CountdownWatcher(), hostPort)) {
 
             zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -233,8 +233,7 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testRootWatcher()
-            throws IOException, InterruptedException, KeeperException {
+    public void testRootWatcher() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/", persistentWatcher, PERSISTENT_RECURSIVE);
             Stat stat = new Stat();
@@ -254,25 +253,21 @@ public class PersistentRecursiveWatcherTest extends ClientBase {
     }
 
     private void assertEvent(BlockingQueue<WatchedEvent> events, EventType eventType, String path, Stat stat)
-        throws InterruptedException {
+            throws InterruptedException {
         assertEvent(events, eventType, path, stat.getMzxid());
     }
 
     private void assertEvent(BlockingQueue<WatchedEvent> events, EventType eventType, String path, long zxid)
-        throws InterruptedException {
+            throws InterruptedException {
         assertEvent(events, eventType, KeeperState.SyncConnected, path, zxid);
     }
 
-    private void assertEvent(BlockingQueue<WatchedEvent> events, EventType eventType, KeeperState keeperState,
-        String path, long zxid) throws InterruptedException {
+    private void assertEvent(
+            BlockingQueue<WatchedEvent> events, EventType eventType, KeeperState keeperState, String path, long zxid)
+            throws InterruptedException {
         WatchedEvent actualEvent = events.poll(5, TimeUnit.SECONDS);
         assertNotNull(actualEvent);
-        WatchedEvent expectedEvent = new WatchedEvent(
-            eventType,
-            keeperState,
-            path,
-            zxid
-        );
+        WatchedEvent expectedEvent = new WatchedEvent(eventType, keeperState, path, zxid);
         TestUtils.assertWatchedEventEquals(expectedEvent, actualEvent);
     }
 }

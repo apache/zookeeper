@@ -94,5 +94,4 @@ public class StatCommand extends CliCommand {
         new StatPrinter(out).print(stat);
         return watch;
     }
-
 }

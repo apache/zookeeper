@@ -28,5 +28,4 @@ public interface LeaderElectionMXBean {
      * @return the time when the leader election started
      */
     String getStartTime();
-
 }

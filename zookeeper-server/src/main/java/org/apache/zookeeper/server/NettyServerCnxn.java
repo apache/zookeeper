@@ -171,18 +171,19 @@ public class NettyServerCnxn extends ServerCnxn {
         } catch (KeeperException.NoAuthException e) {
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(
-                    LOG,
-                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                    "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId) + " (filtered by ACL)");
+                        LOG,
+                        ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                        "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId)
+                                + " (filtered by ACL)");
             }
             return;
         }
         ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire
@@ -198,8 +199,8 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public int sendResponse(ReplyHeader h, Record r, String tag,
-                             String cacheKey, Stat stat, int opCode) throws IOException {
+    public int sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat, int opCode)
+            throws IOException {
         // cacheKey and stat are used in caching, which is not
         // implemented here. Implementation example can be found in NIOServerCnxn.
         if (closingChannel || !channel.isOpen()) {
@@ -276,7 +277,6 @@ public class NettyServerCnxn extends ServerCnxn {
             sb.append(cbuf, off, len);
             checkFlush(false);
         }
-
     }
 
     /** Return if four letter word found and responded to, otw false **/
@@ -300,10 +300,8 @@ public class NettyServerCnxn extends ServerCnxn {
         // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
         if (!FourLetterCommands.isEnabled(cmd)) {
             LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
-            NopCommand nopCmd = new NopCommand(
-                pwriter,
-                this,
-                cmd + " is not executed because it is not in the whitelist.");
+            NopCommand nopCmd =
+                    new NopCommand(pwriter, this, cmd + " is not executed because it is not in the whitelist.");
             nopCmd.start();
             return true;
         }
@@ -402,7 +400,8 @@ public class NettyServerCnxn extends ServerCnxn {
                     appendToQueuedBuffer(buf.retainedSlice(buf.readerIndex(), buf.readableBytes()));
                     if (LOG.isTraceEnabled()) {
                         LOG.trace("Copy is {}", queuedBuffer);
-                        LOG.trace("0x{} queuedBuffer {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(queuedBuffer));
+                        LOG.trace(
+                                "0x{} queuedBuffer {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(queuedBuffer));
                     }
                 }
             }
@@ -417,7 +416,10 @@ public class NettyServerCnxn extends ServerCnxn {
         checkIsInEventLoop("processQueuedBuffer");
         if (queuedBuffer != null) {
             if (LOG.isTraceEnabled()) {
-                LOG.trace("processing queue 0x{} queuedBuffer {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(queuedBuffer));
+                LOG.trace(
+                        "processing queue 0x{} queuedBuffer {}",
+                        Long.toHexString(sessionId),
+                        ByteBufUtil.hexDump(queuedBuffer));
             }
             receiveMessage(queuedBuffer);
             if (closingChannel) {
@@ -467,7 +469,10 @@ public class NettyServerCnxn extends ServerCnxn {
                         LOG.trace("message readable {} bb len {} {}", message.readableBytes(), bb.remaining(), bb);
                         ByteBuffer dat = bb.duplicate();
                         dat.flip();
-                        LOG.trace("0x{} bb {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
+                        LOG.trace(
+                                "0x{} bb {}",
+                                Long.toHexString(sessionId),
+                                ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
                     }
 
                     if (bb.remaining() > message.readableBytes()) {
@@ -478,12 +483,17 @@ public class NettyServerCnxn extends ServerCnxn {
                     bb.limit(bb.capacity());
 
                     if (LOG.isTraceEnabled()) {
-                        LOG.trace("after readBytes message readable {} bb len {} {}", message.readableBytes(), bb.remaining(), bb);
+                        LOG.trace(
+                                "after readBytes message readable {} bb len {} {}",
+                                message.readableBytes(),
+                                bb.remaining(),
+                                bb);
                         ByteBuffer dat = bb.duplicate();
                         dat.flip();
-                        LOG.trace("after readbytes 0x{} bb {}",
-                                  Long.toHexString(sessionId),
-                                  ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
+                        LOG.trace(
+                                "after readbytes 0x{} bb {}",
+                                Long.toHexString(sessionId),
+                                ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
                     }
                     if (bb.remaining() == 0) {
                         bb.flip();
@@ -512,7 +522,10 @@ public class NettyServerCnxn extends ServerCnxn {
                         LOG.trace("message readable {} bblenrem {}", message.readableBytes(), bbLen.remaining());
                         ByteBuffer dat = bbLen.duplicate();
                         dat.flip();
-                        LOG.trace("0x{} bbLen {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
+                        LOG.trace(
+                                "0x{} bbLen {}",
+                                Long.toHexString(sessionId),
+                                ByteBufUtil.hexDump(Unpooled.wrappedBuffer(dat)));
                     }
 
                     if (message.readableBytes() < bbLen.remaining()) {
@@ -524,7 +537,10 @@ public class NettyServerCnxn extends ServerCnxn {
                         bbLen.flip();
 
                         if (LOG.isTraceEnabled()) {
-                            LOG.trace("0x{} bbLen {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(Unpooled.wrappedBuffer(bbLen)));
+                            LOG.trace(
+                                    "0x{} bbLen {}",
+                                    Long.toHexString(sessionId),
+                                    ByteBufUtil.hexDump(Unpooled.wrappedBuffer(bbLen)));
                         }
                         int len = bbLen.getInt();
                         if (LOG.isTraceEnabled()) {
@@ -542,8 +558,10 @@ public class NettyServerCnxn extends ServerCnxn {
                         }
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
-                            LOG.info("Closing connection to {} because the server is not ready (server state is: {})",
-                                getRemoteSocketAddress(), zks == null ? "unknown" : zks.getState());
+                            LOG.info(
+                                    "Closing connection to {} because the server is not ready (server state is: {})",
+                                    getRemoteSocketAddress(),
+                                    zks == null ? "unknown" : zks.getState());
                             close(DisconnectReason.IO_EXCEPTION);
                             return;
                         }

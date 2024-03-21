@@ -26,16 +26,19 @@ import org.junit.jupiter.api.Test;
 public class WatchesSummaryTest extends ZKTestCase {
 
     private WatchesSummary s;
+
     @BeforeEach
     public void setUp() {
         s = new WatchesSummary(1, 2, 3);
     }
+
     @Test
     public void testGetters() {
         assertEquals(1, s.getNumConnections());
         assertEquals(2, s.getNumPaths());
         assertEquals(3, s.getTotalWatches());
     }
+
     @Test
     public void testToMap() {
         Map<String, Object> m = s.toMap();
@@ -44,5 +47,4 @@ public class WatchesSummaryTest extends ZKTestCase {
         assertEquals(Integer.valueOf(2), m.get(WatchesSummary.KEY_NUM_PATHS));
         assertEquals(Integer.valueOf(3), m.get(WatchesSummary.KEY_NUM_TOTAL_WATCHES));
     }
-
 }

@@ -87,5 +87,4 @@ public class BufferStats {
     public synchronized String toString() {
         return String.format("%d/%d/%d", lastBufferSize, minBufferSize, maxBufferSize);
     }
-
 }

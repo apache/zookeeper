@@ -27,11 +27,11 @@ import org.apache.zookeeper.proto.RequestHeader;
 public class MockPacket extends ClientCnxn.Packet {
 
     public MockPacket(
-        RequestHeader requestHeader,
-        ReplyHeader replyHeader,
-        Record request,
-        Record response,
-        WatchRegistration watchRegistration) {
+            RequestHeader requestHeader,
+            ReplyHeader replyHeader,
+            Record request,
+            Record response,
+            WatchRegistration watchRegistration) {
         super(requestHeader, replyHeader, request, response, watchRegistration);
     }
 
@@ -39,5 +39,4 @@ public class MockPacket extends ClientCnxn.Packet {
         createBB();
         return this.bb;
     }
-
 }

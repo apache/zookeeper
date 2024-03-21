@@ -30,5 +30,4 @@ public class NullQuorumAuthLearner implements QuorumAuthLearner {
     public void authenticate(Socket sock, String hostname) {
         return; // simply return don't require auth
     }
-
 }

@@ -70,5 +70,4 @@ public class NIOServerCnxnFactoryTest {
         ServerSocket ss = new ServerSocket(listenAddress.getPort());
         ss.close();
     }
-
 }

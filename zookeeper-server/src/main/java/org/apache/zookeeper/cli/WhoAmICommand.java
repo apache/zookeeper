@@ -51,5 +51,4 @@ public class WhoAmICommand extends CliCommand {
         }
         return false;
     }
-
 }

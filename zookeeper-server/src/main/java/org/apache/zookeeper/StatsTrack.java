@@ -75,7 +75,6 @@ public class StatsTrack {
         }
     }
 
-
     /**
      * get the count of nodes allowed as part of quota
      *

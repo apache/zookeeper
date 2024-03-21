@@ -76,5 +76,4 @@ public interface MetricsProvider {
      * on the underlying implementation.
      */
     void resetAllValues();
-
 }

@@ -60,6 +60,7 @@ public class LeaderBeanTest {
     private LeaderZooKeeperServer zks;
     private QuorumPeer qp;
     private QuorumVerifier quorumVerifierMock;
+
     @TempDir
     File tmpDir;
 
@@ -68,10 +69,14 @@ public class LeaderBeanTest {
         Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
-        peersView.put(Long.valueOf(myId),
-                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
+        peersView.put(
+                Long.valueOf(myId),
+                new QuorumServer(
+                        myId,
                         new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
+                        new InetSocketAddress(clientIP, PortAssignment.unique()),
+                        new InetSocketAddress(clientIP, clientPort),
+                        LearnerType.PARTICIPANT));
         return peersView;
     }
 
@@ -162,24 +167,28 @@ public class LeaderBeanTest {
     private Request createMockRequest() throws IOException {
         TxnHeader header = mock(TxnHeader.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        OutputArchive oa = (OutputArchive) args[0];
+                        oa.writeString("header", "test");
+                        return null;
+                    }
+                })
+                .when(header)
+                .serialize(any(OutputArchive.class), anyString());
         Record txn = mock(Record.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("record", "test");
-                return null;
-            }
-        }).when(txn).serialize(any(OutputArchive.class), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        OutputArchive oa = (OutputArchive) args[0];
+                        oa.writeString("record", "test");
+                        return null;
+                    }
+                })
+                .when(txn)
+                .serialize(any(OutputArchive.class), anyString());
         return new Request(1, 2, 3, header, txn, 4);
     }
 
@@ -221,5 +230,4 @@ public class LeaderBeanTest {
         assertTrue(followerInfo.contains("5"));
         assertEquals("5\n", leaderBean.nonVotingFollowerInfo());
     }
-
 }

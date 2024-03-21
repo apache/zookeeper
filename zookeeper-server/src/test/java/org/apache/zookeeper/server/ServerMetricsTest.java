@@ -106,5 +106,4 @@ public class ServerMetricsTest extends ZKTestCase {
 
         metric.reset();
     }
-
 }

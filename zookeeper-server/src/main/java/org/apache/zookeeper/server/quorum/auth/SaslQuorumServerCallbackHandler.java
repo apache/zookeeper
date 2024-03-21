@@ -52,14 +52,13 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
     private final Map<String, String> credentials;
     private final Set<String> authzHosts;
 
-    public SaslQuorumServerCallbackHandler(
-        Configuration configuration,
-        String serverSection,
-        Set<String> authzHosts) throws IOException {
+    public SaslQuorumServerCallbackHandler(Configuration configuration, String serverSection, Set<String> authzHosts)
+            throws IOException {
         AppConfigurationEntry[] configurationEntries = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {
-            String errorMessage = "Could not find a '" + serverSection + "' entry in this configuration: Server cannot start.";
+            String errorMessage =
+                    "Could not find a '" + serverSection + "' entry in this configuration: Server cannot start.";
             LOG.error(errorMessage);
             throw new IOException(errorMessage);
         }
@@ -70,7 +69,8 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
         for (AppConfigurationEntry entry : configurationEntries) {
             if (entry.getLoginModuleName().equals(DigestLoginModule.class.getName())) {
                 Map<String, ?> options = entry.getOptions();
-                // Populate DIGEST-MD5 user -> password map with JAAS configuration entries from the "QuorumServer" section.
+                // Populate DIGEST-MD5 user -> password map with JAAS configuration entries from the "QuorumServer"
+                // section.
                 // Usernames are distinguished from other options by prefixing the username with a "user_" prefix.
                 for (Map.Entry<String, ?> pair : options.entrySet()) {
                     String key = pair.getKey();
@@ -160,10 +160,11 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
         ac.setAuthorized(authzFlag);
         if (ac.isAuthorized()) {
             ac.setAuthorizedID(authorizationID);
-            LOG.info("Successfully authenticated learner: authenticationID={};  authorizationID={}.",
-                     authenticationID, authorizationID);
+            LOG.info(
+                    "Successfully authenticated learner: authenticationID={};  authorizationID={}.",
+                    authenticationID,
+                    authorizationID);
         }
         LOG.debug("SASL authorization completed, authorized flag set to {}", ac.isAuthorized());
     }
-
 }

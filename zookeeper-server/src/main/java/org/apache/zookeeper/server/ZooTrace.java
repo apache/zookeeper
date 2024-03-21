@@ -57,7 +57,8 @@ public class ZooTrace {
     @Deprecated
     public static final long JMX_TRACE_MASK = 1 << 9;
 
-    private static long traceMask = CLIENT_REQUEST_TRACE_MASK | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK | WARNING_TRACE_MASK;
+    private static long traceMask =
+            CLIENT_REQUEST_TRACE_MASK | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK | WARNING_TRACE_MASK;
 
     public static synchronized long getTextTraceLevel() {
         return traceMask;
@@ -90,5 +91,4 @@ public class ZooTrace {
             log.trace(header + ":" + rp + request.toString());
         }
     }
-
 }

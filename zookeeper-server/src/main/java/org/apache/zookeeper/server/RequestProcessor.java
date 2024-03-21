@@ -38,11 +38,9 @@ public interface RequestProcessor {
         public RequestProcessorException(String msg, Throwable t) {
             super(msg, t);
         }
-
     }
 
     void processRequest(Request request) throws RequestProcessorException;
 
     void shutdown();
-
 }

@@ -18,17 +18,13 @@
 
 package org.apache.zookeeper.common;
 
-
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from JKS files.
  */
 class JKSFileLoader extends StandardTypeFileKeyStoreLoader {
 
     private JKSFileLoader(
-        String keyStorePath,
-        String trustStorePath,
-        String keyStorePassword,
-        String trustStorePassword) {
+            String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword, SupportedStandardKeyFormat.JKS);
     }
 
@@ -38,7 +34,5 @@ class JKSFileLoader extends StandardTypeFileKeyStoreLoader {
         JKSFileLoader build() {
             return new JKSFileLoader(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
         }
-
     }
-
 }

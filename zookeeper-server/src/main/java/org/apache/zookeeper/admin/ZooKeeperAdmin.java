@@ -86,10 +86,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @see ZooKeeper#ZooKeeper(String, int, Watcher)
      *
      */
-    public ZooKeeperAdmin(
-        String connectString,
-        int sessionTimeout,
-        Watcher watcher) throws IOException {
+    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher) throws IOException {
         super(connectString, sessionTimeout, watcher);
     }
 
@@ -122,11 +119,8 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      * @see ZooKeeper#ZooKeeper(String, int, Watcher, ZKClientConfig)
      */
-    public ZooKeeperAdmin(
-        String connectString,
-        int sessionTimeout,
-        Watcher watcher,
-        ZKClientConfig conf) throws IOException {
+    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher, ZKClientConfig conf)
+            throws IOException {
         super(connectString, sessionTimeout, watcher, conf);
     }
 
@@ -170,11 +164,8 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @since 3.6.1
      */
     public ZooKeeperAdmin(
-        String connectString,
-        int sessionTimeout,
-        Watcher watcher,
-        boolean canBeReadOnly,
-        ZKClientConfig conf) throws IOException {
+            String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, ZKClientConfig conf)
+            throws IOException {
         super(connectString, sessionTimeout, watcher, canBeReadOnly, conf);
     }
 
@@ -212,11 +203,8 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean)
      */
-    public ZooKeeperAdmin(
-        String connectString,
-        int sessionTimeout,
-        Watcher watcher,
-        boolean canBeReadOnly) throws IOException {
+    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly)
+            throws IOException {
         super(connectString, sessionTimeout, watcher, canBeReadOnly);
     }
 
@@ -238,11 +226,8 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
     public byte[] reconfigure(
-        String joiningServers,
-        String leavingServers,
-        String newMembers,
-        long fromConfig,
-        Stat stat) throws KeeperException, InterruptedException {
+            String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat)
+            throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
@@ -264,17 +249,18 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      */
     public byte[] reconfigure(
-        List<String> joiningServers,
-        List<String> leavingServers,
-        List<String> newMembers,
-        long fromConfig,
-        Stat stat) throws KeeperException, InterruptedException {
+            List<String> joiningServers,
+            List<String> leavingServers,
+            List<String> newMembers,
+            long fromConfig,
+            Stat stat)
+            throws KeeperException, InterruptedException {
         return reconfigure(
-            StringUtils.joinStrings(joiningServers, ","),
-            StringUtils.joinStrings(leavingServers, ","),
-            StringUtils.joinStrings(newMembers, ","),
-            fromConfig,
-            stat);
+                StringUtils.joinStrings(joiningServers, ","),
+                StringUtils.joinStrings(leavingServers, ","),
+                StringUtils.joinStrings(newMembers, ","),
+                fromConfig,
+                stat);
     }
 
     /**
@@ -284,26 +270,18 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      **/
     public void reconfigure(
-        String joiningServers,
-        String leavingServers,
-        String newMembers,
-        long fromConfig,
-        DataCallback cb,
-        Object ctx) {
+            String joiningServers,
+            String leavingServers,
+            String newMembers,
+            long fromConfig,
+            DataCallback cb,
+            Object ctx) {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
         GetDataResponse response = new GetDataResponse();
         cnxn.queuePacket(
-            h,
-            new ReplyHeader(),
-            request,
-            response,
-            cb,
-            ZooDefs.CONFIG_NODE,
-            ZooDefs.CONFIG_NODE,
-            ctx,
-            null);
+                h, new ReplyHeader(), request, response, cb, ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
     }
 
     /**
@@ -313,19 +291,19 @@ public class ZooKeeperAdmin extends ZooKeeper {
      *
      */
     public void reconfigure(
-        List<String> joiningServers,
-        List<String> leavingServers,
-        List<String> newMembers,
-        long fromConfig,
-        DataCallback cb,
-        Object ctx) {
+            List<String> joiningServers,
+            List<String> leavingServers,
+            List<String> newMembers,
+            long fromConfig,
+            DataCallback cb,
+            Object ctx) {
         reconfigure(
-            StringUtils.joinStrings(joiningServers, ","),
-            StringUtils.joinStrings(leavingServers, ","),
-            StringUtils.joinStrings(newMembers, ","),
-            fromConfig,
-            cb,
-            ctx);
+                StringUtils.joinStrings(joiningServers, ","),
+                StringUtils.joinStrings(leavingServers, ","),
+                StringUtils.joinStrings(newMembers, ","),
+                fromConfig,
+                cb,
+                ctx);
     }
 
     /**
@@ -341,5 +319,4 @@ public class ZooKeeperAdmin extends ZooKeeper {
     public String toString() {
         return super.toString();
     }
-
 }

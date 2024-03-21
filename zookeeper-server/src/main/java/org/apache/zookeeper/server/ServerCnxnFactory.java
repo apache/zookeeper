@@ -132,7 +132,8 @@ public abstract class ServerCnxnFactory {
 
     // This method is to maintain compatiblity of startup(zks) and enable sharing of zks
     // when we add secureCnxnFactory.
-    public abstract void startup(ZooKeeperServer zkServer, boolean startServer) throws IOException, InterruptedException;
+    public abstract void startup(ZooKeeperServer zkServer, boolean startServer)
+            throws IOException, InterruptedException;
 
     /** The maximum queue length of the ZooKeeper server's socket */
     public abstract int getSocketListenBacklog();
@@ -144,6 +145,7 @@ public abstract class ServerCnxnFactory {
     public abstract void start();
 
     protected ZooKeeperServer zkServer;
+
     public final void setZooKeeperServer(ZooKeeperServer zks) {
         this.zkServer = zks;
         if (zks != null) {
@@ -164,8 +166,8 @@ public abstract class ServerCnxnFactory {
         }
         try {
             ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName)
-                                                                           .getDeclaredConstructor()
-                                                                           .newInstance();
+                    .getDeclaredConstructor()
+                    .newInstance();
             LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
             return serverCnxnFactory;
         } catch (Exception e) {
@@ -186,7 +188,8 @@ public abstract class ServerCnxnFactory {
         return createFactory(addr, maxClientCnxns, -1);
     }
 
-    public static ServerCnxnFactory createFactory(InetSocketAddress addr, int maxClientCnxns, int backlog) throws IOException {
+    public static ServerCnxnFactory createFactory(InetSocketAddress addr, int maxClientCnxns, int backlog)
+            throws IOException {
         ServerCnxnFactory factory = createFactory();
         factory.configure(addr, maxClientCnxns, backlog);
         return factory;
@@ -203,6 +206,7 @@ public abstract class ServerCnxnFactory {
     // Connection set is relied on heavily by four letter commands
     // Construct a ConcurrentHashSet using a ConcurrentHashMap
     protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);
         if (jmxConnectionBean != null) {
@@ -220,7 +224,6 @@ public abstract class ServerCnxnFactory {
                 LOG.warn("Could not register connection", e);
             }
         }
-
     }
 
     /**
@@ -234,7 +237,8 @@ public abstract class ServerCnxnFactory {
      * @throws IOException if jaas.conf is missing or there's an error in it.
      */
     protected void configureSaslLogin() throws IOException {
-        String serverSection = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
+        String serverSection = System.getProperty(
+                ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
 
         // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.
         AppConfigurationEntry[] entries = null;
@@ -275,13 +279,13 @@ public abstract class ServerCnxnFactory {
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
-                                  + " ZooKeeper server to authenticate itself properly: "
-                                  + e);
+                    + " ZooKeeper server to authenticate itself properly: "
+                    + e);
         }
     }
 
     private static void setLoginUser(String name) {
-        //Created this method to avoid ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD find bug issue
+        // Created this method to avoid ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD find bug issue
         loginUser = name;
     }
     /**
@@ -303,11 +307,11 @@ public abstract class ServerCnxnFactory {
         maxCnxns = Integer.getInteger(ZOOKEEPER_MAX_CONNECTION, ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         if (maxCnxns < 0) {
             maxCnxns = ZOOKEEPER_MAX_CONNECTION_DEFAULT;
-            LOG.warn("maxCnxns should be greater than or equal to 0, using default value {}.",
+            LOG.warn(
+                    "maxCnxns should be greater than or equal to 0, using default value {}.",
                     ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         } else if (maxCnxns == ZOOKEEPER_MAX_CONNECTION_DEFAULT) {
-            LOG.warn("maxCnxns is not configured, using default value {}.",
-                    ZOOKEEPER_MAX_CONNECTION_DEFAULT);
+            LOG.warn("maxCnxns is not configured, using default value {}.", ZOOKEEPER_MAX_CONNECTION_DEFAULT);
         } else {
             LOG.info("maxCnxns configured value is {}.", maxCnxns);
         }

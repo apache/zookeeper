@@ -80,5 +80,4 @@ public class WatchesReport {
     public Map<Long, Set<String>> toMap() {
         return deepCopy(id2paths);
     }
-
 }

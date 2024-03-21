@@ -129,5 +129,4 @@ public class GetChildren2Test extends ClientBase {
         assertEquals(c_a.size(), 10);
         assertEquals(c_a, c_b);
     }
-
 }

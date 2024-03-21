@@ -104,5 +104,4 @@ public class KeyStoreFileTypeTest extends ZKTestCase {
             KeyStoreFileType.fromPropertyValueOrFileName("", "prod.key");
         });
     }
-
 }

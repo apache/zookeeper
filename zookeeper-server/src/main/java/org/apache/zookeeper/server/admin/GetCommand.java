@@ -25,7 +25,6 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 /**
  * Command that represents HTTP GET request
  */
-
 public abstract class GetCommand extends CommandBase {
 
     protected GetCommand(List<String> names) {

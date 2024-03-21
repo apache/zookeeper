@@ -81,7 +81,6 @@ public class ZooKeeperServerTest extends ZKTestCase {
         }
     }
 
-
     @Test
     public void testSortDataDirAscending() {
         File[] files = new File[5];
@@ -159,7 +158,7 @@ public class ZooKeeperServerTest extends ZKTestCase {
             FileTxnLog log = new FileTxnLog(file);
             assertFalse(log.isForceSync());
         } finally {
-            //Reset back to default.
+            // Reset back to default.
             System.setProperty("zookeeper.forceSync", "yes");
         }
     }
@@ -195,7 +194,7 @@ public class ZooKeeperServerTest extends ZKTestCase {
         request.setLastZxidSeen(99L);
         request.setTimeOut(500);
         request.setSessionId(123L);
-        request.setPasswd(new byte[]{ 1 });
+        request.setPasswd(new byte[] {1});
         request.setReadOnly(true);
 
         ServerCnxn.CloseRequestException e = assertThrows(
@@ -215,8 +214,11 @@ public class ZooKeeperServerTest extends ZKTestCase {
         }
 
         final Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        assertEquals(1, values.keySet().stream().filter(
-                key -> key.contains(String.format("%s_%s", namespace, name))).count());
+        assertEquals(
+                1,
+                values.keySet().stream()
+                        .filter(key -> key.contains(String.format("%s_%s", namespace, name)))
+                        .count());
 
         assertEquals(count, values.get(String.format("%s_%s", namespace, name)));
     }

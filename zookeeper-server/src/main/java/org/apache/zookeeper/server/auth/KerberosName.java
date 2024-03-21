@@ -63,8 +63,7 @@ public class KerberosName {
      * A pattern for parsing a auth_to_local rule.
      */
     private static final Pattern ruleParser = Pattern.compile(
-        "\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?"
-        + "(s/([^/]*)/([^/]*)/(g)?)?))");
+            "\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?" + "(s/([^/]*)/([^/]*)/(g)?)?))");
 
     /**
      * A pattern that recognizes simple/non-simple names.
@@ -83,7 +82,7 @@ public class KerberosName {
             defaultRealm = KerberosUtil.getDefaultRealm();
         } catch (Exception ke) {
             if ((System.getProperty("zookeeper.requireKerberosConfig") != null)
-                && (System.getProperty("zookeeper.requireKerberosConfig").equals("true"))) {
+                    && (System.getProperty("zookeeper.requireKerberosConfig").equals("true"))) {
                 throw new IllegalArgumentException("Can't get Kerberos configuration", ke);
             } else {
                 defaultRealm = "";
@@ -255,16 +254,13 @@ public class KerberosName {
                         int num = Integer.parseInt(paramNum);
                         if (num < 0 || num > params.length) {
                             throw new BadFormatString(String.format(
-                                "index %d from %s is outside of the valid range 0 to %d",
-                                num,
-                                format,
-                                (params.length - 1)));
+                                    "index %d from %s is outside of the valid range 0 to %d",
+                                    num, format, (params.length - 1)));
                         }
                         result.append(params[num]);
                     } catch (NumberFormatException nfe) {
                         throw new BadFormatString("bad format in username mapping in " + paramNum, nfe);
                     }
-
                 }
                 start = match.end();
             }
@@ -318,7 +314,6 @@ public class KerberosName {
             }
             return result;
         }
-
     }
 
     static List<Rule> parseRules(String rules) {
@@ -333,12 +328,12 @@ public class KerberosName {
                 result.add(new Rule());
             } else {
                 result.add(new Rule(
-                    Integer.parseInt(matcher.group(4)),
-                    matcher.group(5),
-                    matcher.group(7),
-                    matcher.group(9),
-                    matcher.group(10),
-                    "g".equals(matcher.group(11))));
+                        Integer.parseInt(matcher.group(4)),
+                        matcher.group(5),
+                        matcher.group(7),
+                        matcher.group(9),
+                        matcher.group(10),
+                        "g".equals(matcher.group(11))));
             }
             remaining = remaining.substring(matcher.end());
         }
@@ -360,10 +355,10 @@ public class KerberosName {
         BadFormatString(String msg) {
             super(msg);
         }
+
         BadFormatString(String msg, Throwable err) {
             super(msg, err);
         }
-
     }
 
     @SuppressWarnings("serial")
@@ -372,7 +367,6 @@ public class KerberosName {
         NoMatchingRule(String msg) {
             super(msg);
         }
-
     }
 
     /**
@@ -388,9 +382,9 @@ public class KerberosName {
             if (realm == null) {
                 return serviceName;
             }
-            params = new String[]{realm, serviceName};
+            params = new String[] {realm, serviceName};
         } else {
-            params = new String[]{realm, serviceName, hostName};
+            params = new String[] {realm, serviceName, hostName};
         }
         for (Rule r : rules) {
             String result = r.apply(params);
@@ -414,5 +408,4 @@ public class KerberosName {
             System.out.println("Name: " + name + " to " + name.getShortName());
         }
     }
-
 }

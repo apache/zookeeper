@@ -59,5 +59,4 @@ public class WatcherOrBitSetTest extends ZKTestCase {
         assertTrue(bitSet.contains(bit));
         assertEquals(1, bitSet.size());
     }
-
 }

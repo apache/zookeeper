@@ -47,10 +47,23 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;
 
-    protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout,
-                                    int maxSessionTimeout, int listenBacklog, ZKDatabase zkDb, QuorumPeer self) {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb, self.getInitialConfig(),
-              self.isReconfigEnabled());
+    protected QuorumZooKeeperServer(
+            FileTxnSnapLog logFactory,
+            int tickTime,
+            int minSessionTimeout,
+            int maxSessionTimeout,
+            int listenBacklog,
+            ZKDatabase zkDb,
+            QuorumPeer self) {
+        super(
+                logFactory,
+                tickTime,
+                minSessionTimeout,
+                maxSessionTimeout,
+                listenBacklog,
+                zkDb,
+                self.getInitialConfig(),
+                self.isReconfigEnabled());
         this.self = self;
     }
 
@@ -72,7 +85,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
         if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi)
-            || !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
+                || !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
             return null;
         }
 
@@ -141,22 +154,23 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // We need to set isLocalSession to tree for these type of request
         // so that the request processor can process them correctly.
         switch (si.type) {
-        case OpCode.createSession:
-            if (self.areLocalSessionsEnabled()) {
-                // All new sessions local by default.
-                si.setLocalSession(true);
-            }
-            break;
-        case OpCode.closeSession:
-            String reqType = "global";
-            if (upgradeableSessionTracker.isLocalSession(si.sessionId)) {
-                si.setLocalSession(true);
-                reqType = "local";
-            }
-            LOG.info("Submitting {} closeSession request for session 0x{}", reqType, Long.toHexString(si.sessionId));
-            break;
-        default:
-            break;
+            case OpCode.createSession:
+                if (self.areLocalSessionsEnabled()) {
+                    // All new sessions local by default.
+                    si.setLocalSession(true);
+                }
+                break;
+            case OpCode.closeSession:
+                String reqType = "global";
+                if (upgradeableSessionTracker.isLocalSession(si.sessionId)) {
+                    si.setLocalSession(true);
+                    reqType = "local";
+                }
+                LOG.info(
+                        "Submitting {} closeSession request for session 0x{}", reqType, Long.toHexString(si.sessionId));
+                break;
+            default:
+                break;
         }
     }
 
@@ -171,11 +185,13 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.print("electionAlg=");
         pwriter.println(self.getElectionType());
         pwriter.print("electionPort=");
-        pwriter.println(self.getElectionAddress().getAllPorts()
-                .stream().map(Objects::toString).collect(Collectors.joining("|")));
+        pwriter.println(self.getElectionAddress().getAllPorts().stream()
+                .map(Objects::toString)
+                .collect(Collectors.joining("|")));
         pwriter.print("quorumPort=");
-        pwriter.println(self.getQuorumAddress().getAllPorts()
-                        .stream().map(Objects::toString).collect(Collectors.joining("|")));
+        pwriter.println(self.getQuorumAddress().getAllPorts().stream()
+                .map(Objects::toString)
+                .collect(Collectors.joining("|")));
         pwriter.print("peerType=");
         pwriter.println(self.getLearnerType().ordinal());
         pwriter.println("membership: ");
@@ -191,7 +207,8 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     protected void registerMetrics() {
         super.registerMetrics();
 
-        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
+        MetricsContext rootContext =
+                ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.registerGauge("quorum_size", () -> {
             return self.getQuorumSize();
@@ -202,7 +219,8 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     protected void unregisterMetrics() {
         super.unregisterMetrics();
 
-        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
+        MetricsContext rootContext =
+                ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
 
         rootContext.unregisterGauge("quorum_size");
     }
@@ -212,5 +230,4 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         super.dumpMonitorValues(response);
         response.accept("peer_state", self.getDetailedPeerState());
     }
-
 }

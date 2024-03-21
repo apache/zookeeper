@@ -85,5 +85,4 @@ public class DeleteAllCommand extends CliCommand {
         }
         return false;
     }
-
 }

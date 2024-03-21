@@ -38,12 +38,17 @@ abstract class StandardTypeFileKeyStoreLoader extends FileKeyStoreLoader {
     protected final SupportedStandardKeyFormat format;
 
     protected enum SupportedStandardKeyFormat {
-        JKS, PKCS12, BCFKS
+        JKS,
+        PKCS12,
+        BCFKS
     }
 
-
-    StandardTypeFileKeyStoreLoader(String keyStorePath, String trustStorePath, String keyStorePassword,
-        String trustStorePassword, SupportedStandardKeyFormat format) {
+    StandardTypeFileKeyStoreLoader(
+            String keyStorePath,
+            String trustStorePath,
+            String keyStorePassword,
+            String trustStorePassword,
+            SupportedStandardKeyFormat format) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
         this.format = format;
     }
@@ -73,5 +78,4 @@ abstract class StandardTypeFileKeyStoreLoader extends FileKeyStoreLoader {
     private static char[] passwordStringToCharArray(String password) {
         return password == null ? EMPTY_CHAR_ARRAY : password.toCharArray();
     }
-
 }

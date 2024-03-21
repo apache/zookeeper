@@ -101,5 +101,4 @@ public class StatCommandTest {
         assertThat(output, containsString("Zookeeper version:"));
         assertThat(output, containsString("Node count:"));
     }
-
 }

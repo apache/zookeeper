@@ -39,5 +39,4 @@ public class LeaderElectionBean implements LeaderElectionMXBean, ZKMBeanInfo {
     public String getStartTime() {
         return startTime.toString();
     }
-
 }

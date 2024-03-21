@@ -80,11 +80,7 @@ public class WriteLock extends ProtocolSupport {
      * @param acl the acls that you want to use for all the paths
      * @param callback the call back instance
      */
-    public WriteLock(
-        ZooKeeper zookeeper,
-        String dir,
-        List<ACL> acl,
-        LockListener callback) {
+    public WriteLock(ZooKeeper zookeeper, String dir, List<ACL> acl, LockListener callback) {
         this(zookeeper, dir, acl);
         this.callback = callback;
     }
@@ -164,7 +160,6 @@ public class WriteLock extends ProtocolSupport {
                 LOG.warn("Failed to acquire lock", e);
             }
         }
-
     }
 
     /**
@@ -183,7 +178,7 @@ public class WriteLock extends ProtocolSupport {
          * @throws InterruptedException
          */
         private void findPrefixInChildren(String prefix, ZooKeeper zookeeper, String dir)
-            throws KeeperException, InterruptedException {
+                throws KeeperException, InterruptedException {
             List<String> names = zookeeper.getChildren(dir, false);
             for (String name : names) {
                 if (name.startsWith(prefix)) {
@@ -197,7 +192,6 @@ public class WriteLock extends ProtocolSupport {
 
                 LOG.debug("Created id: {}", id);
             }
-
         }
 
         /**
@@ -207,8 +201,8 @@ public class WriteLock extends ProtocolSupport {
          * @return if the command was successful or not
          */
         @SuppressFBWarnings(
-            value = "NP_NULL_PARAM_DEREF_NONVIRTUAL",
-            justification = "findPrefixInChildren will assign a value to this.id")
+                value = "NP_NULL_PARAM_DEREF_NONVIRTUAL",
+                justification = "findPrefixInChildren will assign a value to this.id")
         public boolean execute() throws KeeperException, InterruptedException {
             do {
                 if (id == null) {
@@ -252,11 +246,9 @@ public class WriteLock extends ProtocolSupport {
                         }
                     }
                 }
-            }
-            while (id == null);
+            } while (id == null);
             return Boolean.FALSE;
         }
-
     }
 
     /**
@@ -298,6 +290,4 @@ public class WriteLock extends ProtocolSupport {
     public String getId() {
         return this.id;
     }
-
 }
-

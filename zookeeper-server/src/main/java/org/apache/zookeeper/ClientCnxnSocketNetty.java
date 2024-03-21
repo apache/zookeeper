@@ -100,7 +100,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * Other non-lifecycle methods are in jeopardy getting a null channel
      * when calling in concurrency. We must handle it.
      */
-
     @Override
     boolean isConnected() {
         // Assuming that isConnected() is only used to initiate connection,
@@ -126,11 +125,12 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     void connect(InetSocketAddress addr) throws IOException {
         firstConnect = new CountDownLatch(1);
 
-        Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup)
-                                             .channel(NettyUtils.nioOrEpollSocketChannel())
-                                             .option(ChannelOption.SO_LINGER, -1)
-                                             .option(ChannelOption.TCP_NODELAY, true)
-                                             .handler(new ZKClientPipelineFactory(addr.getHostString(), addr.getPort()));
+        Bootstrap bootstrap = new Bootstrap()
+                .group(eventLoopGroup)
+                .channel(NettyUtils.nioOrEpollSocketChannel())
+                .option(ChannelOption.SO_LINGER, -1)
+                .option(ChannelOption.TCP_NODELAY, true)
+                .handler(new ZKClientPipelineFactory(addr.getHostString(), addr.getPort()));
         bootstrap = configureBootstrapAllocator(bootstrap);
         bootstrap.validate();
 
@@ -230,8 +230,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     }
 
     @Override
-    void connectionPrimed() {
-    }
+    void connectionPrimed() {}
 
     @Override
     void packetAdded() {
@@ -254,15 +253,13 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             waitSasl.release();
         }
         if (outgoingQueue != null) {
-          outgoingQueue.add(WakeupPacket.getInstance());
+            outgoingQueue.add(WakeupPacket.getInstance());
         }
     }
 
     @Override
-    void doTransport(
-        int waitTimeOut,
-        Queue<Packet> pendingQueue,
-        ClientCnxn cnxn) throws IOException, InterruptedException {
+    void doTransport(int waitTimeOut, Queue<Packet> pendingQueue, ClientCnxn cnxn)
+            throws IOException, InterruptedException {
         try {
             if (!firstConnect.await(waitTimeOut, TimeUnit.MILLISECONDS)) {
                 return;
@@ -355,8 +352,8 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         while (true) {
             if (p != WakeupPacket.getInstance()) {
                 if ((p.requestHeader != null)
-                    && (p.requestHeader.getType() != ZooDefs.OpCode.ping)
-                    && (p.requestHeader.getType() != ZooDefs.OpCode.auth)) {
+                        && (p.requestHeader.getType() != ZooDefs.OpCode.ping)
+                        && (p.requestHeader.getType() != ZooDefs.OpCode.auth)) {
                     p.requestHeader.setXid(cnxn.getXid());
                     synchronized (pendingQueue) {
                         pendingQueue.add(p);
@@ -414,7 +411,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         public static Packet getInstance() {
             return instance;
         }
-
     }
 
     /**
@@ -443,7 +439,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // The synchronized is to prevent the race on shared variable "sslContext".
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline)
-            throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+                throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
             if (sslContext == null) {
                 try (ClientX509Util x509Util = new ClientX509Util()) {
                     sslContext = x509Util.createNettySslContextForClient(clientConfig);
@@ -452,7 +448,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             pipeline.addLast("ssl", sslContext.newHandler(pipeline.channel().alloc(), host, port));
             LOG.info("SSL handler added for channel: {}", pipeline.channel());
         }
-
     }
 
     /**
@@ -521,7 +516,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             LOG.error("Unexpected throwable", cause);
             cleanup();
         }
-
     }
 
     /**
@@ -543,5 +537,4 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     static void clearTestAllocator() {
         TEST_ALLOCATOR.set(null);
     }
-
 }

@@ -31,8 +31,7 @@ public class CommandFactoryTest {
      */
     @Test
     public void testCommandCreation() {
-        CliCommand cliCommand =
-                CommandFactory.getInstance(CommandFactory.Command.CREATE);
+        CliCommand cliCommand = CommandFactory.getInstance(CommandFactory.Command.CREATE);
         assertTrue(cliCommand instanceof CreateCommand);
     }
 }

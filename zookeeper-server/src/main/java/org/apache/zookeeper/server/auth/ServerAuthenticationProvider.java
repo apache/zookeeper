@@ -53,7 +53,6 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
         public ServerCnxn getCnxn() {
             return cnxn;
         }
-
     }
 
     public static class MatchValues {
@@ -103,7 +102,6 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
         public List<ACL> getSetAcls() {
             return setAcls;
         }
-
     }
 
     /**
@@ -141,5 +139,4 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
     public final boolean matches(String id, String aclExpr) {
         throw new UnsupportedOperationException();
     }
-
 }

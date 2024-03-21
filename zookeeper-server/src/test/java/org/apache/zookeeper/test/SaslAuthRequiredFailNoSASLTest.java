@@ -61,6 +61,4 @@ public class SaslAuthRequiredFailNoSASLTest extends ClientBase {
             }
         }
     }
-
 }
-

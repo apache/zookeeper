@@ -37,5 +37,4 @@ public interface LockListener {
      * released.
      */
     void lockReleased();
-
 }

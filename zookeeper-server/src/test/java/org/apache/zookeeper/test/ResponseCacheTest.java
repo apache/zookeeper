@@ -66,8 +66,8 @@ public class ResponseCacheTest extends ClientBase {
         }
     }
 
-    private void checkCacheStatus(long expectedHits, long expectedMisses,
-                                  String cacheHitMetricsName, String cacheMissMetricsName) {
+    private void checkCacheStatus(
+            long expectedHits, long expectedMisses, String cacheHitMetricsName, String cacheMissMetricsName) {
 
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(expectedHits, metrics.get(cacheHitMetricsName));
@@ -103,8 +103,7 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 1;
             expectedHits += reads - 1;
         }
-        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
-                "response_packet_cache_misses");
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits", "response_packet_cache_misses");
 
         writeData = "test2".getBytes();
         writeStat = zk.setData(path, writeData, -1);
@@ -117,8 +116,7 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 1;
             expectedHits += reads - 1;
         }
-        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
-                "response_packet_cache_misses");
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits", "response_packet_cache_misses");
 
         // Create a child beneath the tested node. This won't change the data of
         // the tested node, but will change it's pzxid. The next read of the tested
@@ -131,8 +129,7 @@ public class ResponseCacheTest extends ClientBase {
         }
         assertArrayEquals(writeData, readData);
         assertNotSame(writeStat, readStat);
-        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits",
-                "response_packet_cache_misses");
+        checkCacheStatus(expectedHits, expectedMisses, "response_packet_cache_hits", "response_packet_cache_misses");
 
         ServerMetrics.getMetrics().resetAll();
         expectedHits = 0;
@@ -157,7 +154,10 @@ public class ResponseCacheTest extends ClientBase {
             expectedMisses += 6;
         }
 
-        checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+        checkCacheStatus(
+                expectedHits,
+                expectedMisses,
+                "response_packet_get_children_cache_hits",
                 "response_packet_get_children_cache_misses");
 
         checkPath(path + "/a", zk, 2);
@@ -168,7 +168,10 @@ public class ResponseCacheTest extends ClientBase {
             expectedHits += 3;
         }
 
-        checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+        checkCacheStatus(
+                expectedHits,
+                expectedMisses,
+                "response_packet_get_children_cache_hits",
                 "response_packet_get_children_cache_misses");
     }
 
@@ -192,5 +195,4 @@ public class ResponseCacheTest extends ClientBase {
             fail("stats from exists()/getChildren2() do not match");
         }
     }
-
 }

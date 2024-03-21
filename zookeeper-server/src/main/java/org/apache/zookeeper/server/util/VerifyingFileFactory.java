@@ -88,7 +88,5 @@ public final class VerifyingFileFactory {
         public VerifyingFileFactory build() {
             return new VerifyingFileFactory(this);
         }
-
     }
-
 }

@@ -38,7 +38,7 @@ public class ServerIdTest extends ClientBase {
 
     public static Stream<Arguments> data() throws Exception {
         List<Arguments> testTypes = new ArrayList<>();
-        for (boolean ttlsEnabled : new boolean[]{true, false}) {
+        for (boolean ttlsEnabled : new boolean[] {true, false}) {
             for (int serverId = 0; serverId <= 255; ++serverId) {
                 testTypes.add(Arguments.of(ttlsEnabled, serverId));
             }
@@ -56,8 +56,8 @@ public class ServerIdTest extends ClientBase {
     @BeforeEach
     @Override
     public void setUp() throws Exception {
-        //since parameterized test methods need a parameterized setUp method
-        //the inherited method has to be overridden with an empty function body
+        // since parameterized test methods need a parameterized setUp method
+        // the inherited method has to be overridden with an empty function body
     }
 
     public void setUp(boolean ttlsEnabled, int serverId) throws Exception {
@@ -89,10 +89,22 @@ public class ServerIdTest extends ClientBase {
             zk.delete("/foo", -1);
 
             if (ttlsEnabled) {
-                zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 1000);  // should work
+                zk.create(
+                        "/foo",
+                        new byte[0],
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT_WITH_TTL,
+                        new Stat(),
+                        1000); // should work
             } else {
                 try {
-                    zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 1000);
+                    zk.create(
+                            "/foo",
+                            new byte[0],
+                            ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                            CreateMode.PERSISTENT_WITH_TTL,
+                            new Stat(),
+                            1000);
                     fail("Should have thrown KeeperException.UnimplementedException");
                 } catch (KeeperException.UnimplementedException e) {
                     // expected
@@ -104,5 +116,4 @@ public class ServerIdTest extends ClientBase {
             }
         }
     }
-
 }

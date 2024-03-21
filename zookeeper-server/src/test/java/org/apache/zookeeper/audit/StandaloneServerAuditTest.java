@@ -55,8 +55,7 @@ public class StandaloneServerAuditTest extends ClientBase {
     public void testCreateAuditLog() throws KeeperException, InterruptedException, IOException {
         final ZooKeeper zk = createClient();
         String path = "/createPath";
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         List<String> logs = readAuditLog(os);
         assertEquals(1, logs.size());
         assertTrue(logs.get(0).endsWith("operation=create\tznode=/createPath\tznode_type=persistent\tresult=success"));
@@ -64,8 +63,7 @@ public class StandaloneServerAuditTest extends ClientBase {
 
     private static List<String> readAuditLog(ByteArrayOutputStream os) throws IOException {
         List<String> logs = new ArrayList<>();
-        LineNumberReader r = new LineNumberReader(
-                new StringReader(os.toString()));
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
         String line;
         while ((line = r.readLine()) != null) {
             logs.add(line);
@@ -74,4 +72,3 @@ public class StandaloneServerAuditTest extends ClientBase {
         return logs;
     }
 }
-

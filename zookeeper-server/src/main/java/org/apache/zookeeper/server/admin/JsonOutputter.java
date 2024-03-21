@@ -65,5 +65,4 @@ public class JsonOutputter implements CommandOutputter {
             pw.write(ERROR_RESPONSE);
         }
     }
-
 }

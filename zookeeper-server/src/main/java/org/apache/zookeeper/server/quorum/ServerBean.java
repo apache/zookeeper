@@ -35,5 +35,4 @@ public abstract class ServerBean implements ServerMXBean, ZKMBeanInfo {
     public String getStartTime() {
         return startTime.toString();
     }
-
 }

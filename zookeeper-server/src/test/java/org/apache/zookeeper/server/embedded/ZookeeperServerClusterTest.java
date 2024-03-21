@@ -74,7 +74,6 @@ public class ZookeeperServerClusterTest {
         config.put("server.2", "localhost:" + port5 + ":" + port8);
         config.put("server.3", "localhost:" + port6 + ":" + port9);
 
-
         final Properties configZookeeper1 = new Properties();
         configZookeeper1.putAll(config);
         configZookeeper1.put("clientPort", clientport1 + "");
@@ -83,7 +82,7 @@ public class ZookeeperServerClusterTest {
         configZookeeper2.putAll(config);
         configZookeeper2.put("clientPort", clientport2 + "");
 
-        final Properties configZookeeper3 =  new Properties();
+        final Properties configZookeeper3 = new Properties();
         configZookeeper3.putAll(config);
         configZookeeper3.put("clientPort", clientport3 + "");
 
@@ -94,9 +93,21 @@ public class ZookeeperServerClusterTest {
         Files.createDirectories(baseDir3.resolve("data"));
         Files.write(baseDir3.resolve("data").resolve("myid"), "3".getBytes("ASCII"));
 
-        try (ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper1).baseDir(baseDir1).exitHandler(ExitHandler.LOG_ONLY).build();
-                ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper2).baseDir(baseDir2).exitHandler(ExitHandler.LOG_ONLY).build();
-                ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder().configuration(configZookeeper3).baseDir(baseDir3).exitHandler(ExitHandler.LOG_ONLY).build();) {
+        try (ZooKeeperServerEmbedded zkServer1 = ZooKeeperServerEmbedded.builder()
+                        .configuration(configZookeeper1)
+                        .baseDir(baseDir1)
+                        .exitHandler(ExitHandler.LOG_ONLY)
+                        .build();
+                ZooKeeperServerEmbedded zkServer2 = ZooKeeperServerEmbedded.builder()
+                        .configuration(configZookeeper2)
+                        .baseDir(baseDir2)
+                        .exitHandler(ExitHandler.LOG_ONLY)
+                        .build();
+                ZooKeeperServerEmbedded zkServer3 = ZooKeeperServerEmbedded.builder()
+                        .configuration(configZookeeper3)
+                        .baseDir(baseDir3)
+                        .exitHandler(ExitHandler.LOG_ONLY)
+                        .build(); ) {
             zkServer1.start();
             zkServer2.start();
             zkServer3.start();
@@ -107,7 +118,9 @@ public class ZookeeperServerClusterTest {
             for (int i = 0; i < 100; i++) {
                 ZookeeperServeInfo.ServerInfo status = ZookeeperServeInfo.getStatus("ReplicatedServer*");
                 System.out.println("status:" + status);
-                if (status.isLeader() && !status.isStandaloneMode() && status.getPeers().size() == 3) {
+                if (status.isLeader()
+                        && !status.isStandaloneMode()
+                        && status.getPeers().size() == 3) {
                     break;
                 }
                 Thread.sleep(100);
@@ -116,8 +129,6 @@ public class ZookeeperServerClusterTest {
             assertTrue(status.isLeader());
             assertTrue(!status.isStandaloneMode());
             assertEquals(3, status.getPeers().size());
-
         }
     }
-
 }

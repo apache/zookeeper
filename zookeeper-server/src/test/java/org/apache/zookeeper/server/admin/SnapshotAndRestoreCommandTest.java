@@ -306,7 +306,7 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
     public void testRestoreCommand_invalidSnapshotData() throws Exception {
         final HttpURLConnection restoreConn = sendRestoreRequest(jettyAdminPort);
         try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes());
-             final OutputStream outputStream = restoreConn.getOutputStream()) {
+                final OutputStream outputStream = restoreConn.getOutputStream()) {
             IOUtils.copyBytes(inputStream, outputStream, 1024, true);
         }
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, restoreConn.getResponseCode());
@@ -320,11 +320,16 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         }
 
         for (int i = 0; i < count; i++) {
-            zk.create(String.format("%s/%s", parentPath, "n_"), new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+            zk.create(
+                    String.format("%s/%s", parentPath, "n_"),
+                    new byte[0],
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.EPHEMERAL_SEQUENTIAL);
         }
     }
 
-    private static HttpURLConnection sendSnapshotRequest(final boolean streaming, final int jettyAdminPort) throws Exception  {
+    private static HttpURLConnection sendSnapshotRequest(final boolean streaming, final int jettyAdminPort)
+            throws Exception {
         final String queryParamsStr = buildQueryStringForSnapshotCommand(streaming);
         final URL snapshotURL = new URL(String.format(URL_FORMAT + "/snapshot", jettyAdminPort) + "?" + queryParamsStr);
         final HttpURLConnection snapshotConn = (HttpURLConnection) snapshotURL.openConnection();
@@ -334,7 +339,7 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         return snapshotConn;
     }
 
-    private static HttpURLConnection sendRestoreRequest(final int jettyAdminPort) throws Exception  {
+    private static HttpURLConnection sendRestoreRequest(final int jettyAdminPort) throws Exception {
         final URL restoreURL = new URL(String.format(URL_FORMAT + "/restore", jettyAdminPort));
         final HttpURLConnection restoreConn = (HttpURLConnection) restoreURL.openConnection();
         restoreConn.setDoOutput(true);
@@ -362,18 +367,18 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         }
 
         final String resultString = result.toString();
-        return resultString.length() > 0
-                ? resultString.substring(0, resultString.length() - 1)
-                : resultString;
+        return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
     }
 
     private static void validateResponseHeaders(final HttpURLConnection conn) {
-        LOG.info("Header:{}, Value:{}",
+        LOG.info(
+                "Header:{}, Value:{}",
                 Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID,
                 conn.getHeaderField(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID));
         assertNotNull(conn.getHeaderField(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID));
 
-        LOG.info("Header:{}, Value:{}",
+        LOG.info(
+                "Header:{}, Value:{}",
                 Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE,
                 conn.getHeaderField(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE));
         assertNotNull(conn.getHeaderField(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE));
@@ -405,7 +410,7 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         assertTrue((Double) metrics.get("avg_restore_time") > 0.0);
     }
 
-    public static  File takeSnapshotAndValidate(final int jettyAdminPort, final File dataDir) throws Exception {
+    public static File takeSnapshotAndValidate(final int jettyAdminPort, final File dataDir) throws Exception {
         // take snapshot with streaming
         final HttpURLConnection snapshotConn = sendSnapshotRequest(true, jettyAdminPort);
 
@@ -414,7 +419,7 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         validateResponseHeaders(snapshotConn);
         final File snapshotFile = new File(dataDir + "/snapshot." + System.currentTimeMillis());
         try (final InputStream inputStream = snapshotConn.getInputStream();
-             final FileOutputStream outputStream = new FileOutputStream(snapshotFile)) {
+                final FileOutputStream outputStream = new FileOutputStream(snapshotFile)) {
             IOUtils.copyBytes(inputStream, outputStream, 1024, true);
             final long fileSize = Files.size(snapshotFile.toPath());
             assertTrue(fileSize > 0);
@@ -426,7 +431,7 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         // perform restore
         final HttpURLConnection restoreConn = sendRestoreRequest(jettyAdminPort);
         try (final CheckedInputStream is = SnapStream.getInputStream(snapshotFile);
-             final OutputStream outputStream = restoreConn.getOutputStream()) {
+                final OutputStream outputStream = restoreConn.getOutputStream()) {
             IOUtils.copyBytes(is, outputStream, 1024, true);
         }
         // validate restore response

@@ -50,5 +50,4 @@ public class ZooKeeperCriticalThread extends ZooKeeperThread {
         listener.notifyStopping(threadName, ExitCode.UNEXPECTED_ERROR.getValue());
         ServerMetrics.getMetrics().UNRECOVERABLE_ERROR_COUNT.add(1);
     }
-
 }

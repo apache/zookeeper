@@ -30,14 +30,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZKAuditLoggerPerformance {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZKAuditLoggerPerformance.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZKAuditLoggerPerformance.class);
     private ZooKeeper zkClient;
     private String parentPath;
     private int numberOfRecords;
 
-    public ZKAuditLoggerPerformance(ZooKeeper zkClient, String parentPath,
-                                    int numberOfRecords) {
+    public ZKAuditLoggerPerformance(ZooKeeper zkClient, String parentPath, int numberOfRecords) {
         this.zkClient = zkClient;
         this.parentPath = parentPath;
         this.numberOfRecords = numberOfRecords;
@@ -45,10 +43,7 @@ public class ZKAuditLoggerPerformance {
 
     public void create() throws Exception {
         for (int i = 0; i < numberOfRecords; i++) {
-            zkClient.create(getPath(i), "0123456789".getBytes(),
-                    Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-
+            zkClient.create(getPath(i), "0123456789".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
     }
 
@@ -89,8 +84,7 @@ public class ZKAuditLoggerPerformance {
 
     public static void main(String[] args) {
         if (args.length != 3) {
-            System.err.println(
-                    "USAGE: ZKAuditLoggerPerformance connectionString parentPath numberOfRecords");
+            System.err.println("USAGE: ZKAuditLoggerPerformance connectionString parentPath numberOfRecords");
             System.exit(1);
         }
         String cxnString = args[0];
@@ -107,8 +101,7 @@ public class ZKAuditLoggerPerformance {
         try {
             Stat exists = zkClient.exists(parentPath, false);
             if (exists == null) {
-                System.err.println(
-                        "Parent path '" + parentPath + "' must exist.");
+                System.err.println("Parent path '" + parentPath + "' must exist.");
                 System.exit(1);
             }
         } catch (KeeperException | InterruptedException e1) {
@@ -124,9 +117,7 @@ public class ZKAuditLoggerPerformance {
             System.err.println(msg);
             System.exit(1);
         }
-        ZKAuditLoggerPerformance auditLoggingPerf = new ZKAuditLoggerPerformance(
-                zkClient,
-                parentPath, recordCount);
+        ZKAuditLoggerPerformance auditLoggingPerf = new ZKAuditLoggerPerformance(zkClient, parentPath, recordCount);
         AuditLogPerfReading doOperations = null;
         try {
             doOperations = auditLoggingPerf.doOperations();
@@ -136,8 +127,7 @@ public class ZKAuditLoggerPerformance {
             System.err.println(msg);
             System.exit(1);
         }
-        System.out
-                .println("Time taken for " + recordCount + " operations are:");
+        System.out.println("Time taken for " + recordCount + " operations are:");
         System.out.println(doOperations.report());
         System.exit(0);
     }

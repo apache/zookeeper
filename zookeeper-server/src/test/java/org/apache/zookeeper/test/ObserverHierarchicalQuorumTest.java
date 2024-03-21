@@ -37,5 +37,4 @@ public class ObserverHierarchicalQuorumTest extends HierarchicalQuorumTest {
     public void testHierarchicalQuorum() throws Throwable {
         cht.runHammer(5, 10);
     }
-
 }

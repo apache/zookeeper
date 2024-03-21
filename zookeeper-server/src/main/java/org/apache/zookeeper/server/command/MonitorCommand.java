@@ -61,5 +61,4 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         pw.print("\t");
         pw.println(value);
     }
-
 }

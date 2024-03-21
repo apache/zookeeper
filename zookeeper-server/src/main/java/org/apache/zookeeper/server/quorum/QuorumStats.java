@@ -29,9 +29,10 @@ public class QuorumStats {
         String LEADING_STATE = "leading";
         String FOLLOWING_STATE = "following";
         String OBSERVING_STATE = "observing";
-        String[] getQuorumPeers();
-        String getServerState();
 
+        String[] getQuorumPeers();
+
+        String getServerState();
     }
 
     protected QuorumStats(Provider provider) {
@@ -68,5 +69,4 @@ public class QuorumStats {
         }
         return sb.toString();
     }
-
 }

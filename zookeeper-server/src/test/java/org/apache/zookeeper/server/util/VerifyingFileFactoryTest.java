@@ -38,14 +38,16 @@ public class VerifyingFileFactoryTest extends ZKTestCase {
 
     @Test
     public void testForWarningOnRelativePath() {
-        VerifyingFileFactory vff = new VerifyingFileFactory.Builder(log).warnForRelativePath().build();
+        VerifyingFileFactory vff =
+                new VerifyingFileFactory.Builder(log).warnForRelativePath().build();
         vff.create("a/relative/path");
         // assertTrue(log.hasWarned);
     }
 
     @Test
     public void testForNoWarningOnIntendedRelativePath() {
-        VerifyingFileFactory vff = new VerifyingFileFactory.Builder(log).warnForRelativePath().build();
+        VerifyingFileFactory vff =
+                new VerifyingFileFactory.Builder(log).warnForRelativePath().build();
         vff.create("./an/intended/relative/path");
         // assertFalse(log.hasWarned);
     }
@@ -53,7 +55,9 @@ public class VerifyingFileFactoryTest extends ZKTestCase {
     @Test
     public void testForFailForNonExistingPath() {
         assertThrows(IllegalArgumentException.class, () -> {
-            VerifyingFileFactory vff = new VerifyingFileFactory.Builder(log).failForNonExistingPath().build();
+            VerifyingFileFactory vff = new VerifyingFileFactory.Builder(log)
+                    .failForNonExistingPath()
+                    .build();
             vff.create("/I/H0p3/this/path/d035/n0t/ex15t");
         });
     }
@@ -64,5 +68,4 @@ public class VerifyingFileFactoryTest extends ZKTestCase {
         VerifyingFileFactory vff = new VerifyingFileFactory.Builder(log).build();
         assertEquals(file, vff.create(file.getPath()));
     }
-
 }

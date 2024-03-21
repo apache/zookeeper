@@ -68,5 +68,4 @@ public class MultiResponseTest extends ZKTestCase {
         decodedRequest.deserialize(bia, "result");
         return decodedRequest;
     }
-
 }

@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -42,17 +41,15 @@ import org.slf4j.LoggerFactory;
 
 public class NettyServerCnxnFactoryTest extends ClientBase {
 
-    private static final Logger LOG = LoggerFactory
-            .getLogger(NettyServerCnxnFactoryTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactoryTest.class);
 
     ClientX509Util x509Util;
     final LinkedBlockingQueue<ZooKeeper> zooKeeperClients = new LinkedBlockingQueue<>();
 
-
     @Override
     public void setUp() throws Exception {
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
-                "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
 
         // by default, we don't start any ZooKeeper server, as not all the tests are needing it.
     }
@@ -68,7 +65,7 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
             zk.close();
         }
 
-        //stopping the server only if it was started
+        // stopping the server only if it was started
         if (serverFactory != null) {
             super.tearDown();
         }
@@ -142,7 +139,8 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
         CountDownLatch latch = new CountDownLatch(1);
         Thread[] cnxnWorker = new Thread[threadNum];
         for (int i = 0; i < cnxnWorker.length; i++) {
-            cnxnWorker[i] = new ClientConnectionGenerator(i, cnxnPerThread, cnxnCreated, cnxnLimit, latch, zooKeeperClients);
+            cnxnWorker[i] =
+                    new ClientConnectionGenerator(i, cnxnPerThread, cnxnCreated, cnxnLimit, latch, zooKeeperClients);
             cnxnWorker[i].start();
         }
 
@@ -159,16 +157,19 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
         // (throttling should be greater than 0)
         long handshakeThrottledNum = tlsHandshakeExceeded.get();
         LOG.info("TLS_HANDSHAKE_EXCEEDED: {}", handshakeThrottledNum);
-        assertThat("The number of handshake throttled should be "
-                + "greater than 0", handshakeThrottledNum, Matchers.greaterThan(0L));
+        assertThat(
+                "The number of handshake throttled should be " + "greater than 0",
+                handshakeThrottledNum,
+                Matchers.greaterThan(0L));
 
         // Assert there is no outstanding handshake anymore, all the clients connected in the end
         int outstandingHandshakeNum = factory.getOutstandingHandshakeNum();
         LOG.info("outstanding handshake is {}", outstandingHandshakeNum);
-        assertThat("The outstanding handshake number should be 0 "
-                + "after all cnxns established", outstandingHandshakeNum, Matchers.is(0));
+        assertThat(
+                "The outstanding handshake number should be 0 " + "after all cnxns established",
+                outstandingHandshakeNum,
+                Matchers.is(0));
     }
-
 
     private final class ClientConnectionWatcher implements Watcher {
 
@@ -178,8 +179,8 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
         private final int cnxnId;
         private final CountDownLatch latch;
 
-        public ClientConnectionWatcher(AtomicInteger cnxnCreated, int cnxnLimit, int cnxnThreadId,
-                                       int cnxnId, CountDownLatch latch) {
+        public ClientConnectionWatcher(
+                AtomicInteger cnxnCreated, int cnxnLimit, int cnxnThreadId, int cnxnId, CountDownLatch latch) {
             this.cnxnCreated = cnxnCreated;
             this.cnxnLimit = cnxnLimit;
             this.cnxnThreadId = cnxnThreadId;
@@ -189,16 +190,16 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
 
         @Override
         public void process(WatchedEvent event) {
-            LOG.info(String.format("WATCHER [thread: %d, cnx:%d] - new event: %s", cnxnThreadId, cnxnId, event.toString()));
+            LOG.info(String.format(
+                    "WATCHER [thread: %d, cnx:%d] - new event: %s", cnxnThreadId, cnxnId, event.toString()));
             if (event.getState() == Event.KeeperState.SyncConnected) {
-              int created = cnxnCreated.addAndGet(1);
-              if (created == cnxnLimit) {
-                latch.countDown();
-              }
+                int created = cnxnCreated.addAndGet(1);
+                if (created == cnxnLimit) {
+                    latch.countDown();
+                }
             }
         }
     }
-
 
     private final class ClientConnectionGenerator extends Thread {
 
@@ -209,10 +210,13 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
         private final CountDownLatch latch;
         private final LinkedBlockingQueue<ZooKeeper> zks;
 
-        private ClientConnectionGenerator(int cnxnThreadId, int cnxnPerThread,
-                                          AtomicInteger cnxnCreated, int cnxnLimit,
-                                          CountDownLatch latch,
-                                          LinkedBlockingQueue<ZooKeeper> zks) {
+        private ClientConnectionGenerator(
+                int cnxnThreadId,
+                int cnxnPerThread,
+                AtomicInteger cnxnCreated,
+                int cnxnLimit,
+                CountDownLatch latch,
+                LinkedBlockingQueue<ZooKeeper> zks) {
             this.cnxnThreadId = cnxnThreadId;
             this.cnxnPerThread = cnxnPerThread;
             this.cnxnCreated = cnxnCreated;
@@ -226,13 +230,14 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
 
             for (int j = 0; j < cnxnPerThread; j++) {
                 try {
-                    zks.add(new ZooKeeper(hostPort, 30000,
-                                          new ClientConnectionWatcher(cnxnCreated, cnxnLimit, cnxnThreadId, j, latch)));
+                    zks.add(new ZooKeeper(
+                            hostPort,
+                            30000,
+                            new ClientConnectionWatcher(cnxnCreated, cnxnLimit, cnxnThreadId, j, latch)));
                 } catch (Exception e) {
                     LOG.info("Error while creating zk client", e);
                 }
             }
         }
     }
-
 }

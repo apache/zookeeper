@@ -51,17 +51,21 @@ public class SyncRequestProcessorMetricTest {
         ZKDatabase db = mock(ZKDatabase.class);
         when(db.append(any(Request.class))).thenReturn(true);
         doAnswer(invocation -> {
-            Thread.sleep(100);
-            return null;
-        }).when(db).commit();
+                    Thread.sleep(100);
+                    return null;
+                })
+                .when(db)
+                .commit();
         zks = mock(ZooKeeperServer.class);
         when(zks.getZKDatabase()).thenReturn(db);
 
         nextProcessor = mock(RequestProcessor.class);
         doAnswer(invocationOnMock -> {
-            allRequestsFlushed.countDown();
-            return null;
-        }).when(nextProcessor).processRequest(any(Request.class));
+                    allRequestsFlushed.countDown();
+                    return null;
+                })
+                .when(nextProcessor)
+                .processRequest(any(Request.class));
     }
 
     private Request createRquest(long sessionId, int xid) {
@@ -104,5 +108,4 @@ public class SyncRequestProcessorMetricTest {
 
         syncProcessor.shutdown();
     }
-
 }

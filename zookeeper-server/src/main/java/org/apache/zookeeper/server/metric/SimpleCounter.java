@@ -52,5 +52,4 @@ public class SimpleCounter extends Metric implements Counter {
         m.put(name, this.get());
         return m;
     }
-
 }

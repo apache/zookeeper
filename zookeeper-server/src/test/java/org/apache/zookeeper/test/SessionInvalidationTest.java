@@ -100,5 +100,4 @@ public class SessionInvalidationTest extends ClientBase {
 
         zk.close();
     }
-
 }

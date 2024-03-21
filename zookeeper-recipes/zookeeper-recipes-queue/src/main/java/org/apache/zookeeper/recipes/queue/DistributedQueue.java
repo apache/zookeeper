@@ -54,7 +54,6 @@ public class DistributedQueue {
             this.acl = acl;
         }
         this.zookeeper = zookeeper;
-
     }
 
     /**
@@ -70,7 +69,7 @@ public class DistributedQueue {
 
         for (String childName : childNames) {
             try {
-                //Check format
+                // Check format
                 if (!childName.regionMatches(0, prefix, 0, prefix.length())) {
                     LOG.warn("Found child node with improper name: {}", childName);
                     continue;
@@ -105,7 +104,7 @@ public class DistributedQueue {
 
         for (String childName : childNames) {
             try {
-                //Check format
+                // Check format
                 if (!childName.regionMatches(0, prefix, 0, prefix.length())) {
                     LOG.warn("Found child node with improper name: {}", childName);
                     continue;
@@ -158,11 +157,10 @@ public class DistributedQueue {
                     try {
                         return zookeeper.getData(dir + "/" + headNode, false, null);
                     } catch (KeeperException.NoNodeException e) {
-                        //Another client removed the node first, try next
+                        // Another client removed the node first, try next
                     }
                 }
             }
-
         }
     }
 
@@ -196,7 +194,6 @@ public class DistributedQueue {
                     // Another client deleted the node first.
                 }
             }
-
         }
     }
 
@@ -212,10 +209,10 @@ public class DistributedQueue {
             LOG.debug("Watcher fired: {}", event);
             latch.countDown();
         }
+
         public void await() throws InterruptedException {
             latch.await();
         }
-
     }
 
     /**
@@ -268,7 +265,6 @@ public class DistributedQueue {
                 zookeeper.create(dir, new byte[0], acl, CreateMode.PERSISTENT);
             }
         }
-
     }
 
     /**
@@ -298,5 +294,4 @@ public class DistributedQueue {
             return null;
         }
     }
-
 }

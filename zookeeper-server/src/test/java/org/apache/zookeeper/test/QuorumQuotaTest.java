@@ -57,5 +57,4 @@ public class QuorumQuotaTest extends QuorumBase {
         assertTrue(st.getBytes() == 2404L, "bytes are set");
         assertTrue(st.getCount() == 601, "num count is set");
     }
-
 }

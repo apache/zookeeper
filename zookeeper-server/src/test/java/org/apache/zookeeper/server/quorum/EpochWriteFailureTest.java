@@ -55,8 +55,8 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
         String server;
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":"
-                    + PortAssignment.unique() + ":participant;127.0.0.1:" + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server);
             sb.append("\n");
         }
@@ -68,19 +68,19 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
 
         // ensure two servers started
         for (int i = 0; i < SERVER_COUNT - 1; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
 
         CountdownWatcher watch1 = new CountdownWatcher();
-        zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT,
-                watch1);
+        zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT, watch1);
         watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         String data = "originalData";
         zk.create("/epochIssue", data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        //initialize third server
+        // initialize third server
         mt[2] = new MainThread(2, clientPorts[2], currentQuorumCfgSection, false) {
 
             @Override
@@ -89,7 +89,7 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
             }
         };
 
-        //This server has problem it fails while writing acceptedEpoch.
+        // This server has problem it fails while writing acceptedEpoch.
         mt[2].start();
 
         /*
@@ -97,7 +97,8 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
          * failure is injected and it keeps on trying to join the quorum
          */
 
-        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT / 2),
+        assertFalse(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT / 2),
                 "verify server 2 not started");
 
         QuorumPeer quorumPeer = mt[2].getQuorumPeer();
@@ -107,10 +108,29 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
     }
 
     static class CustomQuorumPeer extends QuorumPeer {
-        CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
-                         int electionAlg, long myid, int tickTime, int initLimit, int syncLimit,
-                         int connectToLearnerMasterLimit) throws IOException {
-            super(quorumPeers, snapDir, logDir, clientPort, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        CustomQuorumPeer(
+                Map<Long, QuorumServer> quorumPeers,
+                File snapDir,
+                File logDir,
+                int clientPort,
+                int electionAlg,
+                long myid,
+                int tickTime,
+                int initLimit,
+                int syncLimit,
+                int connectToLearnerMasterLimit)
+                throws IOException {
+            super(
+                    quorumPeers,
+                    snapDir,
+                    logDir,
+                    clientPort,
+                    electionAlg,
+                    myid,
+                    tickTime,
+                    initLimit,
+                    syncLimit,
+                    connectToLearnerMasterLimit);
         }
 
         @Override
@@ -124,13 +144,18 @@ public class EpochWriteFailureTest extends QuorumPeerTestBase {
 
     private static class MockTestQPMain extends TestQPMain {
         @Override
-        public void runFromConfig(QuorumPeerConfig config)
-                throws IOException {
-            quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(),
-                    config.getDataDir(), config.getDataLogDir(),
-                    config.getClientPortAddress().getPort(), config.getElectionAlg(),
-                    config.getServerId(), config.getTickTime(), config.getInitLimit(),
-                    config.getSyncLimit(), config.getSyncLimit());
+        public void runFromConfig(QuorumPeerConfig config) throws IOException {
+            quorumPeer = new CustomQuorumPeer(
+                    config.getQuorumVerifier().getAllMembers(),
+                    config.getDataDir(),
+                    config.getDataLogDir(),
+                    config.getClientPortAddress().getPort(),
+                    config.getElectionAlg(),
+                    config.getServerId(),
+                    config.getTickTime(),
+                    config.getInitLimit(),
+                    config.getSyncLimit(),
+                    config.getSyncLimit());
             quorumPeer.start();
             try {
                 quorumPeer.join();

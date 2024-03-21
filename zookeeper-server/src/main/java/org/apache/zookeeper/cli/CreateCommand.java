@@ -74,7 +74,8 @@ public class CreateCommand extends CliCommand {
         boolean hasC = cl.hasOption("c");
         boolean hasT = cl.hasOption("t");
         if (hasC && (hasE || hasS)) {
-            throw new MalformedCommandException("-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
+            throw new MalformedCommandException(
+                    "-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
         }
         long ttl;
         try {
@@ -120,9 +121,8 @@ public class CreateCommand extends CliCommand {
             acl = AclParser.parse(args[3]);
         }
         try {
-            String newPath = hasT
-                ? zk.create(path, data, acl, flags, new Stat(), ttl)
-                : zk.create(path, data, acl, flags);
+            String newPath =
+                    hasT ? zk.create(path, data, acl, flags, new Stat(), ttl) : zk.create(path, data, acl, flags);
             err.println("Created " + newPath);
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
@@ -137,5 +137,4 @@ public class CreateCommand extends CliCommand {
         }
         return true;
     }
-
 }

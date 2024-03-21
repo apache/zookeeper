@@ -61,13 +61,17 @@ public class ZKTestCase {
     @BeforeAll
     public static void before() {
         if (!testBaseDir.exists()) {
-            assertTrue(testBaseDir.mkdirs(),
-                "Cannot properly create test base directory " + testBaseDir.getAbsolutePath());
+            assertTrue(
+                    testBaseDir.mkdirs(),
+                    "Cannot properly create test base directory " + testBaseDir.getAbsolutePath());
         } else if (!testBaseDir.isDirectory()) {
-            assertTrue(testBaseDir.delete(),
-                "Cannot properly delete file with duplicate name of test base directory " + testBaseDir.getAbsolutePath());
-            assertTrue(testBaseDir.mkdirs(),
-                "Cannot properly create test base directory " + testBaseDir.getAbsolutePath());
+            assertTrue(
+                    testBaseDir.delete(),
+                    "Cannot properly delete file with duplicate name of test base directory "
+                            + testBaseDir.getAbsolutePath());
+            assertTrue(
+                    testBaseDir.mkdirs(),
+                    "Cannot properly create test base directory " + testBaseDir.getAbsolutePath());
         }
     }
 
@@ -98,7 +102,6 @@ public class ZKTestCase {
          * @return true when success
          */
         boolean evaluate();
-
     }
 
     /**
@@ -124,20 +127,24 @@ public class ZKTestCase {
         waitForMetric(metricKey, matcher, DEFAULT_METRIC_TIMEOUT);
     }
 
-    public static <T> void waitForMetric(String metricKey, Matcher<T> matcher, int timeoutInSeconds) throws InterruptedException {
-        String errorMessage = String.format("metric \"%s\" failed to match after %d seconds",
-            metricKey, timeoutInSeconds);
-        waitFor(errorMessage, () -> {
-            @SuppressWarnings("unchecked")
-            T actual = (T) MetricsUtils.currentServerMetrics().get(metricKey);
-            if (!matcher.matches(actual)) {
-                Description description = new StringDescription();
-                matcher.describeMismatch(actual, description);
-                LOG.info("match failed for metric {}: {}", metricKey, description);
-                return false;
-            }
-            return true;
-        }, timeoutInSeconds);
+    public static <T> void waitForMetric(String metricKey, Matcher<T> matcher, int timeoutInSeconds)
+            throws InterruptedException {
+        String errorMessage =
+                String.format("metric \"%s\" failed to match after %d seconds", metricKey, timeoutInSeconds);
+        waitFor(
+                errorMessage,
+                () -> {
+                    @SuppressWarnings("unchecked")
+                    T actual = (T) MetricsUtils.currentServerMetrics().get(metricKey);
+                    if (!matcher.matches(actual)) {
+                        Description description = new StringDescription();
+                        matcher.describeMismatch(actual, description);
+                        LOG.info("match failed for metric {}: {}", metricKey, description);
+                        return false;
+                    }
+                    return true;
+                },
+                timeoutInSeconds);
     }
 
     /**

@@ -57,7 +57,6 @@ public class FLETest extends ZKTestCase {
         }
 
         long leader;
-
     }
 
     int countVotes(HashSet<TestVote> hs, long id) {
@@ -82,7 +81,7 @@ public class FLETest extends ZKTestCase {
 
     volatile Vote[] votes;
     volatile long leader = -1;
-    //volatile int round = 1;
+    // volatile int round = 1;
     Random rand = new Random();
     Set<Long> joinedThreads;
 
@@ -205,10 +204,14 @@ public class FLETest extends ZKTestCase {
                                  * Assert that the state of the thread is the one expected.
                                  */
                                 if (v.getId() == i) {
-                                    assertTrue(peer.getPeerState() == ServerState.LEADING, "Wrong state" + peer.getPeerState());
+                                    assertTrue(
+                                            peer.getPeerState() == ServerState.LEADING,
+                                            "Wrong state" + peer.getPeerState());
                                     leader = i;
                                 } else {
-                                    assertTrue(peer.getPeerState() == ServerState.FOLLOWING, "Wrong state" + peer.getPeerState());
+                                    assertTrue(
+                                            peer.getPeerState() == ServerState.FOLLOWING,
+                                            "Wrong state" + peer.getPeerState());
                                 }
 
                                 /*
@@ -236,7 +239,6 @@ public class FLETest extends ZKTestCase {
                      * a new leader election.
                      */
                     Thread.sleep(100);
-
                 }
                 LOG.debug("Thread {} votes {}", i, v);
             } catch (InterruptedException e) {
@@ -258,7 +260,6 @@ public class FLETest extends ZKTestCase {
 
             return (loopCounter < MAX_LOOP_COUNTER) || (quora.get(id).size() > count / 2);
         }
-
     }
 
     @Test
@@ -305,7 +306,13 @@ public class FLETest extends ZKTestCase {
          */
         for (int i = 0; i < count; i++) {
             port[i] = PortAssignment.unique();
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port[i])));
+            peers.put(
+                    Long.valueOf(i),
+                    new QuorumServer(
+                            i,
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", port[i])));
             tmpdir[i] = ClientBase.createTmpDir();
         }
 
@@ -364,9 +371,11 @@ public class FLETest extends ZKTestCase {
 
         private volatile boolean success = false;
         private QuorumPeer peer;
+
         public VerifyState(QuorumPeer peer) {
             this.peer = peer;
         }
+
         public void run() {
             setName("VerifyState-" + peer.getMyId());
             while (true) {
@@ -386,10 +395,10 @@ public class FLETest extends ZKTestCase {
                 }
             }
         }
+
         public boolean isSuccess() {
             return success;
         }
-
     }
 
     /*
@@ -404,7 +413,13 @@ public class FLETest extends ZKTestCase {
         ArrayList<QuorumPeer> peerList = new ArrayList<>();
         for (sid = 0; sid < 3; sid++) {
             port[sid] = PortAssignment.unique();
-            peers.put(Long.valueOf(sid), new QuorumServer(sid, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port[sid])));
+            peers.put(
+                    Long.valueOf(sid),
+                    new QuorumServer(
+                            sid,
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", port[sid])));
             tmpdir[sid] = ClientBase.createTmpDir();
         }
         // start 2 peers and verify if they form the cluster
@@ -452,7 +467,12 @@ public class FLETest extends ZKTestCase {
         int waitTime = 10 * 1000;
         ArrayList<QuorumPeer> peerList = new ArrayList<>();
         for (sid = 0; sid < 3; sid++) {
-            peers.put(Long.valueOf(sid), new QuorumServer(sid, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+            peers.put(
+                    Long.valueOf(sid),
+                    new QuorumServer(
+                            sid,
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
             tmpdir[sid] = ClientBase.createTmpDir();
             port[sid] = PortAssignment.unique();
         }
@@ -500,5 +520,4 @@ public class FLETest extends ZKTestCase {
     public void testElectionTimeUnit() throws Exception {
         assertEquals("MS", QuorumPeer.FLE_TIME_UNIT);
     }
-
 }

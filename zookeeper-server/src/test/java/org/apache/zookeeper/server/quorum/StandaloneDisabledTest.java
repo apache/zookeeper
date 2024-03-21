@@ -59,22 +59,24 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     public void startSingleServerTest() throws Exception {
         setUpData();
 
-        //start one server
+        // start one server
         startServer(leaderId, serverStrings.get(leaderId) + "\n");
         ReconfigTest.testServerHasConfig(zkHandles[leaderId], null, null);
         LOG.info("Initial Configuration:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
 
-        //start and add 2 followers
+        // start and add 2 followers
         startFollowers();
         testReconfig(leaderId, true, reconfigServers);
-        LOG.info("Configuration after adding 2 followers:\n{}", new String(zkHandles[leaderId].getConfig(this, new Stat())));
+        LOG.info(
+                "Configuration after adding 2 followers:\n{}",
+                new String(zkHandles[leaderId].getConfig(this, new Stat())));
 
-        //shutdown leader- quorum should still exist
+        // shutdown leader- quorum should still exist
         shutDownServer(leaderId);
         ReconfigTest.testNormalOperation(zkHandles[follower1], zkHandles[follower2]);
 
-        //should not be able to remove follower 2
-        //No quorum in new config (1/2)
+        // should not be able to remove follower 2
+        // No quorum in new config (1/2)
         reconfigServers.clear();
         reconfigServers.add(Integer.toString(follower2));
         try {
@@ -83,13 +85,15 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         } catch (KeeperException.NewConfigNoQuorum e) {
         }
 
-        //reconfigure out leader and follower 1. Remaining follower
-        //2 should elect itself as leader and run by itself
+        // reconfigure out leader and follower 1. Remaining follower
+        // 2 should elect itself as leader and run by itself
         reconfigServers.clear();
         reconfigServers.add(Integer.toString(leaderId));
         reconfigServers.add(Integer.toString(follower1));
         testReconfig(follower2, false, reconfigServers);
-        LOG.info("Configuration after removing leader and follower 1:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
+        LOG.info(
+                "Configuration after removing leader and follower 1:\n{}",
+                new String(zkHandles[follower2].getConfig(this, new Stat())));
 
         // Kill server 1 to avoid it interferences with FLE of the quorum {2, 3, 4}.
         shutDownServer(follower1);
@@ -106,13 +110,15 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
             fail("Should have been BadArgumentsException!");
         }
 
-        //Add two participants and change them to observers to check
-        //that we can reconfigure down to one participant with observers.
+        // Add two participants and change them to observers to check
+        // that we can reconfigure down to one participant with observers.
         ArrayList<String> observerStrings = new ArrayList<>();
         startObservers(observerStrings);
-        testReconfig(follower2, true, reconfigServers); //add partcipants
-        testReconfig(follower2, true, observerStrings); //change to observers
-        LOG.info("Configuration after adding two observers:\n{}", new String(zkHandles[follower2].getConfig(this, new Stat())));
+        testReconfig(follower2, true, reconfigServers); // add partcipants
+        testReconfig(follower2, true, observerStrings); // change to observers
+        LOG.info(
+                "Configuration after adding two observers:\n{}",
+                new String(zkHandles[follower2].getConfig(this, new Stat())));
 
         shutDownData();
     }
@@ -130,7 +136,9 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         clientPorts = new int[NUM_SERVERS];
         serverStrings = buildServerStrings();
         reconfigServers = new ArrayList<>();
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
     }
 
     /**
@@ -155,8 +163,8 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < NUM_SERVERS; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant;"
-                            + "localhost:" + clientPorts[i];
+            String server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;" + "localhost:" + clientPorts[i];
             serverStrings.add(server);
         }
         return serverStrings;
@@ -171,8 +179,8 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         peers[id] = new MainThread(id, clientPorts[id], config);
         peers[id].start();
         assertTrue(
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT),
-            "Server " + id + " is not up");
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT),
+                "Server " + id + " is not up");
         assertTrue(peers[id].isQuorumPeerRunning(), "Error- Server started in Standalone Mode!");
         zkHandles[id] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[id]);
         zkAdminHandles[id] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT, this);
@@ -201,11 +209,11 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.clear();
         for (int i = 1; i <= 2; i++) {
             String config = serverStrings.get(leaderId)
-                                    + "\n"
-                                    + serverStrings.get(i)
-                                    + "\n"
-                                    + serverStrings.get(i % 2 + 1)
-                                    + "\n";
+                    + "\n"
+                    + serverStrings.get(i)
+                    + "\n"
+                    + serverStrings.get(i % 2 + 1)
+                    + "\n";
             startServer(i, config);
             reconfigServers.add(serverStrings.get(i));
         }
@@ -236,7 +244,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         if (adding) {
             ReconfigTest.reconfig(zkAdminHandles[id], servers, null, null, -1);
             for (String server : servers) {
-                int id2 = Integer.parseInt(server.substring(7, 8)); //server.#
+                int id2 = Integer.parseInt(server.substring(7, 8)); // server.#
                 ReconfigTest.testNormalOperation(zkHandles[id], zkHandles[id2]);
             }
             ReconfigTest.testServerHasConfig(zkHandles[id], servers, null);
@@ -244,7 +252,6 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
             ReconfigTest.reconfig(zkAdminHandles[id], null, servers, null, -1);
             ReconfigTest.testServerHasConfig(zkHandles[id], null, servers);
         }
-
     }
 
     /**
@@ -254,12 +261,11 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     public void startObserver() throws Exception {
         int clientPort = PortAssignment.unique();
         String config = "server." + observer1 + "=localhost:" + PortAssignment.unique() + ":" + clientPort
-                        + ":observer;" + "localhost:" + PortAssignment.unique();
+                + ":observer;" + "localhost:" + PortAssignment.unique();
         MainThread observer = new MainThread(observer1, clientPort, config);
         observer.start();
         assertFalse(
-            ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
-            "Observer was able to start by itself!");
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
+                "Observer was able to start by itself!");
     }
-
 }

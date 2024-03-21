@@ -31,5 +31,4 @@ public interface ServerMXBean {
      * @return the start time the server
      */
     String getStartTime();
-
 }

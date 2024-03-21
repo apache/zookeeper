@@ -77,8 +77,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
     @Test
     public void testClientCnxnSocketFragility() throws Exception {
-        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET,
-                FragileClientCnxnSocketNIO.class.getName());
+        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, FragileClientCnxnSocketNIO.class.getName());
         System.setProperty(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT, "1000");
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
@@ -86,8 +85,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
-            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":"
-                    + PortAssignment.unique() + ":participant;127.0.0.1:" + clientPorts[i];
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -100,7 +99,8 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         // Ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
         String path = "/testClientCnxnSocketFragility";
@@ -127,8 +127,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         assertTrue(catchKeeperException);
         assertTrue(!watcher.isSessionExpired());
 
-        GetDataRetryForeverBackgroundTask retryForeverGetData =
-                new GetDataRetryForeverBackgroundTask(zk, path);
+        GetDataRetryForeverBackgroundTask retryForeverGetData = new GetDataRetryForeverBackgroundTask(zk, path);
         retryForeverGetData.startTask();
         // Let's make a broken network
         socket.mute();
@@ -280,24 +279,24 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         private volatile boolean hitUnsafeRegion = false;
 
         public CustomClientCnxn(
-            HostProvider hostProvider,
-            int sessionTimeout,
-            ZKClientConfig zkClientConfig,
-            Watcher defaultWatcher,
-            ClientCnxnSocket clientCnxnSocket,
-            long sessionId,
-            byte[] sessionPasswd,
-            boolean canBeReadOnly
-        ) throws IOException {
+                HostProvider hostProvider,
+                int sessionTimeout,
+                ZKClientConfig zkClientConfig,
+                Watcher defaultWatcher,
+                ClientCnxnSocket clientCnxnSocket,
+                long sessionId,
+                byte[] sessionPasswd,
+                boolean canBeReadOnly)
+                throws IOException {
             super(
-                hostProvider,
-                sessionTimeout,
-                zkClientConfig,
-                defaultWatcher,
-                clientCnxnSocket,
-                sessionId,
-                sessionPasswd,
-                canBeReadOnly);
+                    hostProvider,
+                    sessionTimeout,
+                    zkClientConfig,
+                    defaultWatcher,
+                    clientCnxnSocket,
+                    sessionId,
+                    sessionPasswd,
+                    canBeReadOnly);
         }
 
         void attemptClose() {
@@ -329,7 +328,11 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         @Override
         public void disconnect() {
             assertTrue(closing);
-            LOG.info("Attempt to disconnecting client for session: 0x{} {} {}", Long.toHexString(getSessionId()), closing, state);
+            LOG.info(
+                    "Attempt to disconnecting client for session: 0x{} {} {}",
+                    Long.toHexString(getSessionId()),
+                    closing,
+                    state);
             sendThread.close();
             ///////// Unsafe Region ////////
             unsafeCoordinator.sync(closing);
@@ -355,26 +358,26 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
 
         @Override
         ClientCnxn createConnection(
-            HostProvider hostProvider,
-            int sessionTimeout,
-            ZKClientConfig clientConfig,
-            Watcher defaultWatcher,
-            ClientCnxnSocket clientCnxnSocket,
-            long sessionId,
-            byte[] sessionPasswd,
-            boolean canBeReadOnly
-        ) throws IOException {
+                HostProvider hostProvider,
+                int sessionTimeout,
+                ZKClientConfig clientConfig,
+                Watcher defaultWatcher,
+                ClientCnxnSocket clientCnxnSocket,
+                long sessionId,
+                byte[] sessionPasswd,
+                boolean canBeReadOnly)
+                throws IOException {
             assertTrue(clientCnxnSocket instanceof FragileClientCnxnSocketNIO);
             socket = (FragileClientCnxnSocketNIO) clientCnxnSocket;
             ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(
-                hostProvider,
-                sessionTimeout,
-                clientConfig,
-                defaultWatcher,
-                clientCnxnSocket,
-                sessionId,
-                sessionPasswd,
-                canBeReadOnly);
+                    hostProvider,
+                    sessionTimeout,
+                    clientConfig,
+                    defaultWatcher,
+                    clientCnxnSocket,
+                    sessionId,
+                    sessionPasswd,
+                    canBeReadOnly);
             return ClientCnxnSocketFragilityTest.this.cnxn;
         }
     }

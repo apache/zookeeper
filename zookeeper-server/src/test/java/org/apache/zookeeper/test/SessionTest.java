@@ -96,7 +96,6 @@ public class SessionTest extends ZKTestCase {
                 clientConnected.countDown();
             }
         }
-
     }
 
     private DisconnectableZooKeeper createClient() throws IOException, InterruptedException {
@@ -109,7 +108,8 @@ public class SessionTest extends ZKTestCase {
         return createClient(timeout, watcher);
     }
 
-    private DisconnectableZooKeeper createClient(int timeout, CountdownWatcher watcher) throws IOException, InterruptedException {
+    private DisconnectableZooKeeper createClient(int timeout, CountdownWatcher watcher)
+            throws IOException, InterruptedException {
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(HOSTPORT, timeout, watcher);
         if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
             fail("Unable to connect to server");
@@ -153,16 +153,17 @@ public class SessionTest extends ZKTestCase {
     private class MyWatcher implements Watcher {
 
         private String name;
+
         public MyWatcher(String name) {
             this.name = name;
         }
+
         public void process(WatchedEvent event) {
             LOG.info("{} event:{} {} {}", name, event.getState(), event.getType(), event.getPath());
             if (event.getState() == KeeperState.SyncConnected && startSignal != null && startSignal.getCount() > 0) {
                 startSignal.countDown();
             }
         }
-
     }
 
     /**
@@ -183,7 +184,8 @@ public class SessionTest extends ZKTestCase {
 
         Stat stat = new Stat();
         startSignal = new CountDownLatch(1);
-        zk = new DisconnectableZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, new MyWatcher("testSession"), zk.getSessionId(), zk.getSessionPasswd());
+        zk = new DisconnectableZooKeeper(
+                HOSTPORT, CONNECTION_TIMEOUT, new MyWatcher("testSession"), zk.getSessionId(), zk.getSessionPasswd());
         startSignal.await();
 
         LOG.info("zk with session id 0x{} was created!", Long.toHexString(zk.getSessionId()));
@@ -203,12 +205,14 @@ public class SessionTest extends ZKTestCase {
 
         AsyncCallback.DataCallback cb = new AsyncCallback.DataCallback() {
             String status = "not done";
+
             public void processResult(int rc, String p, Object c, byte[] b, Stat s) {
                 synchronized (this) {
                     status = KeeperException.Code.get(rc).toString();
                     this.notify();
                 }
             }
+
             public String toString() {
                 return status;
             }
@@ -239,18 +243,23 @@ public class SessionTest extends ZKTestCase {
         for (int i = 0; i < hostPorts.length * 2; i++) {
             zk.dontReconnect();
             // This should stomp the zk handle
-            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[(i + 1)
-                                                                                          % hostPorts.length], CONNECTION_TIMEOUT, new MyWatcher(Integer.toString(
-                    i
-                            + 1)), zk.getSessionId(), zk.getSessionPasswd());
+            DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(
+                    hostPorts[(i + 1) % hostPorts.length],
+                    CONNECTION_TIMEOUT,
+                    new MyWatcher(Integer.toString(i + 1)),
+                    zk.getSessionId(),
+                    zk.getSessionPasswd());
             final int[] result = new int[1];
             result[0] = Integer.MAX_VALUE;
-            zknew.sync("/", (rc, path, ctx) -> {
-                synchronized (result) {
-                    result[0] = rc;
-                    result.notify();
-                }
-            }, null);
+            zknew.sync(
+                    "/",
+                    (rc, path, ctx) -> {
+                        synchronized (result) {
+                            result[0] = rc;
+                            result.notify();
+                        }
+                    },
+                    null);
             synchronized (result) {
                 if (result[0] == Integer.MAX_VALUE) {
                     result.wait(5000);
@@ -265,7 +274,7 @@ public class SessionTest extends ZKTestCase {
             } catch (KeeperException.ConnectionLossException e) {
                 LOG.info("Got connection loss exception as expected");
             }
-            //zk.close();
+            // zk.close();
             zk = zknew;
         }
         zk.close();
@@ -332,13 +341,13 @@ public class SessionTest extends ZKTestCase {
     private class DupWatcher extends CountdownWatcher {
 
         public List<WatchedEvent> states = new LinkedList<>();
+
         public void process(WatchedEvent event) {
             super.process(event);
             if (event.getType() == EventType.None) {
                 states.add(event);
             }
         }
-
     }
 
     @Test
@@ -394,5 +403,4 @@ public class SessionTest extends ZKTestCase {
             }
         }
     }
-
 }

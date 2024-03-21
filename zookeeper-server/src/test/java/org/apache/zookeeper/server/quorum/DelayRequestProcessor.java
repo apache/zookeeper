@@ -55,8 +55,7 @@ public class DelayRequestProcessor implements RequestProcessor {
     }
 
     @Override
-    public void shutdown() {
-    }
+    public void shutdown() {}
 
     public void unblockQueue() throws RequestProcessorException {
         if (blocking) {
@@ -73,5 +72,4 @@ public class DelayRequestProcessor implements RequestProcessor {
         zooKeeperServer.commitProcessor.nextProcessor = delayRequestProcessor;
         return delayRequestProcessor;
     }
-
 }

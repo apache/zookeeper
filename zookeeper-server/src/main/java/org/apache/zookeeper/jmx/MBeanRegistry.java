@@ -152,7 +152,10 @@ public class MBeanRegistry {
         } catch (JMException e) {
             LOG.warn("Error during unregister of [{}]", bean.getName(), e);
         } catch (Throwable t) {
-            LOG.error("Unexpected exception during unregister of [{}]. It should be reviewed and fixed.", bean.getName(), t);
+            LOG.error(
+                    "Unexpected exception during unregister of [{}]. It should be reviewed and fixed.",
+                    bean.getName(),
+                    t);
         }
     }
 
@@ -219,5 +222,4 @@ public class MBeanRegistry {
             throw e;
         }
     }
-
 }

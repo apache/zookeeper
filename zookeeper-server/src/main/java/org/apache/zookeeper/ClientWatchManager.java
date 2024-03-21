@@ -37,5 +37,4 @@ public interface ClientWatchManager {
      * @return may be empty set but must not be null
      */
     Set<Watcher> materialize(Watcher.Event.KeeperState state, Watcher.Event.EventType type, String path);
-
 }

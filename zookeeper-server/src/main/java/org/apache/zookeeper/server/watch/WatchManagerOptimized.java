@@ -210,7 +210,8 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
+    public WatcherOrBitSet triggerWatch(
+            String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
 
         BitHashSet watchers = remove(path);
@@ -275,24 +276,24 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
 
     void updateMetrics(final EventType type, int size) {
         switch (type) {
-        case NodeCreated:
-            ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(size);
-            break;
+            case NodeCreated:
+                ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(size);
+                break;
 
-        case NodeDeleted:
-            ServerMetrics.getMetrics().NODE_DELETED_WATCHER.add(size);
-            break;
+            case NodeDeleted:
+                ServerMetrics.getMetrics().NODE_DELETED_WATCHER.add(size);
+                break;
 
-        case NodeDataChanged:
-            ServerMetrics.getMetrics().NODE_CHANGED_WATCHER.add(size);
-            break;
+            case NodeDataChanged:
+                ServerMetrics.getMetrics().NODE_CHANGED_WATCHER.add(size);
+                break;
 
-        case NodeChildrenChanged:
-            ServerMetrics.getMetrics().NODE_CHILDREN_WATCHER.add(size);
-            break;
-        default:
-            // Other types not logged.
-            break;
+            case NodeChildrenChanged:
+                ServerMetrics.getMetrics().NODE_CHILDREN_WATCHER.add(size);
+                break;
+            default:
+                // Other types not logged.
+                break;
         }
     }
 
@@ -404,9 +405,11 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(watcherBitIdMap.size()).append(" connections watching ").append(pathSize()).append(" paths\n");
+        sb.append(watcherBitIdMap.size())
+                .append(" connections watching ")
+                .append(pathSize())
+                .append(" paths\n");
         sb.append("Total watches:").append(size());
         return sb.toString();
     }
-
 }

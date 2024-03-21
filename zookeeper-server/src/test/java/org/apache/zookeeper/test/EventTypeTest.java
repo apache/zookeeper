@@ -45,7 +45,5 @@ public class EventTypeTest extends ZKTestCase {
         } catch (RuntimeException re) {
             // we're good.
         }
-
     }
-
 }

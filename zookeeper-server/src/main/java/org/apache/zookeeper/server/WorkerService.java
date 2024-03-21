@@ -85,9 +85,7 @@ public class WorkerService {
          * (Optional) If implemented, is called if the service is stopped
          * or unable to schedule the request.
          */
-        public void cleanup() {
-        }
-
+        public void cleanup() {}
     }
 
     /**
@@ -156,7 +154,6 @@ public class WorkerService {
                 workRequest.cleanup();
             }
         }
-
     }
 
     /**
@@ -192,7 +189,6 @@ public class WorkerService {
             }
             return t;
         }
-
     }
 
     public void start() {
@@ -237,5 +233,4 @@ public class WorkerService {
             }
         }
     }
-
 }

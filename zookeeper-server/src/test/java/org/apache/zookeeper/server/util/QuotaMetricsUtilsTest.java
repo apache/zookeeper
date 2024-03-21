@@ -63,7 +63,6 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
         validateQuotaMetrics(ns, countHardLimit, bytesHardLimit, countUsage, bytesUsage, nameSuffix);
     }
 
-
     @Test
     public void testQuotaMetrics_multipleQuotaSubtrees() throws Exception {
         // register the metrics
@@ -105,8 +104,13 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
         buildDataTree("/" + ns + "/a/c/d", limitTrack2, usageTrack2, dt);
 
         // validate the quota metrics
-        validateQuotaMetrics(ns, countHardLimit1 + countHardLimit2, bytesHardLimit1 + bytesHardLimit2,
-                countUsage1 + countUsage2, bytesUsage1 + bytesUsage2, nameSuffix);
+        validateQuotaMetrics(
+                ns,
+                countHardLimit1 + countHardLimit2,
+                bytesHardLimit1 + bytesHardLimit2,
+                countUsage1 + countUsage2,
+                bytesUsage1 + bytesUsage2,
+                nameSuffix);
     }
 
     @Test
@@ -124,7 +128,7 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
         final long countHardLimit = -1;
         final long bytesHardLimit = -1;
 
-        final long countUsage = 1;  // the node itself is always counted
+        final long countUsage = 1; // the node itself is always counted
         final long bytesUsage = 0;
 
         final StatsTrack limitTrack = buildLimitStatsTrack(countLimit, bytesLimit, countHardLimit, bytesHardLimit);
@@ -159,33 +163,45 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
     public void testShouldCollect_limitPath() {
         final String limitPath = Quotas.quotaPath("/ns1") + QuotaMetricsUtils.LIMIT_END_STRING;
 
-        assertTrue(QuotaMetricsUtils.shouldCollect(limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT));
-        assertTrue(QuotaMetricsUtils.shouldCollect(limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT));
+        assertTrue(QuotaMetricsUtils.shouldCollect(
+                limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT));
+        assertTrue(QuotaMetricsUtils.shouldCollect(
+                limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT));
 
-        assertFalse(QuotaMetricsUtils.shouldCollect(limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE));
-        assertFalse(QuotaMetricsUtils.shouldCollect(limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                limitPath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE));
     }
 
     @Test
     public void testShouldCollect_usagePath() {
         final String usagePath = Quotas.quotaPath("/ns1") + QuotaMetricsUtils.STATS_END_STRING;
 
-        assertTrue(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE));
-        assertTrue(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE));
+        assertTrue(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE));
+        assertTrue(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE));
 
-        assertFalse(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT));
-        assertFalse(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT));
     }
 
     @Test
     public void testShouldCollect_notLimitOrUsagePath() {
         final String usagePath = Quotas.quotaPath("/ns1") + "/notLimitOrUsage";
 
-        assertFalse(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE));
-        assertFalse(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_USAGE));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE));
 
-        assertFalse(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT));
-        assertFalse(QuotaMetricsUtils.shouldCollect(usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_COUNT_LIMIT));
+        assertFalse(QuotaMetricsUtils.shouldCollect(
+                usagePath, QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT));
     }
 
     @Test
@@ -199,22 +215,24 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
     public void testCollectQuotaMetrics_noData() {
         final Map<String, Number> metricsMap = new HashMap<>();
 
-        QuotaMetricsUtils.collectQuotaLimitOrUsage(Quotas.quotaPath("/ns1") + QuotaMetricsUtils.LIMIT_END_STRING,
-                                        new DataNode(new byte[0], null, null),
-                                        metricsMap,
-                                        QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT);
+        QuotaMetricsUtils.collectQuotaLimitOrUsage(
+                Quotas.quotaPath("/ns1") + QuotaMetricsUtils.LIMIT_END_STRING,
+                new DataNode(new byte[0], null, null),
+                metricsMap,
+                QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT);
 
         assertEquals(1, metricsMap.size());
         final Map.Entry<String, Number> entry = metricsMap.entrySet().iterator().next();
         assertEquals("ns1", entry.getKey());
-        assertEquals(-1L,  entry.getValue().longValue());
+        assertEquals(-1L, entry.getValue().longValue());
     }
 
     @Test
     public void testCollectQuotaMetrics_nullData() {
         final Map<String, Number> metricsMap = new HashMap<>();
 
-        QuotaMetricsUtils.collectQuotaLimitOrUsage(Quotas.quotaPath("/ns1") + QuotaMetricsUtils.LIMIT_END_STRING,
+        QuotaMetricsUtils.collectQuotaLimitOrUsage(
+                Quotas.quotaPath("/ns1") + QuotaMetricsUtils.LIMIT_END_STRING,
                 new DataNode(null, null, null),
                 metricsMap,
                 QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_LIMIT);
@@ -226,7 +244,8 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
     public void testCollectQuotaMetrics_noNamespace() {
         final Map<String, Number> metricsMap = new HashMap<>();
 
-        QuotaMetricsUtils.collectQuotaLimitOrUsage("/zookeeper/quota",
+        QuotaMetricsUtils.collectQuotaLimitOrUsage(
+                "/zookeeper/quota",
                 new DataNode(null, null, null),
                 metricsMap,
                 QuotaMetricsUtils.QUOTA_LIMIT_USAGE_METRIC_TYPE.QUOTA_BYTES_USAGE);
@@ -240,19 +259,21 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
 
         // added random UUID as NAME_SUFFIX to avoid GaugeSet being overwritten when registering with same name
         rootContext.registerGaugeSet(
-                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE + nameSuffix, () -> QuotaMetricsUtils.getQuotaCountLimit(dt));
+                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE + nameSuffix,
+                () -> QuotaMetricsUtils.getQuotaCountLimit(dt));
         rootContext.registerGaugeSet(
-                QuotaMetricsUtils.QUOTA_BYTES_LIMIT_PER_NAMESPACE + nameSuffix, () -> QuotaMetricsUtils.getQuotaBytesLimit(dt));
+                QuotaMetricsUtils.QUOTA_BYTES_LIMIT_PER_NAMESPACE + nameSuffix,
+                () -> QuotaMetricsUtils.getQuotaBytesLimit(dt));
         rootContext.registerGaugeSet(
-                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE + nameSuffix, () -> QuotaMetricsUtils.getQuotaCountUsage(dt));
+                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE + nameSuffix,
+                () -> QuotaMetricsUtils.getQuotaCountUsage(dt));
         rootContext.registerGaugeSet(
-                QuotaMetricsUtils.QUOTA_BYTES_USAGE_PER_NAMESPACE + nameSuffix, () -> QuotaMetricsUtils.getQuotaBytesUsage(dt));
+                QuotaMetricsUtils.QUOTA_BYTES_USAGE_PER_NAMESPACE + nameSuffix,
+                () -> QuotaMetricsUtils.getQuotaBytesUsage(dt));
     }
 
-    private StatsTrack buildLimitStatsTrack(final long countLimit,
-                                            final long bytesLimit,
-                                            final long countHardLimit,
-                                            final long bytesHardLimit) {
+    private StatsTrack buildLimitStatsTrack(
+            final long countLimit, final long bytesLimit, final long countHardLimit, final long bytesHardLimit) {
         final StatsTrack limitTrack = new StatsTrack();
         limitTrack.setCount(countLimit);
         limitTrack.setBytes(bytesLimit);
@@ -261,8 +282,7 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
         return limitTrack;
     }
 
-    private StatsTrack buildUsageStatsTrack(final long countUsage,
-                                            final long bytesUsage) {
+    private StatsTrack buildUsageStatsTrack(final long countUsage, final long bytesUsage) {
         final StatsTrack usageTrack = new StatsTrack();
         usageTrack.setCount(countUsage);
         usageTrack.setBytes(bytesUsage);
@@ -270,10 +290,9 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
         return usageTrack;
     }
 
-    private void buildDataTree(final String path,
-                               final StatsTrack limitTrack,
-                               final StatsTrack usageTrack,
-                               final DataTree dataTree) throws Exception {
+    private void buildDataTree(
+            final String path, final StatsTrack limitTrack, final StatsTrack usageTrack, final DataTree dataTree)
+            throws Exception {
 
         // create the ancestor and child data nodes
         buildAncestors(path, dataTree);
@@ -311,16 +330,25 @@ public class QuotaMetricsUtilsTest extends ZKTestCase {
         }
     }
 
-    private void validateQuotaMetrics(final String namespace,
-                                      final Long countLimit,
-                                      final Long bytesLimit,
-                                      final Long countUsage,
-                                      final Long bytesUsage,
-                                      final String nameSuffix) {
+    private void validateQuotaMetrics(
+            final String namespace,
+            final Long countLimit,
+            final Long bytesLimit,
+            final Long countUsage,
+            final Long bytesUsage,
+            final String nameSuffix) {
         final Map<String, Object> values = MetricsUtils.currentServerMetrics();
-        assertEquals(countLimit, values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE + nameSuffix));
-        assertEquals(bytesLimit, values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_BYTES_LIMIT_PER_NAMESPACE + nameSuffix));
-        assertEquals(countUsage, values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE + nameSuffix));
-        assertEquals(bytesUsage, values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_BYTES_USAGE_PER_NAMESPACE + nameSuffix));
+        assertEquals(
+                countLimit,
+                values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE + nameSuffix));
+        assertEquals(
+                bytesLimit,
+                values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_BYTES_LIMIT_PER_NAMESPACE + nameSuffix));
+        assertEquals(
+                countUsage,
+                values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE + nameSuffix));
+        assertEquals(
+                bytesUsage,
+                values.get(namespace + "_" + QuotaMetricsUtils.QUOTA_BYTES_USAGE_PER_NAMESPACE + nameSuffix));
     }
 }

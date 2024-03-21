@@ -61,7 +61,8 @@ import org.slf4j.LoggerFactory;
 public class X509AuthenticationProvider implements AuthenticationProvider {
 
     public static final String X509_CERTIFICATE_ATTRIBUTE_NAME = "javax.servlet.request.X509Certificate";
-    static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER = "zookeeper.X509AuthenticationProvider.superUser";
+    static final String ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER =
+            "zookeeper.X509AuthenticationProvider.superUser";
     private static final Logger LOG = LoggerFactory.getLogger(X509AuthenticationProvider.class);
     private final X509TrustManager trustManager;
     private final X509KeyManager keyManager;
@@ -80,14 +81,14 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         ZKConfig config = new ZKConfig();
         try (X509Util x509Util = new ClientX509Util()) {
             String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
-            String keyStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(config,
-                    x509Util.getSslKeystorePasswdProperty(),
-                    x509Util.getSslKeystorePasswdPathProperty());
+            String keyStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(
+                    config, x509Util.getSslKeystorePasswdProperty(), x509Util.getSslKeystorePasswdPathProperty());
             String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
             boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
-            boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+            boolean hostnameVerificationEnabled =
+                    Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
             X509KeyManager km = null;
             X509TrustManager tm = null;
@@ -102,9 +103,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             }
 
             String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
-            String trustStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(config,
-                    x509Util.getSslTruststorePasswdProperty(),
-                    x509Util.getSslTruststorePasswdPathProperty());
+            String trustStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(
+                    config, x509Util.getSslTruststorePasswdProperty(), x509Util.getSslTruststorePasswdPathProperty());
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
             boolean fipsMode = x509Util.getFipsMode(config);
 
@@ -113,14 +113,14 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             } else {
                 try {
                     tm = X509Util.createTrustManager(
-                        trustStoreLocation,
-                        trustStorePassword,
-                        trustStoreTypeProp,
-                        crlEnabled,
-                        ocspEnabled,
-                        hostnameVerificationEnabled,
-                        false,
-                        fipsMode);
+                            trustStoreLocation,
+                            trustStorePassword,
+                            trustStoreTypeProp,
+                            crlEnabled,
+                            ocspEnabled,
+                            hostnameVerificationEnabled,
+                            false,
+                            fipsMode);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
                 }
@@ -168,8 +168,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public List<Id> handleAuthentication(HttpServletRequest request, byte[] authData) {
-        final X509Certificate[] certChain =
-                (X509Certificate[]) request.getAttribute(X509_CERTIFICATE_ATTRIBUTE_NAME);
+        final X509Certificate[] certChain = (X509Certificate[]) request.getAttribute(X509_CERTIFICATE_ATTRIBUTE_NAME);
         return handleAuthentication(certChain);
     }
 
@@ -190,8 +189,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     @Override
     public boolean matches(String id, String aclExpr) {
         if (System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER) != null) {
-            return id.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER))
-                   || id.equals(aclExpr);
+            return id.equals(System.getProperty(ZOOKEEPER_X509AUTHENTICATIONPROVIDER_SUPERUSER)) || id.equals(aclExpr);
         }
 
         return id.equals(aclExpr);

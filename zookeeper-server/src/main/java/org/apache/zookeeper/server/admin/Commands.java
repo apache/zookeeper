@@ -85,7 +85,8 @@ public class Commands {
     static final Logger LOG = LoggerFactory.getLogger(Commands.class);
     // VisibleForTesting
     static final String ADMIN_RATE_LIMITER_INTERVAL = "zookeeper.admin.rateLimiterIntervalInMS";
-    private static final long rateLimiterInterval = Integer.parseInt(System.getProperty(ADMIN_RATE_LIMITER_INTERVAL, "300000"));
+    private static final long rateLimiterInterval =
+            Integer.parseInt(System.getProperty(ADMIN_RATE_LIMITER_INTERVAL, "300000"));
     // VisibleForTesting
     static final String AUTH_INFO_SEPARATOR = " ";
     // VisibleForTesting
@@ -93,6 +94,7 @@ public class Commands {
 
     /** Maps command names to Command instances */
     private static Map<String, Command> commands = new HashMap<>();
+
     private static Set<String> primaryNames = new HashSet<>();
 
     /**
@@ -174,14 +176,16 @@ public class Commands {
         if (command.isServerRequired() && (zkServer == null || !zkServer.isRunning())) {
             // set the status code to 200 to keep the current behavior of existing commands
             LOG.warn("This ZooKeeper instance is not currently serving requests for command");
-            return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests", HttpServletResponse.SC_OK);
+            return new CommandResponse(
+                    cmdName, "This ZooKeeper instance is not currently serving requests", HttpServletResponse.SC_OK);
         }
 
         final AuthRequest authRequest = command.getAuthRequest();
         if (authRequest != null) {
             if (authInfo == null) {
                 LOG.warn("Auth info is missing for command");
-                return new CommandResponse(cmdName, "Auth info is missing for the command", HttpServletResponse.SC_UNAUTHORIZED);
+                return new CommandResponse(
+                        cmdName, "Auth info is missing for the command", HttpServletResponse.SC_UNAUTHORIZED);
             }
             try {
                 final List<Id> ids = handleAuthentication(request, authInfo);
@@ -192,13 +196,15 @@ public class Commands {
                 return new CommandResponse(cmdName, "Not authorized", HttpServletResponse.SC_FORBIDDEN);
             } catch (final Exception e) {
                 LOG.warn("Error occurred during auth for command", e);
-                return new CommandResponse(cmdName, "Error occurred during auth", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return new CommandResponse(
+                        cmdName, "Error occurred during auth", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         }
         return isGet ? command.runGet(zkServer, kwargs) : command.runPost(zkServer, inputStream);
     }
 
-    private static List<Id> handleAuthentication(final HttpServletRequest request, final String authInfo) throws KeeperException.AuthFailedException {
+    private static List<Id> handleAuthentication(final HttpServletRequest request, final String authInfo)
+            throws KeeperException.AuthFailedException {
         final String[] authData = authInfo.split(AUTH_INFO_SEPARATOR);
         // for IP and x509, auth info only contains the schema and Auth Id will be extracted from HTTP request
         if (authData.length != 1 && authData.length != 2) {
@@ -227,10 +233,8 @@ public class Commands {
         }
     }
 
-    private static void handleAuthorization(final ZooKeeperServer zkServer,
-                                            final List<Id> ids,
-                                            final int perm,
-                                            final String path)
+    private static void handleAuthorization(
+            final ZooKeeperServer zkServer, final List<Id> ids, final int perm, final String path)
             throws KeeperException.NoNodeException, KeeperException.NoAuthException {
         final DataNode dataNode = zkServer.getZKDatabase().getNode(path);
         if (dataNode == null) {
@@ -300,9 +304,7 @@ public class Commands {
             CommandResponse response = initializeResponse();
             zkServer.getServerCnxnFactory().resetAllConnectionStats();
             return response;
-
         }
-
     }
 
     /**
@@ -321,7 +323,6 @@ public class Commands {
             response.putAll(zkServer.getConf().toMap());
             return response;
         }
-
     }
 
     /**
@@ -352,7 +353,6 @@ public class Commands {
             }
             return response;
         }
-
     }
 
     /**
@@ -371,7 +371,6 @@ public class Commands {
             response.put("logdir_size", zkServer.getLogDirSize());
             return response;
         }
-
     }
 
     /**
@@ -396,7 +395,6 @@ public class Commands {
             response.put("session_id_to_ephemeral_paths", zkServer.getEphemerals());
             return response;
         }
-
     }
 
     /**
@@ -416,7 +414,6 @@ public class Commands {
             }
             return response;
         }
-
     }
 
     /**
@@ -434,7 +431,6 @@ public class Commands {
             response.put("digests", zkServer.getZKDatabase().getDataTree().getDigestLog());
             return response;
         }
-
     }
 
     /**
@@ -453,7 +449,6 @@ public class Commands {
             response.put("tracemask", ZooTrace.getTextTraceLevel());
             return response;
         }
-
     }
 
     public static class InitialConfigurationCommand extends GetCommand {
@@ -468,7 +463,6 @@ public class Commands {
             response.put("initial_configuration", zkServer.getInitialConfig());
             return response;
         }
-
     }
 
     /**
@@ -487,7 +481,6 @@ public class Commands {
             response.put("read_only", zkServer instanceof ReadOnlyZooKeeperServer);
             return response;
         }
-
     }
 
     /**
@@ -513,7 +506,6 @@ public class Commands {
             response.put("timestamp", info == null ? -1L : info.timestamp);
             return response;
         }
-
     }
 
     /**
@@ -539,7 +531,6 @@ public class Commands {
             }
             return response;
         }
-
     }
 
     /**
@@ -581,9 +572,7 @@ public class Commands {
             zkServer.dumpMonitorValues(response::put);
             ServerMetrics.getMetrics().getMetricsProvider().dump(response::put);
             return response;
-
         }
-
     }
 
     /**
@@ -607,7 +596,6 @@ public class Commands {
             }
             return response;
         }
-
     }
 
     /**
@@ -645,7 +633,7 @@ public class Commands {
                 return response;
             }
 
-            if (inputStream == null){
+            if (inputStream == null) {
                 response.setStatusCode(HttpServletResponse.SC_BAD_REQUEST);
                 LOG.warn("InputStream from restore request is null");
                 return response;
@@ -685,7 +673,6 @@ public class Commands {
         public CommandResponse runGet(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             return initializeResponse();
         }
-
     }
 
     /**
@@ -719,7 +706,6 @@ public class Commands {
             response.put("tracemask", traceMask);
             return response;
         }
-
     }
 
     /**
@@ -747,7 +733,8 @@ public class Commands {
             rateLimiter = new RateLimiter(1, rateLimiterInterval, TimeUnit.MICROSECONDS);
         }
 
-        @SuppressFBWarnings(value = "OBL_UNSATISFIED_OBLIGATION",
+        @SuppressFBWarnings(
+                value = "OBL_UNSATISFIED_OBLIGATION",
                 justification = "FileInputStream is passed to CommandResponse and closed in StreamOutputter")
         @Override
         public CommandResponse runGet(final ZooKeeperServer zkServer, final Map<String, String> kwargs) {
@@ -841,7 +828,6 @@ public class Commands {
             response.put("node_count", zkServer.getZKDatabase().getNodeCount());
             return response;
         }
-
     }
 
     /**
@@ -874,7 +860,6 @@ public class Commands {
             response.put("secure_connections", secureConnections);
             return response;
         }
-
     }
 
     /**
@@ -892,7 +877,6 @@ public class Commands {
             zkServer.serverStats().reset();
             return response;
         }
-
     }
 
     /**
@@ -932,7 +916,6 @@ public class Commands {
             response.put("observers", Collections.emptySet());
             return response;
         }
-
     }
 
     /**
@@ -953,7 +936,6 @@ public class Commands {
             response.putAll(sortedSystemProperties);
             return response;
         }
-
     }
 
     /**
@@ -1018,8 +1000,7 @@ public class Commands {
                 }
                 return String.format("%s:%d", QuorumPeer.QuorumServer.delimitedHostString(address), address.getPort());
             }
-       }
-
+        }
     }
 
     /**
@@ -1041,7 +1022,6 @@ public class Commands {
             response.put("session_id_to_watched_paths", dt.getWatches().toMap());
             return response;
         }
-
     }
 
     /**
@@ -1062,7 +1042,6 @@ public class Commands {
             response.put("path_to_session_ids", dt.getWatchesByPath().toMap());
             return response;
         }
-
     }
 
     /**
@@ -1082,7 +1061,6 @@ public class Commands {
             response.putAll(dt.getWatchesSummary().toMap());
             return response;
         }
-
     }
 
     /**
@@ -1104,11 +1082,9 @@ public class Commands {
                 QuorumVerifier qv = peer.getQuorumVerifier();
 
                 QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getMyId());
-                boolean voting = (
-                        voter != null
-                                && voter.addr.equals(peer.getQuorumAddress())
-                                && voter.electionAddr.equals(peer.getElectionAddress())
-                );
+                boolean voting = (voter != null
+                        && voter.addr.equals(peer.getQuorumAddress())
+                        && voter.electionAddr.equals(peer.getElectionAddress()));
                 response.put("myid", zkServer.getConf().getServerId());
                 response.put("is_leader", zkServer instanceof LeaderZooKeeperServer);
                 response.put("quorum_address", peer.getQuorumAddress());
@@ -1126,10 +1102,7 @@ public class Commands {
             }
             return response;
         }
-
     }
 
-    private Commands() {
-    }
-
+    private Commands() {}
 }

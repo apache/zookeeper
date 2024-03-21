@@ -125,5 +125,4 @@ public class NodeHashMapImpl implements NodeHashMap {
     public long getDigest() {
         return hash.getHash();
     }
-
 }

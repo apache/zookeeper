@@ -30,19 +30,19 @@ public class FileKeyStoreLoaderBuilderProvider {
      * @param type the file type to load keys/certs from.
      * @return a new Builder.
      */
-    static FileKeyStoreLoader.Builder<? extends FileKeyStoreLoader> getBuilderForKeyStoreFileType(KeyStoreFileType type) {
+    static FileKeyStoreLoader.Builder<? extends FileKeyStoreLoader> getBuilderForKeyStoreFileType(
+            KeyStoreFileType type) {
         switch (Objects.requireNonNull(type)) {
-        case JKS:
-            return new JKSFileLoader.Builder();
-        case PEM:
-            return new PEMFileLoader.Builder();
-        case PKCS12:
-            return new PKCS12FileLoader.Builder();
-        case BCFKS:
-            return new BCFKSFileLoader.Builder();
-        default:
-            throw new AssertionError("Unexpected StoreFileType: " + type.name());
+            case JKS:
+                return new JKSFileLoader.Builder();
+            case PEM:
+                return new PEMFileLoader.Builder();
+            case PKCS12:
+                return new PKCS12FileLoader.Builder();
+            case BCFKS:
+                return new BCFKSFileLoader.Builder();
+            default:
+                throw new AssertionError("Unexpected StoreFileType: " + type.name());
         }
     }
-
 }

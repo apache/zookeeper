@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -38,8 +37,7 @@ public class ControllableConnectionFactory extends NIOServerCnxnFactory {
     private long remainingRequestsToFail = 0;
     private long remainingResponsesToHold = 0;
 
-    public ControllableConnectionFactory() {
-    }
+    public ControllableConnectionFactory() {}
 
     @Override
     protected NIOServerCnxn createConnection(SocketChannel sock, SelectionKey sk, SelectorThread selectorThread)
@@ -49,7 +47,7 @@ public class ControllableConnectionFactory extends NIOServerCnxnFactory {
 
     /**
      * Called by the connection to delay processing requests from the client.
-    */
+     */
     public synchronized void delayRequestIfNeeded() {
         try {
             if (responseDelayInMs > 0) {
@@ -63,7 +61,7 @@ public class ControllableConnectionFactory extends NIOServerCnxnFactory {
     /**
      * Check if we should fail the next incoming request.
      * If so, decrement the remaining requests to fail.
-    */
+     */
     public synchronized boolean shouldFailNextRequest() {
         if (remainingRequestsToFail == 0) {
             return false;
@@ -81,7 +79,7 @@ public class ControllableConnectionFactory extends NIOServerCnxnFactory {
      * Check if we should send a response to the latest processed request (true),
      * or eat the response to mess with the client (false).
      * If so, decrement the remaining requests to eat.
-    */
+     */
     public synchronized boolean shouldSendResponse() {
         if (remainingResponsesToHold == 0) {
             return true;

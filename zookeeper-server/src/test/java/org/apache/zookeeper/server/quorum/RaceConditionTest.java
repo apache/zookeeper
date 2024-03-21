@@ -58,7 +58,6 @@ public class RaceConditionTest extends QuorumPeerTestBase {
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2380.
      * Deadlock while shutting down the ZooKeeper
      */
-
     @Test
     @Timeout(value = 30)
     public void testRaceConditionBetweenLeaderAndAckRequestProcessor() throws Exception {
@@ -78,13 +77,15 @@ public class RaceConditionTest extends QuorumPeerTestBase {
          * after the leader election, not the old LEADING state.
          * </pre>
          */
-        boolean leaderStateChanged = ClientBase
-            .waitForServerState(leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
+        boolean leaderStateChanged = ClientBase.waitForServerState(
+                leader, 15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
         // Wait for the old leader to start completely
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
-            "Failed to bring up the old leader server");
-        assertTrue(leaderStateChanged || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch),
-            "Leader failed to transition to new state. Current state is " + leader.getServerState());
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
+                "Failed to bring up the old leader server");
+        assertTrue(
+                leaderStateChanged || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch),
+                "Leader failed to transition to new state. Current state is " + leader.getServerState());
     }
 
     @AfterEach
@@ -111,7 +112,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;127.0.0.1:" + clientPorts[i];
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -131,8 +132,8 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
             assertTrue(
-                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                "waiting for server " + i + " being up");
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
         return mt;
     }
@@ -160,8 +161,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
 
         private boolean stopPing;
 
-        public CustomQuorumPeer() throws SaslException {
-        }
+        public CustomQuorumPeer() throws SaslException {}
 
         public void setStopPing(boolean stopPing) {
             this.stopPing = stopPing;
@@ -193,20 +193,21 @@ public class RaceConditionTest extends QuorumPeerTestBase {
                      * MockSyncRequestProcessor
                      */
                     RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-                    RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
-                    commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
+                    RequestProcessor toBeAppliedProcessor =
+                            new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
+                    commitProcessor = new CommitProcessor(
+                            toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
                     commitProcessor.start();
-                    ProposalRequestProcessor proposalProcessor = new MockProposalRequestProcessor(this, commitProcessor);
+                    ProposalRequestProcessor proposalProcessor =
+                            new MockProposalRequestProcessor(this, commitProcessor);
                     proposalProcessor.initialize();
                     prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
                     prepRequestProcessor.start();
                     firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
                 }
-
             };
             return new Leader(this, zk);
         }
-
     }
 
     private static class MockSyncRequestProcessor extends SyncRequestProcessor {
@@ -226,7 +227,6 @@ public class RaceConditionTest extends QuorumPeerTestBase {
             processRequest(request);
             super.shutdown();
         }
-
     }
 
     private static class MockProposalRequestProcessor extends ProposalRequestProcessor {
@@ -241,7 +241,6 @@ public class RaceConditionTest extends QuorumPeerTestBase {
             AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
             syncProcessor = new MockSyncRequestProcessor(zks, ackProcessor);
         }
-
     }
 
     private static class MockTestQPMain extends TestQPMain {
@@ -250,7 +249,5 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
-
     }
-
 }

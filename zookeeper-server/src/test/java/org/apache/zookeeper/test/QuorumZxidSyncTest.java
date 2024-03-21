@@ -82,7 +82,9 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         assertTrue(ClientBase.waitForServerUp(qb.hostPort, 10000), "Servers didn't come up");
         qb.s5.start();
         String hostPort = "127.0.0.1:" + qb.s5.getClientPort();
-        assertFalse(ClientBase.waitForServerUp(hostPort, 10000), "Servers came up, but shouldn't have since it's ahead of leader");
+        assertFalse(
+                ClientBase.waitForServerUp(hostPort, 10000),
+                "Servers came up, but shouldn't have since it's ahead of leader");
     }
 
     private void cleanAndInitializeDataDir(File f) throws IOException {
@@ -155,5 +157,4 @@ public class QuorumZxidSyncTest extends ZKTestCase {
     public void tearDown() throws Exception {
         qb.tearDown();
     }
-
 }

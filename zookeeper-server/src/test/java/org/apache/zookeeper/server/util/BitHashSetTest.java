@@ -41,7 +41,7 @@ public class BitHashSetTest extends ZKTestCase {
         for (int bit : ws) {
             actualBits.add(bit);
         }
-        assertArrayEquals(new Integer[]{1}, actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[] {1}, actualBits.toArray(new Integer[actualBits.size()]));
 
         // add the same bit again
         assertFalse(ws.add(1));
@@ -59,7 +59,7 @@ public class BitHashSetTest extends ZKTestCase {
         for (int bit : ws) {
             actualBits.add(bit);
         }
-        assertArrayEquals(new Integer[]{1, 2}, actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[] {1, 2}, actualBits.toArray(new Integer[actualBits.size()]));
     }
 
     @Test
@@ -82,7 +82,7 @@ public class BitHashSetTest extends ZKTestCase {
         for (int bit : ws) {
             actualBits.add(bit);
         }
-        assertArrayEquals(new Integer[]{2}, actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[] {2}, actualBits.toArray(new Integer[actualBits.size()]));
 
         ws.add(3);
         assertEquals(2, ws.size());
@@ -92,7 +92,7 @@ public class BitHashSetTest extends ZKTestCase {
         for (int bit : ws) {
             actualBits.add(bit);
         }
-        assertArrayEquals(new Integer[]{2, 3}, actualBits.toArray(new Integer[actualBits.size()]));
+        assertArrayEquals(new Integer[] {2, 3}, actualBits.toArray(new Integer[actualBits.size()]));
 
         ws.remove(2);
         ws.remove(3);
@@ -100,5 +100,4 @@ public class BitHashSetTest extends ZKTestCase {
         assertEquals(0, ws.size());
         assertEquals(0, ws.cachedSize());
     }
-
 }

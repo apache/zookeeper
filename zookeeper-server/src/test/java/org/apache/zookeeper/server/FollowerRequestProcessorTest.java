@@ -44,7 +44,11 @@ public class FollowerRequestProcessorTest extends ObserverMasterTestBase {
         zk.create("/testFollowerSkipNextAProcessor", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         assertEquals("test", new String(zk.getData("/testFollowerSkipNextAProcessor", null, null)));
-        assertEquals(1L, ServerMetrics.getMetrics().SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT.get());
+        assertEquals(
+                1L,
+                ServerMetrics.getMetrics()
+                        .SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT
+                        .get());
     }
 
     @Test
@@ -54,18 +58,24 @@ public class FollowerRequestProcessorTest extends ObserverMasterTestBase {
         zk.create("/testFollowerSkipNextAProcessor", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         assertEquals("test", new String(zk.getData("/testFollowerSkipNextAProcessor", null, null)));
-        assertEquals(0L, ServerMetrics.getMetrics().SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT.get());
+        assertEquals(
+                0L,
+                ServerMetrics.getMetrics()
+                        .SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT
+                        .get());
     }
 
     private void setupTestObserverServer(String skipLearnerRequestToNextProcessor) throws Exception {
-        System.setProperty(FollowerRequestProcessor.SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR, skipLearnerRequestToNextProcessor);
+        System.setProperty(
+                FollowerRequestProcessor.SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR, skipLearnerRequestToNextProcessor);
 
         // Setup Ensemble with observer master port so that observer connects with Observer master and not the leader
         final int OM_PROXY_PORT = PortAssignment.unique();
         forwarder = setUp(OM_PROXY_PORT, true);
 
         q3.start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
 
         // Connect with observer zookeeper

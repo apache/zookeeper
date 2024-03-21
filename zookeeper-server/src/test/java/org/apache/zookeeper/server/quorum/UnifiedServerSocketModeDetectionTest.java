@@ -59,8 +59,10 @@ import org.slf4j.LoggerFactory;
 public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocketModeDetectionTest.class);
+
     @TempDir
     static File tempDir;
+
     private static X509TestContext x509TestContext;
 
     private X509Util x509Util;
@@ -74,7 +76,11 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
     @BeforeAll
     public static void setUpClass() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
-        x509TestContext = X509TestContext.newBuilder().setTempDir(tempDir).setKeyStoreKeyType(X509KeyType.EC).setTrustStoreKeyType(X509KeyType.EC).build();
+        x509TestContext = X509TestContext.newBuilder()
+                .setTempDir(tempDir)
+                .setKeyStoreKeyType(X509KeyType.EC)
+                .setTrustStoreKeyType(X509KeyType.EC)
+                .build();
     }
 
     @AfterAll
@@ -129,7 +135,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
         } else {
             clientSocket = new Socket();
             clientSocket.connect(localServerAddress);
-            clientSocket.getOutputStream().write(new byte[]{1, 2, 3, 4, 5});
+            clientSocket.getOutputStream().write(new byte[] {1, 2, 3, 4, 5});
         }
         serverSideSocket = acceptFuture.get();
     }
@@ -438,5 +444,4 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
         serverSideSocket.shutdownOutput();
         assertTrue(serverSideSocket.isOutputShutdown());
     }
-
 }

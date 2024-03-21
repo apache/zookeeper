@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,8 +50,7 @@ import org.slf4j.LoggerFactory;
 
 public class QuorumDigestTest extends QuorumPeerTestBase {
 
-    private static final Logger LOG =
-          LoggerFactory.getLogger(QuorumDigestTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumDigestTest.class);
 
     private Servers servers;
     private String forceSnapSyncValue;
@@ -97,8 +95,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
 
         // have some extra txns
         int leader = servers.findLeader();
-        TxnLogDigestTest.performOperations(servers.zk[leader],
-                "/testDigestMatchesDuringSnapSync");
+        TxnLogDigestTest.performOperations(servers.zk[leader], "/testDigestMatchesDuringSnapSync");
         assertEquals(0L, getMismatchDigestCount());
     }
 
@@ -112,31 +109,36 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         final String prefix = "/testDigestMatchesWithAsyncRequests";
 
         // start a thread to send requests asynchronously,
-        Thread createTrafficThread = new Thread () {
+        Thread createTrafficThread = new Thread() {
             @Override
             public void run() {
                 int i = 0;
                 while (!stopped.get()) {
                     String path = prefix + "-" + i;
-                    client.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                            CreateMode.PERSISTENT, new StringCallback() {
-                        @Override
-                        public void processResult(int rc, String path,
-                                Object ctx, String name) {
-                            // ignore the result
-                        }
-                    }, null);
+                    client.create(
+                            path,
+                            path.getBytes(),
+                            ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                            CreateMode.PERSISTENT,
+                            new StringCallback() {
+                                @Override
+                                public void processResult(int rc, String path, Object ctx, String name) {
+                                    // ignore the result
+                                }
+                            },
+                            null);
                     try {
                         Thread.sleep(10);
-                    } catch (InterruptedException e) { /* ignore */ }
+                    } catch (InterruptedException e) {
+                        /* ignore */
+                    }
                 }
             }
         };
         createTrafficThread.start();
 
         // shutdown a follower and observer
-        List<Integer> targets = Arrays.asList(
-                servers.findAnyFollower(), servers.findAnyObserver());
+        List<Integer> targets = Arrays.asList(servers.findAnyFollower(), servers.findAnyObserver());
         stopServers(targets);
 
         // start the follower and observer to have a diff sync
@@ -165,8 +167,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         assertEquals(0L, getMismatchDigestCount());
 
         // shutdown a follower and observer
-        List<Integer> targets = Arrays.asList(
-                servers.findAnyFollower(), servers.findAnyObserver());
+        List<Integer> targets = Arrays.asList(servers.findAnyFollower(), servers.findAnyObserver());
         stopServers(targets);
 
         int leader = servers.findLeader();
@@ -222,8 +223,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         assertEquals(0L, getMismatchDigestCount());
 
         // shutdown a follower and observer
-        List<Integer> targets = Arrays.asList(
-                servers.findAnyFollower(), servers.findAnyObserver());
+        List<Integer> targets = Arrays.asList(servers.findAnyFollower(), servers.findAnyObserver());
         stopServers(targets);
 
         // do some extra writes
@@ -244,8 +244,7 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         static String skipTxnZxid = "";
 
         @Mock
-        public ProcessTxnResult processTxn(Invocation invocation,
-                TxnHeader header, Record txn, TxnDigest digest) {
+        public ProcessTxnResult processTxn(Invocation invocation, TxnHeader header, Record txn, TxnDigest digest) {
             if (header != null && Long.toHexString(header.getZxid()).equals(skipTxnZxid)) {
                 LOG.info("skip process txn {}", header.getZxid());
                 ProcessTxnResult rc = new ProcessTxnResult();

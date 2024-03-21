@@ -59,22 +59,22 @@ public class QuorumUtilTest extends ZKTestCase {
         int secondFollowerIndex = 0;
 
         switch (leaderIndex) {
-        case 1:
-            firstFollowerIndex = 2;
-            secondFollowerIndex = 3;
-            break;
-        case 2:
-            firstFollowerIndex = 1;
-            secondFollowerIndex = 3;
-            break;
-        case 3:
-            firstFollowerIndex = 1;
-            secondFollowerIndex = 2;
-            break;
+            case 1:
+                firstFollowerIndex = 2;
+                secondFollowerIndex = 3;
+                break;
+            case 2:
+                firstFollowerIndex = 1;
+                secondFollowerIndex = 3;
+                break;
+            case 3:
+                firstFollowerIndex = 1;
+                secondFollowerIndex = 2;
+                break;
 
-        default:
-            fail("Unexpected leaderIndex value: " + leaderIndex);
-            break;
+            default:
+                fail("Unexpected leaderIndex value: " + leaderIndex);
+                break;
         }
 
         LOG.info(">-->> Shuting down server [{}]", firstFollowerIndex);
@@ -90,5 +90,4 @@ public class QuorumUtilTest extends ZKTestCase {
         Set<ZKMBeanInfo> pending = MBeanRegistry.getInstance().getRegisteredBeans();
         assertTrue(pending.isEmpty(), "The following beans should have been unregistered: " + pending);
     }
-
 }
