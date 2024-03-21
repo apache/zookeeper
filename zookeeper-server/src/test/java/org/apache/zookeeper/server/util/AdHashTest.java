@@ -97,5 +97,4 @@ public class AdHashTest extends ZKTestCase {
         addListOfDigests(hashall, bucket5);
         assertEquals(hashall, hash45, "empty hashall + 4&5 should equal hash45");
     }
-
 }

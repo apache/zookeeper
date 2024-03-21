@@ -87,8 +87,7 @@ public class DelQuotaCommand extends CliCommand {
             quota.setByteHardLimit(1);
         }
 
-        boolean flagSet = (cl.hasOption("n") || cl.hasOption("N")
-                || cl.hasOption("b") || cl.hasOption("B"));
+        boolean flagSet = (cl.hasOption("n") || cl.hasOption("N") || cl.hasOption("b") || cl.hasOption("B"));
         try {
             delQuota(zk, path, flagSet ? quota : null);
         } catch (IllegalArgumentException ex) {
@@ -171,8 +170,7 @@ public class DelQuotaCommand extends CliCommand {
      * @throws KeeperException
      * @throws InterruptedException
      */
-    private static boolean trimProcQuotas(ZooKeeper zk, String path)
-            throws KeeperException, InterruptedException {
+    private static boolean trimProcQuotas(ZooKeeper zk, String path) throws KeeperException, InterruptedException {
         if (Quotas.quotaZookeeper.equals(path)) {
             return true;
         }
@@ -185,5 +183,4 @@ public class DelQuotaCommand extends CliCommand {
             return true;
         }
     }
-
 }

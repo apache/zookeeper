@@ -74,7 +74,8 @@ public class CommandAuthTest extends ZKTestCase {
     private static final String ROOT_USER = "root";
     private static final String ROOT_PASSWORD = "root_passwd";
     private static final String AUTH_TEST_COMMAND_NAME = "authtest";
-    private static final String X509_SUBJECT_PRINCIPAL = "CN=localhost,OU=ZooKeeper,O=Apache,L=Unknown,ST=Unknown,C=Unknown";
+    private static final String X509_SUBJECT_PRINCIPAL =
+            "CN=localhost,OU=ZooKeeper,O=Apache,L=Unknown,ST=Unknown,C=Unknown";
 
     public enum AuthSchema {
         DIGEST,
@@ -166,7 +167,9 @@ public class CommandAuthTest extends ZKTestCase {
     }
 
     @ParameterizedTest
-    @EnumSource(value = AuthSchema.class, names = {"DIGEST"})
+    @EnumSource(
+            value = AuthSchema.class,
+            names = {"DIGEST"})
     public void testAuthCheck_notAuthorized(final AuthSchema authSchema) throws Exception {
         setupRootACL(authSchema);
         try {
@@ -187,9 +190,10 @@ public class CommandAuthTest extends ZKTestCase {
 
     @Test
     public void testAuthCheck_invalidServerRequiredConfig() {
-        assertThrows("An active server is required for auth check",
-        IllegalArgumentException.class,
-        () -> new AuthTestCommand(false, ZooDefs.Perms.ALL, ROOT_PATH));
+        assertThrows(
+                "An active server is required for auth check",
+                IllegalArgumentException.class,
+                () -> new AuthTestCommand(false, ZooDefs.Perms.ALL, ROOT_PATH));
     }
 
     @Test
@@ -199,30 +203,33 @@ public class CommandAuthTest extends ZKTestCase {
 
     @Test
     public void testAuthCheck_noAuthInfoSeparator() {
-        final String invalidAuthInfo =  String.format("%s%s%s:%s", DIGEST_SCHEMA, "", ROOT_USER, ROOT_PASSWORD);
+        final String invalidAuthInfo = String.format("%s%s%s:%s", DIGEST_SCHEMA, "", ROOT_USER, ROOT_PASSWORD);
         testAuthCheck_invalidAuthInfo(invalidAuthInfo);
     }
 
     @Test
     public void testAuthCheck_invalidAuthInfoSeparator() {
-        final String invalidAuthInfo =  String.format("%s%s%s:%s", DIGEST_SCHEMA, ":", ROOT_USER, ROOT_PASSWORD);
+        final String invalidAuthInfo = String.format("%s%s%s:%s", DIGEST_SCHEMA, ":", ROOT_USER, ROOT_PASSWORD);
         testAuthCheck_invalidAuthInfo(invalidAuthInfo);
     }
 
     @Test
     public void testAuthCheck_invalidAuthSchema() {
-        final String invalidAuthInfo =  String.format("%s%s%s:%s", "InvalidAuthSchema", AUTH_INFO_SEPARATOR, ROOT_USER, ROOT_PASSWORD);
+        final String invalidAuthInfo =
+                String.format("%s%s%s:%s", "InvalidAuthSchema", AUTH_INFO_SEPARATOR, ROOT_USER, ROOT_PASSWORD);
         testAuthCheck_invalidAuthInfo(invalidAuthInfo);
     }
 
     @Test
     public void testAuthCheck_authProviderNotFound() {
-        final String invalidAuthInfo =  String.format("%s%s%s:%s", "sasl", AUTH_INFO_SEPARATOR, ROOT_USER, ROOT_PASSWORD);
+        final String invalidAuthInfo =
+                String.format("%s%s%s:%s", "sasl", AUTH_INFO_SEPARATOR, ROOT_USER, ROOT_PASSWORD);
         testAuthCheck_invalidAuthInfo(invalidAuthInfo);
     }
 
     private void testAuthCheck_invalidAuthInfo(final String invalidAuthInfo) {
-        final CommandResponse commandResponse = Commands.runGetCommand(AUTH_TEST_COMMAND_NAME, zks, new HashMap<>(), invalidAuthInfo, null);
+        final CommandResponse commandResponse =
+                Commands.runGetCommand(AUTH_TEST_COMMAND_NAME, zks, new HashMap<>(), invalidAuthInfo, null);
         assertEquals(HttpServletResponse.SC_UNAUTHORIZED, commandResponse.getStatusCode());
     }
 
@@ -238,7 +245,8 @@ public class CommandAuthTest extends ZKTestCase {
     }
 
     private void setupTLS() throws Exception {
-        System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
+        System.setProperty(
+                "zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
 
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
@@ -251,7 +259,8 @@ public class CommandAuthTest extends ZKTestCase {
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
 
         // server
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY, Boolean.TRUE.toString());
 
         // admin server
@@ -264,11 +273,15 @@ public class CommandAuthTest extends ZKTestCase {
 
         // create SSLContext
         final SSLContext sslContext = SSLContext.getInstance(ClientX509Util.DEFAULT_PROTOCOL);
-        final X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider("x509");
+        final X509AuthenticationProvider authProvider =
+                (X509AuthenticationProvider) ProviderRegistry.getProvider("x509");
         if (authProvider == null) {
             throw new X509Exception.SSLContextException("Could not create SSLContext with x509 auth provider");
         }
-        sslContext.init(new X509KeyManager[]{authProvider.getKeyManager()}, new X509TrustManager[]{authProvider.getTrustManager()}, null);
+        sslContext.init(
+                new X509KeyManager[] {authProvider.getKeyManager()},
+                new X509TrustManager[] {authProvider.getTrustManager()},
+                null);
 
         // set SSLSocketFactory
         HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
@@ -315,7 +328,8 @@ public class CommandAuthTest extends ZKTestCase {
         }
     }
 
-    private HttpURLConnection sendAuthTestCommandRequest(final AuthSchema authSchema, final boolean validAuthInfo) throws Exception  {
+    private HttpURLConnection sendAuthTestCommandRequest(final AuthSchema authSchema, final boolean validAuthInfo)
+            throws Exception {
         final URL authTestURL = new URL(String.format(HTTPS_URL_FORMAT + "/" + AUTH_TEST_COMMAND_NAME, jettyAdminPort));
         final HttpURLConnection authTestConn = (HttpURLConnection) authTestURL.openConnection();
         addAuthHeader(authTestConn, authSchema, validAuthInfo);
@@ -343,7 +357,7 @@ public class CommandAuthTest extends ZKTestCase {
         zk.setACL(Commands.ROOT_PATH, OPEN_ACL_UNSAFE, -1);
     }
 
-    public static void setupRootACLForDigest(final ZooKeeper zk) throws Exception  {
+    public static void setupRootACLForDigest(final ZooKeeper zk) throws Exception {
         final String idPassword = String.format("%s:%s", ROOT_USER, ROOT_PASSWORD);
         final String digest = DigestAuthenticationProvider.generateDigest(idPassword);
 
@@ -351,12 +365,12 @@ public class CommandAuthTest extends ZKTestCase {
         zk.setACL(Commands.ROOT_PATH, Collections.singletonList(acl), -1);
     }
 
-    private static void setupRootACLForX509(final ZooKeeper zk) throws Exception  {
+    private static void setupRootACLForX509(final ZooKeeper zk) throws Exception {
         final ACL acl = new ACL(ZooDefs.Perms.ALL, new Id(X509_SCHEMA, X509_SUBJECT_PRINCIPAL));
         zk.setACL(Commands.ROOT_PATH, Collections.singletonList(acl), -1);
     }
 
-    private static void setupRootACLForIP(final ZooKeeper zk) throws Exception  {
+    private static void setupRootACLForIP(final ZooKeeper zk) throws Exception {
         final ACL acl = new ACL(ZooDefs.Perms.ALL, new Id(IP_SCHEMA, "127.0.0.1"));
         zk.setACL(Commands.ROOT_PATH, Collections.singletonList(acl), -1);
     }
@@ -374,7 +388,8 @@ public class CommandAuthTest extends ZKTestCase {
         zk.addAuthInfo(IP_SCHEMA, "127.0.0.1".getBytes(StandardCharsets.UTF_8));
     }
 
-    public static void addAuthHeader(final HttpURLConnection conn, final AuthSchema authSchema, final boolean validAuthInfo) {
+    public static void addAuthHeader(
+            final HttpURLConnection conn, final AuthSchema authSchema, final boolean validAuthInfo) {
         String authInfo;
         switch (authSchema) {
             case DIGEST:
@@ -393,18 +408,19 @@ public class CommandAuthTest extends ZKTestCase {
     }
 
     public static String buildAuthorizationForDigest() {
-        return  String.format("%s%s%s:%s", DIGEST_SCHEMA, Commands.AUTH_INFO_SEPARATOR, ROOT_USER, ROOT_PASSWORD);
+        return String.format("%s%s%s:%s", DIGEST_SCHEMA, Commands.AUTH_INFO_SEPARATOR, ROOT_USER, ROOT_PASSWORD);
     }
 
     private static String buildInvalidAuthorizationForDigest() {
-        return  String.format("%s%s%s:%s", DIGEST_SCHEMA, Commands.AUTH_INFO_SEPARATOR, "InvalidUser", "InvalidPassword");
+        return String.format(
+                "%s%s%s:%s", DIGEST_SCHEMA, Commands.AUTH_INFO_SEPARATOR, "InvalidUser", "InvalidPassword");
     }
 
     private static String buildAuthorizationForX509() {
-        return  String.format("%s%s", X509_SCHEMA, Commands.AUTH_INFO_SEPARATOR);
+        return String.format("%s%s", X509_SCHEMA, Commands.AUTH_INFO_SEPARATOR);
     }
 
     private static String buildAuthorizationForIP() {
-        return  String.format("%s%s", IP_SCHEMA, Commands.AUTH_INFO_SEPARATOR);
+        return String.format("%s%s", IP_SCHEMA, Commands.AUTH_INFO_SEPARATOR);
     }
 }

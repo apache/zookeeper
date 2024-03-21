@@ -39,7 +39,8 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
 
     private static final Logger LOG = LoggerFactory.getLogger(FollowerRequestProcessor.class);
 
-    public static final String SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR = "zookeeper.follower.skipLearnerRequestToNextProcessor";
+    public static final String SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR =
+            "zookeeper.follower.skipLearnerRequestToNextProcessor";
 
     private final boolean skipLearnerRequestToNextProcessor;
 
@@ -56,7 +57,9 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         this.skipLearnerRequestToNextProcessor = Boolean.getBoolean(SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR);
-        LOG.info("Initialized FollowerRequestProcessor with {} as {}", SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR,
+        LOG.info(
+                "Initialized FollowerRequestProcessor with {} as {}",
+                SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR,
                 skipLearnerRequestToNextProcessor);
     }
 
@@ -94,29 +97,29 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 // of the sync operations this follower has pending, so we
                 // add it to pendingSyncs.
                 switch (request.type) {
-                case OpCode.sync:
-                    zks.pendingSyncs.add(request);
-                    zks.getFollower().request(request);
-                    break;
-                case OpCode.create:
-                case OpCode.create2:
-                case OpCode.createTTL:
-                case OpCode.createContainer:
-                case OpCode.delete:
-                case OpCode.deleteContainer:
-                case OpCode.setData:
-                case OpCode.reconfig:
-                case OpCode.setACL:
-                case OpCode.multi:
-                    zks.getFollower().request(request);
-                    break;
-                case OpCode.createSession:
-                case OpCode.closeSession:
-                    // Don't forward local sessions to the leader.
-                    if (!request.isLocalSession()) {
+                    case OpCode.sync:
+                        zks.pendingSyncs.add(request);
                         zks.getFollower().request(request);
-                    }
-                    break;
+                        break;
+                    case OpCode.create:
+                    case OpCode.create2:
+                    case OpCode.createTTL:
+                    case OpCode.createContainer:
+                    case OpCode.delete:
+                    case OpCode.deleteContainer:
+                    case OpCode.setData:
+                    case OpCode.reconfig:
+                    case OpCode.setACL:
+                    case OpCode.multi:
+                        zks.getFollower().request(request);
+                        break;
+                    case OpCode.createSession:
+                    case OpCode.closeSession:
+                        // Don't forward local sessions to the leader.
+                        if (!request.isLocalSession()) {
+                            zks.getFollower().request(request);
+                        }
+                        break;
                 }
             }
         } catch (RuntimeException e) { // spotbugs require explicit catch of RuntimeException
@@ -129,7 +132,9 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
 
     private void maybeSendRequestToNextProcessor(Request request) throws RequestProcessorException {
         if (skipLearnerRequestToNextProcessor && request.isFromLearner()) {
-            ServerMetrics.getMetrics().SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT.add(1);
+            ServerMetrics.getMetrics()
+                    .SKIP_LEARNER_REQUEST_TO_NEXT_PROCESSOR_COUNT
+                    .add(1);
         } else {
             nextProcessor.processRequest(request);
         }
@@ -174,5 +179,4 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
         queuedRequests.add(Request.requestOfDeath);
         nextProcessor.shutdown();
     }
-
 }

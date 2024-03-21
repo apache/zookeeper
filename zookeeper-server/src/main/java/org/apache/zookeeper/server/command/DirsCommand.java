@@ -37,5 +37,4 @@ public class DirsCommand extends AbstractFourLetterCommand {
         pw.println("datadir_size: " + zkServer.getDataDirSize());
         pw.println("logdir_size: " + zkServer.getLogDirSize());
     }
-
 }

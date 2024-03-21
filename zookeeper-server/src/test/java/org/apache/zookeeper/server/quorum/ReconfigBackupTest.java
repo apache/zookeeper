@@ -53,7 +53,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
     @BeforeEach
     public void setup() {
         ClientBase.setupTestEnv();
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
     }
 
     /**
@@ -69,7 +71,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + clientPorts[i];
+                    + ":participant;localhost:" + clientPorts[i];
             sb.append(server + "\n");
         }
 
@@ -88,7 +90,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
             File backupFile = mt[i].getFileByName("zoo.cfg.bak");
             assertNotNull(backupFile, "static file backup should exist");
@@ -124,7 +127,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             clientPorts[i] = PortAssignment.unique();
             quorumPorts[i] = PortAssignment.unique();
             electionPorts[i] = PortAssignment.unique();
-            servers[i] = "server." + i + "=localhost:" + quorumPorts[i] + ":" + electionPorts[i] + ":participant;localhost:" + clientPorts[i];
+            servers[i] = "server." + i + "=localhost:" + quorumPorts[i] + ":" + electionPorts[i]
+                    + ":participant;localhost:" + clientPorts[i];
 
             newServers.add(servers[i]);
 
@@ -151,7 +155,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
         // test old cluster
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
@@ -187,7 +192,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
 
         // wait for new servers to be up running
         for (int i = SERVER_COUNT; i < NEW_SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
         }
@@ -243,7 +249,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + clientPorts[i];
+                    + ":participant;localhost:" + clientPorts[i];
             sb.append(server + "\n");
             allServers.add(server);
 
@@ -284,7 +290,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         String dynamicFileContent = null;
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
             ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
 
@@ -322,5 +329,4 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
     }
-
 }

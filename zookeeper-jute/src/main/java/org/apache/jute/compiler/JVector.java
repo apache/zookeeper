@@ -47,8 +47,14 @@ public class JVector extends JCompType {
      * Creates a new instance of JVector.
      */
     public JVector(JType t) {
-        super("struct " + extractVectorName(t), " ::std::vector<" + t.getCppType() + ">", "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.List<" + t.getJavaType() + ">", "Vector",
-                "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.ArrayList<" + t.getJavaType() + ">");
+        super(
+                "struct " + extractVectorName(t),
+                " ::std::vector<" + t.getCppType() + ">",
+                "System.Collections.Generic.List<" + t.getCsharpType() + ">",
+                "java.util.List<" + t.getJavaType() + ">",
+                "Vector",
+                "System.Collections.Generic.List<" + t.getCsharpType() + ">",
+                "java.util.ArrayList<" + t.getJavaType() + ">");
         mElement = t;
     }
 
@@ -57,8 +63,7 @@ public class JVector extends JCompType {
     }
 
     public String genJavaCompareTo(String fname) {
-        return "    throw new UnsupportedOperationException(\"comparing "
-                + fname + " is unimplemented\");\n";
+        return "    throw new UnsupportedOperationException(\"comparing " + fname + " is unimplemented\");\n";
     }
 
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
@@ -92,8 +97,10 @@ public class JVector extends JCompType {
         ret.append("      a_.startVector(" + fname + ",\"" + tag + "\");\n");
         ret.append("      if (" + fname + "!= null) {");
         ret.append("          int " + getId("len") + " = " + fname + ".size();\n");
-        ret.append("          for(int " + getId("vidx") + " = 0; " + getId("vidx") + "<" + getId("len") + "; " + getId("vidx") + "++) {\n");
-        ret.append("            " + mElement.getJavaWrapperType() + " " + getId("e") + " = (" + mElement.getJavaWrapperType() + ") " + fname + ".get(" + getId("vidx") + ");\n");
+        ret.append("          for(int " + getId("vidx") + " = 0; " + getId("vidx") + "<" + getId("len") + "; "
+                + getId("vidx") + "++) {\n");
+        ret.append("            " + mElement.getJavaWrapperType() + " " + getId("e") + " = ("
+                + mElement.getJavaWrapperType() + ") " + fname + ".get(" + getId("vidx") + ");\n");
         ret.append(mElement.genJavaWriteWrapper(getId("e"), getId("e")));
         ret.append("          }\n");
         ret.append("      }\n");
@@ -117,8 +124,10 @@ public class JVector extends JCompType {
         ret.append("      a_.StartVector(" + capitalize(fname) + ",\"" + tag + "\");\n");
         ret.append("      if (" + capitalize(fname) + "!= null) {");
         ret.append("          int " + getId("len") + " = " + capitalize(fname) + ".Count;\n");
-        ret.append("          for(int " + getId("vidx") + " = 0; " + getId("vidx") + "<" + getId("len") + "; " + getId("vidx") + "++) {\n");
-        ret.append("            " + mElement.getCsharpWrapperType() + " " + getId("e") + " = (" + mElement.getCsharpWrapperType() + ") " + capitalize(fname) + "[" + getId("vidx") + "];\n");
+        ret.append("          for(int " + getId("vidx") + " = 0; " + getId("vidx") + "<" + getId("len") + "; "
+                + getId("vidx") + "++) {\n");
+        ret.append("            " + mElement.getCsharpWrapperType() + " " + getId("e") + " = ("
+                + mElement.getCsharpWrapperType() + ") " + capitalize(fname) + "[" + getId("vidx") + "];\n");
         ret.append(mElement.genCsharpWriteWrapper(getId("e"), getId("e")));
         ret.append("          }\n");
         ret.append("      }\n");
@@ -135,13 +144,15 @@ public class JVector extends JCompType {
     public String genCsharpReadWrapper(String fname, String tag, boolean decl) {
         StringBuilder ret = new StringBuilder();
         if (decl) {
-            ret.append("      System.Collections.Generic.List<" + mElement.getCsharpType() + "> " + capitalize(fname) + ";\n");
+            ret.append("      System.Collections.Generic.List<" + mElement.getCsharpType() + "> " + capitalize(fname)
+                    + ";\n");
         }
         ret.append("    {\n");
         incrLevel();
         ret.append("      IIndex " + getId("vidx") + " = a_.StartVector(\"" + tag + "\");\n");
         ret.append("      if (" + getId("vidx") + "!= null) {");
-        ret.append("          " + capitalize(fname) + "=new System.Collections.Generic.List<" + mElement.getCsharpType() + ">();\n");
+        ret.append("          " + capitalize(fname) + "=new System.Collections.Generic.List<" + mElement.getCsharpType()
+                + ">();\n");
         ret.append("          for (; !" + getId("vidx") + ".Done(); " + getId("vidx") + ".Incr()) {\n");
         ret.append(mElement.genCsharpReadWrapper(getId("e"), getId("e"), true));
         ret.append("            " + capitalize(fname) + ".Add(" + getId("e") + ");\n");

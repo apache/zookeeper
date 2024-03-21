@@ -78,5 +78,4 @@ class JLineZNodeCompleter implements Completer {
         Collections.sort(candidates);
         return candidates.size() == 0 ? buffer.length() : buffer.lastIndexOf("/") + 1;
     }
-
 }

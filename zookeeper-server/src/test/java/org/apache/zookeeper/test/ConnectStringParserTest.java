@@ -58,9 +58,12 @@ public class ConnectStringParserTest extends ZKTestCase {
 
         servers = "[2001:db8:1::242:ac11:2],[2001:db8:85a3:8d3:1319:8a2e:370:7348]";
         parser = new ConnectStringParser(servers);
-        assertEquals("2001:db8:1::242:ac11:2", parser.getServerAddresses().get(0).getHostString());
+        assertEquals(
+                "2001:db8:1::242:ac11:2", parser.getServerAddresses().get(0).getHostString());
         assertEquals(DEFAULT_PORT, parser.getServerAddresses().get(0).getPort());
-        assertEquals("2001:db8:85a3:8d3:1319:8a2e:370:7348", parser.getServerAddresses().get(1).getHostString());
+        assertEquals(
+                "2001:db8:85a3:8d3:1319:8a2e:370:7348",
+                parser.getServerAddresses().get(1).getHostString());
         assertEquals(DEFAULT_PORT, parser.getServerAddresses().get(1).getPort());
     }
 
@@ -75,8 +78,11 @@ public class ConnectStringParserTest extends ZKTestCase {
 
         servers = "[2001:db8:1::242:ac11:2]:1234,[2001:db8:85a3:8d3:1319:8a2e:370:7348]:5678";
         parser = new ConnectStringParser(servers);
-        assertEquals("2001:db8:1::242:ac11:2", parser.getServerAddresses().get(0).getHostString());
-        assertEquals("2001:db8:85a3:8d3:1319:8a2e:370:7348", parser.getServerAddresses().get(1).getHostString());
+        assertEquals(
+                "2001:db8:1::242:ac11:2", parser.getServerAddresses().get(0).getHostString());
+        assertEquals(
+                "2001:db8:85a3:8d3:1319:8a2e:370:7348",
+                parser.getServerAddresses().get(1).getHostString());
         assertEquals(1234, parser.getServerAddresses().get(0).getPort());
         assertEquals(5678, parser.getServerAddresses().get(1).getPort());
     }
@@ -105,5 +111,4 @@ public class ConnectStringParserTest extends ZKTestCase {
         assertEquals(2182, parser.getServerAddresses().get(1).getPort());
         assertEquals(2183, parser.getServerAddresses().get(2).getPort());
     }
-
 }

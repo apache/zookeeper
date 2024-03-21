@@ -93,8 +93,8 @@ public class Util {
      */
     public static String makeSnapshotName(long zxid) {
         return FileSnap.SNAPSHOT_FILE_PREFIX + "."
-               + Long.toHexString(zxid)
-               + SnapStream.getStreamMode().getFileExtension();
+                + Long.toHexString(zxid)
+                + SnapStream.getStreamMode().getFileExtension();
     }
 
     /**
@@ -172,7 +172,6 @@ public class Util {
         return null;
     }
 
-
     /**
      * Serializes transaction header and transaction data into a byte buffer.
      *
@@ -217,6 +216,7 @@ public class Util {
 
         private String prefix;
         private boolean ascending;
+
         public DataDirFileComparator(String prefix, boolean ascending) {
             this.prefix = prefix;
             this.ascending = ascending;
@@ -228,7 +228,6 @@ public class Util {
             int result = z1 < z2 ? -1 : (z1 > z2 ? 1 : 0);
             return ascending ? result : -result;
         }
-
     }
 
     /**
@@ -268,5 +267,4 @@ public class Util {
     public static boolean isSnapshotFileName(String fileName) {
         return fileName.startsWith(FileSnap.SNAPSHOT_FILE_PREFIX + ".");
     }
-
 }

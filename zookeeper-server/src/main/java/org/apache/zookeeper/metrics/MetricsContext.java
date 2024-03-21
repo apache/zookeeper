@@ -131,5 +131,4 @@ public interface MetricsContext {
      * @return the summary identified by name in this context.
      */
     SummarySet getSummarySet(String name, DetailLevel detailLevel);
-
 }

@@ -193,9 +193,8 @@ public class ServerAdminClient {
             int rc = is.read(resBytes);
             ByteBuffer res = ByteBuffer.wrap(resBytes);
             long retv = res.getLong();
-            System.out.println("rc=" + rc
-                               + " retv=0" + Long.toOctalString(retv)
-                               + " masks=0" + Long.toOctalString(traceMask));
+            System.out.println(
+                    "rc=" + rc + " retv=0" + Long.toOctalString(retv) + " masks=0" + Long.toOctalString(traceMask));
             assert (retv == traceMask);
         } catch (IOException e) {
             LOG.warn("Unexpected exception", e);
@@ -248,8 +247,7 @@ public class ServerAdminClient {
 
     private static void usage() {
         System.out.println("usage: java [-cp CLASSPATH] org.apache.zookeeper.ServerAdminClient "
-                           + "host port op (ruok|stat|dump|kill|gettracemask|settracemask) [arguments]");
-
+                + "host port op (ruok|stat|dump|kill|gettracemask|settracemask) [arguments]");
     }
 
     public static void main(String[] args) {
@@ -276,5 +274,4 @@ public class ServerAdminClient {
             System.out.println("Unrecognized op: " + op);
         }
     }
-
 }

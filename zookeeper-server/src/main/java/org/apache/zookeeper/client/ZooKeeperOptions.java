@@ -39,14 +39,15 @@ public class ZooKeeperOptions {
     private final byte[] sessionPasswd;
     private final ZKClientConfig clientConfig;
 
-    ZooKeeperOptions(String connectString,
-                     int sessionTimeout,
-                     Watcher defaultWatcher,
-                     Function<Collection<InetSocketAddress>, HostProvider> hostProvider,
-                     boolean canBeReadOnly,
-                     long sessionId,
-                     byte[] sessionPasswd,
-                     ZKClientConfig clientConfig) {
+    ZooKeeperOptions(
+            String connectString,
+            int sessionTimeout,
+            Watcher defaultWatcher,
+            Function<Collection<InetSocketAddress>, HostProvider> hostProvider,
+            boolean canBeReadOnly,
+            long sessionId,
+            byte[] sessionPasswd,
+            ZKClientConfig clientConfig) {
         this.connectString = connectString;
         this.sessionTimeout = sessionTimeout;
         this.hostProvider = hostProvider;

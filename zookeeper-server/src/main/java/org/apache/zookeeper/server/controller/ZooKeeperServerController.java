@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -51,7 +50,8 @@ public class ZooKeeperServerController {
         }
 
         cnxnFactory = new ControllableConnectionFactory();
-        cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog());
+        cnxnFactory.configure(
+                config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog());
         quorumPeer = QuorumPeer.createFromConfig(config);
         quorumPeer.setCnxnFactory(cnxnFactory);
     }
@@ -97,12 +97,15 @@ public class ZooKeeperServerController {
             throw new IllegalArgumentException("Invalid command parameter!");
         }
 
-        LOG.info("processing command {}{}", command.getAction(),
+        LOG.info(
+                "processing command {}{}",
+                command.getAction(),
                 command.getParameter() == null ? "" : "[" + command.getParameter() + "]");
 
         // Don't process command if we are shutting down or still initializing.
         if (!isReady()) {
-            throw new IllegalStateException("Service is not ready. It has already been shutdown or is still initializing.");
+            throw new IllegalStateException(
+                    "Service is not ready. It has already been shutdown or is still initializing.");
         }
 
         switch (command.getAction()) {
@@ -118,8 +121,8 @@ public class ZooKeeperServerController {
                 } else {
                     // A single parameter should be a session id as long.
                     // Parse failure exceptions will be sent to the caller.
-                    cnxnFactory.closeSession(Long.decode(command.getParameter()),
-                            ServerCnxn.DisconnectReason.CONNECTION_CLOSE_FORCED);
+                    cnxnFactory.closeSession(
+                            Long.decode(command.getParameter()), ServerCnxn.DisconnectReason.CONNECTION_CLOSE_FORCED);
                 }
                 break;
             case EXPIRESESSION:
@@ -133,11 +136,11 @@ public class ZooKeeperServerController {
                 break;
             case REJECTCONNECTIONS:
                 // TODO: (hanm) implement once dependent feature is ready.
-                //cnxnFactory.rejectNewConnections();
+                // cnxnFactory.rejectNewConnections();
                 break;
             case ADDDELAY:
-                cnxnFactory.delayResponses(command.getParameter() == null
-                        ? DEFAULT_DELAY_MS : Long.decode(command.getParameter()));
+                cnxnFactory.delayResponses(
+                        command.getParameter() == null ? DEFAULT_DELAY_MS : Long.decode(command.getParameter()));
                 break;
             case NORESPONSE:
                 if (command.getParameter() == null) {
@@ -181,6 +184,4 @@ public class ZooKeeperServerController {
             expireSession(sessionId);
         }
     }
-
 }
-

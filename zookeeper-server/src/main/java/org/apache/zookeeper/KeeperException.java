@@ -91,69 +91,69 @@ public abstract class KeeperException extends Exception {
      */
     public static KeeperException create(Code code) {
         switch (code) {
-        case SYSTEMERROR:
-            return new SystemErrorException();
-        case RUNTIMEINCONSISTENCY:
-            return new RuntimeInconsistencyException();
-        case DATAINCONSISTENCY:
-            return new DataInconsistencyException();
-        case CONNECTIONLOSS:
-            return new ConnectionLossException();
-        case MARSHALLINGERROR:
-            return new MarshallingErrorException();
-        case UNIMPLEMENTED:
-            return new UnimplementedException();
-        case OPERATIONTIMEOUT:
-            return new OperationTimeoutException();
-        case NEWCONFIGNOQUORUM:
-            return new NewConfigNoQuorum();
-        case RECONFIGINPROGRESS:
-            return new ReconfigInProgress();
-        case BADARGUMENTS:
-            return new BadArgumentsException();
-        case APIERROR:
-            return new APIErrorException();
-        case NONODE:
-            return new NoNodeException();
-        case NOAUTH:
-            return new NoAuthException();
-        case BADVERSION:
-            return new BadVersionException();
-        case NOCHILDRENFOREPHEMERALS:
-            return new NoChildrenForEphemeralsException();
-        case NODEEXISTS:
-            return new NodeExistsException();
-        case INVALIDACL:
-            return new InvalidACLException();
-        case AUTHFAILED:
-            return new AuthFailedException();
-        case NOTEMPTY:
-            return new NotEmptyException();
-        case SESSIONEXPIRED:
-            return new SessionExpiredException();
-        case INVALIDCALLBACK:
-            return new InvalidCallbackException();
-        case SESSIONMOVED:
-            return new SessionMovedException();
-        case NOTREADONLY:
-            return new NotReadOnlyException();
-        case EPHEMERALONLOCALSESSION:
-            return new EphemeralOnLocalSessionException();
-        case NOWATCHER:
-            return new NoWatcherException();
-        case RECONFIGDISABLED:
-            return new ReconfigDisabledException();
-        case SESSIONCLOSEDREQUIRESASLAUTH:
-            return new SessionClosedRequireAuthException();
-        case REQUESTTIMEOUT:
-            return new RequestTimeoutException();
-        case QUOTAEXCEEDED:
-            return new QuotaExceededException();
-        case THROTTLEDOP:
-            return new ThrottledOpException();
-        case OK:
-        default:
-            throw new IllegalArgumentException("Invalid exception code:" + code.code);
+            case SYSTEMERROR:
+                return new SystemErrorException();
+            case RUNTIMEINCONSISTENCY:
+                return new RuntimeInconsistencyException();
+            case DATAINCONSISTENCY:
+                return new DataInconsistencyException();
+            case CONNECTIONLOSS:
+                return new ConnectionLossException();
+            case MARSHALLINGERROR:
+                return new MarshallingErrorException();
+            case UNIMPLEMENTED:
+                return new UnimplementedException();
+            case OPERATIONTIMEOUT:
+                return new OperationTimeoutException();
+            case NEWCONFIGNOQUORUM:
+                return new NewConfigNoQuorum();
+            case RECONFIGINPROGRESS:
+                return new ReconfigInProgress();
+            case BADARGUMENTS:
+                return new BadArgumentsException();
+            case APIERROR:
+                return new APIErrorException();
+            case NONODE:
+                return new NoNodeException();
+            case NOAUTH:
+                return new NoAuthException();
+            case BADVERSION:
+                return new BadVersionException();
+            case NOCHILDRENFOREPHEMERALS:
+                return new NoChildrenForEphemeralsException();
+            case NODEEXISTS:
+                return new NodeExistsException();
+            case INVALIDACL:
+                return new InvalidACLException();
+            case AUTHFAILED:
+                return new AuthFailedException();
+            case NOTEMPTY:
+                return new NotEmptyException();
+            case SESSIONEXPIRED:
+                return new SessionExpiredException();
+            case INVALIDCALLBACK:
+                return new InvalidCallbackException();
+            case SESSIONMOVED:
+                return new SessionMovedException();
+            case NOTREADONLY:
+                return new NotReadOnlyException();
+            case EPHEMERALONLOCALSESSION:
+                return new EphemeralOnLocalSessionException();
+            case NOWATCHER:
+                return new NoWatcherException();
+            case RECONFIGDISABLED:
+                return new ReconfigDisabledException();
+            case SESSIONCLOSEDREQUIRESASLAUTH:
+                return new SessionClosedRequireAuthException();
+            case REQUESTTIMEOUT:
+                return new RequestTimeoutException();
+            case QUOTAEXCEEDED:
+                return new QuotaExceededException();
+            case THROTTLEDOP:
+                return new ThrottledOpException();
+            case OK:
+            default:
+                throw new IllegalArgumentException("Invalid exception code:" + code.code);
         }
     }
 
@@ -322,7 +322,6 @@ public abstract class KeeperException extends Exception {
 
         @Deprecated
         int EphemeralOnLocalSession = -120;
-
     }
 
     /** Codes which represent the various KeeperException
@@ -377,7 +376,7 @@ public abstract class KeeperException extends Exception {
         /** Not authenticated */
         NOAUTH(NoAuth),
         /** Version conflict
-         In case of reconfiguration: reconfig requested from config version X but last seen config has a different version Y */
+         * In case of reconfiguration: reconfig requested from config version X but last seen config has a different version Y */
         BADVERSION(BadVersion),
         /** Ephemeral nodes may not have children */
         NOCHILDRENFOREPHEMERALS(NoChildrenForEphemerals),
@@ -415,7 +414,7 @@ public abstract class KeeperException extends Exception {
         /** Operation was throttled and not executed at all. This error code indicates that zookeeper server
          *  is under heavy load and can't process incoming requests at full speed; please retry with back off.
          */
-        THROTTLEDOP (-127);
+        THROTTLEDOP(-127);
 
         private static final Map<Integer, Code> lookup = new HashMap<>();
 
@@ -426,6 +425,7 @@ public abstract class KeeperException extends Exception {
         }
 
         private final int code;
+
         Code(int code) {
             this.code = code;
         }
@@ -454,68 +454,68 @@ public abstract class KeeperException extends Exception {
 
     static String getCodeMessage(Code code) {
         switch (code) {
-        case OK:
-            return "ok";
-        case SYSTEMERROR:
-            return "SystemError";
-        case RUNTIMEINCONSISTENCY:
-            return "RuntimeInconsistency";
-        case DATAINCONSISTENCY:
-            return "DataInconsistency";
-        case CONNECTIONLOSS:
-            return "ConnectionLoss";
-        case MARSHALLINGERROR:
-            return "MarshallingError";
-        case NEWCONFIGNOQUORUM:
-            return "NewConfigNoQuorum";
-        case RECONFIGINPROGRESS:
-            return "ReconfigInProgress";
-        case UNIMPLEMENTED:
-            return "Unimplemented";
-        case OPERATIONTIMEOUT:
-            return "OperationTimeout";
-        case BADARGUMENTS:
-            return "BadArguments";
-        case APIERROR:
-            return "APIError";
-        case NONODE:
-            return "NoNode";
-        case NOAUTH:
-            return "NoAuth";
-        case BADVERSION:
-            return "BadVersion";
-        case NOCHILDRENFOREPHEMERALS:
-            return "NoChildrenForEphemerals";
-        case NODEEXISTS:
-            return "NodeExists";
-        case INVALIDACL:
-            return "InvalidACL";
-        case AUTHFAILED:
-            return "AuthFailed";
-        case NOTEMPTY:
-            return "Directory not empty";
-        case SESSIONEXPIRED:
-            return "Session expired";
-        case INVALIDCALLBACK:
-            return "Invalid callback";
-        case SESSIONMOVED:
-            return "Session moved";
-        case NOTREADONLY:
-            return "Not a read-only call";
-        case EPHEMERALONLOCALSESSION:
-            return "Ephemeral node on local session";
-        case NOWATCHER:
-            return "No such watcher";
-        case RECONFIGDISABLED:
-            return "Reconfig is disabled";
-        case SESSIONCLOSEDREQUIRESASLAUTH:
-            return "Session closed because client failed to authenticate";
-        case QUOTAEXCEEDED:
-            return "Quota has exceeded";
-        case THROTTLEDOP:
-            return "Op throttled due to high load";
-        default:
-            return "Unknown error " + code;
+            case OK:
+                return "ok";
+            case SYSTEMERROR:
+                return "SystemError";
+            case RUNTIMEINCONSISTENCY:
+                return "RuntimeInconsistency";
+            case DATAINCONSISTENCY:
+                return "DataInconsistency";
+            case CONNECTIONLOSS:
+                return "ConnectionLoss";
+            case MARSHALLINGERROR:
+                return "MarshallingError";
+            case NEWCONFIGNOQUORUM:
+                return "NewConfigNoQuorum";
+            case RECONFIGINPROGRESS:
+                return "ReconfigInProgress";
+            case UNIMPLEMENTED:
+                return "Unimplemented";
+            case OPERATIONTIMEOUT:
+                return "OperationTimeout";
+            case BADARGUMENTS:
+                return "BadArguments";
+            case APIERROR:
+                return "APIError";
+            case NONODE:
+                return "NoNode";
+            case NOAUTH:
+                return "NoAuth";
+            case BADVERSION:
+                return "BadVersion";
+            case NOCHILDRENFOREPHEMERALS:
+                return "NoChildrenForEphemerals";
+            case NODEEXISTS:
+                return "NodeExists";
+            case INVALIDACL:
+                return "InvalidACL";
+            case AUTHFAILED:
+                return "AuthFailed";
+            case NOTEMPTY:
+                return "Directory not empty";
+            case SESSIONEXPIRED:
+                return "Session expired";
+            case INVALIDCALLBACK:
+                return "Invalid callback";
+            case SESSIONMOVED:
+                return "Session moved";
+            case NOTREADONLY:
+                return "Not a read-only call";
+            case EPHEMERALONLOCALSESSION:
+                return "Ephemeral node on local session";
+            case NOWATCHER:
+                return "No such watcher";
+            case RECONFIGDISABLED:
+                return "Reconfig is disabled";
+            case SESSIONCLOSEDREQUIRESASLAUTH:
+                return "Session closed because client failed to authenticate";
+            case QUOTAEXCEEDED:
+                return "Quota has exceeded";
+            case THROTTLEDOP:
+                return "Op throttled due to high load";
+            default:
+                return "Unknown error " + code;
         }
     }
 
@@ -591,7 +591,6 @@ public abstract class KeeperException extends Exception {
         public APIErrorException() {
             super(Code.APIERROR);
         }
-
     }
 
     /**
@@ -603,7 +602,6 @@ public abstract class KeeperException extends Exception {
         public AuthFailedException() {
             super(Code.AUTHFAILED);
         }
-
     }
 
     /**
@@ -615,10 +613,10 @@ public abstract class KeeperException extends Exception {
         public BadArgumentsException() {
             super(Code.BADARGUMENTS);
         }
+
         public BadArgumentsException(String path) {
             super(Code.BADARGUMENTS, path);
         }
-
     }
 
     /**
@@ -630,10 +628,10 @@ public abstract class KeeperException extends Exception {
         public BadVersionException() {
             super(Code.BADVERSION);
         }
+
         public BadVersionException(String path) {
             super(Code.BADVERSION, path);
         }
-
     }
 
     /**
@@ -645,7 +643,6 @@ public abstract class KeeperException extends Exception {
         public ConnectionLossException() {
             super(Code.CONNECTIONLOSS);
         }
-
     }
 
     /**
@@ -657,7 +654,6 @@ public abstract class KeeperException extends Exception {
         public DataInconsistencyException() {
             super(Code.DATAINCONSISTENCY);
         }
-
     }
 
     /**
@@ -669,10 +665,10 @@ public abstract class KeeperException extends Exception {
         public InvalidACLException() {
             super(Code.INVALIDACL);
         }
+
         public InvalidACLException(String path) {
             super(Code.INVALIDACL, path);
         }
-
     }
 
     /**
@@ -684,7 +680,6 @@ public abstract class KeeperException extends Exception {
         public InvalidCallbackException() {
             super(Code.INVALIDCALLBACK);
         }
-
     }
 
     /**
@@ -696,7 +691,6 @@ public abstract class KeeperException extends Exception {
         public MarshallingErrorException() {
             super(Code.MARSHALLINGERROR);
         }
-
     }
 
     /**
@@ -708,7 +702,6 @@ public abstract class KeeperException extends Exception {
         public NoAuthException() {
             super(Code.NOAUTH);
         }
-
     }
 
     /**
@@ -720,7 +713,6 @@ public abstract class KeeperException extends Exception {
         public NewConfigNoQuorum() {
             super(Code.NEWCONFIGNOQUORUM);
         }
-
     }
 
     /**
@@ -732,7 +724,6 @@ public abstract class KeeperException extends Exception {
         public ReconfigInProgress() {
             super(Code.RECONFIGINPROGRESS);
         }
-
     }
 
     /**
@@ -744,10 +735,10 @@ public abstract class KeeperException extends Exception {
         public NoChildrenForEphemeralsException() {
             super(Code.NOCHILDRENFOREPHEMERALS);
         }
+
         public NoChildrenForEphemeralsException(String path) {
             super(Code.NOCHILDRENFOREPHEMERALS, path);
         }
-
     }
 
     /**
@@ -759,10 +750,10 @@ public abstract class KeeperException extends Exception {
         public NodeExistsException() {
             super(Code.NODEEXISTS);
         }
+
         public NodeExistsException(String path) {
             super(Code.NODEEXISTS, path);
         }
-
     }
 
     /**
@@ -774,10 +765,10 @@ public abstract class KeeperException extends Exception {
         public NoNodeException() {
             super(Code.NONODE);
         }
+
         public NoNodeException(String path) {
             super(Code.NONODE, path);
         }
-
     }
 
     /**
@@ -789,10 +780,10 @@ public abstract class KeeperException extends Exception {
         public NotEmptyException() {
             super(Code.NOTEMPTY);
         }
+
         public NotEmptyException(String path) {
             super(Code.NOTEMPTY, path);
         }
-
     }
 
     /**
@@ -804,7 +795,6 @@ public abstract class KeeperException extends Exception {
         public OperationTimeoutException() {
             super(Code.OPERATIONTIMEOUT);
         }
-
     }
 
     /**
@@ -816,7 +806,6 @@ public abstract class KeeperException extends Exception {
         public RuntimeInconsistencyException() {
             super(Code.RUNTIMEINCONSISTENCY);
         }
-
     }
 
     /**
@@ -828,7 +817,6 @@ public abstract class KeeperException extends Exception {
         public SessionExpiredException() {
             super(Code.SESSIONEXPIRED);
         }
-
     }
 
     /**
@@ -840,7 +828,6 @@ public abstract class KeeperException extends Exception {
         public UnknownSessionException() {
             super(Code.UNKNOWNSESSION);
         }
-
     }
 
     /**
@@ -852,7 +839,6 @@ public abstract class KeeperException extends Exception {
         public SessionMovedException() {
             super(Code.SESSIONMOVED);
         }
-
     }
 
     /**
@@ -864,7 +850,6 @@ public abstract class KeeperException extends Exception {
         public NotReadOnlyException() {
             super(Code.NOTREADONLY);
         }
-
     }
 
     /**
@@ -876,7 +861,6 @@ public abstract class KeeperException extends Exception {
         public EphemeralOnLocalSessionException() {
             super(Code.EPHEMERALONLOCALSESSION);
         }
-
     }
 
     /**
@@ -888,7 +872,6 @@ public abstract class KeeperException extends Exception {
         public SystemErrorException() {
             super(Code.SYSTEMERROR);
         }
-
     }
 
     /**
@@ -900,7 +883,6 @@ public abstract class KeeperException extends Exception {
         public UnimplementedException() {
             super(Code.UNIMPLEMENTED);
         }
-
     }
 
     /**
@@ -916,7 +898,6 @@ public abstract class KeeperException extends Exception {
         public NoWatcherException(String path) {
             super(Code.NOWATCHER, path);
         }
-
     }
 
     /**
@@ -928,10 +909,10 @@ public abstract class KeeperException extends Exception {
         public ReconfigDisabledException() {
             super(Code.RECONFIGDISABLED);
         }
+
         public ReconfigDisabledException(String path) {
             super(Code.RECONFIGDISABLED, path);
         }
-
     }
 
     /**
@@ -942,10 +923,10 @@ public abstract class KeeperException extends Exception {
         public SessionClosedRequireAuthException() {
             super(Code.SESSIONCLOSEDREQUIRESASLAUTH);
         }
+
         public SessionClosedRequireAuthException(String path) {
             super(Code.SESSIONCLOSEDREQUIRESASLAUTH, path);
         }
-
     }
 
     /**
@@ -956,7 +937,6 @@ public abstract class KeeperException extends Exception {
         public RequestTimeoutException() {
             super(Code.REQUESTTIMEOUT);
         }
-
     }
 
     /**
@@ -967,6 +947,7 @@ public abstract class KeeperException extends Exception {
         public QuotaExceededException() {
             super(Code.QUOTAEXCEEDED);
         }
+
         public QuotaExceededException(String path) {
             super(Code.QUOTAEXCEEDED, path);
         }

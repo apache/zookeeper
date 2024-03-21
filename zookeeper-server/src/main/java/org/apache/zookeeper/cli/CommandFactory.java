@@ -69,7 +69,7 @@ public class CommandFactory {
      * @param command the {@link Command} to create a new instance of
      * @return the new {@code CliCommand} instance
      */
-    public static CliCommand getInstance (Command command) {
+    public static CliCommand getInstance(Command command) {
         return command.getInstance();
     }
 }

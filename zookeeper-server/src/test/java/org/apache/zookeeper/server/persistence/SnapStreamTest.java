@@ -58,9 +58,16 @@ public class SnapStreamTest {
 
     @Test
     public void testGetStreamMode() {
-        assertEquals(StreamMode.CHECKED, SnapStream.getStreamMode("snapshot.180000e3a2"), "expected to return un-compressed stream");
-        assertEquals(StreamMode.SNAPPY, SnapStream.getStreamMode("snapshot.180000e3a2.snappy"), "expected to return snappy stream");
-        assertEquals(StreamMode.GZIP, SnapStream.getStreamMode("snapshot.180000e3a2.gz"), "expected to return gzip stream");
+        assertEquals(
+                StreamMode.CHECKED,
+                SnapStream.getStreamMode("snapshot.180000e3a2"),
+                "expected to return un-compressed stream");
+        assertEquals(
+                StreamMode.SNAPPY,
+                SnapStream.getStreamMode("snapshot.180000e3a2.snappy"),
+                "expected to return snappy stream");
+        assertEquals(
+                StreamMode.GZIP, SnapStream.getStreamMode("snapshot.180000e3a2.gz"), "expected to return gzip stream");
     }
 
     @Test
@@ -83,7 +90,8 @@ public class SnapStreamTest {
         testSerializeDeserialize(mode, fileSuffix, true, tmpDir);
     }
 
-    private void testSerializeDeserialize(StreamMode mode, String fileSuffix, boolean fsync, File tmpDir) throws IOException {
+    private void testSerializeDeserialize(StreamMode mode, String fileSuffix, boolean fsync, File tmpDir)
+            throws IOException {
         SnapStream.setStreamMode(mode);
 
         // serialize with gzip stream
@@ -126,9 +134,9 @@ public class SnapStreamTest {
     }
 
     /*
-        For this test a single tempDirectory will be created but the checkInvalidsnapshot will create
-        multiple files within the directory for the tests.
-     */
+       For this test a single tempDirectory will be created but the checkInvalidsnapshot will create
+       multiple files within the directory for the tests.
+    */
     @Test
     public void testInvalidSnapshot(@TempDir File tmpDir) throws IOException {
         assertFalse(SnapStream.isValidSnapshot(null));
@@ -137,5 +145,4 @@ public class SnapStreamTest {
         checkInvalidSnapshot("snapshot.180000e3a2.gz", tmpDir);
         checkInvalidSnapshot("snapshot.180000e3a2.snappy", tmpDir);
     }
-
 }

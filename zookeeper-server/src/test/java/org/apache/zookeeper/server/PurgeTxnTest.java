@@ -214,7 +214,8 @@ public class PurgeTxnTest extends ZKTestCase {
         nRecentValidSnapFiles = txnLog.findNValidSnapshots(nRecentCount + 5);
         assertEquals(nRecentCount, nRecentValidSnapFiles.size());
         for (File f : nRecentValidSnapFiles) {
-            assertTrue((Util.getZxidFromName(f.getName(), "snapshot") != -1),
+            assertTrue(
+                    (Util.getZxidFromName(f.getName(), "snapshot") != -1),
                     "findNValidSnapshots() returned a non-snapshot: " + f.getPath());
         }
 
@@ -361,7 +362,9 @@ public class PurgeTxnTest extends ZKTestCase {
 
         int numberOfSnapFilesToKeep = 10;
         // scenario where four parameter are passed
-        String[] args = new String[]{dataLogDir.getAbsolutePath(), dataDir.getAbsolutePath(), "-n", Integer.toString(numberOfSnapFilesToKeep)};
+        String[] args = new String[] {
+            dataLogDir.getAbsolutePath(), dataDir.getAbsolutePath(), "-n", Integer.toString(numberOfSnapFilesToKeep)
+        };
         PurgeTxnLog.main(args);
 
         assertEquals(numberOfSnapFilesToKeep, dataDirVersion2.listFiles().length);
@@ -399,11 +402,12 @@ public class PurgeTxnTest extends ZKTestCase {
 
         int numberOfSnapFilesToKeep = 10;
         // scenario where only three parameter are passed
-        String[] args = new String[]{dataLogDir.getAbsolutePath(), "-n", Integer.toString(numberOfSnapFilesToKeep)};
+        String[] args = new String[] {dataLogDir.getAbsolutePath(), "-n", Integer.toString(numberOfSnapFilesToKeep)};
         PurgeTxnLog.main(args);
         assertEquals(
                 numberOfSnapFilesToKeep
-                        * 2, // Since for each snapshot we have a log file with same zxid, expect same # logs as snaps to be kept
+                        * 2, // Since for each snapshot we have a log file with same zxid, expect same # logs as snaps
+                // to be kept
                 dataLogDirVersion2.listFiles().length);
     }
 
@@ -519,9 +523,12 @@ public class PurgeTxnTest extends ZKTestCase {
         }
 
         // scenario where four parameter are passed
-        String[] args = new String[]{dataLogDir.getAbsolutePath(), dataDir.getAbsolutePath(), "-n", Integer.toString(numberOfSnapFilesToKeep)};
+        String[] args = new String[] {
+            dataLogDir.getAbsolutePath(), dataDir.getAbsolutePath(), "-n", Integer.toString(numberOfSnapFilesToKeep)
+        };
         PurgeTxnLog.main(args);
-        //Since the recent 3 snapshots are all invalid,when purging, we can assert that 6 snapshot files are retained(3 invalid snapshots and 3 retained valid snapshots)
+        // Since the recent 3 snapshots are all invalid,when purging, we can assert that 6 snapshot files are retained(3
+        // invalid snapshots and 3 retained valid snapshots)
         assertEquals(numberOfSnapFilesToKeep + numberOfSnapFilesToKeep, dataDirVersion2.listFiles().length);
         // Since for each snapshot we have a log file with same zxid, expect same # logs as snaps to be kept
         assertEquals(numberOfSnapFilesToKeep + numberOfSnapFilesToKeep, dataLogDirVersion2.listFiles().length);
@@ -533,7 +540,14 @@ public class PurgeTxnTest extends ZKTestCase {
         return logFile;
     }
 
-    private void createDataDirFiles(AtomicInteger offset, int limit, boolean createPrecedingLogFile, File version_2, List<File> snaps, List<File> logs) throws IOException {
+    private void createDataDirFiles(
+            AtomicInteger offset,
+            int limit,
+            boolean createPrecedingLogFile,
+            File version_2,
+            List<File> snaps,
+            List<File> logs)
+            throws IOException {
         int counter = offset.get() + (2 * limit);
         if (createPrecedingLogFile) {
             counter++;
@@ -558,7 +572,8 @@ public class PurgeTxnTest extends ZKTestCase {
         }
     }
 
-    private List<String> manyClientOps(final ZooKeeper zk, final CountDownLatch doPurge, int thCount, final String prefix) {
+    private List<String> manyClientOps(
+            final ZooKeeper zk, final CountDownLatch doPurge, int thCount, final String prefix) {
         Thread[] ths = new Thread[thCount];
         final List<String> znodes = Collections.synchronizedList(new ArrayList<>());
         final CountDownLatch finished = new CountDownLatch(thCount);

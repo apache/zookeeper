@@ -111,31 +111,31 @@ public enum CreateMode {
      */
     public static CreateMode fromFlag(int flag) throws KeeperException {
         switch (flag) {
-        case 0:
-            return CreateMode.PERSISTENT;
+            case 0:
+                return CreateMode.PERSISTENT;
 
-        case 1:
-            return CreateMode.EPHEMERAL;
+            case 1:
+                return CreateMode.EPHEMERAL;
 
-        case 2:
-            return CreateMode.PERSISTENT_SEQUENTIAL;
+            case 2:
+                return CreateMode.PERSISTENT_SEQUENTIAL;
 
-        case 3:
-            return CreateMode.EPHEMERAL_SEQUENTIAL;
+            case 3:
+                return CreateMode.EPHEMERAL_SEQUENTIAL;
 
-        case 4:
-            return CreateMode.CONTAINER;
+            case 4:
+                return CreateMode.CONTAINER;
 
-        case 5:
-            return CreateMode.PERSISTENT_WITH_TTL;
+            case 5:
+                return CreateMode.PERSISTENT_WITH_TTL;
 
-        case 6:
-            return CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
+            case 6:
+                return CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
 
-        default:
-            String errMsg = "Received an invalid flag value: " + flag + " to convert to a CreateMode";
-            LOG.error(errMsg);
-            throw new KeeperException.BadArgumentsException(errMsg);
+            default:
+                String errMsg = "Received an invalid flag value: " + flag + " to convert to a CreateMode";
+                LOG.error(errMsg);
+                throw new KeeperException.BadArgumentsException(errMsg);
         }
     }
 
@@ -144,29 +144,29 @@ public enum CreateMode {
      */
     public static CreateMode fromFlag(int flag, CreateMode defaultMode) {
         switch (flag) {
-        case 0:
-            return CreateMode.PERSISTENT;
+            case 0:
+                return CreateMode.PERSISTENT;
 
-        case 1:
-            return CreateMode.EPHEMERAL;
+            case 1:
+                return CreateMode.EPHEMERAL;
 
-        case 2:
-            return CreateMode.PERSISTENT_SEQUENTIAL;
+            case 2:
+                return CreateMode.PERSISTENT_SEQUENTIAL;
 
-        case 3:
-            return CreateMode.EPHEMERAL_SEQUENTIAL;
+            case 3:
+                return CreateMode.EPHEMERAL_SEQUENTIAL;
 
-        case 4:
-            return CreateMode.CONTAINER;
+            case 4:
+                return CreateMode.CONTAINER;
 
-        case 5:
-            return CreateMode.PERSISTENT_WITH_TTL;
+            case 5:
+                return CreateMode.PERSISTENT_WITH_TTL;
 
-        case 6:
-            return CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
+            case 6:
+                return CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
 
-        default:
-            return defaultMode;
+            default:
+                return defaultMode;
         }
     }
 }

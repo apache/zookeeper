@@ -62,5 +62,4 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean 
             throw new IllegalArgumentException("Not a valid learner master");
         }
     }
-
 }

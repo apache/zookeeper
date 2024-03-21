@@ -81,7 +81,8 @@ public class SessionTrackerTest extends ZKTestCase {
         }
         assertTrue(sessionImpl.isClosing(), "Session didn't expired");
         assertFalse(sessionTrackerImpl.touchSession(sessionId, sessionTimeout), "Session didn't expired");
-        assertEquals(1, firstProcessor.getCountOfCloseSessionReq(), "Duplicate session expiry request has been generated");
+        assertEquals(
+                1, firstProcessor.getCountOfCloseSessionReq(), "Duplicate session expiry request has been generated");
     }
 
     /**
@@ -150,7 +151,5 @@ public class SessionTrackerTest extends ZKTestCase {
         int getCountOfCloseSessionReq() {
             return countOfCloseSessionReq;
         }
-
     }
-
 }

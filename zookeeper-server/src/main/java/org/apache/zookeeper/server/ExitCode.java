@@ -59,5 +59,4 @@ public enum ExitCode {
     public int getValue() {
         return value;
     }
-
 }

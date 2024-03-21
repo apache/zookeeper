@@ -202,7 +202,8 @@ public class ReferenceCountedACLCache {
     }
 
     public synchronized void purgeUnused() {
-        Iterator<Map.Entry<Long, AtomicLongWithEquals>> refCountIter = referenceCounter.entrySet().iterator();
+        Iterator<Map.Entry<Long, AtomicLongWithEquals>> refCountIter =
+                referenceCounter.entrySet().iterator();
         while (refCountIter.hasNext()) {
             Map.Entry<Long, AtomicLongWithEquals> entry = refCountIter.next();
             if (entry.getValue().get() <= 0) {
@@ -242,7 +243,5 @@ public class ReferenceCountedACLCache {
         public int hashCode() {
             return 31 * Long.valueOf(get()).hashCode();
         }
-
     }
-
 }

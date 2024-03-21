@@ -44,22 +44,19 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public void close(DisconnectReason reason) {
-    }
+    public void close(DisconnectReason reason) {}
 
     @Override
-    public int sendResponse(ReplyHeader h, Record r, String tag,
-                             String cacheKey, Stat stat, int opCode) throws IOException {
+    public int sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat, int opCode)
+            throws IOException {
         return 0;
     }
 
     @Override
-    public void sendCloseSession() {
-    }
+    public void sendCloseSession() {}
 
     @Override
-    public void process(WatchedEvent event, List<ACL> acl) {
-    }
+    public void process(WatchedEvent event, List<ACL> acl) {}
 
     @Override
     public long getSessionId() {
@@ -67,8 +64,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void setSessionId(long sessionId) {
-    }
+    void setSessionId(long sessionId) {}
 
     @Override
     public boolean isSecure() {
@@ -86,20 +82,16 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void sendBuffer(ByteBuffer... closeConn) {
-    }
+    void sendBuffer(ByteBuffer... closeConn) {}
 
     @Override
-    void enableRecv() {
-    }
+    void enableRecv() {}
 
     @Override
-    void disableRecv(boolean waitDisableRecv) {
-    }
+    void disableRecv(boolean waitDisableRecv) {}
 
     @Override
-    void setSessionTimeout(int sessionTimeout) {
-    }
+    void setSessionTimeout(int sessionTimeout) {}
 
     @Override
     protected ServerStats serverStats() {
@@ -120,5 +112,4 @@ public class MockServerCnxn extends ServerCnxn {
     public int getInterestOps() {
         return 0;
     }
-
 }

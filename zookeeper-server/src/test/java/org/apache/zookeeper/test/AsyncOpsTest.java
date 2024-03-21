@@ -266,5 +266,4 @@ public class AsyncOpsTest extends ClientBase {
     public void testAsyncMultiSequential_NoSideEffect() throws Exception {
         new MultiCB(zk).verifyMultiSequential_NoSideEffect();
     }
-
 }

@@ -49,9 +49,7 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
         hostAliases.put(ZK1_ALIAS, ZK1_IP);
 
         HostResolutionRequestInterceptor.INSTANCE.install(
-                new MappedHostResolver(hostAliases),
-                DefaultHostResolver.INSTANCE
-        );
+                new MappedHostResolver(hostAliases), DefaultHostResolver.INSTANCE);
 
         InetAddress ia = InetAddress.getByName(ZK1_FQDN);
         IA_MOCK_ZK1 = ia;
@@ -68,7 +66,8 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
         }
 
         return addr.getAddress();
-    };
+    }
+    ;
 
     @AfterEach
     public void cleanUpEnvironment() {
@@ -83,8 +82,10 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
     public void testQuorumDefaultCanonicalization() throws ConfigException {
         QuorumPeer.QuorumServer qps = createQuorumServer(ZK1_ALIAS);
 
-        assertEquals(ZK1_ALIAS, qps.hostname,
-           "The host name has been \"changed\" (canonicalized?) despite default settings");
+        assertEquals(
+                ZK1_ALIAS,
+                qps.hostname,
+                "The host name has been \"changed\" (canonicalized?) despite default settings");
     }
 
     @Test
@@ -93,8 +94,10 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
 
         QuorumPeer.QuorumServer qps = createQuorumServer(ZK1_ALIAS);
 
-        assertEquals(ZK1_ALIAS, qps.hostname,
-           "The host name has been \"changed\" (canonicalized?) despite default settings");
+        assertEquals(
+                ZK1_ALIAS,
+                qps.hostname,
+                "The host name has been \"changed\" (canonicalized?) despite default settings");
     }
 
     @Test
@@ -103,8 +106,7 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
 
         QuorumPeer.QuorumServer qps = createQuorumServer(ZK1_ALIAS);
 
-        assertEquals(ZK1_FQDN, qps.hostname,
-            "The host name hasn't been correctly canonicalized");
+        assertEquals(ZK1_FQDN, qps.hostname, "The host name hasn't been correctly canonicalized");
     }
 
     @Test
@@ -113,7 +115,6 @@ public class QuorumCanonicalizeTest extends ZKTestCase {
 
         QuorumPeer.QuorumServer qps = createQuorumServer(ZK1_IP);
 
-        assertEquals(ZK1_FQDN, qps.hostname,
-            "The host name hasn't been correctly canonicalized");
+        assertEquals(ZK1_FQDN, qps.hostname, "The host name hasn't been correctly canonicalized");
     }
 }

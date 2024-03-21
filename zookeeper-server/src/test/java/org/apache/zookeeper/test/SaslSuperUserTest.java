@@ -50,7 +50,8 @@ public class SaslSuperUserTest extends ClientBase {
 
     @BeforeAll
     public static void setupStatic() throws Exception {
-        oldAuthProvider = System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+        oldAuthProvider = System.setProperty(
+                "zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         oldClientConfigSection = System.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY);
 
         File tmpDir = createTmpDir();
@@ -58,22 +59,22 @@ public class SaslSuperUserTest extends ClientBase {
         FileWriter fwriter = new FileWriter(saslConfFile);
 
         fwriter.write(""
-                              + "Server {\n"
-                              + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                              + "          user_super_duper=\"test\"\n"
-                              + "          user_other_super=\"test\";\n"
-                              + "};\n"
-                              + "Client {\n"
-                              + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                              + "       username=\"super_duper\"\n"
-                              + "       password=\"test\";\n"
-                              + "};"
-                              + "OtherClient {\n"
-                              + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                              + "       username=\"other_super\"\n"
-                              + "       password=\"test\";\n"
-                              + "};"
-                              + "\n");
+                + "Server {\n"
+                + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                + "          user_super_duper=\"test\"\n"
+                + "          user_other_super=\"test\";\n"
+                + "};\n"
+                + "Client {\n"
+                + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                + "       username=\"super_duper\"\n"
+                + "       password=\"test\";\n"
+                + "};"
+                + "OtherClient {\n"
+                + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                + "       username=\"other_super\"\n"
+                + "       password=\"test\";\n"
+                + "};"
+                + "\n");
         fwriter.close();
         oldLoginConfig = System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
         oldSuperUser = System.setProperty(ZooKeeperServer.SASL_SUPER_USER, "super_duper");
@@ -114,14 +115,17 @@ public class SaslSuperUserTest extends ClientBase {
                 super.process(event);
             }
         }
-
     }
 
     private void connectAndPerformSuperOps() throws Exception {
         ZooKeeper zk = createClient();
         try {
             zk.create("/digest_read", null, Arrays.asList(new ACL(Perms.READ, otherDigestUser)), CreateMode.PERSISTENT);
-            zk.create("/digest_read/sub", null, Arrays.asList(new ACL(Perms.READ, otherDigestUser)), CreateMode.PERSISTENT);
+            zk.create(
+                    "/digest_read/sub",
+                    null,
+                    Arrays.asList(new ACL(Perms.READ, otherDigestUser)),
+                    CreateMode.PERSISTENT);
             zk.create("/sasl_read", null, Arrays.asList(new ACL(Perms.READ, otherSaslUser)), CreateMode.PERSISTENT);
             zk.create("/sasl_read/sub", null, Arrays.asList(new ACL(Perms.READ, otherSaslUser)), CreateMode.PERSISTENT);
             zk.delete("/digest_read/sub", -1);
@@ -136,7 +140,7 @@ public class SaslSuperUserTest extends ClientBase {
     @Test
     public void testSuperIsSuper() throws Exception {
         connectAndPerformSuperOps();
-        //If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
+        // If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
         assertEquals(authFailed.get(), 0);
     }
 
@@ -152,7 +156,7 @@ public class SaslSuperUserTest extends ClientBase {
 
         try {
             connectAndPerformSuperOps();
-            //If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
+            // If the test fails it will most likely fail with a NoAuth exception before it ever gets to this assertion
             assertEquals(authFailed.get(), 0);
         } finally {
             restoreProperty(superUser1Prop, prevSuperUser1);

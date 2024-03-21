@@ -122,8 +122,7 @@ public class BinaryOutputArchive implements OutputArchive {
         dataSize += strLen;
     }
 
-    public void writeBuffer(byte[] barr, String tag)
-            throws IOException {
+    public void writeBuffer(byte[] barr, String tag) throws IOException {
         if (barr == null) {
             writeInt(-1, "len");
             return;
@@ -138,11 +137,9 @@ public class BinaryOutputArchive implements OutputArchive {
         r.serialize(this, tag);
     }
 
-    public void startRecord(Record r, String tag) throws IOException {
-    }
+    public void startRecord(Record r, String tag) throws IOException {}
 
-    public void endRecord(Record r, String tag) throws IOException {
-    }
+    public void endRecord(Record r, String tag) throws IOException {}
 
     public void startVector(List<?> v, String tag) throws IOException {
         if (v == null) {
@@ -152,19 +149,16 @@ public class BinaryOutputArchive implements OutputArchive {
         writeInt(v.size(), tag);
     }
 
-    public void endVector(List<?> v, String tag) throws IOException {
-    }
+    public void endVector(List<?> v, String tag) throws IOException {}
 
     public void startMap(TreeMap<?, ?> v, String tag) throws IOException {
         writeInt(v.size(), tag);
     }
 
-    public void endMap(TreeMap<?, ?> v, String tag) throws IOException {
-    }
+    public void endMap(TreeMap<?, ?> v, String tag) throws IOException {}
 
     @Override
     public long getDataSize() {
         return dataSize;
     }
-
 }

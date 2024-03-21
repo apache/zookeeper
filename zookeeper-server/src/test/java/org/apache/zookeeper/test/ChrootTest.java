@@ -46,18 +46,19 @@ public class ChrootTest extends ClientBase {
         public MyWatcher(String path) {
             this.path = path;
         }
+
         public void process(WatchedEvent event) {
             System.out.println("latch:" + path + " " + event.getPath());
             this.eventPath = event.getPath();
             latch.countDown();
         }
+
         public boolean matches() throws InterruptedException {
             if (!latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
                 fail("No watch received within timeout period " + path);
             }
             return path.equals(eventPath);
         }
-
     }
 
     @Test
@@ -135,5 +136,4 @@ public class ChrootTest extends ClientBase {
             }
         }
     }
-
 }

@@ -38,13 +38,13 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPrivateKeyFromKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         Optional<String> optPassword = x509TestContext.getKeyStorePassword().length() > 0
-                                               ? Optional.of(x509TestContext.getKeyStorePassword())
-                                               : Optional.empty();
-        PrivateKey privateKey = PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), optPassword);
+                ? Optional.of(x509TestContext.getKeyStorePassword())
+                : Optional.empty();
+        PrivateKey privateKey =
+                PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), optPassword);
         assertEquals(x509TestContext.getKeyStoreKeyPair().getPrivate(), privateKey);
     }
 
@@ -52,8 +52,7 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadEncryptedPrivateKeyFromKeyStoreWithoutPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(GeneralSecurityException.class, () -> {
             if (!x509TestContext.isKeyStoreEncrypted()) {
@@ -67,14 +66,14 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadEncryptedPrivateKeyFromKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(GeneralSecurityException.class, () -> {
             if (!x509TestContext.isKeyStoreEncrypted()) {
                 throw new GeneralSecurityException(); // this case is not tested so throw the expected exception
             }
-            PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), Optional.of("wrong password"));
+            PemReader.loadPrivateKey(
+                    x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), Optional.of("wrong password"));
         });
     }
 
@@ -82,14 +81,14 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadUnencryptedPrivateKeyFromKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             if (x509TestContext.isKeyStoreEncrypted()) {
                 throw new IOException();
             }
-            PemReader.loadPrivateKey(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), Optional.of("wrong password"));
+            PemReader.loadPrivateKey(
+                    x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM), Optional.of("wrong password"));
         });
     }
 
@@ -97,8 +96,7 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPrivateKeyFromTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(KeyStoreException.class, () -> {
             PemReader.loadPrivateKey(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM), Optional.empty());
@@ -109,8 +107,7 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadPrivateKeyFromTrustStoreWithPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(KeyStoreException.class, () -> {
             PemReader.loadPrivateKey(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM), Optional.of("foobar"));
@@ -120,10 +117,10 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadCertificateFromKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM));
+        List<X509Certificate> certs =
+                PemReader.readCertificateChain(x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM));
         assertEquals(1, certs.size());
         assertEquals(x509TestContext.getKeyStoreCertificate(), certs.get(0));
     }
@@ -131,12 +128,11 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadCertificateFromTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM));
+        List<X509Certificate> certs =
+                PemReader.readCertificateChain(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM));
         assertEquals(1, certs.size());
         assertEquals(x509TestContext.getTrustStoreCertificate(), certs.get(0));
     }
-
 }

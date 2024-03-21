@@ -39,8 +39,10 @@ public class LeaderWithObserverTest {
 
     QuorumPeer peer;
     Leader leader;
+
     @TempDir
     File tmpDir;
+
     long participantId;
     long observerId;
 
@@ -52,7 +54,14 @@ public class LeaderWithObserverTest {
         observerId = peers.size();
         leader = createLeader(tmpDir, peer);
         peer.leader = leader;
-        peers.put(observerId, new QuorumPeer.QuorumServer(observerId, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), QuorumPeer.LearnerType.OBSERVER));
+        peers.put(
+                observerId,
+                new QuorumPeer.QuorumServer(
+                        observerId,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        QuorumPeer.LearnerType.OBSERVER));
 
         // these tests are serial, we can speed up InterruptedException
         peer.tickTime = 1;
@@ -79,7 +88,10 @@ public class LeaderWithObserverTest {
         }
 
         assertEquals(1, leader.connectingFollowers.size(), "Unexpected vote in connectingFollowers");
-        assertEquals(lastAcceptedEpoch, peer.getAcceptedEpoch(), "Leader shouldn't set new epoch until quorum of participants is in connectingFollowers");
+        assertEquals(
+                lastAcceptedEpoch,
+                peer.getAcceptedEpoch(),
+                "Leader shouldn't set new epoch until quorum of participants is in connectingFollowers");
         assertTrue(leader.waitingForNewEpoch);
         try {
             // Observer asks for epoch (mocking LearnerHandler behavior)
@@ -89,7 +101,10 @@ public class LeaderWithObserverTest {
         }
 
         assertEquals(1, leader.connectingFollowers.size(), "Unexpected vote in connectingFollowers");
-        assertEquals(lastAcceptedEpoch, peer.getAcceptedEpoch(), "Leader shouldn't set new epoch after observer asks for epoch");
+        assertEquals(
+                lastAcceptedEpoch,
+                peer.getAcceptedEpoch(),
+                "Leader shouldn't set new epoch after observer asks for epoch");
         assertTrue(leader.waitingForNewEpoch);
         try {
             // Now participant asks for epoch (mocking LearnerHandler behavior). Second add to connectingFollowers.
@@ -179,5 +194,4 @@ public class LeaderWithObserverTest {
             fail("Timed out in waitForEpochAck");
         }
     }
-
 }

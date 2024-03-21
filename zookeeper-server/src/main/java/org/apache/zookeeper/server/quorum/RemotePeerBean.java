@@ -44,18 +44,21 @@ public class RemotePeerBean implements RemotePeerMXBean, ZKMBeanInfo {
     public String getName() {
         return "replica." + peer.id;
     }
+
     public boolean isHidden() {
         return false;
     }
 
     public String getQuorumAddress() {
-        return peer.addr.getAllAddresses().stream().map(NetUtils::formatInetAddr)
-            .collect(Collectors.joining("|"));
+        return peer.addr.getAllAddresses().stream()
+                .map(NetUtils::formatInetAddr)
+                .collect(Collectors.joining("|"));
     }
 
     public String getElectionAddress() {
-        return peer.electionAddr.getAllAddresses().stream().map(NetUtils::formatInetAddr)
-            .collect(Collectors.joining("|"));
+        return peer.electionAddr.getAllAddresses().stream()
+                .map(NetUtils::formatInetAddr)
+                .collect(Collectors.joining("|"));
     }
 
     public String getClientAddress() {
@@ -73,5 +76,4 @@ public class RemotePeerBean implements RemotePeerMXBean, ZKMBeanInfo {
     public boolean isLeader() {
         return localPeer.isLeader(peer.getId());
     }
-
 }

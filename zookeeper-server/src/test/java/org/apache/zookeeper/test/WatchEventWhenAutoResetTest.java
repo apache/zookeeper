@@ -74,7 +74,6 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
                 LOG.warn("ignoring interrupt during EventsWatcher assertEvent");
             }
         }
-
     }
 
     private ZooKeeper createClient(QuorumUtil qu, int id, EventsWatcher watcher) throws IOException {
@@ -190,6 +189,4 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
         watcher.waitForConnected(TIMEOUT * 1000L);
         watcher.assertEvent(TIMEOUT, EventType.NodeChildrenChanged);
     }
-
 }
-

@@ -41,6 +41,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
 
     @TempDir
     static File tempDir;
+
     static File tempFile;
 
     private static final Logger LOG = LoggerFactory.getLogger(FileChangeWatcherTest.class);
@@ -250,5 +251,4 @@ public class FileChangeWatcherTest extends ZKTestCase {
             }
         }
     }
-
 }

@@ -59,7 +59,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + clientPorts[i];
+                    + ":participant;localhost:" + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
             if (i == 1) {
@@ -84,9 +84,11 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], CONNECTION_TIMEOUT),
                 "waiting for server 0 being up");
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[1], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[1], CONNECTION_TIMEOUT),
                 "waiting for server 1 being up");
 
         int leader = mt[0].main.quorumPeer.leader == null ? 1 : 0;
@@ -102,7 +104,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         mt[2].start();
         zk[2] = new ZooKeeper("127.0.0.1:" + clientPorts[2], ClientBase.CONNECTION_TIMEOUT, this);
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[2], CONNECTION_TIMEOUT),
                 "waiting for server 2 being up");
 
         ReconfigTest.testServerHasConfig(zk[0], allServers, null);
@@ -141,7 +144,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         for (int i = 0; i < 2; i++) {
             oldClientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + oldClientPorts[i];
+                    + ":participant;localhost:" + oldClientPorts[i];
             sb.append(server + "\n");
         }
 
@@ -157,7 +160,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
                 role = "participant";
             }
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":"
-                     + role + ";localhost:" + clientPorts[i];
+                    + role + ";localhost:" + clientPorts[i];
             allServersNext.add(server);
             sb.append(server + "\n");
         }
@@ -174,7 +177,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < 2; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
         }
 
@@ -187,7 +191,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < 2; i++) {
-            assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerDown("127.0.0.1:" + oldClientPorts[i], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
         }
 
@@ -205,7 +210,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
@@ -240,7 +246,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + clientPorts[i];
+                    + ":participant;localhost:" + clientPorts[i];
             sb.append(server + "\n");
             if (i == 1) {
                 currentQuorumCfgSection = sb.toString();
@@ -268,7 +274,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         // make sure servers 0, 1 don't come online - this should be the case
         // since they can't complete the reconfig
         for (int i = 0; i < 2; i++) {
-            assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT / 10),
+            assertFalse(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT / 10),
                     "server " + i + " is up but shouldn't be");
         }
 
@@ -298,7 +305,7 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + clientPorts[i];
+                    + ":participant;localhost:" + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
             if (i == 1) {
@@ -316,7 +323,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
 
@@ -337,7 +345,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         // servers 0 and 1 should connect to all servers, including the one in
         // their .next file during startup, and will find the next config and join it
         for (int i = 0; i < 2; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
         }
 
@@ -384,8 +393,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ArrayList<String> allServersNext = new ArrayList<>();
         sb = new StringBuilder();
         for (int i = 2; i < SERVER_COUNT; i++) {
-            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1]
-                            + ":participant;localhost:" + ports[i][2];
+            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1] + ":participant;localhost:"
+                    + ports[i][2];
             allServersNext.add(server);
             sb.append(server + "\n");
         }
@@ -405,17 +414,14 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         zk[3] = new ZooKeeper("127.0.0.1:" + ports[3][2], ClientBase.CONNECTION_TIMEOUT, this);
 
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 
-        assertEquals(
-            nextQuorumCfgSection + "version=200000000",
-            ReconfigTest.testServerHasConfig(zk[2], null, null));
-        assertEquals(
-            nextQuorumCfgSection + "version=200000000",
-            ReconfigTest.testServerHasConfig(zk[3], null, null));
+        assertEquals(nextQuorumCfgSection + "version=200000000", ReconfigTest.testServerHasConfig(zk[2], null, null));
+        assertEquals(nextQuorumCfgSection + "version=200000000", ReconfigTest.testServerHasConfig(zk[3], null, null));
         ReconfigTest.testNormalOperation(zk[2], zk[2]);
         ReconfigTest.testNormalOperation(zk[3], zk[2]);
 
@@ -464,7 +470,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ReconfigTest.testNormalOperation(zk[0], zk[2]);
 
         for (int i = 0; i <= 2; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
         }
 
@@ -478,8 +485,8 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         ArrayList<String> allServersNext = new ArrayList<>();
         sb = new StringBuilder();
         for (int i = 2; i < SERVER_COUNT; i++) {
-            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1]
-                            + ":participant;localhost:" + ports[i][2];
+            String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1] + ":participant;localhost:"
+                    + ports[i][2];
             allServersNext.add(server);
             sb.append(server + "\n");
         }
@@ -499,19 +506,16 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         zk[3] = new ZooKeeper("127.0.0.1:" + ports[3][2], ClientBase.CONNECTION_TIMEOUT, this);
 
         for (int i = 2; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 3),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 3),
                     "waiting for server " + i + " being up");
             ReconfigTest.testServerHasConfig(zk[i], allServersNext, null);
         }
 
         ReconfigTest.testNormalOperation(zk[0], zk[2]);
         ReconfigTest.testNormalOperation(zk[3], zk[1]);
-        assertEquals(
-            nextQuorumCfgSection + "version=200000000",
-            ReconfigTest.testServerHasConfig(zk[2], null, null));
-        assertEquals(
-            nextQuorumCfgSection + "version=200000000",
-            ReconfigTest.testServerHasConfig(zk[3], null, null));
+        assertEquals(nextQuorumCfgSection + "version=200000000", ReconfigTest.testServerHasConfig(zk[2], null, null));
+        assertEquals(nextQuorumCfgSection + "version=200000000", ReconfigTest.testServerHasConfig(zk[3], null, null));
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             zk[i].close();
@@ -541,11 +545,10 @@ public class ReconfigRecoveryTest extends QuorumPeerTestBase {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < numServers; i++) {
             String server = "server." + i + "=localhost:" + ports[i][0] + ":" + ports[i][1] + ":"
-                            + (observerIds.contains(i) ? "observer" : "participant")
-                            + ";localhost:" + ports[i][2];
+                    + (observerIds.contains(i) ? "observer" : "participant")
+                    + ";localhost:" + ports[i][2];
             sb.append(server + "\n");
         }
         return sb;
     }
-
 }

@@ -24,6 +24,4 @@ import org.junit.runners.Suite;
  * Run tests with: Nio Client against Netty server
  */
 @Suite.SuiteClasses({AsyncHammerTest.class})
-public class NioNettySuiteHammerTest extends NioNettySuiteBase {
-
-}
+public class NioNettySuiteHammerTest extends NioNettySuiteBase {}

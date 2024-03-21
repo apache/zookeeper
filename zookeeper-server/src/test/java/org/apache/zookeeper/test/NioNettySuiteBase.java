@@ -54,5 +54,4 @@ public class NioNettySuiteBase {
         TestByteBufAllocatorTestHelper.clearTestAllocator();
         TestByteBufAllocator.checkForLeaks();
     }
-
 }

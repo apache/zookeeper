@@ -27,8 +27,7 @@ import org.apache.zookeeper.server.ServerMetrics;
  */
 public abstract class MetricsUtils {
 
-    private MetricsUtils() {
-    }
+    private MetricsUtils() {}
 
     /**
      * Collect all metrics from a {@link MetricsProvider}. A MetricsProvider
@@ -56,5 +55,4 @@ public abstract class MetricsUtils {
     public static Map<String, Object> currentServerMetrics() {
         return collect(ServerMetrics.getMetrics().getMetricsProvider());
     }
-
 }

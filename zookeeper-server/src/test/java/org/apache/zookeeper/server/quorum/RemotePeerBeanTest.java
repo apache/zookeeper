@@ -74,5 +74,4 @@ public class RemotePeerBeanTest {
         assertEquals(expectedHostPort, remotePeerBean.getElectionAddress());
         assertEquals(expectedHostPort, remotePeerBean.getQuorumAddress());
     }
-
 }

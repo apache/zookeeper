@@ -36,7 +36,8 @@ class ZooKeeperTestable implements Testable {
     public void injectSessionExpiration() {
         LOG.info("injectSessionExpiration() called");
 
-        clientCnxn.eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, Watcher.Event.KeeperState.Expired, null));
+        clientCnxn.eventThread.queueEvent(
+                new WatchedEvent(Watcher.Event.EventType.None, Watcher.Event.KeeperState.Expired, null));
         clientCnxn.eventThread.queueEventOfDeath();
         clientCnxn.state = ZooKeeper.States.CLOSED;
         clientCnxn.sendThread.getClientCnxnSocket().onClosing();
@@ -53,5 +54,4 @@ class ZooKeeperTestable implements Testable {
         LOG.info("closeSocket() called");
         clientCnxn.sendThread.testableCloseSocket();
     }
-
 }

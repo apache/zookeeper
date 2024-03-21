@@ -45,14 +45,20 @@ public class PortAssignmentTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testSetupPortRange(String strProcessCount, String cmdLine, int expectedMinimumPort, int expectedMaximumPort) {
+    public void testSetupPortRange(
+            String strProcessCount, String cmdLine, int expectedMinimumPort, int expectedMaximumPort) {
         PortAssignment.PortRange portRange = PortAssignment.setupPortRange(strProcessCount, cmdLine);
-        assertEquals(expectedMinimumPort, portRange.getMinimum(), buildAssertionMessage("minimum", strProcessCount, cmdLine));
-        assertEquals(expectedMaximumPort, portRange.getMaximum(), buildAssertionMessage("maximum", strProcessCount, cmdLine));
+        assertEquals(
+                expectedMinimumPort,
+                portRange.getMinimum(),
+                buildAssertionMessage("minimum", strProcessCount, cmdLine));
+        assertEquals(
+                expectedMaximumPort,
+                portRange.getMaximum(),
+                buildAssertionMessage("maximum", strProcessCount, cmdLine));
     }
 
     private String buildAssertionMessage(String checkType, String strProcessCount, String cmdLine) {
         return String.format("strProcessCount = %s, cmdLine = %s, checking %s", strProcessCount, cmdLine, checkType);
     }
-
 }

@@ -45,7 +45,9 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
     @BeforeEach
     public void setup() {
         QuorumPeerConfig.setReconfigEnabled(true);
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
     }
 
     @AfterEach
@@ -77,10 +79,11 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
 
         for (int i = 1; i <= 5; i++) {
             members.add("server." + i + "=127.0.0.1:"
-                        + qu.getPeer(i).peer.getQuorumAddress().getAllPorts().get(0)
-                        + ":" + qu.getPeer(i).peer.getElectionAddress().getAllPorts().get(0)
-                        + ";" + "127.0.0.1:"
-                        + qu.getPeer(i).peer.getClientPort());
+                    + qu.getPeer(i).peer.getQuorumAddress().getAllPorts().get(0)
+                    + ":"
+                    + qu.getPeer(i).peer.getElectionAddress().getAllPorts().get(0)
+                    + ";" + "127.0.0.1:"
+                    + qu.getPeer(i).peer.getClientPort());
         }
 
         // Change the quorum system from majority to hierarchical.
@@ -203,7 +206,8 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         }
 
         for (int i = 1; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + ports[i][2], CONNECTION_TIMEOUT * 2),
                     "waiting for server " + i + " being up");
         }
 
@@ -236,5 +240,4 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
             mt[i].shutdown();
         }
     }
-
 }

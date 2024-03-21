@@ -38,5 +38,4 @@ public class NopCommand extends AbstractFourLetterCommand {
     public void commandRun() {
         pw.println(msg);
     }
-
 }

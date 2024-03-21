@@ -74,25 +74,25 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
                 // filter read requests
                 switch (request.type) {
-                case OpCode.sync:
-                case OpCode.create:
-                case OpCode.create2:
-                case OpCode.createTTL:
-                case OpCode.createContainer:
-                case OpCode.delete:
-                case OpCode.deleteContainer:
-                case OpCode.setData:
-                case OpCode.reconfig:
-                case OpCode.setACL:
-                case OpCode.multi:
-                    sendErrorResponse(request);
-                    continue;
-                case OpCode.closeSession:
-                case OpCode.createSession:
-                    if (!request.isLocalSession()) {
+                    case OpCode.sync:
+                    case OpCode.create:
+                    case OpCode.create2:
+                    case OpCode.createTTL:
+                    case OpCode.createContainer:
+                    case OpCode.delete:
+                    case OpCode.deleteContainer:
+                    case OpCode.setData:
+                    case OpCode.reconfig:
+                    case OpCode.setACL:
+                    case OpCode.multi:
                         sendErrorResponse(request);
                         continue;
-                    }
+                    case OpCode.closeSession:
+                    case OpCode.createSession:
+                        if (!request.isLocalSession()) {
+                            sendErrorResponse(request);
+                            continue;
+                        }
                 }
 
                 // proceed to the next processor
@@ -108,9 +108,7 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
 
     private void sendErrorResponse(Request request) {
         ReplyHeader hdr = new ReplyHeader(
-                request.cxid,
-                zks.getZKDatabase().getDataTreeLastProcessedZxid(),
-                Code.NOTREADONLY.intValue());
+                request.cxid, zks.getZKDatabase().getDataTreeLastProcessedZxid(), Code.NOTREADONLY.intValue());
         try {
             request.cnxn.sendResponse(hdr, null, null);
         } catch (IOException e) {
@@ -132,5 +130,4 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
         queuedRequests.add(Request.requestOfDeath);
         nextProcessor.shutdown();
     }
-
 }

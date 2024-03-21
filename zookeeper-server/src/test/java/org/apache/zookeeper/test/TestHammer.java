@@ -27,6 +27,7 @@ import org.apache.zookeeper.common.Time;
 public class TestHammer implements VoidCallback {
 
     static int REPS = 50000;
+
     public static void main(String[] args) {
         long startTime = Time.currentElapsedTime();
         ZooKeeper zk = null;
@@ -38,7 +39,8 @@ public class TestHammer implements VoidCallback {
         }
         for (int i = 0; i < REPS; i++) {
             try {
-                String name = zk.create("/testFile-", new byte[16], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+                String name =
+                        zk.create("/testFile-", new byte[16], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
                 zk.delete(name, -1, new TestHammer(), null);
             } catch (Exception e) {
                 i--;
@@ -52,5 +54,4 @@ public class TestHammer implements VoidCallback {
         // TODO Auto-generated method stub
 
     }
-
 }

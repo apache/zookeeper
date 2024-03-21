@@ -78,6 +78,7 @@ public class ZKDatabase {
      * all these members.
      */
     protected DataTree dataTree;
+
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected FileTxnSnapLog snapLog;
     protected long minCommittedLog, maxCommittedLog;
@@ -86,6 +87,7 @@ public class ZKDatabase {
      * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
      */
     public static final String SNAPSHOT_SIZE_FACTOR = "zookeeper.snapshotSizeFactor";
+
     public static final double DEFAULT_SNAPSHOT_SIZE_FACTOR = 0.33;
     private double snapshotSizeFactor;
 
@@ -114,41 +116,33 @@ public class ZKDatabase {
 
         try {
             snapshotSizeFactor = Double.parseDouble(
-                    System.getProperty(SNAPSHOT_SIZE_FACTOR,
-                            Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
+                    System.getProperty(SNAPSHOT_SIZE_FACTOR, Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
             if (snapshotSizeFactor > 1) {
                 snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
                 LOG.warn(
-                    "The configured {} is invalid, going to use the default {}",
-                    SNAPSHOT_SIZE_FACTOR,
-                    DEFAULT_SNAPSHOT_SIZE_FACTOR);
+                        "The configured {} is invalid, going to use the default {}",
+                        SNAPSHOT_SIZE_FACTOR,
+                        DEFAULT_SNAPSHOT_SIZE_FACTOR);
             }
         } catch (NumberFormatException e) {
-            LOG.error(
-                "Error parsing {}, using default value {}",
-                SNAPSHOT_SIZE_FACTOR,
-                DEFAULT_SNAPSHOT_SIZE_FACTOR);
+            LOG.error("Error parsing {}, using default value {}", SNAPSHOT_SIZE_FACTOR, DEFAULT_SNAPSHOT_SIZE_FACTOR);
             snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
         }
 
         LOG.info("{} = {}", SNAPSHOT_SIZE_FACTOR, snapshotSizeFactor);
 
         try {
-            commitLogCount = Integer.parseInt(
-                    System.getProperty(COMMIT_LOG_COUNT,
-                            Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
+            commitLogCount =
+                    Integer.parseInt(System.getProperty(COMMIT_LOG_COUNT, Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
             if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
                 commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
                 LOG.warn(
-                    "The configured commitLogCount {} is less than the recommended {}, going to use the recommended one",
-                    COMMIT_LOG_COUNT,
-                    DEFAULT_COMMIT_LOG_COUNT);
+                        "The configured commitLogCount {} is less than the recommended {}, going to use the recommended one",
+                        COMMIT_LOG_COUNT,
+                        DEFAULT_COMMIT_LOG_COUNT);
             }
         } catch (NumberFormatException e) {
-            LOG.error(
-                "Error parsing {} - use default value {}",
-                COMMIT_LOG_COUNT,
-                DEFAULT_COMMIT_LOG_COUNT);
+            LOG.error("Error parsing {} - use default value {}", COMMIT_LOG_COUNT, DEFAULT_COMMIT_LOG_COUNT);
             commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
         }
         LOG.info("{}={}", COMMIT_LOG_COUNT, commitLogCount);
@@ -288,8 +282,11 @@ public class ZKDatabase {
         initialized = true;
         long loadTime = Time.currentElapsedTime() - startTime;
         ServerMetrics.getMetrics().DB_INIT_TIME.add(loadTime);
-        LOG.info("Snapshot loaded in {} ms, highest zxid is 0x{}, digest is {}",
-                loadTime, Long.toHexString(zxid), dataTree.getTreeDigest());
+        LOG.info(
+                "Snapshot loaded in {} ms, highest zxid is 0x{}, digest is {}",
+                loadTime,
+                Long.toHexString(zxid),
+                dataTree.getTreeDigest());
         return zxid;
     }
 
@@ -381,9 +378,7 @@ public class ZKDatabase {
             // If we cannot guarantee that this is strictly the starting txn
             // after a given zxid, we should fail.
             if ((itr.getHeader() != null) && (itr.getHeader().getZxid() > startZxid)) {
-                LOG.warn(
-                    "Unable to find proposals from txnlog for zxid: 0x{}",
-                    Long.toHexString(startZxid));
+                LOG.warn("Unable to find proposals from txnlog for zxid: 0x{}", Long.toHexString(startZxid));
                 itr.close();
                 return TxnLogProposalIterator.EMPTY_ITERATOR;
             }
@@ -520,9 +515,22 @@ public class ZKDatabase {
      * @param persistentRecursiveWatches the persistent recursive watches the client wants to reset
      * @param watcher the watcher function
      */
-    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
-                           List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
-        dataTree.setWatches(relativeZxid, dataWatches, existWatches, childWatches, persistentWatches, persistentRecursiveWatches, watcher);
+    public void setWatches(
+            long relativeZxid,
+            List<String> dataWatches,
+            List<String> existWatches,
+            List<String> childWatches,
+            List<String> persistentWatches,
+            List<String> persistentRecursiveWatches,
+            Watcher watcher) {
+        dataTree.setWatches(
+                relativeZxid,
+                dataWatches,
+                existWatches,
+                childWatches,
+                persistentWatches,
+                persistentRecursiveWatches,
+                watcher);
     }
 
     /**
@@ -652,7 +660,6 @@ public class ZKDatabase {
         initialized = true;
     }
 
-
     /**
      * serialize the snapshot
      * @param oa the output archive to which the snapshot needs to be serialized
@@ -711,11 +718,7 @@ public class ZKDatabase {
                 this.dataTree.addConfigNode();
             }
             this.dataTree.setData(
-                ZooDefs.CONFIG_NODE,
-                qv.toString().getBytes(UTF_8),
-                -1,
-                qv.getVersion(),
-                Time.currentWallTime());
+                    ZooDefs.CONFIG_NODE, qv.toString().getBytes(UTF_8), -1, qv.getVersion(), Time.currentWallTime());
         } catch (NoNodeException e) {
             System.out.println("configuration node missing - should not happen");
         }

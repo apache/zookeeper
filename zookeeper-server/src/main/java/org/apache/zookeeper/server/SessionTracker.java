@@ -35,9 +35,10 @@ public interface SessionTracker {
     interface Session {
 
         long getSessionId();
-        int getTimeout();
-        boolean isClosing();
 
+        int getTimeout();
+
+        boolean isClosing();
     }
 
     interface SessionExpirer {
@@ -45,7 +46,6 @@ public interface SessionTracker {
         void expire(Session session);
 
         long getServerId();
-
     }
 
     long createSession(int sessionTimeout);
@@ -107,7 +107,9 @@ public interface SessionTracker {
      * @param sessionId
      * @param owner
      */
-    void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException, KeeperException.UnknownSessionException;
+    void checkSession(long sessionId, Object owner)
+            throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException,
+                    KeeperException.UnknownSessionException;
 
     /**
      * Strictly check that a given session is a global session or not
@@ -116,7 +118,8 @@ public interface SessionTracker {
      * @throws KeeperException.SessionExpiredException
      * @throws KeeperException.SessionMovedException
      */
-    void checkGlobalSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException;
+    void checkGlobalSession(long sessionId, Object owner)
+            throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException;
 
     void setOwner(long id, Object owner) throws SessionExpiredException;
 

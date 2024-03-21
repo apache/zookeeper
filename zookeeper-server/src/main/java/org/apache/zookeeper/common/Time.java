@@ -50,5 +50,4 @@ public class Time {
         long wallTime = currentWallTime() + elapsedTime - currentElapsedTime();
         return new Date(wallTime);
     }
-
 }

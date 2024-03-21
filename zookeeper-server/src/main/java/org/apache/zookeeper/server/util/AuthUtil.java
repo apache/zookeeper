@@ -27,7 +27,7 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
 
 public final class AuthUtil {
     private AuthUtil() {
-        //Utility classes should not have public constructors
+        // Utility classes should not have public constructors
     }
     /**
      * Gives user name
@@ -60,9 +60,9 @@ public final class AuthUtil {
         }
 
         String formatted = authInfo.stream()
-            .map(AuthUtil::getUser)
-            .filter(name -> name != null && !name.trim().isEmpty())
-            .collect(Collectors.joining(","));
+                .map(AuthUtil::getUser)
+                .filter(name -> name != null && !name.trim().isEmpty())
+                .collect(Collectors.joining(","));
 
         return formatted.isEmpty() ? null : formatted;
     }

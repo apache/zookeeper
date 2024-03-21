@@ -83,7 +83,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;127.0.0.1:" + clientPorts[i];
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -139,7 +139,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         createEmptyNode(zk[followerA], path, CreateMode.PERSISTENT);
 
         LOG.info("Hook to catch the 2nd sub create node txn in multi-op");
-        CustomDataTree dt = (CustomDataTree) mt[followerA].main.quorumPeer.getZkDb().getDataTree();
+        CustomDataTree dt =
+                (CustomDataTree) mt[followerA].main.quorumPeer.getZkDb().getDataTree();
 
         final ZooKeeperServer zkServer = mt[followerA].main.quorumPeer.getActiveServer();
 
@@ -239,8 +240,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CLOSED);
         mt[followerA].start();
         // zk[followerA] will be closed in addSerializeListener, re-create it
-        zk[followerA] = new ZooKeeper("127.0.0.1:" + clientPorts[followerA],
-                ClientBase.CONNECTION_TIMEOUT, this);
+        zk[followerA] = new ZooKeeper("127.0.0.1:" + clientPorts[followerA], ClientBase.CONNECTION_TIMEOUT, this);
 
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
@@ -265,15 +265,15 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             @Override
             public void process() {
                 LOG.info("Trigger a multi op in async");
-                followerZk.multi(Arrays.asList(
-                        Op.create("/multi0", "/multi0".getBytes(),
-                                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                        Op.setData(path, "new data".getBytes(), -1)
-                ), new MultiCallback() {
-                    @Override
-                    public void processResult(int rc, String path, Object ctx,
-                            List<OpResult> opResults) {}
-                }, null);
+                followerZk.multi(
+                        Arrays.asList(
+                                Op.create("/multi0", "/multi0".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                                Op.setData(path, "new data".getBytes(), -1)),
+                        new MultiCallback() {
+                            @Override
+                            public void processResult(int rc, String path, Object ctx, List<OpResult> opResults) {}
+                        },
+                        null);
 
                 LOG.info("Wait for the signal to continue");
                 try {
@@ -315,7 +315,6 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         LOG.info("Make sure there is nothing caught in the digest mismatch");
         checkNoMismatchReported();
-
     }
 
     private void checkNoMismatchReported() {
@@ -343,10 +342,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
     private void compareStat(String path, int sid, int compareWithSid) throws Exception {
         ZooKeeper[] compareZk = new ZooKeeper[2];
-        compareZk[0] = new ZooKeeper("127.0.0.1:" + clientPorts[sid],
-                ClientBase.CONNECTION_TIMEOUT, this);
-        compareZk[1] = new ZooKeeper("127.0.0.1:" + clientPorts[compareWithSid],
-                ClientBase.CONNECTION_TIMEOUT, this);
+        compareZk[0] = new ZooKeeper("127.0.0.1:" + clientPorts[sid], ClientBase.CONNECTION_TIMEOUT, this);
+        compareZk[1] = new ZooKeeper("127.0.0.1:" + clientPorts[compareWithSid], ClientBase.CONNECTION_TIMEOUT, this);
         QuorumPeerMainTest.waitForAll(compareZk, States.CONNECTED);
 
         try {
@@ -358,7 +355,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
             assertEquals(stat1, stat2);
         } finally {
-            for (ZooKeeper z: compareZk) {
+            for (ZooKeeper z : compareZk) {
                 z.close();
             }
         }
@@ -387,10 +384,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         });
 
         LOG.info("Create a global session");
-        ZooKeeper globalClient = new ZooKeeper(
-                "127.0.0.1:" + clientPorts[followerA],
-                ClientBase.CONNECTION_TIMEOUT,
-                this);
+        ZooKeeper globalClient =
+                new ZooKeeper("127.0.0.1:" + clientPorts[followerA], ClientBase.CONNECTION_TIMEOUT, this);
         QuorumPeerMainTest.waitForOne(globalClient, States.CONNECTED);
 
         LOG.info("Restart followerA to load the data from disk");
@@ -402,8 +397,10 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         LOG.info("Make sure the global sessions are consistent with leader");
 
-        Map<Long, Integer> globalSessionsOnLeader = mt[leaderId].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
-        Map<Long, Integer> globalSessionsOnFollowerA = mt[followerA].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
+        Map<Long, Integer> globalSessionsOnLeader =
+                mt[leaderId].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
+        Map<Long, Integer> globalSessionsOnFollowerA =
+                mt[followerA].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
         LOG.info("sessions are {}, {}", globalSessionsOnLeader.keySet(), globalSessionsOnFollowerA.keySet());
         assertTrue(globalSessionsOnFollowerA.keySet().containsAll(globalSessionsOnLeader.keySet()));
     }
@@ -415,7 +412,6 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     interface NodeCreateListener {
 
         void process(String path);
-
     }
 
     interface DigestSerializeListener {
@@ -457,7 +453,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
                 int parentCVersion,
                 long zxid,
                 long time,
-                Stat outputStat) throws NoNodeException, NodeExistsException {
+                Stat outputStat)
+                throws NoNodeException, NodeExistsException {
             NodeCreateListener listener = nodeCreateListeners.get(path);
             if (listener != null) {
                 listener.process(path);
@@ -489,8 +486,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             return result;
         }
 
-        public Stat setData(String path, byte data[], int version, long zxid,
-                long time) throws NoNodeException {
+        public Stat setData(String path, byte data[], int version, long zxid, long time) throws NoNodeException {
             if (setListener != null) {
                 setListener.process();
             }
@@ -502,13 +498,11 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     interface NodeSerializeListener {
 
         void nodeSerialized(String path);
-
     }
 
     interface CommitSessionListener {
 
         void process(long sessionId);
-
     }
 
     static class CustomizedQPMain extends TestQPMain {
@@ -537,28 +531,26 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
                     return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.getZkDb()) {
                         @Override
                         public void createSessionTracker() {
-                            sessionTracker = new LearnerSessionTracker(
-                                    this,
-                                    getZKDatabase().getSessionWithTimeOuts(),
-                                    this.tickTime,
-                                    self.getMyId(),
-                                    self.areLocalSessionsEnabled(),
-                                    getZooKeeperServerListener()) {
+                            sessionTracker =
+                                    new LearnerSessionTracker(
+                                            this,
+                                            getZKDatabase().getSessionWithTimeOuts(),
+                                            this.tickTime,
+                                            self.getMyId(),
+                                            self.areLocalSessionsEnabled(),
+                                            getZooKeeperServerListener()) {
 
-                                public synchronized boolean commitSession(
-                                        long sessionId, int sessionTimeout) {
-                                    if (commitSessionListener != null) {
-                                        commitSessionListener.process(sessionId);
-                                    }
-                                    return super.commitSession(sessionId, sessionTimeout);
-                                }
-                            };
+                                        public synchronized boolean commitSession(long sessionId, int sessionTimeout) {
+                                            if (commitSessionListener != null) {
+                                                commitSessionListener.process(sessionId);
+                                            }
+                                            return super.commitSession(sessionId, sessionTimeout);
+                                        }
+                                    };
                         }
                     });
                 }
             };
         }
-
     }
-
 }

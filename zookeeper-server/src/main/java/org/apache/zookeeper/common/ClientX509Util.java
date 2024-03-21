@@ -60,10 +60,10 @@ public class ClientX509Util extends X509Util {
     }
 
     public SslContext createNettySslContextForClient(ZKConfig config)
-        throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+            throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
         String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
-        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
-            getSslKeystorePasswdPathProperty());
+        String keyStorePassword = getPasswordFromConfigPropertyOrFile(
+                config, getSslKeystorePasswdProperty(), getSslKeystorePasswdPathProperty());
         String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
 
         SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
@@ -97,15 +97,16 @@ public class ClientX509Util extends X509Util {
     }
 
     public SslContext createNettySslContextForServer(ZKConfig config)
-        throws X509Exception.SSLContextException, X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+            throws X509Exception.SSLContextException, X509Exception.KeyManagerException,
+                    X509Exception.TrustManagerException, SSLException {
         String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
-        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
-            getSslKeystorePasswdPathProperty());
+        String keyStorePassword = getPasswordFromConfigPropertyOrFile(
+                config, getSslKeystorePasswdProperty(), getSslKeystorePasswdPathProperty());
         String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
 
         if (keyStoreLocation.isEmpty()) {
             throw new X509Exception.SSLContextException(
-                "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
+                    "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
         }
 
         KeyManager km = createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
@@ -113,7 +114,8 @@ public class ClientX509Util extends X509Util {
         return createNettySslContextForServer(config, km, getTrustManager(config));
     }
 
-    public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
+    public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager)
+            throws SSLException {
         SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(keyManager);
 
         if (trustManager != null) {
@@ -146,7 +148,9 @@ public class ClientX509Util extends X509Util {
                 sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
                 sslEngine.setSSLParameters(sslParameters);
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("{} hostname verification: enabled HTTPS style endpoint identification algorithm", clientOrServer);
+                    LOG.debug(
+                            "{} hostname verification: enabled HTTPS style endpoint identification algorithm",
+                            clientOrServer);
                 }
             }
         };
@@ -155,7 +159,7 @@ public class ClientX509Util extends X509Util {
     private String[] getEnabledProtocols(final ZKConfig config) {
         String enabledProtocolsInput = config.getProperty(getSslEnabledProtocolsProperty());
         if (enabledProtocolsInput == null) {
-            return new String[]{ config.getProperty(getSslProtocolProperty(), DEFAULT_PROTOCOL) };
+            return new String[] {config.getProperty(getSslProtocolProperty(), DEFAULT_PROTOCOL)};
         }
         return enabledProtocolsInput.split(",");
     }
@@ -182,8 +186,8 @@ public class ClientX509Util extends X509Util {
 
     private TrustManager getTrustManager(ZKConfig config) throws X509Exception.TrustManagerException {
         String trustStoreLocation = config.getProperty(getSslTruststoreLocationProperty(), "");
-        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslTruststorePasswdProperty(),
-            getSslTruststorePasswdPathProperty());
+        String trustStorePassword = getPasswordFromConfigPropertyOrFile(
+                config, getSslTruststorePasswdProperty(), getSslTruststorePasswdPathProperty());
         String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
 
         boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty());
@@ -195,9 +199,15 @@ public class ClientX509Util extends X509Util {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
             return null;
         } else {
-            return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
-                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, getFipsMode(config));
+            return createTrustManager(
+                    trustStoreLocation,
+                    trustStorePassword,
+                    trustStoreType,
+                    sslCrlEnabled,
+                    sslOcspEnabled,
+                    sslServerHostnameVerificationEnabled,
+                    sslClientHostnameVerificationEnabled,
+                    getFipsMode(config));
         }
     }
 }

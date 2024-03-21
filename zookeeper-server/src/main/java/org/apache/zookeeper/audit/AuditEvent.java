@@ -74,25 +74,30 @@ public final class AuditEvent {
                 } else {
                     buffer.append(PAIR_SEPARATOR);
                 }
-                buffer.append(key).append(KEY_VAL_SEPARATOR)
-                        .append(value);
+                buffer.append(key).append(KEY_VAL_SEPARATOR).append(value);
             }
         }
-        //add result field
+        // add result field
         if (buffer.length() > 0) {
             buffer.append(PAIR_SEPARATOR);
         }
-        buffer.append("result").append(KEY_VAL_SEPARATOR)
-                .append(result.name().toLowerCase());
+        buffer.append("result").append(KEY_VAL_SEPARATOR).append(result.name().toLowerCase());
         return buffer.toString();
     }
 
     public enum FieldName {
-        USER, OPERATION, IP, ACL, ZNODE, SESSION, ZNODE_TYPE
+        USER,
+        OPERATION,
+        IP,
+        ACL,
+        ZNODE,
+        SESSION,
+        ZNODE_TYPE
     }
 
     public enum Result {
-        SUCCESS, FAILURE, INVOKED
+        SUCCESS,
+        FAILURE,
+        INVOKED
     }
 }
-

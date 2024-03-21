@@ -119,7 +119,8 @@ public class QuorumOracleMaj extends QuorumMaj {
     }
 
     @Override
-    public boolean revalidateOutstandingProp(Leader self, ArrayList<Leader.Proposal> outstandingProposal, long lastCommitted) {
+    public boolean revalidateOutstandingProp(
+            Leader self, ArrayList<Leader.Proposal> outstandingProposal, long lastCommitted) {
         LOG.debug("Start Revalidation outstandingProposals");
         try {
             while (outstandingProposal.size() >= 1) {
@@ -130,7 +131,11 @@ public class QuorumOracleMaj extends QuorumMaj {
                 while (i < outstandingProposal.size()) {
                     p = outstandingProposal.get(i);
                     if (p.getZxid() > lastCommitted) {
-                        LOG.debug("Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}", Long.toHexString(p.getZxid()), outstandingProposal.size(), Long.toHexString(lastCommitted));
+                        LOG.debug(
+                                "Re-validate outstanding proposal: 0x{} size:{} lastCommitted:{}",
+                                Long.toHexString(p.getZxid()),
+                                outstandingProposal.size(),
+                                Long.toHexString(lastCommitted));
                         if (!self.tryToCommit(p, p.getZxid(), null)) {
                             break;
                         } else {
@@ -197,4 +202,3 @@ public class QuorumOracleMaj extends QuorumMaj {
         return 43; // any arbitrary constant will do
     }
 }
-

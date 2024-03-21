@@ -97,15 +97,15 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     private Request createRequest(String path, int opCode) throws IOException {
         Record record;
         switch (opCode) {
-        case ZooDefs.OpCode.setData:
-            record = new SetDataRequest(path, new byte[0], -1);
-            break;
-        case ZooDefs.OpCode.delete:
-            record = new DeleteRequest(path, -1);
-            break;
-        default:
-            record = new DeleteRequest(path, -1);
-            break;
+            case ZooDefs.OpCode.setData:
+                record = new SetDataRequest(path, new byte[0], -1);
+                break;
+            case ZooDefs.OpCode.delete:
+                record = new DeleteRequest(path, -1);
+                break;
+            default:
+                record = new DeleteRequest(path, -1);
+                break;
         }
 
         return createRequest(record, opCode);
@@ -119,17 +119,19 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     public void testPrepRequestProcessorMetrics() throws Exception {
         CountDownLatch threeRequests = new CountDownLatch(3);
         doAnswer(invocationOnMock -> {
-            threeRequests.countDown();
-            return null;
-        }).when(nextProcessor).processRequest(any(Request.class));
+                    threeRequests.countDown();
+                    return null;
+                })
+                .when(nextProcessor)
+                .processRequest(any(Request.class));
 
         PrepRequestProcessor prepRequestProcessor = new PrepRequestProcessor(zks, nextProcessor);
 
-        //setData will generate one change
+        // setData will generate one change
         prepRequestProcessor.processRequest(createRequest("/foo", ZooDefs.OpCode.setData));
-        //delete will generate two changes, one for itself, one for its parent
+        // delete will generate two changes, one for itself, one for its parent
         prepRequestProcessor.processRequest(createRequest("/foo/bar", ZooDefs.OpCode.delete));
-        //mocking two ephemeral nodes exists for this session so two changes
+        // mocking two ephemeral nodes exists for this session so two changes
         prepRequestProcessor.processRequest(createRequest(2, ZooDefs.OpCode.closeSession));
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
@@ -161,14 +163,15 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     private class SimpleWatcher implements Watcher {
 
         CountDownLatch created;
+
         public SimpleWatcher(CountDownLatch latch) {
             this.created = latch;
         }
+
         @Override
         public void process(WatchedEvent e) {
             created.countDown();
         }
-
     }
 
     @Test
@@ -191,5 +194,4 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
 
         util.shutdownAll();
     }
-
 }

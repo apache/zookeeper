@@ -42,7 +42,6 @@ public class X509Exception extends Exception {
         public KeyManagerException(Throwable cause) {
             super(cause);
         }
-
     }
 
     public static class TrustManagerException extends X509Exception {
@@ -54,7 +53,6 @@ public class X509Exception extends Exception {
         public TrustManagerException(Throwable cause) {
             super(cause);
         }
-
     }
 
     public static class SSLContextException extends X509Exception {
@@ -70,7 +68,5 @@ public class X509Exception extends Exception {
         public SSLContextException(String message, Throwable cause) {
             super(message, cause);
         }
-
     }
-
 }

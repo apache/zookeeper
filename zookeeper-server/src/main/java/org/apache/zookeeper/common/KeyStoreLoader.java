@@ -50,5 +50,4 @@ interface KeyStoreLoader {
      *         a security error, such as "unsupported crypto algorithm".
      */
     KeyStore loadTrustStore() throws IOException, GeneralSecurityException;
-
 }

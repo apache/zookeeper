@@ -39,7 +39,7 @@ public class AvgMinMaxCounterSet extends Metric implements SummarySet {
     }
 
     private AvgMinMaxCounter getCounterForKey(String key) {
-        return counters.computeIfAbsent(key, k-> new AvgMinMaxCounter(k + "_" + name));
+        return counters.computeIfAbsent(key, k -> new AvgMinMaxCounter(k + "_" + name));
     }
 
     public void addDataPoint(String key, long value) {
@@ -71,5 +71,4 @@ public class AvgMinMaxCounterSet extends Metric implements SummarySet {
         }
         return m;
     }
-
 }

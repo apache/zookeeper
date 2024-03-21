@@ -89,7 +89,8 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         ZooKeeper zk = ClientBase.createZKClient(qu.getConnectString(leader));
 
-        CreateRequest createRequest = new CreateRequest("/impossible", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
+        CreateRequest createRequest =
+                new CreateRequest("/impossible", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         createRequest.serialize(boa, "request");
@@ -101,7 +102,8 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         LOG.info("Fake session Id: {}", Long.toHexString(fakeSessionId));
 
-        Request request = new Request(null, fakeSessionId, 0, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
+        Request request =
+                new Request(null, fakeSessionId, 0, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
 
         // Submit request directly to leader
         leader.getActiveServer().submitRequest(request);
@@ -111,7 +113,6 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         Stat stat = zk.exists("/impossible", null);
         assertEquals(null, stat, "Node from fake session get created");
-
     }
 
     /**
@@ -127,7 +128,8 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         ZooKeeper zk = ClientBase.createZKClient(qu.getConnectString(leader));
 
-        CreateRequest createRequest = new CreateRequest("/success", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag());
+        CreateRequest createRequest =
+                new CreateRequest("/success", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         createRequest.serialize(boa, "request");
@@ -139,7 +141,8 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         LOG.info("Local session Id: {}", Long.toHexString(locallSession));
 
-        Request request = new Request(null, locallSession, 0, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
+        Request request =
+                new Request(null, locallSession, 0, OpCode.create, RequestRecord.fromBytes(bb), new ArrayList<Id>());
 
         // Submit request directly to leader
         leader.getActiveServer().submitRequest(request);
@@ -149,7 +152,5 @@ public class LeaderSessionTrackerTest extends ZKTestCase {
 
         Stat stat = zk.exists("/success", null);
         assertTrue(stat != null, "Request from local sesson failed");
-
     }
-
 }

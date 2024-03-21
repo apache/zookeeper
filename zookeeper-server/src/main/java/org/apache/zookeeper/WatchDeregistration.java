@@ -36,11 +36,7 @@ public class WatchDeregistration {
     private final ZKWatchManager zkManager;
 
     public WatchDeregistration(
-        String serverPath,
-        Watcher watcher,
-        WatcherType watcherType,
-        boolean local,
-        ZKWatchManager zkManager) {
+            String serverPath, Watcher watcher, WatcherType watcherType, boolean local, ZKWatchManager zkManager) {
         this.serverPath = serverPath;
         this.watcher = watcher;
         this.watcherType = watcherType;
@@ -67,5 +63,4 @@ public class WatchDeregistration {
     public String getServerPath() {
         return serverPath;
     }
-
 }

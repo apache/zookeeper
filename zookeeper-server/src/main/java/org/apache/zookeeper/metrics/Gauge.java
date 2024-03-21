@@ -32,5 +32,4 @@ public interface Gauge {
      * @return the current value for the gauge
      */
     Number get();
-
 }

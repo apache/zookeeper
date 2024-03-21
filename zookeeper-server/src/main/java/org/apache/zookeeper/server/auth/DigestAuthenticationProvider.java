@@ -43,10 +43,12 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     static {
         try {
-            //sanity check, pre-check the availability of the algorithm to avoid some unexpected exceptions in the runtime
+            // sanity check, pre-check the availability of the algorithm to avoid some unexpected exceptions in the
+            // runtime
             generateDigest(DIGEST_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("don't support this ACL digest algorithm: " + DIGEST_ALGORITHM + " in the current environment");
+            throw new RuntimeException(
+                    "don't support this ACL digest algorithm: " + DIGEST_ALGORITHM + " in the current environment");
         }
         LOG.info("ACL digest algorithm is: {}", DIGEST_ALGORITHM);
     }

@@ -77,5 +77,4 @@ public class AvgMinMaxPercentileCounterSet extends Metric implements SummarySet 
         }
         return m;
     }
-
 }

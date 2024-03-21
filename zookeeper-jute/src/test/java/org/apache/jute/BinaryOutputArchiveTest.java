@@ -84,9 +84,7 @@ public class BinaryOutputArchiveTest {
         String user1 = "horizon";
         String user2 = "zhao";
         WhoAmIResponse whoAmIResponse = new WhoAmIResponse();
-        whoAmIResponse.setClientInfo(Arrays.asList(
-                new ClientInfo(schema, user1),
-                new ClientInfo(schema, user2)));
+        whoAmIResponse.setClientInfo(Arrays.asList(new ClientInfo(schema, user1), new ClientInfo(schema, user2)));
 
         int listSizeLength = 4;
         int clientInfo1Length = stringLengthSize + schema.length() + stringLengthSize + user1.length();
@@ -100,5 +98,4 @@ public class BinaryOutputArchiveTest {
         assertEquals(dataSize, outputArchive.getDataSize());
         assertEquals(baos.size(), outputArchive.getDataSize());
     }
-
 }

@@ -47,7 +47,6 @@ public class FLEPredicateTest extends ZKTestCase {
         boolean predicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch) {
             return this.totalOrderPredicate(newId, newZxid, newEpoch, curId, curZxid, curEpoch);
         }
-
     }
 
     HashMap<Long, QuorumServer> peers;
@@ -61,7 +60,12 @@ public class FLEPredicateTest extends ZKTestCase {
          * Creates list of peers.
          */
         for (int i = 0; i < 3; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+            peers.put(
+                    Long.valueOf(i),
+                    new QuorumServer(
+                            i,
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         }
 
         /*
@@ -99,5 +103,4 @@ public class FLEPredicateTest extends ZKTestCase {
             fail("Exception while creating quorum peer");
         }
     }
-
 }

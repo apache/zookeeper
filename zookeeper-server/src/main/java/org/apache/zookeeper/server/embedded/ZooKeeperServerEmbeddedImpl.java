@@ -71,7 +71,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
         LOG.info("SyncEnabled:" + config.getSyncEnabled());
         LOG.info("MetricsProviderClassName:" + config.getMetricsProviderClassName());
 
-        for (Map.Entry<Long, QuorumPeer.QuorumServer> server : config.getServers().entrySet()) {
+        for (Map.Entry<Long, QuorumPeer.QuorumServer> server :
+                config.getServers().entrySet()) {
             LOG.info("Server: " + server.getKey() + " -> addr " + server.getValue().addr + " elect "
                     + server.getValue().electionAddr + " id=" + server.getValue().id + " type "
                     + server.getValue().type);
@@ -117,9 +118,11 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             };
 
             // Start and schedule the the purge task
-            purgeMgr = new DatadirCleanupManager(config
-                    .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+            purgeMgr = new DatadirCleanupManager(
+                    config.getDataDir(),
+                    config.getDataLogDir(),
+                    config.getSnapRetainCount(),
+                    config.getPurgeInterval());
             purgeMgr.start();
 
             thread = new Thread("zkservermainrunner") {
@@ -153,9 +156,11 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                     started.complete(null);
                 }
             };
-            purgeMgr = new DatadirCleanupManager(config
-                    .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+            purgeMgr = new DatadirCleanupManager(
+                    config.getDataDir(),
+                    config.getDataLogDir(),
+                    config.getSnapRetainCount(),
+                    config.getPurgeInterval());
             purgeMgr.start();
             thread = new Thread("zkservermainrunner") {
                 @Override
@@ -202,10 +207,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
 
     private String prettifyConnectionString(InetSocketAddress confAddress, int boundPort) {
         if (confAddress != null) {
-            return confAddress.getHostString()
-                .replace("0.0.0.0", "localhost")
-                .replace("0:0:0:0:0:0:0:0", "localhost")
-                + ":" + boundPort;
+            return confAddress.getHostString().replace("0.0.0.0", "localhost").replace("0:0:0:0:0:0:0:0", "localhost")
+                    + ":" + boundPort;
         }
         throw new IllegalStateException("No client address is configured");
     }

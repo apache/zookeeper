@@ -106,7 +106,8 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
      * Does create/delete depending on the type and verifies
      * if cversion before the operation is 1 less than cversion afer.
      */
-    private void doOp(FileTxnSnapLog logFile, int type, String path, DataTree dt, DataNode parent, int cversion) throws Exception {
+    private void doOp(FileTxnSnapLog logFile, int type, String path, DataTree dt, DataNode parent, int cversion)
+            throws Exception {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
 
@@ -152,7 +153,8 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         }
         LOG.info("Children: {} for {}", childStr, parentName);
         LOG.info("(cverions, pzxid): {}, {}", newCversion, newPzxid);
-        assertTrue((newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1),
+        assertTrue(
+                (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1),
                 type + " <cversion, pzxid> verification failed. Expected: <" + (prevCversion + 1) + ", "
                         + (prevPzxid + 1) + ">, found: <" + newCversion + ", " + newPzxid + ">");
     }
@@ -175,5 +177,4 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
         LOG.info("Received magic : {} Expected : {}", header.getMagic(), FileTxnLog.TXNLOG_MAGIC);
         assertTrue(header.getMagic() == FileTxnLog.TXNLOG_MAGIC, "Missing magic number ");
     }
-
 }

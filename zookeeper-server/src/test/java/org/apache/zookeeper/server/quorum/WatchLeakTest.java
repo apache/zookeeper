@@ -79,7 +79,6 @@ public class WatchLeakTest {
     /**
      * Check that if session has expired then no watch can be set
      */
-
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testWatchesLeak(boolean sessionTimedout) throws Exception {
@@ -87,15 +86,16 @@ public class WatchLeakTest {
         NIOServerCnxnFactory serverCnxnFactory = mock(NIOServerCnxnFactory.class);
         final SelectionKey sk = new FakeSK();
         MockSelectorThread selectorThread = mock(MockSelectorThread.class);
-        when(selectorThread.addInterestOpsUpdateRequest(any(SelectionKey.class))).thenAnswer(new Answer<Boolean>() {
-            @Override
-            public Boolean answer(InvocationOnMock invocation) throws Throwable {
-                SelectionKey sk = (SelectionKey) invocation.getArguments()[0];
-                NIOServerCnxn nioSrvCnx = (NIOServerCnxn) sk.attachment();
-                sk.interestOps(nioSrvCnx.getInterestOps());
-                return true;
-            }
-        });
+        when(selectorThread.addInterestOpsUpdateRequest(any(SelectionKey.class)))
+                .thenAnswer(new Answer<Boolean>() {
+                    @Override
+                    public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                        SelectionKey sk = (SelectionKey) invocation.getArguments()[0];
+                        NIOServerCnxn nioSrvCnx = (NIOServerCnxn) sk.attachment();
+                        sk.interestOps(nioSrvCnx.getInterestOps());
+                        return true;
+                    }
+                });
 
         ZKDatabase database = new ZKDatabase(null);
         database.setlastProcessedZxid(2L);
@@ -116,7 +116,8 @@ public class WatchLeakTest {
             // Simulate a socket channel between a client and a follower
             final SocketChannel socketChannel = createClientSocketChannel();
             // Create the NIOServerCnxn that will handle the client requests
-            final MockNIOServerCnxn nioCnxn = new MockNIOServerCnxn(fzks, socketChannel, sk, serverCnxnFactory, selectorThread);
+            final MockNIOServerCnxn nioCnxn =
+                    new MockNIOServerCnxn(fzks, socketChannel, sk, serverCnxnFactory, selectorThread);
             sk.attach(nioCnxn);
             // Send the connection request as a client do
             nioCnxn.doIO(sk);
@@ -166,7 +167,6 @@ public class WatchLeakTest {
             leaderIs = mock(InputArchive.class);
             bufferedOutput = mock(BufferedOutputStream.class);
         }
-
     }
 
     /**
@@ -190,8 +190,7 @@ public class WatchLeakTest {
         }
 
         @Override
-        public void cancel() {
-        }
+        public void cancel() {}
 
         @Override
         public int interestOps() {
@@ -219,7 +218,6 @@ public class WatchLeakTest {
             }
             return ops;
         }
-
     }
 
     /**
@@ -336,5 +334,4 @@ public class WatchLeakTest {
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos.toByteArray(), null);
         return qp;
     }
-
 }

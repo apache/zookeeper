@@ -77,7 +77,6 @@ public class WatcherCleanerTest extends ZKTestCase {
             }
             return false;
         }
-
     }
 
     @Test
@@ -147,8 +146,8 @@ public class WatcherCleanerTest extends ZKTestCase {
         listener.setDelayMs(20);
         cleaner.start();
         listener.setCountDownLatch(new CountDownLatch(3));
-        //the dead watchers will be added one by one and cleared one by one because we set both watchCleanThreshold and
-        //maxInProcessingDeadWatchers to 1
+        // the dead watchers will be added one by one and cleared one by one because we set both watchCleanThreshold and
+        // maxInProcessingDeadWatchers to 1
         cleaner.addDeadWatcher(1);
         cleaner.addDeadWatcher(2);
         cleaner.addDeadWatcher(3);
@@ -162,7 +161,7 @@ public class WatcherCleanerTest extends ZKTestCase {
         waitForMetric("dead_watchers_cleared", is(3L));
         waitForMetric("cnt_dead_watchers_cleaner_latency", is(3L));
 
-        //Each latency should be a little over 20 ms, allow 5 ms deviation
+        // Each latency should be a little over 20 ms, allow 5 ms deviation
         waitForMetric("avg_dead_watchers_cleaner_latency", closeTo(20, 5));
         waitForMetric("min_dead_watchers_cleaner_latency", closeTo(20, 5));
         waitForMetric("max_dead_watchers_cleaner_latency", closeTo(20, 5));
@@ -170,5 +169,4 @@ public class WatcherCleanerTest extends ZKTestCase {
         waitForMetric("p95_dead_watchers_cleaner_latency", closeTo(20, 5));
         waitForMetric("p99_dead_watchers_cleaner_latency", closeTo(20, 5));
     }
-
 }

@@ -42,5 +42,4 @@ public class CloseCommand extends CliCommand {
 
         return false;
     }
-
 }

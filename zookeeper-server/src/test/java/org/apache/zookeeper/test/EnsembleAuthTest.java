@@ -32,7 +32,8 @@ public class EnsembleAuthTest extends ClientBase {
 
     @BeforeEach
     public void setUp() throws Exception {
-        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
+        System.setProperty(
+                "zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
         super.setUp();
     }
 
@@ -111,7 +112,8 @@ public class EnsembleAuthTest extends ClientBase {
             System.setProperty(EnsembleAuthenticationProvider.ENSEMBLE_PROPERTY, auth);
         }
         if (useAuth) {
-            System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
+            System.setProperty(
+                    "zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider");
         } else {
             System.clearProperty("zookeeper.authProvider.1");
         }
@@ -119,5 +121,4 @@ public class EnsembleAuthTest extends ClientBase {
         ProviderRegistry.initialize();
         startServer();
     }
-
 }

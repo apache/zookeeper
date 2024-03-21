@@ -101,5 +101,4 @@ public class EphemeralTypeTest {
             EphemeralType.get(0xff00010000000000L);
         });
     }
-
 }

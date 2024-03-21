@@ -339,5 +339,4 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
         fos.write(content.getBytes(StandardCharsets.US_ASCII));
         fos.close();
     }
-
 }

@@ -40,8 +40,7 @@ public class TestUtils {
      * @param failOnError
      *            if true file deletion success is ensured
      */
-    public static boolean deleteFileRecursively(
-            File file, final boolean failOnError) {
+    public static boolean deleteFileRecursively(File file, final boolean failOnError) {
         if (file != null) {
             if (file.isDirectory()) {
                 File[] files = file.listFiles();
@@ -92,9 +91,9 @@ public class TestUtils {
         int count = threadGroup.activeCount();
         Thread[] threads;
         do {
-            threads = new Thread[count + count / 2 + 1]; //slightly grow the array size
+            threads = new Thread[count + count / 2 + 1]; // slightly grow the array size
             count = threadGroup.enumerate(threads, true);
-            //return value of enumerate() must be strictly less than the array size according to javadoc
+            // return value of enumerate() must be strictly less than the array size according to javadoc
         } while (count >= threads.length);
         return Collections.unmodifiableList(Stream.of(threads).limit(count).collect(Collectors.toList()));
     }

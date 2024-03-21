@@ -72,7 +72,12 @@ public class ContainerManager {
      * @param maxNeverUsedIntervalMs the max time in milliseconds that a container that has never had
      *                                  any children is retained
      */
-    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor, int checkIntervalMs, int maxPerMinute, long maxNeverUsedIntervalMs) {
+    public ContainerManager(
+            ZKDatabase zkDb,
+            RequestProcessor requestProcessor,
+            int checkIntervalMs,
+            int maxPerMinute,
+            long maxNeverUsedIntervalMs) {
         this.zkDb = zkDb;
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
@@ -80,7 +85,11 @@ public class ContainerManager {
         this.maxNeverUsedIntervalMs = maxNeverUsedIntervalMs;
         timer = new Timer("ContainerManagerTask", true);
 
-        LOG.info("Using checkIntervalMs={} maxPerMinute={} maxNeverUsedIntervalMs={}", checkIntervalMs, maxPerMinute, maxNeverUsedIntervalMs);
+        LOG.info(
+                "Using checkIntervalMs={} maxPerMinute={} maxNeverUsedIntervalMs={}",
+                checkIntervalMs,
+                maxPerMinute,
+                maxNeverUsedIntervalMs);
     }
 
     /**
@@ -129,7 +138,8 @@ public class ContainerManager {
             long startMs = Time.currentElapsedTime();
 
             DeleteContainerRequest record = new DeleteContainerRequest(containerPath);
-            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
+            Request request =
+                    new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
             try {
                 LOG.info("Attempting to delete candidate container: {}", containerPath);
                 postDeleteRequest(request);
@@ -162,19 +172,19 @@ public class ContainerManager {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             if ((node != null) && node.getChildren().isEmpty()) {
                 /*
-                    cversion > 0: keep newly created containers from being deleted
-                    before any children have been added. If you were to create the
-                    container just before a container cleaning period the container
-                    would be immediately be deleted.
-                 */
+                   cversion > 0: keep newly created containers from being deleted
+                   before any children have been added. If you were to create the
+                   container just before a container cleaning period the container
+                   would be immediately be deleted.
+                */
                 if (node.stat.getCversion() > 0) {
                     candidates.add(containerPath);
                 } else {
                     /*
-                        Users may not want unused containers to live indefinitely. Allow a system
-                        property to be set that sets the max time for a cversion-0 container
-                        to stay before being deleted
-                     */
+                       Users may not want unused containers to live indefinitely. Allow a system
+                       property to be set that sets the max time for a cversion-0 container
+                       to stay before being deleted
+                    */
                     if ((maxNeverUsedIntervalMs != 0) && (getElapsed(node) > maxNeverUsedIntervalMs)) {
                         candidates.add(containerPath);
                     }
@@ -202,5 +212,4 @@ public class ContainerManager {
     protected long getElapsed(DataNode node) {
         return Time.currentWallTime() - node.stat.getMtime();
     }
-
 }

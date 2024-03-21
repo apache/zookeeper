@@ -99,5 +99,4 @@ public class ListQuotaCommand extends CliCommand {
 
         return statsTracks;
     }
-
 }

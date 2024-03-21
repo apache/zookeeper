@@ -35,12 +35,13 @@ public class ZookeeperBanner {
         "  / /__  | (_) | | (_) | |   <  |  __/ |  __/ | |_) | |  __/ | |    ",
         " /_____|  \\___/   \\___/  |_|\\_\\  \\___|  \\___| | .__/   \\___| |_|",
         "                                              | |                     ",
-        "                                              |_|                     ", ""};
+        "                                              |_|                     ",
+        ""
+    };
 
     public static void printBanner(Logger log) {
         for (String line : BANNER) {
             log.info(line);
         }
     }
-
 }

@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,7 +57,6 @@ public class ServerStatsTest extends ZKTestCase {
 
         // Then ...
         assertAllPacketsZero(serverStats);
-
     }
 
     @Test
@@ -102,7 +100,6 @@ public class ServerStatsTest extends ZKTestCase {
 
         // Then ...
         assertFsyncThresholdExceedCountZero(serverStats);
-
     }
 
     @Test
@@ -140,5 +137,4 @@ public class ServerStatsTest extends ZKTestCase {
     private void assertFsyncThresholdExceedCountZero(ServerStats serverStats) {
         assertEquals(0L, serverStats.getFsyncThresholdExceedCount());
     }
-
 }

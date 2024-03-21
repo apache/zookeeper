@@ -24,6 +24,5 @@ import org.apache.zookeeper.data.ACL;
 
 public interface ServerWatcher extends Watcher {
 
-  void process(WatchedEvent event, List<ACL> znodeAcl);
-
+    void process(WatchedEvent event, List<ACL> znodeAcl);
 }

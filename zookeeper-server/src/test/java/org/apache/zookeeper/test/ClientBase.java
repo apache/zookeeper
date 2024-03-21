@@ -98,12 +98,14 @@ public abstract class ClientBase extends ZKTestCase {
         public CountdownWatcher() {
             reset();
         }
+
         public synchronized void reset() {
             clientConnected = new CountDownLatch(1);
             connected = false;
             syncConnected = false;
             readOnlyConnected = false;
         }
+
         public synchronized void process(WatchedEvent event) {
             KeeperState state = event.getState();
             if (state == KeeperState.SyncConnected) {
@@ -125,13 +127,15 @@ public abstract class ClientBase extends ZKTestCase {
                 clientConnected.countDown();
             }
         }
+
         public synchronized boolean isConnected() {
             return connected;
         }
 
         protected synchronized String connectionDescription() {
-            return String.format("connected(%s), syncConnected(%s), readOnlyConnected(%s)",
-                connected, syncConnected, readOnlyConnected);
+            return String.format(
+                    "connected(%s), syncConnected(%s), readOnlyConnected(%s)",
+                    connected, syncConnected, readOnlyConnected);
         }
 
         public synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
@@ -145,6 +149,7 @@ public abstract class ClientBase extends ZKTestCase {
                 throw new TimeoutException("Failed to connect to ZooKeeper server: " + connectionDescription());
             }
         }
+
         public synchronized void waitForSyncConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
@@ -154,10 +159,10 @@ public abstract class ClientBase extends ZKTestCase {
             }
             if (!syncConnected) {
                 throw new TimeoutException(
-                    "Failed to connect to read-write ZooKeeper server: "
-                        + connectionDescription());
+                        "Failed to connect to read-write ZooKeeper server: " + connectionDescription());
             }
         }
+
         public synchronized void waitForReadOnlyConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
@@ -167,10 +172,10 @@ public abstract class ClientBase extends ZKTestCase {
             }
             if (!readOnlyConnected) {
                 throw new TimeoutException(
-                    "Failed to connect in read-only mode to ZooKeeper server: "
-                        + connectionDescription());
+                        "Failed to connect in read-only mode to ZooKeeper server: " + connectionDescription());
             }
         }
+
         public synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
@@ -182,7 +187,6 @@ public abstract class ClientBase extends ZKTestCase {
                 throw new TimeoutException("Did not disconnect: " + connectionDescription());
             }
         }
-
     }
 
     protected TestableZooKeeper createClient() throws IOException, InterruptedException {
@@ -205,11 +209,13 @@ public abstract class ClientBase extends ZKTestCase {
         return createClient(new CountdownWatcher(), hp, timeout);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)
+            throws IOException, InterruptedException {
         return createClient(watcher, hp, CONNECTION_TIMEOUT);
     }
 
-    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp, int timeout)
+            throws IOException, InterruptedException {
         watcher.reset();
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
         if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
@@ -239,12 +245,13 @@ public abstract class ClientBase extends ZKTestCase {
 
         String host;
         int port;
+
         public HostPort(String host, int port) {
             this.host = host;
             this.port = port;
         }
-
     }
+
     public static List<HostPort> parseHostPortList(String hplist) {
         ArrayList<HostPort> alist = new ArrayList<>();
         for (String hp : hplist.split(",")) {
@@ -411,10 +418,8 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
-    public static void startServerInstance(File dataDir,
-        ServerCnxnFactory factory,
-        String hostPort,
-        int serverId) throws IOException, InterruptedException {
+    public static void startServerInstance(File dataDir, ServerCnxnFactory factory, String hostPort, int serverId)
+            throws IOException, InterruptedException {
         startServerInstance(dataDir, factory, hostPort, serverId, null);
     }
 
@@ -422,18 +427,16 @@ public abstract class ClientBase extends ZKTestCase {
      * Starting the given server instance
      */
     public static void startServerInstance(
-        File dataDir,
-        ServerCnxnFactory factory,
-        String hostPort,
-        int serverId, ZKConfig zkConfig) throws IOException, InterruptedException {
+            File dataDir, ServerCnxnFactory factory, String hostPort, int serverId, ZKConfig zkConfig)
+            throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
         assertTrue(
-            ClientBase.waitForServerUp("127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure(), zkConfig),
-            "waiting for server up");
+                ClientBase.waitForServerUp("127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure(), zkConfig),
+                "waiting for server up");
     }
 
     /**
@@ -450,10 +453,8 @@ public abstract class ClientBase extends ZKTestCase {
      *      href="https://issues.apache.org/jira/browse/ZOOKEEPER-1852">ZOOKEEPER-1852</a>
      *      for more information.
      */
-    public static ServerCnxnFactory createNewServerInstance(
-        ServerCnxnFactory factory,
-        String hostPort,
-        int maxCnxns) throws IOException, InterruptedException {
+    public static ServerCnxnFactory createNewServerInstance(ServerCnxnFactory factory, String hostPort, int maxCnxns)
+            throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("CREATING server instance 127.0.0.1:{}", port);
         if (factory == null) {
@@ -482,8 +483,8 @@ public abstract class ClientBase extends ZKTestCase {
             final int PORT = getPort(hostPort);
 
             assertTrue(
-                ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT, factory.isSecure()),
-                "waiting for server down");
+                    ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT, factory.isSecure()),
+                    "waiting for server down");
         }
     }
 
@@ -543,7 +544,9 @@ public abstract class ClientBase extends ZKTestCase {
     /**
      * Give it a chance to set up customized env before starting the server.
      */
-    public void setupCustomizedEnv() { /* do nothing by default */ }
+    public void setupCustomizedEnv() {
+        /* do nothing by default */
+    }
 
     private void startServer(int serverId) throws Exception {
         LOG.info("STARTING server");
@@ -642,15 +645,17 @@ public abstract class ClientBase extends ZKTestCase {
             LOG.info(message);
             if (fdCount > initialFdCount) {
                 LOG.info("sleeping for 20 secs");
-                //Thread.sleep(60000);
-                //assertTrue(message, fdCount <= initialFdCount);
+                // Thread.sleep(60000);
+                // assertTrue(message, fdCount <= initialFdCount);
             }
         }
 
         cleanUpCustomizedEnv();
     }
 
-    public void cleanUpCustomizedEnv() { /* do nothing by default */ }
+    public void cleanUpCustomizedEnv() {
+        /* do nothing by default */
+    }
 
     public static MBeanServerConnection jmxConn() throws IOException {
         return JMXEnv.conn();
@@ -749,13 +754,13 @@ public abstract class ClientBase extends ZKTestCase {
         return createZKClient(cxnString, sessionTimeout, CONNECTION_TIMEOUT);
     }
 
-    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
-        long connectionTimeout) throws IOException {
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout, long connectionTimeout)
+            throws IOException {
         return createZKClient(cxnString, sessionTimeout, connectionTimeout, new ZKClientConfig());
     }
 
-    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
-        long connectionTimeout, ZKClientConfig config) throws IOException {
+    public static ZooKeeper createZKClient(
+            String cxnString, int sessionTimeout, long connectionTimeout, ZKClientConfig config) throws IOException {
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher, config);
         try {
@@ -765,5 +770,4 @@ public abstract class ClientBase extends ZKTestCase {
         }
         return zk;
     }
-
 }

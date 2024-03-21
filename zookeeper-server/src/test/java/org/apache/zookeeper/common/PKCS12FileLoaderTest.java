@@ -29,27 +29,26 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLoadKeyStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+    public void testLoadKeyStore(X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
         KeyStore ks = new PKCS12FileLoader.Builder()
-            .setKeyStorePath(path)
-            .setKeyStorePassword(x509TestContext.getKeyStorePassword())
-            .build()
-            .loadKeyStore();
+                .setKeyStorePath(path)
+                .setKeyStorePassword(x509TestContext.getKeyStorePassword())
+                .build()
+                .loadKeyStore();
         assertEquals(1, ks.size());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(Exception.class, () -> {
-            String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
+            String path =
+                    x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
             new PKCS12FileLoader.Builder()
                     .setKeyStorePath(path)
                     .setKeyStorePassword("wrong password")
@@ -61,11 +60,11 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
-            String path = x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
+            String path =
+                    x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
             new PKCS12FileLoader.Builder()
                     .setKeyStorePath(path + ".does_not_exist")
                     .setKeyStorePassword(x509TestContext.getKeyStorePassword())
@@ -77,8 +76,7 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithNullFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
             new PKCS12FileLoader.Builder()
@@ -91,8 +89,7 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadKeyStoreWithWrongFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             // Trying to load a PEM file with PKCS12 loader should fail
@@ -108,26 +105,25 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStore(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
         KeyStore ts = new PKCS12FileLoader.Builder()
-            .setTrustStorePath(path)
-            .setTrustStorePassword(x509TestContext.getTrustStorePassword())
-            .build()
-            .loadTrustStore();
+                .setTrustStorePath(path)
+                .setTrustStorePassword(x509TestContext.getTrustStorePassword())
+                .build()
+                .loadTrustStore();
         assertEquals(1, ts.size());
     }
 
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongPassword(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(Exception.class, () -> {
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
             new PKCS12FileLoader.Builder()
                     .setTrustStorePath(path)
                     .setTrustStorePassword("wrong password")
@@ -139,11 +135,11 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath();
             new PKCS12FileLoader.Builder()
                     .setTrustStorePath(path + ".does_not_exist")
                     .setTrustStorePassword(x509TestContext.getTrustStorePassword())
@@ -155,8 +151,7 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithNullFilePath(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(NullPointerException.class, () -> {
             new PKCS12FileLoader.Builder()
@@ -169,12 +164,12 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     public void testLoadTrustStoreWithWrongFileType(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         assertThrows(IOException.class, () -> {
             // Trying to load a PEM file with PKCS12 loader should fail
-            String path = x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
+            String path =
+                    x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath();
             new PKCS12FileLoader.Builder()
                     .setTrustStorePath(path)
                     .setTrustStorePassword(x509TestContext.getTrustStorePassword())
@@ -182,5 +177,4 @@ public class PKCS12FileLoaderTest extends BaseX509ParameterizedTestCase {
                     .loadTrustStore();
         });
     }
-
 }

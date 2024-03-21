@@ -68,7 +68,8 @@ public class UnsupportedAddWatcherTest extends ClientBase {
         }
 
         @Override
-        public WatcherOrBitSet triggerWatch(String path, Watcher.Event.EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
+        public WatcherOrBitSet triggerWatch(
+                String path, Watcher.Event.EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
             return new WatcherOrBitSet(Collections.emptySet());
         }
 
@@ -125,8 +126,7 @@ public class UnsupportedAddWatcherTest extends ClientBase {
                 // the server will generate an exception as our custom watch manager doesn't implement
                 // the new version of addWatch()
                 zk.create("/foo", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                zk.addWatch("/foo", event -> {
-                }, AddWatchMode.PERSISTENT_RECURSIVE);
+                zk.addWatch("/foo", event -> {}, AddWatchMode.PERSISTENT_RECURSIVE);
             }
         });
     }

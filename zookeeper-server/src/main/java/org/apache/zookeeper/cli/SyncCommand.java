@@ -81,5 +81,4 @@ public class SyncCommand extends CliCommand {
 
         return false;
     }
-
 }

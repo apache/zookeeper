@@ -31,5 +31,4 @@ public class ServerCnxnHelper {
         // default
         return ServerCnxnFactory.ZOOKEEPER_MAX_CONNECTION_DEFAULT;
     }
-
 }

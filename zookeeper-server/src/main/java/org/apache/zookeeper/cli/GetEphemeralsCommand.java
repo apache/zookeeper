@@ -70,5 +70,4 @@ public class GetEphemeralsCommand extends CliCommand {
         out.println(ephemerals);
         return false;
     }
-
 }

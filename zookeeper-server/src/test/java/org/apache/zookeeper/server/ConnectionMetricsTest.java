@@ -62,7 +62,8 @@ public class ConnectionMetricsTest extends ZKTestCase {
         LOG.info("connecting to server: {}", follower1);
         ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
         // create a connection to follower
-        ZooKeeper zk = new ZooKeeper(util.getConnectionStringForServer(follower1), ClientBase.CONNECTION_TIMEOUT, watcher);
+        ZooKeeper zk =
+                new ZooKeeper(util.getConnectionStringForServer(follower1), ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         LOG.info("connected");
 
@@ -87,7 +88,13 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
     private class MockNIOServerCnxn extends NIOServerCnxn {
 
-        public MockNIOServerCnxn(ZooKeeperServer zk, SocketChannel sock, SelectionKey sk, NIOServerCnxnFactory factory, NIOServerCnxnFactory.SelectorThread selectorThread) throws IOException {
+        public MockNIOServerCnxn(
+                ZooKeeperServer zk,
+                SocketChannel sock,
+                SelectionKey sk,
+                NIOServerCnxnFactory factory,
+                NIOServerCnxnFactory.SelectorThread selectorThread)
+                throws IOException {
             super(zk, sock, sk, factory, selectorThread);
         }
 
@@ -95,7 +102,6 @@ public class ConnectionMetricsTest extends ZKTestCase {
         protected boolean isSocketOpen() {
             return true;
         }
-
     }
 
     private static class FakeSK extends SelectionKey {
@@ -116,8 +122,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         }
 
         @Override
-        public void cancel() {
-        }
+        public void cancel() {}
 
         @Override
         public int interestOps() {
@@ -136,7 +141,6 @@ public class ConnectionMetricsTest extends ZKTestCase {
         public int readyOps() {
             return ops;
         }
-
     }
 
     private NIOServerCnxn createMockNIOCnxn() throws IOException {
@@ -211,7 +215,8 @@ public class ConnectionMetricsTest extends ZKTestCase {
     @Test
     public void testStaleSessionsExpired() throws Exception {
         int tickTime = 1000;
-        SessionTrackerImpl tracker = new SessionTrackerImpl(mock(ZooKeeperServer.class), new ConcurrentHashMap<>(), tickTime, 1L, null);
+        SessionTrackerImpl tracker =
+                new SessionTrackerImpl(mock(ZooKeeperServer.class), new ConcurrentHashMap<>(), tickTime, 1L, null);
 
         tracker.sessionsById.put(1L, mock(SessionTrackerImpl.SessionImpl.class));
         tracker.sessionsById.put(2L, mock(SessionTrackerImpl.SessionImpl.class));
@@ -235,5 +240,4 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
         tracker.shutdown();
     }
-
 }

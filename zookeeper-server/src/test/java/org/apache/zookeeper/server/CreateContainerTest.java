@@ -117,9 +117,13 @@ public class CreateContainerTest extends ClientBase {
     public void testSimpleDeletion() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
+        zk.delete("/foo/bar", -1); // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(
+                serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor,
+                1,
+                100);
         containerManager.checkContainers();
 
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
@@ -146,9 +150,13 @@ public class CreateContainerTest extends ClientBase {
         DataTree dataTree = serverFactory.getZooKeeperServer().getZKDatabase().getDataTree();
         assertEquals(dataTree.getContainers().size(), 1);
 
-        zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
+        zk.delete("/foo/bar", -1); // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(
+                serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor,
+                1,
+                100);
         containerManager.checkContainers();
 
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
@@ -176,9 +184,13 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER, cb, "context");
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
+        zk.delete("/foo/bar", -1); // should cause "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(
+                serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor,
+                1,
+                100);
         containerManager.checkContainers();
 
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
@@ -191,9 +203,15 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.delete("/foo/bar/one", -1);  // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
+        zk.delete(
+                "/foo/bar/one",
+                -1); // should cause "/foo/bar" and "/foo" to get deleted when checkContainers() is called
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100);
+        ContainerManager containerManager = new ContainerManager(
+                serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor,
+                1,
+                100);
         containerManager.checkContainers();
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
         containerManager.checkContainers();
@@ -209,11 +227,17 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
-            @Override protected Collection<String> getCandidates() {
-                return Collections.singletonList("/foo");
-            }
-        };
+        ContainerManager containerManager =
+                new ContainerManager(
+                        serverFactory.getZooKeeperServer().getZKDatabase(),
+                        serverFactory.getZooKeeperServer().firstProcessor,
+                        1,
+                        100) {
+                    @Override
+                    protected Collection<String> getCandidates() {
+                        return Collections.singletonList("/foo");
+                    }
+                };
         containerManager.checkContainers();
 
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
@@ -228,27 +252,28 @@ public class CreateContainerTest extends ClientBase {
             @Override
             public void processRequest(Request request) {
                 try {
-                    queue.add(request.readRequestRecord(DeleteContainerRequest::new).getPath());
+                    queue.add(request.readRequestRecord(DeleteContainerRequest::new)
+                            .getPath());
                 } catch (IOException e) {
                     fail(e);
                 }
             }
 
             @Override
-            public void shutdown() {
-            }
+            public void shutdown() {}
         };
-        final ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
-            @Override
-            protected long getMinIntervalMs() {
-                return 1000;
-            }
+        final ContainerManager containerManager =
+                new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), processor, 1, 2) {
+                    @Override
+                    protected long getMinIntervalMs() {
+                        return 1000;
+                    }
 
-            @Override
-            protected Collection<String> getCandidates() {
-                return Arrays.asList("/one", "/two", "/three", "/four");
-            }
-        };
+                    @Override
+                    protected Collection<String> getCandidates() {
+                        return Arrays.asList("/one", "/two", "/three", "/four");
+                    }
+                };
         Executors.newSingleThreadExecutor().submit(() -> {
             containerManager.checkContainers();
             return null;
@@ -268,18 +293,25 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         AtomicLong elapsed = new AtomicLong(0);
         AtomicInteger deletesQty = new AtomicInteger(0);
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100, 1000) {
-            @Override
-            protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
-                deletesQty.incrementAndGet();
-                super.postDeleteRequest(request);
-            }
+        ContainerManager containerManager =
+                new ContainerManager(
+                        serverFactory.getZooKeeperServer().getZKDatabase(),
+                        serverFactory.getZooKeeperServer().firstProcessor,
+                        1,
+                        100,
+                        1000) {
+                    @Override
+                    protected void postDeleteRequest(Request request)
+                            throws RequestProcessor.RequestProcessorException {
+                        deletesQty.incrementAndGet();
+                        super.postDeleteRequest(request);
+                    }
 
-            @Override
-            protected long getElapsed(DataNode node) {
-                return elapsed.get();
-            }
-        };
+                    @Override
+                    protected long getElapsed(DataNode node) {
+                        return elapsed.get();
+                    }
+                };
         containerManager.checkContainers(); // elapsed time will appear to be 0 - container will not get deleted
         assertEquals(deletesQty.get(), 0);
         assertNotNull(zk.exists("/foo", false), "Container should not have been deleted");
@@ -295,16 +327,25 @@ public class CreateContainerTest extends ClientBase {
     public void testZeroMaxNeverUsedInterval() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         AtomicInteger deletesQty = new AtomicInteger(0);
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100, 0) {
-            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
-                deletesQty.incrementAndGet();
-                super.postDeleteRequest(request);
-            }
+        ContainerManager containerManager =
+                new ContainerManager(
+                        serverFactory.getZooKeeperServer().getZKDatabase(),
+                        serverFactory.getZooKeeperServer().firstProcessor,
+                        1,
+                        100,
+                        0) {
+                    @Override
+                    protected void postDeleteRequest(Request request)
+                            throws RequestProcessor.RequestProcessorException {
+                        deletesQty.incrementAndGet();
+                        super.postDeleteRequest(request);
+                    }
 
-            @Override protected long getElapsed(DataNode node) {
-                return 10000;   // some number greater than 0
-            }
-        };
+                    @Override
+                    protected long getElapsed(DataNode node) {
+                        return 10000; // some number greater than 0
+                    }
+                };
         containerManager.checkContainers(); // elapsed time will appear to be 0 - container will not get deleted
         assertEquals(deletesQty.get(), 0);
         assertNotNull(zk.exists("/foo", false), "Container should not have been deleted");
@@ -340,5 +381,4 @@ public class CreateContainerTest extends ClientBase {
         assertEquals(name.length(), stat.getDataLength());
         assertEquals(0, stat.getNumChildren());
     }
-
 }

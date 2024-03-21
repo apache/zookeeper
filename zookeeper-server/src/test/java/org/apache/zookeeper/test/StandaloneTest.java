@@ -50,7 +50,9 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
 
     @BeforeEach
     public void setup() {
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
     }
 
@@ -81,7 +83,8 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":participant;" + CLIENT_PORT + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique())
+                + ":participant;" + CLIENT_PORT + "\n";
 
         MainThread mt = new MainThread(1, quorumCfgSection);
         verifyStandalone(mt, CLIENT_PORT);
@@ -97,7 +100,8 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT = PortAssignment.unique();
 
-        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique()) + ":participant;" + CLIENT_PORT + "\n";
+        String quorumCfgSection = "server.1=127.0.0.1:" + (PortAssignment.unique()) + ":" + (PortAssignment.unique())
+                + ":participant;" + CLIENT_PORT + "\n";
 
         MainThread mt = new MainThread(1, quorumCfgSection, false);
         verifyStandalone(mt, CLIENT_PORT);
@@ -106,7 +110,8 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
     void verifyStandalone(MainThread mt, int clientPort) throws InterruptedException {
         mt.start();
         try {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
                     "waiting for server 1 being up");
         } finally {
             assertFalse(mt.isQuorumPeerRunning(), "Error- MainThread started in Quorum Mode!");
@@ -153,5 +158,4 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
         f.shutdown();
         assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being down ");
     }
-
 }

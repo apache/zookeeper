@@ -66,5 +66,4 @@ interface Stats {
     /** Reset counters
      * @since 3.3.0 */
     void resetStats();
-
 }

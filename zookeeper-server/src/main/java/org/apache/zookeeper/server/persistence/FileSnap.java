@@ -218,11 +218,8 @@ public class FileSnap implements SnapShot {
      * @param header the header of this snapshot
      * @throws IOException
      */
-    protected void serialize(
-        DataTree dt,
-        Map<Long, Integer> sessions,
-        OutputArchive oa,
-        FileHeader header) throws IOException {
+    protected void serialize(DataTree dt, Map<Long, Integer> sessions, OutputArchive oa, FileHeader header)
+            throws IOException {
         // this is really a programmatic error and not something that can
         // happen at runtime
         if (header == null) {
@@ -239,11 +236,8 @@ public class FileSnap implements SnapShot {
      * @param snapShot the file to store snapshot into
      * @param fsync sync the file immediately after write
      */
-    public synchronized void serialize(
-        DataTree dt,
-        Map<Long, Integer> sessions,
-        File snapShot,
-        boolean fsync) throws IOException {
+    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync)
+            throws IOException {
         if (!close) {
             try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot, fsync)) {
                 OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
@@ -267,8 +261,7 @@ public class FileSnap implements SnapShot {
                 }
 
                 lastSnapshotInfo = new SnapshotInfo(
-                    Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX),
-                    snapShot.lastModified() / 1000);
+                        Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX), snapShot.lastModified() / 1000);
             }
         } else {
             throw new IOException("FileSnap has already been closed");
@@ -284,5 +277,4 @@ public class FileSnap implements SnapShot {
     public synchronized void close() throws IOException {
         close = true;
     }
-
 }

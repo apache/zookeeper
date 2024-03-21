@@ -51,7 +51,6 @@ public class MultiAsyncTransactionTest extends ClientBase {
 
         int rc;
         List<OpResult> results;
-
     }
 
     private void finishPendingOps() {
@@ -86,19 +85,24 @@ public class MultiAsyncTransactionTest extends ClientBase {
 
         pendingOps.set(iteration);
 
-        List<Op> ops = Arrays.asList(Op.create("/node-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL), Op.create("/dup", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+        List<Op> ops = Arrays.asList(
+                Op.create("/node-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL),
+                Op.create("/dup", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
 
         for (int i = 0; i < iteration; ++i) {
-            zk.multi(ops, new MultiCallback() {
-                @Override
-                public void processResult(int rc, String path, Object ctx, List<OpResult> opResults) {
-                    MultiResult result = new MultiResult();
-                    result.results = opResults;
-                    result.rc = rc;
-                    results.add(result);
-                    finishPendingOps();
-                }
-            }, null);
+            zk.multi(
+                    ops,
+                    new MultiCallback() {
+                        @Override
+                        public void processResult(int rc, String path, Object ctx, List<OpResult> opResults) {
+                            MultiResult result = new MultiResult();
+                            result.results = opResults;
+                            result.rc = rc;
+                            results.add(result);
+                            finishPendingOps();
+                        }
+                    },
+                    null);
         }
 
         waitForPendingOps(CONNECTION_TIMEOUT);
@@ -111,15 +115,25 @@ public class MultiAsyncTransactionTest extends ClientBase {
 
         // Check that the first operation is successful in all request
         assertTrue(results.get(0).results.get(0) instanceof CreateResult);
-        assertEquals(KeeperException.Code.OK.intValue(), ((ErrorResult) results.get(1).results.get(0)).getErr());
-        assertEquals(KeeperException.Code.OK.intValue(), ((ErrorResult) results.get(2).results.get(0)).getErr());
-        assertEquals(KeeperException.Code.OK.intValue(), ((ErrorResult) results.get(3).results.get(0)).getErr());
+        assertEquals(
+                KeeperException.Code.OK.intValue(),
+                ((ErrorResult) results.get(1).results.get(0)).getErr());
+        assertEquals(
+                KeeperException.Code.OK.intValue(),
+                ((ErrorResult) results.get(2).results.get(0)).getErr());
+        assertEquals(
+                KeeperException.Code.OK.intValue(),
+                ((ErrorResult) results.get(3).results.get(0)).getErr());
 
         // Check that the second operation failed after the first request
-        assertEquals(KeeperException.Code.NODEEXISTS.intValue(), ((ErrorResult) results.get(1).results.get(1)).getErr());
-        assertEquals(KeeperException.Code.NODEEXISTS.intValue(), ((ErrorResult) results.get(2).results.get(1)).getErr());
-        assertEquals(KeeperException.Code.NODEEXISTS.intValue(), ((ErrorResult) results.get(3).results.get(1)).getErr());
-
+        assertEquals(
+                KeeperException.Code.NODEEXISTS.intValue(),
+                ((ErrorResult) results.get(1).results.get(1)).getErr());
+        assertEquals(
+                KeeperException.Code.NODEEXISTS.intValue(),
+                ((ErrorResult) results.get(2).results.get(1)).getErr());
+        assertEquals(
+                KeeperException.Code.NODEEXISTS.intValue(),
+                ((ErrorResult) results.get(3).results.get(1)).getErr());
     }
-
 }

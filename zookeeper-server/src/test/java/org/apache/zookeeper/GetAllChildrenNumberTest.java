@@ -57,19 +57,20 @@ public class GetAllChildrenNumberTest extends ClientBase {
 
     @Test
     public void testGetAllChildrenNumberSync() throws KeeperException, InterruptedException {
-        //a bad case
+        // a bad case
         try {
             zk.getAllChildrenNumber(null);
             fail("the path for getAllChildrenNumber must not be null.");
         } catch (IllegalArgumentException e) {
-            //expected
+            // expected
         }
 
         assertEquals(EPHEMERAL_CNT, zk.getAllChildrenNumber(BASE + "/0"));
         assertEquals(0, zk.getAllChildrenNumber(BASE + "/0/ephem0"));
         assertEquals(0, zk.getAllChildrenNumber(BASE_EXT));
         assertEquals(PERSISTENT_CNT + PERSISTENT_CNT * EPHEMERAL_CNT, zk.getAllChildrenNumber(BASE));
-        // 6(EPHEMERAL) + 2(PERSISTENT) + 3("/zookeeper,/zookeeper/quota,/zookeeper/config") + 1(BASE_EXT) + 1(BASE) = 13
+        // 6(EPHEMERAL) + 2(PERSISTENT) + 3("/zookeeper,/zookeeper/quota,/zookeeper/config") + 1(BASE_EXT) + 1(BASE) =
+        // 13
         assertEquals(13, zk.getAllChildrenNumber("/"));
     }
 
@@ -78,13 +79,16 @@ public class GetAllChildrenNumberTest extends ClientBase {
 
         final CountDownLatch doneProcessing = new CountDownLatch(1);
 
-        zk.getAllChildrenNumber("/", (rc, path, ctx, number) -> {
-            if (path == null) {
-                fail((String.format("the path of getAllChildrenNumber was null.")));
-            }
-            assertEquals(13, number);
-            doneProcessing.countDown();
-        }, null);
+        zk.getAllChildrenNumber(
+                "/",
+                (rc, path, ctx, number) -> {
+                    if (path == null) {
+                        fail((String.format("the path of getAllChildrenNumber was null.")));
+                    }
+                    assertEquals(13, number);
+                    doneProcessing.countDown();
+                },
+                null);
         long waitForCallbackSecs = 2L;
         if (!doneProcessing.await(waitForCallbackSecs, TimeUnit.SECONDS)) {
             fail(String.format("getAllChildrenNumber didn't callback within %d seconds", waitForCallbackSecs));
@@ -105,5 +109,4 @@ public class GetAllChildrenNumberTest extends ClientBase {
             }
         }
     }
-
 }

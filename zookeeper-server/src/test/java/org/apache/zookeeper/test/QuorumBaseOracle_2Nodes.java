@@ -40,8 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-public class QuorumBaseOracle_2Nodes extends ClientBase{
+public class QuorumBaseOracle_2Nodes extends ClientBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumBase.class);
 
@@ -67,8 +66,6 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
 
-
-
     @BeforeEach
     @Override
     public void setUp() throws Exception {
@@ -88,10 +85,7 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         portClient1 = PortAssignment.unique();
         portClient2 = PortAssignment.unique();
 
-        hostPort = "127.0.0.1:"
-                + portClient1
-                + ",127.0.0.1:"
-                + portClient2;
+        hostPort = "127.0.0.1:" + portClient1 + ",127.0.0.1:" + portClient2;
         LOG.info("Ports are: {}", hostPort);
 
         s1dir = ClientBase.createTmpDir();
@@ -130,18 +124,51 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         int syncLimit = 3;
         int connectToLearnerMasterLimit = 3;
         Map<Long, QuorumPeer.QuorumServer> peers = new HashMap<>();
-        peers.put(Long.valueOf(1), new QuorumPeer.QuorumServer(1, new InetSocketAddress(LOCALADDR, port1), new InetSocketAddress(LOCALADDR, portLE1), new InetSocketAddress(LOCALADDR, portClient1), QuorumPeer.LearnerType.PARTICIPANT));
-        peers.put(Long.valueOf(2), new QuorumPeer.QuorumServer(2, new InetSocketAddress(LOCALADDR, port2), new InetSocketAddress(LOCALADDR, portLE2), new InetSocketAddress(LOCALADDR, portClient2), QuorumPeer.LearnerType.PARTICIPANT));
+        peers.put(
+                Long.valueOf(1),
+                new QuorumPeer.QuorumServer(
+                        1,
+                        new InetSocketAddress(LOCALADDR, port1),
+                        new InetSocketAddress(LOCALADDR, portLE1),
+                        new InetSocketAddress(LOCALADDR, portClient1),
+                        QuorumPeer.LearnerType.PARTICIPANT));
+        peers.put(
+                Long.valueOf(2),
+                new QuorumPeer.QuorumServer(
+                        2,
+                        new InetSocketAddress(LOCALADDR, port2),
+                        new InetSocketAddress(LOCALADDR, portLE2),
+                        new InetSocketAddress(LOCALADDR, portClient2),
+                        QuorumPeer.LearnerType.PARTICIPANT));
 
         LOG.info("creating QuorumPeer 1 port {}", portClient1);
-        s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
-                .getAbsolutePath() + oraclePath_0 + mastership);
+        s1 = new QuorumPeer(
+                peers,
+                s1dir,
+                s1dir,
+                portClient1,
+                3,
+                1,
+                tickTime,
+                initLimit,
+                syncLimit,
+                connectToLearnerMasterLimit,
+                oracleDir.getAbsolutePath() + oraclePath_0 + mastership);
         assertEquals(portClient1, s1.getClientPort());
         LOG.info("creating QuorumPeer 2 port {}", portClient2);
-        s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, oracleDir
-                .getAbsolutePath() + oraclePath_1 + mastership);
+        s2 = new QuorumPeer(
+                peers,
+                s2dir,
+                s2dir,
+                portClient2,
+                3,
+                2,
+                tickTime,
+                initLimit,
+                syncLimit,
+                connectToLearnerMasterLimit,
+                oracleDir.getAbsolutePath() + oraclePath_1 + mastership);
         assertEquals(portClient2, s2.getClientPort());
-
 
         LOG.info("QuorumPeer 1 voting view: {}", s1.getVotingView());
         LOG.info("QuorumPeer 2 voting view: {}", s2.getVotingView());
@@ -232,7 +259,8 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         StringBuilder hosts = new StringBuilder();
         for (QuorumPeer p : getPeerList()) {
             if (p.getPeerState() == state) {
-                hosts.append(String.format("%s:%d,", LOCALADDR, p.getClientAddress().getPort()));
+                hosts.append(
+                        String.format("%s:%d,", LOCALADDR, p.getClientAddress().getPort()));
             }
         }
         LOG.info("getPeersMatching ports are {}", hosts);
@@ -271,19 +299,53 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         if (peers == null) {
             peers = new HashMap<>();
 
-            peers.put(Long.valueOf(1), new QuorumPeer.QuorumServer(1, new InetSocketAddress(LOCALADDR, port1), new InetSocketAddress(LOCALADDR, portLE1), new InetSocketAddress(LOCALADDR, portClient1), QuorumPeer.LearnerType.PARTICIPANT));
-            peers.put(Long.valueOf(2), new QuorumPeer.QuorumServer(2, new InetSocketAddress(LOCALADDR, port2), new InetSocketAddress(LOCALADDR, portLE2), new InetSocketAddress(LOCALADDR, portClient2), QuorumPeer.LearnerType.PARTICIPANT));
+            peers.put(
+                    Long.valueOf(1),
+                    new QuorumPeer.QuorumServer(
+                            1,
+                            new InetSocketAddress(LOCALADDR, port1),
+                            new InetSocketAddress(LOCALADDR, portLE1),
+                            new InetSocketAddress(LOCALADDR, portClient1),
+                            QuorumPeer.LearnerType.PARTICIPANT));
+            peers.put(
+                    Long.valueOf(2),
+                    new QuorumPeer.QuorumServer(
+                            2,
+                            new InetSocketAddress(LOCALADDR, port2),
+                            new InetSocketAddress(LOCALADDR, portLE2),
+                            new InetSocketAddress(LOCALADDR, portClient2),
+                            QuorumPeer.LearnerType.PARTICIPANT));
         }
 
         switch (i) {
             case 1:
                 LOG.info("creating QuorumPeer 1 port {}", portClient1);
-                s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+                s1 = new QuorumPeer(
+                        peers,
+                        s1dir,
+                        s1dir,
+                        portClient1,
+                        3,
+                        1,
+                        tickTime,
+                        initLimit,
+                        syncLimit,
+                        connectToLearnerMasterLimit);
                 assertEquals(portClient1, s1.getClientPort());
                 break;
             case 2:
                 LOG.info("creating QuorumPeer 2 port {}", portClient2);
-                s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+                s2 = new QuorumPeer(
+                        peers,
+                        s2dir,
+                        s2dir,
+                        portClient2,
+                        3,
+                        2,
+                        tickTime,
+                        initLimit,
+                        syncLimit,
+                        connectToLearnerMasterLimit);
                 assertEquals(portClient2, s2.getClientPort());
                 break;
         }
@@ -311,6 +373,7 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
 
         JMXEnv.tearDown();
     }
+
     public void shutdownServers() {
         shutdown(s1);
         shutdown(s2);
@@ -353,8 +416,8 @@ public class QuorumBaseOracle_2Nodes extends ClientBase{
         return createClient(watcher, hp);
     }
 
-    protected TestableZooKeeper createClient(ClientBase.CountdownWatcher watcher, QuorumPeer.ServerState state) throws IOException, InterruptedException {
+    protected TestableZooKeeper createClient(ClientBase.CountdownWatcher watcher, QuorumPeer.ServerState state)
+            throws IOException, InterruptedException {
         return createClient(watcher, getPeersMatching(state));
     }
-
 }

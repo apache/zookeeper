@@ -61,7 +61,6 @@ public class DigestAuthDisabledTest extends ClientBase {
                 super.process(event);
             }
         }
-
     }
 
     @Test

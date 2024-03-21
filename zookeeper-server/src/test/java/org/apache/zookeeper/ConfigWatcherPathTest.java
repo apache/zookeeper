@@ -207,7 +207,8 @@ public class ConfigWatcherPathTest extends ClientBase {
 
     @Test
     public void testDataWatcherPathWithChrootAndConfigPath() throws Exception {
-        try (ZooKeeper zk1 = createClient(hostPort + "/root1"); ZooKeeper zk2 = createClient()) {
+        try (ZooKeeper zk1 = createClient(hostPort + "/root1");
+                ZooKeeper zk2 = createClient()) {
             // given: watcher client path "/zookeeper/config" in chroot "/root1"
             BlockingQueueWatcher dataWatcher = new BlockingQueueWatcher();
             zk1.addWatch("/zookeeper/config", dataWatcher, AddWatchMode.PERSISTENT);

@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
@@ -55,8 +54,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testBasic()
-            throws IOException, InterruptedException, KeeperException {
+    public void testBasic() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             internalTestBasic(zk);
@@ -64,8 +62,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testNullWatch()
-            throws IOException, InterruptedException, KeeperException {
+    public void testNullWatch() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             assertThrows(IllegalArgumentException.class, () -> {
                 zk.addWatch("/a/b", null, PERSISTENT);
@@ -78,8 +75,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testDefaultWatcher()
-            throws IOException, InterruptedException, KeeperException {
+    public void testDefaultWatcher() throws IOException, InterruptedException, KeeperException {
         CountdownWatcher watcher = new CountdownWatcher() {
             @Override
             public synchronized void process(WatchedEvent event) {
@@ -95,8 +91,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testBasicAsync()
-            throws IOException, InterruptedException, KeeperException {
+    public void testBasicAsync() throws IOException, InterruptedException, KeeperException {
         CountdownWatcher watcher = new CountdownWatcher() {
             @Override
             public synchronized void process(WatchedEvent event) {
@@ -119,8 +114,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testAsyncDefaultWatcher()
-            throws IOException, InterruptedException, KeeperException {
+    public void testAsyncDefaultWatcher() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = (rc, path, ctx) -> {
@@ -152,8 +146,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testRemoval()
-            throws IOException, InterruptedException, KeeperException {
+    public void testRemoval() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/a/b", persistentWatcher, PERSISTENT);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -182,10 +175,9 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testMultiClient()
-            throws IOException, InterruptedException, KeeperException {
+    public void testMultiClient() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk1 = createClient(new CountdownWatcher(), hostPort);
-             ZooKeeper zk2 = createClient(new CountdownWatcher(), hostPort)) {
+                ZooKeeper zk2 = createClient(new CountdownWatcher(), hostPort)) {
 
             zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -206,8 +198,7 @@ public class PersistentWatcherTest extends ClientBase {
     }
 
     @Test
-    public void testRootWatcher()
-            throws IOException, InterruptedException, KeeperException {
+    public void testRootWatcher() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             zk.addWatch("/", persistentWatcher, PERSISTENT);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

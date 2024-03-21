@@ -30,12 +30,10 @@ import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 public abstract class BaseTestMetricsProvider implements MetricsProvider {
 
     @Override
-    public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
-    }
+    public void configure(Properties prprts) throws MetricsProviderLifeCycleException {}
 
     @Override
-    public void start() throws MetricsProviderLifeCycleException {
-    }
+    public void start() throws MetricsProviderLifeCycleException {}
 
     @Override
     public MetricsContext getRootContext() {
@@ -43,16 +41,13 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
     }
 
     @Override
-    public void stop() {
-    }
+    public void stop() {}
 
     @Override
-    public void dump(BiConsumer<String, Object> sink) {
-    }
+    public void dump(BiConsumer<String, Object> sink) {}
 
     @Override
-    public void resetAllValues() {
-    }
+    public void resetAllValues() {}
 
     public static final class MetricsProviderCapturingLifecycle extends BaseTestMetricsProvider {
 
@@ -98,7 +93,6 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
                 throw new IllegalStateException();
             }
         }
-
     }
 
     public static final class MetricsProviderWithErrorInStart extends BaseTestMetricsProvider {
@@ -107,7 +101,6 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
         public void start() throws MetricsProviderLifeCycleException {
             throw new MetricsProviderLifeCycleException();
         }
-
     }
 
     public static final class MetricsProviderWithErrorInConfigure extends BaseTestMetricsProvider {
@@ -116,7 +109,6 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
         public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
             throw new MetricsProviderLifeCycleException();
         }
-
     }
 
     public static final class MetricsProviderWithConfiguration extends BaseTestMetricsProvider {
@@ -127,7 +119,6 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
         public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
             httpPort.set(Integer.parseInt(prprts.getProperty("httpPort")));
         }
-
     }
 
     public static final class MetricsProviderWithErrorInStop extends BaseTestMetricsProvider {
@@ -139,7 +130,5 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
             stopCalled.set(true);
             throw new RuntimeException();
         }
-
     }
-
 }

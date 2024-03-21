@@ -95,5 +95,4 @@ public interface ConnectionMXBean {
     /** Reset counters
      * @since 3.3.0 */
     void resetCounters();
-
 }

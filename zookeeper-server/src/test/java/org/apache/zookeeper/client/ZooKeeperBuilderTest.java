@@ -70,8 +70,8 @@ public class ZooKeeperBuilderTest extends ClientBase {
     public void testBuildClient() throws Exception {
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
         ZooKeeper zk = new ZooKeeperBuilder(hostPort, 1000)
-            .withDefaultWatcher(events::offer)
-            .build();
+                .withDefaultWatcher(events::offer)
+                .build();
         testClient(events, zk);
     }
 
@@ -79,8 +79,8 @@ public class ZooKeeperBuilderTest extends ClientBase {
     public void testBuildAdminClient() throws Exception {
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
         ZooKeeper zk = new ZooKeeperBuilder(hostPort, 1000)
-            .withDefaultWatcher(events::offer)
-            .buildAdmin();
+                .withDefaultWatcher(events::offer)
+                .buildAdmin();
         testClient(events, zk);
     }
 }

@@ -118,12 +118,8 @@ public class ConfigUtilsTest {
      * Tests the ConfigUtils.getClientConfigStr(String) method with version.
      */
     @ParameterizedTest
-    @ValueSource(strings = {
-            "version=1.2.3\n",
-            "version = 1.2.3\n",
-            "version=1.2.3\nfoo=bar\n",
-            "foo=bar\nversion=1.2.3\n"
-    })
+    @ValueSource(
+            strings = {"version=1.2.3\n", "version = 1.2.3\n", "version=1.2.3\nfoo=bar\n", "foo=bar\nversion=1.2.3\n"})
     public void testGetClientConfigStrWithVersion(String configData) {
         String result = ConfigUtils.getClientConfigStr(configData);
         assertEquals("1.2.3 ", result);
@@ -133,12 +129,7 @@ public class ConfigUtilsTest {
      * Tests the ConfigUtils.getClientConfigStr(String) method without version.
      */
     @ParameterizedTest
-    @ValueSource(strings = {
-            "versions=1.2.3\n",
-            "versions = 1.2.3\n",
-            "foo=bar\n",
-            "version=\n"
-    })
+    @ValueSource(strings = {"versions=1.2.3\n", "versions = 1.2.3\n", "foo=bar\n", "version=\n"})
     public void testGetClientConfigStrWithoutVersion(String configData) {
         String result = ConfigUtils.getClientConfigStr(configData);
         assertEquals(" ", result);

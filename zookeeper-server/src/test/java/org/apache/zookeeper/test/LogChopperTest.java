@@ -43,17 +43,19 @@ class Pair<V1, V2> {
 
     private V1 v1;
     private V2 v2;
+
     Pair(V1 v1, V2 v2) {
         this.v1 = v1;
         this.v2 = v2;
     }
+
     public V1 getFirst() {
         return v1;
     }
+
     public V2 getSecond() {
         return v2;
     }
-
 }
 
 public class LogChopperTest extends ClientBase {
@@ -127,5 +129,4 @@ public class LogChopperTest extends ClientBase {
         assertEquals(1001, (long) firstLast.getFirst());
         assertEquals(1017, (long) firstLast.getSecond());
     }
-
 }

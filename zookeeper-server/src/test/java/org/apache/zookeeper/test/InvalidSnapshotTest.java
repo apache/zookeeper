@@ -113,7 +113,5 @@ public class InvalidSnapshotTest extends ZKTestCase {
         f.shutdown();
         zks.shutdown();
         assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
-
     }
-
 }

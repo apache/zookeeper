@@ -68,5 +68,4 @@ public class GetAllChildrenNumberCommand extends CliCommand {
 
         return false;
     }
-
 }

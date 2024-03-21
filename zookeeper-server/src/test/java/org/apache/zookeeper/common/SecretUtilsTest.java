@@ -36,7 +36,7 @@ public class SecretUtilsTest {
     static File tempDir;
 
     @ParameterizedTest
-    @ValueSource (strings = {"test secret", ""})
+    @ValueSource(strings = {"test secret", ""})
     public void testReadSecret(final String secretTxt) throws Exception {
         final Path secretFile = createSecretFile(secretTxt);
 

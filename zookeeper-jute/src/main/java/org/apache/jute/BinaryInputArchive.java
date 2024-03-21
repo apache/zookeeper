@@ -37,8 +37,7 @@ public class BinaryInputArchive implements InputArchive {
     private static final int extraMaxBuffer;
 
     static {
-        final Integer configuredExtraMaxBuffer =
-            Integer.getInteger("zookeeper.jute.maxbuffer.extrasize", maxBuffer);
+        final Integer configuredExtraMaxBuffer = Integer.getInteger("zookeeper.jute.maxbuffer.extrasize", maxBuffer);
         if (configuredExtraMaxBuffer < 1024) {
             // Earlier hard coded value was 1024, So the value should not be less than that value
             extraMaxBuffer = 1024;
@@ -134,11 +133,9 @@ public class BinaryInputArchive implements InputArchive {
         r.deserialize(this, tag);
     }
 
-    public void startRecord(String tag) throws IOException {
-    }
+    public void startRecord(String tag) throws IOException {}
 
-    public void endRecord(String tag) throws IOException {
-    }
+    public void endRecord(String tag) throws IOException {}
 
     public Index startVector(String tag) throws IOException {
         int len = readInt(tag);
@@ -148,15 +145,13 @@ public class BinaryInputArchive implements InputArchive {
         return new BinaryIndex(len);
     }
 
-    public void endVector(String tag) throws IOException {
-    }
+    public void endVector(String tag) throws IOException {}
 
     public Index startMap(String tag) throws IOException {
         return new BinaryIndex(readInt(tag));
     }
 
-    public void endMap(String tag) throws IOException {
-    }
+    public void endMap(String tag) throws IOException {}
 
     // Since this is a rough sanity check, add some padding to maxBuffer to
     // make up for extra fields, etc. (otherwise e.g. clients may be able to

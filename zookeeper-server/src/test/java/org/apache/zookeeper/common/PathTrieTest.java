@@ -161,5 +161,4 @@ public class PathTrieTest {
         assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1/node2"));
         assertEquals("/node1", this.pathTrie.findMaxPrefix("/node1/node3"));
     }
-
 }

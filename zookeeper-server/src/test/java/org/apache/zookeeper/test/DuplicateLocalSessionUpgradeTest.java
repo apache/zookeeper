@@ -107,7 +107,5 @@ public class DuplicateLocalSessionUpgradeTest extends ZKTestCase {
         // will be exactly 2. The alternative way of checking is to actually
         // read txnlog but this should be sufficient
         assertEquals(2L, zxidDiff);
-
     }
-
 }

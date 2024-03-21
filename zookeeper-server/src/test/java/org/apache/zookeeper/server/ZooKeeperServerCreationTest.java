@@ -49,5 +49,4 @@ public class ZooKeeperServerCreationTest {
         ConnectRequest connReq = new ConnectRequest();
         zks.processConnectRequest(cnxn, connReq);
     }
-
 }

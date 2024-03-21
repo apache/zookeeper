@@ -41,8 +41,7 @@ public final class ZookeeperServeInfo {
 
     private static final MBeanServer localServer = ManagementFactory.getPlatformMBeanServer();
 
-    private ZookeeperServeInfo() {
-    }
+    private ZookeeperServeInfo() {}
 
     public static class PeerInfo {
 
@@ -76,8 +75,8 @@ public final class ZookeeperServeInfo {
 
         @Override
         public String toString() {
-            return "PeerInfo{" + "name=" + name + ", leader=" + leader + ", quorumAddress=" + quorumAddress
-                    + ", state=" + state + '}';
+            return "PeerInfo{" + "name=" + name + ", leader=" + leader + ", quorumAddress=" + quorumAddress + ", state="
+                    + state + '}';
         }
     }
 
@@ -91,8 +90,14 @@ public final class ZookeeperServeInfo {
         private final String lastLatency;
         private final String nodes;
 
-        public ConnectionInfo(String sourceip, String sessionid, String lastoperation, String lastResponseTime,
-                              String avgLatency, String lastLatency, String nodes) {
+        public ConnectionInfo(
+                String sourceip,
+                String sessionid,
+                String lastoperation,
+                String lastResponseTime,
+                String avgLatency,
+                String lastLatency,
+                String nodes) {
             this.sourceip = sourceip;
             this.sessionid = sessionid;
             this.lastoperation = lastoperation;
@@ -170,7 +175,6 @@ public final class ZookeeperServeInfo {
             return "ServerInfo{" + "connections=" + connections + ", leader=" + leader + ", standaloneMode="
                     + standaloneMode + ", peers=" + peers + '}';
         }
-
     }
 
     public static ServerInfo getStatus() throws Exception {
@@ -201,8 +205,8 @@ public final class ZookeeperServeInfo {
             } else if (o.getClassName().equalsIgnoreCase(QuorumBean.class.getName())) {
                 standalonemode = false;
                 try {
-                    QuorumMXBean quorum = MBeanServerInvocationHandler.newProxyInstance(localServer, o.getObjectName(),
-                            QuorumMXBean.class, false);
+                    QuorumMXBean quorum = MBeanServerInvocationHandler.newProxyInstance(
+                            localServer, o.getObjectName(), QuorumMXBean.class, false);
                     myName = quorum.getName();
                 } catch (UndeclaredThrowableException err) {
                     if (err.getCause() instanceof javax.management.InstanceNotFoundException) {
@@ -215,18 +219,24 @@ public final class ZookeeperServeInfo {
         }
         info.standaloneMode = standalonemode;
         if (standalonemode) {
-            Set<ObjectInstance> connectionsbeans = localServer.queryMBeans(new ObjectName(
-                    "org.apache.ZooKeeperService:name0=*,name1=Connections,name2=*,name3=*"), null);
+            Set<ObjectInstance> connectionsbeans = localServer.queryMBeans(
+                    new ObjectName("org.apache.ZooKeeperService:name0=*,name1=Connections,name2=*,name3=*"), null);
             for (ObjectInstance conbean : connectionsbeans) {
-                ConnectionMXBean cc = MBeanServerInvocationHandler.
-                        newProxyInstance(localServer, conbean.getObjectName(), ConnectionMXBean.class, false);
+                ConnectionMXBean cc = MBeanServerInvocationHandler.newProxyInstance(
+                        localServer, conbean.getObjectName(), ConnectionMXBean.class, false);
                 try {
                     String nodes = "";
                     if (cc.getEphemeralNodes() != null) {
                         nodes = Arrays.asList(cc.getEphemeralNodes()) + "";
                     }
-                    info.connections.add(new ConnectionInfo(cc.getSourceIP(), cc.getSessionId(), cc.getLastOperation(),
-                            cc.getLastResponseTime(), cc.getAvgLatency() + "", cc.getLastLatency() + "", nodes));
+                    info.connections.add(new ConnectionInfo(
+                            cc.getSourceIP(),
+                            cc.getSessionId(),
+                            cc.getLastOperation(),
+                            cc.getLastResponseTime(),
+                            cc.getAvgLatency() + "",
+                            cc.getLastLatency() + "",
+                            nodes));
                 } catch (Exception ex) {
                     if (ex instanceof InstanceNotFoundException && ex.getCause() instanceof InstanceNotFoundException) {
                         // SKIP
@@ -241,14 +251,14 @@ public final class ZookeeperServeInfo {
                         "Cannot find local JMX name for current node, in quorum mode, scanned " + first_level_beans);
             }
             boolean leader = false;
-            Set<ObjectInstance> replicas = localServer.queryMBeans(new ObjectName(
-                    "org.apache.ZooKeeperService:name0=" + myName + ",name1=*"), null);
+            Set<ObjectInstance> replicas = localServer.queryMBeans(
+                    new ObjectName("org.apache.ZooKeeperService:name0=" + myName + ",name1=*"), null);
             for (ObjectInstance o : replicas) {
                 if (o.getClassName().toLowerCase().contains("local")) {
-                    LocalPeerMXBean local = MBeanServerInvocationHandler.
-                            newProxyInstance(localServer, o.getObjectName(), LocalPeerMXBean.class, false);
-                    info.addPeer(new PeerInfo(local.getName(), local.getQuorumAddress(), local.getState() + "",
-                            local.isLeader()));
+                    LocalPeerMXBean local = MBeanServerInvocationHandler.newProxyInstance(
+                            localServer, o.getObjectName(), LocalPeerMXBean.class, false);
+                    info.addPeer(new PeerInfo(
+                            local.getName(), local.getQuorumAddress(), local.getState() + "", local.isLeader()));
 
                     ObjectName asfollowername = new ObjectName(o.getObjectName() + ",name2=Follower");
                     ObjectName asleadername = new ObjectName(o.getObjectName() + ",name2=Leader");
@@ -256,29 +266,35 @@ public final class ZookeeperServeInfo {
                     Set<ObjectInstance> connectionsbeans = null;
                     if (isleader) {
                         leader = true;
-                        ObjectName asleaderconnections = new ObjectName(
-                                asleadername + ",name3=Connections,name4=*,name5=*");
+                        ObjectName asleaderconnections =
+                                new ObjectName(asleadername + ",name3=Connections,name4=*,name5=*");
                         connectionsbeans = localServer.queryMBeans(asleaderconnections, null);
                     } else {
                         leader = false;
-                        ObjectName asfollowernameconnections = new ObjectName(
-                                asfollowername + ",name3=Connections,name4=*,name5=*");
+                        ObjectName asfollowernameconnections =
+                                new ObjectName(asfollowername + ",name3=Connections,name4=*,name5=*");
                         connectionsbeans = localServer.queryMBeans(asfollowernameconnections, null);
                     }
 
                     for (ObjectInstance conbean : connectionsbeans) {
-                        ConnectionMXBean cc = MBeanServerInvocationHandler.newProxyInstance(localServer,
-                                conbean.getObjectName(), ConnectionMXBean.class, false);
+                        ConnectionMXBean cc = MBeanServerInvocationHandler.newProxyInstance(
+                                localServer, conbean.getObjectName(), ConnectionMXBean.class, false);
                         try {
                             String nodes = "";
                             if (cc.getEphemeralNodes() != null) {
                                 nodes = Arrays.asList(cc.getEphemeralNodes()) + "";
                             }
-                            info.connections.add(new ConnectionInfo(cc.getSourceIP(), cc.getSessionId(), cc.
-                                    getLastOperation(), cc.getLastResponseTime(), cc.getAvgLatency() + "", cc.
-                                    getLastLatency() + "", nodes));
+                            info.connections.add(new ConnectionInfo(
+                                    cc.getSourceIP(),
+                                    cc.getSessionId(),
+                                    cc.getLastOperation(),
+                                    cc.getLastResponseTime(),
+                                    cc.getAvgLatency() + "",
+                                    cc.getLastLatency() + "",
+                                    nodes));
                         } catch (Exception ex) {
-                            if (ex instanceof InstanceNotFoundException && ex.getCause() instanceof InstanceNotFoundException) {
+                            if (ex instanceof InstanceNotFoundException
+                                    && ex.getCause() instanceof InstanceNotFoundException) {
                                 // SKIP
                             } else {
                                 throw ex;
@@ -286,12 +302,11 @@ public final class ZookeeperServeInfo {
                         }
                     }
                 } else {
-                    RemotePeerMXBean remote = MBeanServerInvocationHandler.newProxyInstance(localServer, o.
-                            getObjectName(), RemotePeerMXBean.class, false);
-                    info.addPeer(new PeerInfo(remote.getName(), remote.getQuorumAddress(),
-                            "REMOTE", remote.isLeader()));
+                    RemotePeerMXBean remote = MBeanServerInvocationHandler.newProxyInstance(
+                            localServer, o.getObjectName(), RemotePeerMXBean.class, false);
+                    info.addPeer(
+                            new PeerInfo(remote.getName(), remote.getQuorumAddress(), "REMOTE", remote.isLeader()));
                 }
-
             }
             info.leader = leader;
         }

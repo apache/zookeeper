@@ -31,5 +31,4 @@ public interface IDeadWatcherListener {
      * @param deadWatchers the watchers which have closed cnxn
      */
     void processDeadWatchers(Set<Integer> deadWatchers);
-
 }

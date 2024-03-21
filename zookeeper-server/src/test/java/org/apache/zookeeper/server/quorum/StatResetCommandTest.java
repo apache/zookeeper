@@ -107,5 +107,4 @@ public class StatResetCommandTest {
         verify(serverStats, times(1)).reset();
         verify(bufferStats, times(1)).reset();
     }
-
 }

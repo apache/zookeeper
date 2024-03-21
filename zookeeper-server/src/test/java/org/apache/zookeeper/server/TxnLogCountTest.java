@@ -55,14 +55,16 @@ public class TxnLogCountTest {
     private Request mockTxnRequest() throws IOException {
         TxnHeader header = mock(TxnHeader.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocation) throws Throwable {
+                        Object[] args = invocation.getArguments();
+                        OutputArchive oa = (OutputArchive) args[0];
+                        oa.writeString("header", "test");
+                        return null;
+                    }
+                })
+                .when(header)
+                .serialize(any(OutputArchive.class), anyString());
         Request request = new Request(1, 2, 3, header, null, 4);
         return request;
     }

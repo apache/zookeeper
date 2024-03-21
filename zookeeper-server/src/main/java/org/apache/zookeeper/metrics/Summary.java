@@ -31,5 +31,4 @@ public interface Summary {
      * @param value current value
      */
     void add(long value);
-
 }

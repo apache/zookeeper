@@ -91,5 +91,4 @@ public class RemoveWatchesCommand extends CliCommand {
         }
         return true;
     }
-
 }

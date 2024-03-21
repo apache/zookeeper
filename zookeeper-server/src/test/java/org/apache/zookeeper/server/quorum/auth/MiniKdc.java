@@ -406,5 +406,4 @@ public class MiniKdc {
         System.setProperty(sysprop, debug);
         return old;
     }
-
 }

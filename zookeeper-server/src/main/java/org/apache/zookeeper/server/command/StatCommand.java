@@ -33,6 +33,7 @@ public class StatCommand extends AbstractFourLetterCommand {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractFourLetterCommand.class);
     private int len;
+
     public StatCommand(PrintWriter pw, ServerCnxn serverCnxn, int len) {
         super(pw, serverCnxn);
         this.len = len;
@@ -68,5 +69,4 @@ public class StatCommand extends AbstractFourLetterCommand {
             }
         }
     }
-
 }

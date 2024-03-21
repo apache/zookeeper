@@ -34,5 +34,4 @@ public interface LeaderElectionAware {
      * @param eventType
      */
     void onElectionEvent(EventType eventType);
-
 }

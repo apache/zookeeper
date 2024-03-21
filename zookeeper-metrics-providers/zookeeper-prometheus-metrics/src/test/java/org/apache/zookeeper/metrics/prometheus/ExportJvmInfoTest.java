@@ -55,5 +55,4 @@ public class ExportJvmInfoTest extends PrometheusMetricsTestBase {
             provider.stop();
         }
     }
-
 }

@@ -155,8 +155,5 @@ public interface TxnLog extends Closeable {
          * @throws IOException
          */
         long getStorageSize() throws IOException;
-
     }
-
 }
-

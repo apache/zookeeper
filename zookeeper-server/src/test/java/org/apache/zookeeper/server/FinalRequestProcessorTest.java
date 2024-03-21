@@ -61,7 +61,10 @@ public class FinalRequestProcessorTest {
     @BeforeEach
     public void setUp() throws KeeperException.NoNodeException, IOException {
         testACLs.clear();
-        testACLs.addAll(Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")), new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")), new ACL(ZooDefs.Perms.READ, new Id("world", "anyone"))));
+        testACLs.addAll(Arrays.asList(
+                new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")),
+                new ACL(ZooDefs.Perms.READ, new Id("world", "anyone"))));
 
         ZooKeeperServer zks = new ZooKeeperServer();
         ZKDatabase db = mock(ZKDatabase.class);
@@ -74,13 +77,15 @@ public class FinalRequestProcessorTest {
 
         cnxn = mock(ServerCnxn.class);
         doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) {
-                replyHeaders[0] = invocationOnMock.getArgument(0);
-                responseRecord[0] = invocationOnMock.getArgument(1);
-                return null;
-            }
-        }).when(cnxn).sendResponse(any(), any(), anyString());
+                    @Override
+                    public Object answer(InvocationOnMock invocationOnMock) {
+                        replyHeaders[0] = invocationOnMock.getArgument(0);
+                        responseRecord[0] = invocationOnMock.getArgument(1);
+                        return null;
+                    }
+                })
+                .when(cnxn)
+                .sendResponse(any(), any(), anyString());
 
         GetACLRequest getACLRequest = new GetACLRequest();
         getACLRequest.setPath(testPath);
@@ -162,7 +167,9 @@ public class FinalRequestProcessorTest {
     public void testACLDigestHashHiding_OnlyAdmin() {
         // Arrange
         testACLs.clear();
-        testACLs.addAll(Arrays.asList(new ACL(ZooDefs.Perms.READ, new Id("digest", "user:secrethash")), new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret"))));
+        testACLs.addAll(Arrays.asList(
+                new ACL(ZooDefs.Perms.READ, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret"))));
         List<Id> authInfo = new ArrayList<>();
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
@@ -176,8 +183,14 @@ public class FinalRequestProcessorTest {
         assertThat("Number of ACLs in the response are different", rsp.getAcl().size(), equalTo(2));
 
         // Verify ACLs in the response
-        assertThat("Password hash mismatch in the response", rsp.getAcl().get(0).getId().getId(), equalTo("user:secrethash"));
-        assertThat("Password hash mismatch in the response", rsp.getAcl().get(1).getId().getId(), equalTo("adminuser:adminsecret"));
+        assertThat(
+                "Password hash mismatch in the response",
+                rsp.getAcl().get(0).getId().getId(),
+                equalTo("user:secrethash"));
+        assertThat(
+                "Password hash mismatch in the response",
+                rsp.getAcl().get(1).getId().getId(),
+                equalTo("adminuser:adminsecret"));
     }
 
     private void assertMasked(boolean masked) {
@@ -187,37 +200,60 @@ public class FinalRequestProcessorTest {
 
         // Verify ACLs in the response
         assertThat("Invalid ACL list in the response", rsp.getAcl().get(0).getPerms(), equalTo(ZooDefs.Perms.ALL));
-        assertThat("Invalid ACL list in the response", rsp.getAcl().get(0).getId().getScheme(), equalTo("digest"));
+        assertThat(
+                "Invalid ACL list in the response", rsp.getAcl().get(0).getId().getScheme(), equalTo("digest"));
         if (masked) {
-            assertThat("Password hash is not masked in the response", rsp.getAcl().get(0).getId().getId(), equalTo("user:x"));
+            assertThat(
+                    "Password hash is not masked in the response",
+                    rsp.getAcl().get(0).getId().getId(),
+                    equalTo("user:x"));
         } else {
-            assertThat("Password hash mismatch in the response", rsp.getAcl().get(0).getId().getId(), equalTo("user:secrethash"));
+            assertThat(
+                    "Password hash mismatch in the response",
+                    rsp.getAcl().get(0).getId().getId(),
+                    equalTo("user:secrethash"));
         }
 
         assertThat("Invalid ACL list in the response", rsp.getAcl().get(1).getPerms(), equalTo(ZooDefs.Perms.ADMIN));
-        assertThat("Invalid ACL list in the response", rsp.getAcl().get(1).getId().getScheme(), equalTo("digest"));
+        assertThat(
+                "Invalid ACL list in the response", rsp.getAcl().get(1).getId().getScheme(), equalTo("digest"));
         if (masked) {
-            assertThat("Password hash is not masked in the response", rsp.getAcl().get(1).getId().getId(), equalTo("adminuser:x"));
+            assertThat(
+                    "Password hash is not masked in the response",
+                    rsp.getAcl().get(1).getId().getId(),
+                    equalTo("adminuser:x"));
         } else {
-            assertThat("Password hash mismatch in the response", rsp.getAcl().get(1).getId().getId(), equalTo("adminuser:adminsecret"));
+            assertThat(
+                    "Password hash mismatch in the response",
+                    rsp.getAcl().get(1).getId().getId(),
+                    equalTo("adminuser:adminsecret"));
         }
 
         assertThat("Invalid ACL list in the response", rsp.getAcl().get(2).getPerms(), equalTo(ZooDefs.Perms.READ));
-        assertThat("Invalid ACL list in the response", rsp.getAcl().get(2).getId().getScheme(), equalTo("world"));
-        assertThat("Invalid ACL list in the response", rsp.getAcl().get(2).getId().getId(), equalTo("anyone"));
+        assertThat(
+                "Invalid ACL list in the response", rsp.getAcl().get(2).getId().getScheme(), equalTo("world"));
+        assertThat(
+                "Invalid ACL list in the response", rsp.getAcl().get(2).getId().getId(), equalTo("anyone"));
 
         // Verify that FinalRequestProcessor hasn't changed the original ACL objects
         assertThat("Original ACL list has been modified", testACLs.get(0).getPerms(), equalTo(ZooDefs.Perms.ALL));
-        assertThat("Original ACL list has been modified", testACLs.get(0).getId().getScheme(), equalTo("digest"));
-        assertThat("Original ACL list has been modified", testACLs.get(0).getId().getId(), equalTo("user:secrethash"));
+        assertThat(
+                "Original ACL list has been modified", testACLs.get(0).getId().getScheme(), equalTo("digest"));
+        assertThat(
+                "Original ACL list has been modified", testACLs.get(0).getId().getId(), equalTo("user:secrethash"));
 
         assertThat("Original ACL list has been modified", testACLs.get(1).getPerms(), equalTo(ZooDefs.Perms.ADMIN));
-        assertThat("Original ACL list has been modified", testACLs.get(1).getId().getScheme(), equalTo("digest"));
-        assertThat("Original ACL list has been modified", testACLs.get(1).getId().getId(), equalTo("adminuser:adminsecret"));
+        assertThat(
+                "Original ACL list has been modified", testACLs.get(1).getId().getScheme(), equalTo("digest"));
+        assertThat(
+                "Original ACL list has been modified",
+                testACLs.get(1).getId().getId(),
+                equalTo("adminuser:adminsecret"));
 
         assertThat("Original ACL list has been modified", testACLs.get(2).getPerms(), equalTo(ZooDefs.Perms.READ));
-        assertThat("Original ACL list has been modified", testACLs.get(2).getId().getScheme(), equalTo("world"));
-        assertThat("Original ACL list has been modified", testACLs.get(2).getId().getId(), equalTo("anyone"));
+        assertThat(
+                "Original ACL list has been modified", testACLs.get(2).getId().getScheme(), equalTo("world"));
+        assertThat(
+                "Original ACL list has been modified", testACLs.get(2).getId().getId(), equalTo("anyone"));
     }
-
 }

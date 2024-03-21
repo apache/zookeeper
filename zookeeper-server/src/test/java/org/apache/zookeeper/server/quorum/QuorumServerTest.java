@@ -81,7 +81,6 @@ public class QuorumServerTest extends ZKTestCase {
         expected = ipv4config + ":participant;;1.2.3.4:1237";
         qs = new QuorumServer(0, provided);
         assertEquals(expected, qs.toString(), "Only secureClientPort");
-
     }
 
     @Test
@@ -99,7 +98,7 @@ public class QuorumServerTest extends ZKTestCase {
     }
 
     @Test
-    public void unbalancedIpv6LiteralsInServerConfigFailToBeParsed()  {
+    public void unbalancedIpv6LiteralsInServerConfigFailToBeParsed() {
         assertThrows(ConfigException.class, () -> {
             new QuorumServer(0, "[::1:1234:1236:participant");
         });
@@ -127,22 +126,29 @@ public class QuorumServerTest extends ZKTestCase {
         assertEquals("127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant", qs.toString(), "MultiAddress parse error");
 
         qs = new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236;1237;1238");
-        assertEquals("127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant;0.0.0.0:1237;0.0.0.0:1238", qs.toString(), "MultiAddress parse with clientPort and secureClientPort");
+        assertEquals(
+                "127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant;0.0.0.0:1237;0.0.0.0:1238",
+                qs.toString(),
+                "MultiAddress parse with clientPort and secureClientPort");
     }
 
     @Test
     public void testWildcard() throws KeeperException.BadArgumentsException {
-        String[] addrs = new String[]{"127.0.0.1", "[0:0:0:0:0:0:0:1]", "0.0.0.0", "[::]"};
+        String[] addrs = new String[] {"127.0.0.1", "[0:0:0:0:0:0:0:1]", "0.0.0.0", "[::]"};
         for (int i = 0; i < addrs.length; i++) {
             for (int j = i; j < addrs.length; j++) {
-                QuorumPeer.QuorumServer server1 = new QuorumPeer.QuorumServer(1, new InetSocketAddress(ipv6n1, 1234), // peer
-                                                                              new InetSocketAddress(ipv6n1, 1236), // election
-                                                                              new InetSocketAddress(addrs[i], 1237)  // client
-                );
-                QuorumPeer.QuorumServer server2 = new QuorumPeer.QuorumServer(2, new InetSocketAddress(ipv6n2, 1234), // peer
-                                                                              new InetSocketAddress(ipv6n2, 1236), // election
-                                                                              new InetSocketAddress(addrs[j], 1237)  // client
-                );
+                QuorumPeer.QuorumServer server1 = new QuorumPeer.QuorumServer(
+                        1,
+                        new InetSocketAddress(ipv6n1, 1234), // peer
+                        new InetSocketAddress(ipv6n1, 1236), // election
+                        new InetSocketAddress(addrs[i], 1237) // client
+                        );
+                QuorumPeer.QuorumServer server2 = new QuorumPeer.QuorumServer(
+                        2,
+                        new InetSocketAddress(ipv6n2, 1234), // peer
+                        new InetSocketAddress(ipv6n2, 1236), // election
+                        new InetSocketAddress(addrs[j], 1237) // client
+                        );
                 server1.checkAddressDuplicate(server2);
             }
         }
@@ -151,14 +157,18 @@ public class QuorumServerTest extends ZKTestCase {
     @Test
     public void testDuplicate() {
         assertThrows(KeeperException.BadArgumentsException.class, () -> {
-            QuorumPeer.QuorumServer server1 = new QuorumPeer.QuorumServer(1, new InetSocketAddress(ipv6n1, 1234), // peer
+            QuorumPeer.QuorumServer server1 = new QuorumPeer.QuorumServer(
+                    1,
+                    new InetSocketAddress(ipv6n1, 1234), // peer
                     new InetSocketAddress(ipv6n1, 1236), // election
-                    new InetSocketAddress(ipv6n1, 1237)  // client
-            );
-            QuorumPeer.QuorumServer server2 = new QuorumPeer.QuorumServer(2, new InetSocketAddress(ipv6n2, 1234), // peer
+                    new InetSocketAddress(ipv6n1, 1237) // client
+                    );
+            QuorumPeer.QuorumServer server2 = new QuorumPeer.QuorumServer(
+                    2,
+                    new InetSocketAddress(ipv6n2, 1234), // peer
                     new InetSocketAddress(ipv6n2, 1236), // election
-                    new InetSocketAddress(ipv6n1, 1237)  // client
-            );
+                    new InetSocketAddress(ipv6n1, 1237) // client
+                    );
             server1.checkAddressDuplicate(server2);
         });
     }
@@ -189,5 +199,4 @@ public class QuorumServerTest extends ZKTestCase {
         assertNull(qs.clientAddr, "clientPort not specified");
         assertNull(qs.secureClientAddr, "secureClientPort not specified");
     }
-
 }

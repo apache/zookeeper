@@ -95,8 +95,7 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
         }
     }
 
-    private TxnLogProposalIterator() {
-    }
+    private TxnLogProposalIterator() {}
 
     public TxnLogProposalIterator(TxnIterator itr) {
         if (itr != null) {
@@ -104,5 +103,4 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
             hasNext = (itr.getHeader() != null);
         }
     }
-
 }

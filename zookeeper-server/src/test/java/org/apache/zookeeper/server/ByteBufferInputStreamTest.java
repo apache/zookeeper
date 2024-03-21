@@ -34,6 +34,7 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
     private static final byte[] DATA_BYTES_0 = "Apache ZooKeeper".getBytes(StandardCharsets.UTF_8);
 
     private static byte[] DATA_BYTES;
+
     @BeforeAll
     public static void setUpClass() {
         int len = DATA_BYTES_0.length + 2;
@@ -46,11 +47,12 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
     private ByteBuffer bb;
     private ByteBufferInputStream in;
     private byte[] bs;
+
     @BeforeEach
     public void setUp() throws Exception {
         bb = ByteBuffer.wrap(DATA_BYTES);
         in = new ByteBufferInputStream(bb);
-        bs = new byte[]{(byte) 1, (byte) 2, (byte) 3, (byte) 4};
+        bs = new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4};
     }
 
     @Test
@@ -61,27 +63,31 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         }
         assertEquals(-1, in.read());
     }
+
     @Test
     public void testReadArrayOffsetLength() throws Exception {
         assertEquals(1, in.read(bs, 2, 1));
-        byte[] expected = new byte[]{(byte) 1, (byte) 2, DATA_BYTES[0], (byte) 4};
+        byte[] expected = new byte[] {(byte) 1, (byte) 2, DATA_BYTES[0], (byte) 4};
         assertArrayEquals(expected, bs);
     }
+
     @Test
     public void testReadArrayOffsetLength_LengthTooLarge() throws Exception {
         assertThrows(IndexOutOfBoundsException.class, () -> {
             in.read(bs, 2, 3);
         });
     }
+
     @Test
     public void testReadArrayOffsetLength_HitEndOfStream() throws Exception {
         for (int i = 0; i < DATA_BYTES.length - 1; i++) {
             in.read();
         }
         assertEquals(1, in.read(bs, 2, 2));
-        byte[] expected = new byte[]{(byte) 1, (byte) 2, DATA_BYTES[DATA_BYTES.length - 1], (byte) 4};
+        byte[] expected = new byte[] {(byte) 1, (byte) 2, DATA_BYTES[DATA_BYTES.length - 1], (byte) 4};
         assertArrayEquals(expected, bs);
     }
+
     @Test
     public void testReadArrayOffsetLength_AtEndOfStream() throws Exception {
         for (int i = 0; i < DATA_BYTES.length; i++) {
@@ -91,12 +97,14 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         assertEquals(-1, in.read(bs, 2, 2));
         assertArrayEquals(expected, bs);
     }
+
     @Test
     public void testReadArrayOffsetLength_0Length() throws Exception {
         byte[] expected = Arrays.copyOf(bs, bs.length);
         assertEquals(0, in.read(bs, 2, 0));
         assertArrayEquals(expected, bs);
     }
+
     @Test
     public void testReadArray() throws Exception {
         byte[] expected = Arrays.copyOf(DATA_BYTES, 4);
@@ -111,6 +119,7 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         assertEquals(DATA_BYTES[3], in.read());
         assertEquals(DATA_BYTES[4], in.read());
     }
+
     @Test
     public void testSkip2() throws Exception {
         for (int i = 0; i < DATA_BYTES.length / 2; i++) {
@@ -122,6 +131,7 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         assertEquals(DATA_BYTES[idx++], in.read());
         assertEquals(DATA_BYTES[idx++], in.read());
     }
+
     @Test
     public void testNegativeSkip() throws Exception {
         in.read();
@@ -129,6 +139,7 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         assertEquals(DATA_BYTES[1], in.read());
         assertEquals(DATA_BYTES[2], in.read());
     }
+
     @Test
     public void testSkip_HitEnd() throws Exception {
         for (int i = 0; i < DATA_BYTES.length - 1; i++) {
@@ -137,6 +148,7 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         assertEquals(1L, in.skip(2L));
         assertEquals(-1, in.read());
     }
+
     @Test
     public void testSkip_AtEnd() throws Exception {
         for (int i = 0; i < DATA_BYTES.length; i++) {
@@ -154,5 +166,4 @@ public class ByteBufferInputStreamTest extends ZKTestCase {
         }
         assertEquals(0, in.available());
     }
-
 }

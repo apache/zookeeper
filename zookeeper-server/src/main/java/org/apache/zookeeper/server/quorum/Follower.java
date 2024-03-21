@@ -92,14 +92,14 @@ public class Follower extends Learner {
                 if (self.isReconfigStateChange()) {
                     throw new Exception("learned about role change");
                 }
-                //check to see if the leader zxid is lower than ours
-                //this should never happen but is just a safety check
+                // check to see if the leader zxid is lower than ours
+                // this should never happen but is just a safety check
                 long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
                 if (newEpoch < self.getAcceptedEpoch()) {
                     LOG.error("Proposed leader epoch "
-                              + ZxidUtils.zxidToString(newEpochZxid)
-                              + " is less than our accepted epoch "
-                              + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
+                            + ZxidUtils.zxidToString(newEpochZxid)
+                            + " is less than our accepted epoch "
+                            + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
                     throw new IOException("Error: Epoch of leader is lower");
                 }
                 long startTime = Time.currentElapsedTime();
@@ -140,10 +140,10 @@ public class Follower extends Learner {
             if (connectionTime != 0) {
                 long connectionDuration = System.currentTimeMillis() - connectionTime;
                 LOG.info(
-                    "Disconnected from leader (with address: {}). Was connected for {}ms. Sync state: {}",
-                    leaderAddr,
-                    connectionDuration,
-                    completedSync);
+                        "Disconnected from leader (with address: {}). Was connected for {}ms. Sync state: {}",
+                        leaderAddr,
+                        connectionDuration,
+                        completedSync);
                 messageTracker.dumpToLog(leaderAddr.toString());
             }
         }
@@ -156,93 +156,93 @@ public class Follower extends Learner {
      */
     protected void processPacket(QuorumPacket qp) throws Exception {
         switch (qp.getType()) {
-        case Leader.PING:
-            ping(qp);
-            break;
-        case Leader.PROPOSAL:
-            ServerMetrics.getMetrics().LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
-            TxnLogEntry logEntry = SerializeUtils.deserializeTxn(qp.getData());
-            TxnHeader hdr = logEntry.getHeader();
-            Record txn = logEntry.getTxn();
-            TxnDigest digest = logEntry.getDigest();
-            if (hdr.getZxid() != lastQueued + 1) {
-                LOG.warn(
-                    "Got zxid 0x{} expected 0x{}",
-                    Long.toHexString(hdr.getZxid()),
-                    Long.toHexString(lastQueued + 1));
-            }
-            lastQueued = hdr.getZxid();
-
-            if (hdr.getType() == OpCode.reconfig) {
-                SetDataTxn setDataTxn = (SetDataTxn) txn;
-                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
-                self.setLastSeenQuorumVerifier(qv, true);
-            }
-
-            fzk.logRequest(hdr, txn, digest);
-            if (hdr != null) {
-                /*
-                 * Request header is created only by the leader, so this is only set
-                 * for quorum packets. If there is a clock drift, the latency may be
-                 * negative. Headers use wall time, not CLOCK_MONOTONIC.
-                 */
-                long now = Time.currentWallTime();
-                long latency = now - hdr.getTime();
-                if (latency >= 0) {
-                    ServerMetrics.getMetrics().PROPOSAL_LATENCY.add(latency);
+            case Leader.PING:
+                ping(qp);
+                break;
+            case Leader.PROPOSAL:
+                ServerMetrics.getMetrics().LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
+                TxnLogEntry logEntry = SerializeUtils.deserializeTxn(qp.getData());
+                TxnHeader hdr = logEntry.getHeader();
+                Record txn = logEntry.getTxn();
+                TxnDigest digest = logEntry.getDigest();
+                if (hdr.getZxid() != lastQueued + 1) {
+                    LOG.warn(
+                            "Got zxid 0x{} expected 0x{}",
+                            Long.toHexString(hdr.getZxid()),
+                            Long.toHexString(lastQueued + 1));
                 }
-            }
-            if (om != null) {
-                final long startTime = Time.currentElapsedTime();
-                om.proposalReceived(qp);
-                ServerMetrics.getMetrics().OM_PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
-            }
-            break;
-        case Leader.COMMIT:
-            ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
-            fzk.commit(qp.getZxid());
-            if (om != null) {
-                final long startTime = Time.currentElapsedTime();
-                om.proposalCommitted(qp.getZxid());
-                ServerMetrics.getMetrics().OM_COMMIT_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
-            }
-            break;
+                lastQueued = hdr.getZxid();
 
-        case Leader.COMMITANDACTIVATE:
-            // get the new configuration from the request
-            Request request = fzk.pendingTxns.element();
-            SetDataTxn setDataTxn = (SetDataTxn) request.getTxn();
-            QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
+                if (hdr.getType() == OpCode.reconfig) {
+                    SetDataTxn setDataTxn = (SetDataTxn) txn;
+                    QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
+                    self.setLastSeenQuorumVerifier(qv, true);
+                }
 
-            // get new designated leader from (current) leader's message
-            ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
-            long suggestedLeaderId = buffer.getLong();
-            final long zxid = qp.getZxid();
-            boolean majorChange = self.processReconfig(qv, suggestedLeaderId, zxid, true);
-            // commit (writes the new config to ZK tree (/zookeeper/config)
-            fzk.commit(zxid);
+                fzk.logRequest(hdr, txn, digest);
+                if (hdr != null) {
+                    /*
+                     * Request header is created only by the leader, so this is only set
+                     * for quorum packets. If there is a clock drift, the latency may be
+                     * negative. Headers use wall time, not CLOCK_MONOTONIC.
+                     */
+                    long now = Time.currentWallTime();
+                    long latency = now - hdr.getTime();
+                    if (latency >= 0) {
+                        ServerMetrics.getMetrics().PROPOSAL_LATENCY.add(latency);
+                    }
+                }
+                if (om != null) {
+                    final long startTime = Time.currentElapsedTime();
+                    om.proposalReceived(qp);
+                    ServerMetrics.getMetrics().OM_PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
+                }
+                break;
+            case Leader.COMMIT:
+                ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
+                fzk.commit(qp.getZxid());
+                if (om != null) {
+                    final long startTime = Time.currentElapsedTime();
+                    om.proposalCommitted(qp.getZxid());
+                    ServerMetrics.getMetrics().OM_COMMIT_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
+                }
+                break;
 
-            if (om != null) {
-                om.informAndActivate(zxid, suggestedLeaderId);
-            }
-            if (majorChange) {
-                throw new Exception("changes proposed in reconfig");
-            }
-            break;
-        case Leader.UPTODATE:
-            LOG.error("Received an UPTODATE message after Follower started");
-            break;
-        case Leader.REVALIDATE:
-            if (om == null || !om.revalidateLearnerSession(qp)) {
-                revalidate(qp);
-            }
-            break;
-        case Leader.SYNC:
-            fzk.sync();
-            break;
-        default:
-            LOG.warn("Unknown packet type: {}", LearnerHandler.packetToString(qp));
-            break;
+            case Leader.COMMITANDACTIVATE:
+                // get the new configuration from the request
+                Request request = fzk.pendingTxns.element();
+                SetDataTxn setDataTxn = (SetDataTxn) request.getTxn();
+                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData(), UTF_8));
+
+                // get new designated leader from (current) leader's message
+                ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
+                long suggestedLeaderId = buffer.getLong();
+                final long zxid = qp.getZxid();
+                boolean majorChange = self.processReconfig(qv, suggestedLeaderId, zxid, true);
+                // commit (writes the new config to ZK tree (/zookeeper/config)
+                fzk.commit(zxid);
+
+                if (om != null) {
+                    om.informAndActivate(zxid, suggestedLeaderId);
+                }
+                if (majorChange) {
+                    throw new Exception("changes proposed in reconfig");
+                }
+                break;
+            case Leader.UPTODATE:
+                LOG.error("Received an UPTODATE message after Follower started");
+                break;
+            case Leader.REVALIDATE:
+                if (om == null || !om.revalidateLearnerSession(qp)) {
+                    revalidate(qp);
+                }
+                break;
+            case Leader.SYNC:
+                fzk.sync();
+                break;
+            default:
+                LOG.warn("Unknown packet type: {}", LearnerHandler.packetToString(qp));
+                break;
         }
     }
 
@@ -286,5 +286,4 @@ public class Follower extends Learner {
         LOG.info("shutdown Follower");
         super.shutdown();
     }
-
 }

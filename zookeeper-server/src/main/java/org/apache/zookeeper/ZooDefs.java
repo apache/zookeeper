@@ -100,7 +100,6 @@ public class ZooDefs {
         int closeSession = -11;
 
         int error = -1;
-
     }
 
     @InterfaceAudience.Public
@@ -117,7 +116,6 @@ public class ZooDefs {
         int ADMIN = 1 << 4;
 
         int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
-
     }
 
     @InterfaceAudience.Public
@@ -138,7 +136,8 @@ public class ZooDefs {
          * This is a completely open ACL .
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
-        ArrayList<ACL> OPEN_ACL_UNSAFE = new ArrayList<>(Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
+        ArrayList<ACL> OPEN_ACL_UNSAFE =
+                new ArrayList<>(Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
 
         /**
          * This ACL gives the creators authentication id's all permissions.
@@ -150,15 +149,14 @@ public class ZooDefs {
          * This ACL gives the world the ability to read.
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
-        ArrayList<ACL> READ_ACL_UNSAFE = new ArrayList<>(Collections.singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
-
+        ArrayList<ACL> READ_ACL_UNSAFE =
+                new ArrayList<>(Collections.singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
     }
 
     @InterfaceAudience.Public
     public interface AddWatchModes {
         int persistent = 0; // matches AddWatchMode.PERSISTENT
 
-        int persistentRecursive = 1;  // matches AddWatchMode.PERSISTENT_RECURSIVE
+        int persistentRecursive = 1; // matches AddWatchMode.PERSISTENT_RECURSIVE
     }
-
 }

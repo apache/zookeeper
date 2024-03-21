@@ -46,10 +46,10 @@ public class LearnerHandlerBean implements LearnerHandlerMXBean, ZKMBeanInfo {
     @Override
     public String getName() {
         return MBeanRegistry.getInstance()
-                            .makeFullPath(
-                                "Learner_Connections",
-                                ObjectName.quote(remoteAddr),
-                                String.format("\"id:%d\"", learnerHandler.getSid()));
+                .makeFullPath(
+                        "Learner_Connections",
+                        ObjectName.quote(remoteAddr),
+                        String.format("\"id:%d\"", learnerHandler.getSid()));
     }
 
     @Override
@@ -67,5 +67,4 @@ public class LearnerHandlerBean implements LearnerHandlerMXBean, ZKMBeanInfo {
     public String toString() {
         return "LearnerHandlerBean{remoteIP=" + remoteAddr + ",ServerId=" + learnerHandler.getSid() + "}";
     }
-
 }

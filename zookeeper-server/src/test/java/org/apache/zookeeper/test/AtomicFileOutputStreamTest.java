@@ -48,6 +48,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         testDir = ClientBase.createEmptyTestDir();
         dstFile = new File(testDir, "test.txt");
     }
+
     @AfterEach
     public void cleanupTestDir() throws IOException {
         ClientBase.recursiveDelete(testDir);
@@ -198,5 +199,4 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
         assertEquals(TEST_STRING, new String(Files.readAllBytes(dstFile.toPath()), UTF_8));
         assertEquals(1, testDir.list().length);
     }
-
 }

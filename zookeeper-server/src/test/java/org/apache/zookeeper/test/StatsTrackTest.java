@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.StatsTrack;
@@ -54,7 +53,6 @@ public class StatsTrackTest {
             count = Integer.parseInt(split[0].split("=")[1]);
             bytes = Long.parseLong(split[1].split("=")[1]);
         }
-
 
         /**
          * get the count of nodes allowed as part of quota

@@ -58,5 +58,4 @@ public class SaslTestUtil extends ClientBase {
 
         return ret;
     }
-
 }

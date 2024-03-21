@@ -148,15 +148,14 @@ public class ZooKeeperBuilder {
     @InterfaceAudience.Private
     public ZooKeeperOptions toOptions() {
         return new ZooKeeperOptions(
-            connectString,
-            sessionTimeout,
-            defaultWatcher,
-            hostProvider,
-            canBeReadOnly,
-            sessionId,
-            sessionPasswd,
-            clientConfig
-        );
+                connectString,
+                sessionTimeout,
+                defaultWatcher,
+                hostProvider,
+                canBeReadOnly,
+                sessionId,
+                sessionPasswd,
+                clientConfig);
     }
 
     /**

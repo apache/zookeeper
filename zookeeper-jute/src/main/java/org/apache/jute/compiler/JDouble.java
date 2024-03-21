@@ -37,5 +37,4 @@ public class JDouble extends JType {
     public String genJavaHashCode(String fname) {
         return "    ret = java.lang.Double.hashCode(" + fname + ");\n";
     }
-
 }

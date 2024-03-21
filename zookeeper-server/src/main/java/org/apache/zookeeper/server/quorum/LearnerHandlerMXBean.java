@@ -28,5 +28,4 @@ public interface LearnerHandlerMXBean {
      * the leader or to the next ObserverMaster if that feature is enabled
      */
     void terminateConnection();
-
 }

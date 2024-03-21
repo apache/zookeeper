@@ -111,7 +111,6 @@ public class SaslAuthTest extends ClientBase {
                 super.process(event);
             }
         }
-
     }
 
     @Test
@@ -184,7 +183,8 @@ public class SaslAuthTest extends ClientBase {
             boolean success = false;
             while (!success && tryCount++ <= totalTry) {
                 try {
-                    zk.create("/saslAuthFail", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                    zk.create(
+                            "/saslAuthFail", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                     success = true;
                 } catch (KeeperException.ConnectionLossException e) {
                     Thread.sleep(1000);

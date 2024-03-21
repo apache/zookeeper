@@ -99,7 +99,7 @@ public interface Watcher {
              */
             Closed(7);
 
-            private final int intValue;     // Integer representation of value
+            private final int intValue; // Integer representation of value
             // for sending over wire
 
             KeeperState(int intValue) {
@@ -112,27 +112,27 @@ public interface Watcher {
 
             public static KeeperState fromInt(int intValue) {
                 switch (intValue) {
-                case -1:
-                    return KeeperState.Unknown;
-                case 0:
-                    return KeeperState.Disconnected;
-                case 1:
-                    return KeeperState.NoSyncConnected;
-                case 3:
-                    return KeeperState.SyncConnected;
-                case 4:
-                    return KeeperState.AuthFailed;
-                case 5:
-                    return KeeperState.ConnectedReadOnly;
-                case 6:
-                    return KeeperState.SaslAuthenticated;
-                case -112:
-                    return KeeperState.Expired;
-                case 7:
-                    return KeeperState.Closed;
+                    case -1:
+                        return KeeperState.Unknown;
+                    case 0:
+                        return KeeperState.Disconnected;
+                    case 1:
+                        return KeeperState.NoSyncConnected;
+                    case 3:
+                        return KeeperState.SyncConnected;
+                    case 4:
+                        return KeeperState.AuthFailed;
+                    case 5:
+                        return KeeperState.ConnectedReadOnly;
+                    case 6:
+                        return KeeperState.SaslAuthenticated;
+                    case -112:
+                        return KeeperState.Expired;
+                    case 7:
+                        return KeeperState.Closed;
 
-                default:
-                    throw new RuntimeException("Invalid integer value for conversion to KeeperState");
+                    default:
+                        throw new RuntimeException("Invalid integer value for conversion to KeeperState");
                 }
             }
         }
@@ -149,9 +149,9 @@ public interface Watcher {
             NodeChildrenChanged(4),
             DataWatchRemoved(5),
             ChildWatchRemoved(6),
-            PersistentWatchRemoved (7);
+            PersistentWatchRemoved(7);
 
-            private final int intValue;     // Integer representation of value
+            private final int intValue; // Integer representation of value
             // for sending over wire
 
             EventType(int intValue) {
@@ -164,29 +164,28 @@ public interface Watcher {
 
             public static EventType fromInt(int intValue) {
                 switch (intValue) {
-                case -1:
-                    return EventType.None;
-                case 1:
-                    return EventType.NodeCreated;
-                case 2:
-                    return EventType.NodeDeleted;
-                case 3:
-                    return EventType.NodeDataChanged;
-                case 4:
-                    return EventType.NodeChildrenChanged;
-                case 5:
-                    return EventType.DataWatchRemoved;
-                case 6:
-                    return EventType.ChildWatchRemoved;
-                case 7:
-                    return EventType.PersistentWatchRemoved;
+                    case -1:
+                        return EventType.None;
+                    case 1:
+                        return EventType.NodeCreated;
+                    case 2:
+                        return EventType.NodeDeleted;
+                    case 3:
+                        return EventType.NodeDataChanged;
+                    case 4:
+                        return EventType.NodeChildrenChanged;
+                    case 5:
+                        return EventType.DataWatchRemoved;
+                    case 6:
+                        return EventType.ChildWatchRemoved;
+                    case 7:
+                        return EventType.PersistentWatchRemoved;
 
-                default:
-                    throw new RuntimeException("Invalid integer value for conversion to EventType");
+                    default:
+                        throw new RuntimeException("Invalid integer value for conversion to EventType");
                 }
             }
         }
-
     }
 
     /**
@@ -213,22 +212,21 @@ public interface Watcher {
 
         public static WatcherType fromInt(int intValue) {
             switch (intValue) {
-            case 1:
-                return WatcherType.Children;
-            case 2:
-                return WatcherType.Data;
-            case 3:
-                return WatcherType.Any;
-            case 4:
-                return Persistent;
-            case 5:
-                return PersistentRecursive;
-            default:
-                throw new RuntimeException("Invalid integer value for conversion to WatcherType");
+                case 1:
+                    return WatcherType.Children;
+                case 2:
+                    return WatcherType.Data;
+                case 3:
+                    return WatcherType.Any;
+                case 4:
+                    return Persistent;
+                case 5:
+                    return PersistentRecursive;
+                default:
+                    throw new RuntimeException("Invalid integer value for conversion to WatcherType");
             }
         }
     }
 
     void process(WatchedEvent event);
-
 }

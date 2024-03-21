@@ -55,7 +55,7 @@ public class PurgeTxnLog {
         System.out.println("\tdataLogDir -- path to the txn log directory");
         System.out.println("\tsnapDir -- path to the snapshot directory");
         System.out.println("\tcount -- the number of old snaps/logs you want "
-                           + "to keep, value should be greater than or equal to 3");
+                + "to keep, value should be greater than or equal to 3");
     }
 
     private static final String PREFIX_SNAPSHOT = "snapshot";
@@ -119,9 +119,11 @@ public class PurgeTxnLog {
         class MyFileFilter implements FileFilter {
 
             private final String prefix;
+
             MyFileFilter(String prefix) {
                 this.prefix = prefix;
             }
+
             public boolean accept(File f) {
                 if (!f.getName().startsWith(prefix + ".")) {
                     return false;
@@ -132,7 +134,6 @@ public class PurgeTxnLog {
                 long fZxid = Util.getZxidFromName(f.getName(), prefix);
                 return fZxid < leastZxidToBeRetain;
             }
-
         }
         // add all non-excluded log files
         File[] logs = txnLog.getDataLogDir().listFiles(new MyFileFilter(PREFIX_LOG));
@@ -150,9 +151,7 @@ public class PurgeTxnLog {
         // remove the old files
         for (File f : files) {
             final String msg = String.format(
-                "Removing file: %s\t%s",
-                DateFormat.getDateTimeInstance().format(f.lastModified()),
-                f.getPath());
+                    "Removing file: %s\t%s", DateFormat.getDateTimeInstance().format(f.lastModified()), f.getPath());
 
             LOG.info(msg);
             System.out.println(msg);
@@ -161,7 +160,6 @@ public class PurgeTxnLog {
                 System.err.println("Failed to remove " + f.getPath());
             }
         }
-
     }
 
     /**
@@ -233,5 +231,4 @@ public class PurgeTxnLog {
         printUsage();
         ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
-
 }

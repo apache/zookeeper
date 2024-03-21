@@ -19,7 +19,6 @@
 /**
  *
  */
-
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
@@ -59,8 +58,8 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     public static Stream<Arguments> positiveTestData() {
         ArrayList<Arguments> result = new ArrayList<>();
         for (SslProvider sslProvider : SslProvider.values()) {
-            for (String fipsEnabled : new String[] { "true", "false" }) {
-                for (String hostnameverification : new String[] { "true", "false" }) {
+            for (String fipsEnabled : new String[] {"true", "false"}) {
+                for (String hostnameverification : new String[] {"true", "false"}) {
                     result.add(Arguments.of(sslProvider, fipsEnabled, hostnameverification));
                 }
             }
@@ -71,7 +70,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     public static Stream<Arguments> negativeTestData() {
         ArrayList<Arguments> result = new ArrayList<>();
         for (SslProvider sslProvider : SslProvider.values()) {
-            for (String fipsEnabled : new String[] { "true", "false" }) {
+            for (String fipsEnabled : new String[] {"true", "false"}) {
                 result.add(Arguments.of(sslProvider, fipsEnabled));
             }
         }
@@ -83,7 +82,8 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.setProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY, Boolean.TRUE.toString());
         clientX509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
@@ -147,17 +147,24 @@ public class ClientSSLTest extends QuorumPeerTestBase {
      */
     @ParameterizedTest(name = "sslProvider={0}, fipsEnabled={1}, hostnameVerification={2}")
     @MethodSource("positiveTestData")
-    public void testClientServerSSL_positive(SslProvider sslProvider, String fipsEnabled, String hostnameVerification) throws Exception {
-        //Skipping this test for s390x arch as netty-tc-native is not supported
-        assumeFalse(System.getProperty("os.arch").contains("s390x"), " Skipping for s390x arch as netty-tcnative is not yet supported.");
+    public void testClientServerSSL_positive(SslProvider sslProvider, String fipsEnabled, String hostnameVerification)
+            throws Exception {
+        // Skipping this test for s390x arch as netty-tc-native is not supported
+        assumeFalse(
+                System.getProperty("os.arch").contains("s390x"),
+                " Skipping for s390x arch as netty-tcnative is not yet supported.");
         // Arrange
         System.setProperty(clientX509Util.getSslProviderProperty(), sslProvider.toString());
         System.setProperty(clientX509Util.getFipsModeProperty(), fipsEnabled);
         System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), hostnameVerification);
 
         // Act & Assert
-        testClientServerSSL(hostnameVerification.equals("true") ? "localhost" : InetAddress.getLocalHost().getHostName(),
-            true, CONNECTION_TIMEOUT);
+        testClientServerSSL(
+                hostnameVerification.equals("true")
+                        ? "localhost"
+                        : InetAddress.getLocalHost().getHostName(),
+                true,
+                CONNECTION_TIMEOUT);
     }
 
     /**
@@ -172,8 +179,9 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), "true");
 
         // Act & Assert
-        assertThrows(AssertionError.class, () ->
-            testClientServerSSL(InetAddress.getLocalHost().getHostName(), true, 5000));
+        assertThrows(
+                AssertionError.class,
+                () -> testClientServerSSL(InetAddress.getLocalHost().getHostName(), true, 5000));
     }
 
     @Test
@@ -201,7 +209,9 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             secureClientPorts[i] = PortAssignment.unique();
-            String server = String.format("server.%d=127.0.0.1:%d:%d:participant;127.0.0.1:%d%n", i, PortAssignment.unique(), PortAssignment.unique(), clientPorts[i]);
+            String server = String.format(
+                    "server.%d=127.0.0.1:%d:%d:participant;127.0.0.1:%d%n",
+                    i, PortAssignment.unique(), PortAssignment.unique(), clientPorts[i]);
             sb.append(server);
         }
         String quorumCfg = sb.toString();
@@ -222,7 +232,8 @@ public class ClientSSLTest extends QuorumPeerTestBase {
 
         // Servers have been set up. Now go test if secure connection is successful.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT),
                     "waiting for server " + i + " being up");
             final int port = useSecurePort ? secureClientPorts[i] : clientPorts[i];
             try (ZooKeeper zk = ClientBase.createZKClient(hostname + ":" + port, TIMEOUT, connectTimeout)) {
@@ -259,20 +270,23 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     @Test
     public void testSecureStandaloneServerAuthFail() throws IOException {
         try {
-            System.setProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail",
-                AuthFailX509AuthenticationProvider.class.getName());
+            System.setProperty(
+                    ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail",
+                    AuthFailX509AuthenticationProvider.class.getName());
             System.setProperty(clientX509Util.getSslAuthProviderProperty(), "authfail");
 
             Integer secureClientPort = PortAssignment.unique();
             MainThread mt = new MainThread(MainThread.UNSET_MYID, "", secureClientPort, false);
             mt.start();
 
-            AssertionError ex = assertThrows("Client should not able to connect when authentication fails", AssertionError.class,
-                () -> {
-                    ClientBase.createZKClient("localhost:" + secureClientPort, TIMEOUT, 3000);
-                });
-            assertThat("Exception message does not match (different exception caught?)",
-                ex.getMessage(), startsWith("ZooKeeper client can not connect to"));
+            AssertionError ex = assertThrows(
+                    "Client should not able to connect when authentication fails", AssertionError.class, () -> {
+                        ClientBase.createZKClient("localhost:" + secureClientPort, TIMEOUT, 3000);
+                    });
+            assertThat(
+                    "Exception message does not match (different exception caught?)",
+                    ex.getMessage(),
+                    startsWith("ZooKeeper client can not connect to"));
         } finally {
             System.clearProperty(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "authfail");
             System.clearProperty(clientX509Util.getSslAuthProviderProperty());

@@ -31,5 +31,4 @@ public class NullQuorumAuthServer implements QuorumAuthServer {
     public void authenticate(final Socket sock, final DataInputStream din) {
         // simply return don't require auth
     }
-
 }

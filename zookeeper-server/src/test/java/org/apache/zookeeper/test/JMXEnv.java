@@ -67,7 +67,6 @@ public class JMXEnv {
             }
         } catch (IOException e) {
             LOG.warn("Unexpected, ignoring", e);
-
         }
         cc = null;
         try {
@@ -76,7 +75,6 @@ public class JMXEnv {
             }
         } catch (IOException e) {
             LOG.warn("Unexpected, ignoring", e);
-
         }
         cs = null;
     }
@@ -304,9 +302,9 @@ public class JMXEnv {
 
     static Pattern standaloneRegEx = Pattern.compile("^org.apache.ZooKeeperService:name0=StandaloneServer_port-?\\d+$");
     static Pattern instanceRegEx = Pattern.compile("^org.apache.ZooKeeperService:name0=ReplicatedServer_id(\\d+)"
-                                                           + ",name1=replica.(\\d+),name2=(Follower|Leader)$");
+            + ",name1=replica.(\\d+),name2=(Follower|Leader)$");
     static Pattern observerRegEx = Pattern.compile("^org.apache.ZooKeeperService:name0=ReplicatedServer_id(-?\\d+)"
-                                                           + ",name1=replica.(-?\\d+),name2=(StandaloneServer_port-?\\d+)$");
+            + ",name1=replica.(-?\\d+),name2=(StandaloneServer_port-?\\d+)$");
     static List<Pattern> beanPatterns = Arrays.asList(standaloneRegEx, instanceRegEx, observerRegEx);
 
     public static List<ObjectName> getServerBeans() throws IOException {
@@ -336,5 +334,4 @@ public class JMXEnv {
         }
         return serverBeans.get(0);
     }
-
 }

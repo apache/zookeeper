@@ -73,7 +73,6 @@ public class LearnerTest extends ZKTestCase {
         public Learner getLearner() {
             return learner;
         }
-
     }
 
     static class SimpleLearner extends Learner {
@@ -83,7 +82,6 @@ public class LearnerTest extends ZKTestCase {
             zk = new SimpleLearnerZooKeeperServer(ftsl, self);
             ((SimpleLearnerZooKeeperServer) zk).learner = this;
         }
-
     }
 
     static class TestLearner extends Learner {
@@ -179,7 +177,7 @@ public class LearnerTest extends ZKTestCase {
             learner.connectToLeader(new MultipleAddresses(addr), "");
             fail("should have thrown IOException!");
         } catch (IOException e) {
-            //good, wanted to see that, let's make sure we ran out of time
+            // good, wanted to see that, let's make sure we ran out of time
             assertTrue(learner.nanoTime() > 2000 * 5 * 1000_000);
             assertEquals(3, learner.getSockConnectAttempt());
         }
@@ -208,7 +206,7 @@ public class LearnerTest extends ZKTestCase {
             learner.connectToLeader(new MultipleAddresses(asList(addrA, addrB, addrC, addrD)), "");
             fail("should have thrown IOException!");
         } catch (IOException e) {
-            //good, wanted to see the IOException, let's make sure we tried each address 5 times
+            // good, wanted to see the IOException, let's make sure we tried each address 5 times
             assertEquals(4 * 5, learner.getSockConnectAttempt());
         }
     }
@@ -238,7 +236,6 @@ public class LearnerTest extends ZKTestCase {
         Socket mockSocket = mock(Socket.class);
         when(mockSocket.isConnected()).thenReturn(true);
         learner.setSocketToBeCreated(mockSocket);
-
 
         // we expect this to not throw an IOException since there is a single working address
         learner.connectToLeader(new MultipleAddresses(asList(addrBadA, addrBadB, addrBadC, addrWorking)), "");
@@ -291,7 +288,12 @@ public class LearnerTest extends ZKTestCase {
         sl.zk.getZKDatabase().serializeSnapshot(oa);
         oa.writeString("BenWasHere", "signature");
         TxnHeader hdr = new TxnHeader(0, 0, 0, 0, ZooDefs.OpCode.create);
-        CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
+        CreateTxn txn = new CreateTxn(
+                "/foo",
+                new byte[0],
+                new ArrayList<ACL>(),
+                false,
+                sl.zk.getZKDatabase().getNode("/").stat.getCversion());
         ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
         hdr.serialize(boa, "hdr");
@@ -321,7 +323,10 @@ public class LearnerTest extends ZKTestCase {
             @Override
             public void accept(Integer exitCode) {
                 exitProcCalled[0] = true;
-                assertThat("System.exit() was called with invalid exit code", exitCode, equalTo(ExitCode.QUORUM_PACKET_ERROR.getValue()));
+                assertThat(
+                        "System.exit() was called with invalid exit code",
+                        exitCode,
+                        equalTo(ExitCode.QUORUM_PACKET_ERROR.getValue()));
             }
         });
 

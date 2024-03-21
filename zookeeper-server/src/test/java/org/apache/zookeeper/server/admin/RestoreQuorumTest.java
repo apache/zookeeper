@@ -49,7 +49,8 @@ public class RestoreQuorumTest extends QuorumPeerTestBase {
             // create data
             servers.zk[leaderId].create(PATH, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             for (int i = 0; i < NODE_COUNT; i++) {
-                servers.zk[leaderId].create(PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                servers.zk[leaderId].create(
+                        PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
 
             // take snapshot
@@ -57,7 +58,8 @@ public class RestoreQuorumTest extends QuorumPeerTestBase {
 
             // create more data
             for (int i = NODE_COUNT; i < NODE_COUNT * 2; i++) {
-                servers.zk[leaderId].create(PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                servers.zk[leaderId].create(
+                        PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
 
             // shutdown all servers to simulate quorum lost
@@ -85,7 +87,8 @@ public class RestoreQuorumTest extends QuorumPeerTestBase {
 
             // create more data after restore
             for (int i = NODE_COUNT * 2; i < NODE_COUNT * 3; i++) {
-                servers.zk[leaderId].create(PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+                servers.zk[leaderId].create(
+                        PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
             }
 
             // validate all servers have expected data

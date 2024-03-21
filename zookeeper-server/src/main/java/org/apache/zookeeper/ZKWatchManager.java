@@ -117,12 +117,8 @@ class ZKWatchManager implements ClientWatchManager {
     }
 
     public Map<Watcher.Event.EventType, Set<Watcher>> removeWatcher(
-        String clientPath,
-        Watcher watcher,
-        Watcher.WatcherType watcherType,
-        boolean local,
-        int rc
-    ) throws KeeperException {
+            String clientPath, Watcher watcher, Watcher.WatcherType watcherType, boolean local, int rc)
+            throws KeeperException {
         // Validate the provided znode path contains the given watcher of
         // watcherType
         containsWatcher(clientPath, watcher, watcherType);
@@ -136,62 +132,67 @@ class ZKWatchManager implements ClientWatchManager {
         removedWatchers.put(Watcher.Event.EventType.PersistentWatchRemoved, persistentWatchersToRem);
         boolean removedWatcher = false;
         switch (watcherType) {
-        case Children: {
-            synchronized (childWatches) {
-                removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
+            case Children: {
+                synchronized (childWatches) {
+                    removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
+                }
+                break;
             }
-            break;
-        }
-        case Data: {
-            synchronized (dataWatches) {
-                removedWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-            }
+            case Data: {
+                synchronized (dataWatches) {
+                    removedWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                }
 
-            synchronized (existWatches) {
-                boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                removedWatcher |= removedDataWatcher;
+                synchronized (existWatches) {
+                    boolean removedDataWatcher =
+                            removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher |= removedDataWatcher;
+                }
+                break;
             }
-            break;
-        }
-        case Persistent: {
-            synchronized (persistentWatches) {
-                removedWatcher = removeWatches(persistentWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+            case Persistent: {
+                synchronized (persistentWatches) {
+                    removedWatcher =
+                            removeWatches(persistentWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+                }
+                break;
             }
-            break;
-        }
-        case PersistentRecursive: {
-            synchronized (persistentRecursiveWatches) {
-                removedWatcher = removeWatches(persistentRecursiveWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+            case PersistentRecursive: {
+                synchronized (persistentRecursiveWatches) {
+                    removedWatcher = removeWatches(
+                            persistentRecursiveWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+                }
+                break;
             }
-            break;
-        }
-        case Any: {
-            synchronized (childWatches) {
-                removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
-            }
+            case Any: {
+                synchronized (childWatches) {
+                    removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
+                }
 
-            synchronized (dataWatches) {
-                boolean removedDataWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                removedWatcher |= removedDataWatcher;
-            }
+                synchronized (dataWatches) {
+                    boolean removedDataWatcher =
+                            removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher |= removedDataWatcher;
+                }
 
-            synchronized (existWatches) {
-                boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                removedWatcher |= removedDataWatcher;
-            }
+                synchronized (existWatches) {
+                    boolean removedDataWatcher =
+                            removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher |= removedDataWatcher;
+                }
 
-            synchronized (persistentWatches) {
-                boolean removedPersistentWatcher = removeWatches(persistentWatches,
-                        watcher, clientPath, local, rc, persistentWatchersToRem);
-                removedWatcher |= removedPersistentWatcher;
-            }
+                synchronized (persistentWatches) {
+                    boolean removedPersistentWatcher =
+                            removeWatches(persistentWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+                    removedWatcher |= removedPersistentWatcher;
+                }
 
-            synchronized (persistentRecursiveWatches) {
-                boolean removedPersistentRecursiveWatcher = removeWatches(persistentRecursiveWatches,
-                        watcher, clientPath, local, rc, persistentWatchersToRem);
-                removedWatcher |= removedPersistentRecursiveWatcher;
+                synchronized (persistentRecursiveWatches) {
+                    boolean removedPersistentRecursiveWatcher = removeWatches(
+                            persistentRecursiveWatches, watcher, clientPath, local, rc, persistentWatchersToRem);
+                    removedWatcher |= removedPersistentRecursiveWatcher;
+                }
             }
-        }
         }
         // Watcher function doesn't exists for the specified params
         if (!removedWatcher) {
@@ -229,66 +230,64 @@ class ZKWatchManager implements ClientWatchManager {
      *            - type of the watcher
      * @throws KeeperException.NoWatcherException
      */
-    void containsWatcher(String path, Watcher watcher, Watcher.WatcherType watcherType) throws
-            KeeperException.NoWatcherException {
+    void containsWatcher(String path, Watcher watcher, Watcher.WatcherType watcherType)
+            throws KeeperException.NoWatcherException {
         boolean containsWatcher = false;
         switch (watcherType) {
-        case Children: {
-            synchronized (childWatches) {
-                containsWatcher = contains(path, watcher, childWatches);
+            case Children: {
+                synchronized (childWatches) {
+                    containsWatcher = contains(path, watcher, childWatches);
+                }
+                break;
             }
-            break;
-        }
-        case Data: {
-            synchronized (dataWatches) {
-                containsWatcher = contains(path, watcher, dataWatches);
-            }
+            case Data: {
+                synchronized (dataWatches) {
+                    containsWatcher = contains(path, watcher, dataWatches);
+                }
 
-            synchronized (existWatches) {
-                boolean contains_temp = contains(path, watcher, existWatches);
-                containsWatcher |= contains_temp;
+                synchronized (existWatches) {
+                    boolean contains_temp = contains(path, watcher, existWatches);
+                    containsWatcher |= contains_temp;
+                }
+                break;
             }
-            break;
-        }
-        case Persistent: {
-            synchronized (persistentWatches) {
-                containsWatcher |= contains(path, watcher, persistentWatches);
+            case Persistent: {
+                synchronized (persistentWatches) {
+                    containsWatcher |= contains(path, watcher, persistentWatches);
+                }
+                break;
             }
-            break;
-        }
-        case PersistentRecursive: {
-            synchronized (persistentRecursiveWatches) {
-                containsWatcher |= contains(path, watcher, persistentRecursiveWatches);
+            case PersistentRecursive: {
+                synchronized (persistentRecursiveWatches) {
+                    containsWatcher |= contains(path, watcher, persistentRecursiveWatches);
+                }
+                break;
             }
-            break;
-        }
-        case Any: {
-            synchronized (childWatches) {
-                containsWatcher = contains(path, watcher, childWatches);
-            }
+            case Any: {
+                synchronized (childWatches) {
+                    containsWatcher = contains(path, watcher, childWatches);
+                }
 
-            synchronized (dataWatches) {
-                boolean contains_temp = contains(path, watcher, dataWatches);
-                containsWatcher |= contains_temp;
-            }
+                synchronized (dataWatches) {
+                    boolean contains_temp = contains(path, watcher, dataWatches);
+                    containsWatcher |= contains_temp;
+                }
 
-            synchronized (existWatches) {
-                boolean contains_temp = contains(path, watcher, existWatches);
-                containsWatcher |= contains_temp;
-            }
+                synchronized (existWatches) {
+                    boolean contains_temp = contains(path, watcher, existWatches);
+                    containsWatcher |= contains_temp;
+                }
 
-            synchronized (persistentWatches) {
-                boolean contains_temp = contains(path, watcher,
-                        persistentWatches);
-                containsWatcher |= contains_temp;
-            }
+                synchronized (persistentWatches) {
+                    boolean contains_temp = contains(path, watcher, persistentWatches);
+                    containsWatcher |= contains_temp;
+                }
 
-            synchronized (persistentRecursiveWatches) {
-                boolean contains_temp = contains(path, watcher,
-                        persistentRecursiveWatches);
-                containsWatcher |= contains_temp;
+                synchronized (persistentRecursiveWatches) {
+                    boolean contains_temp = contains(path, watcher, persistentRecursiveWatches);
+                    containsWatcher |= contains_temp;
+                }
             }
-        }
         }
         // Watcher function doesn't exists for the specified params
         if (!containsWatcher) {
@@ -297,12 +296,13 @@ class ZKWatchManager implements ClientWatchManager {
     }
 
     protected boolean removeWatches(
-        Map<String, Set<Watcher>> pathVsWatcher,
-        Watcher watcher,
-        String path,
-        boolean local,
-        int rc,
-        Set<Watcher> removedWatchers) throws KeeperException {
+            Map<String, Set<Watcher>> pathVsWatcher,
+            Watcher watcher,
+            String path,
+            boolean local,
+            int rc,
+            Set<Watcher> removedWatchers)
+            throws KeeperException {
         if (!local && rc != KeeperException.Code.OK.intValue()) {
             throw KeeperException.create(KeeperException.Code.get(rc), path);
         }
@@ -342,101 +342,94 @@ class ZKWatchManager implements ClientWatchManager {
      *                                                        Event.EventType, java.lang.String)
      */
     @Override
-    public Set<Watcher> materialize(
-        Watcher.Event.KeeperState state,
-        Watcher.Event.EventType type,
-        String clientPath
-    ) {
+    public Set<Watcher> materialize(Watcher.Event.KeeperState state, Watcher.Event.EventType type, String clientPath) {
         final Set<Watcher> result = new HashSet<>();
 
         switch (type) {
-        case None:
-            if (defaultWatcher != null) {
-                result.add(defaultWatcher);
-            }
+            case None:
+                if (defaultWatcher != null) {
+                    result.add(defaultWatcher);
+                }
 
-            boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
-            synchronized (dataWatches) {
-                for (Set<Watcher> ws : dataWatches.values()) {
-                    result.addAll(ws);
+                boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
+                synchronized (dataWatches) {
+                    for (Set<Watcher> ws : dataWatches.values()) {
+                        result.addAll(ws);
+                    }
+                    if (clear) {
+                        dataWatches.clear();
+                    }
                 }
-                if (clear) {
-                    dataWatches.clear();
-                }
-            }
 
-            synchronized (existWatches) {
-                for (Set<Watcher> ws : existWatches.values()) {
-                    result.addAll(ws);
+                synchronized (existWatches) {
+                    for (Set<Watcher> ws : existWatches.values()) {
+                        result.addAll(ws);
+                    }
+                    if (clear) {
+                        existWatches.clear();
+                    }
                 }
-                if (clear) {
-                    existWatches.clear();
-                }
-            }
 
-            synchronized (childWatches) {
-                for (Set<Watcher> ws : childWatches.values()) {
-                    result.addAll(ws);
+                synchronized (childWatches) {
+                    for (Set<Watcher> ws : childWatches.values()) {
+                        result.addAll(ws);
+                    }
+                    if (clear) {
+                        childWatches.clear();
+                    }
                 }
-                if (clear) {
-                    childWatches.clear();
-                }
-            }
 
-            synchronized (persistentWatches) {
-                for (Set<Watcher> ws: persistentWatches.values()) {
-                    result.addAll(ws);
+                synchronized (persistentWatches) {
+                    for (Set<Watcher> ws : persistentWatches.values()) {
+                        result.addAll(ws);
+                    }
                 }
-            }
 
-            synchronized (persistentRecursiveWatches) {
-                for (Set<Watcher> ws: persistentRecursiveWatches.values()) {
-                    result.addAll(ws);
+                synchronized (persistentRecursiveWatches) {
+                    for (Set<Watcher> ws : persistentRecursiveWatches.values()) {
+                        result.addAll(ws);
+                    }
                 }
-            }
 
-            return result;
-        case NodeDataChanged:
-        case NodeCreated:
-            synchronized (dataWatches) {
-                addTo(dataWatches.remove(clientPath), result);
-            }
-            synchronized (existWatches) {
-                addTo(existWatches.remove(clientPath), result);
-            }
-            addPersistentWatches(clientPath, type, result);
-            break;
-        case NodeChildrenChanged:
-            synchronized (childWatches) {
-                addTo(childWatches.remove(clientPath), result);
-            }
-            addPersistentWatches(clientPath, type, result);
-            break;
-        case NodeDeleted:
-            synchronized (dataWatches) {
-                addTo(dataWatches.remove(clientPath), result);
-            }
-            // TODO This shouldn't be needed, but just in case
-            synchronized (existWatches) {
-                Set<Watcher> list = existWatches.remove(clientPath);
-                if (list != null) {
-                    addTo(list, result);
-                    LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
+                return result;
+            case NodeDataChanged:
+            case NodeCreated:
+                synchronized (dataWatches) {
+                    addTo(dataWatches.remove(clientPath), result);
                 }
-            }
-            synchronized (childWatches) {
-                addTo(childWatches.remove(clientPath), result);
-            }
-            addPersistentWatches(clientPath, type, result);
-            break;
-        default:
-            String errorMsg = String.format(
-                "Unhandled watch event type %s with state %s on path %s",
-                type,
-                state,
-                clientPath);
-            LOG.error(errorMsg);
-            throw new RuntimeException(errorMsg);
+                synchronized (existWatches) {
+                    addTo(existWatches.remove(clientPath), result);
+                }
+                addPersistentWatches(clientPath, type, result);
+                break;
+            case NodeChildrenChanged:
+                synchronized (childWatches) {
+                    addTo(childWatches.remove(clientPath), result);
+                }
+                addPersistentWatches(clientPath, type, result);
+                break;
+            case NodeDeleted:
+                synchronized (dataWatches) {
+                    addTo(dataWatches.remove(clientPath), result);
+                }
+                // TODO This shouldn't be needed, but just in case
+                synchronized (existWatches) {
+                    Set<Watcher> list = existWatches.remove(clientPath);
+                    if (list != null) {
+                        addTo(list, result);
+                        LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
+                    }
+                }
+                synchronized (childWatches) {
+                    addTo(childWatches.remove(clientPath), result);
+                }
+                addPersistentWatches(clientPath, type, result);
+                break;
+            default:
+                String errorMsg = String.format(
+                        "Unhandled watch event type %s with state %s on path %s", type, state, clientPath);
+                LOG.error(errorMsg);
+                throw new RuntimeException(errorMsg);
         }
 
         return result;

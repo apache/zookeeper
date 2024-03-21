@@ -112,5 +112,4 @@ public interface AuthenticationProvider {
         // Most of the authentication providers id contains only user name.
         return id;
     }
-
 }

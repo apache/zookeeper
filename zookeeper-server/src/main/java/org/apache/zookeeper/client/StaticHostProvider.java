@@ -45,7 +45,6 @@ public final class StaticHostProvider implements HostProvider {
     public interface Resolver {
 
         InetAddress[] getAllByName(String name) throws UnknownHostException;
-
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProvider.class);
@@ -138,7 +137,8 @@ public final class StaticHostProvider implements HostProvider {
     private InetSocketAddress resolve(InetSocketAddress address) {
         try {
             String curHostString = address.getHostString();
-            List<InetAddress> resolvedAddresses = new ArrayList<>(Arrays.asList(this.resolver.getAllByName(curHostString)));
+            List<InetAddress> resolvedAddresses =
+                    new ArrayList<>(Arrays.asList(this.resolver.getAllByName(curHostString)));
             if (resolvedAddresses.isEmpty()) {
                 return address;
             }
@@ -181,8 +181,7 @@ public final class StaticHostProvider implements HostProvider {
      */
     @Override
     public synchronized boolean updateServerList(
-        Collection<InetSocketAddress> serverAddresses,
-        InetSocketAddress currentHost) {
+            Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
         List<InetSocketAddress> shuffledList = shuffle(serverAddresses);
         if (shuffledList.isEmpty()) {
             throw new IllegalArgumentException("A HostProvider may not be empty!");
@@ -211,10 +210,10 @@ public final class StaticHostProvider implements HostProvider {
 
         for (InetSocketAddress addr : shuffledList) {
             if (addr.getPort() == myServer.getPort()
-                && ((addr.getAddress() != null
-                     && myServer.getAddress() != null
-                     && addr.getAddress().equals(myServer.getAddress()))
-                    || addr.getHostString().equals(myServer.getHostString()))) {
+                    && ((addr.getAddress() != null
+                                    && myServer.getAddress() != null
+                                    && addr.getAddress().equals(myServer.getAddress()))
+                            || addr.getHostString().equals(myServer.getHostString()))) {
                 myServerInNewConfig = true;
                 break;
             }
@@ -264,7 +263,7 @@ public final class StaticHostProvider implements HostProvider {
                 reconfigMode = false;
             } else {
                 pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew))))
-                       / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
+                        / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
                 pNew = 1 - pOld;
             }
         }
@@ -342,7 +341,7 @@ public final class StaticHostProvider implements HostProvider {
                     currentIndex = serverAddresses.indexOf(addr);
                     return resolve(addr);
                 }
-                //tried all servers and couldn't connect
+                // tried all servers and couldn't connect
                 reconfigMode = false;
                 needToSleep = (spinDelay > 0);
             }
@@ -372,5 +371,4 @@ public final class StaticHostProvider implements HostProvider {
         lastIndex = currentIndex;
         reconfigMode = false;
     }
-
 }

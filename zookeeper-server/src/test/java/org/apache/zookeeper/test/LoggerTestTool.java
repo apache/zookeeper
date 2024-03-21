@@ -30,59 +30,59 @@ import java.io.ByteArrayOutputStream;
 import org.slf4j.LoggerFactory;
 
 public class LoggerTestTool implements AutoCloseable {
-  private final ByteArrayOutputStream os;
-  private Appender<ILoggingEvent> appender;
-  private Logger qlogger;
+    private final ByteArrayOutputStream os;
+    private Appender<ILoggingEvent> appender;
+    private Logger qlogger;
 
-  public LoggerTestTool(Class<?> cls) {
-    os = createLoggingStream(cls);
-  }
+    public LoggerTestTool(Class<?> cls) {
+        os = createLoggingStream(cls);
+    }
 
-  public LoggerTestTool(String cls) {
-    os = createLoggingStream(cls);
-  }
+    public LoggerTestTool(String cls) {
+        os = createLoggingStream(cls);
+    }
 
-  public ByteArrayOutputStream getOutputStream() {
-    return os;
-  }
+    public ByteArrayOutputStream getOutputStream() {
+        return os;
+    }
 
-  private ByteArrayOutputStream createLoggingStream(Class<?> cls) {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    appender = getConsoleAppender(os);
-    qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
-    qlogger.addAppender(appender);
-    qlogger.setLevel(Level.INFO);
-    appender.start();
-    return os;
-  }
+    private ByteArrayOutputStream createLoggingStream(Class<?> cls) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        appender = getConsoleAppender(os);
+        qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
+        qlogger.addAppender(appender);
+        qlogger.setLevel(Level.INFO);
+        appender.start();
+        return os;
+    }
 
-  private ByteArrayOutputStream createLoggingStream(String cls) {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    appender = getConsoleAppender(os);
-    qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
-    qlogger.addAppender(appender);
-    qlogger.setLevel(Level.INFO);
-    appender.start();
-    return os;
-  }
+    private ByteArrayOutputStream createLoggingStream(String cls) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        appender = getConsoleAppender(os);
+        qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
+        qlogger.addAppender(appender);
+        qlogger.setLevel(Level.INFO);
+        appender.start();
+        return os;
+    }
 
-  private OutputStreamAppender<ILoggingEvent> getConsoleAppender(ByteArrayOutputStream os) {
-    Logger rootLogger =
-        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-    Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
-        ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
+    private OutputStreamAppender<ILoggingEvent> getConsoleAppender(ByteArrayOutputStream os) {
+        Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
+                        ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder())
+                .getLayout();
 
-    OutputStreamAppender<ILoggingEvent> appender = new OutputStreamAppender<>();
-    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
-    appender.setOutputStream(os);
-    appender.setLayout(layout);
+        OutputStreamAppender<ILoggingEvent> appender = new OutputStreamAppender<>();
+        appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+        appender.setOutputStream(os);
+        appender.setLayout(layout);
 
-    return appender;
-  }
+        return appender;
+    }
 
-  @Override
-  public void close() throws Exception {
-    qlogger.detachAppender(appender);
-    os.close();
-  }
+    @Override
+    public void close() throws Exception {
+        qlogger.detachAppender(appender);
+        os.close();
+    }
 }

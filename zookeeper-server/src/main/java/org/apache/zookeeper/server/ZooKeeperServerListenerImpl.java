@@ -43,5 +43,4 @@ class ZooKeeperServerListenerImpl implements ZooKeeperServerListener {
         LOG.info("Thread {} exits, error code {}", threadName, exitCode);
         zkServer.setState(State.ERROR);
     }
-
 }

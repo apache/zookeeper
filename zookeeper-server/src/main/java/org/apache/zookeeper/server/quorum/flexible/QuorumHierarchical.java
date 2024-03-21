@@ -61,7 +61,6 @@ import org.slf4j.LoggerFactory;
  *
  * Note that it is still necessary to define peers using the server keyword.
  */
-
 public class QuorumHierarchical implements QuorumVerifier {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumHierarchical.class);
@@ -92,9 +91,9 @@ public class QuorumHierarchical implements QuorumVerifier {
             return true;
         }
         if ((allMembers.size() != qm.getAllMembers().size())
-            || (serverWeight.size() != qm.serverWeight.size())
-            || (groupWeight.size() != qm.groupWeight.size())
-            || (serverGroup.size() != qm.serverGroup.size())) {
+                || (serverWeight.size() != qm.serverWeight.size())
+                || (groupWeight.size() != qm.groupWeight.size())
+                || (serverGroup.size() != qm.serverGroup.size())) {
             return false;
         }
         for (QuorumServer qs : allMembers.values()) {
@@ -134,7 +133,6 @@ public class QuorumHierarchical implements QuorumVerifier {
      * This constructor takes a set of properties. We use
      * it in the unit test for this feature.
      */
-
     public QuorumHierarchical(Properties qp) throws ConfigException {
         parse(qp);
         LOG.info("{}, {}, {}", serverWeight.size(), serverGroup.size(), groupWeight.size());
@@ -177,7 +175,6 @@ public class QuorumHierarchical implements QuorumVerifier {
         } catch (IllegalArgumentException e) {
             throw new ConfigException("Error processing " + filename, e);
         }
-
     }
 
     /**
@@ -243,6 +240,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     public Map<Long, QuorumServer> getAllMembers() {
         return allMembers;
     }
+
     public String toString() {
         StringWriter sw = new StringWriter();
 
@@ -370,6 +368,7 @@ public class QuorumHierarchical implements QuorumVerifier {
             return false;
         }
     }
+
     public Map<Long, QuorumServer> getVotingMembers() {
         return participatingMembers;
     }
@@ -385,5 +384,4 @@ public class QuorumHierarchical implements QuorumVerifier {
     public void setVersion(long ver) {
         version = ver;
     }
-
 }

@@ -43,7 +43,6 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
      * Enable since request processor for writing txnlog to disk and
      * take periodic snapshot. Default is ON.
      */
-
     private boolean syncRequestProcessorEnabled = this.self.getSyncEnabled();
 
     /*
@@ -51,7 +50,14 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
      */ ConcurrentLinkedQueue<Request> pendingSyncs = new ConcurrentLinkedQueue<>();
 
     ObserverZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
+        super(
+                logFactory,
+                self.tickTime,
+                self.minSessionTimeout,
+                self.maxSessionTimeout,
+                self.clientPortListenBacklog,
+                zkDb,
+                self);
         LOG.info("syncEnabled ={}", syncRequestProcessorEnabled);
     }
 
@@ -90,7 +96,8 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         // Observers to, for example, remove the disk sync requirements.
         // Currently, they behave almost exactly the same as followers.
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
+        commitProcessor =
+                new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
         commitProcessor.start();
         firstProcessor = new ObserverRequestProcessor(this, commitProcessor);
         ((ObserverRequestProcessor) firstProcessor).start();
@@ -144,5 +151,4 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         super.dumpMonitorValues(response);
         response.accept("observer_master_id", getObserver().getLearnerMasterId());
     }
-
 }

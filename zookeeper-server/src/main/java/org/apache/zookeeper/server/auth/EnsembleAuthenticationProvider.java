@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * matches the name that the server thinks it belongs to. if the name does not match,
  * this provider will close the connection.
  */
-
 public class EnsembleAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(EnsembleAuthenticationProvider.class);
@@ -124,5 +123,4 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     public boolean isValid(String id) {
         return false;
     }
-
 }

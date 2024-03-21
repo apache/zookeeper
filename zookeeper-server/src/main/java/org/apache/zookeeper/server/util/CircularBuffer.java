@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.util;
 
 import java.lang.reflect.Array;
@@ -97,7 +96,7 @@ public class CircularBuffer<T> {
         return numberOfElements.get() >= capacity;
     }
 
-    public synchronized void  reset() {
+    public synchronized void reset() {
         numberOfElements.set(0);
     }
 }

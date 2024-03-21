@@ -337,9 +337,9 @@ public class DataTree {
      */
     boolean isSpecialPath(String path) {
         return rootZookeeper.equals(path)
-               || procZookeeper.equals(path)
-               || quotaZookeeper.equals(path)
-               || configZookeeper.equals(path);
+                || procZookeeper.equals(path)
+                || quotaZookeeper.equals(path)
+                || configZookeeper.equals(path);
     }
 
     public static void copyStatPersisted(StatPersisted from, StatPersisted to) {
@@ -413,7 +413,15 @@ public class DataTree {
      * @throws NodeExistsException
      * @throws NoNodeException
      */
-    public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time) throws NoNodeException, NodeExistsException {
+    public void createNode(
+            final String path,
+            byte[] data,
+            List<ACL> acl,
+            long ephemeralOwner,
+            int parentCVersion,
+            long zxid,
+            long time)
+            throws NoNodeException, NodeExistsException {
         createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
     }
 
@@ -436,7 +444,16 @@ public class DataTree {
      * @throws NodeExistsException
      * @throws NoNodeException
      */
-    public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws NoNodeException, NodeExistsException {
+    public void createNode(
+            final String path,
+            byte[] data,
+            List<ACL> acl,
+            long ephemeralOwner,
+            int parentCVersion,
+            long zxid,
+            long time,
+            Stat outputStat)
+            throws NoNodeException, NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -517,13 +534,13 @@ public class DataTree {
         String lastPrefix = getMaxPrefixWithQuota(path);
         long bytes = data == null ? 0 : data.length;
         // also check to update the quotas for this node
-        if (lastPrefix != null) {    // ok we have some match and need to update
+        if (lastPrefix != null) { // ok we have some match and need to update
             updateQuotaStat(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated, zxid, acl);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
-            Event.EventType.NodeChildrenChanged, zxid, parentAcl);
+        childWatches.triggerWatch(
+                parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged, zxid, parentAcl);
     }
 
     /**
@@ -613,20 +630,15 @@ public class DataTree {
         updateWriteStat(path, 0L);
 
         if (LOG.isTraceEnabled()) {
+            ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "dataWatches.triggerWatch " + path);
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "dataWatches.triggerWatch " + path);
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "childWatches.triggerWatch " + parentName);
+                    LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "childWatches.triggerWatch " + parentName);
         }
 
         WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted, zxid, acl);
         childWatches.triggerWatch(path, EventType.NodeDeleted, zxid, acl, processed);
-        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
-            EventType.NodeChildrenChanged, zxid, parentAcl);
+        childWatches.triggerWatch(
+                "".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged, zxid, parentAcl);
     }
 
     public Stat setData(String path, byte[] data, int version, long zxid, long time) throws NoNodeException {
@@ -756,7 +768,9 @@ public class DataTree {
             return nodes.size() - 2;
         }
 
-        return (int) nodes.entrySet().parallelStream().filter(entry -> entry.getKey().startsWith(path + "/")).count();
+        return (int) nodes.entrySet().parallelStream()
+                .filter(entry -> entry.getKey().startsWith(path + "/"))
+                .count();
     }
 
     public Stat setACL(String path, List<ACL> acl, int version) throws NoNodeException {
@@ -842,7 +856,6 @@ public class DataTree {
         public int hashCode() {
             return (int) ((clientId ^ cxid) % Integer.MAX_VALUE);
         }
-
     }
 
     public volatile long lastProcessedZxid = 0;
@@ -868,172 +881,174 @@ public class DataTree {
             rc.err = 0;
             rc.multiResult = null;
             switch (header.getType()) {
-            case OpCode.create:
-                CreateTxn createTxn = (CreateTxn) txn;
-                rc.path = createTxn.getPath();
-                createNode(
-                    createTxn.getPath(),
-                    createTxn.getData(),
-                    createTxn.getAcl(),
-                    createTxn.getEphemeral() ? header.getClientId() : 0,
-                    createTxn.getParentCVersion(),
-                    header.getZxid(),
-                    header.getTime(),
-                    null);
-                break;
-            case OpCode.create2:
-                CreateTxn create2Txn = (CreateTxn) txn;
-                rc.path = create2Txn.getPath();
-                Stat stat = new Stat();
-                createNode(
-                    create2Txn.getPath(),
-                    create2Txn.getData(),
-                    create2Txn.getAcl(),
-                    create2Txn.getEphemeral() ? header.getClientId() : 0,
-                    create2Txn.getParentCVersion(),
-                    header.getZxid(),
-                    header.getTime(),
-                    stat);
-                rc.stat = stat;
-                break;
-            case OpCode.createTTL:
-                CreateTTLTxn createTtlTxn = (CreateTTLTxn) txn;
-                rc.path = createTtlTxn.getPath();
-                stat = new Stat();
-                createNode(
-                    createTtlTxn.getPath(),
-                    createTtlTxn.getData(),
-                    createTtlTxn.getAcl(),
-                    EphemeralType.TTL.toEphemeralOwner(createTtlTxn.getTtl()),
-                    createTtlTxn.getParentCVersion(),
-                    header.getZxid(),
-                    header.getTime(),
-                    stat);
-                rc.stat = stat;
-                break;
-            case OpCode.createContainer:
-                CreateContainerTxn createContainerTxn = (CreateContainerTxn) txn;
-                rc.path = createContainerTxn.getPath();
-                stat = new Stat();
-                createNode(
-                    createContainerTxn.getPath(),
-                    createContainerTxn.getData(),
-                    createContainerTxn.getAcl(),
-                    EphemeralType.CONTAINER_EPHEMERAL_OWNER,
-                    createContainerTxn.getParentCVersion(),
-                    header.getZxid(),
-                    header.getTime(),
-                    stat);
-                rc.stat = stat;
-                break;
-            case OpCode.delete:
-            case OpCode.deleteContainer:
-                DeleteTxn deleteTxn = (DeleteTxn) txn;
-                rc.path = deleteTxn.getPath();
-                deleteNode(deleteTxn.getPath(), header.getZxid());
-                break;
-            case OpCode.reconfig:
-            case OpCode.setData:
-                SetDataTxn setDataTxn = (SetDataTxn) txn;
-                rc.path = setDataTxn.getPath();
-                rc.stat = setData(
-                    setDataTxn.getPath(),
-                    setDataTxn.getData(),
-                    setDataTxn.getVersion(),
-                    header.getZxid(),
-                    header.getTime());
-                break;
-            case OpCode.setACL:
-                SetACLTxn setACLTxn = (SetACLTxn) txn;
-                rc.path = setACLTxn.getPath();
-                rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(), setACLTxn.getVersion());
-                break;
-            case OpCode.closeSession:
-                long sessionId = header.getClientId();
-                if (txn != null) {
-                    killSession(sessionId, header.getZxid(),
-                            ephemerals.remove(sessionId),
-                            ((CloseSessionTxn) txn).getPaths2Delete());
-                } else {
-                    killSession(sessionId, header.getZxid());
-                }
-                break;
-            case OpCode.error:
-                ErrorTxn errTxn = (ErrorTxn) txn;
-                rc.err = errTxn.getErr();
-                break;
-            case OpCode.check:
-                CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
-                rc.path = checkTxn.getPath();
-                break;
-            case OpCode.multi:
-                MultiTxn multiTxn = (MultiTxn) txn;
-                List<Txn> txns = multiTxn.getTxns();
-                rc.multiResult = new ArrayList<>();
-                boolean failed = false;
-                for (Txn subtxn : txns) {
-                    if (subtxn.getType() == OpCode.error) {
-                        failed = true;
-                        break;
-                    }
-                }
-
-                boolean post_failed = false;
-                for (Txn subtxn : txns) {
-                    final Supplier<Record> supplier;
-                    switch (subtxn.getType()) {
-                    case OpCode.create:
-                    case OpCode.create2:
-                        supplier = CreateTxn::new;
-                        break;
-                    case OpCode.createTTL:
-                        supplier = CreateTTLTxn::new;
-                        break;
-                    case OpCode.createContainer:
-                        supplier = CreateContainerTxn::new;
-                        break;
-                    case OpCode.delete:
-                    case OpCode.deleteContainer:
-                        supplier = DeleteTxn::new;
-                        break;
-                    case OpCode.setData:
-                        supplier = SetDataTxn::new;
-                        break;
-                    case OpCode.error:
-                        supplier = ErrorTxn::new;
-                        post_failed = true;
-                        break;
-                    case OpCode.check:
-                        supplier = CheckVersionTxn::new;
-                        break;
-                    default:
-                        throw new IOException("Invalid type of op: " + subtxn.getType());
-                    }
-
-                    final Record record;
-                    if (failed && subtxn.getType() != OpCode.error) {
-                        int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
-                        subtxn.setType(OpCode.error);
-                        record = new ErrorTxn(ec);
+                case OpCode.create:
+                    CreateTxn createTxn = (CreateTxn) txn;
+                    rc.path = createTxn.getPath();
+                    createNode(
+                            createTxn.getPath(),
+                            createTxn.getData(),
+                            createTxn.getAcl(),
+                            createTxn.getEphemeral() ? header.getClientId() : 0,
+                            createTxn.getParentCVersion(),
+                            header.getZxid(),
+                            header.getTime(),
+                            null);
+                    break;
+                case OpCode.create2:
+                    CreateTxn create2Txn = (CreateTxn) txn;
+                    rc.path = create2Txn.getPath();
+                    Stat stat = new Stat();
+                    createNode(
+                            create2Txn.getPath(),
+                            create2Txn.getData(),
+                            create2Txn.getAcl(),
+                            create2Txn.getEphemeral() ? header.getClientId() : 0,
+                            create2Txn.getParentCVersion(),
+                            header.getZxid(),
+                            header.getTime(),
+                            stat);
+                    rc.stat = stat;
+                    break;
+                case OpCode.createTTL:
+                    CreateTTLTxn createTtlTxn = (CreateTTLTxn) txn;
+                    rc.path = createTtlTxn.getPath();
+                    stat = new Stat();
+                    createNode(
+                            createTtlTxn.getPath(),
+                            createTtlTxn.getData(),
+                            createTtlTxn.getAcl(),
+                            EphemeralType.TTL.toEphemeralOwner(createTtlTxn.getTtl()),
+                            createTtlTxn.getParentCVersion(),
+                            header.getZxid(),
+                            header.getTime(),
+                            stat);
+                    rc.stat = stat;
+                    break;
+                case OpCode.createContainer:
+                    CreateContainerTxn createContainerTxn = (CreateContainerTxn) txn;
+                    rc.path = createContainerTxn.getPath();
+                    stat = new Stat();
+                    createNode(
+                            createContainerTxn.getPath(),
+                            createContainerTxn.getData(),
+                            createContainerTxn.getAcl(),
+                            EphemeralType.CONTAINER_EPHEMERAL_OWNER,
+                            createContainerTxn.getParentCVersion(),
+                            header.getZxid(),
+                            header.getTime(),
+                            stat);
+                    rc.stat = stat;
+                    break;
+                case OpCode.delete:
+                case OpCode.deleteContainer:
+                    DeleteTxn deleteTxn = (DeleteTxn) txn;
+                    rc.path = deleteTxn.getPath();
+                    deleteNode(deleteTxn.getPath(), header.getZxid());
+                    break;
+                case OpCode.reconfig:
+                case OpCode.setData:
+                    SetDataTxn setDataTxn = (SetDataTxn) txn;
+                    rc.path = setDataTxn.getPath();
+                    rc.stat = setData(
+                            setDataTxn.getPath(),
+                            setDataTxn.getData(),
+                            setDataTxn.getVersion(),
+                            header.getZxid(),
+                            header.getTime());
+                    break;
+                case OpCode.setACL:
+                    SetACLTxn setACLTxn = (SetACLTxn) txn;
+                    rc.path = setACLTxn.getPath();
+                    rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(), setACLTxn.getVersion());
+                    break;
+                case OpCode.closeSession:
+                    long sessionId = header.getClientId();
+                    if (txn != null) {
+                        killSession(
+                                sessionId,
+                                header.getZxid(),
+                                ephemerals.remove(sessionId),
+                                ((CloseSessionTxn) txn).getPaths2Delete());
                     } else {
-                        record = RequestRecord.fromBytes(subtxn.getData()).readRecord(supplier);
+                        killSession(sessionId, header.getZxid());
+                    }
+                    break;
+                case OpCode.error:
+                    ErrorTxn errTxn = (ErrorTxn) txn;
+                    rc.err = errTxn.getErr();
+                    break;
+                case OpCode.check:
+                    CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
+                    rc.path = checkTxn.getPath();
+                    break;
+                case OpCode.multi:
+                    MultiTxn multiTxn = (MultiTxn) txn;
+                    List<Txn> txns = multiTxn.getTxns();
+                    rc.multiResult = new ArrayList<>();
+                    boolean failed = false;
+                    for (Txn subtxn : txns) {
+                        if (subtxn.getType() == OpCode.error) {
+                            failed = true;
+                            break;
+                        }
                     }
 
-                    assert !failed || (subtxn.getType() == OpCode.error);
+                    boolean post_failed = false;
+                    for (Txn subtxn : txns) {
+                        final Supplier<Record> supplier;
+                        switch (subtxn.getType()) {
+                            case OpCode.create:
+                            case OpCode.create2:
+                                supplier = CreateTxn::new;
+                                break;
+                            case OpCode.createTTL:
+                                supplier = CreateTTLTxn::new;
+                                break;
+                            case OpCode.createContainer:
+                                supplier = CreateContainerTxn::new;
+                                break;
+                            case OpCode.delete:
+                            case OpCode.deleteContainer:
+                                supplier = DeleteTxn::new;
+                                break;
+                            case OpCode.setData:
+                                supplier = SetDataTxn::new;
+                                break;
+                            case OpCode.error:
+                                supplier = ErrorTxn::new;
+                                post_failed = true;
+                                break;
+                            case OpCode.check:
+                                supplier = CheckVersionTxn::new;
+                                break;
+                            default:
+                                throw new IOException("Invalid type of op: " + subtxn.getType());
+                        }
 
-                    TxnHeader subHdr = new TxnHeader(
-                        header.getClientId(),
-                        header.getCxid(),
-                        header.getZxid(),
-                        header.getTime(),
-                        subtxn.getType());
-                    ProcessTxnResult subRc = processTxn(subHdr, record, true);
-                    rc.multiResult.add(subRc);
-                    if (subRc.err != 0 && rc.err == 0) {
-                        rc.err = subRc.err;
+                        final Record record;
+                        if (failed && subtxn.getType() != OpCode.error) {
+                            int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
+                            subtxn.setType(OpCode.error);
+                            record = new ErrorTxn(ec);
+                        } else {
+                            record = RequestRecord.fromBytes(subtxn.getData()).readRecord(supplier);
+                        }
+
+                        assert !failed || (subtxn.getType() == OpCode.error);
+
+                        TxnHeader subHdr = new TxnHeader(
+                                header.getClientId(),
+                                header.getCxid(),
+                                header.getZxid(),
+                                header.getTime(),
+                                subtxn.getType());
+                        ProcessTxnResult subRc = processTxn(subHdr, record, true);
+                        rc.multiResult.add(subRc);
+                        if (subRc.err != 0 && rc.err == 0) {
+                            rc.err = subRc.err;
+                        }
                     }
-                }
-                break;
+                    break;
             }
         } catch (KeeperException e) {
             LOG.debug("Failed: {}:{}", header, txn, e);
@@ -1130,8 +1145,7 @@ public class DataTree {
         killSession(session, zxid, ephemerals.remove(session), null);
     }
 
-    void killSession(long session, long zxid, Set<String> paths2DeleteLocal,
-            List<String> paths2DeleteInTxn) {
+    void killSession(long session, long zxid, Set<String> paths2DeleteLocal, List<String> paths2DeleteInTxn) {
         if (paths2DeleteInTxn != null) {
             deleteNodes(session, zxid, paths2DeleteInTxn);
         }
@@ -1143,14 +1157,14 @@ public class DataTree {
         if (paths2DeleteInTxn != null) {
             // explicitly check and remove to avoid potential performance
             // issue when using removeAll
-            for (String path: paths2DeleteInTxn) {
+            for (String path : paths2DeleteInTxn) {
                 paths2DeleteLocal.remove(path);
             }
             if (!paths2DeleteLocal.isEmpty()) {
                 LOG.warn(
-                    "Unexpected extra paths under session {} which are not in txn 0x{}",
-                    paths2DeleteLocal,
-                    Long.toHexString(zxid));
+                        "Unexpected extra paths under session {} which are not in txn 0x{}",
+                        paths2DeleteLocal,
+                        Long.toHexString(zxid));
             }
         }
 
@@ -1167,18 +1181,31 @@ public class DataTree {
                 LOG.debug("Deleting ephemeral node {} for session {}", path, sessionHex);
             } catch (NoNodeException e) {
                 LOG.warn(
-                    "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
-                        path, sessionHex);
+                        "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
+                        path,
+                        sessionHex);
             }
             if (ZKAuditProvider.isAuditEnabled()) {
                 if (deleted) {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.SUCCESS);
+                    ZKAuditProvider.log(
+                            ZKAuditProvider.getZKUser(),
+                            AuditConstants.OP_DEL_EZNODE_EXP,
+                            path,
+                            null,
+                            null,
+                            sessionHex,
+                            null,
+                            Result.SUCCESS);
                 } else {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.FAILURE);
+                    ZKAuditProvider.log(
+                            ZKAuditProvider.getZKUser(),
+                            AuditConstants.OP_DEL_EZNODE_EXP,
+                            path,
+                            null,
+                            null,
+                            sessionHex,
+                            null,
+                            Result.FAILURE);
                 }
             }
         }
@@ -1304,8 +1331,8 @@ public class DataTree {
         synchronized (node) {
             StatPersisted statCopy = new StatPersisted();
             copyStatPersisted(node.stat, statCopy);
-            //we do not need to make a copy of node.data because the contents
-            //are never changed
+            // we do not need to make a copy of node.data because the contents
+            // are never changed
             nodeCopy = new DataNode(node.data, node.acl, statCopy);
             children = node.getChildren().toArray(new String[0]);
         }
@@ -1364,8 +1391,7 @@ public class DataTree {
                 String parentPath = path.substring(0, lastSlash);
                 DataNode parent = nodes.get(parentPath);
                 if (parent == null) {
-                    throw new IOException(
-                            "Invalid Datatree, unable to find parent " + parentPath + " of path " + path);
+                    throw new IOException("Invalid Datatree, unable to find parent " + parentPath + " of path " + path);
                 }
                 parent.addChild(path.substring(lastSlash + 1));
                 long owner = node.stat.getEphemeralOwner();
@@ -1487,8 +1513,14 @@ public class DataTree {
         childWatches.removeWatcher(watcher);
     }
 
-    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches,
-                           List<String> persistentWatches, List<String> persistentRecursiveWatches, Watcher watcher) {
+    public void setWatches(
+            long relativeZxid,
+            List<String> dataWatches,
+            List<String> existWatches,
+            List<String> childWatches,
+            List<String> persistentWatches,
+            List<String> persistentRecursiveWatches,
+            Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             if (node == null) {
@@ -1566,25 +1598,25 @@ public class DataTree {
     public boolean containsWatcher(String path, WatcherType type, Watcher watcher) {
         boolean containsWatcher = false;
         switch (type) {
-        case Children:
-            containsWatcher = this.childWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
-            break;
-        case Data:
-            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
-            break;
-        case Persistent:
-            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT);
-            break;
-        case PersistentRecursive:
-            containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
-            break;
-        case Any:
-            if (this.childWatches.containsWatcher(path, watcher, null)) {
-                containsWatcher = true;
-            } else if (this.dataWatches.containsWatcher(path, watcher, null)) {
-                containsWatcher = true;
-            }
-            break;
+            case Children:
+                containsWatcher = this.childWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
+                break;
+            case Data:
+                containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.STANDARD);
+                break;
+            case Persistent:
+                containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT);
+                break;
+            case PersistentRecursive:
+                containsWatcher = this.dataWatches.containsWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+                break;
+            case Any:
+                if (this.childWatches.containsWatcher(path, watcher, null)) {
+                    containsWatcher = true;
+                } else if (this.dataWatches.containsWatcher(path, watcher, null)) {
+                    containsWatcher = true;
+                }
+                break;
         }
         return containsWatcher;
     }
@@ -1592,31 +1624,31 @@ public class DataTree {
     public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
         boolean removed = false;
         switch (type) {
-        case Children:
-            removed = this.childWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
-            break;
-        case Data:
-            removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
-            break;
-        case Persistent:
-            if (this.childWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
-                removed = true;
-            }
-            if (this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
-                removed = true;
-            }
-            break;
-        case PersistentRecursive:
-            removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
-            break;
-        case Any:
-            if (this.childWatches.removeWatcher(path, watcher, null)) {
-                removed = true;
-            }
-            if (this.dataWatches.removeWatcher(path, watcher, null)) {
-                removed = true;
-            }
-            break;
+            case Children:
+                removed = this.childWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
+                break;
+            case Data:
+                removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.STANDARD);
+                break;
+            case Persistent:
+                if (this.childWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
+                    removed = true;
+                }
+                if (this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT)) {
+                    removed = true;
+                }
+                break;
+            case PersistentRecursive:
+                removed = this.dataWatches.removeWatcher(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+                break;
+            case Any:
+                if (this.childWatches.removeWatcher(path, watcher, null)) {
+                    removed = true;
+                }
+                if (this.dataWatches.removeWatcher(path, watcher, null)) {
+                    removed = true;
+                }
+                break;
         }
         return removed;
     }
@@ -1699,8 +1731,9 @@ public class DataTree {
             zxidDigest.deserialize(ia);
             if (zxidDigest.zxid > 0) {
                 digestFromLoadedSnapshot = zxidDigest;
-                LOG.info("The digest in the snapshot has digest version of {}, "
-                        + "with zxid as 0x{}, and digest value as {}",
+                LOG.info(
+                        "The digest in the snapshot has digest version of {}, "
+                                + "with zxid as 0x{}, and digest value as {}",
                         digestFromLoadedSnapshot.digestVersion,
                         Long.toHexString(digestFromLoadedSnapshot.zxid),
                         digestFromLoadedSnapshot.digest);
@@ -1725,11 +1758,13 @@ public class DataTree {
             // to compare digest when replaying the first txn, since it's
             // a non-fuzzy snapshot.
             if (digestFromLoadedSnapshot != null && digestFromLoadedSnapshot.zxid < startZxidOfSnapshot) {
-                LOG.info("The zxid of snapshot digest 0x{} is smaller "
-                        + "than the known snapshot highest zxid, the snapshot "
-                        + "started with zxid 0x{}. It will be invalid to use "
-                        + "this snapshot digest associated with this zxid, will "
-                        + "ignore comparing it.", Long.toHexString(digestFromLoadedSnapshot.zxid),
+                LOG.info(
+                        "The zxid of snapshot digest 0x{} is smaller "
+                                + "than the known snapshot highest zxid, the snapshot "
+                                + "started with zxid 0x{}. It will be invalid to use "
+                                + "this snapshot digest associated with this zxid, will "
+                                + "ignore comparing it.",
+                        Long.toHexString(digestFromLoadedSnapshot.zxid),
                         Long.toHexString(startZxidOfSnapshot));
                 digestFromLoadedSnapshot = null;
             }
@@ -1764,14 +1799,15 @@ public class DataTree {
      * @return true if lastProcessedZxid is deserialized successfully, otherwise false
      * @throws IOException if there is an I/O error
      */
-    public boolean deserializeLastProcessedZxid(final InputArchive ia)  throws IOException {
+    public boolean deserializeLastProcessedZxid(final InputArchive ia) throws IOException {
         if (!ZooKeeperServer.isSerializeLastProcessedZxidEnabled()) {
             return false;
         }
         try {
             lastProcessedZxid = ia.readLong("lastZxid");
         } catch (final EOFException e) {
-            LOG.warn("Got EOFException while reading the last processed zxid, likely due to reading an older snapshot.");
+            LOG.warn(
+                    "Got EOFException while reading the last processed zxid, likely due to reading an older snapshot.");
             return false;
         }
         return true;
@@ -1787,9 +1823,9 @@ public class DataTree {
         if (zxid == digestFromLoadedSnapshot.zxid) {
             if (digestCalculator.getDigestVersion() != digestFromLoadedSnapshot.digestVersion) {
                 LOG.info(
-                    "Digest version changed, local: {}, new: {}, skip comparing digest now.",
-                    digestFromLoadedSnapshot.digestVersion,
-                    digestCalculator.getDigestVersion());
+                        "Digest version changed, local: {}, new: {}, skip comparing digest now.",
+                        digestFromLoadedSnapshot.digestVersion,
+                        digestCalculator.getDigestVersion());
                 digestFromLoadedSnapshot = null;
                 return;
             }
@@ -1799,8 +1835,7 @@ public class DataTree {
             digestFromLoadedSnapshot = null;
         } else if (digestFromLoadedSnapshot.zxid != 0 && zxid > digestFromLoadedSnapshot.zxid) {
             RATE_LOGGER.rateLimitLog(
-                    "The txn 0x{} of snapshot digest does not exist.",
-                    Long.toHexString(digestFromLoadedSnapshot.zxid));
+                    "The txn 0x{} of snapshot digest does not exist.", Long.toHexString(digestFromLoadedSnapshot.zxid));
         }
     }
 
@@ -1838,7 +1873,10 @@ public class DataTree {
             if (firstMismatchTxn) {
                 LOG.error(
                         "First digest mismatch on txn: {}, {}, expected digest is {}, actual digest is {}, ",
-                        header, txn, digest, actualDigest);
+                        header,
+                        txn,
+                        digest,
+                        actualDigest);
                 firstMismatchTxn = false;
             }
             return false;
@@ -1846,7 +1884,8 @@ public class DataTree {
             RATE_LOGGER.flush();
             LOG.debug(
                     "Digests are matching for Zxid: {}, Digest in log and actual tree: {}",
-                    Long.toHexString(zxid), logDigest);
+                    Long.toHexString(zxid),
+                    logDigest);
             return true;
         }
     }
@@ -1947,7 +1986,6 @@ public class DataTree {
         public long getDigest() {
             return digest;
         }
-
     }
 
     /**

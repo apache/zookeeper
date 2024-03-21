@@ -126,5 +126,4 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     public boolean isValid(String id) {
         return true;
     }
-
 }

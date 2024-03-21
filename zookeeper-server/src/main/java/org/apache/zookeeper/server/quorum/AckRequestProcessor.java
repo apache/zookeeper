@@ -53,5 +53,4 @@ class AckRequestProcessor implements RequestProcessor {
     public void shutdown() {
         // TODO No need to do anything
     }
-
 }

@@ -67,7 +67,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ObserverMaster.class);
 
-    //Follower counter
+    // Follower counter
     private final AtomicLong followerCounter = new AtomicLong(-1);
 
     private QuorumPeer self;
@@ -84,7 +84,9 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
      * to keeping recent txns.
      */
     private static final int PKTS_SIZE_LIMIT = 32 * 1024 * 1024;
-    private static volatile int pktsSizeLimit = Integer.getInteger("zookeeper.observerMaster.sizeLimit", PKTS_SIZE_LIMIT);
+
+    private static volatile int pktsSizeLimit =
+            Integer.getInteger("zookeeper.observerMaster.sizeLimit", PKTS_SIZE_LIMIT);
     private ConcurrentLinkedQueue<QuorumPacket> proposedPkts = new ConcurrentLinkedQueue<>();
     private ConcurrentLinkedQueue<QuorumPacket> committedPkts = new ConcurrentLinkedQueue<>();
     private int pktsSize = 0;
@@ -128,7 +130,6 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
             result = 31 * result + handler.hashCode();
             return result;
         }
-
     }
 
     private Thread thread;
@@ -256,10 +257,10 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         LearnerHandler learnerHandler = revalidation.handler;
         // create a copy here as the qp object is reused by the Follower and may be mutated
         QuorumPacket deepCopy = new QuorumPacket(
-            qp.getType(),
-            qp.getZxid(),
-            Arrays.copyOf(qp.getData(), qp.getData().length),
-            qp.getAuthinfo() == null ? null : new ArrayList<>(qp.getAuthinfo()));
+                qp.getType(),
+                qp.getZxid(),
+                Arrays.copyOf(qp.getData(), qp.getData().length),
+                qp.getAuthinfo() == null ? null : new ArrayList<>(qp.getAuthinfo()));
         learnerHandler.queuePacket(deepCopy);
         // To keep consistent as leader, touch the session when it's
         // revalidating the session, only update if it's a valid session.
@@ -296,11 +297,11 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
             QuorumPacket packet = itr.next();
             if (packet.getZxid() > lastSeenZxid + 1) {
                 LOG.error(
-                    "LearnerHandler is too far behind (0x{} < 0x{}), disconnecting {} at {}",
-                    Long.toHexString(lastSeenZxid + 1),
-                    Long.toHexString(packet.getZxid()),
-                    learnerHandler.getSid(),
-                    learnerHandler.getRemoteAddress());
+                        "LearnerHandler is too far behind (0x{} < 0x{}), disconnecting {} at {}",
+                        Long.toHexString(lastSeenZxid + 1),
+                        Long.toHexString(packet.getZxid()),
+                        learnerHandler.getSid(),
+                        learnerHandler.getRemoteAddress());
                 learnerHandler.shutdown();
                 return -1;
             } else if (packet.getZxid() == lastSeenZxid + 1) {
@@ -317,15 +318,15 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
                 queueBytesUsed += LearnerHandler.packetSize(packet);
             }
             LOG.info(
-                "finished syncing observer from retained commit queue: sid {}, "
-                    + "queue head 0x{}, queue tail 0x{}, sync position 0x{}, num packets used {}, "
-                    + "num bytes used {}",
-                learnerHandler.getSid(),
-                Long.toHexString(queueHeadZxid),
-                Long.toHexString(packet.getZxid()),
-                Long.toHexString(lastSeenZxid),
-                packet.getZxid() - lastSeenZxid,
-                queueBytesUsed);
+                    "finished syncing observer from retained commit queue: sid {}, "
+                            + "queue head 0x{}, queue tail 0x{}, sync position 0x{}, num packets used {}, "
+                            + "num bytes used {}",
+                    learnerHandler.getSid(),
+                    Long.toHexString(queueHeadZxid),
+                    Long.toHexString(packet.getZxid()),
+                    Long.toHexString(lastSeenZxid),
+                    packet.getZxid() - lastSeenZxid,
+                    queueBytesUsed);
         }
         activeObservers.add(learnerHandler);
         return lastProposedZxid;
@@ -364,9 +365,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         }
         if (pkt.getZxid() != zxid) {
             final String m = String.format(
-                "Unexpected proposal packet on commit ack, expected zxid 0x%d got zxid 0x%d",
-                zxid,
-                pkt.getZxid());
+                    "Unexpected proposal packet on commit ack, expected zxid 0x%d got zxid 0x%d", zxid, pkt.getZxid());
             LOG.error(m);
             throw new RuntimeException(m);
         }
@@ -539,5 +538,4 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
             MBeanRegistry.getInstance().unregister(bean);
         }
     }
-
 }

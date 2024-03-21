@@ -45,5 +45,4 @@ public interface DataTreeMXBean {
      * @return number of ephemeral nodes in the data tree
      */
     int countEphemerals();
-
 }

@@ -38,5 +38,4 @@ public class IsroCommand extends AbstractFourLetterCommand {
             pw.print("rw");
         }
     }
-
 }

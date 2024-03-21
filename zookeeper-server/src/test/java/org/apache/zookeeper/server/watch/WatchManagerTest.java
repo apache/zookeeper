@@ -58,8 +58,7 @@ public class WatchManagerTest extends ZKTestCase {
 
     public static Stream<Arguments> data() {
         return Stream.of(
-            Arguments.of(WatchManager.class.getName()),
-            Arguments.of(WatchManagerOptimized.class.getName()));
+                Arguments.of(WatchManager.class.getName()), Arguments.of(WatchManagerOptimized.class.getName()));
     }
 
     @BeforeEach
@@ -90,8 +89,7 @@ public class WatchManagerTest extends ZKTestCase {
         private final AtomicInteger watchesAdded;
         private volatile boolean stopped = false;
 
-        public AddWatcherWorker(
-                IWatchManager manager, int paths, int watchers, AtomicInteger watchesAdded) {
+        public AddWatcherWorker(IWatchManager manager, int paths, int watchers, AtomicInteger watchesAdded) {
             this.manager = manager;
             this.paths = paths;
             this.watchers = watchers;
@@ -112,7 +110,6 @@ public class WatchManagerTest extends ZKTestCase {
         public void shutdown() {
             stopped = true;
         }
-
     }
 
     public class WatcherTriggerWorker extends Thread {
@@ -122,8 +119,7 @@ public class WatchManagerTest extends ZKTestCase {
         private final AtomicInteger triggeredCount;
         private volatile boolean stopped = false;
 
-        public WatcherTriggerWorker(
-                IWatchManager manager, int paths, AtomicInteger triggeredCount) {
+        public WatcherTriggerWorker(IWatchManager manager, int paths, AtomicInteger triggeredCount) {
             this.manager = manager;
             this.paths = paths;
             this.triggeredCount = triggeredCount;
@@ -147,7 +143,6 @@ public class WatchManagerTest extends ZKTestCase {
         public void shutdown() {
             stopped = true;
         }
-
     }
 
     public class RemoveWatcherWorker extends Thread {
@@ -158,8 +153,7 @@ public class WatchManagerTest extends ZKTestCase {
         private final AtomicInteger watchesRemoved;
         private volatile boolean stopped = false;
 
-        public RemoveWatcherWorker(
-                IWatchManager manager, int paths, int watchers, AtomicInteger watchesRemoved) {
+        public RemoveWatcherWorker(IWatchManager manager, int paths, int watchers, AtomicInteger watchesRemoved) {
             this.manager = manager;
             this.paths = paths;
             this.watchers = watchers;
@@ -184,7 +178,6 @@ public class WatchManagerTest extends ZKTestCase {
         public void shutdown() {
             stopped = true;
         }
-
     }
 
     public class CreateDeadWatchersWorker extends Thread {
@@ -194,8 +187,7 @@ public class WatchManagerTest extends ZKTestCase {
         private final Set<Watcher> removedWatchers;
         private volatile boolean stopped = false;
 
-        public CreateDeadWatchersWorker(
-                IWatchManager manager, int watchers, Set<Watcher> removedWatchers) {
+        public CreateDeadWatchersWorker(IWatchManager manager, int watchers, Set<Watcher> removedWatchers) {
             this.manager = manager;
             this.watchers = watchers;
             this.removedWatchers = removedWatchers;
@@ -220,7 +212,6 @@ public class WatchManagerTest extends ZKTestCase {
         public void shutdown() {
             stopped = true;
         }
-
     }
 
     /**
@@ -749,43 +740,43 @@ public class WatchManagerTest extends ZKTestCase {
 
         final String path3 = "/path3";
 
-        //both watcher1 and watcher2 are watching path1
+        // both watcher1 and watcher2 are watching path1
         manager.addWatch(path1, watcher1);
         manager.addWatch(path1, watcher2);
 
-        //path2 is watched by watcher1
+        // path2 is watched by watcher1
         manager.addWatch(path2, watcher1);
 
         manager.triggerWatch(path3, EventType.NodeCreated, 1, null);
-        //path3 is not being watched so metric is 0
+        // path3 is not being watched so metric is 0
         checkMetrics("node_created_watch_count", 0L, 0L, 0D, 0L, 0L);
         // Watchers shouldn't have received any events yet so the zxid should be -1.
         checkMostRecentWatchedEvent(watcher1, null, null, -1);
         checkMostRecentWatchedEvent(watcher2, null, null, -1);
 
-        //path1 is watched by two watchers so two fired
+        // path1 is watched by two watchers so two fired
         manager.triggerWatch(path1, EventType.NodeCreated, 2, null);
         checkMetrics("node_created_watch_count", 2L, 2L, 2D, 1L, 2L);
         checkMostRecentWatchedEvent(watcher1, path1, EventType.NodeCreated, 2);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeCreated, 2);
 
-        //path2 is watched by one watcher so one fired now total is 3
+        // path2 is watched by one watcher so one fired now total is 3
         manager.triggerWatch(path2, EventType.NodeCreated, 3, null);
         checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
         checkMostRecentWatchedEvent(watcher1, path2, EventType.NodeCreated, 3);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeCreated, 2);
 
-        //watches on path1 are no longer there so zero fired
+        // watches on path1 are no longer there so zero fired
         manager.triggerWatch(path1, EventType.NodeDataChanged, 4, null);
         checkMetrics("node_changed_watch_count", 0L, 0L, 0D, 0L, 0L);
         checkMostRecentWatchedEvent(watcher1, path2, EventType.NodeCreated, 3);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeCreated, 2);
 
-        //both watcher and watcher are watching path1
+        // both watcher and watcher are watching path1
         manager.addWatch(path1, watcher1);
         manager.addWatch(path1, watcher2);
 
-        //path2 is watched by watcher1
+        // path2 is watched by watcher1
         manager.addWatch(path2, watcher1);
 
         manager.triggerWatch(path1, EventType.NodeDataChanged, 5, null);
@@ -798,8 +789,7 @@ public class WatchManagerTest extends ZKTestCase {
         checkMostRecentWatchedEvent(watcher1, path2, EventType.NodeDeleted, 6);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeDataChanged, 5);
 
-        //make sure that node created watch count is not impacted by the fire of other event types
+        // make sure that node created watch count is not impacted by the fire of other event types
         checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
     }
-
 }

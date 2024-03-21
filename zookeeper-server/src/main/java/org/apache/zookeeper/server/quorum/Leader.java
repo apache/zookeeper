@@ -80,7 +80,8 @@ public class Leader extends LearnerMaster {
 
     private static final Logger LOG = LoggerFactory.getLogger(Leader.class);
 
-    private static final boolean nodelay = System.getProperty("leader.nodelay", "true").equals("true");
+    private static final boolean nodelay =
+            System.getProperty("leader.nodelay", "true").equals("true");
 
     static {
         LOG.info("TCP NoDelay set to: {}", nodelay);
@@ -91,8 +92,7 @@ public class Leader extends LearnerMaster {
         private QuorumPacket packet;
         protected Request request;
 
-        public Proposal() {
-        }
+        public Proposal() {}
 
         public Proposal(QuorumPacket packet) {
             this.packet = packet;
@@ -220,8 +220,8 @@ public class Leader extends LearnerMaster {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
             /*
-            * Any changes on forwardiongFollowers could possible affect the need of Oracle.
-            * */
+             * Any changes on forwardiongFollowers could possible affect the need of Oracle.
+             * */
             self.getQuorumVerifier().updateNeedOracle(new ArrayList<>(forwardingFollowers));
         }
     }
@@ -268,7 +268,7 @@ public class Leader extends LearnerMaster {
         return pendingSyncs.size();
     }
 
-    //Follower counter
+    // Follower counter
     final AtomicLong followerCounter = new AtomicLong(-1);
 
     /**
@@ -343,10 +343,10 @@ public class Leader extends LearnerMaster {
         }
 
         addresses.stream()
-          .map(address -> createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()))
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .forEach(serverSockets::add);
+                .map(address -> createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(serverSockets::add);
 
         if (serverSockets.isEmpty()) {
             throw new IOException("Leader failed to initialize any of the following sockets: " + addresses);
@@ -492,11 +492,13 @@ public class Leader extends LearnerMaster {
         private final AtomicBoolean fail = new AtomicBoolean(false);
 
         LearnerCnxAcceptor() {
-            super("LearnerCnxAcceptor-" + serverSockets.stream()
-                      .map(ServerSocket::getLocalSocketAddress)
-                      .map(Objects::toString)
-                      .collect(Collectors.joining("|")),
-                  zk.getZooKeeperServerListener());
+            super(
+                    "LearnerCnxAcceptor-"
+                            + serverSockets.stream()
+                                    .map(ServerSocket::getLocalSocketAddress)
+                                    .map(Objects::toString)
+                                    .collect(Collectors.joining("|")),
+                    zk.getZooKeeperServerListener());
         }
 
         @Override
@@ -505,8 +507,8 @@ public class Leader extends LearnerMaster {
                 ExecutorService executor = Executors.newFixedThreadPool(serverSockets.size());
                 CountDownLatch latch = new CountDownLatch(serverSockets.size());
 
-                serverSockets.forEach(serverSocket ->
-                        executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
+                serverSockets.forEach(
+                        serverSocket -> executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
 
                 try {
                     latch.await();
@@ -597,9 +599,7 @@ public class Leader extends LearnerMaster {
                     }
                 }
             }
-
         }
-
     }
 
     StateSummary leaderStateSummary;
@@ -673,14 +673,18 @@ public class Leader extends LearnerMaster {
                 // specified by the user; the lack of version in a config file is interpreted as version=0).
                 // As soon as a config is established we would like to increase its version so that it
                 // takes presedence over other initial configs that were not established (such as a config
-                // of a server trying to join the ensemble, which may be a partial view of the system, not the full config).
+                // of a server trying to join the ensemble, which may be a partial view of the system, not the full
+                // config).
                 // We chose to set the new version to the one of the NEWLEADER message. However, before we can do that
-                // there must be agreement on the new version, so we can only change the version when sending/receiving UPTODATE,
-                // not when sending/receiving NEWLEADER. In other words, we can't change curQV here since its the committed quorum verifier,
+                // there must be agreement on the new version, so we can only change the version when sending/receiving
+                // UPTODATE,
+                // not when sending/receiving NEWLEADER. In other words, we can't change curQV here since its the
+                // committed quorum verifier,
                 // and there's still no agreement on the new version that we'd like to use. Instead, we use
                 // lastSeenQuorumVerifier which is being sent with NEWLEADER message
                 // so its a good way to let followers know about the new version. (The original reason for sending
-                // lastSeenQuorumVerifier with NEWLEADER is so that the leader completes any potentially uncommitted reconfigs
+                // lastSeenQuorumVerifier with NEWLEADER is so that the leader completes any potentially uncommitted
+                // reconfigs
                 // that it finds before starting to propose operations. Here we're reusing the same code path for
                 // reaching consensus on the new version number.)
 
@@ -689,7 +693,8 @@ public class Leader extends LearnerMaster {
                 // hence before they construct the NEWLEADER message containing
                 // the last-seen-quorumverifier of the leader, which we change below
                 try {
-                    LOG.debug(String.format("set lastSeenQuorumVerifier to currentQuorumVerifier (%s)", curQV.toString()));
+                    LOG.debug(String.format(
+                            "set lastSeenQuorumVerifier to currentQuorumVerifier (%s)", curQV.toString()));
                     QuorumVerifier newQV = self.configFromString(curQV.toString());
                     newQV.setVersion(zk.getZxid());
                     self.setLastSeenQuorumVerifier(newQV, true);
@@ -699,7 +704,8 @@ public class Leader extends LearnerMaster {
             }
 
             newLeaderProposal.addQuorumVerifier(self.getQuorumVerifier());
-            if (self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()) {
+            if (self.getLastSeenQuorumVerifier().getVersion()
+                    > self.getQuorumVerifier().getVersion()) {
                 newLeaderProposal.addQuorumVerifier(self.getLastSeenQuorumVerifier());
             }
 
@@ -716,8 +722,8 @@ public class Leader extends LearnerMaster {
                 waitForNewLeaderAck(self.getMyId(), zk.getZxid());
             } catch (InterruptedException e) {
                 shutdown("Waiting for a quorum of followers, only synced with sids: [ "
-                         + newLeaderProposal.ackSetsToString()
-                         + " ]");
+                        + newLeaderProposal.ackSetsToString()
+                        + " ]");
                 HashSet<Long> followerSet = new HashSet<>();
 
                 for (LearnerHandler f : getLearners()) {
@@ -791,7 +797,8 @@ public class Leader extends LearnerMaster {
                     SyncedLearnerTracker syncedAckSet = new SyncedLearnerTracker();
                     syncedAckSet.addQuorumVerifier(self.getQuorumVerifier());
                     if (self.getLastSeenQuorumVerifier() != null
-                        && self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()) {
+                            && self.getLastSeenQuorumVerifier().getVersion()
+                                    > self.getQuorumVerifier().getVersion()) {
                         syncedAckSet.addQuorumVerifier(self.getLastSeenQuorumVerifier());
                     }
 
@@ -829,13 +836,19 @@ public class Leader extends LearnerMaster {
                      * the size of outstandingProposals can be 1. The only one outstanding proposal is the one waiting for the ACK from
                      * the leader itself.
                      * */
-                    if (!tickSkip && !syncedAckSet.hasAllQuorums()
-                        && !(self.getQuorumVerifier().overrideQuorumDecision(getForwardingFollowers()) && self.getQuorumVerifier().revalidateOutstandingProp(this, new ArrayList<>(outstandingProposals.values()), lastCommitted))) {
+                    if (!tickSkip
+                            && !syncedAckSet.hasAllQuorums()
+                            && !(self.getQuorumVerifier().overrideQuorumDecision(getForwardingFollowers())
+                                    && self.getQuorumVerifier()
+                                            .revalidateOutstandingProp(
+                                                    this,
+                                                    new ArrayList<>(outstandingProposals.values()),
+                                                    lastCommitted))) {
                         // Lost quorum of last committed and/or last proposed
                         // config, set shutdown flag
                         shutdownMessage = "Not sufficient followers synced, only synced with sids: [ "
-                                          + syncedAckSet.ackSetsToString()
-                                          + " ]";
+                                + syncedAckSet.ackSetsToString()
+                                + " ]";
                         break;
                     }
                     tickSkip = !tickSkip;
@@ -892,15 +905,15 @@ public class Leader extends LearnerMaster {
     }
 
     synchronized void closeSockets() {
-       for (ServerSocket serverSocket : serverSockets) {
-           if (!serverSocket.isClosed()) {
-               try {
-                   serverSocket.close();
-               } catch (IOException e) {
-                   LOG.warn("Ignoring unexpected exception during close {}", serverSocket, e);
-               }
-           }
-       }
+        for (ServerSocket serverSocket : serverSockets) {
+            if (!serverSocket.isClosed()) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    LOG.warn("Ignoring unexpected exception during close {}", serverSocket, e);
+                }
+            }
+        }
     }
 
     /** In a reconfig operation, this method attempts to find the best leader for next configuration.
@@ -912,15 +925,20 @@ public class Leader extends LearnerMaster {
      * @param zxid of the reconfigProposal
      * @return server if of the designated leader
      */
-
     private long getDesignatedLeader(Proposal reconfigProposal, long zxid) {
-        //new configuration
-        Proposal.QuorumVerifierAcksetPair newQVAcksetPair = reconfigProposal.qvAcksetPairs.get(reconfigProposal.qvAcksetPairs.size() - 1);
+        // new configuration
+        Proposal.QuorumVerifierAcksetPair newQVAcksetPair =
+                reconfigProposal.qvAcksetPairs.get(reconfigProposal.qvAcksetPairs.size() - 1);
 
-        //check if I'm in the new configuration with the same quorum address -
+        // check if I'm in the new configuration with the same quorum address -
         // if so, I'll remain the leader
         if (newQVAcksetPair.getQuorumVerifier().getVotingMembers().containsKey(self.getMyId())
-            && newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getMyId()).addr.equals(self.getQuorumAddress())) {
+                && newQVAcksetPair
+                        .getQuorumVerifier()
+                        .getVotingMembers()
+                        .get(self.getMyId())
+                        .addr
+                        .equals(self.getQuorumAddress())) {
             return self.getMyId();
         }
         // start with an initial set of candidates that are voters from new config that
@@ -930,21 +948,21 @@ public class Leader extends LearnerMaster {
         candidates.remove(self.getMyId()); // if we're here, I shouldn't be the leader
         long curCandidate = candidates.iterator().next();
 
-        //go over outstanding ops in order, and try to find a candidate that acked the most ops.
-        //this way it will be the most up-to-date and we'll minimize the number of ops that get dropped
+        // go over outstanding ops in order, and try to find a candidate that acked the most ops.
+        // this way it will be the most up-to-date and we'll minimize the number of ops that get dropped
 
         long curZxid = zxid + 1;
         Proposal p = outstandingProposals.get(curZxid);
 
         while (p != null && !candidates.isEmpty()) {
             for (Proposal.QuorumVerifierAcksetPair qvAckset : p.qvAcksetPairs) {
-                //reduce the set of candidates to those that acknowledged p
+                // reduce the set of candidates to those that acknowledged p
                 candidates.retainAll(qvAckset.getAckset());
-                //no candidate acked p, return the best candidate found so far
+                // no candidate acked p, return the best candidate found so far
                 if (candidates.isEmpty()) {
                     return curCandidate;
                 }
-                //update the current candidate, and if it is the only one remaining, return it
+                // update the current candidate, and if it is the only one remaining, return it
                 curCandidate = candidates.iterator().next();
                 if (candidates.size() == 1) {
                     return curCandidate;
@@ -981,10 +999,7 @@ public class Leader extends LearnerMaster {
 
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
-            LOG.warn(
-                "Commiting zxid 0x{} from {} not first!",
-                Long.toHexString(zxid),
-                followerAddr);
+            LOG.warn("Commiting zxid 0x{} from {} not first!", Long.toHexString(zxid), followerAddr);
             LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));
         }
 
@@ -999,19 +1014,22 @@ public class Leader extends LearnerMaster {
         } else if (p.request.getHdr().getType() == OpCode.reconfig) {
             LOG.debug("Committing a reconfiguration! {}", outstandingProposals.size());
 
-            //if this server is voter in new config with the same quorum address,
-            //then it will remain the leader
-            //otherwise an up-to-date follower will be designated as leader. This saves
-            //leader election time, unless the designated leader fails
+            // if this server is voter in new config with the same quorum address,
+            // then it will remain the leader
+            // otherwise an up-to-date follower will be designated as leader. This saves
+            // leader election time, unless the designated leader fails
             Long designatedLeader = getDesignatedLeader(p, zxid);
 
-            QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size() - 1).getQuorumVerifier();
+            QuorumVerifier newQV =
+                    p.qvAcksetPairs.get(p.qvAcksetPairs.size() - 1).getQuorumVerifier();
 
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
 
             if (designatedLeader != self.getMyId()) {
-                LOG.info(String.format("Committing a reconfiguration (reconfigEnabled=%s); this leader is not the designated "
-                        + "leader anymore, setting allowedToCommit=false", self.isReconfigEnabled()));
+                LOG.info(String.format(
+                        "Committing a reconfiguration (reconfigEnabled=%s); this leader is not the designated "
+                                + "leader anymore, setting allowedToCommit=false",
+                        self.isReconfigEnabled()));
                 allowedToCommit = false;
             }
 
@@ -1073,9 +1091,9 @@ public class Leader extends LearnerMaster {
         }
         if (lastCommitted >= zxid) {
             LOG.debug(
-                "proposal has already been committed, pzxid: 0x{} zxid: 0x{}",
-                Long.toHexString(lastCommitted),
-                Long.toHexString(zxid));
+                    "proposal has already been committed, pzxid: 0x{} zxid: 0x{}",
+                    Long.toHexString(lastCommitted),
+                    Long.toHexString(zxid));
             // The proposal has already been committed
             return;
         }
@@ -1132,10 +1150,10 @@ public class Leader extends LearnerMaster {
         ToBeAppliedRequestProcessor(RequestProcessor next, Leader leader) {
             if (!(next instanceof FinalRequestProcessor)) {
                 throw new RuntimeException(ToBeAppliedRequestProcessor.class.getName()
-                                           + " must be connected to "
-                                           + FinalRequestProcessor.class.getName()
-                                           + " not "
-                                           + next.getClass().getName());
+                        + " must be connected to "
+                        + FinalRequestProcessor.class.getName()
+                        + " not "
+                        + next.getClass().getName());
             }
             this.leader = leader;
             this.next = next;
@@ -1176,7 +1194,6 @@ public class Leader extends LearnerMaster {
             LOG.info("Shutting down");
             next.shutdown();
         }
-
     }
 
     /**
@@ -1218,7 +1235,7 @@ public class Leader extends LearnerMaster {
         ServerMetrics.getMetrics().COMMIT_COUNT.add(1);
     }
 
-    //commit and send some info
+    // commit and send some info
     public void commitAndActivate(long zxid, long designatedLeader) {
         synchronized (this) {
             lastCommitted = zxid;
@@ -1253,7 +1270,8 @@ public class Leader extends LearnerMaster {
      * Create an inform and activate packet and send it to all observers.
      */
     public void informAndActivate(Proposal proposal, long designatedLeader) {
-        sendObserverPacket(buildInformAndActivePacket(proposal.request.zxid, designatedLeader, proposal.packet.getData()));
+        sendObserverPacket(
+                buildInformAndActivePacket(proposal.request.zxid, designatedLeader, proposal.packet.getData()));
     }
 
     long lastProposed;
@@ -1276,7 +1294,6 @@ public class Leader extends LearnerMaster {
         public XidRolloverException(String message) {
             super(message);
         }
-
     }
 
     /**
@@ -1313,7 +1330,8 @@ public class Leader extends LearnerMaster {
                 self.setLastSeenQuorumVerifier(request.qv, true);
             }
 
-            if (self.getQuorumVerifier().getVersion() < self.getLastSeenQuorumVerifier().getVersion()) {
+            if (self.getQuorumVerifier().getVersion()
+                    < self.getLastSeenQuorumVerifier().getVersion()) {
                 p.addQuorumVerifier(self.getLastSeenQuorumVerifier());
             }
 
@@ -1332,7 +1350,6 @@ public class Leader extends LearnerMaster {
      *
      * @param r the request
      */
-
     public synchronized void processSync(LearnerSyncRequest r) {
         if (outstandingProposals.isEmpty()) {
             sendSync(r);
@@ -1513,10 +1530,10 @@ public class Leader extends LearnerMaster {
             if (ss.getCurrentEpoch() != -1) {
                 if (ss.isMoreRecentThan(leaderStateSummary)) {
                     throw new IOException("Follower is ahead of the leader, leader summary: "
-                                          + leaderStateSummary.getCurrentEpoch()
-                                          + " (current epoch), "
-                                          + leaderStateSummary.getLastZxid()
-                                          + " (last zxid)");
+                            + leaderStateSummary.getCurrentEpoch()
+                            + " (current epoch), "
+                            + leaderStateSummary.getLastZxid()
+                            + " (last zxid)");
                 }
                 if (ss.getLastZxid() != -1 && isParticipant(id)) {
                     electingFollowers.add(id);
@@ -1563,9 +1580,10 @@ public class Leader extends LearnerMaster {
     private synchronized void startZkServer() {
         // Update lastCommitted and Db's zxid to a value representing the new epoch
         lastCommitted = zk.getZxid();
-        LOG.info("Have quorum of supporters, sids: [{}]; starting up and setting last processed zxid: 0x{}",
-                 newLeaderProposal.ackSetsToString(),
-                 Long.toHexString(zk.getZxid()));
+        LOG.info(
+                "Have quorum of supporters, sids: [{}]; starting up and setting last processed zxid: 0x{}",
+                newLeaderProposal.ackSetsToString(),
+                Long.toHexString(zk.getZxid()));
 
         if (self.isReconfigEnabled()) {
             /*
@@ -1581,11 +1599,13 @@ public class Leader extends LearnerMaster {
 
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
             if (designatedLeader != self.getMyId()) {
-                LOG.warn("This leader is not the designated leader, it will be initialized with allowedToCommit = false");
+                LOG.warn(
+                        "This leader is not the designated leader, it will be initialized with allowedToCommit = false");
                 allowedToCommit = false;
             }
         } else {
-            LOG.info("Dynamic reconfig feature is disabled, skip designatedLeader calculation and reconfig processing.");
+            LOG.info(
+                    "Dynamic reconfig feature is disabled, skip designatedLeader calculation and reconfig processing.");
         }
 
         leaderStartTime = Time.currentElapsedTime();
@@ -1613,7 +1633,6 @@ public class Leader extends LearnerMaster {
     public void waitForNewLeaderAck(long sid, long zxid) throws InterruptedException {
 
         synchronized (newLeaderProposal.qvAcksetPairs) {
-
             if (quorumFormed) {
                 return;
             }
@@ -1621,10 +1640,10 @@ public class Leader extends LearnerMaster {
             long currentZxid = newLeaderProposal.packet.getZxid();
             if (zxid != currentZxid) {
                 LOG.error(
-                    "NEWLEADER ACK from sid: {} is from a different epoch - current 0x{} received 0x{}",
-                    sid,
-                    Long.toHexString(currentZxid),
-                    Long.toHexString(zxid));
+                        "NEWLEADER ACK from sid: {} is from a different epoch - current 0x{} received 0x{}",
+                        sid,
+                        Long.toHexString(currentZxid),
+                        Long.toHexString(zxid));
                 return;
             }
 
@@ -1659,46 +1678,46 @@ public class Leader extends LearnerMaster {
      */
     public static String getPacketType(int packetType) {
         switch (packetType) {
-        case DIFF:
-            return "DIFF";
-        case TRUNC:
-            return "TRUNC";
-        case SNAP:
-            return "SNAP";
-        case OBSERVERINFO:
-            return "OBSERVERINFO";
-        case NEWLEADER:
-            return "NEWLEADER";
-        case FOLLOWERINFO:
-            return "FOLLOWERINFO";
-        case UPTODATE:
-            return "UPTODATE";
-        case LEADERINFO:
-            return "LEADERINFO";
-        case ACKEPOCH:
-            return "ACKEPOCH";
-        case REQUEST:
-            return "REQUEST";
-        case PROPOSAL:
-            return "PROPOSAL";
-        case ACK:
-            return "ACK";
-        case COMMIT:
-            return "COMMIT";
-        case COMMITANDACTIVATE:
-            return "COMMITANDACTIVATE";
-        case PING:
-            return "PING";
-        case REVALIDATE:
-            return "REVALIDATE";
-        case SYNC:
-            return "SYNC";
-        case INFORM:
-            return "INFORM";
-        case INFORMANDACTIVATE:
-            return "INFORMANDACTIVATE";
-        default:
-            return "UNKNOWN";
+            case DIFF:
+                return "DIFF";
+            case TRUNC:
+                return "TRUNC";
+            case SNAP:
+                return "SNAP";
+            case OBSERVERINFO:
+                return "OBSERVERINFO";
+            case NEWLEADER:
+                return "NEWLEADER";
+            case FOLLOWERINFO:
+                return "FOLLOWERINFO";
+            case UPTODATE:
+                return "UPTODATE";
+            case LEADERINFO:
+                return "LEADERINFO";
+            case ACKEPOCH:
+                return "ACKEPOCH";
+            case REQUEST:
+                return "REQUEST";
+            case PROPOSAL:
+                return "PROPOSAL";
+            case ACK:
+                return "ACK";
+            case COMMIT:
+                return "COMMIT";
+            case COMMITANDACTIVATE:
+                return "COMMITANDACTIVATE";
+            case PING:
+                return "PING";
+            case REVALIDATE:
+                return "REVALIDATE";
+            case SYNC:
+                return "SYNC";
+            case INFORM:
+                return "INFORM";
+            case INFORMANDACTIVATE:
+                return "INFORMANDACTIVATE";
+            default:
+                return "UNKNOWN";
         }
     }
 
@@ -1782,16 +1801,14 @@ public class Leader extends LearnerMaster {
                 zk.setOwner(id, learnerHandler);
             } catch (KeeperException.SessionExpiredException e) {
                 LOG.error(
-                    "Somehow session 0x{} expired right after being renewed! (impossible)",
-                    Long.toHexString(id),
-                    e);
+                        "Somehow session 0x{} expired right after being renewed! (impossible)",
+                        Long.toHexString(id),
+                        e);
             }
         }
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "Session 0x" + Long.toHexString(id) + " is valid: " + valid);
+                    LOG, ZooTrace.SESSION_TRACE_MASK, "Session 0x" + Long.toHexString(id) + " is valid: " + valid);
         }
         dos.writeBoolean(valid);
         qp.setData(bos.toByteArray());
@@ -1813,5 +1830,4 @@ public class Leader extends LearnerMaster {
             MBeanRegistry.getInstance().unregister(bean);
         }
     }
-
 }

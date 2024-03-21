@@ -26,7 +26,15 @@ import org.junit.runner.RunWith;
  * Run tests with: Netty Client against Netty server
  */
 @RunWith(JUnitPlatform.class)
-@SelectClasses({ACLTest.class, AsyncOpsTest.class, ChrootClientTest.class, ClientTest.class, FourLetterWordsTest.class, NullDataTest.class, SessionTest.class, WatcherTest.class, ReconfigTest.class})
-public class NettyNettySuiteTest extends NettyNettySuiteBase {
-
-}
+@SelectClasses({
+    ACLTest.class,
+    AsyncOpsTest.class,
+    ChrootClientTest.class,
+    ClientTest.class,
+    FourLetterWordsTest.class,
+    NullDataTest.class,
+    SessionTest.class,
+    WatcherTest.class,
+    ReconfigTest.class
+})
+public class NettyNettySuiteTest extends NettyNettySuiteBase {}

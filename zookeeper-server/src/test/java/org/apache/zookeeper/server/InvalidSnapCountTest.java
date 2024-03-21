@@ -87,7 +87,6 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
         public void shutdown() {
             main.shutdown();
         }
-
     }
 
     public static class TestMain extends ZooKeeperServerMain {
@@ -95,7 +94,6 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
         public void shutdown() {
             super.shutdown();
         }
-
     }
 
     /**
@@ -109,17 +107,16 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
         MainThread main = new MainThread(CLIENT_PORT);
         main.start();
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT),
                 "waiting for server being up");
 
         assertEquals(SyncRequestProcessor.getSnapCount(), 2);
 
         main.shutdown();
-
     }
 
     public void process(WatchedEvent event) {
         // ignore for this test
     }
-
 }

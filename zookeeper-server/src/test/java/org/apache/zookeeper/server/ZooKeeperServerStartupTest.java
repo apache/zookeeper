@@ -84,21 +84,24 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
 
         startSimpleZKServer(startupDelayLatch);
         SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
-        assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
+        assertTrue(
+                simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
 
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
-        assertFalse(simplezks.waitForSessionCreation(5),
-            "Since server is not fully started, zks#createSession() shouldn't be invoked");
+        assertFalse(
+                simplezks.waitForSessionCreation(5),
+                "Since server is not fully started, zks#createSession() shouldn't be invoked");
 
         LOG.info("Decrements the count of the latch, so that server will proceed with startup");
         startupDelayLatch.countDown();
 
         assertTrue(ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server being up ");
 
-        assertTrue(simplezks.waitForSessionCreation(5),
-            "Failed to invoke zks#createSession() method during client session creation");
+        assertTrue(
+                simplezks.waitForSessionCreation(5),
+                "Failed to invoke zks#createSession() method during client session creation");
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         zkClient.close();
     }
@@ -118,19 +121,27 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
             System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, NettyServerCnxnFactory.class.getName());
             startSimpleZKServer(startupDelayLatch);
             SimpleZooKeeperServer simplezks = (SimpleZooKeeperServer) zks;
-            assertTrue(simplezks.waitForStartupInvocation(10), "Failed to invoke zks#startup() method during server startup");
+            assertTrue(
+                    simplezks.waitForStartupInvocation(10),
+                    "Failed to invoke zks#startup() method during server startup");
 
             CountdownWatcher watcher = new CountdownWatcher();
             ZooKeeper zkClient = new ZooKeeper(HOSTPORT, ClientBase.CONNECTION_TIMEOUT, watcher);
 
-            assertFalse(simplezks.waitForSessionCreation(5), "Since server is not fully started, zks#createSession() shouldn't be invoked");
+            assertFalse(
+                    simplezks.waitForSessionCreation(5),
+                    "Since server is not fully started, zks#createSession() shouldn't be invoked");
 
             LOG.info("Decrements the count of the latch, so that server will proceed with startup");
             startupDelayLatch.countDown();
 
-            assertTrue(ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server being up ");
+            assertTrue(
+                    ClientBase.waitForServerUp(HOSTPORT, ClientBase.CONNECTION_TIMEOUT),
+                    "waiting for server being up ");
 
-            assertTrue(simplezks.waitForSessionCreation(5), "Failed to invoke zks#createSession() method during client session creation");
+            assertTrue(
+                    simplezks.waitForSessionCreation(5),
+                    "Failed to invoke zks#createSession() method during client session creation");
             watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
             zkClient.close();
         } finally {
@@ -206,7 +217,8 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
         private CountDownLatch startupInvokedLatch = new CountDownLatch(1);
         private CountDownLatch createSessionInvokedLatch = new CountDownLatch(1);
 
-        public SimpleZooKeeperServer(File snapDir, File logDir, int tickTime, CountDownLatch startupDelayLatch) throws IOException {
+        public SimpleZooKeeperServer(File snapDir, File logDir, int tickTime, CountDownLatch startupDelayLatch)
+                throws IOException {
             super(snapDir, logDir, tickTime);
             this.startupDelayLatch = startupDelayLatch;
         }
@@ -241,7 +253,5 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
         boolean waitForSessionCreation(long timeout) throws InterruptedException {
             return createSessionInvokedLatch.await(timeout, TimeUnit.SECONDS);
         }
-
     }
-
 }

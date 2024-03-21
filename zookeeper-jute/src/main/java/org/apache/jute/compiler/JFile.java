@@ -41,8 +41,7 @@ public class JFile {
      * @param inclFiles included files (as JFile)
      * @param recList   List of records defined within this file
      */
-    public JFile(String name, ArrayList<JFile> inclFiles,
-                 ArrayList<JRecord> recList) {
+    public JFile(String name, ArrayList<JFile> inclFiles, ArrayList<JRecord> recList) {
         mName = name;
         mInclFiles = inclFiles;
         mRecords = recList;
@@ -62,23 +61,18 @@ public class JFile {
      *
      * @param outputDirectory
      */
-    public void genCode(String language, File outputDirectory)
-            throws IOException {
+    public void genCode(String language, File outputDirectory) throws IOException {
         if ("c++".equals(language)) {
-            CppGenerator gen = new CppGenerator(mName, mInclFiles, mRecords,
-                    outputDirectory);
+            CppGenerator gen = new CppGenerator(mName, mInclFiles, mRecords, outputDirectory);
             gen.genCode();
         } else if ("java".equals(language)) {
-            JavaGenerator gen = new JavaGenerator(mName, mInclFiles, mRecords,
-                    outputDirectory);
+            JavaGenerator gen = new JavaGenerator(mName, mInclFiles, mRecords, outputDirectory);
             gen.genCode();
         } else if ("c".equals(language)) {
-            CGenerator gen = new CGenerator(mName, mInclFiles, mRecords,
-                    outputDirectory);
+            CGenerator gen = new CGenerator(mName, mInclFiles, mRecords, outputDirectory);
             gen.genCode();
         } else if ("csharp".equals(language)) {
-            CSharpGenerator gen = new CSharpGenerator(mName, mInclFiles, mRecords,
-                    outputDirectory);
+            CSharpGenerator gen = new CSharpGenerator(mName, mInclFiles, mRecords, outputDirectory);
             gen.genCode();
         } else {
             throw new IOException("Cannnot recognize language:" + language);

@@ -71,6 +71,4 @@ public class ClientRetryTest extends ClientBase {
             zk.close();
         }
     }
-
 }
-

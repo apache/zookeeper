@@ -45,7 +45,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
-    private ContainerManager containerManager;  // guarded by sync
+    private ContainerManager containerManager; // guarded by sync
 
     CommitProcessor commitProcessor;
 
@@ -55,7 +55,14 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
      * @throws IOException
      */
     public LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
+        super(
+                logFactory,
+                self.tickTime,
+                self.minSessionTimeout,
+                self.maxSessionTimeout,
+                self.clientPortListenBacklog,
+                zkDb,
+                self);
     }
 
     public Leader getLeader() {
@@ -66,7 +73,8 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
-        commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
+        commitProcessor = new CommitProcessor(
+                toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
         commitProcessor.start();
         ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
         proposalProcessor.initialize();
@@ -79,12 +87,11 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
     private synchronized void setupContainerManager() {
         containerManager = new ContainerManager(
-            getZKDatabase(),
-            prepRequestProcessor,
-            Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-            Integer.getInteger("znode.container.maxPerMinute", 10000),
-            Long.getLong("znode.container.maxNeverUsedIntervalMs", 0)
-        );
+                getZKDatabase(),
+                prepRequestProcessor,
+                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                Integer.getInteger("znode.container.maxPerMinute", 10000),
+                Long.getLong("znode.container.maxNeverUsedIntervalMs", 0));
     }
 
     @Override
@@ -99,32 +106,24 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void registerMetrics() {
         super.registerMetrics();
 
-        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
-        rootContext.registerGauge("learners", gaugeWithLeader(
-                (leader) -> leader.getLearners().size())
-        );
-        rootContext.registerGauge("synced_followers", gaugeWithLeader(
-                (leader) -> leader.getForwardingFollowers().size()
-        ));
-        rootContext.registerGauge("synced_non_voting_followers", gaugeWithLeader(
-                (leader) -> leader.getNonVotingFollowers().size()
-        ));
+        MetricsContext rootContext =
+                ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
+        rootContext.registerGauge(
+                "learners", gaugeWithLeader((leader) -> leader.getLearners().size()));
+        rootContext.registerGauge("synced_followers", gaugeWithLeader((leader) -> leader.getForwardingFollowers()
+                .size()));
+        rootContext.registerGauge(
+                "synced_non_voting_followers",
+                gaugeWithLeader((leader) -> leader.getNonVotingFollowers().size()));
         rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
-        rootContext.registerGauge("pending_syncs", gaugeWithLeader(
-                (leader) -> leader.getNumPendingSyncs()
-        ));
-        rootContext.registerGauge("leader_uptime", gaugeWithLeader(
-                (leader) -> leader.getUptime()
-        ));
-        rootContext.registerGauge("last_proposal_size", gaugeWithLeader(
-                (leader) -> leader.getProposalStats().getLastBufferSize()
-        ));
-        rootContext.registerGauge("max_proposal_size", gaugeWithLeader(
-                (leader) -> leader.getProposalStats().getMaxBufferSize()
-        ));
-        rootContext.registerGauge("min_proposal_size", gaugeWithLeader(
-                (leader) -> leader.getProposalStats().getMinBufferSize()
-        ));
+        rootContext.registerGauge("pending_syncs", gaugeWithLeader((leader) -> leader.getNumPendingSyncs()));
+        rootContext.registerGauge("leader_uptime", gaugeWithLeader((leader) -> leader.getUptime()));
+        rootContext.registerGauge("last_proposal_size", gaugeWithLeader((leader) -> leader.getProposalStats()
+                .getLastBufferSize()));
+        rootContext.registerGauge("max_proposal_size", gaugeWithLeader((leader) -> leader.getProposalStats()
+                .getMaxBufferSize()));
+        rootContext.registerGauge("min_proposal_size", gaugeWithLeader((leader) -> leader.getProposalStats()
+                .getMinBufferSize()));
     }
 
     private org.apache.zookeeper.metrics.Gauge gaugeWithLeader(Function<Leader, Number> supplier) {
@@ -141,7 +140,8 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     protected void unregisterMetrics() {
         super.unregisterMetrics();
 
-        MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
+        MetricsContext rootContext =
+                ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
         rootContext.unregisterGauge("learners");
         rootContext.unregisterGauge("synced_followers");
         rootContext.unregisterGauge("synced_non_voting_followers");
@@ -172,12 +172,12 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public void createSessionTracker() {
         sessionTracker = new LeaderSessionTracker(
-            this,
-            getZKDatabase().getSessionWithTimeOuts(),
-            tickTime,
-            self.getMyId(),
-            self.areLocalSessionsEnabled(),
-            getZooKeeperServerListener());
+                this,
+                getZKDatabase().getSessionWithTimeOuts(),
+                tickTime,
+                self.getMyId(),
+                self.areLocalSessionsEnabled(),
+                getZooKeeperServerListener());
     }
 
     public boolean touch(long sess, int to) {
@@ -305,5 +305,4 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             // this is ok, it just means that the session revalidation failed.
         }
     }
-
 }

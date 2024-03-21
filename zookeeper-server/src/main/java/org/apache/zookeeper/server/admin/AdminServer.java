@@ -30,20 +30,22 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 public interface AdminServer {
 
     void start() throws AdminServerException;
+
     void shutdown() throws AdminServerException;
+
     void setZooKeeperServer(ZooKeeperServer zkServer);
 
     @InterfaceAudience.Public
     class AdminServerException extends Exception {
 
         private static final long serialVersionUID = 1L;
+
         public AdminServerException(String message, Throwable cause) {
             super(message, cause);
         }
+
         public AdminServerException(Throwable cause) {
             super(cause);
         }
-
     }
-
 }

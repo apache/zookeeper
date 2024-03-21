@@ -95,5 +95,4 @@ public interface NodeHashMap {
      * Return the digest value.
      */
     long getDigest();
-
 }

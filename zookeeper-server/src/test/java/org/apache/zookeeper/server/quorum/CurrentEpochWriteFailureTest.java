@@ -71,8 +71,8 @@ public class CurrentEpochWriteFailureTest extends QuorumPeerTestBase {
         // Initialize files for later use
         File snapDir = firstServer.getQuorumPeer().getTxnFactory().getSnapDir();
         File currentEpochFile = new File(snapDir, QuorumPeer.CURRENT_EPOCH_FILENAME);
-        File currentEpochTempFile = new File(snapDir,
-            QuorumPeer.CURRENT_EPOCH_FILENAME + AtomicFileOutputStream.TMP_EXTENSION);
+        File currentEpochTempFile =
+                new File(snapDir, QuorumPeer.CURRENT_EPOCH_FILENAME + AtomicFileOutputStream.TMP_EXTENSION);
 
         // Shutdown servers
         servers.shutDownAllServers();
@@ -87,11 +87,11 @@ public class CurrentEpochWriteFailureTest extends QuorumPeerTestBase {
         servers.restartAllServersAndClients(this);
 
         // Check the first server where problem was injected.
-        assertTrue(ClientBase
-                .waitForServerUp("127.0.0.1:" + firstServer.getClientPort(), CONNECTION_TIMEOUT),
-            "server " + firstServer.getMyid()
-                + " is not up as file currentEpoch.tmp rename to currentEpoch file was failed"
-                + " which lead current epoch inconsistent state.");
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + firstServer.getClientPort(), CONNECTION_TIMEOUT),
+                "server " + firstServer.getMyid()
+                        + " is not up as file currentEpoch.tmp rename to currentEpoch file was failed"
+                        + " which lead current epoch inconsistent state.");
     }
 
     private void restartServers() throws InterruptedException, IOException {

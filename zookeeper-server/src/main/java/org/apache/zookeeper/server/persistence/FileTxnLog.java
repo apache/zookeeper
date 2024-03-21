@@ -106,7 +106,8 @@ public class FileTxnLog implements TxnLog, Closeable {
     public static final String LOG_FILE_PREFIX = "log";
 
     static final String FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "fsync.warningthresholdms";
-    static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "zookeeper." + FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
+    static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY =
+            "zookeeper." + FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
 
     /** Maximum time we allow for elapsed fsync before WARNing */
     private static final long fsyncWarningThresholdMS;
@@ -152,7 +153,8 @@ public class FileTxnLog implements TxnLog, Closeable {
     volatile FileOutputStream fos = null;
 
     File logDir;
-    private final boolean forceSync = !System.getProperty("zookeeper.forceSync", "yes").equals("no");
+    private final boolean forceSync =
+            !System.getProperty("zookeeper.forceSync", "yes").equals("no");
     long dbId;
     private final Queue<FileOutputStream> streamsToFlush = new ArrayDeque<>();
     File logFileWrite = null;
@@ -272,11 +274,7 @@ public class FileTxnLog implements TxnLog, Closeable {
             return false;
         }
         if (hdr.getZxid() <= lastZxidSeen) {
-            LOG.warn(
-                "Current zxid {} is <= {} for {}",
-                hdr.getZxid(),
-                lastZxidSeen,
-                Request.op2String(hdr.getType()));
+            LOG.warn("Current zxid {} is <= {} for {}", hdr.getZxid(), lastZxidSeen, Request.op2String(hdr.getType()));
         } else {
             lastZxidSeen = hdr.getZxid();
         }
@@ -352,7 +350,6 @@ public class FileTxnLog implements TxnLog, Closeable {
             v.add(f);
         }
         return v.toArray(new File[0]);
-
     }
 
     /**
@@ -366,7 +363,8 @@ public class FileTxnLog implements TxnLog, Closeable {
         // if a log file is more recent we must scan it to find
         // the highest zxid
         long zxid = maxLog;
-        try (FileTxnLog txn = new FileTxnLog(logDir); TxnIterator itr = txn.read(maxLog)) {
+        try (FileTxnLog txn = new FileTxnLog(logDir);
+                TxnIterator itr = txn.read(maxLog)) {
             while (true) {
                 if (!itr.next()) {
                     break;
@@ -410,11 +408,11 @@ public class FileTxnLog implements TxnLog, Closeable {
                     }
 
                     LOG.warn(
-                        "fsync-ing the write ahead log in {} took {}ms which will adversely effect operation latency."
-                            + "File size is {} bytes. See the ZooKeeper troubleshooting guide",
-                        Thread.currentThread().getName(),
-                        syncElapsedMS,
-                        channel.size());
+                            "fsync-ing the write ahead log in {} took {}ms which will adversely effect operation latency."
+                                    + "File size is {} bytes. See the ZooKeeper troubleshooting guide",
+                            Thread.currentThread().getName(),
+                            syncElapsedMS,
+                            channel.size());
                 }
 
                 ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);
@@ -476,8 +474,8 @@ public class FileTxnLog implements TxnLog, Closeable {
             PositionInputStream input = itr.inputStream;
             if (input == null) {
                 throw new IOException("No log files found to truncate! This could "
-                                      + "happen if you still have snapshots from an old setup or "
-                                      + "log files were deleted accidentally or dataLogDir was changed in zoo.cfg.");
+                        + "happen if you still have snapshots from an old setup or "
+                        + "log files were deleted accidentally or dataLogDir was changed in zoo.cfg.");
             }
             long pos = input.getPosition();
             // now, truncate at the current position
@@ -550,6 +548,7 @@ public class FileTxnLog implements TxnLog, Closeable {
     static class PositionInputStream extends FilterInputStream {
 
         long position;
+
         protected PositionInputStream(InputStream in) {
             super(in);
             position = 0;
@@ -589,6 +588,7 @@ public class FileTxnLog implements TxnLog, Closeable {
             }
             return rc;
         }
+
         public long getPosition() {
             return position;
         }
@@ -607,7 +607,6 @@ public class FileTxnLog implements TxnLog, Closeable {
         public void reset() {
             throw new UnsupportedOperationException("reset");
         }
-
     }
 
     /**
@@ -626,8 +625,8 @@ public class FileTxnLog implements TxnLog, Closeable {
         static final String CRC_ERROR = "CRC check failed";
 
         PositionInputStream inputStream = null;
-        //stored files is the list of files greater than
-        //the zxid we are looking for.
+        // stored files is the list of files greater than
+        // the zxid we are looking for.
         private ArrayList<File> storedFiles;
 
         /**
@@ -671,10 +670,7 @@ public class FileTxnLog implements TxnLog, Closeable {
          */
         void init() throws IOException {
             storedFiles = new ArrayList<>();
-            List<File> files = Util.sortDataDir(
-                FileTxnLog.getLogFiles(logDir.listFiles(), 0),
-                LOG_FILE_PREFIX,
-                false);
+            List<File> files = Util.sortDataDir(FileTxnLog.getLogFiles(logDir.listFiles(), 0), LOG_FILE_PREFIX, false);
             for (File f : files) {
                 if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) >= zxid) {
                     storedFiles.add(f);
@@ -725,8 +721,8 @@ public class FileTxnLog implements TxnLog, Closeable {
             header.deserialize(ia, "fileheader");
             if (header.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
                 throw new IOException("Transaction log: " + this.logFile
-                                      + " has invalid magic number "
-                                      + header.getMagic() + " != " + FileTxnLog.TXNLOG_MAGIC);
+                        + " has invalid magic number "
+                        + header.getMagic() + " != " + FileTxnLog.TXNLOG_MAGIC);
             }
         }
 
@@ -832,7 +828,5 @@ public class FileTxnLog implements TxnLog, Closeable {
                 inputStream.close();
             }
         }
-
     }
-
 }

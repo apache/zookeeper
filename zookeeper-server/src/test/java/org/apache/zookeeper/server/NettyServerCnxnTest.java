@@ -82,7 +82,8 @@ public class NettyServerCnxnTest extends ClientBase {
     @BeforeEach
     @Override
     public void setUp() throws Exception {
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         NettyServerCnxnFactory.setTestAllocator(TestByteBufAllocator.getInstance());
         super.maxCnxns = 1;
         super.exceptionOnFailedConnect = true;
@@ -108,7 +109,9 @@ public class NettyServerCnxnTest extends ClientBase {
     @Test
     @Timeout(value = 40)
     public void testSendCloseSession() throws Exception {
-        assertTrue(serverFactory instanceof NettyServerCnxnFactory, "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
+        assertTrue(
+                serverFactory instanceof NettyServerCnxnFactory,
+                "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
 
         final ZooKeeper zk = createClient();
         final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
@@ -148,22 +151,31 @@ public class NettyServerCnxnTest extends ClientBase {
     @Test
     @Timeout(value = 40)
     public void testMaxConnectionPerIpSurpased() {
-        assertTrue(serverFactory instanceof NettyServerCnxnFactory, "Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
+        assertTrue(
+                serverFactory instanceof NettyServerCnxnFactory,
+                "Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
         assertThrows(ProtocolException.class, () -> {
-            try (final ZooKeeper zk1 = createClient(); final ZooKeeper zk2 = createClient()) {
-            }
+            try (final ZooKeeper zk1 = createClient();
+                    final ZooKeeper zk2 = createClient()) {}
         });
     }
 
     @Test
     public void testClientResponseStatsUpdate() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
-            BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
-            assertThat("Last client response size should be initialized with INIT_VALUE", clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
+            BufferStats clientResponseStats =
+                    serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+            assertThat(
+                    "Last client response size should be initialized with INIT_VALUE",
+                    clientResponseStats.getLastBufferSize(),
+                    equalTo(BufferStats.INIT_VALUE));
 
             zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            assertThat("Last client response size should be greater than 0 after client request was performed", clientResponseStats.getLastBufferSize(), greaterThan(0));
+            assertThat(
+                    "Last client response size should be greater than 0 after client request was performed",
+                    clientResponseStats.getLastBufferSize(),
+                    greaterThan(0));
 
             byte[] contents = zk.getData("/a", null, null);
             assertArrayEquals("test".getBytes(StandardCharsets.UTF_8), contents, "unexpected data");
@@ -174,7 +186,7 @@ public class NettyServerCnxnTest extends ClientBase {
     public void testNonMTLSLocalConn() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
             ServerStats serverStats = serverFactory.getZooKeeperServer().serverStats();
-            //2 for local stat connection and this client
+            // 2 for local stat connection and this client
             assertEquals(2, serverStats.getNonMTLSLocalConnCount());
             assertEquals(0, serverStats.getNonMTLSRemoteConnCount());
         }
@@ -232,13 +244,11 @@ public class NettyServerCnxnTest extends ClientBase {
             factory.setSecure(secure);
             factory.setZooKeeperServer(zks);
             Attribute atr = mock(Attribute.class);
-            Mockito.doReturn(atr).when(channel).attr(
-                    Mockito.any()
-            );
+            Mockito.doReturn(atr).when(channel).attr(Mockito.any());
             doNothing().when(atr).set(Mockito.any());
             factory.channelHandler.channelActive(context);
 
-            if (zks != null)  {
+            if (zks != null) {
                 assertEquals(0, zks.serverStats().getNonMTLSLocalConnCount());
                 assertEquals(1, zks.serverStats().getNonMTLSRemoteConnCount());
             } else {
@@ -257,32 +267,51 @@ public class NettyServerCnxnTest extends ClientBase {
     @Test
     public void testServerSideThrottling() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
-            BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
-            assertThat("Last client response size should be initialized with INIT_VALUE", clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
+            BufferStats clientResponseStats =
+                    serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+            assertThat(
+                    "Last client response size should be initialized with INIT_VALUE",
+                    clientResponseStats.getLastBufferSize(),
+                    equalTo(BufferStats.INIT_VALUE));
 
             zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            assertThat("Last client response size should be greater than 0 after client request was performed", clientResponseStats.getLastBufferSize(), greaterThan(0));
+            assertThat(
+                    "Last client response size should be greater than 0 after client request was performed",
+                    clientResponseStats.getLastBufferSize(),
+                    greaterThan(0));
 
             for (final ServerCnxn cnxn : serverFactory.cnxns) {
                 final NettyServerCnxn nettyCnxn = ((NettyServerCnxn) cnxn);
                 // Disable receiving data for all open connections ...
                 nettyCnxn.disableRecv();
                 // ... then force a throttled read after 1 second (this puts the read into queuedBuffer) ...
-                nettyCnxn.getChannel().eventLoop().schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        nettyCnxn.getChannel().read();
-                    }
-                }, 1, TimeUnit.SECONDS);
+                nettyCnxn
+                        .getChannel()
+                        .eventLoop()
+                        .schedule(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        nettyCnxn.getChannel().read();
+                                    }
+                                },
+                                1,
+                                TimeUnit.SECONDS);
 
                 // ... and finally disable throttling after 2 seconds.
-                nettyCnxn.getChannel().eventLoop().schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        nettyCnxn.enableRecv();
-                    }
-                }, 2, TimeUnit.SECONDS);
+                nettyCnxn
+                        .getChannel()
+                        .eventLoop()
+                        .schedule(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        nettyCnxn.enableRecv();
+                                    }
+                                },
+                                2,
+                                TimeUnit.SECONDS);
             }
 
             byte[] contents = zk.getData("/a", null, null);
@@ -295,12 +324,18 @@ public class NettyServerCnxnTest extends ClientBase {
                 // Disable receiving data for all open connections ...
                 nettyCnxn.disableRecv();
                 // ... then disable throttling after 2 seconds.
-                nettyCnxn.getChannel().eventLoop().schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        nettyCnxn.enableRecv();
-                    }
-                }, 2, TimeUnit.SECONDS);
+                nettyCnxn
+                        .getChannel()
+                        .eventLoop()
+                        .schedule(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        nettyCnxn.enableRecv();
+                                    }
+                                },
+                                2,
+                                TimeUnit.SECONDS);
             }
 
             contents = zk.getData("/a", null, null);
@@ -330,7 +365,8 @@ public class NettyServerCnxnTest extends ClientBase {
 
     @Test
     public void testNettyUsesDaemonThreads() throws Exception {
-        assertTrue(serverFactory instanceof NettyServerCnxnFactory,
+        assertTrue(
+                serverFactory instanceof NettyServerCnxnFactory,
                 "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!");
 
         // Use Netty in the client to check the threads on both the client and server side
@@ -395,7 +431,9 @@ public class NettyServerCnxnTest extends ClientBase {
                                 }
                                 try {
                                     Thread.sleep(10);
-                                } catch (InterruptedException e) { /* ignore */ }
+                                } catch (InterruptedException e) {
+                                    /* ignore */
+                                }
                             }
                             // always enable the recv at end
                             for (final ServerCnxn cnxn : serverFactory.cnxns) {
@@ -414,7 +452,9 @@ public class NettyServerCnxnTest extends ClientBase {
                                         Thread.sleep(10);
                                         cnxn.enableRecv();
                                         Thread.sleep(10);
-                                    } catch (InterruptedException e) { /* ignore */ }
+                                    } catch (InterruptedException e) {
+                                        /* ignore */
+                                    }
                                 }
                             }
                         }
@@ -432,17 +472,22 @@ public class NettyServerCnxnTest extends ClientBase {
                     public void run() {
                         int requestIssued = 0;
                         while (requestIssued++ < totalRequestsNum) {
-                            zk.getData(path, null, new DataCallback() {
-                                @Override
-                                public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
-                                    if (rc == KeeperException.Code.OK.intValue()) {
-                                        successResponse.addAndGet(1);
-                                    } else {
-                                        LOG.info("failed response is {}", rc);
-                                    }
-                                    responseReceivedLatch.countDown();
-                                }
-                            }, null);
+                            zk.getData(
+                                    path,
+                                    null,
+                                    new DataCallback() {
+                                        @Override
+                                        public void processResult(
+                                                int rc, String path, Object ctx, byte[] data, Stat stat) {
+                                            if (rc == KeeperException.Code.OK.intValue()) {
+                                                successResponse.addAndGet(1);
+                                            } else {
+                                                LOG.info("failed response is {}", rc);
+                                            }
+                                            responseReceivedLatch.countDown();
+                                        }
+                                    },
+                                    null);
                         }
                     }
                 };

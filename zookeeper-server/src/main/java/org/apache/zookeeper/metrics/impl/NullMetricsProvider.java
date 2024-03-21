@@ -41,12 +41,10 @@ public class NullMetricsProvider implements MetricsProvider {
     public static final MetricsProvider INSTANCE = new NullMetricsProvider();
 
     @Override
-    public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
-    }
+    public void configure(Properties configuration) throws MetricsProviderLifeCycleException {}
 
     @Override
-    public void start() throws MetricsProviderLifeCycleException {
-    }
+    public void start() throws MetricsProviderLifeCycleException {}
 
     @Override
     public MetricsContext getRootContext() {
@@ -54,16 +52,13 @@ public class NullMetricsProvider implements MetricsProvider {
     }
 
     @Override
-    public void dump(BiConsumer<String, Object> sink) {
-    }
+    public void dump(BiConsumer<String, Object> sink) {}
 
     @Override
-    public void resetAllValues() {
-    }
+    public void resetAllValues() {}
 
     @Override
-    public void stop() {
-    }
+    public void stop() {}
 
     public static final class NullMetricsContext implements MetricsContext {
 
@@ -85,20 +80,16 @@ public class NullMetricsProvider implements MetricsProvider {
         }
 
         @Override
-        public void registerGauge(String name, Gauge gauge) {
-        }
+        public void registerGauge(String name, Gauge gauge) {}
 
         @Override
-        public void unregisterGauge(String name) {
-        }
+        public void unregisterGauge(String name) {}
 
         @Override
-        public void registerGaugeSet(final String name, final GaugeSet gaugeSet) {
-        }
+        public void registerGaugeSet(final String name, final GaugeSet gaugeSet) {}
 
         @Override
-        public void unregisterGaugeSet(final String name) {
-        }
+        public void unregisterGaugeSet(final String name) {}
 
         @Override
         public Summary getSummary(String name, DetailLevel detailLevel) {
@@ -109,7 +100,6 @@ public class NullMetricsProvider implements MetricsProvider {
         public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
             return NullSummarySet.INSTANCE;
         }
-
     }
 
     private static final class NullCounter implements Counter {
@@ -117,14 +107,12 @@ public class NullMetricsProvider implements MetricsProvider {
         private static final NullCounter INSTANCE = new NullCounter();
 
         @Override
-        public void add(long delta) {
-        }
+        public void add(long delta) {}
 
         @Override
         public long get() {
             return 0;
         }
-
     }
 
     private static final class NullCounterSet implements CounterSet {
@@ -132,8 +120,7 @@ public class NullMetricsProvider implements MetricsProvider {
         private static final NullCounterSet INSTANCE = new NullCounterSet();
 
         @Override
-        public void add(final String key, final long delta) {
-        }
+        public void add(final String key, final long delta) {}
     }
 
     private static final class NullSummary implements Summary {
@@ -141,9 +128,7 @@ public class NullMetricsProvider implements MetricsProvider {
         private static final NullSummary INSTANCE = new NullSummary();
 
         @Override
-        public void add(long value) {
-        }
-
+        public void add(long value) {}
     }
 
     private static final class NullSummarySet implements SummarySet {
@@ -151,9 +136,6 @@ public class NullMetricsProvider implements MetricsProvider {
         private static final NullSummarySet INSTANCE = new NullSummarySet();
 
         @Override
-        public void add(String key, long value) {
-        }
-
+        public void add(String key, long value) {}
     }
-
 }

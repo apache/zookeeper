@@ -30,15 +30,11 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 public class DummyAdminServer implements AdminServer {
 
     @Override
-    public void start() throws AdminServerException {
-    }
+    public void start() throws AdminServerException {}
 
     @Override
-    public void shutdown() throws AdminServerException {
-    }
+    public void shutdown() throws AdminServerException {}
 
     @Override
-    public void setZooKeeperServer(ZooKeeperServer zkServer) {
-    }
-
+    public void setZooKeeperServer(ZooKeeperServer zkServer) {}
 }

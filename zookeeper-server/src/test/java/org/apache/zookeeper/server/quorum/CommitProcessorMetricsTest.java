@@ -130,7 +130,6 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
                 poolEmptied.countDown();
             }
         }
-
     }
 
     private class TestWorkerService extends WorkerService {
@@ -146,12 +145,12 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
                 requestScheduled.countDown();
             }
         }
-
     }
 
     private class DummyFinalProcessor implements RequestProcessor {
 
         int processTime;
+
         public DummyFinalProcessor(int processTime) {
             this.processTime = processTime;
         }
@@ -171,9 +170,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         }
 
         @Override
-        public void shutdown() {
-        }
-
+        public void shutdown() {}
     }
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum) {
@@ -220,7 +217,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         checkMetrics("requests_in_session_queue", 1L, 1L, 1D, 1L, 1L);
 
-        //these two read requests will be stuck in the session queue because there is write in front of them
+        // these two read requests will be stuck in the session queue because there is write in front of them
         processRequestWithWait(createReadRequest(1L, 2));
         processRequestWithWait(createReadRequest(1L, 3));
 
@@ -238,7 +235,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         Request req1 = createWriteRequest(1L, 2);
         processRequestWithWait(req1);
 
-        //no request sent to next processor yet
+        // no request sent to next processor yet
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         assertEquals(0L, values.get("cnt_write_final_proc_time_ms"));
 
@@ -273,7 +270,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     @Test
     public void testServerWriteCommittedTime() throws Exception {
         setupProcessors(0, 0);
-        //a commit w/o pending request is a write from other servers
+        // a commit w/o pending request is a write from other servers
         commitWithWait(createWriteRequest(1L, 1));
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
@@ -295,8 +292,8 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         Request req2 = createWriteRequest(1L, 2);
         processRequestWithWait(req2);
-        //the second write will be stuck in the session queue for at least one second
-        //but the LOCAL_WRITE_COMMITTED_TIME is from when the commit is received
+        // the second write will be stuck in the session queue for at least one second
+        // but the LOCAL_WRITE_COMMITTED_TIME is from when the commit is received
         Thread.sleep(1000);
 
         commitWithWait(req2);
@@ -320,7 +317,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         Request req2 = createWriteRequest(1L, 2);
         processRequestWithWait(req2);
-        //the second write will be stuck in the session queue for at least one second
+        // the second write will be stuck in the session queue for at least one second
         Thread.sleep(1000);
 
         commitWithWait(req2);
@@ -343,7 +340,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         Request req1 = createWriteRequest(1L, 2);
         processRequestWithWait(req1);
         processRequestWithWait(createReadRequest(1L, 3));
-        //the second read will be stuck in the session queue for at least one second
+        // the second read will be stuck in the session queue for at least one second
         Thread.sleep(1000);
 
         commitWithWait(req1);
@@ -357,20 +354,21 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     public void testTimeWaitingEmptyPoolInCommitProcessorRead() throws Exception {
         setupProcessors(1, 1000);
 
-        //three read requests will be scheduled first
+        // three read requests will be scheduled first
         requestScheduled = new CountDownLatch(3);
         commitProcessor.processRequest(createReadRequest(0L, 2));
         commitProcessor.processRequest(createReadRequest(1L, 3));
         commitProcessor.processRequest(createReadRequest(2L, 4));
         requestScheduled.await(5, TimeUnit.SECONDS);
 
-        //add a commit request to trigger waitForEmptyPool
+        // add a commit request to trigger waitForEmptyPool
         poolEmptied = new CountDownLatch(1);
         commitProcessor.commit(createWriteRequest(1L, 1));
         poolEmptied.await(5, TimeUnit.SECONDS);
 
-        long actual = (long) MetricsUtils.currentServerMetrics().get("max_time_waiting_empty_pool_in_commit_processor_read_ms");
-        //since each request takes 1000ms to process, so the waiting shouldn't be more than three times of that
+        long actual = (long)
+                MetricsUtils.currentServerMetrics().get("max_time_waiting_empty_pool_in_commit_processor_read_ms");
+        // since each request takes 1000ms to process, so the waiting shouldn't be more than three times of that
         checkTimeMetric(actual, 2500L, 3500L);
     }
 
@@ -378,7 +376,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     public void testConcurrentRequestProcessingInCommitProcessor() throws Exception {
         setupProcessors(3, 1000);
 
-        //three read requests will be processed in parallel
+        // three read requests will be processed in parallel
         commitSeen = new CountDownLatch(1);
         requestScheduled = new CountDownLatch(3);
         commitProcessor.processRequest(createReadRequest(1L, 2));
@@ -386,12 +384,12 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         commitProcessor.processRequest(createReadRequest(1L, 4));
         requestScheduled.await(5, TimeUnit.SECONDS);
 
-        //add a commit request to trigger waitForEmptyPool, which will record number of requests being proccessed
+        // add a commit request to trigger waitForEmptyPool, which will record number of requests being proccessed
         poolEmptied = new CountDownLatch(1);
         commitProcessor.commit(createWriteRequest(1L, 1));
         poolEmptied.await(5, TimeUnit.SECONDS);
 
-        //this will change after we upstream batch write in CommitProcessor
+        // this will change after we upstream batch write in CommitProcessor
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         assertEquals(3L, values.get("max_concurrent_request_processing_in_commit_processor"));
     }
@@ -399,19 +397,19 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     @Test
     public void testReadsAfterWriteInSessionQueue() throws Exception {
         setupProcessors(0, 0);
-        //this read request is before write
+        // this read request is before write
         processRequestWithWait(createReadRequest(1L, 1));
 
-        //one write request
+        // one write request
         Request req1 = createWriteRequest(1L, 1);
         processRequestWithWait(req1);
 
-        //three read requests after the write
+        // three read requests after the write
         processRequestWithWait(createReadRequest(1L, 2));
         processRequestWithWait(createReadRequest(1L, 3));
         processRequestWithWait(createReadRequest(1L, 4));
 
-        //commit the write
+        // commit the write
         commitWithWait(req1);
 
         checkMetrics("reads_after_write_in_session_queue", 3L, 3L, 3d, 1, 3);
@@ -423,7 +421,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         processRequestWithWait(createReadRequest(1L, 1));
         processRequestWithWait(createReadRequest(1L, 2));
 
-        //recorded reads in the queue are 1, 1
+        // recorded reads in the queue are 1, 1
         checkMetrics("read_commit_proc_req_queued", 1L, 1L, 1d, 2, 2);
     }
 
@@ -435,21 +433,21 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         Request req2 = createWriteRequest(1L, 2);
         processRequestWithWait(req2);
 
-        //since we haven't got any commit request, the write request stays in the queue
-        //recorded writes in the queue are 1, 2
+        // since we haven't got any commit request, the write request stays in the queue
+        // recorded writes in the queue are 1, 2
         checkMetrics("write_commit_proc_req_queued", 1L, 2L, 1.5d, 2, 3);
 
         commitWithWait(req1);
 
-        //recording is done before commit request is processed, so writes in the queue are: 1, 2, 2
+        // recording is done before commit request is processed, so writes in the queue are: 1, 2, 2
         checkMetrics("write_commit_proc_req_queued", 1L, 2L, 1.6667d, 3, 5);
 
         commitWithWait(req2);
-        //writes in the queue are 1, 2, 2, 1
+        // writes in the queue are 1, 2, 2, 1
         checkMetrics("write_commit_proc_req_queued", 1L, 2L, 1.5d, 4, 6);
 
-        //send a read request to trigger the recording, this time the write queue should be empty
-        //writes in the queue are 1, 2, 2, 1, 0
+        // send a read request to trigger the recording, this time the write queue should be empty
+        // writes in the queue are 1, 2, 2, 1, 0
         processRequestWithWait(createReadRequest(1L, 1));
 
         checkMetrics("write_commit_proc_req_queued", 0L, 2L, 1.2d, 5, 6);
@@ -462,7 +460,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         commitWithWait(createWriteRequest(1L, 1));
         commitWithWait(createWriteRequest(1L, 2));
 
-        //recorded commits in the queue are 1, 1
+        // recorded commits in the queue are 1, 1
         checkMetrics("commit_commit_proc_req_queued", 1L, 1L, 1d, 2, 2);
     }
 
@@ -481,27 +479,26 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     public void testPendingSessionQueueSize() throws Exception {
         setupProcessors(0, 0);
 
-        //one write request for session 1
+        // one write request for session 1
         Request req1 = createWriteRequest(1L, 1);
         processRequestWithWait(req1);
 
-        //two write requests for session 2
+        // two write requests for session 2
         Request req2 = createWriteRequest(2L, 2);
         processRequestWithWait(req2);
         Request req3 = createWriteRequest(2L, 3);
         processRequestWithWait(req3);
 
         commitWithWait(req1);
-        //there are two sessions with pending requests
+        // there are two sessions with pending requests
         checkMetrics("pending_session_queue_size", 2L, 2L, 2d, 1, 2);
 
         commitWithWait(req2);
-        //there is on session with pending requests
+        // there is on session with pending requests
         checkMetrics("pending_session_queue_size", 1L, 2L, 1.5d, 2, 3);
 
         commitWithWait(req3);
-        //there is one session with pending requests
+        // there is one session with pending requests
         checkMetrics("pending_session_queue_size", 1L, 2L, 1.333d, 3, 4);
     }
-
 }

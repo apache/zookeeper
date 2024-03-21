@@ -83,7 +83,8 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         setupDataTree(zk);
 
-        ACL deleteProtection = new ACL(ZooDefs.Perms.DELETE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */));
+        ACL deleteProtection = new ACL(
+                ZooDefs.Perms.DELETE, new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0=" /* password is test */));
         List<ACL> acls = Arrays.asList(new ACL(ZooDefs.Perms.READ, Ids.ANYONE_ID_UNSAFE), deleteProtection);
 
         // poison the well
@@ -200,7 +201,6 @@ public class ZooKeeperTest extends ClientBase {
                     ctx.notify();
                 }
             }
-
         };
         final AtomicInteger ctx = new AtomicInteger(3);
         ZKUtil.deleteRecursive(zk, "/a", cb, ctx);
@@ -239,7 +239,7 @@ public class ZooKeeperTest extends ClientBase {
     public void testParseWithQuotes() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        for (String quoteChar : new String[]{"'", "\""}) {
+        for (String quoteChar : new String[] {"'", "\""}) {
             String cmdstring = String.format("create /node %1$squoted data%1$s", quoteChar);
             zkMain.cl.parseCommand(cmdstring);
             assertEquals(zkMain.cl.getNumArguments(), 3, "quotes combine arguments");
@@ -253,7 +253,7 @@ public class ZooKeeperTest extends ClientBase {
     public void testParseWithMixedQuotes() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        for (String[] quoteChars : new String[][]{{"'", "\""}, {"\"", "'"}}) {
+        for (String[] quoteChars : new String[][] {{"'", "\""}, {"\"", "'"}}) {
             String outerQuotes = quoteChars[0];
             String innerQuotes = quoteChars[1];
             String cmdstring = String.format("create /node %1$s%2$squoted data%2$s%1$s", outerQuotes, innerQuotes);
@@ -261,7 +261,9 @@ public class ZooKeeperTest extends ClientBase {
             assertEquals(zkMain.cl.getNumArguments(), 3, "quotes combine arguments");
             assertEquals(zkMain.cl.getCmdArgument(0), "create", "create is not taken as first argument");
             assertEquals(zkMain.cl.getCmdArgument(1), "/node", "/node is not taken as second argument");
-            assertEquals(zkMain.cl.getCmdArgument(2), innerQuotes + "quoted data" + innerQuotes,
+            assertEquals(
+                    zkMain.cl.getCmdArgument(2),
+                    innerQuotes + "quoted data" + innerQuotes,
                     "quoted data is not taken as third argument");
         }
     }
@@ -456,7 +458,7 @@ public class ZooKeeperTest extends ClientBase {
     public void testCheckInvalidAcls() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        String cmdstring = "create -s -e /node data ip:scheme:gggsd"; //invalid acl's
+        String cmdstring = "create -s -e /node data ip:scheme:gggsd"; // invalid acl's
 
         // For Invalid ACls should not throw exception
         zkMain.executeLine(cmdstring);
@@ -467,7 +469,7 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
         String cmdstring = "create -s -e /node1 data ";
-        String cmdstring1 = "delete /node1 2"; //invalid dataversion no
+        String cmdstring1 = "delete /node1 2"; // invalid dataversion no
         zkMain.executeLine(cmdstring);
 
         // For Invalid dataversion number should not throw exception
@@ -505,8 +507,7 @@ public class ZooKeeperTest extends ClientBase {
         assertEquals("Command index out of range", result);
     }
 
-    private String executeLine(ZooKeeperMain zkMain, String cmd)
-        throws InterruptedException, IOException {
+    private String executeLine(ZooKeeperMain zkMain, String cmd) throws InterruptedException, IOException {
         // setup redirect out/err streams to get System.in/err, use this
         // judiciously!
         final PrintStream systemErr = System.err; // get current err
@@ -665,20 +666,24 @@ public class ZooKeeperTest extends ClientBase {
         try {
             zk = createClient();
             ZKClientConfig clientConfig = new ZKClientConfig();
-            clientConfig.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
+            clientConfig.setProperty(
+                    ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
             CountdownWatcher watcher = new CountdownWatcher();
             HostProvider aHostProvider = new StaticHostProvider(new ConnectStringParser(hostPort).getServerAddresses());
             newZKClient = new ZooKeeper(
-                hostPort,
-                zk.getSessionTimeout(),
-                watcher,
-                zk.getSessionId(),
-                zk.getSessionPasswd(),
-                false,
-                aHostProvider,
-                clientConfig);
+                    hostPort,
+                    zk.getSessionTimeout(),
+                    watcher,
+                    zk.getSessionId(),
+                    zk.getSessionPasswd(),
+                    false,
+                    aHostProvider,
+                    clientConfig);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
-            assertEquals(zk.getSessionId(), newZKClient.getSessionId(), "Old client session id and new clinet session id must be same");
+            assertEquals(
+                    zk.getSessionId(),
+                    newZKClient.getSessionId(),
+                    "Old client session id and new clinet session id must be same");
         } finally {
             zk.close();
             newZKClient.close();
@@ -760,7 +765,7 @@ public class ZooKeeperTest extends ClientBase {
         expectedResults.add("ip: 127.0.0.1");
 
         // Check who ami without authentication/without any user into the session
-        cmd.parse(new String[] { "whoami" });
+        cmd.parse(new String[] {"whoami"});
         String actualResult = runCommandExpect(cmd);
         assertClientAuthInfo(expectedResults, actualResult);
 
@@ -779,8 +784,9 @@ public class ZooKeeperTest extends ClientBase {
 
     private void assertClientAuthInfo(List<String> expected, String actual) {
         expected.forEach(s -> {
-            assertTrue(actual.contains(s),
-                "Expected result part '" + s + "' not present in actual result '" + actual + "' ");
+            assertTrue(
+                    actual.contains(s),
+                    "Expected result part '" + s + "' not present in actual result '" + actual + "' ");
         });
     }
 
@@ -789,8 +795,9 @@ public class ZooKeeperTest extends ClientBase {
         // get a wrong port number
         int invalidPort = PortAssignment.unique();
         long timeout = 3000L; // millisecond
-        String[] args1 = {"-server", "localhost:" + invalidPort, "-timeout",
-                Long.toString(timeout), "-waitforconnection", "ls", "/"};
+        String[] args1 = {
+            "-server", "localhost:" + invalidPort, "-timeout", Long.toString(timeout), "-waitforconnection", "ls", "/"
+        };
         long startTime = System.currentTimeMillis();
         // try to connect to a non-existing server so as to wait until wait_timeout
         try {
@@ -800,9 +807,7 @@ public class ZooKeeperTest extends ClientBase {
             // do nothing
         }
         long endTime = System.currentTimeMillis();
-        assertTrue(endTime - startTime >= timeout,
-                "ZooKeeeperMain does not wait until the specified timeout");
-
+        assertTrue(endTime - startTime >= timeout, "ZooKeeeperMain does not wait until the specified timeout");
     }
 
     @Test
@@ -814,5 +819,4 @@ public class ZooKeeperTest extends ClientBase {
         // One impossible code
         assertThrows(IllegalArgumentException.class, () -> KeeperException.create(Code.get(Integer.MAX_VALUE)));
     }
-
 }

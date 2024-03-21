@@ -157,7 +157,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
                 }
             }
             int leaderIndex = qu.getLeaderServer();
-            //Shut down the cluster and delete the snapshots from the followers
+            // Shut down the cluster and delete the snapshots from the followers
             for (int i = 1; i <= qu.ALL; i++) {
                 qu.shutdown(i);
                 if (i != leaderIndex) {
@@ -170,7 +170,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
                     assertEquals(txnLogFactory.findNRecentSnapshots(10).size(), 0);
                 }
             }
-            //Start while trusting empty snapshots, verify that the followers save snapshots
+            // Start while trusting empty snapshots, verify that the followers save snapshots
             System.setProperty(FileTxnSnapLog.ZOOKEEPER_SNAPSHOT_TRUST_EMPTY, "true");
             qu.start(leaderIndex);
             for (int i = 1; i <= qu.ALL; i++) {
@@ -181,7 +181,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
                     assertTrue(snapshots.size() > 0, "A snapshot should have been created on follower " + i);
                 }
             }
-            //Check that the created nodes are still there
+            // Check that the created nodes are still there
             try (ZooKeeper zk = new ZooKeeper(connString, CONNECTION_TIMEOUT, this)) {
                 for (int i = 0; i < N_TRANSACTIONS; i++) {
                     assertNotNull(zk.exists("/node-" + i, false));
@@ -196,5 +196,4 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements Watcher {
     public void process(WatchedEvent event) {
         // do nothing
     }
-
 }

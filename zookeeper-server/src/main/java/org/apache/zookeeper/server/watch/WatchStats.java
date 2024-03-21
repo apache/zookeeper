@@ -23,14 +23,14 @@ package org.apache.zookeeper.server.watch;
  */
 public final class WatchStats {
     private static final WatchStats[] WATCH_STATS = new WatchStats[] {
-            new WatchStats(0), // NONE
-            new WatchStats(1), // STANDARD
-            new WatchStats(2), // PERSISTENT
-            new WatchStats(3), // STANDARD + PERSISTENT
-            new WatchStats(4), // PERSISTENT_RECURSIVE
-            new WatchStats(5), // STANDARD + PERSISTENT_RECURSIVE
-            new WatchStats(6), // PERSISTENT + PERSISTENT_RECURSIVE
-            new WatchStats(7), // STANDARD + PERSISTENT + PERSISTENT_RECURSIVE
+        new WatchStats(0), // NONE
+        new WatchStats(1), // STANDARD
+        new WatchStats(2), // PERSISTENT
+        new WatchStats(3), // STANDARD + PERSISTENT
+        new WatchStats(4), // PERSISTENT_RECURSIVE
+        new WatchStats(5), // STANDARD + PERSISTENT_RECURSIVE
+        new WatchStats(6), // PERSISTENT + PERSISTENT_RECURSIVE
+        new WatchStats(7), // STANDARD + PERSISTENT + PERSISTENT_RECURSIVE
     };
 
     /**

@@ -43,7 +43,6 @@ public class ZooKeeperThreadTest extends ZKTestCase {
         protected void handleException(String thName, Throwable e) {
             runningLatch.countDown();
         }
-
     }
 
     public class MyCriticalThread extends ZooKeeperCriticalThread {
@@ -52,9 +51,7 @@ public class ZooKeeperThreadTest extends ZKTestCase {
             super(threadName, new ZooKeeperServerListener() {
 
                 @Override
-                public void notifyStopping(String threadName, int erroCode) {
-
-                }
+                public void notifyStopping(String threadName, int erroCode) {}
             });
         }
 
@@ -66,7 +63,6 @@ public class ZooKeeperThreadTest extends ZKTestCase {
         protected void handleException(String thName, Throwable e) {
             runningLatch.countDown();
         }
-
     }
 
     /**
@@ -84,5 +80,4 @@ public class ZooKeeperThreadTest extends ZKTestCase {
         t2.start();
         assertTrue(runningLatch.await(10000, TimeUnit.MILLISECONDS), "Uncaught exception is not properly handled.");
     }
-
 }

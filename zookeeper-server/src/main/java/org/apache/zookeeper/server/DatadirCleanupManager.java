@@ -144,7 +144,6 @@ public class DatadirCleanupManager {
             }
             LOG.info("Purge task completed.");
         }
-
     }
 
     /**
@@ -191,5 +190,4 @@ public class DatadirCleanupManager {
     public int getSnapRetainCount() {
         return snapRetainCount;
     }
-
 }

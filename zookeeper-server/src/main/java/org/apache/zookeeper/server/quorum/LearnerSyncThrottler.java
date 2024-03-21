@@ -114,5 +114,4 @@ public class LearnerSyncThrottler {
     public int getSyncInProgress() {
         return syncInProgress;
     }
-
 }

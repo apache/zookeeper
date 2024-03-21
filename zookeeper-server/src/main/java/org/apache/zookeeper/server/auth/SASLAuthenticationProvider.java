@@ -32,7 +32,6 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
         // TODO: consider substituting current implementation of direct ClientCnxn manipulation with
         // a call to this method (SASLAuthenticationProvider:handleAuthentication()) at session initiation.
         return KeeperException.Code.AUTHFAILED;
-
     }
 
     public boolean matches(String id, String aclExpr) {
@@ -63,5 +62,4 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
             return false;
         }
     }
-
 }

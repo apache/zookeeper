@@ -72,7 +72,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
     @Test
     public void testNettyIpAuthDefault(@TempDir File tmpDir) throws Exception {
         String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
@@ -122,7 +123,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
         } finally {
             f.shutdown();
             zks.shutdown();
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
 
@@ -198,9 +200,9 @@ public class ACLTest extends ZKTestCase implements Watcher {
         } finally {
             f.shutdown();
             zks.shutdown();
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
         }
-
     }
 
     /*
@@ -256,7 +258,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
             zk.close();
             f.shutdown();
             zks.shutdown();
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
 
@@ -300,7 +303,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
             zk.close();
             f.shutdown();
             zks.shutdown();
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
 
@@ -333,7 +337,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                     stat = zk.exists(path, false);
                     fail("exists should throw NoAuthException when don't have read permission");
                 } catch (KeeperException.NoAuthException e) {
-                    //expected
+                    // expected
                 }
 
                 zk.delete(path, -1);
@@ -349,7 +353,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
         } finally {
             f.shutdown();
             zks.shutdown();
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
 
@@ -378,7 +383,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                     stat = zk.exists("/", false);
                     fail("exists should throw NoAuthException when removing root path's ACL permission");
                 } catch (KeeperException.NoAuthException e) {
-                    //expected
+                    // expected
                 }
             } finally {
                 zk.close();
@@ -386,7 +391,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
         } finally {
             f.shutdown();
             zks.shutdown();
-            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+            assertTrue(
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
         }
     }
 }

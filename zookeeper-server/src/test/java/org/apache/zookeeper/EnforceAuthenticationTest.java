@@ -74,7 +74,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     @Test
     public void testEnforceAuthenticationOldBehaviourWithNetty() throws Exception {
         Map<String, String> prop = new HashMap<>();
-        //setting property false should give the same behaviour as when property is not set
+        // setting property false should give the same behaviour as when property is not set
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "false");
         prop.put("serverCnxnFactory", "org.apache.zookeeper.server.NettyServerCnxnFactory");
         startServer(prop);
@@ -84,12 +84,11 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     private void testEnforceAuthOldBehaviour(boolean netty) throws Exception {
         ZKClientConfig config = new ZKClientConfig();
         if (netty) {
-            config.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET,
-                "org.apache.zookeeper.ClientCnxnSocketNetty");
+            config.setProperty(
+                    ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         }
-        ZooKeeper client = ClientBase
-            .createZKClient("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT,
-                config);
+        ZooKeeper client =
+                ClientBase.createZKClient("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, config);
         String path = "/defaultAuth" + System.currentTimeMillis();
         String data = "someData";
         client.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -122,8 +121,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
         testServerCannotStart(prop);
     }
 
-    private void testServerCannotStart(Map<String, String> prop)
-        throws Exception {
+    private void testServerCannotStart(Map<String, String> prop) throws Exception {
         File confFile = getConfFile(prop);
         ServerConfig config = new ServerConfig();
         config.parse(confFile.toString());
@@ -132,7 +130,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
             serverMain.runFromConfig(config);
             fail("IllegalArgumentException is expected.");
         } catch (IllegalArgumentException e) {
-            //do nothing
+            // do nothing
         }
     }
 
@@ -141,8 +139,8 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
         Map<String, String> prop = new HashMap<>();
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_ENABLED), "true");
         prop.put(removeZooKeeper(AuthenticationHelper.ENFORCE_AUTH_SCHEMES), "digest");
-        //digest auth provider is started by default, so no need to
-        //prop.put("authProvider.1", DigestAuthenticationProvider.class.getName());
+        // digest auth provider is started by default, so no need to
+        // prop.put("authProvider.1", DigestAuthenticationProvider.class.getName());
         startServer(prop);
         testEnforceAuthNewBehaviour(false);
     }
@@ -163,29 +161,26 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
     private void testEnforceAuthNewBehaviour(boolean netty) throws Exception {
         ZKClientConfig config = new ZKClientConfig();
         if (netty) {
-            config.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET,
-                "org.apache.zookeeper.ClientCnxnSocketNetty");
+            config.setProperty(
+                    ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         }
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ZooKeeper client =
-            new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch),
-                config);
+                new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch), config);
         countDownLatch.await();
         String path = "/newAuth" + System.currentTimeMillis();
         String data = "someData";
 
-        //try without authentication
+        // try without authentication
         try {
             client.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("SessionClosedRequireAuthException is expected.");
         } catch (KeeperException.SessionClosedRequireAuthException e) {
-            //do nothing
+            // do nothing
         }
         client.close();
         countDownLatch = new CountDownLatch(1);
-        client =
-            new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch),
-                config);
+        client = new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch), config);
         countDownLatch.await();
 
         // try operations after authentication
@@ -206,8 +201,7 @@ public class EnforceAuthenticationTest extends QuorumPeerTestBase {
         ZKClientConfig config = new ZKClientConfig();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ZooKeeper client =
-            new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch),
-                config);
+                new ZooKeeper("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT, getWatcher(countDownLatch), config);
         countDownLatch.await();
         // try operation without adding auth info, it should be success as ip auth info is
         // added automatically by server

@@ -47,7 +47,6 @@ public class KeeperStateTest extends ZKTestCase {
         } catch (RuntimeException re) {
             // we're good.
         }
-
     }
 
     /** Validate that the deprecated constant still works. There were issues
@@ -58,9 +57,9 @@ public class KeeperStateTest extends ZKTestCase {
     public void testDeprecatedCodeOkInSwitch() {
         int test = 1;
         switch (test) {
-        case Code.Ok:
-            assertTrue(true);
-            break;
+            case Code.Ok:
+                assertTrue(true);
+                break;
         }
     }
 
@@ -69,10 +68,9 @@ public class KeeperStateTest extends ZKTestCase {
     public void testCodeOKInSwitch() {
         Code test = Code.OK;
         switch (test) {
-        case OK:
-            assertTrue(true);
-            break;
+            case OK:
+                assertTrue(true);
+                break;
         }
     }
-
 }

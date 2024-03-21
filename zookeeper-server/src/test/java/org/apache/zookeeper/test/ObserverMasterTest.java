@@ -83,7 +83,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         latch = new CountDownLatch(2);
         setUp(-1, testObserverMaster);
         q3.start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
 
         validateObserverSyncTimeMetrics();
@@ -111,19 +112,24 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         // Now kill one of the other real servers
         q2.shutdown();
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2, ClientBase.CONNECTION_TIMEOUT),
                 "Waiting for server 2 to shut down");
 
         LOG.info("Server 2 down");
 
         // Now the resulting ensemble shouldn't be quorate
         latch.await();
-        assertNotSame(KeeperState.SyncConnected, lastEvent.getState(), "Client is still connected to non-quorate cluster");
+        assertNotSame(
+                KeeperState.SyncConnected, lastEvent.getState(), "Client is still connected to non-quorate cluster");
 
         LOG.info("Latch returned");
 
         try {
-            assertNotEquals("Shouldn't get a response when cluster not quorate!", "test", new String(zk.getData("/obstest", null, null)));
+            assertNotEquals(
+                    "Shouldn't get a response when cluster not quorate!",
+                    "test",
+                    new String(zk.getData("/obstest", null, null)));
         } catch (ConnectionLossException c) {
             LOG.info("Connection loss exception caught - ensemble not quorate (this is expected)");
         }
@@ -133,11 +139,12 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         LOG.info("Restarting server 2");
 
         // Bring it back
-        //q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection, extraCfgs);
+        // q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection, extraCfgs);
         q2.start();
 
         LOG.info("Waiting for server 2 to come up");
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT),
                 "waiting for server 2 being up");
 
         LOG.info("Server 2 started, waiting for latch");
@@ -145,7 +152,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         latch.await();
         // It's possible our session expired - but this is ok, shows we
         // were able to talk to the ensemble
-        assertTrue((KeeperState.SyncConnected == lastEvent.getState() || KeeperState.Expired == lastEvent.getState()),
+        assertTrue(
+                (KeeperState.SyncConnected == lastEvent.getState() || KeeperState.Expired == lastEvent.getState()),
                 "Client didn't reconnect to quorate ensemble (state was" + lastEvent.getState() + ")");
 
         LOG.info("perform a revalidation test");
@@ -155,7 +163,10 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         PortForwarder leaderPF = new PortForwarder(leaderProxyPort, leaderPort);
 
         latch = new CountDownLatch(1);
-        ZooKeeper client = new ZooKeeper(String.format("127.0.0.1:%d,127.0.0.1:%d", leaderProxyPort, obsProxyPort), ClientBase.CONNECTION_TIMEOUT, this);
+        ZooKeeper client = new ZooKeeper(
+                String.format("127.0.0.1:%d,127.0.0.1:%d", leaderProxyPort, obsProxyPort),
+                ClientBase.CONNECTION_TIMEOUT,
+                this);
         latch.await();
         client.create("/revalidtest", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         assertNotNull(client.exists("/revalidtest", null), "Read-after write failed");
@@ -180,7 +191,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     public void testRevalidation(boolean testObserverMaster) throws Exception {
         setUp(-1, testObserverMaster);
         q3.start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
         final int leaderProxyPort = PortAssignment.unique();
         final int obsProxyPort = PortAssignment.unique();
@@ -189,7 +201,10 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         PortForwarder leaderPF = new PortForwarder(leaderProxyPort, leaderPort);
 
         latch = new CountDownLatch(1);
-        zk = new ZooKeeper(String.format("127.0.0.1:%d,127.0.0.1:%d", leaderProxyPort, obsProxyPort), ClientBase.CONNECTION_TIMEOUT, this);
+        zk = new ZooKeeper(
+                String.format("127.0.0.1:%d,127.0.0.1:%d", leaderProxyPort, obsProxyPort),
+                ClientBase.CONNECTION_TIMEOUT,
+                this);
         latch.await();
         zk.create("/revalidtest", "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         assertNotNull(zk.exists("/revalidtest", null), "Read-after write failed");
@@ -215,13 +230,14 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1, ClientBase.CONNECTION_TIMEOUT, null);
         for (int i = 0; i < 10; i++) {
-            zk.create("/bulk"
-                              + i, ("Initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(
+                    "/bulk" + i, ("Initial data of some size").getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
 
         q3.start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for observer to be up");
 
         latch = new CountDownLatch(1);
@@ -233,11 +249,14 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         final long zxid = q1.getQuorumPeer().getLastLoggedZxid();
 
         // wait for change to propagate
-        waitFor("Timeout waiting for observer sync", new WaitForCondition() {
-            public boolean evaluate() {
-                return zxid == q3.getQuorumPeer().getLastLoggedZxid();
-            }
-        }, 30);
+        waitFor(
+                "Timeout waiting for observer sync",
+                new WaitForCondition() {
+                    public boolean evaluate() {
+                        return zxid == q3.getQuorumPeer().getLastLoggedZxid();
+                    }
+                },
+                30);
 
         ZooKeeper obsZk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS, ClientBase.CONNECTION_TIMEOUT, this);
         int followerPort = q1.getQuorumPeer().leader == null ? CLIENT_PORT_QP1 : CLIENT_PORT_QP2;
@@ -247,7 +266,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         CountDownLatch oAsyncLatch = new CountDownLatch(numTransactions);
         Thread oAsyncWriteThread = new Thread(new AsyncWriter(obsZk, numTransactions, true, oAsyncLatch, "/obs", gate));
         CountDownLatch fAsyncLatch = new CountDownLatch(numTransactions);
-        Thread fAsyncWriteThread = new Thread(new AsyncWriter(fZk, numTransactions, true, fAsyncLatch, "/follower", gate));
+        Thread fAsyncWriteThread =
+                new Thread(new AsyncWriter(fZk, numTransactions, true, fAsyncLatch, "/follower", gate));
 
         LOG.info("ASYNC WRITES");
         oAsyncWriteThread.start();
@@ -274,7 +294,10 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    public void testAdminCommands(boolean testObserverMaster) throws IOException, MBeanException, InstanceNotFoundException, ReflectionException, InterruptedException, MalformedObjectNameException, AttributeNotFoundException, InvalidAttributeValueException, KeeperException {
+    public void testAdminCommands(boolean testObserverMaster)
+            throws IOException, MBeanException, InstanceNotFoundException, ReflectionException, InterruptedException,
+                    MalformedObjectNameException, AttributeNotFoundException, InvalidAttributeValueException,
+                    KeeperException {
         // flush all beans, then start
         for (ZKMBeanInfo beanInfo : MBeanRegistry.getInstance().getRegisteredBeans()) {
             MBeanRegistry.getInstance().unregister(beanInfo);
@@ -283,7 +306,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         JMXEnv.setUp();
         setUp(-1, testObserverMaster);
         q3.start();
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for observer to be up");
 
         // Assert that commands are getting forwarded correctly
@@ -293,7 +317,9 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
         // test stats collection
         final Map<String, String> emptyMap = Collections.emptyMap();
-        Map<String, Object> stats = Commands.runGetCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap, null, null).toMap();
+        Map<String, Object> stats = Commands.runGetCommand(
+                        "mntr", q3.getQuorumPeer().getActiveServer(), emptyMap, null, null)
+                .toMap();
         assertTrue(stats.containsKey("observer_master_id"), "observer not emitting observer_master_id");
 
         // check the stats for the first peer
@@ -329,8 +355,9 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         // test admin commands for disconnection
         ObjectName connBean = null;
         for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null)) {
-            if (bean.getCanonicalName().contains("Learner_Connections") && bean.getCanonicalName().contains("id:"
-                                                                                                                    + q3.getQuorumPeer().getMyId())) {
+            if (bean.getCanonicalName().contains("Learner_Connections")
+                    && bean.getCanonicalName()
+                            .contains("id:" + q3.getQuorumPeer().getMyId())) {
                 connBean = bean;
                 break;
             }
@@ -339,12 +366,15 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
         latch = new CountDownLatch(1);
         JMXEnv.conn().invoke(connBean, "terminateConnection", new Object[0], null);
-        assertTrue(latch.await(CONNECTION_TIMEOUT / 2, TimeUnit.MILLISECONDS),
-                "server failed to disconnect on terminate");
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+        assertTrue(
+                latch.await(CONNECTION_TIMEOUT / 2, TimeUnit.MILLISECONDS), "server failed to disconnect on terminate");
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                 "waiting for server 3 being up");
 
-        final String obsBeanName = String.format("org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer", q3.getQuorumPeer().getMyId(), q3.getQuorumPeer().getMyId());
+        final String obsBeanName = String.format(
+                "org.apache.ZooKeeperService:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Observer",
+                q3.getQuorumPeer().getMyId(), q3.getQuorumPeer().getMyId());
         Set<ObjectName> names = JMXEnv.conn().queryNames(new ObjectName(obsBeanName), null);
         assertEquals(1, names.size(), "expecting singular observer bean");
         ObjectName obsBean = names.iterator().next();
@@ -354,8 +384,10 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
             long observerMasterId = q3.getQuorumPeer().observer.getLearnerMasterId();
             latch = new CountDownLatch(1);
             JMXEnv.conn().setAttribute(obsBean, new Attribute("LearnerMaster", Long.toString(3 - observerMasterId)));
-            assertTrue(latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "server failed to disconnect on terminate");
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
+            assertTrue(
+                    latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "server failed to disconnect on terminate");
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS, CONNECTION_TIMEOUT),
                     "waiting for server 3 being up");
         } else {
             // show we get an error
@@ -364,7 +396,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
                 JMXEnv.conn().setAttribute(obsBean, new Attribute("LearnerMaster", Long.toString(3 - leaderId)));
                 fail("should have seen an exception on previous command");
             } catch (RuntimeMBeanException e) {
-                assertEquals(IllegalArgumentException.class, e.getCause().getClass(), "mbean failed for the wrong reason");
+                assertEquals(
+                        IllegalArgumentException.class, e.getCause().getClass(), "mbean failed for the wrong reason");
             }
         }
 
@@ -373,21 +406,23 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     }
 
     private String createServerString(String type, long serverId, int clientPort) {
-        return "server." + serverId + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":" + type + ";" + clientPort;
+        return "server." + serverId + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":"
+                + type + ";" + clientPort;
     }
 
     private void waitServerUp(int clientPort) {
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + clientPort, CONNECTION_TIMEOUT),
                 "waiting for server being up");
     }
 
     private ZooKeeperAdmin createAdmin(int clientPort) throws IOException {
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU=" /* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
-        ZooKeeperAdmin admin = new ZooKeeperAdmin(
-            "127.0.0.1:" + clientPort,
-            ClientBase.CONNECTION_TIMEOUT,
-            DummyWatcher.INSTANCE);
+        ZooKeeperAdmin admin =
+                new ZooKeeperAdmin("127.0.0.1:" + clientPort, ClientBase.CONNECTION_TIMEOUT, DummyWatcher.INSTANCE);
         admin.addAuthInfo("digest", "super:test".getBytes());
         return admin;
     }
@@ -397,7 +432,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @Disabled
-    public void testDynamicReconfig(boolean testObserverMaster) throws InterruptedException, IOException, KeeperException {
+    public void testDynamicReconfig(boolean testObserverMaster)
+            throws InterruptedException, IOException, KeeperException {
         if (!testObserverMaster) {
             return;
         }
@@ -415,11 +451,13 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         int omPort1 = PortAssignment.unique();
         int omPort2 = PortAssignment.unique();
         String quorumCfgSection = createServerString("participant", 1, clientPort1)
-                                          + "\n"
-                                          + createServerString("participant", 2, clientPort2);
+                + "\n"
+                + createServerString("participant", 2, clientPort2);
 
-        MainThread s1 = new MainThread(1, clientPort1, quorumCfgSection, String.format("observerMasterPort=%d%n", omPort1));
-        MainThread s2 = new MainThread(2, clientPort2, quorumCfgSection, String.format("observerMasterPort=%d%n", omPort2));
+        MainThread s1 =
+                new MainThread(1, clientPort1, quorumCfgSection, String.format("observerMasterPort=%d%n", omPort1));
+        MainThread s2 =
+                new MainThread(2, clientPort2, quorumCfgSection, String.format("observerMasterPort=%d%n", omPort2));
         s1.start();
         s2.start();
         waitServerUp(clientPort1);
@@ -430,26 +468,24 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         int observerClientPort = PortAssignment.unique();
         int observerId = 10;
         MainThread observer = new MainThread(
-            observerId,
-            observerClientPort,
-            quorumCfgSection + "\n" + createServerString("observer", observerId, observerClientPort),
-            String.format("observerMasterPort=%d%n", nonLeaderOMPort));
+                observerId,
+                observerClientPort,
+                quorumCfgSection + "\n" + createServerString("observer", observerId, observerClientPort),
+                String.format("observerMasterPort=%d%n", nonLeaderOMPort));
         LOG.info("starting observer");
         observer.start();
         waitServerUp(observerClientPort);
 
         // create a client to the observer
         final LinkedBlockingQueue<KeeperState> states = new LinkedBlockingQueue<>();
-        ZooKeeper observerClient = new ZooKeeper(
-            "127.0.0.1:" + observerClientPort,
-            ClientBase.CONNECTION_TIMEOUT,
-            event -> {
-                try {
-                    states.put(event.getState());
-                } catch (InterruptedException ignore) {
+        ZooKeeper observerClient =
+                new ZooKeeper("127.0.0.1:" + observerClientPort, ClientBase.CONNECTION_TIMEOUT, event -> {
+                    try {
+                        states.put(event.getState());
+                    } catch (InterruptedException ignore) {
 
-                }
-            });
+                    }
+                });
 
         // wait for connected
         KeeperState state = states.poll(1000, TimeUnit.MILLISECONDS);
@@ -457,7 +493,8 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
 
         // issue reconfig command
         ArrayList<String> newServers = new ArrayList<>();
-        String server = "server.3=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ":participant;localhost:" + PortAssignment.unique();
+        String server = "server.3=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                + ":participant;localhost:" + PortAssignment.unique();
         newServers.add(server);
         ZooKeeperAdmin admin = createAdmin(clientPort1);
         ReconfigTest.reconfig(admin, newServers, null, null, -1);
@@ -486,7 +523,13 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
         private final String root;
         private final CountDownLatch gate;
 
-        AsyncWriter(ZooKeeper client, int numTransactions, boolean issueSync, CountDownLatch writerLatch, String root, CountDownLatch gate) {
+        AsyncWriter(
+                ZooKeeper client,
+                int numTransactions,
+                boolean issueSync,
+                CountDownLatch writerLatch,
+                String root,
+                CountDownLatch gate) {
             this.client = client;
             this.numTransactions = numTransactions;
             this.issueSync = issueSync;
@@ -507,13 +550,18 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
             }
             for (int i = 0; i < numTransactions; i++) {
                 final boolean pleaseLog = i % 100 == 0;
-                client.create(root
-                                      + i, "inner thread".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {
-                                          writerLatch.countDown();
-                                          if (pleaseLog) {
-                                              LOG.info("wrote {}", path);
-                                          }
-                                      }, null);
+                client.create(
+                        root + i,
+                        "inner thread".getBytes(),
+                        Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT,
+                        (rc, path, ctx, name) -> {
+                            writerLatch.countDown();
+                            if (pleaseLog) {
+                                LOG.info("wrote {}", path);
+                            }
+                        },
+                        null);
                 if (pleaseLog) {
                     LOG.info("async wrote {}{}", root, i);
                     if (issueSync) {
@@ -522,14 +570,14 @@ public class ObserverMasterTest extends ObserverMasterTestBase {
                 }
             }
         }
-
     }
 
     private void validateObserverSyncTimeMetrics() {
         final String name = "observer_sync_time";
         final Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
 
-        assertEquals(5, metrics.keySet().stream().filter(key -> key.contains(name)).count());
+        assertEquals(
+                5, metrics.keySet().stream().filter(key -> key.contains(name)).count());
         assertNotNull(metrics.get(String.format("avg_%s", name)));
         assertNotNull(metrics.get(String.format("min_%s", name)));
         assertNotNull(metrics.get(String.format("max_%s", name)));

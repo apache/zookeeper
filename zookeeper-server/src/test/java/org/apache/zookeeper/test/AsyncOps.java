@@ -123,7 +123,6 @@ public class AsyncOps {
 
             assertEquals(expected, actual);
         }
-
     }
 
     public static class StringCB extends AsyncCB implements StringCallback {
@@ -209,7 +208,6 @@ public class AsyncOps {
         public String toString() {
             return super.toString() + name;
         }
-
     }
 
     public static class ACLCB extends AsyncCB implements ACLCallback {
@@ -268,15 +266,17 @@ public class AsyncOps {
         @Override
         public String toString() {
             return super.toString()
-                   + toString(acl) + ":"
-                   + ":" + version
-                   + ":" + new String(data)
-                   + ":" + (stat == null ? "null" : stat.getAversion()
-                                                    + ":" + stat.getCversion()
-                                                    + ":" + stat.getEphemeralOwner()
-                                                    + ":" + stat.getVersion());
+                    + toString(acl) + ":"
+                    + ":" + version
+                    + ":" + new String(data)
+                    + ":"
+                    + (stat == null
+                            ? "null"
+                            : stat.getAversion()
+                                    + ":" + stat.getCversion()
+                                    + ":" + stat.getEphemeralOwner()
+                                    + ":" + stat.getVersion());
         }
-
     }
 
     public static class ChildrenCB extends AsyncCB implements ChildrenCallback {
@@ -361,7 +361,6 @@ public class AsyncOps {
         public String toString() {
             return super.toString() + children.toString();
         }
-
     }
 
     public static class Children2CB extends AsyncCB implements Children2Callback {
@@ -446,7 +445,6 @@ public class AsyncOps {
         public String toString() {
             return super.toString() + children.toString();
         }
-
     }
 
     public static class Create2CB extends AsyncCB implements Create2Callback {
@@ -526,13 +524,12 @@ public class AsyncOps {
             return super.toString()
                     + name + ":"
                     + (stat == null
-                        ? "null"
-                        : stat.getAversion()
-                            + ":" + stat.getCversion()
-                            + ":" + stat.getEphemeralOwner()
-                            + ":" + stat.getVersion());
+                            ? "null"
+                            : stat.getAversion()
+                                    + ":" + stat.getCversion()
+                                    + ":" + stat.getEphemeralOwner()
+                                    + ":" + stat.getVersion());
         }
-
     }
 
     public static class DataCB extends AsyncCB implements DataCallback {
@@ -576,13 +573,15 @@ public class AsyncOps {
         @Override
         public String toString() {
             return super.toString()
-                   + ":" + (data == null ? "null" : new String(data))
-                   + ":" + (stat == null ? "null" : stat.getAversion()
-                                                    + ":" + stat.getCversion()
-                                                    + ":" + stat.getEphemeralOwner()
-                                                    + ":" + stat.getVersion());
+                    + ":" + (data == null ? "null" : new String(data))
+                    + ":"
+                    + (stat == null
+                            ? "null"
+                            : stat.getAversion()
+                                    + ":" + stat.getCversion()
+                                    + ":" + stat.getEphemeralOwner()
+                                    + ":" + stat.getVersion());
         }
-
     }
 
     public static class StatCB extends AsyncCB implements StatCallback {
@@ -680,13 +679,15 @@ public class AsyncOps {
         @Override
         public String toString() {
             return super.toString() + version
-                   + ":" + new String(data)
-                   + ":" + (stat == null ? "null" : stat.getAversion()
-                                                    + ":" + stat.getCversion()
-                                                    + ":" + stat.getEphemeralOwner()
-                                                    + ":" + stat.getVersion());
+                    + ":" + new String(data)
+                    + ":"
+                    + (stat == null
+                            ? "null"
+                            : stat.getAversion()
+                                    + ":" + stat.getCversion()
+                                    + ":" + stat.getEphemeralOwner()
+                                    + ":" + stat.getVersion());
         }
-
     }
 
     public static class VoidCB extends AsyncCB implements VoidCallback {
@@ -753,7 +754,6 @@ public class AsyncOps {
         public String toString() {
             return super.toString() + version;
         }
-
     }
 
     public static class MultiCB implements MultiCallback {
@@ -784,8 +784,8 @@ public class AsyncOps {
 
         public void verifyMulti() {
             List<Op> ops = Arrays.asList(
-                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.delete("/multi", -1));
+                    Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/multi", -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -796,8 +796,9 @@ public class AsyncOps {
 
         public void verifyMultiFailure_AllErrorResult() {
             List<Op> ops = Arrays.asList(
-                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.delete("/nonexist1", -1), Op.setData("/multi", "test".getBytes(), -1));
+                    Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/nonexist1", -1),
+                    Op.setData("/multi", "test".getBytes(), -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -808,8 +809,8 @@ public class AsyncOps {
 
         public void verifyMultiFailure_NoSideEffect() throws KeeperException, InterruptedException {
             List<Op> ops = Arrays.asList(
-                Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
-                Op.delete("/nonexist1", -1));
+                    Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+                    Op.delete("/nonexist1", -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -827,8 +828,8 @@ public class AsyncOps {
             assertNotNull(zk.exists(path + "0000000001", false));
 
             List<Op> ops = Arrays.asList(
-                Op.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL),
-                Op.delete("/nonexist", -1));
+                    Op.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL),
+                    Op.delete("/nonexist", -1));
             zk.multi(ops, this, null);
             latch_await();
 
@@ -836,7 +837,5 @@ public class AsyncOps {
             zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             assertNotNull(zk.exists(seqPath, false));
         }
-
     }
-
 }

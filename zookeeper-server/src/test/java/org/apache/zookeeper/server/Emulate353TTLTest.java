@@ -76,8 +76,14 @@ public class Emulate353TTLTest extends ClientBase {
     public void test353TTL() throws KeeperException, InterruptedException {
         DataTree dataTree = serverFactory.zkServer.getZKDatabase().dataTree;
         long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
-        dataTree.createNode("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, ephemeralOwner, dataTree.getNode("/").stat.getCversion()
-                                                                                                      + 1, 1, 1);
+        dataTree.createNode(
+                "/foo",
+                new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                ephemeralOwner,
+                dataTree.getNode("/").stat.getCversion() + 1,
+                1,
+                1);
 
         final AtomicLong fakeElapsed = new AtomicLong(0);
         ContainerManager containerManager = newContainerManager(fakeElapsed);
@@ -100,12 +106,15 @@ public class Emulate353TTLTest extends ClientBase {
     }
 
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {
-        return new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+        return new ContainerManager(
+                serverFactory.getZooKeeperServer().getZKDatabase(),
+                serverFactory.getZooKeeperServer().firstProcessor,
+                1,
+                100) {
             @Override
             protected long getElapsed(DataNode node) {
                 return fakeElapsed.get();
             }
         };
     }
-
 }

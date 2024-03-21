@@ -26,7 +26,12 @@ import org.apache.zookeeper.server.NIOServerCnxnFactory.SelectorThread;
 public class MockNIOServerCnxn extends NIOServerCnxn {
 
     public MockNIOServerCnxn(
-            ZooKeeperServer zk, SocketChannel sock, SelectionKey sk, NIOServerCnxnFactory factory, SelectorThread selectorThread) throws IOException {
+            ZooKeeperServer zk,
+            SocketChannel sock,
+            SelectionKey sk,
+            NIOServerCnxnFactory factory,
+            SelectorThread selectorThread)
+            throws IOException {
         super(zk, sock, sk, factory, selectorThread);
     }
 
@@ -41,5 +46,4 @@ public class MockNIOServerCnxn extends NIOServerCnxn {
     protected boolean isSocketOpen() {
         return true;
     }
-
 }

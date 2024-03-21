@@ -32,6 +32,7 @@ public class ResponseCache {
     // Magic number chosen to be "big enough but not too big"
     public static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
     private final int cacheSize;
+
     private static class Entry {
         public Stat stat;
         public byte[] data;
@@ -86,7 +87,5 @@ public class ResponseCache {
         protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
             return size() >= cacheSize;
         }
-
     }
-
 }

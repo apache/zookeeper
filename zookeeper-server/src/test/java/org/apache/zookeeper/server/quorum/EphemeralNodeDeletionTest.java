@@ -52,7 +52,6 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
      * ZooKeeper ephemeral node is never deleted if follower fail while reading
      * the proposal packet.
      */
-
     @Test
     @Timeout(value = 120)
     public void testEphemeralNodeDeletion() throws Exception {
@@ -80,7 +79,8 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         // ensure all servers started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
 
@@ -91,13 +91,14 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         /**
          * now the problem scenario starts
          */
-
         Stat firstEphemeralNode = new Stat();
 
         // 1: create ephemeral node
         String nodePath = "/e1";
         zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, firstEphemeralNode);
-        assertEquals(zk.getSessionId(), firstEphemeralNode.getEphemeralOwner(),
+        assertEquals(
+                zk.getSessionId(),
+                firstEphemeralNode.getEphemeralOwner(),
                 "Current session and ephemeral owner should be same");
 
         // 2: inject network problem in one of the follower
@@ -110,12 +111,14 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         // remove the error
         follower.setInjectError(false);
 
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + follower.getClientPort(), CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + follower.getClientPort(), CONNECTION_TIMEOUT),
                 "Faulted Follower should have joined quorum by now");
 
         QuorumPeer leader = getByServerState(mt, ServerState.LEADING);
         assertNotNull(leader, "Leader should not be null");
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT),
                 "Leader must be running");
 
         watch = new CountdownWatcher();
@@ -126,10 +129,8 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         assertNull(exists, "Node must have been deleted from leader");
 
         CountdownWatcher followerWatch = new CountdownWatcher();
-        ZooKeeper followerZK = new ZooKeeper(
-                "127.0.0.1:" + follower.getClientPort(),
-                ClientBase.CONNECTION_TIMEOUT,
-                followerWatch);
+        ZooKeeper followerZK =
+                new ZooKeeper("127.0.0.1:" + follower.getClientPort(), ClientBase.CONNECTION_TIMEOUT, followerWatch);
         followerWatch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         Stat nodeAtFollower = followerZK.exists(nodePath, false);
 
@@ -182,9 +183,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         private boolean injectError = false;
 
-        public CustomQuorumPeer() throws SaslException {
-
-        }
+        public CustomQuorumPeer() throws SaslException {}
 
         @Override
         protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
@@ -201,18 +200,16 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
                     super.readPacket(pp);
                     if (injectError && pp.getType() == Leader.PROPOSAL) {
                         String type = LearnerHandler.packetToString(pp);
-                        throw new SocketTimeoutException("Socket timeout while reading the packet for operation "
-                                                                 + type);
+                        throw new SocketTimeoutException(
+                                "Socket timeout while reading the packet for operation " + type);
                     }
                 }
-
             };
         }
 
         public void setInjectError(boolean injectError) {
             this.injectError = injectError;
         }
-
     }
 
     static class MockTestQPMain extends TestQPMain {
@@ -221,7 +218,6 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
-
     }
 
     private static class SyncCallback implements AsyncCallback.VoidCallback {
@@ -232,7 +228,5 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         public void processResult(int rc, String path, Object ctx) {
             sync.countDown();
         }
-
     }
-
 }

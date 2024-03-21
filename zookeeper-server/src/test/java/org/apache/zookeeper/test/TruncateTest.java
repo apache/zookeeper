@@ -127,7 +127,10 @@ public class TruncateTest extends ZKTestCase {
             assertTrue(logs[i].delete(), "Failed to delete log file: " + logs[i].getName());
         }
         try {
-            assertThat("truncateLog() should return false if truncation fails instead of throwing exception", zkdb.truncateLog(1), is(false));
+            assertThat(
+                    "truncateLog() should return false if truncation fails instead of throwing exception",
+                    zkdb.truncateLog(1),
+                    is(false));
         } catch (NullPointerException npe) {
             fail("This should not throw NPE!");
         }
@@ -190,13 +193,33 @@ public class TruncateTest extends ZKTestCase {
 
         // Start up two of the quorum and add 10 txns
         Map<Long, QuorumServer> peers = new HashMap<>();
-        peers.put(Long.valueOf(1), new QuorumServer(1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port1)));
-        peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port2)));
-        peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", port3)));
+        peers.put(
+                Long.valueOf(1),
+                new QuorumServer(
+                        1,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", port1)));
+        peers.put(
+                Long.valueOf(2),
+                new QuorumServer(
+                        2,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", port2)));
+        peers.put(
+                Long.valueOf(3),
+                new QuorumServer(
+                        3,
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                        new InetSocketAddress("127.0.0.1", port3)));
 
-        QuorumPeer s2 = new QuorumPeer(peers, dataDir2, dataDir2, port2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        QuorumPeer s2 = new QuorumPeer(
+                peers, dataDir2, dataDir2, port2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         s2.start();
-        QuorumPeer s3 = new QuorumPeer(peers, dataDir3, dataDir3, port3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        QuorumPeer s3 = new QuorumPeer(
+                peers, dataDir3, dataDir3, port3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         s3.start();
         zk = ClientBase.createZKClient("127.0.0.1:" + port2, 15000);
 
@@ -212,7 +235,8 @@ public class TruncateTest extends ZKTestCase {
         } catch (KeeperException.NoNodeException e) {
             // this is what we want
         }
-        QuorumPeer s1 = new QuorumPeer(peers, dataDir1, dataDir1, port1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        QuorumPeer s1 = new QuorumPeer(
+                peers, dataDir1, dataDir1, port1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         s1.start();
         ZooKeeper zk1 = ClientBase.createZKClient("127.0.0.1:" + port1, 15000);
         zk1.getData("/9", false, new Stat());
@@ -233,5 +257,4 @@ public class TruncateTest extends ZKTestCase {
         QuorumBase.shutdown(s2);
         QuorumBase.shutdown(s3);
     }
-
 }

@@ -41,8 +41,7 @@ class CppGenerator {
      * @param rlist           List of records defined within this file
      * @param outputDirectory
      */
-    CppGenerator(String name, List<JFile> ilist, List<JRecord> rlist,
-                 File outputDirectory) {
+    CppGenerator(String name, List<JFile> ilist, List<JRecord> rlist, File outputDirectory) {
         this.outputDirectory = outputDirectory;
         mName = (new File(name)).getName();
         mInclFiles = ilist;
@@ -57,14 +56,12 @@ class CppGenerator {
     void genCode() throws IOException {
         if (!outputDirectory.exists()) {
             if (!outputDirectory.mkdirs()) {
-                throw new IOException("unable to create output directory "
-                        + outputDirectory);
+                throw new IOException("unable to create output directory " + outputDirectory);
             }
         }
 
         try (FileWriter cc = new FileWriter(new File(outputDirectory, mName + ".cc"));
-             FileWriter hh = new FileWriter(new File(outputDirectory, mName + ".hh"));
-        ) {
+                FileWriter hh = new FileWriter(new File(outputDirectory, mName + ".hh")); ) {
             hh.write("/**\n");
             hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
             hh.write("* or more contributor license agreements.  See the NOTICE file\n");

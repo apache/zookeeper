@@ -90,12 +90,18 @@ public class LoadFromLogTest extends ClientBase {
         do {
             hdr = itr.getHeader();
             expectedZxid++;
-            assertTrue(lastZxid != hdr.getZxid(), "not the same transaction. lastZxid=" + lastZxid + ", zxid=" + hdr.getZxid());
-            assertTrue((hdr.getZxid() == expectedZxid), "excepting next transaction. expected=" + expectedZxid + ", retrieved=" + hdr.getZxid());
+            assertTrue(
+                    lastZxid != hdr.getZxid(),
+                    "not the same transaction. lastZxid=" + lastZxid + ", zxid=" + hdr.getZxid());
+            assertTrue(
+                    (hdr.getZxid() == expectedZxid),
+                    "excepting next transaction. expected=" + expectedZxid + ", retrieved=" + hdr.getZxid());
             lastZxid = hdr.getZxid();
         } while (itr.next());
 
-        assertTrue((expectedZxid == TOTAL_TRANSACTIONS), "processed all transactions. " + expectedZxid + " == " + TOTAL_TRANSACTIONS);
+        assertTrue(
+                (expectedZxid == TOTAL_TRANSACTIONS),
+                "processed all transactions. " + expectedZxid + " == " + TOTAL_TRANSACTIONS);
     }
 
     /**
@@ -168,7 +174,8 @@ public class LoadFromLogTest extends ClientBase {
         try {
             zk.create("/invalidsnap", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             for (int i = 0; i < NUM_MESSAGES; i++) {
-                lastPath = zk.create("/invalidsnap/test-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                lastPath = zk.create(
+                        "/invalidsnap/test-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             }
         } finally {
             zk.close();
@@ -204,9 +211,11 @@ public class LoadFromLogTest extends ClientBase {
             zk.close();
         }
         LOG.info("Expected {} found {}", expectedPath, path);
-        assertTrue(path.equals(expectedPath),
+        assertTrue(
+                path.equals(expectedPath),
                 "Error in sequential znode creation expected " + expectedPath + " found " + path);
-        assertTrue((children.length == NUM_MESSAGES),
+        assertTrue(
+                (children.length == NUM_MESSAGES),
                 "Unexpected number of children " + children.length + " expected " + NUM_MESSAGES);
     }
 
@@ -223,7 +232,7 @@ public class LoadFromLogTest extends ClientBase {
                 try {
                     zk.create("/invaliddir/test-", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 } catch (NoNodeException e) {
-                    //Expected
+                    // Expected
                 }
             }
         } finally {
@@ -260,7 +269,8 @@ public class LoadFromLogTest extends ClientBase {
         } catch (IOException e) {
             LOG.debug("Server failed to start - correct behavior", e);
         } finally {
-            System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT);
+            System.setProperty(
+                    FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT);
         }
     }
 
@@ -289,5 +299,4 @@ public class LoadFromLogTest extends ClientBase {
 
         startServer();
     }
-
 }

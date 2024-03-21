@@ -37,8 +37,7 @@ public class AuthenticationHelper {
 
     public static final String ENFORCE_AUTH_ENABLED = "zookeeper.enforce.auth.enabled";
     public static final String ENFORCE_AUTH_SCHEMES = "zookeeper.enforce.auth.schemes";
-    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH =
-        "zookeeper.sessionRequireClientSASLAuth";
+    public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
     public static final String SASL_AUTH_SCHEME = "sasl";
 
     private boolean enforceAuthEnabled;
@@ -54,8 +53,7 @@ public class AuthenticationHelper {
             enforceAuthEnabled = true;
             enforceAuthSchemes.add(SASL_AUTH_SCHEME);
         } else {
-            enforceAuthEnabled =
-                Boolean.parseBoolean(System.getProperty(ENFORCE_AUTH_ENABLED, "false"));
+            enforceAuthEnabled = Boolean.parseBoolean(System.getProperty(ENFORCE_AUTH_ENABLED, "false"));
             String enforceAuthSchemesProp = System.getProperty(ENFORCE_AUTH_SCHEMES);
             if (enforceAuthSchemesProp != null) {
                 Arrays.stream(enforceAuthSchemesProp.split(",")).forEach(s -> {
@@ -72,9 +70,7 @@ public class AuthenticationHelper {
     private void validateConfiguredProperties() {
         if (enforceAuthEnabled) {
             if (enforceAuthSchemes.isEmpty()) {
-                String msg =
-                    ENFORCE_AUTH_ENABLED + " is true " + ENFORCE_AUTH_SCHEMES + " must be  "
-                        + "configured.";
+                String msg = ENFORCE_AUTH_ENABLED + " is true " + ENFORCE_AUTH_SCHEMES + " must be  " + "configured.";
                 LOG.error(msg);
                 throw new IllegalArgumentException(msg);
             }
@@ -117,12 +113,14 @@ public class AuthenticationHelper {
      */
     public boolean enforceAuthentication(ServerCnxn connection, int xid) throws IOException {
         if (isEnforceAuthEnabled() && !isCnxnAuthenticated(connection)) {
-            //Un authenticated connection, lets inform user with response and then close the session
-            LOG.error("Client authentication scheme(s) {} does not match with any of the expected "
-                    + "authentication scheme {}, closing session.", getAuthSchemes(connection),
-                enforceAuthSchemes);
-            ReplyHeader replyHeader = new ReplyHeader(xid, 0,
-                KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue());
+            // Un authenticated connection, lets inform user with response and then close the session
+            LOG.error(
+                    "Client authentication scheme(s) {} does not match with any of the expected "
+                            + "authentication scheme {}, closing session.",
+                    getAuthSchemes(connection),
+                    enforceAuthSchemes);
+            ReplyHeader replyHeader =
+                    new ReplyHeader(xid, 0, KeeperException.Code.SESSIONCLOSEDREQUIRESASLAUTH.intValue());
             connection.sendResponse(replyHeader, null, "response");
             connection.sendCloseSession();
             connection.disableRecv();

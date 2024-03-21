@@ -50,7 +50,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;127.0.0.1:" + clientPorts[i];
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -63,8 +63,9 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
         // ensure server started
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
-                "waiting for server " + i + " being up");
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
         }
 
         CountdownWatcher watch1 = new CountdownWatcher();
@@ -84,7 +85,9 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             zk.create("/clientHang2", data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             fail("KeeperException is expected.");
         } catch (KeeperException exception) {
-            assertEquals(KeeperException.Code.REQUESTTIMEOUT.intValue(), exception.code().intValue());
+            assertEquals(
+                    KeeperException.Code.REQUESTTIMEOUT.intValue(),
+                    exception.code().intValue());
         }
 
         // do cleanup
@@ -113,24 +116,24 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
     class CustomClientCnxn extends ClientCnxn {
 
         CustomClientCnxn(
-            HostProvider hostProvider,
-            int sessionTimeout,
-            ZKClientConfig clientConfig,
-            Watcher defaultWatcher,
-            ClientCnxnSocket clientCnxnSocket,
-            long sessionId,
-            byte[] sessionPasswd,
-            boolean canBeReadOnly
-        ) throws IOException {
+                HostProvider hostProvider,
+                int sessionTimeout,
+                ZKClientConfig clientConfig,
+                Watcher defaultWatcher,
+                ClientCnxnSocket clientCnxnSocket,
+                long sessionId,
+                byte[] sessionPasswd,
+                boolean canBeReadOnly)
+                throws IOException {
             super(
-                hostProvider,
-                sessionTimeout,
-                clientConfig,
-                defaultWatcher,
-                clientCnxnSocket,
-                sessionId,
-                sessionPasswd,
-                canBeReadOnly);
+                    hostProvider,
+                    sessionTimeout,
+                    clientConfig,
+                    defaultWatcher,
+                    clientCnxnSocket,
+                    sessionId,
+                    sessionPasswd,
+                    canBeReadOnly);
         }
 
         @Override
@@ -142,7 +145,6 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             }
             super.finishPacket(p);
         }
-
     }
 
     class CustomZooKeeper extends ZooKeeper {
@@ -153,26 +155,24 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
         @Override
         ClientCnxn createConnection(
-            HostProvider hostProvider,
-            int sessionTimeout,
-            ZKClientConfig clientConfig,
-            Watcher defaultWatcher,
-            ClientCnxnSocket clientCnxnSocket,
-            long sessionId,
-            byte[] sessionPasswd,
-            boolean canBeReadOnly
-        ) throws IOException {
+                HostProvider hostProvider,
+                int sessionTimeout,
+                ZKClientConfig clientConfig,
+                Watcher defaultWatcher,
+                ClientCnxnSocket clientCnxnSocket,
+                long sessionId,
+                byte[] sessionPasswd,
+                boolean canBeReadOnly)
+                throws IOException {
             return new CustomClientCnxn(
-                hostProvider,
-                sessionTimeout,
-                clientConfig,
-                defaultWatcher,
-                clientCnxnSocket,
-                sessionId,
-                sessionPasswd,
-                canBeReadOnly);
+                    hostProvider,
+                    sessionTimeout,
+                    clientConfig,
+                    defaultWatcher,
+                    clientCnxnSocket,
+                    sessionId,
+                    sessionPasswd,
+                    canBeReadOnly);
         }
-
     }
-
 }

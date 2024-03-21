@@ -66,7 +66,6 @@ public class ToStringOutputArchiveTest {
         outputArchive.writeString(str, "string");
         checkDataSize(dataSize, baos, outputArchive);
 
-
         float f = 12.0f;
         int floatSize = String.valueOf(f).length();
         dataSize += comma.length() + floatSize;
@@ -97,9 +96,7 @@ public class ToStringOutputArchiveTest {
         String user1 = "horizon";
         String user2 = "zhao";
         WhoAmIResponse whoAmIResponse = new WhoAmIResponse();
-        whoAmIResponse.setClientInfo(Arrays.asList(
-                new ClientInfo(schema, user1),
-                new ClientInfo(schema, user2)));
+        whoAmIResponse.setClientInfo(Arrays.asList(new ClientInfo(schema, user1), new ClientInfo(schema, user2)));
         String whoAmIResponseStr = whoAmIResponse.toString().replace("\n", "");
 
         String startRecordSign = "s{";
@@ -107,7 +104,6 @@ public class ToStringOutputArchiveTest {
         dataSize += comma.length() + startRecordSign.length() + whoAmIResponseStr.length() + endRecordSign.length();
         outputArchive.writeRecord(whoAmIResponse, "record");
         checkDataSize(dataSize, baos, outputArchive);
-
     }
 
     private void checkDataSize(int dataSize, ByteArrayOutputStream baos, OutputArchive outputArchive) {

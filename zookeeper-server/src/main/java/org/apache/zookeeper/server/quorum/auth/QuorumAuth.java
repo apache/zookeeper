@@ -62,16 +62,16 @@ public class QuorumAuth {
 
         static Status getStatus(int status) {
             switch (status) {
-            case 0:
-                return IN_PROGRESS;
-            case 1:
-                return SUCCESS;
-            case -1:
-                return ERROR;
-            default:
-                LOG.error("Unknown status:{}!", status);
-                assert false : "Unknown status!";
-                return ERROR;
+                case 0:
+                    return IN_PROGRESS;
+                case 1:
+                    return SUCCESS;
+                case -1:
+                    return ERROR;
+                default:
+                    LOG.error("Unknown status:{}!", status);
+                    assert false : "Unknown status!";
+                    return ERROR;
             }
         }
 
@@ -91,5 +91,4 @@ public class QuorumAuth {
         din.reset();
         return firstIsAuth;
     }
-
 }

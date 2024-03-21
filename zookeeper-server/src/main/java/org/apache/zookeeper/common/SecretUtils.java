@@ -30,18 +30,19 @@ import org.slf4j.LoggerFactory;
 public final class SecretUtils {
     private static final Logger LOG = LoggerFactory.getLogger(SecretUtils.class);
 
-    private SecretUtils() {
-    }
+    private SecretUtils() {}
 
     public static char[] readSecret(final String pathToFile) {
         LOG.info("Reading secret from {}", pathToFile);
 
         try {
-            final String secretValue = new String(
-                    Files.readAllBytes(Paths.get(pathToFile)), StandardCharsets.UTF_8);
+            final String secretValue = new String(Files.readAllBytes(Paths.get(pathToFile)), StandardCharsets.UTF_8);
 
             if (secretValue.endsWith(System.lineSeparator())) {
-                return secretValue.substring(0, secretValue.length() - System.lineSeparator().length()).toCharArray();
+                return secretValue
+                        .substring(
+                                0, secretValue.length() - System.lineSeparator().length())
+                        .toCharArray();
             }
 
             return secretValue.toCharArray();

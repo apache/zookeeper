@@ -109,9 +109,9 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
     public void testFourLetterWordsInvalidConfiguration() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
-        System.setProperty("zookeeper.4lw.commands.whitelist", "foo bar"
-                + " foo,,, "
-                + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
+        System.setProperty(
+                "zookeeper.4lw.commands.whitelist",
+                "foo bar" + " foo,,, " + "bar :.,@#$%^&*() , , , , bar, bar, stat,        ");
         startServer();
 
         // Just make sure we are good when admin made some mistakes in config file.
@@ -135,9 +135,11 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
     public void testFourLetterWordsEnableAllCommandsThroughExplicitList() throws Exception {
         stopServer();
         FourLetterCommands.resetWhiteList();
-        System.setProperty("zookeeper.4lw.commands.whitelist", "ruok, envi, conf, stat, srvr, cons, dump,"
-                + "wchs, wchp, wchc, srst, crst, "
-                + "dirs, mntr, gtmk, isro, stmk");
+        System.setProperty(
+                "zookeeper.4lw.commands.whitelist",
+                "ruok, envi, conf, stat, srvr, cons, dump,"
+                        + "wchs, wchp, wchc, srst, crst, "
+                        + "dirs, mntr, gtmk, isro, stmk");
         startServer();
         verifyAllCommandsSuccess();
     }
@@ -250,5 +252,4 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         LOG.info("cmd {} expected an exact match of {}; got {}", cmd, expected, resp);
         assertTrue(resp.trim().equals(expected));
     }
-
 }

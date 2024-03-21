@@ -125,8 +125,7 @@ public class ZooKeeperServerMain {
         try {
             try {
                 metricsProvider = MetricsProviderBootstrap.startMetricsProvider(
-                    config.getMetricsProviderClassName(),
-                    config.getMetricsProviderConfiguration());
+                        config.getMetricsProviderClassName(), config.getMetricsProviderConfiguration());
             } catch (MetricsProviderLifeCycleException error) {
                 throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
             }
@@ -141,7 +140,15 @@ public class ZooKeeperServerMain {
             if (config.jvmPauseMonitorToRun) {
                 jvmPauseMonitor = new JvmPauseMonitor(config);
             }
-            final ZooKeeperServer zkServer = new ZooKeeperServer(jvmPauseMonitor, txnLog, config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, config.listenBacklog, null, config.initialConfig);
+            final ZooKeeperServer zkServer = new ZooKeeperServer(
+                    jvmPauseMonitor,
+                    txnLog,
+                    config.tickTime,
+                    config.minSessionTimeout,
+                    config.maxSessionTimeout,
+                    config.listenBacklog,
+                    null,
+                    config.initialConfig);
             txnLog.setServerStats(zkServer.serverStats());
 
             // Registers shutdown handler which will be used to know the
@@ -157,24 +164,31 @@ public class ZooKeeperServerMain {
             boolean needStartZKServer = true;
             if (config.getClientPortAddress() != null) {
                 cnxnFactory = ServerCnxnFactory.createFactory();
-                cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), false);
+                cnxnFactory.configure(
+                        config.getClientPortAddress(),
+                        config.getMaxClientCnxns(),
+                        config.getClientPortListenBacklog(),
+                        false);
                 cnxnFactory.startup(zkServer);
                 // zkServer has been started. So we don't need to start it again in secureCnxnFactory.
                 needStartZKServer = false;
             }
             if (config.getSecureClientPortAddress() != null) {
                 secureCnxnFactory = ServerCnxnFactory.createFactory();
-                secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
+                secureCnxnFactory.configure(
+                        config.getSecureClientPortAddress(),
+                        config.getMaxClientCnxns(),
+                        config.getClientPortListenBacklog(),
+                        true);
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 
             containerManager = new ContainerManager(
-                zkServer.getZKDatabase(),
-                zkServer.firstProcessor,
-                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                Integer.getInteger("znode.container.maxPerMinute", 10000),
-                Long.getLong("znode.container.maxNeverUsedIntervalMs", 0)
-            );
+                    zkServer.getZKDatabase(),
+                    zkServer.firstProcessor,
+                    Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+                    Integer.getInteger("znode.container.maxPerMinute", 10000),
+                    Long.getLong("znode.container.maxNeverUsedIntervalMs", 0));
             containerManager.start();
             ZKAuditProvider.addZKStartStopAuditLog();
 
@@ -260,7 +274,6 @@ public class ZooKeeperServerMain {
         return 0;
     }
 
-
     /**
      * Shutdowns properly the service, this method is not a public API.
      */
@@ -276,7 +289,8 @@ public class ZooKeeperServerMain {
                 LOG.info("Connection factory did not start");
                 return;
             }
-            ZooKeeperServerShutdownHandler zkShutdownHandler = primaryCnxnFactory.getZooKeeperServer().getZkShutdownHandler();
+            ZooKeeperServerShutdownHandler zkShutdownHandler =
+                    primaryCnxnFactory.getZooKeeperServer().getZkShutdownHandler();
             zkShutdownHandler.handle(ZooKeeperServer.State.SHUTDOWN);
             try {
                 // ServerCnxnFactory will call the shutdown
@@ -295,6 +309,5 @@ public class ZooKeeperServerMain {
         }
     }
 
-    protected void serverStarted() {
-    }
+    protected void serverStarted() {}
 }

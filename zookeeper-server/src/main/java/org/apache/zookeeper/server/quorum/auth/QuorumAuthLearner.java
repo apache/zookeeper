@@ -37,5 +37,4 @@ public interface QuorumAuthLearner {
      *             if there is an authentication failure
      */
     void authenticate(Socket sock, String hostname) throws IOException;
-
 }

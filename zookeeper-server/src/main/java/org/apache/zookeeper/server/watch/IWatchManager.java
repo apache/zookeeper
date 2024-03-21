@@ -50,7 +50,7 @@ public interface IWatchManager {
         if (watcherMode == WatcherMode.DEFAULT_WATCHER_MODE) {
             return addWatch(path, watcher);
         }
-        throw new UnsupportedOperationException();  // custom implementations must defeat this
+        throw new UnsupportedOperationException(); // custom implementations must defeat this
     }
 
     /**

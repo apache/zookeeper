@@ -62,7 +62,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;127.0.0.1:" + clientPorts[i];
+                    + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();
@@ -147,7 +147,8 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         }
     }
 
-    private void waitForNewLeaderElection(QuorumPeer peer, long leaderCurrentEpoch) throws IOException, InterruptedException {
+    private void waitForNewLeaderElection(QuorumPeer peer, long leaderCurrentEpoch)
+            throws IOException, InterruptedException {
         LOG.info("Waiting for new LE cycle..");
         int count = 100; // giving a grace period of 10seconds
         while (count > 0) {
@@ -174,5 +175,4 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         String node = NODE_PATH + "/" + randomUUID.toString();
         return node;
     }
-
 }

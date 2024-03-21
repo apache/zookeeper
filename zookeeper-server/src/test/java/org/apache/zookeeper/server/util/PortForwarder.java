@@ -161,7 +161,6 @@ public class PortForwarder extends Thread {
                 // ignore silently
             }
         }
-
     }
 
     private volatile boolean stopped = false;
@@ -197,12 +196,12 @@ public class PortForwarder extends Thread {
                                 throw e;
                             }
                             LOG.warn(
-                                "connection failed, retrying({}): local:{} from:{} to:{}",
-                                retry,
-                                sock.getLocalPort(),
-                                sock.getPort(),
-                                to,
-                                e);
+                                    "connection failed, retrying({}): local:{} from:{} to:{}",
+                                    retry,
+                                    sock.getLocalPort(),
+                                    sock.getPort(),
+                                    to,
+                                    e);
                         }
                         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                         retry--;
@@ -219,25 +218,19 @@ public class PortForwarder extends Thread {
                 } catch (SocketTimeoutException e) {
                     LOG.warn("socket timed out", e);
                 } catch (ConnectException e) {
-                    LOG.warn(
-                        "connection exception local:{} from:{} to:{}",
-                        sock.getLocalPort(),
-                        sock.getPort(),
-                        to,
-                        e);
+                    LOG.warn("connection exception local:{} from:{} to:{}", sock.getLocalPort(), sock.getPort(), to, e);
                     sock.close();
                 } catch (IOException e) {
                     if (!"Socket closed".equals(e.getMessage())) {
                         LOG.warn(
-                            "unexpected exception local:{} from:{} to:{}",
-                            sock.getLocalPort(),
-                            sock.getPort(),
-                            to,
-                            e);
+                                "unexpected exception local:{} from:{} to:{}",
+                                sock.getLocalPort(),
+                                sock.getPort(),
+                                to,
+                                e);
                         throw e;
                     }
                 }
-
             }
         } catch (IOException e) {
             LOG.error("Unexpected exception to:{}", to, e);
@@ -261,5 +254,4 @@ public class PortForwarder extends Thread {
             }
         }
     }
-
 }

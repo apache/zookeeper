@@ -83,5 +83,4 @@ public class SetCommand extends CliCommand {
         }
         return false;
     }
-
 }

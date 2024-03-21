@@ -60,5 +60,4 @@ public class CommandResponseTest extends ZKTestCase {
         assertEquals("xkcd", rmap.get("origin"));
         assertEquals("http://xkcd.com/149/", rmap.get("url"));
     }
-
 }

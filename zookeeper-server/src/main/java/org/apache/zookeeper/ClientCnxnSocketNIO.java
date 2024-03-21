@@ -74,8 +74,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new EndOfStreamException("Unable to read additional data from server sessionid 0x"
-                                               + Long.toHexString(sessionId)
-                                               + ", likely server has closed socket");
+                        + Long.toHexString(sessionId)
+                        + ", likely server has closed socket");
             }
             if (!incomingBuffer.hasRemaining()) {
                 incomingBuffer.flip();
@@ -110,8 +110,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 // If we already started writing p, p.bb will already exist
                 if (p.bb == null) {
                     if ((p.requestHeader != null)
-                        && (p.requestHeader.getType() != OpCode.ping)
-                        && (p.requestHeader.getType() != OpCode.auth)) {
+                            && (p.requestHeader.getType() != OpCode.ping)
+                            && (p.requestHeader.getType() != OpCode.auth)) {
                         p.requestHeader.setXid(cnxn.getXid());
                     }
                     p.createBB();
@@ -121,8 +121,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     sentCount.getAndIncrement();
                     outgoingQueue.removeFirstOccurrence(p);
                     if (p.requestHeader != null
-                        && p.requestHeader.getType() != OpCode.ping
-                        && p.requestHeader.getType() != OpCode.auth) {
+                            && p.requestHeader.getType() != OpCode.ping
+                            && p.requestHeader.getType() != OpCode.auth) {
                         synchronized (pendingQueue) {
                             pendingQueue.add(p);
                         }
@@ -325,10 +325,8 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
 
     @Override
-    void doTransport(
-        int waitTimeOut,
-        Queue<Packet> pendingQueue,
-        ClientCnxn cnxn) throws IOException, InterruptedException {
+    void doTransport(int waitTimeOut, Queue<Packet> pendingQueue, ClientCnxn cnxn)
+            throws IOException, InterruptedException {
         selector.select(waitTimeOut);
         Set<SelectionKey> selected;
         synchronized (this) {
@@ -358,7 +356,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         selected.clear();
     }
 
-    //TODO should this be synchronized?
+    // TODO should this be synchronized?
     @Override
     void testableCloseSocket() throws IOException {
         LOG.info("testableCloseSocket() called");
@@ -415,5 +413,4 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         ByteBuffer pbb = p.bb;
         sock.write(pbb);
     }
-
 }

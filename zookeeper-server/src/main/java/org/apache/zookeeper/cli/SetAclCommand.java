@@ -99,7 +99,5 @@ public class SetAclCommand extends CliCommand {
         }
 
         return false;
-
     }
-
 }

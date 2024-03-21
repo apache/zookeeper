@@ -25,5 +25,4 @@ public class KerberosUtil {
     public static String getDefaultRealm() throws IllegalArgumentException {
         return new KerberosPrincipal("tmp", 1).getRealm();
     }
-
 }

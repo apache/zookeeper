@@ -101,10 +101,8 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
     }
 
     public ReplyHeader submitRequest(
-        RequestHeader h,
-        Record request,
-        Record response,
-        WatchRegistration watchRegistration) throws InterruptedException {
+            RequestHeader h, Record request, Record response, WatchRegistration watchRegistration)
+            throws InterruptedException {
         return cnxn.submitRequest(h, request, response, watchRegistration);
     }
 
@@ -116,5 +114,4 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
     public void disconnect() {
         cnxn.disconnect();
     }
-
 }

@@ -100,16 +100,20 @@ public class X509TestHelpers {
      * @throws OperatorCreationException
      * @throws GeneralSecurityException
      */
-    public static X509Certificate newSelfSignedCACert(
-            X500Name subject, KeyPair keyPair, long expirationMillis) throws IOException, OperatorCreationException, GeneralSecurityException {
+    public static X509Certificate newSelfSignedCACert(X500Name subject, KeyPair keyPair, long expirationMillis)
+            throws IOException, OperatorCreationException, GeneralSecurityException {
         Date now = new Date();
-        X509v3CertificateBuilder builder = initCertBuilder(subject, // for self-signed certs, issuer == subject
-                                                           now, new Date(now.getTime()
-                                                                                 + expirationMillis), subject, keyPair.getPublic());
+        X509v3CertificateBuilder builder = initCertBuilder(
+                subject, // for self-signed certs, issuer == subject
+                now,
+                new Date(now.getTime() + expirationMillis),
+                subject,
+                keyPair.getPublic());
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true)); // is a CA
-        builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature
-                                                                            | KeyUsage.keyCertSign
-                                                                            | KeyUsage.cRLSign));
+        builder.addExtension(
+                Extension.keyUsage,
+                true,
+                new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign));
         return buildAndSignCertificate(keyPair.getPrivate(), builder);
     }
 
@@ -129,18 +133,28 @@ public class X509TestHelpers {
      * @throws GeneralSecurityException
      */
     public static X509Certificate newCert(
-            X509Certificate caCert, KeyPair caKeyPair, X500Name certSubject, PublicKey certPublicKey, long expirationMillis) throws IOException, OperatorCreationException, GeneralSecurityException {
+            X509Certificate caCert,
+            KeyPair caKeyPair,
+            X500Name certSubject,
+            PublicKey certPublicKey,
+            long expirationMillis)
+            throws IOException, OperatorCreationException, GeneralSecurityException {
         if (!caKeyPair.getPublic().equals(caCert.getPublicKey())) {
             throw new IllegalArgumentException("CA private key does not match the public key in the CA cert");
         }
         Date now = new Date();
-        X509v3CertificateBuilder builder = initCertBuilder(new X500Name(caCert.getIssuerDN().getName()), now, new Date(
-                now.getTime()
-                        + expirationMillis), certSubject, certPublicKey);
+        X509v3CertificateBuilder builder = initCertBuilder(
+                new X500Name(caCert.getIssuerDN().getName()),
+                now,
+                new Date(now.getTime() + expirationMillis),
+                certSubject,
+                certPublicKey);
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false)); // not a CA
-        builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature
-                                                                            | KeyUsage.keyEncipherment));
-        builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
+        builder.addExtension(
+                Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+        builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(new KeyPurposeId[] {
+            KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth
+        }));
 
         builder.addExtension(Extension.subjectAlternativeName, false, getLocalhostSubjectAltNames());
         return buildAndSignCertificate(caKeyPair.getPrivate(), builder);
@@ -154,7 +168,8 @@ public class X509TestHelpers {
         InetAddress[] localAddresses = InetAddress.getAllByName("localhost");
         GeneralName[] generalNames = new GeneralName[localAddresses.length + 1];
         for (int i = 0; i < localAddresses.length; i++) {
-            generalNames[i] = new GeneralName(GeneralName.iPAddress, new DEROctetString(localAddresses[i].getAddress()));
+            generalNames[i] =
+                    new GeneralName(GeneralName.iPAddress, new DEROctetString(localAddresses[i].getAddress()));
         }
         generalNames[generalNames.length - 1] = new GeneralName(GeneralName.dNSName, new DERIA5String("localhost"));
         return new GeneralNames(generalNames);
@@ -172,7 +187,13 @@ public class X509TestHelpers {
      */
     private static X509v3CertificateBuilder initCertBuilder(
             X500Name issuer, Date notBefore, Date notAfter, X500Name subject, PublicKey subjectPublicKey) {
-        return new X509v3CertificateBuilder(issuer, new BigInteger(SERIAL_NUMBER_MAX_BITS, PRNG), notBefore, notAfter, subject, SubjectPublicKeyInfo.getInstance(subjectPublicKey.getEncoded()));
+        return new X509v3CertificateBuilder(
+                issuer,
+                new BigInteger(SERIAL_NUMBER_MAX_BITS, PRNG),
+                notBefore,
+                notAfter,
+                subject,
+                SubjectPublicKeyInfo.getInstance(subjectPublicKey.getEncoded()));
     }
 
     /**
@@ -184,15 +205,17 @@ public class X509TestHelpers {
      * @throws OperatorCreationException
      * @throws CertificateException
      */
-    private static X509Certificate buildAndSignCertificate(
-            PrivateKey privateKey, X509v3CertificateBuilder builder) throws IOException, OperatorCreationException, CertificateException {
+    private static X509Certificate buildAndSignCertificate(PrivateKey privateKey, X509v3CertificateBuilder builder)
+            throws IOException, OperatorCreationException, CertificateException {
         BcContentSignerBuilder signerBuilder;
         if (privateKey.getAlgorithm().contains("RSA")) { // a little hacky way to detect key type, but it works
-            AlgorithmIdentifier signatureAlgorithm = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WithRSAEncryption");
+            AlgorithmIdentifier signatureAlgorithm =
+                    new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WithRSAEncryption");
             AlgorithmIdentifier digestAlgorithm = new DefaultDigestAlgorithmIdentifierFinder().find(signatureAlgorithm);
             signerBuilder = new BcRSAContentSignerBuilder(signatureAlgorithm, digestAlgorithm);
         } else { // if not RSA, assume EC
-            AlgorithmIdentifier signatureAlgorithm = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256withECDSA");
+            AlgorithmIdentifier signatureAlgorithm =
+                    new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256withECDSA");
             AlgorithmIdentifier digestAlgorithm = new DefaultDigestAlgorithmIdentifierFinder().find(signatureAlgorithm);
             signerBuilder = new BcECContentSignerBuilder(signatureAlgorithm, digestAlgorithm);
         }
@@ -209,12 +232,12 @@ public class X509TestHelpers {
      */
     public static KeyPair generateKeyPair(X509KeyType keyType) throws GeneralSecurityException {
         switch (keyType) {
-        case RSA:
-            return generateRSAKeyPair();
-        case EC:
-            return generateECKeyPair();
-        default:
-            throw new IllegalArgumentException("Invalid X509KeyType");
+            case RSA:
+                return generateRSAKeyPair();
+            case EC:
+                return generateECKeyPair();
+            default:
+                throw new IllegalArgumentException("Invalid X509KeyType");
         }
     }
 
@@ -224,7 +247,8 @@ public class X509TestHelpers {
      */
     public static KeyPair generateRSAKeyPair() throws GeneralSecurityException {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        RSAKeyGenParameterSpec keyGenSpec = new RSAKeyGenParameterSpec(DEFAULT_RSA_KEY_SIZE_BITS, DEFAULT_RSA_PUB_EXPONENT);
+        RSAKeyGenParameterSpec keyGenSpec =
+                new RSAKeyGenParameterSpec(DEFAULT_RSA_KEY_SIZE_BITS, DEFAULT_RSA_PUB_EXPONENT);
         keyGen.initialize(keyGenSpec, PRNG);
         return keyGen.generateKeyPair();
     }
@@ -250,8 +274,8 @@ public class X509TestHelpers {
      * @throws IOException if converting the certificate or private key to PEM format fails.
      * @throws OperatorCreationException if constructing the encryptor from the given password fails.
      */
-    public static String pemEncodeCertAndPrivateKey(
-            X509Certificate cert, PrivateKey privateKey, String keyPassword) throws IOException, OperatorCreationException {
+    public static String pemEncodeCertAndPrivateKey(X509Certificate cert, PrivateKey privateKey, String keyPassword)
+            throws IOException, OperatorCreationException {
         return pemEncodeX509Certificate(cert) + "\n" + pemEncodePrivateKey(privateKey, keyPassword);
     }
 
@@ -264,13 +288,17 @@ public class X509TestHelpers {
      * @throws IOException if converting the key to PEM format fails.
      * @throws OperatorCreationException if constructing the encryptor from the given password fails.
      */
-    public static String pemEncodePrivateKey(
-            PrivateKey key, String password) throws IOException, OperatorCreationException {
+    public static String pemEncodePrivateKey(PrivateKey key, String password)
+            throws IOException, OperatorCreationException {
         StringWriter stringWriter = new StringWriter();
         JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter);
         OutputEncryptor encryptor = null;
         if (password != null && password.length() > 0) {
-            encryptor = new JceOpenSSLPKCS8EncryptorBuilder(PKCSObjectIdentifiers.pbeWithSHAAnd3_KeyTripleDES_CBC).setProvider(BouncyCastleProvider.PROVIDER_NAME).setRandom(PRNG).setPassword(password.toCharArray()).build();
+            encryptor = new JceOpenSSLPKCS8EncryptorBuilder(PKCSObjectIdentifiers.pbeWithSHAAnd3_KeyTripleDES_CBC)
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .setRandom(PRNG)
+                    .setPassword(password.toCharArray())
+                    .build();
         }
         pemWriter.writeObject(new JcaPKCS8Generator(key, encryptor));
         pemWriter.close();
@@ -302,8 +330,8 @@ public class X509TestHelpers {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public static byte[] certToJavaTrustStoreBytes(
-            X509Certificate cert, String keyPassword) throws IOException, GeneralSecurityException {
+    public static byte[] certToJavaTrustStoreBytes(X509Certificate cert, String keyPassword)
+            throws IOException, GeneralSecurityException {
         KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
         return certToTrustStoreBytes(cert, keyPassword, trustStore);
     }
@@ -319,8 +347,8 @@ public class X509TestHelpers {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public static byte[] certToPKCS12TrustStoreBytes(
-            X509Certificate cert, String keyPassword) throws IOException, GeneralSecurityException {
+    public static byte[] certToPKCS12TrustStoreBytes(X509Certificate cert, String keyPassword)
+            throws IOException, GeneralSecurityException {
         KeyStore trustStore = KeyStore.getInstance("PKCS12");
         return certToTrustStoreBytes(cert, keyPassword, trustStore);
     }
@@ -336,14 +364,14 @@ public class X509TestHelpers {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public static byte[] certToBCFKSTrustStoreBytes(
-      X509Certificate cert,
-      String keyPassword) throws IOException, GeneralSecurityException {
+    public static byte[] certToBCFKSTrustStoreBytes(X509Certificate cert, String keyPassword)
+            throws IOException, GeneralSecurityException {
         KeyStore trustStore = KeyStore.getInstance("BCFKS");
         return certToTrustStoreBytes(cert, keyPassword, trustStore);
     }
 
-    private static byte[] certToTrustStoreBytes(X509Certificate cert, String keyPassword, KeyStore trustStore) throws IOException, GeneralSecurityException {
+    private static byte[] certToTrustStoreBytes(X509Certificate cert, String keyPassword, KeyStore trustStore)
+            throws IOException, GeneralSecurityException {
         char[] keyPasswordChars = keyPassword == null ? new char[0] : keyPassword.toCharArray();
         trustStore.load(null, keyPasswordChars);
         trustStore.setCertificateEntry(cert.getSubjectDN().toString(), cert);
@@ -367,7 +395,8 @@ public class X509TestHelpers {
      * @throws GeneralSecurityException
      */
     public static byte[] certAndPrivateKeyToJavaKeyStoreBytes(
-            X509Certificate cert, PrivateKey privateKey, String keyPassword) throws IOException, GeneralSecurityException {
+            X509Certificate cert, PrivateKey privateKey, String keyPassword)
+            throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         return certAndPrivateKeyToBytes(cert, privateKey, keyPassword, keyStore);
     }
@@ -383,8 +412,8 @@ public class X509TestHelpers {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public static byte[] certAndPrivateKeyToPKCS12Bytes(
-            X509Certificate cert, PrivateKey privateKey, String keyPassword) throws IOException, GeneralSecurityException {
+    public static byte[] certAndPrivateKeyToPKCS12Bytes(X509Certificate cert, PrivateKey privateKey, String keyPassword)
+            throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         return certAndPrivateKeyToBytes(cert, privateKey, keyPassword, keyStore);
     }
@@ -400,19 +429,18 @@ public class X509TestHelpers {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    public static byte[] certAndPrivateKeyToBCFKSBytes(
-      X509Certificate cert,
-      PrivateKey privateKey,
-      String keyPassword) throws IOException, GeneralSecurityException {
+    public static byte[] certAndPrivateKeyToBCFKSBytes(X509Certificate cert, PrivateKey privateKey, String keyPassword)
+            throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance("BCFKS");
         return certAndPrivateKeyToBytes(cert, privateKey, keyPassword, keyStore);
     }
 
     private static byte[] certAndPrivateKeyToBytes(
-            X509Certificate cert, PrivateKey privateKey, String keyPassword, KeyStore keyStore) throws IOException, GeneralSecurityException {
+            X509Certificate cert, PrivateKey privateKey, String keyPassword, KeyStore keyStore)
+            throws IOException, GeneralSecurityException {
         char[] keyPasswordChars = keyPassword == null ? new char[0] : keyPassword.toCharArray();
         keyStore.load(null, keyPasswordChars);
-        keyStore.setKeyEntry("key", privateKey, keyPasswordChars, new Certificate[]{cert});
+        keyStore.setKeyEntry("key", privateKey, keyPasswordChars, new Certificate[] {cert});
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         keyStore.store(outputStream, keyPasswordChars);
         outputStream.flush();
@@ -428,7 +456,8 @@ public class X509TestHelpers {
      * @throws CertificateException if the conversion fails.
      */
     public static X509Certificate toX509Cert(X509CertificateHolder certHolder) throws CertificateException {
-        return new JcaX509CertificateConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME).getCertificate(certHolder);
+        return new JcaX509CertificateConverter()
+                .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                .getCertificate(certHolder);
     }
-
 }

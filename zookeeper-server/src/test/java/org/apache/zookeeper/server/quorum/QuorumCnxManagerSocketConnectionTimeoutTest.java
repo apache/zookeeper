@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,12 +66,14 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
         // use a custom socket factory that will cause timeout instead of connecting to the
         // leader election port of the current leader
         final InetSocketAddress leaderElectionAddress =
-            qu.getLeaderQuorumPeer().getElectionAddress().getOne();
+                qu.getLeaderQuorumPeer().getElectionAddress().getOne();
         QuorumCnxManager.setSocketFactory(() -> new SocketStub(leaderElectionAddress));
 
         qu.shutdown(leaderId);
 
-        assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT),
+        assertTrue(
+                ClientBase.waitForServerDown(
+                        "127.0.0.1:" + qu.getPeer(leaderId).clientPort, ClientBase.CONNECTION_TIMEOUT),
                 "Timeout during waiting for current leader to go down");
 
         String errorMessage = "No new leader was elected";
@@ -107,5 +108,4 @@ public class QuorumCnxManagerSocketConnectionTimeoutTest extends ZKTestCase {
         qu.shutdownAll();
         QuorumCnxManager.setSocketFactory(QuorumCnxManager.DEFAULT_SOCKET_FACTORY);
     }
-
 }

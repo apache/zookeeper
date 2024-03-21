@@ -93,5 +93,4 @@ public class NodeHashMapImplTest extends ZKTestCase {
         assertNotEquals(0, postChangeDigest);
         assertNotEquals(preChangeDigest, postChangeDigest);
     }
-
 }

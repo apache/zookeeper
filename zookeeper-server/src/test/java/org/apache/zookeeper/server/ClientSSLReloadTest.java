@@ -55,6 +55,7 @@ public class ClientSSLReloadTest extends ZKTestCase {
 
     @TempDir
     File dir1;
+
     @TempDir
     File dir2;
 
@@ -111,8 +112,7 @@ public class ClientSSLReloadTest extends ZKTestCase {
     public void certficateReloadTest() throws Exception {
 
         final Properties configZookeeper = getServerConfig();
-        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded
-                .builder()
+        try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded.builder()
                 .baseDir(dir1.toPath())
                 .configuration(configZookeeper)
                 .exitHandler(ExitHandler.LOG_ONLY)
@@ -133,52 +133,74 @@ public class ClientSSLReloadTest extends ZKTestCase {
             CountDownLatch l = new CountDownLatch(1);
             ZKClientConfig zKClientConfig = getZKClientConfig();
             // ZK client object created which will connect with keyStoreFile1 and trustStoreFile1 to the server.
-            try (ZooKeeper zk = new ZooKeeper(zkServer.getSecureConnectionString(), 60000, (WatchedEvent event) -> {
-                switch (event.getState()) {
-                    case SyncConnected:
-                        l.countDown();
-                        break;
-                }
-            }, zKClientConfig)) {
+            try (ZooKeeper zk = new ZooKeeper(
+                    zkServer.getSecureConnectionString(),
+                    60000,
+                    (WatchedEvent event) -> {
+                        switch (event.getState()) {
+                            case SyncConnected:
+                                l.countDown();
+                                break;
+                        }
+                    },
+                    zKClientConfig)) {
                 assertTrue(zk.getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT));
                 assertTrue(l.await(10, TimeUnit.SECONDS));
             }
 
             Log.info("Updating keyStore & trustStore files !!!!");
             // Update the keyStoreFile1 and trustStoreFile1 files in the filesystem with keyStoreFile2 & trustStoreFile2
-            FileUtils.writeStringToFile(keyStoreFile1, FileUtils.readFileToString(keyStoreFile2, StandardCharsets.US_ASCII), StandardCharsets.US_ASCII, false);
-            FileUtils.writeStringToFile(trustStoreFile1, FileUtils.readFileToString(trustStoreFile2, StandardCharsets.US_ASCII), StandardCharsets.US_ASCII, false);
+            FileUtils.writeStringToFile(
+                    keyStoreFile1,
+                    FileUtils.readFileToString(keyStoreFile2, StandardCharsets.US_ASCII),
+                    StandardCharsets.US_ASCII,
+                    false);
+            FileUtils.writeStringToFile(
+                    trustStoreFile1,
+                    FileUtils.readFileToString(trustStoreFile2, StandardCharsets.US_ASCII),
+                    StandardCharsets.US_ASCII,
+                    false);
 
-            // Till FileChangeWatcher thread is triggered & SSLContext options are reset, ZK client should continue connecting.
+            // Till FileChangeWatcher thread is triggered & SSLContext options are reset, ZK client should continue
+            // connecting.
             for (int i = 0; i < 5; i++) {
                 CountDownLatch l2 = new CountDownLatch(1);
                 Thread.sleep(5000);
-                try (ZooKeeper zk = new ZooKeeper(zkServer.getSecureConnectionString(), 60000, (WatchedEvent event) -> {
-                    switch (event.getState()) {
-                        case SyncConnected:
-                            l.countDown();
-                            break;
-                    }
-                }, zKClientConfig)) {
+                try (ZooKeeper zk = new ZooKeeper(
+                        zkServer.getSecureConnectionString(),
+                        60000,
+                        (WatchedEvent event) -> {
+                            switch (event.getState()) {
+                                case SyncConnected:
+                                    l.countDown();
+                                    break;
+                            }
+                        },
+                        zKClientConfig)) {
                     if (!l2.await(5, TimeUnit.SECONDS)) {
                         LOG.error("Unable to connect to zk server");
                         break;
                     }
                 }
             }
-            // Use the updated keyStore and trustStore paths when creating the client; Refreshed server should authenticate the client.
+            // Use the updated keyStore and trustStore paths when creating the client; Refreshed server should
+            // authenticate the client.
             zKClientConfig.setProperty("zookeeper.ssl.keyStore.location", keyStoreFile2.getAbsolutePath());
             zKClientConfig.setProperty("zookeeper.ssl.trustStore.location", trustStoreFile2.getAbsolutePath());
             zKClientConfig.setProperty("zookeeper.ssl.keyStore.type", "PEM");
             zKClientConfig.setProperty("zookeeper.ssl.trustStore.type", "PEM");
             CountDownLatch l3 = new CountDownLatch(1);
-            try (ZooKeeper zk = new ZooKeeper(zkServer.getSecureConnectionString(), 60000, (WatchedEvent event) -> {
-                switch (event.getState()) {
-                    case SyncConnected:
-                        l3.countDown();
-                        break;
-                }
-            }, zKClientConfig)) {
+            try (ZooKeeper zk = new ZooKeeper(
+                    zkServer.getSecureConnectionString(),
+                    60000,
+                    (WatchedEvent event) -> {
+                        switch (event.getState()) {
+                            case SyncConnected:
+                                l3.countDown();
+                                break;
+                        }
+                    },
+                    zKClientConfig)) {
                 assertTrue(zk.getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT));
                 assertTrue(l3.await(10, TimeUnit.SECONDS));
             }
@@ -206,7 +228,8 @@ public class ClientSSLReloadTest extends ZKTestCase {
     }
 
     private ZKClientConfig getZKClientConfig() throws IOException {
-        // Saving copies in JKS format to be used for client calls even after writeStringToFile overwrites keyStoreFile1 and trustStoreFile1
+        // Saving copies in JKS format to be used for client calls even after writeStringToFile overwrites keyStoreFile1
+        // and trustStoreFile1
         File clientKeyStore = x509TestContext1.getKeyStoreFile(KeyStoreFileType.JKS);
         File clientTrustStore = x509TestContext1.getTrustStoreFile(KeyStoreFileType.JKS);
 
@@ -217,7 +240,8 @@ public class ClientSSLReloadTest extends ZKTestCase {
         zKClientConfig.setProperty("zookeeper.ssl.keyStore.type", "JKS");
         zKClientConfig.setProperty("zookeeper.ssl.trustStore.type", "JKS");
         // only netty supports TLS
-        zKClientConfig.setProperty("zookeeper.clientCnxnSocket", org.apache.zookeeper.ClientCnxnSocketNetty.class.getName());
+        zKClientConfig.setProperty(
+                "zookeeper.clientCnxnSocket", org.apache.zookeeper.ClientCnxnSocketNetty.class.getName());
         return zKClientConfig;
     }
 }

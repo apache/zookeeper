@@ -65,5 +65,4 @@ public class AddAuthCommand extends CliCommand {
 
         return false;
     }
-
 }

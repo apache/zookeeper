@@ -193,5 +193,4 @@ public class StatTest extends ClientBase {
         assertEquals(name.length() * 2, stat.getDataLength());
         assertEquals(0, stat.getNumChildren());
     }
-
 }

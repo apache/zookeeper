@@ -36,13 +36,16 @@ public class Environment {
 
         private String k;
         private String v;
+
         public Entry(String k, String v) {
             this.k = k;
             this.v = v;
         }
+
         public String getKey() {
             return k;
         }
+
         public String getValue() {
             return v;
         }
@@ -51,7 +54,6 @@ public class Environment {
         public String toString() {
             return k + "=" + v;
         }
-
     }
 
     private static void put(List<Entry> l, String k, String v) {
@@ -98,5 +100,4 @@ public class Environment {
             log.info(msg + e.toString());
         }
     }
-
 }

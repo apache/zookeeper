@@ -85,7 +85,6 @@ public class FilePadding {
         return currentSize;
     }
 
-
     /**
      * Calculates a new file size with padding. We only return a new size if
      * the current file position is sufficiently close (less than 4K) to end of
@@ -113,5 +112,4 @@ public class FilePadding {
 
         return fileSize;
     }
-
 }

@@ -102,5 +102,4 @@ public class FileTxnSnapLogMetricsTest extends ZKTestCase {
 
         cnxnFactory.shutdown();
     }
-
 }

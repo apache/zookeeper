@@ -32,8 +32,10 @@ import org.junit.jupiter.api.io.TempDir;
 public class DatadirCleanupManagerTest extends ZKTestCase {
 
     private DatadirCleanupManager purgeMgr;
+
     @TempDir
     File tmpDir;
+
     private File snapDir;
     private File dataLogDir;
 
@@ -68,9 +70,11 @@ public class DatadirCleanupManagerTest extends ZKTestCase {
     public void testWithNegativePurgeInterval() throws Exception {
         purgeMgr = new DatadirCleanupManager(snapDir, dataLogDir, 3, -1);
         purgeMgr.start();
-        assertEquals(NOT_STARTED, purgeMgr.getPurgeTaskStatus(), "Purge task is scheduled with negative purge interval");
+        assertEquals(
+                NOT_STARTED, purgeMgr.getPurgeTaskStatus(), "Purge task is scheduled with negative purge interval");
         purgeMgr.shutdown();
-        assertEquals(NOT_STARTED, purgeMgr.getPurgeTaskStatus(), "Purge task is scheduled with negative purge interval");
+        assertEquals(
+                NOT_STARTED, purgeMgr.getPurgeTaskStatus(), "Purge task is scheduled with negative purge interval");
     }
 
     @AfterEach
@@ -79,5 +83,4 @@ public class DatadirCleanupManagerTest extends ZKTestCase {
             purgeMgr.shutdown();
         }
     }
-
 }

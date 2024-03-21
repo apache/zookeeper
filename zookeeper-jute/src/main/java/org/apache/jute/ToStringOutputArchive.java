@@ -99,8 +99,7 @@ public class ToStringOutputArchive implements OutputArchive {
         throwExceptionOnError(tag);
     }
 
-    public void writeBuffer(byte[] buf, String tag)
-            throws IOException {
+    public void writeBuffer(byte[] buf, String tag) throws IOException {
         printCommaUnlessFirst();
         String strValue = escapeBuffer(buf);
         stream.print(strValue);

@@ -51,5 +51,4 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         f.setAccessible(true);
         f.setBoolean(cnxn, true);
     }
-
 }

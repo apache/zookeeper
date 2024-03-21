@@ -52,7 +52,6 @@ public class ClientReconnectTest extends ZKTestCase {
         SocketChannel createSock() {
             return sc;
         }
-
     }
 
     @Test
@@ -66,17 +65,11 @@ public class ClientReconnectTest extends ZKTestCase {
         sc = SocketChannel.open();
 
         ClientCnxnSocketNIO nioCnxn = new MockCnxn();
-        ClientCnxn clientCnxn = new ClientCnxn(
-            hostProvider,
-            5000,
-            zk.getClientConfig(),
-            DummyWatcher.INSTANCE,
-            nioCnxn,
-            false);
+        ClientCnxn clientCnxn =
+                new ClientCnxn(hostProvider, 5000, zk.getClientConfig(), DummyWatcher.INSTANCE, nioCnxn, false);
         clientCnxn.start();
         countDownLatch.await(5000, TimeUnit.MILLISECONDS);
         assertTrue(countDownLatch.getCount() == 0);
         clientCnxn.close();
     }
-
 }

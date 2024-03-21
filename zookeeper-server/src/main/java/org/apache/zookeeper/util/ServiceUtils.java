@@ -31,8 +31,7 @@ public abstract class ServiceUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceUtils.class);
 
-    private ServiceUtils() {
-    }
+    private ServiceUtils() {}
 
     /**
      * Default strategy for shutting down the JVM.
@@ -55,8 +54,7 @@ public abstract class ServiceUtils {
      */
     public static final Consumer<Integer> LOG_ONLY = (code) -> {
         if (code != 0) {
-            LOG.error("Fatal error, JVM should exit with code {}. "
-                + "Actually System.exit is disabled", code);
+            LOG.error("Fatal error, JVM should exit with code {}. " + "Actually System.exit is disabled", code);
         } else {
             LOG.info("JVM should exit with code {}. Actually System.exit is disabled", code);
         }
@@ -84,5 +82,4 @@ public abstract class ServiceUtils {
     public static void requestSystemExit(int code) {
         systemExitProcedure.accept(code);
     }
-
 }

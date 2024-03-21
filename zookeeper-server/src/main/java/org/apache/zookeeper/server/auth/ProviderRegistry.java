@@ -34,7 +34,7 @@ public class ProviderRegistry {
     private static boolean initialized = false;
     private static final Map<String, AuthenticationProvider> authenticationProviders = new HashMap<>();
 
-    //VisibleForTesting
+    // VisibleForTesting
     public static void reset() {
         synchronized (ProviderRegistry.class) {
             initialized = false;
@@ -67,7 +67,8 @@ public class ProviderRegistry {
                 String className = System.getProperty(authKey);
                 try {
                     Class<?> c = ZooKeeperServer.class.getClassLoader().loadClass(className);
-                    AuthenticationProvider ap = (AuthenticationProvider) c.getDeclaredConstructor().newInstance();
+                    AuthenticationProvider ap =
+                            (AuthenticationProvider) c.getDeclaredConstructor().newInstance();
                     authenticationProviders.put(ap.getScheme(), ap);
                 } catch (Exception e) {
                     LOG.warn("Problems loading {}", className, e);
@@ -98,5 +99,4 @@ public class ProviderRegistry {
         }
         return sb.toString();
     }
-
 }

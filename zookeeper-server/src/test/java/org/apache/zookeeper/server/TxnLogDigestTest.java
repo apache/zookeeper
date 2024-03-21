@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,8 +51,7 @@ import org.slf4j.LoggerFactory;
 
 public class TxnLogDigestTest extends ClientBase {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(TxnLogDigestTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TxnLogDigestTest.class);
 
     private ZooKeeper zk;
     private ZooKeeperServer server;
@@ -112,8 +110,7 @@ public class TxnLogDigestTest extends ClientBase {
         // verify that the digest is wrote to disk with txn
         TxnDigest lastDigest = getLastTxnLogDigest();
         assertNotNull(lastDigest);
-        assertEquals(server.getZKDatabase().getDataTree().getTreeDigest(),
-                lastDigest.getTreeDigest());
+        assertEquals(server.getZKDatabase().getDataTree().getTreeDigest(), lastDigest.getTreeDigest());
     }
 
     /**
@@ -184,8 +181,7 @@ public class TxnLogDigestTest extends ClientBase {
         assertEquals(0, digestMistachesCount.get());
     }
 
-    private void restartServerWithDigestFlag(boolean digestEnabled)
-            throws Exception {
+    private void restartServerWithDigestFlag(boolean digestEnabled) throws Exception {
         stopServer();
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTING);
 
@@ -205,16 +201,14 @@ public class TxnLogDigestTest extends ClientBase {
         return lastDigest;
     }
 
-    public static void create(ZooKeeper client, String path, CreateMode mode)
-              throws Exception {
-         client.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, mode);
+    public static void create(ZooKeeper client, String path, CreateMode mode) throws Exception {
+        client.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, mode);
     }
 
     /**
      * Helper method to trigger various write ops inside ZK.
      */
-    public static Map<String, String> performOperations(
-            ZooKeeper client, String prefix) throws Exception {
+    public static Map<String, String> performOperations(ZooKeeper client, String prefix) throws Exception {
         Map<String, String> nodes = new HashMap<>();
 
         String path = prefix;
@@ -238,8 +232,7 @@ public class TxnLogDigestTest extends ClientBase {
         List<Op> subTxns = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             path = prefix + "/m" + i;
-            subTxns.add(Op.create(path, path.getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            subTxns.add(Op.create(path, path.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
             nodes.put(path, path);
         }
         client.multi(subTxns);
@@ -251,9 +244,8 @@ public class TxnLogDigestTest extends ClientBase {
     private void checkNodes(Map<String, String> expectedNodes) throws Exception {
         ZooKeeper client = createClient();
         try {
-            for (Map.Entry<String, String> entry: expectedNodes.entrySet()) {
-                assertEquals(entry.getValue(),
-                        new String(client.getData(entry.getKey(), false, null)));
+            for (Map.Entry<String, String> entry : expectedNodes.entrySet()) {
+                assertEquals(entry.getValue(), new String(client.getData(entry.getKey(), false, null)));
             }
         } finally {
             client.close();
@@ -276,5 +268,6 @@ public class TxnLogDigestTest extends ClientBase {
         public static void reset() {
             skipAppendZxid = -1;
         }
-    };
+    }
+    ;
 }

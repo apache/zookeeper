@@ -67,25 +67,24 @@ import javax.security.auth.x500.X500Principal;
 public final class PemReader {
 
     private static final Pattern CERT_PATTERN = Pattern.compile(
-        "-+BEGIN\\s+.*CERTIFICATE[^-]*-+(?:\\s|\\r|\\n)+" // Header
-        + "([a-z0-9+/=\\r\\n]+)"                     // Base64 text
-        + "-+END\\s+.*CERTIFICATE[^-]*-+",           // Footer
-        CASE_INSENSITIVE);
+            "-+BEGIN\\s+.*CERTIFICATE[^-]*-+(?:\\s|\\r|\\n)+" // Header
+                    + "([a-z0-9+/=\\r\\n]+)" // Base64 text
+                    + "-+END\\s+.*CERTIFICATE[^-]*-+", // Footer
+            CASE_INSENSITIVE);
 
     private static final Pattern PRIVATE_KEY_PATTERN = Pattern.compile(
-        "-+BEGIN\\s+.*PRIVATE\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" // Header
-        + "([a-z0-9+/=\\r\\n]+)"                       // Base64 text
-        + "-+END\\s+.*PRIVATE\\s+KEY[^-]*-+",            // Footer
-        CASE_INSENSITIVE);
+            "-+BEGIN\\s+.*PRIVATE\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" // Header
+                    + "([a-z0-9+/=\\r\\n]+)" // Base64 text
+                    + "-+END\\s+.*PRIVATE\\s+KEY[^-]*-+", // Footer
+            CASE_INSENSITIVE);
 
     private static final Pattern PUBLIC_KEY_PATTERN = Pattern.compile(
-        "-+BEGIN\\s+.*PUBLIC\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" // Header
-        + "([a-z0-9+/=\\r\\n]+)"                      // Base64 text
-        + "-+END\\s+.*PUBLIC\\s+KEY[^-]*-+",            // Footer
-        CASE_INSENSITIVE);
+            "-+BEGIN\\s+.*PUBLIC\\s+KEY[^-]*-+(?:\\s|\\r|\\n)+" // Header
+                    + "([a-z0-9+/=\\r\\n]+)" // Base64 text
+                    + "-+END\\s+.*PUBLIC\\s+KEY[^-]*-+", // Footer
+            CASE_INSENSITIVE);
 
-    private PemReader() {
-    }
+    private PemReader() {}
 
     public static KeyStore loadTrustStore(File certificateChainFile) throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -99,25 +98,25 @@ public final class PemReader {
         return keyStore;
     }
 
-    public static KeyStore loadKeyStore(File certificateChainFile, File privateKeyFile, Optional<String> keyPassword) throws IOException, GeneralSecurityException {
+    public static KeyStore loadKeyStore(File certificateChainFile, File privateKeyFile, Optional<String> keyPassword)
+            throws IOException, GeneralSecurityException {
         PrivateKey key = loadPrivateKey(privateKeyFile, keyPassword);
 
         List<X509Certificate> certificateChain = readCertificateChain(certificateChainFile);
         if (certificateChain.isEmpty()) {
-            throw new CertificateException("Certificate file does not contain any certificates: "
-                                           + certificateChainFile);
+            throw new CertificateException(
+                    "Certificate file does not contain any certificates: " + certificateChainFile);
         }
 
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(null, null);
-        keyStore.setKeyEntry("key",
-                             key,
-                             keyPassword.orElse("").toCharArray(),
-                             certificateChain.toArray(new Certificate[0]));
+        keyStore.setKeyEntry(
+                "key", key, keyPassword.orElse("").toCharArray(), certificateChain.toArray(new Certificate[0]));
         return keyStore;
     }
 
-    public static List<X509Certificate> readCertificateChain(File certificateChainFile) throws IOException, GeneralSecurityException {
+    public static List<X509Certificate> readCertificateChain(File certificateChainFile)
+            throws IOException, GeneralSecurityException {
         String contents = new String(Files.readAllBytes(certificateChainFile.toPath()), US_ASCII);
         return readCertificateChain(contents);
     }
@@ -130,19 +129,22 @@ public final class PemReader {
         int start = 0;
         while (matcher.find(start)) {
             byte[] buffer = base64Decode(matcher.group(1));
-            certificates.add((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(buffer)));
+            certificates.add(
+                    (X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(buffer)));
             start = matcher.end();
         }
 
         return certificates;
     }
 
-    public static PrivateKey loadPrivateKey(File privateKeyFile, Optional<String> keyPassword) throws IOException, GeneralSecurityException {
+    public static PrivateKey loadPrivateKey(File privateKeyFile, Optional<String> keyPassword)
+            throws IOException, GeneralSecurityException {
         String privateKey = new String(Files.readAllBytes(privateKeyFile.toPath()), US_ASCII);
         return loadPrivateKey(privateKey, keyPassword);
     }
 
-    public static PrivateKey loadPrivateKey(String privateKey, Optional<String> keyPassword) throws IOException, GeneralSecurityException {
+    public static PrivateKey loadPrivateKey(String privateKey, Optional<String> keyPassword)
+            throws IOException, GeneralSecurityException {
         Matcher matcher = PRIVATE_KEY_PATTERN.matcher(privateKey);
         if (!matcher.find()) {
             throw new KeyStoreException("did not find a private key");
@@ -153,7 +155,8 @@ public final class PemReader {
         if (keyPassword.isPresent()) {
             EncryptedPrivateKeyInfo encryptedPrivateKeyInfo = new EncryptedPrivateKeyInfo(encodedKey);
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(encryptedPrivateKeyInfo.getAlgName());
-            SecretKey secretKey = keyFactory.generateSecret(new PBEKeySpec(keyPassword.get().toCharArray()));
+            SecretKey secretKey =
+                    keyFactory.generateSecret(new PBEKeySpec(keyPassword.get().toCharArray()));
 
             Cipher cipher = Cipher.getInstance(encryptedPrivateKeyInfo.getAlgName());
             cipher.init(DECRYPT_MODE, secretKey, encryptedPrivateKeyInfo.getAlgParameters());
@@ -214,5 +217,4 @@ public final class PemReader {
     private static byte[] base64Decode(String base64) {
         return getMimeDecoder().decode(base64.getBytes(US_ASCII));
     }
-
 }

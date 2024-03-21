@@ -43,8 +43,10 @@ public class AddWatchCommand extends CliCommand {
     }
 
     public AddWatchCommand() {
-        super("addWatch", "[-m mode] path # optional mode is one of "
-                + Arrays.toString(AddWatchMode.values()) + " - default is " + defaultMode.name());
+        super(
+                "addWatch",
+                "[-m mode] path # optional mode is one of " + Arrays.toString(AddWatchMode.values()) + " - default is "
+                        + defaultMode.name());
     }
 
     @Override
@@ -80,7 +82,5 @@ public class AddWatchCommand extends CliCommand {
         }
 
         return false;
-
     }
-
 }

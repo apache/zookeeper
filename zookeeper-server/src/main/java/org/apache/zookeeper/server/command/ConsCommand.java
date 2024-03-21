@@ -39,5 +39,4 @@ public class ConsCommand extends AbstractFourLetterCommand {
             pw.println();
         }
     }
-
 }

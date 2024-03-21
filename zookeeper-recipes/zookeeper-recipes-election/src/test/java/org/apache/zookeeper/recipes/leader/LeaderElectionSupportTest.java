@@ -52,10 +52,10 @@ public class LeaderElectionSupportTest extends ClientBase {
         zooKeeper = createClient();
 
         zooKeeper.create(
-            TEST_ROOT_NODE + Thread.currentThread().getId(),
-            new byte[0],
-            ZooDefs.Ids.OPEN_ACL_UNSAFE,
-            CreateMode.PERSISTENT);
+                TEST_ROOT_NODE + Thread.currentThread().getId(),
+                new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
     }
 
     @AfterEach
@@ -187,11 +187,11 @@ public class LeaderElectionSupportTest extends ClientBase {
         LeaderElectionSupport electionSupport2 = createLeaderElectionSupport();
         LeaderElectionAware listener = new LeaderElectionAware() {
             boolean stoppedElectedNode = false;
+
             @Override
             public void onElectionEvent(EventType eventType) {
                 events.add(eventType);
-                if (!stoppedElectedNode
-                    && eventType == EventType.DETERMINE_COMPLETE) {
+                if (!stoppedElectedNode && eventType == EventType.DETERMINE_COMPLETE) {
                     stoppedElectedNode = true;
                     try {
                         // stopping the ELECTED node, so re-election will happen.
@@ -236,16 +236,12 @@ public class LeaderElectionSupportTest extends ClientBase {
         return electionSupport;
     }
 
-    private Thread runElectionSupportThread(
-        final CountDownLatch latch,
-        final AtomicInteger failureCounter) {
+    private Thread runElectionSupportThread(final CountDownLatch latch, final AtomicInteger failureCounter) {
         return runElectionSupportThread(latch, failureCounter, 3000);
     }
 
     private Thread runElectionSupportThread(
-        final CountDownLatch latch,
-        final AtomicInteger failureCounter,
-        final long sleepDuration) {
+            final CountDownLatch latch, final AtomicInteger failureCounter, final long sleepDuration) {
         final LeaderElectionSupport electionSupport = createLeaderElectionSupport();
 
         Thread t = new Thread(() -> {
@@ -265,5 +261,4 @@ public class LeaderElectionSupportTest extends ClientBase {
 
         return t;
     }
-
 }

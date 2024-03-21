@@ -62,7 +62,6 @@ public class AvgMinMaxCounterSetTest extends ZKTestCase {
         assertEquals(0L, values.get("max_key2_test"), "max_key2_test should =0");
         assertEquals(0L, values.get("cnt_key2_test"), "cnt_key2_test should =0");
         assertEquals(0L, values.get("sum_key2_test"), "sum_key2_test should =0");
-
     }
 
     @Test
@@ -83,5 +82,4 @@ public class AvgMinMaxCounterSetTest extends ZKTestCase {
         assertEquals(4L, values.get("cnt_key2_test"), "cnt_key2_test should =4");
         assertEquals(14L, values.get("sum_key2_test"), "sum_key2_test should =14");
     }
-
 }

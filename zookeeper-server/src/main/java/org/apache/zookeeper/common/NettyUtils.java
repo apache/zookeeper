@@ -165,5 +165,4 @@ public class NettyUtils {
             return DEFAULT_INET_ADDRESS_COUNT;
         }
     }
-
 }

@@ -54,8 +54,7 @@ public class SnapStream {
     public static final String ZOOKEEPER_SHAPSHOT_STREAM_MODE = "zookeeper.snapshot.compression.method";
 
     private static StreamMode streamMode = StreamMode.fromString(
-        System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE,
-                           StreamMode.DEFAULT_MODE.getName()));
+            System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE, StreamMode.DEFAULT_MODE.getName()));
 
     static {
         LOG.info("{} = {}", ZOOKEEPER_SHAPSHOT_STREAM_MODE, streamMode);
@@ -133,22 +132,22 @@ public class SnapStream {
         OutputStream fos = fsync ? new AtomicFileOutputStream(file) : new FileOutputStream(file);
         OutputStream os;
         switch (streamMode) {
-        case GZIP:
-            try {
-                os = new GZIPOutputStream(fos);
-            } catch (IOException e) {
-                fos.close();
-                throw e;
-            }
-            break;
-        case SNAPPY:
-            // Unlike SnappyInputStream, the SnappyOutputStream
-            // constructor cannot throw an IOException.
-            os = new SnappyOutputStream(fos);
-            break;
-        case CHECKED:
-        default:
-            os = new BufferedOutputStream(fos);
+            case GZIP:
+                try {
+                    os = new GZIPOutputStream(fos);
+                } catch (IOException e) {
+                    fos.close();
+                    throw e;
+                }
+                break;
+            case SNAPPY:
+                // Unlike SnappyInputStream, the SnappyOutputStream
+                // constructor cannot throw an IOException.
+                os = new SnappyOutputStream(fos);
+                break;
+            case CHECKED:
+            default:
+                os = new BufferedOutputStream(fos);
         }
         return new CheckedOutputStream(os, new Adler32());
     }
@@ -173,7 +172,7 @@ public class SnapStream {
     public static void checkSealIntegrity(CheckedInputStream is, InputArchive ia) throws IOException {
         long checkSum = is.getChecksum().getValue();
         long val = ia.readLong("val");
-        ia.readString("path");  // Read and ignore "/" written by SealStream.
+        ia.readString("path"); // Read and ignore "/" written by SealStream.
         if (val != checkSum) {
             throw new IOException("CRC corruption");
         }
@@ -197,15 +196,15 @@ public class SnapStream {
 
         boolean isValid = false;
         switch (getStreamMode(file.getName())) {
-        case GZIP:
-            isValid = isValidGZipStream(file);
-            break;
-        case SNAPPY:
-            isValid = isValidSnappyStream(file);
-            break;
-        case CHECKED:
-        default:
-            isValid = isValidCheckedStream(file);
+            case GZIP:
+                isValid = isValidGZipStream(file);
+                break;
+            case SNAPPY:
+                isValid = isValidSnappyStream(file);
+                break;
+            case CHECKED:
+            default:
+                isValid = isValidCheckedStream(file);
         }
         return isValid;
     }
@@ -325,5 +324,4 @@ public class SnapStream {
 
         return true;
     }
-
 }

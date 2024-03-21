@@ -72,5 +72,4 @@ public class BitMapTest extends ZKTestCase {
 
         assertEquals(v4Bit, v2Bit);
     }
-
 }

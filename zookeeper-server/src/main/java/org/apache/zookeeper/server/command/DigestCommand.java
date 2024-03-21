@@ -43,5 +43,4 @@ public class DigestCommand extends AbstractFourLetterCommand {
             }
         }
     }
-
 }

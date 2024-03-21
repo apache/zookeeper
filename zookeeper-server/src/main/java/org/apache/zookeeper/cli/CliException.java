@@ -55,5 +55,4 @@ public class CliException extends Exception {
     public int getExitCode() {
         return exitCode;
     }
-
 }

@@ -110,5 +110,4 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             }
         }
     }
-
 }

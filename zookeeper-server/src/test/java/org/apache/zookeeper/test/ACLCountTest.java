@@ -90,7 +90,8 @@ public class ACLCountTest extends ZKTestCase {
             try {
                 assertEquals(4, CREATOR_ALL_AND_WORLD_READABLE.size());
             } catch (Exception e) {
-                LOG.error("Something is fundamentally wrong with ArrayList's add() method. add()ing four times to an empty ArrayList should result in an ArrayList with 4 members.");
+                LOG.error(
+                        "Something is fundamentally wrong with ArrayList's add() method. add()ing four times to an empty ArrayList should result in an ArrayList with 4 members.");
                 throw e;
             }
 
@@ -105,5 +106,4 @@ public class ACLCountTest extends ZKTestCase {
         f.shutdown();
         zks.shutdown();
     }
-
 }

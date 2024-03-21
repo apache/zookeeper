@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
  *
  * [1] "BLUE: A New Class of Active Queue Management Algorithms"
  **/
-
 public class BlueThrottle {
     private static final Logger LOG = LoggerFactory.getLogger(BlueThrottle.class);
 
@@ -122,7 +121,7 @@ public class BlueThrottle {
     private static final int DEFAULT_RENEW_SESSION_WEIGHT;
 
     // for unit tests only
-    protected  static void setConnectionWeightEnabled(boolean enabled) {
+    protected static void setConnectionWeightEnabled(boolean enabled) {
         connectionWeightEnabled = enabled;
         logWeighedThrottlingSetting();
     }
@@ -135,8 +134,7 @@ public class BlueThrottle {
                     "The weights for different session types are: global {} renew {} local {}",
                     DEFAULT_GLOBAL_SESSION_WEIGHT,
                     DEFAULT_RENEW_SESSION_WEIGHT,
-                    DEFAULT_LOCAL_SESSION_WEIGHT
-            );
+                    DEFAULT_LOCAL_SESSION_WEIGHT);
         } else {
             LOG.info("Weighed connection throttling is disabled");
         }
@@ -162,9 +160,9 @@ public class BlueThrottle {
             DEFAULT_GLOBAL_SESSION_WEIGHT = 3;
         } else if (globalWeight < localWeight) {
             LOG.warn(
-                "The global session weight {} is less than the local session weight {}. Use the local session weight.",
-                globalWeight,
-                localWeight);
+                    "The global session weight {} is less than the local session weight {}. Use the local session weight.",
+                    globalWeight,
+                    localWeight);
             DEFAULT_GLOBAL_SESSION_WEIGHT = localWeight;
         } else {
             DEFAULT_GLOBAL_SESSION_WEIGHT = globalWeight;
@@ -182,20 +180,19 @@ public class BlueThrottle {
             DEFAULT_RENEW_SESSION_WEIGHT = 2;
         } else if (renewWeight < localWeight) {
             LOG.warn(
-                "The renew session weight {} is less than the local session weight {}. Use the local session weight.",
-                renewWeight,
-                localWeight);
+                    "The renew session weight {} is less than the local session weight {}. Use the local session weight.",
+                    renewWeight,
+                    localWeight);
             DEFAULT_RENEW_SESSION_WEIGHT = localWeight;
         } else {
             DEFAULT_RENEW_SESSION_WEIGHT = renewWeight;
         }
 
         // This is based on the assumption that tokens set in config are for global sessions
-        DEFAULT_CONNECTION_THROTTLE_TOKENS = connectionWeightEnabled
-                ? DEFAULT_GLOBAL_SESSION_WEIGHT * tokens : tokens;
+        DEFAULT_CONNECTION_THROTTLE_TOKENS = connectionWeightEnabled ? DEFAULT_GLOBAL_SESSION_WEIGHT * tokens : tokens;
         DEFAULT_CONNECTION_THROTTLE_FILL_TIME = Integer.getInteger(CONNECTION_THROTTLE_FILL_TIME, 1);
-        DEFAULT_CONNECTION_THROTTLE_FILL_COUNT = connectionWeightEnabled
-                ? DEFAULT_GLOBAL_SESSION_WEIGHT * fillCount : fillCount;
+        DEFAULT_CONNECTION_THROTTLE_FILL_COUNT =
+                connectionWeightEnabled ? DEFAULT_GLOBAL_SESSION_WEIGHT * fillCount : fillCount;
         DEFAULT_CONNECTION_THROTTLE_FREEZE_TIME = Integer.getInteger(CONNECTION_THROTTLE_FREEZE_TIME, -1);
         DEFAULT_CONNECTION_THROTTLE_DROP_INCREASE = getDoubleProp(CONNECTION_THROTTLE_DROP_INCREASE, 0.02);
         DEFAULT_CONNECTION_THROTTLE_DROP_DECREASE = getDoubleProp(CONNECTION_THROTTLE_DROP_DECREASE, 0.002);
@@ -362,5 +359,4 @@ public class BlueThrottle {
 
         return !(rng.nextDouble() < drop);
     }
-
 }

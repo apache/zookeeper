@@ -35,7 +35,9 @@ public class AuthSHA2Test extends AuthTest {
         Security.addProvider(new BouncyCastleProvider());
         // password is test
         System.setProperty(DigestAuthenticationProvider.DIGEST_ALGORITHM_KEY, DigestAlgEnum.SHA_256.getName());
-        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest", "super:wjySwxg860UATFtciuZ1lpzrCHrPeov6SPu/ZD56uig=");
+        System.setProperty(
+                "zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:wjySwxg860UATFtciuZ1lpzrCHrPeov6SPu/ZD56uig=");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.test.InvalidAuthProvider");
     }
 
@@ -73,17 +75,33 @@ public class AuthSHA2Test extends AuthTest {
 
     @Test
     public void testGenerateDigest() throws NoSuchAlgorithmException {
-        assertEquals("super:wjySwxg860UATFtciuZ1lpzrCHrPeov6SPu/ZD56uig=", DigestAuthenticationProvider.generateDigest("super:test"));
-        assertEquals("super:Ie58Fw6KA4ucTEDj23imIltKrXNDxQg8Rwtu0biQFcU=", DigestAuthenticationProvider.generateDigest("super:zookeeper"));
-        assertEquals("super:rVOiTPnqEqlpIRXqSoE6+7h6SzbHUrfAe34i8n/gmRU=", DigestAuthenticationProvider.generateDigest(("super:foo")));
-        assertEquals("super:vs70GBagNcqIhGR4R6rXP8E3lvJPYhzMpAMx8ghbTUk=", DigestAuthenticationProvider.generateDigest(("super:bar")));
+        assertEquals(
+                "super:wjySwxg860UATFtciuZ1lpzrCHrPeov6SPu/ZD56uig=",
+                DigestAuthenticationProvider.generateDigest("super:test"));
+        assertEquals(
+                "super:Ie58Fw6KA4ucTEDj23imIltKrXNDxQg8Rwtu0biQFcU=",
+                DigestAuthenticationProvider.generateDigest("super:zookeeper"));
+        assertEquals(
+                "super:rVOiTPnqEqlpIRXqSoE6+7h6SzbHUrfAe34i8n/gmRU=",
+                DigestAuthenticationProvider.generateDigest(("super:foo")));
+        assertEquals(
+                "super:vs70GBagNcqIhGR4R6rXP8E3lvJPYhzMpAMx8ghbTUk=",
+                DigestAuthenticationProvider.generateDigest(("super:bar")));
     }
 
     @Test
     public void testDigest() throws NoSuchAlgorithmException {
-        assertEquals("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", getGeneratedDigestStr(DigestAuthenticationProvider.digest("test")));
-        assertEquals("456831beef3fc1500939995d7369695f48642664a02d5eab9d807592a08b2384", getGeneratedDigestStr(DigestAuthenticationProvider.digest("zookeeper")));
-        assertEquals("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae", getGeneratedDigestStr(DigestAuthenticationProvider.digest(("foo"))));
-        assertEquals("fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9", getGeneratedDigestStr(DigestAuthenticationProvider.digest(("bar"))));
+        assertEquals(
+                "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+                getGeneratedDigestStr(DigestAuthenticationProvider.digest("test")));
+        assertEquals(
+                "456831beef3fc1500939995d7369695f48642664a02d5eab9d807592a08b2384",
+                getGeneratedDigestStr(DigestAuthenticationProvider.digest("zookeeper")));
+        assertEquals(
+                "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+                getGeneratedDigestStr(DigestAuthenticationProvider.digest(("foo"))));
+        assertEquals(
+                "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9",
+                getGeneratedDigestStr(DigestAuthenticationProvider.digest(("bar"))));
     }
 }

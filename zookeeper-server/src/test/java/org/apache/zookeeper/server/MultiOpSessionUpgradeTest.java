@@ -117,16 +117,19 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         GetDataRequest getDataRequest = new GetDataRequest(path, false);
         getDataRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.getData, RequestRecord.fromBytes(bb), new ArrayList<Id>());
+        return new Request(
+                null, sessionId, 1, ZooDefs.OpCode.getData, RequestRecord.fromBytes(bb), new ArrayList<Id>());
     }
 
     private Request makeCreateRequest(String path, long sessionId) throws IOException {
         ByteArrayOutputStream boas = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(boas);
-        CreateRequest createRequest = new CreateRequest(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
+        CreateRequest createRequest =
+                new CreateRequest(path, "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
         createRequest.serialize(boa, "request");
         ByteBuffer bb = ByteBuffer.wrap(boas.toByteArray());
-        return new Request(null, sessionId, 1, ZooDefs.OpCode.create2, RequestRecord.fromBytes(bb), new ArrayList<Id>());
+        return new Request(
+                null, sessionId, 1, ZooDefs.OpCode.create2, RequestRecord.fromBytes(bb), new ArrayList<Id>());
     }
 
     private QuorumZooKeeperServer getConnectedServer(long sessionId) {
@@ -137,5 +140,4 @@ public class MultiOpSessionUpgradeTest extends QuorumBase {
         }
         return null;
     }
-
 }

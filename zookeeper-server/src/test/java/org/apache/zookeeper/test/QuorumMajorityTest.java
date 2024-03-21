@@ -48,15 +48,17 @@ public class QuorumMajorityTest extends QuorumBase {
             Long electionTimeTaken = -1L;
             String bean = "";
             if (qp.getPeerState() == ServerState.FOLLOWING) {
-                bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower", MBeanRegistry.DOMAIN, i, i);
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower", MBeanRegistry.DOMAIN, i, i);
             } else if (qp.getPeerState() == ServerState.LEADING) {
-                bean = String.format("%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader", MBeanRegistry.DOMAIN, i, i);
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader", MBeanRegistry.DOMAIN, i, i);
             }
             electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean, "ElectionTimeTaken");
             assertTrue(electionTimeTaken >= 0, "Wrong electionTimeTaken value!");
         }
 
-        //setup servers 1-5 to be followers
+        // setup servers 1-5 to be followers
         setUp(false, true);
 
         Proposal p = new Proposal();
@@ -76,7 +78,7 @@ public class QuorumMajorityTest extends QuorumBase {
         p.addAck(Long.valueOf(3));
         assertEquals(true, p.hasAllQuorums());
 
-        //setup servers 1-3 to be followers and 4 and 5 to be observers
+        // setup servers 1-3 to be followers and 4 and 5 to be observers
         setUp(true, true);
 
         p = new Proposal();
@@ -99,5 +101,4 @@ public class QuorumMajorityTest extends QuorumBase {
         p.addAck(Long.valueOf(2));
         assertEquals(true, p.hasAllQuorums());
     }
-
 }

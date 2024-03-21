@@ -15,18 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.common;
-
 
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from BCKFS files.
  */
 class BCFKSFileLoader extends StandardTypeFileKeyStoreLoader {
-    private BCFKSFileLoader(String keyStorePath,
-                            String trustStorePath,
-                            String keyStorePassword,
-                            String trustStorePassword) {
+    private BCFKSFileLoader(
+            String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword, SupportedStandardKeyFormat.BCFKS);
     }
 

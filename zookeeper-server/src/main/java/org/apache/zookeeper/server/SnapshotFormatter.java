@@ -115,8 +115,8 @@ public class SnapshotFormatter {
         printSessionDetails(dataTree, sessions);
         DataTree.ZxidDigest targetZxidDigest = dataTree.getDigestFromLoadedSnapshot();
         if (targetZxidDigest != null) {
-            System.out.println(String.format("Target zxid digest is: %s, %s",
-                    Long.toHexString(targetZxidDigest.zxid), targetZxidDigest.digest));
+            System.out.println(String.format(
+                    "Target zxid digest is: %s, %s", Long.toHexString(targetZxidDigest.zxid), targetZxidDigest.digest));
         }
         System.out.println(String.format("----%nLast zxid: 0x%s", Long.toHexString(Math.max(fileNameZxid, dtZxid))));
     }
@@ -139,7 +139,8 @@ public class SnapshotFormatter {
             printStat(n.stat);
             zxid = Math.max(n.stat.getMzxid(), n.stat.getPzxid());
             if (dumpData) {
-                System.out.println("  data = " + (n.data == null ? "" : Base64.getEncoder().encodeToString(n.data)));
+                System.out.println(
+                        "  data = " + (n.data == null ? "" : Base64.getEncoder().encodeToString(n.data)));
             } else {
                 System.out.println("  dataLength = " + (n.data == null ? 0 : n.data.length));
             }
@@ -158,7 +159,9 @@ public class SnapshotFormatter {
         System.out.println("Session Details (sid, timeout, ephemeralCount):");
         for (Map.Entry<Long, Integer> e : sessions.entrySet()) {
             long sid = e.getKey();
-            System.out.println(String.format("%#016x, %d, %d", sid, e.getValue(), dataTree.getEphemerals(sid).size()));
+            System.out.println(String.format(
+                    "%#016x, %d, %d",
+                    sid, e.getValue(), dataTree.getEphemerals(sid).size()));
         }
     }
 
@@ -181,14 +184,13 @@ public class SnapshotFormatter {
     private void printSnapshotJson(final DataTree dataTree) {
         JsonStringEncoder encoder = JsonStringEncoder.getInstance();
         System.out.printf(
-            "[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}",
-            System.currentTimeMillis());
+                "[1,0,{\"progname\":\"SnapshotFormatter.java\",\"progver\":\"0.01\",\"timestamp\":%d}",
+                System.currentTimeMillis());
         printZnodeJson(dataTree, "/", encoder);
         System.out.print("]");
     }
 
     private void printZnodeJson(final DataTree dataTree, final String fullPath, JsonStringEncoder encoder) {
-
 
         final DataNode n = dataTree.getNode(fullPath);
 
@@ -197,9 +199,7 @@ public class SnapshotFormatter {
             return;
         }
 
-        final String name = fullPath.equals("/")
-            ? fullPath
-            : fullPath.substring(fullPath.lastIndexOf("/") + 1);
+        final String name = fullPath.equals("/") ? fullPath : fullPath.substring(fullPath.lastIndexOf("/") + 1);
 
         System.out.print(",");
 
@@ -209,7 +209,10 @@ public class SnapshotFormatter {
         }
         StringBuilder nodeSB = new StringBuilder();
         nodeSB.append("{");
-        nodeSB.append("\"name\":\"").append(encoder.quoteAsString(name)).append("\"").append(",");
+        nodeSB.append("\"name\":\"")
+                .append(encoder.quoteAsString(name))
+                .append("\"")
+                .append(",");
         nodeSB.append("\"asize\":").append(dataLen).append(",");
         nodeSB.append("\"dsize\":").append(dataLen).append(",");
         nodeSB.append("\"dev\":").append(0).append(",");
@@ -230,5 +233,4 @@ public class SnapshotFormatter {
             System.out.print(nodeSB);
         }
     }
-
 }

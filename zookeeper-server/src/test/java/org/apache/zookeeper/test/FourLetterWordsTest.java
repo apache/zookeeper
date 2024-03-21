@@ -115,6 +115,7 @@ public class FourLetterWordsTest extends ClientBase {
         HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
         return send4LetterWord(hpobj.host, hpobj.port, cmd);
     }
+
     private String sendRequest(String cmd, int timeout) throws IOException, SSLContextException {
         HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
         return send4LetterWord(hpobj.host, hpobj.port, cmd, false, timeout);
@@ -242,5 +243,4 @@ public class FourLetterWordsTest extends ClientBase {
         }
         return new String(baos.toByteArray());
     }
-
 }

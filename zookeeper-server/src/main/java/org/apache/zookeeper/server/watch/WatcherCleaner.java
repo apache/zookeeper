@@ -61,14 +61,19 @@ public class WatcherCleaner extends Thread {
 
     public WatcherCleaner(IDeadWatcherListener listener) {
         this(
-            listener,
-            Integer.getInteger("zookeeper.watcherCleanThreshold", 1000),
-            Integer.getInteger("zookeeper.watcherCleanIntervalInSeconds", 600),
-            Integer.getInteger("zookeeper.watcherCleanThreadsNum", 2),
-            Integer.getInteger("zookeeper.maxInProcessingDeadWatchers", -1));
+                listener,
+                Integer.getInteger("zookeeper.watcherCleanThreshold", 1000),
+                Integer.getInteger("zookeeper.watcherCleanIntervalInSeconds", 600),
+                Integer.getInteger("zookeeper.watcherCleanThreadsNum", 2),
+                Integer.getInteger("zookeeper.maxInProcessingDeadWatchers", -1));
     }
 
-    public WatcherCleaner(IDeadWatcherListener listener, int watcherCleanThreshold, int watcherCleanIntervalInSeconds, int watcherCleanThreadsNum, int maxInProcessingDeadWatchers) {
+    public WatcherCleaner(
+            IDeadWatcherListener listener,
+            int watcherCleanThreshold,
+            int watcherCleanIntervalInSeconds,
+            int watcherCleanThreadsNum,
+            int maxInProcessingDeadWatchers) {
         this.listener = listener;
         this.watcherCleanThreshold = watcherCleanThreshold;
         this.watcherCleanIntervalInSeconds = watcherCleanIntervalInSeconds;
@@ -76,20 +81,20 @@ public class WatcherCleaner extends Thread {
         if (maxInProcessingDeadWatchers > 0 && maxInProcessingDeadWatchers < suggestedMaxInProcessingThreshold) {
             maxInProcessingDeadWatchers = suggestedMaxInProcessingThreshold;
             LOG.info(
-                "The maxInProcessingDeadWatchers config is smaller than the suggested one, change it to use {}",
-                maxInProcessingDeadWatchers);
+                    "The maxInProcessingDeadWatchers config is smaller than the suggested one, change it to use {}",
+                    maxInProcessingDeadWatchers);
         }
         this.maxInProcessingDeadWatchers = maxInProcessingDeadWatchers;
         this.deadWatchers = new HashSet<>();
         this.cleaners = new WorkerService("DeadWatcherCleanner", watcherCleanThreadsNum, false);
 
         LOG.info(
-            "watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}"
-                + ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
-            watcherCleanThreshold,
-            watcherCleanIntervalInSeconds,
-            watcherCleanThreadsNum,
-            maxInProcessingDeadWatchers);
+                "watcherCleanThreshold={}, watcherCleanIntervalInSeconds={}"
+                        + ", watcherCleanThreadsNum={}, maxInProcessingDeadWatchers={}",
+                watcherCleanThreshold,
+                watcherCleanIntervalInSeconds,
+                watcherCleanThreadsNum,
+                maxInProcessingDeadWatchers);
     }
 
     public void addDeadWatcher(int watcherBit) {
@@ -132,7 +137,8 @@ public class WatcherCleaner extends Thread {
                     // same time in the quorum
                     if (!stopped && deadWatchers.size() < watcherCleanThreshold) {
                         int maxWaitMs = (watcherCleanIntervalInSeconds
-                                         + ThreadLocalRandom.current().nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
+                                        + ThreadLocalRandom.current().nextInt(watcherCleanIntervalInSeconds / 2 + 1))
+                                * 1000;
                         cleanEvent.wait(maxWaitMs);
                     }
                 } catch (InterruptedException e) {
@@ -184,5 +190,4 @@ public class WatcherCleaner extends Thread {
             LOG.info("WatcherCleaner thread shutdown is initiated");
         }
     }
-
 }

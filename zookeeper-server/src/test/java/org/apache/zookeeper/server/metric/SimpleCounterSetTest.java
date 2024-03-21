@@ -1,4 +1,4 @@
- /*
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,7 +23,6 @@ import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
 
-
 public class SimpleCounterSetTest extends ZKTestCase {
     @Test
     public void testValues() {
@@ -31,8 +30,8 @@ public class SimpleCounterSetTest extends ZKTestCase {
         final Map<String, Object> values = simpleCounterSet.values();
 
         assertEquals(2, values.size());
-        assertEquals(30L , values.get("key1_test1"));
-        assertEquals(70L , values.get("key2_test1"));
+        assertEquals(30L, values.get("key1_test1"));
+        assertEquals(70L, values.get("key2_test1"));
     }
 
     @Test
@@ -43,8 +42,8 @@ public class SimpleCounterSetTest extends ZKTestCase {
         final Map<String, Object> values = simpleCounterSet.values();
 
         assertEquals(2, values.size());
-        assertEquals(0L , values.get("key1_test2"));
-        assertEquals(0L , values.get("key2_test2"));
+        assertEquals(0L, values.get("key1_test2"));
+        assertEquals(0L, values.get("key2_test2"));
     }
 
     private SimpleCounterSet createSimpleCounterSetAddData(final String name) {

@@ -50,10 +50,12 @@ public class ServerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
+
     protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
     /** defaults to -1 if not set explicitly */
     protected int listenBacklog = -1;
+
     protected String initialConfig;
 
     /** JVM Pause Monitor feature switch */
@@ -126,18 +128,23 @@ public class ServerConfig {
     public InetSocketAddress getClientPortAddress() {
         return clientPortAddress;
     }
+
     public InetSocketAddress getSecureClientPortAddress() {
         return secureClientPortAddress;
     }
+
     public File getDataDir() {
         return dataDir;
     }
+
     public File getDataLogDir() {
         return dataLogDir;
     }
+
     public int getTickTime() {
         return tickTime;
     }
+
     public int getMaxClientCnxns() {
         return maxClientCnxns;
     }
@@ -153,18 +160,23 @@ public class ServerConfig {
     public long getJvmPauseInfoThresholdMs() {
         return jvmPauseInfoThresholdMs;
     }
+
     public long getJvmPauseWarnThresholdMs() {
         return jvmPauseWarnThresholdMs;
     }
+
     public long getJvmPauseSleepTimeMs() {
         return jvmPauseSleepTimeMs;
     }
+
     public boolean isJvmPauseMonitorToRun() {
         return jvmPauseMonitorToRun;
     }
+
     public String getMetricsProviderClassName() {
         return metricsProviderClassName;
     }
+
     public Properties getMetricsProviderConfiguration() {
         return metricsProviderConfiguration;
     }
@@ -172,5 +184,4 @@ public class ServerConfig {
     public int getClientPortListenBacklog() {
         return listenBacklog;
     }
-
 }

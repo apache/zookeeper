@@ -37,5 +37,4 @@ public interface QuorumAuthServer {
      * @throws IOException if the server fails to authenticate connecting quorum learner
      */
     void authenticate(Socket sock, DataInputStream din) throws IOException;
-
 }

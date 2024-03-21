@@ -36,5 +36,4 @@ public class CnxnStatResetCommand extends AbstractFourLetterCommand {
             pw.println("Connection stats reset.");
         }
     }
-
 }

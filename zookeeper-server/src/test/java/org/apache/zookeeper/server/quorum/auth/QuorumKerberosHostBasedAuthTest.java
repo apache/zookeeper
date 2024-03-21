@@ -47,67 +47,68 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     private static String hostlessLearnerPrincipal = KerberosTestUtils.getLearnerPrincipal();
 
     static {
-        setupJaasConfigEntries(hostServerPrincipal, hostLearnerPrincipal, hostNamedLearnerPrincipal, hostlessLearnerPrincipal);
+        setupJaasConfigEntries(
+                hostServerPrincipal, hostLearnerPrincipal, hostNamedLearnerPrincipal, hostlessLearnerPrincipal);
     }
 
     private static void setupJaasConfigEntries(
-        String hostServerPrincipal,
-        String hostLearnerPrincipal,
-        String hostNamedLearnerPrincipal,
-        String hostlessLearnerPrincipal) {
+            String hostServerPrincipal,
+            String hostLearnerPrincipal,
+            String hostNamedLearnerPrincipal,
+            String hostlessLearnerPrincipal) {
         String keytabFilePath = FilenameUtils.normalize(KerberosTestUtils.getKeytabFile(), true);
 
         // note: we use "refreshKrb5Config=true" to refresh the kerberos config in the JVM,
         // making sure that we use the latest config even if other tests already have been executed
         // and initialized the kerberos client configs before)
         String jaasEntries = "QuorumServer {\n"
-                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                             + "       useKeyTab=true\n"
-                             + "       keyTab=\"" + keytabFilePath
-                             + "\"\n"
-                             + "       storeKey=true\n"
-                             + "       useTicketCache=false\n"
-                             + "       debug=false\n"
-                             + "       refreshKrb5Config=true\n"
-                             + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal)
-                             + "\";\n"
-                             + "};\n"
-                             + "QuorumLearner {\n"
-                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                             + "       useKeyTab=true\n"
-                             + "       keyTab=\"" + keytabFilePath
-                             + "\"\n"
-                             + "       storeKey=true\n"
-                             + "       useTicketCache=false\n"
-                             + "       debug=false\n"
-                             + "       refreshKrb5Config=true\n"
-                             + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal)
-                             + "\";\n"
-                             + "};\n"
-                             + "QuorumLearnerMyHost {\n"
-                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                             + "       useKeyTab=true\n"
-                             + "       keyTab=\"" + keytabFilePath
-                             + "\"\n"
-                             + "       storeKey=true\n"
-                             + "       useTicketCache=false\n"
-                             + "       debug=false\n"
-                             + "       refreshKrb5Config=true\n"
-                             + "       principal=\"" + hostNamedLearnerPrincipal
-                             + "\";\n"
-                             + "};\n"
-                             + "QuorumLearnerMissingHost {\n"
-                             + "       com.sun.security.auth.module.Krb5LoginModule required\n"
-                             + "       useKeyTab=true\n"
-                             + "       keyTab=\"" + keytabFilePath
-                             + "\"\n"
-                             + "       storeKey=true\n"
-                             + "       useTicketCache=false\n"
-                             + "       debug=false\n"
-                             + "       refreshKrb5Config=true\n"
-                             + "       principal=\"" + hostlessLearnerPrincipal
-                             + "\";\n"
-                             + "};\n";
+                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                + "       useKeyTab=true\n"
+                + "       keyTab=\"" + keytabFilePath
+                + "\"\n"
+                + "       storeKey=true\n"
+                + "       useTicketCache=false\n"
+                + "       debug=false\n"
+                + "       refreshKrb5Config=true\n"
+                + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal)
+                + "\";\n"
+                + "};\n"
+                + "QuorumLearner {\n"
+                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                + "       useKeyTab=true\n"
+                + "       keyTab=\"" + keytabFilePath
+                + "\"\n"
+                + "       storeKey=true\n"
+                + "       useTicketCache=false\n"
+                + "       debug=false\n"
+                + "       refreshKrb5Config=true\n"
+                + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal)
+                + "\";\n"
+                + "};\n"
+                + "QuorumLearnerMyHost {\n"
+                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                + "       useKeyTab=true\n"
+                + "       keyTab=\"" + keytabFilePath
+                + "\"\n"
+                + "       storeKey=true\n"
+                + "       useTicketCache=false\n"
+                + "       debug=false\n"
+                + "       refreshKrb5Config=true\n"
+                + "       principal=\"" + hostNamedLearnerPrincipal
+                + "\";\n"
+                + "};\n"
+                + "QuorumLearnerMissingHost {\n"
+                + "       com.sun.security.auth.module.Krb5LoginModule required\n"
+                + "       useKeyTab=true\n"
+                + "       keyTab=\"" + keytabFilePath
+                + "\"\n"
+                + "       storeKey=true\n"
+                + "       useTicketCache=false\n"
+                + "       debug=false\n"
+                + "       refreshKrb5Config=true\n"
+                + "       principal=\"" + hostlessLearnerPrincipal
+                + "\";\n"
+                + "};\n";
         setupJaasConfig(jaasEntries);
     }
 
@@ -221,7 +222,8 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
 
         int myid = mt.size() + 1;
         final int clientPort = PortAssignment.unique();
-        String server = String.format("server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
+        String server = String.format(
+                "server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
         sb.append(server + "\n");
         quorumCfgSection = sb.toString();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMyHost");
@@ -269,7 +271,8 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
 
         int myid = mt.size() + 1;
         final int clientPort = PortAssignment.unique();
-        String server = String.format("server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
+        String server = String.format(
+                "server.%d=localhost:%d:%d:participant", myid, PortAssignment.unique(), PortAssignment.unique());
         sb.append(server + "\n");
         quorumCfgSection = sb.toString();
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerMissingHost");
@@ -289,5 +292,4 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
             badServer.deleteBaseDir();
         }
     }
-
 }

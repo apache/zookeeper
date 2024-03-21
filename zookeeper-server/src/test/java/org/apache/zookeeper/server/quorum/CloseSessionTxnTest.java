@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -51,8 +50,7 @@ public class CloseSessionTxnTest extends QuorumPeerTestBase {
     }
 
     private void testCloseSessionWithDifferentConfig(
-            boolean closeSessionEnabledOnLeader,
-            boolean closeSessionEnabledOnFollower) throws Exception {
+            boolean closeSessionEnabledOnLeader, boolean closeSessionEnabledOnFollower) throws Exception {
         // 1. set up an ensemble with 3 servers
         final int numServers = 3;
         servers = LaunchServers(numServers);
@@ -70,8 +68,7 @@ public class CloseSessionTxnTest extends QuorumPeerTestBase {
 
         // 3. create an ephemeral node
         String path = "/testCloseSessionTxnCompatile";
-        servers.zk[leaderId].create(path, new byte[0], Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+        servers.zk[leaderId].create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
         // 3. close the client
         servers.restartClient(leaderId, this);
@@ -94,4 +91,4 @@ public class CloseSessionTxnTest extends QuorumPeerTestBase {
             assertNull(servers.zk[i].exists(path, false));
         }
     }
- }
+}

@@ -82,13 +82,15 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
      *
      * @throws Exception
      */
-
     @Test
     public void testBackwardElectionRound() throws Exception {
         LOG.info("TestLE: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(clientport), new InetSocketAddress(PortAssignment.unique())));
+            peers.put(
+                    Long.valueOf(i),
+                    new QuorumServer(
+                            i, new InetSocketAddress(clientport), new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }
@@ -140,11 +142,9 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         if (!thread.isAlive()) {
             fail("Should not have joined");
         }
-
     }
 
     private ByteBuffer getMsg() {
         return FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1);
     }
-
 }

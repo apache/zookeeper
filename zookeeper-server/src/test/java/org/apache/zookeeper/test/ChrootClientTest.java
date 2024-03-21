@@ -53,5 +53,4 @@ public class ChrootClientTest extends ClientTest {
     public void testPing() throws Exception {
         // not necessary to repeat this, expensive and not chroot related
     }
-
 }

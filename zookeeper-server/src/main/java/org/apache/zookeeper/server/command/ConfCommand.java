@@ -35,5 +35,4 @@ public class ConfCommand extends AbstractFourLetterCommand {
             zkServer.dumpConf(pw);
         }
     }
-
 }

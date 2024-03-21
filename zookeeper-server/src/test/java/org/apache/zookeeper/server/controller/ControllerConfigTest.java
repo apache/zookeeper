@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import java.io.File;
@@ -36,6 +35,7 @@ public class ControllerConfigTest {
 
     @TempDir
     static File configDir;
+
     File configFile;
 
     private static final int AnyTickTime = 1234;
@@ -63,7 +63,8 @@ public class ControllerConfigTest {
         return ports;
     }
 
-    public static void writeRequiredControllerConfig(File file, int controllerPort, int zkServerPort, int adminServerPort) throws IOException {
+    public static void writeRequiredControllerConfig(
+            File file, int controllerPort, int zkServerPort, int adminServerPort) throws IOException {
         PrintWriter writer = new PrintWriter(file);
         writer.write("dataDir=anywhere\n");
         writer.write("controllerPort=" + controllerPort + "\n");
@@ -117,7 +118,8 @@ public class ControllerConfigTest {
         }
     }
 
-    @Test public void parseMissingFileThrows() {
+    @Test
+    public void parseMissingFileThrows() {
         try {
             ControllerServerConfig config = new ControllerServerConfig("DontLookHere.missing");
             Assert.fail("should have thrown");
@@ -126,7 +128,7 @@ public class ControllerConfigTest {
     }
 
     @Test
-    public void parseInvalidPortThrows()throws QuorumPeerConfig.ConfigException {
+    public void parseInvalidPortThrows() throws QuorumPeerConfig.ConfigException {
         try {
             ControllerServerConfig config = new ControllerServerConfig(configFile.getAbsolutePath());
             Assert.fail("should have thrown");
@@ -149,6 +151,5 @@ public class ControllerConfigTest {
             Assert.fail("should have thrown");
         } catch (IllegalArgumentException ex) {
         }
-
     }
 }

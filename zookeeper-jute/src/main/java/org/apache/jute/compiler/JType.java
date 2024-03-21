@@ -35,7 +35,15 @@ public abstract class JType {
     /**
      * Creates a new instance of JType.
      */
-    JType(String cname, String cppname, String csharpName, String javaname, String suffix, String wrapper, String csharpWrapper, String unwrap) {
+    JType(
+            String cname,
+            String cppname,
+            String csharpName,
+            String javaname,
+            String suffix,
+            String wrapper,
+            String csharpWrapper,
+            String unwrap) {
         mCName = cname;
         mCppName = cppname;
         mCsharpName = "Id".equals(csharpName) ? "ZKId" : csharpName;
@@ -184,7 +192,8 @@ public abstract class JType {
     }
 
     String genCsharpCompareTo(String name) {
-        return "    ret = (" + capitalize(name) + " == peer." + capitalize(name) + ")? 0 :((" + capitalize(name) + "<peer." + capitalize(name) + ")?-1:1);\n";
+        return "    ret = (" + capitalize(name) + " == peer." + capitalize(name) + ")? 0 :((" + capitalize(name)
+                + "<peer." + capitalize(name) + ")?-1:1);\n";
     }
 
     String genCsharpEquals(String name, String peer) {

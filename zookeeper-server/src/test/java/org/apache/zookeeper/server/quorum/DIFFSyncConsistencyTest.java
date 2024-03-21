@@ -75,7 +75,8 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
         }
 
         for (int i = 0; i < SERVER_COUNT; i++) {
-            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+            assertTrue(
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
                     "waiting for server " + i + " being up");
         }
 
@@ -120,7 +121,8 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
         Long longLeader = (long) leader;
         while (!p.qvAcksetPairs.get(0).getAckset().contains(longLeader)) {
             if (sleepTime > 2000) {
-                fail("Transaction not synced to disk within 1 second " + p.qvAcksetPairs.get(0).getAckset() + " expected " + leader);
+                fail("Transaction not synced to disk within 1 second "
+                        + p.qvAcksetPairs.get(0).getAckset() + " expected " + leader);
             }
             Thread.sleep(100);
             sleepTime += 100;
@@ -210,8 +212,8 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
             zk = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, watch);
             watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
             Stat val = zk.exists("/zk" + leader, false);
-            assertNotNull(val, "Data inconsistency detected! "
-                    + "Server " + i + " should have a view of /zk" + leader + "!");
+            assertNotNull(
+                    val, "Data inconsistency detected! " + "Server " + i + " should have a view of /zk" + leader + "!");
         }
 
         zk.close();
@@ -232,9 +234,7 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
 
         private volatile boolean injectError = false;
 
-        public CustomQuorumPeer() throws SaslException {
-
-        }
+        public CustomQuorumPeer() throws SaslException {}
 
         @Override
         protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
@@ -251,18 +251,16 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
                     super.readPacket(pp);
                     if (injectError && pp.getType() == Leader.UPTODATE) {
                         String type = LearnerHandler.packetToString(pp);
-                        throw new SocketTimeoutException("Socket timeout while reading the packet for operation "
-                                + type);
+                        throw new SocketTimeoutException(
+                                "Socket timeout while reading the packet for operation " + type);
                     }
                 }
-
             };
         }
 
         public void setInjectError(boolean injectError) {
             this.injectError = injectError;
         }
-
     }
 
     static class MockTestQPMain extends TestQPMain {
@@ -271,7 +269,6 @@ public class DIFFSyncConsistencyTest extends QuorumPeerTestBase {
         protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
-
     }
 
     private Proposal findProposalOfType(Map<Long, Proposal> proposals, int type) {

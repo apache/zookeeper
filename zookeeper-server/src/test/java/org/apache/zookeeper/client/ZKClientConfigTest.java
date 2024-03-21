@@ -128,7 +128,8 @@ public class ZKClientConfigTest {
     @Timeout(value = 10)
     public void testSetConfiguration() {
         ZKClientConfig conf = new ZKClientConfig();
-        String defaultValue = conf.getProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, ZKClientConfig.ENABLE_CLIENT_SASL_DEFAULT);
+        String defaultValue =
+                conf.getProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, ZKClientConfig.ENABLE_CLIENT_SASL_DEFAULT);
         if (defaultValue.equals("true")) {
             conf.setProperty(ENABLE_CLIENT_SASL_KEY, "false");
         } else {
@@ -179,22 +180,18 @@ public class ZKClientConfigTest {
         int defaultValue = 100;
         // property is set in hexadecimal value
         ZKClientConfig zkClientConfig = new ZKClientConfig();
-        zkClientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER,
-                Integer.toString(hexaValue));
+        zkClientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER, Integer.toString(hexaValue));
         int result = zkClientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
         assertEquals(result, hexaValue);
-        zkClientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER,
-                wrongValue);
+        zkClientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER, wrongValue);
         try {
             result = zkClientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
             fail("NumberFormatException is expected");
         } catch (NumberFormatException exception) {
             // do nothing
         }
-        zkClientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER,
-                " " + hexaValue + " ");
+        zkClientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER, " " + hexaValue + " ");
         result = zkClientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
         assertEquals(result, hexaValue);
     }
-
 }

@@ -31,10 +31,7 @@ import org.apache.zookeeper.util.PemReader;
 class PEMFileLoader extends FileKeyStoreLoader {
 
     private PEMFileLoader(
-        String keyStorePath,
-        String trustStorePath,
-        String keyStorePassword,
-        String trustStorePassword) {
+            String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
     }
 
@@ -61,7 +58,5 @@ class PEMFileLoader extends FileKeyStoreLoader {
         PEMFileLoader build() {
             return new PEMFileLoader(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
         }
-
     }
-
 }

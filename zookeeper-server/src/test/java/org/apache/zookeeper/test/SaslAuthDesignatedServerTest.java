@@ -49,9 +49,16 @@ public class SaslAuthDesignatedServerTest extends ClientBase {
          */
         conf.addSection("Server", "org.apache.zookeeper.server.auth.DigestLoginModule", "user_myuser", "wrongpassword");
 
-        conf.addSection("MyZookeeperServer", "org.apache.zookeeper.server.auth.DigestLoginModule", "user_myuser", "mypassword");
+        conf.addSection(
+                "MyZookeeperServer", "org.apache.zookeeper.server.auth.DigestLoginModule", "user_myuser", "mypassword");
 
-        conf.addSection("Client", "org.apache.zookeeper.server.auth.DigestLoginModule", "username", "myuser", "password", "mypassword");
+        conf.addSection(
+                "Client",
+                "org.apache.zookeeper.server.auth.DigestLoginModule",
+                "username",
+                "myuser",
+                "password",
+                "mypassword");
 
         javax.security.auth.login.Configuration.setConfiguration(conf);
     }
@@ -79,7 +86,6 @@ public class SaslAuthDesignatedServerTest extends ClientBase {
                 super.process(event);
             }
         }
-
     }
 
     @Test
@@ -97,5 +103,4 @@ public class SaslAuthDesignatedServerTest extends ClientBase {
             zk.close();
         }
     }
-
 }

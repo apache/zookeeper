@@ -86,5 +86,4 @@ public class GetConfigCommand extends CliCommand {
 
         return watch;
     }
-
 }

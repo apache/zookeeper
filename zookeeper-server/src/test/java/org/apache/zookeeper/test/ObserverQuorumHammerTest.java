@@ -37,5 +37,4 @@ public class ObserverQuorumHammerTest extends QuorumHammerTest {
     public void testHammerBasic() throws Throwable {
         cht.testHammerBasic();
     }
-
 }

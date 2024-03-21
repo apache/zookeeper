@@ -130,12 +130,10 @@ public class AsyncTest extends ZKTestCase implements StringCallback, VoidCallbac
     }
 
     @SuppressWarnings("unchecked")
-    public void processResult(
-            int rc, String path, Object ctx, byte[] data, Stat stat) {
+    public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
         synchronized (ctx) {
             ((LinkedList<Integer>) ctx).add(rc);
             ctx.notifyAll();
         }
     }
-
 }

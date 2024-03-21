@@ -18,17 +18,13 @@
 
 package org.apache.zookeeper.common;
 
-
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from PKCS12 files.
  */
 class PKCS12FileLoader extends StandardTypeFileKeyStoreLoader {
 
     private PKCS12FileLoader(
-        String keyStorePath,
-        String trustStorePath,
-        String keyStorePassword,
-        String trustStorePassword) {
+            String keyStorePath, String trustStorePath, String keyStorePassword, String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword, SupportedStandardKeyFormat.PKCS12);
     }
 
@@ -38,7 +34,5 @@ class PKCS12FileLoader extends StandardTypeFileKeyStoreLoader {
         PKCS12FileLoader build() {
             return new PKCS12FileLoader(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
         }
-
     }
-
 }

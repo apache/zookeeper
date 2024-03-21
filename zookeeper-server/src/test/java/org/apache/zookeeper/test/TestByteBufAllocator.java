@@ -122,7 +122,9 @@ public class TestByteBufAllocator extends PooledByteBufAllocator {
         try {
             long referencedBuffersCount = 0;
             synchronized (this) {
-                referencedBuffersCount = trackedBuffers.stream().filter(byteBuf -> byteBuf.refCnt() > 0).count();
+                referencedBuffersCount = trackedBuffers.stream()
+                        .filter(byteBuf -> byteBuf.refCnt() > 0)
+                        .count();
                 // Make tracked buffers eligible for GC
                 trackedBuffers.clear();
             }
@@ -138,5 +140,4 @@ public class TestByteBufAllocator extends PooledByteBufAllocator {
             ResourceLeakDetector.setLevel(oldLevel);
         }
     }
-
 }

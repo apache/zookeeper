@@ -113,7 +113,8 @@ public class RequestPathMetricsCollector {
         LOG.info("{} = {}", PATH_STATS_COLLECTOR_DELAY, COLLECTOR_DELAY);
         LOG.info("{} = {}", PATH_STATS_ENABLED, enabled);
 
-        this.scheduledExecutor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+        this.scheduledExecutor = (ScheduledThreadPoolExecutor)
+                Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
         scheduledExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
         scheduledExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         requestsMap.put(Request.op2String(create), new PathStatsQueue(create));
@@ -137,17 +138,17 @@ public class RequestPathMetricsCollector {
 
     static boolean isWriteOp(int requestType) {
         switch (requestType) {
-        case ZooDefs.OpCode.sync:
-        case ZooDefs.OpCode.create:
-        case ZooDefs.OpCode.create2:
-        case ZooDefs.OpCode.createContainer:
-        case ZooDefs.OpCode.delete:
-        case ZooDefs.OpCode.deleteContainer:
-        case ZooDefs.OpCode.setData:
-        case ZooDefs.OpCode.reconfig:
-        case ZooDefs.OpCode.setACL:
-        case ZooDefs.OpCode.multi:
-            return true;
+            case ZooDefs.OpCode.sync:
+            case ZooDefs.OpCode.create:
+            case ZooDefs.OpCode.create2:
+            case ZooDefs.OpCode.createContainer:
+            case ZooDefs.OpCode.delete:
+            case ZooDefs.OpCode.deleteContainer:
+            case ZooDefs.OpCode.setData:
+            case ZooDefs.OpCode.reconfig:
+            case ZooDefs.OpCode.setACL:
+            case ZooDefs.OpCode.multi:
+                return true;
         }
         return false;
     }
@@ -182,14 +183,20 @@ public class RequestPathMetricsCollector {
         immutableRequestsMap.forEach((opType, pathStatsQueue) -> pathStatsQueue.start());
 
         // Schedule to log the top used read/write paths every 5 mins
-        scheduledExecutor.scheduleWithFixedDelay(() -> {
-            LOG.info("%nHere are the top Read paths:");
-            logTopPaths(aggregatePaths(4, queue -> !queue.isWriteOperation()),
-                        entry -> LOG.info("{} : {}", entry.getKey(), entry.getValue()));
-            LOG.info("%nHere are the top Write paths:");
-            logTopPaths(aggregatePaths(4, queue -> queue.isWriteOperation()),
-                        entry -> LOG.info("{} : {}", entry.getKey(), entry.getValue()));
-        }, COLLECTOR_INITIAL_DELAY, COLLECTOR_DELAY, TimeUnit.MINUTES);
+        scheduledExecutor.scheduleWithFixedDelay(
+                () -> {
+                    LOG.info("%nHere are the top Read paths:");
+                    logTopPaths(
+                            aggregatePaths(4, queue -> !queue.isWriteOperation()),
+                            entry -> LOG.info("{} : {}", entry.getKey(), entry.getValue()));
+                    LOG.info("%nHere are the top Write paths:");
+                    logTopPaths(
+                            aggregatePaths(4, queue -> queue.isWriteOperation()),
+                            entry -> LOG.info("{} : {}", entry.getKey(), entry.getValue()));
+                },
+                COLLECTOR_INITIAL_DELAY,
+                COLLECTOR_DELAY,
+                TimeUnit.MINUTES);
     }
 
     /**
@@ -247,7 +254,8 @@ public class RequestPathMetricsCollector {
      * Combine all the path Stats Queue that matches the predicate together
      * and then write to the pwriter
      */
-    private void dumpTopAggregatedPaths(PrintWriter pwriter, int queryMaxDepth, final Predicate<PathStatsQueue> predicate) {
+    private void dumpTopAggregatedPaths(
+            PrintWriter pwriter, int queryMaxDepth, final Predicate<PathStatsQueue> predicate) {
         if (!enabled) {
             return;
         }
@@ -258,20 +266,19 @@ public class RequestPathMetricsCollector {
     Map<String, Integer> aggregatePaths(int queryMaxDepth, Predicate<PathStatsQueue> predicate) {
         final Map<String, Integer> combinedMap = new HashMap<>(REQUEST_PREPROCESS_TOPPATH_MAX);
         final int maxDepth = Math.min(queryMaxDepth, REQUEST_PREPROCESS_PATH_DEPTH);
-        immutableRequestsMap.values()
-                            .stream()
-                            .filter(predicate)
-                            .forEach(pathStatsQueue -> pathStatsQueue.collectStats(maxDepth).forEach(
-                                (path, count) -> combinedMap.put(path, combinedMap.getOrDefault(path, 0) + count)));
+        immutableRequestsMap.values().stream().filter(predicate).forEach(pathStatsQueue -> pathStatsQueue
+                .collectStats(maxDepth)
+                .forEach((path, count) -> combinedMap.put(path, combinedMap.getOrDefault(path, 0) + count)));
         return combinedMap;
     }
 
     void logTopPaths(Map<String, Integer> combinedMap, final Consumer<Map.Entry<String, Integer>> output) {
-        combinedMap.entrySet()
-                   .stream()
-                   // sort by path count
-                   .sorted(Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed())
-                   .limit(REQUEST_PREPROCESS_TOPPATH_MAX).forEach(output);
+        combinedMap.entrySet().stream()
+                // sort by path count
+                .sorted(Comparator.comparing(Map.Entry<String, Integer>::getValue)
+                        .reversed())
+                .limit(REQUEST_PREPROCESS_TOPPATH_MAX)
+                .forEach(output);
     }
 
     class PathStatsQueue {
@@ -329,9 +336,8 @@ public class RequestPathMetricsCollector {
             Map<String, Integer> combinedMap;
             // Take a snapshot of the current slot and convert it to map.
             // Set the initial size as 0 since we don't want it to padding nulls in the end.
-            Map<String, Integer> snapShot = mapReducePaths(
-                maxDepth,
-                Arrays.asList(currentSlot.get().toArray(new String[0])));
+            Map<String, Integer> snapShot =
+                    mapReducePaths(maxDepth, Arrays.asList(currentSlot.get().toArray(new String[0])));
             // Starting from the snapshot and go through the queue to reduce them into one map
             // the iterator can run concurrently with write but we want to use a real lock in the test
             synchronized (accurateMode ? requestPathStats : new Object()) {
@@ -357,33 +363,38 @@ public class RequestPathMetricsCollector {
             int delay = ThreadLocalRandom.current().nextInt(REQUEST_STATS_SLOT_DURATION);
             // We need to use fixed Delay as the fixed rate will start the next one right
             // after the previous one finishes if it runs overtime instead of overlapping it.
-            scheduledExecutor.scheduleWithFixedDelay(() -> {
-                // Generate new slot so new requests will go here.
-                ConcurrentLinkedQueue<String> tobeProcessedSlot = currentSlot.getAndSet(new ConcurrentLinkedQueue<>());
-                try {
-                    // pre process the last slot and queue it up, only one thread scheduled modified
-                    // this but we can mess up the collect part so we put a lock in the test.
-                    Map<String, Integer> latestSlot = mapReducePaths(REQUEST_PREPROCESS_PATH_DEPTH, tobeProcessedSlot);
-                    synchronized (accurateMode ? requestPathStats : new Object()) {
-                        if (requestPathStats.remainingCapacity() <= 0) {
-                            requestPathStats.poll();
+            scheduledExecutor.scheduleWithFixedDelay(
+                    () -> {
+                        // Generate new slot so new requests will go here.
+                        ConcurrentLinkedQueue<String> tobeProcessedSlot =
+                                currentSlot.getAndSet(new ConcurrentLinkedQueue<>());
+                        try {
+                            // pre process the last slot and queue it up, only one thread scheduled modified
+                            // this but we can mess up the collect part so we put a lock in the test.
+                            Map<String, Integer> latestSlot =
+                                    mapReducePaths(REQUEST_PREPROCESS_PATH_DEPTH, tobeProcessedSlot);
+                            synchronized (accurateMode ? requestPathStats : new Object()) {
+                                if (requestPathStats.remainingCapacity() <= 0) {
+                                    requestPathStats.poll();
+                                }
+                                if (!requestPathStats.offer(latestSlot)) {
+                                    LOG.error("Failed to insert the new request path stats for {}", requestTypeName);
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.error(
+                                    "Failed to insert the new request path stats for {} with exception {}",
+                                    requestTypeName,
+                                    e);
                         }
-                        if (!requestPathStats.offer(latestSlot)) {
-                            LOG.error("Failed to insert the new request path stats for {}", requestTypeName);
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.error("Failed to insert the new request path stats for {} with exception {}", requestTypeName, e);
-                }
-            }, delay, REQUEST_STATS_SLOT_DURATION, TimeUnit.SECONDS);
+                    },
+                    delay,
+                    REQUEST_STATS_SLOT_DURATION,
+                    TimeUnit.SECONDS);
         }
 
         boolean isWriteOperation() {
             return isWriteOperation;
         }
-
     }
-
 }
-
-

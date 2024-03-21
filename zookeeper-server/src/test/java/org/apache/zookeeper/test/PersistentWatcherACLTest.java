@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.AddWatchMode.PERSISTENT;
@@ -53,7 +52,9 @@ import org.slf4j.LoggerFactory;
 public class PersistentWatcherACLTest extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(PersistentWatcherACLTest.class);
     /** An ACL denying READ. */
-    private static final List<ACL> ACL_NO_READ = Collections.singletonList(new ACL(ZooDefs.Perms.ALL & ~ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+    private static final List<ACL> ACL_NO_READ =
+            Collections.singletonList(new ACL(ZooDefs.Perms.ALL & ~ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+
     private BlockingQueue<WatchedEvent> events;
     private Watcher persistentWatcher;
 
@@ -79,6 +80,7 @@ public class PersistentWatcherACLTest extends ClientBase {
         Step(int opCode, String target) {
             this(opCode, target, null, null);
         }
+
         Step(int opCode, String target, EventType eventType, String eventPath) {
             this.opCode = opCode;
             this.target = target;
@@ -102,7 +104,14 @@ public class PersistentWatcherACLTest extends ClientBase {
      * (These should become Records once we target JDK 14+.)
      */
     private static class Round {
-        Round(String summary, Boolean allowA, Boolean allowB, Boolean allowC, String watchTarget, AddWatchMode watchMode, Step[] steps) {
+        Round(
+                String summary,
+                Boolean allowA,
+                Boolean allowB,
+                Boolean allowC,
+                String watchTarget,
+                AddWatchMode watchMode,
+                Step[] steps) {
             this.summary = summary;
             this.allowA = allowA;
             this.allowB = allowB;
@@ -137,157 +146,145 @@ public class PersistentWatcherACLTest extends ClientBase {
      *
      * @see #ROUNDS
      */
-    private static final Round roundNothingAsAIsWatchedButDeniedBIsNotWatched =
-        new Round(
-            "Nothing as a is watched but denied. b is not watched",
-            false, true, null, "/a", PERSISTENT, new Step[] {
+    private static final Round roundNothingAsAIsWatchedButDeniedBIsNotWatched = new Round(
+            "Nothing as a is watched but denied. b is not watched", false, true, null, "/a", PERSISTENT, new Step[] {
                 new Step(ZooDefs.OpCode.setData, "/a"),
                 new Step(ZooDefs.OpCode.create, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
     private static final Round roundNothingAsBothAAndBDenied =
-        new Round(
-            "Nothing as both a and b denied",
-            false, false, null, "/a", PERSISTENT, new Step[] {
+            new Round("Nothing as both a and b denied", false, false, null, "/a", PERSISTENT, new Step[] {
                 new Step(ZooDefs.OpCode.setData, "/a"),
                 new Step(ZooDefs.OpCode.create, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
     private static final Round roundAChangesInclChildrenAreSeen =
-        new Round(
-            "a changes, incl children, are seen",
-            true, false, null, "/a", PERSISTENT, new Step[] {
+            new Round("a changes, incl children, are seen", true, false, null, "/a", PERSISTENT, new Step[] {
                 new Step(ZooDefs.OpCode.create, "/a", EventType.NodeCreated, "/a"),
                 new Step(ZooDefs.OpCode.setData, "/a", EventType.NodeDataChanged, "/a"),
                 new Step(ZooDefs.OpCode.create, "/a/b", EventType.NodeChildrenChanged, "/a"),
                 new Step(ZooDefs.OpCode.setData, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a/b", EventType.NodeChildrenChanged, "/a"),
                 new Step(ZooDefs.OpCode.delete, "/a", EventType.NodeDeleted, "/a"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
-    private static final Round roundNothingForAAsItSDeniedBChangesSeen =
-        new Round(
+    private static final Round roundNothingForAAsItSDeniedBChangesSeen = new Round(
             "Nothing for a as it's denied, b changes allowed/seen",
-            false, true, null, "/a", PERSISTENT_RECURSIVE, new Step[] {
+            false,
+            true,
+            null,
+            "/a",
+            PERSISTENT_RECURSIVE,
+            new Step[] {
                 new Step(ZooDefs.OpCode.setData, "/a"),
                 new Step(ZooDefs.OpCode.create, "/a/b", EventType.NodeCreated, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b", EventType.NodeDataChanged, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a/b", EventType.NodeDeleted, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
     private static final Round roundNothingBothDenied =
-        new Round(
-            "Nothing - both denied",
-            false, false, null, "/a", PERSISTENT_RECURSIVE, new Step[] {
+            new Round("Nothing - both denied", false, false, null, "/a", PERSISTENT_RECURSIVE, new Step[] {
                 new Step(ZooDefs.OpCode.setData, "/a"),
                 new Step(ZooDefs.OpCode.create, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a/b"),
                 new Step(ZooDefs.OpCode.delete, "/a"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
     private static final Round roundNothingAllDenied =
-        new Round(
-            "Nothing - all denied",
-            false, false, false, "/a", PERSISTENT_RECURSIVE, new Step[] {
+            new Round("Nothing - all denied", false, false, false, "/a", PERSISTENT_RECURSIVE, new Step[] {
                 new Step(ZooDefs.OpCode.create, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b"),
                 new Step(ZooDefs.OpCode.create, "/a/b/c"),
                 new Step(ZooDefs.OpCode.setData, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
-    private static final Round roundADeniesSeeAllChangesForBAndCIncludingBChildren =
-        new Round(
+    private static final Round roundADeniesSeeAllChangesForBAndCIncludingBChildren = new Round(
             "a denies, see all changes for b and c, including b's children",
-            false, true, true, "/a", PERSISTENT_RECURSIVE, new Step[] {
+            false,
+            true,
+            true,
+            "/a",
+            PERSISTENT_RECURSIVE,
+            new Step[] {
                 new Step(ZooDefs.OpCode.create, "/a/b", EventType.NodeCreated, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b", EventType.NodeDataChanged, "/a/b"),
                 new Step(ZooDefs.OpCode.create, "/a/b/c", EventType.NodeCreated, "/a/b/c"),
                 new Step(ZooDefs.OpCode.setData, "/a/b/c", EventType.NodeDataChanged, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b/c", EventType.NodeDeleted, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b", EventType.NodeDeleted, "/a/b"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
-    private static final Round roundADeniesSeeAllBChangesAndBChildrenNothingForC =
-        new Round(
+    private static final Round roundADeniesSeeAllBChangesAndBChildrenNothingForC = new Round(
             "a denies, see all b changes and b's children, nothing for c",
-            false, true, false, "/a", PERSISTENT_RECURSIVE, new Step[] {
+            false,
+            true,
+            false,
+            "/a",
+            PERSISTENT_RECURSIVE,
+            new Step[] {
                 new Step(ZooDefs.OpCode.create, "/a/b", EventType.NodeCreated, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b", EventType.NodeDataChanged, "/a/b"),
                 new Step(ZooDefs.OpCode.create, "/a/b/c"),
                 new Step(ZooDefs.OpCode.setData, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b", EventType.NodeDeleted, "/a/b"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
     private static final Round roundNothingTheWatchIsOnC =
-        new Round(
-            "Nothing - the watch is on c",
-            false, true, false, "/a/b/c", PERSISTENT_RECURSIVE, new Step[] {
+            new Round("Nothing - the watch is on c", false, true, false, "/a/b/c", PERSISTENT_RECURSIVE, new Step[] {
                 new Step(ZooDefs.OpCode.create, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b"),
                 new Step(ZooDefs.OpCode.create, "/a/b/c"),
                 new Step(ZooDefs.OpCode.setData, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b"),
-            }
-        );
+            });
 
     /**
      * @see #roundNothingAsAIsWatchedButDeniedBIsNotWatched
      */
-    private static final Round roundTheWatchIsOnlyOnCBAndCAllowed =
-        new Round(
-            "The watch is only on c (b and c allowed)",
-            false, true, true, "/a/b/c", PERSISTENT_RECURSIVE, new Step[] {
+    private static final Round roundTheWatchIsOnlyOnCBAndCAllowed = new Round(
+            "The watch is only on c (b and c allowed)", false, true, true, "/a/b/c", PERSISTENT_RECURSIVE, new Step[] {
                 new Step(ZooDefs.OpCode.create, "/a/b"),
                 new Step(ZooDefs.OpCode.setData, "/a/b"),
                 new Step(ZooDefs.OpCode.create, "/a/b/c", EventType.NodeCreated, "/a/b/c"),
                 new Step(ZooDefs.OpCode.setData, "/a/b/c", EventType.NodeDataChanged, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b/c", EventType.NodeDeleted, "/a/b/c"),
                 new Step(ZooDefs.OpCode.delete, "/a/b"),
-            }
-        );
+            });
 
     /**
      * Transform the "tristate" {@code allow} property to a concrete
@@ -317,16 +314,15 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see PersistentWatcherACLTest.Round
      * @see PersistentWatcherACLTest.Step
      */
-    private void execRound(Round round)
-        throws IOException, InterruptedException, KeeperException {
+    private void execRound(Round round) throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient(new CountdownWatcher(), hostPort)) {
             List<ACL> aclForA = selectAcl(round.allowA);
             List<ACL> aclForB = selectAcl(round.allowB);
             List<ACL> aclForC = selectAcl(round.allowC);
 
             boolean firstStepCreatesA = round.steps.length > 0
-                && round.steps[0].opCode == ZooDefs.OpCode.create
-                && round.steps[0].target.equals("/a");
+                    && round.steps[0].opCode == ZooDefs.OpCode.create
+                    && round.steps[0].target.equals("/a");
 
             // Assume /a always exists (except if it's about to be created)
             if (!firstStepCreatesA) {
@@ -339,23 +335,20 @@ public class PersistentWatcherACLTest extends ClientBase {
                 Step step = round.steps[i];
 
                 switch (step.opCode) {
-                case ZooDefs.OpCode.create:
-                    List<ACL> acl = step.target.endsWith("/c")
-                        ? aclForC
-                        : step.target.endsWith("/b")
-                        ? aclForB
-                        : aclForA;
-                    zk.create(step.target, new byte[0], acl, CreateMode.PERSISTENT);
-                    break;
-                case ZooDefs.OpCode.delete:
-                    zk.delete(step.target, -1);
-                    break;
-                case ZooDefs.OpCode.setData:
-                    zk.setData(step.target, new byte[0], -1);
-                    break;
-                default:
-                    fail("Unexpected opCode " + step.opCode + " in step " + i);
-                    break;
+                    case ZooDefs.OpCode.create:
+                        List<ACL> acl =
+                                step.target.endsWith("/c") ? aclForC : step.target.endsWith("/b") ? aclForB : aclForA;
+                        zk.create(step.target, new byte[0], acl, CreateMode.PERSISTENT);
+                        break;
+                    case ZooDefs.OpCode.delete:
+                        zk.delete(step.target, -1);
+                        break;
+                    case ZooDefs.OpCode.setData:
+                        zk.setData(step.target, new byte[0], -1);
+                        break;
+                    default:
+                        fail("Unexpected opCode " + step.opCode + " in step " + i);
+                        break;
                 }
 
                 WatchedEvent actualEvent = events.poll(500, TimeUnit.MILLISECONDS);
@@ -364,7 +357,7 @@ public class PersistentWatcherACLTest extends ClientBase {
                 } else {
                     String m = "In event " + actualEvent + " at step " + i;
                     assertNotNull(actualEvent, m);
-                    assertEquals(step.eventType,  actualEvent.getType(), m);
+                    assertEquals(step.eventType, actualEvent.getType(), m);
                     assertEquals(step.eventPath, actualEvent.getPath(), m);
                 }
             }
@@ -382,7 +375,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      */
     @Test
     public void testNothingAsAIsWatchedButDeniedBIsNotWatched()
-        throws IOException, InterruptedException, KeeperException {
+            throws IOException, InterruptedException, KeeperException {
         execRound(roundNothingAsAIsWatchedButDeniedBIsNotWatched);
     }
 
@@ -391,8 +384,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundNothingAsBothAAndBDenied
      */
     @Test
-    public void testNothingAsBothAAndBDenied()
-        throws IOException, InterruptedException, KeeperException {
+    public void testNothingAsBothAAndBDenied() throws IOException, InterruptedException, KeeperException {
         execRound(roundNothingAsBothAAndBDenied);
     }
 
@@ -401,8 +393,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundAChangesInclChildrenAreSeen
      */
     @Test
-    public void testAChangesInclChildrenAreSeen()
-        throws IOException, InterruptedException, KeeperException {
+    public void testAChangesInclChildrenAreSeen() throws IOException, InterruptedException, KeeperException {
         execRound(roundAChangesInclChildrenAreSeen);
     }
 
@@ -411,8 +402,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundNothingForAAsItSDeniedBChangesSeen
      */
     @Test
-    public void testNothingForAAsItSDeniedBChangesSeen()
-        throws IOException, InterruptedException, KeeperException {
+    public void testNothingForAAsItSDeniedBChangesSeen() throws IOException, InterruptedException, KeeperException {
         execRound(roundNothingForAAsItSDeniedBChangesSeen);
     }
 
@@ -421,8 +411,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundNothingBothDenied
      */
     @Test
-    public void testNothingBothDenied()
-        throws IOException, InterruptedException, KeeperException {
+    public void testNothingBothDenied() throws IOException, InterruptedException, KeeperException {
         execRound(roundNothingBothDenied);
     }
 
@@ -431,8 +420,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundNothingAllDenied
      */
     @Test
-    public void testNothingAllDenied()
-        throws IOException, InterruptedException, KeeperException {
+    public void testNothingAllDenied() throws IOException, InterruptedException, KeeperException {
         execRound(roundNothingAllDenied);
     }
 
@@ -442,7 +430,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      */
     @Test
     public void testADeniesSeeAllChangesForBAndCIncludingBChildren()
-        throws IOException, InterruptedException, KeeperException {
+            throws IOException, InterruptedException, KeeperException {
         execRound(roundADeniesSeeAllChangesForBAndCIncludingBChildren);
     }
 
@@ -452,7 +440,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      */
     @Test
     public void testADeniesSeeAllBChangesAndBChildrenNothingForC()
-        throws IOException, InterruptedException, KeeperException {
+            throws IOException, InterruptedException, KeeperException {
         execRound(roundADeniesSeeAllBChangesAndBChildrenNothingForC);
     }
 
@@ -461,8 +449,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundNothingTheWatchIsOnC
      */
     @Test
-    public void testNothingTheWatchIsOnC()
-        throws IOException, InterruptedException, KeeperException {
+    public void testNothingTheWatchIsOnC() throws IOException, InterruptedException, KeeperException {
         execRound(roundNothingTheWatchIsOnC);
     }
 
@@ -471,8 +458,7 @@ public class PersistentWatcherACLTest extends ClientBase {
      * @see #roundTheWatchIsOnlyOnCBAndCAllowed
      */
     @Test
-    public void testTheWatchIsOnlyOnCBAndCAllowed()
-        throws IOException, InterruptedException, KeeperException {
+    public void testTheWatchIsOnlyOnCBAndCAllowed() throws IOException, InterruptedException, KeeperException {
         execRound(roundTheWatchIsOnlyOnCBAndCAllowed);
     }
 
@@ -508,25 +494,25 @@ public class PersistentWatcherACLTest extends ClientBase {
 
     private static String watchModeString(AddWatchMode watchMode) {
         switch (watchMode) {
-        case PERSISTENT:
-            return "PERSISTENT";
-        case PERSISTENT_RECURSIVE:
-            return "PRECURSIVE";
-        default:
-            return "?";
+            case PERSISTENT:
+                return "PERSISTENT";
+            case PERSISTENT_RECURSIVE:
+                return "PRECURSIVE";
+            default:
+                return "?";
         }
     }
 
     private static String actionString(int opCode) {
         switch (opCode) {
-        case ZooDefs.OpCode.create:
-            return "create";
-        case ZooDefs.OpCode.delete:
-            return "delete";
-        case ZooDefs.OpCode.setData:
-            return "modify";
-        default:
-            return "?";
+            case ZooDefs.OpCode.create:
+                return "create";
+            case ZooDefs.OpCode.delete:
+                return "delete";
+            case ZooDefs.OpCode.setData:
+                return "modify";
+            default:
+                return "?";
         }
     }
 
@@ -547,57 +533,54 @@ public class PersistentWatcherACLTest extends ClientBase {
      */
     private static void genCsv(StringBuilder sb) {
         sb.append("Initial State,")
-            .append("Action,")
-            .append("NodeCreated,")
-            .append("NodeDeleted,")
-            .append("NodeDataChanged,")
-            .append("NodeChildrenChanged,")
-            .append("Notes/summary\n");
+                .append("Action,")
+                .append("NodeCreated,")
+                .append("NodeDeleted,")
+                .append("NodeDataChanged,")
+                .append("NodeChildrenChanged,")
+                .append("Notes/summary\n");
         sb.append("Assume /a always exists\n\n");
 
         for (Round round : ROUNDS) {
             sb.append("\"ACL")
-                .append(allowString(": a ", round.allowA))
-                .append(allowString(", b ", round.allowB))
-                .append(allowString(", c ", round.allowC))
-                .append("\"")
-                .append(",,,,,,\"")
-                .append(round.summary)
-                .append("\"\n");
+                    .append(allowString(": a ", round.allowA))
+                    .append(allowString(", b ", round.allowB))
+                    .append(allowString(", c ", round.allowC))
+                    .append("\"")
+                    .append(",,,,,,\"")
+                    .append(round.summary)
+                    .append("\"\n");
             for (int i = 0; i < round.steps.length; i++) {
                 Step step = round.steps[i];
 
                 if (i == 0) {
                     sb.append("\"addWatch(")
-                        .append(round.watchTarget)
-                        .append(", ")
-                        .append(watchModeString(round.watchMode))
-                        .append(")\"");
+                            .append(round.watchTarget)
+                            .append(", ")
+                            .append(watchModeString(round.watchMode))
+                            .append(")\"");
                 }
 
                 sb.append(",")
-                    .append(actionString(step.opCode))
-                    .append(" ")
-                    .append(step.target)
-                    .append(",");
+                        .append(actionString(step.opCode))
+                        .append(" ")
+                        .append(step.target)
+                        .append(",");
 
                 if (step.eventType == EventType.NodeCreated) {
-                    sb.append("y - ")
-                        .append(eventPathString(step.eventPath));
+                    sb.append("y - ").append(eventPathString(step.eventPath));
                 }
 
                 sb.append(",");
 
                 if (step.eventType == EventType.NodeDeleted) {
-                    sb.append("y - ")
-                        .append(eventPathString(step.eventPath));
+                    sb.append("y - ").append(eventPathString(step.eventPath));
                 }
 
                 sb.append(",");
 
                 if (step.eventType == EventType.NodeDataChanged) {
-                    sb.append("y - ")
-                        .append(eventPathString(step.eventPath));
+                    sb.append("y - ").append(eventPathString(step.eventPath));
                 }
 
                 sb.append(",");
@@ -605,8 +588,7 @@ public class PersistentWatcherACLTest extends ClientBase {
                 if (round.watchMode == PERSISTENT_RECURSIVE) {
                     sb.append("n");
                 } else if (step.eventType == EventType.NodeChildrenChanged) {
-                    sb.append("y - ")
-                        .append(eventPathString(step.eventPath));
+                    sb.append("y - ").append(eventPathString(step.eventPath));
                 }
 
                 sb.append("\n");

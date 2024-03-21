@@ -31,5 +31,4 @@ public class RuokCommand extends AbstractFourLetterCommand {
     public void commandRun() {
         pw.print("imok");
     }
-
 }

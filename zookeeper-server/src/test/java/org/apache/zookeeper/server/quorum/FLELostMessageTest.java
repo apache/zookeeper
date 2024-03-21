@@ -64,7 +64,10 @@ public class FLELostMessageTest extends ZKTestCase {
         LOG.info("TestLE: {}, {}", getTestName(), count);
         for (int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(clientport), new InetSocketAddress(PortAssignment.unique())));
+            peers.put(
+                    Long.valueOf(i),
+                    new QuorumServer(
+                            i, new InetSocketAddress(clientport), new InetSocketAddress(PortAssignment.unique())));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }
@@ -96,5 +99,4 @@ public class FLELostMessageTest extends ZKTestCase {
         cnxManager.recvQueue.take();
         cnxManager.toSend(1L, FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 1, 0, 0));
     }
-
 }

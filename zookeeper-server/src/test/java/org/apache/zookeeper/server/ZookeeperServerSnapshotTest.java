@@ -51,7 +51,7 @@ public class ZookeeperServerSnapshotTest extends ZKTestCase {
         final int port = Integer.parseInt(HOST_PORT.split(":")[1]);
         final ServerCnxnFactory serverCnxnFactory = ServerCnxnFactory.createFactory(port, -1);
         ZooKeeper zk = null;
-        try  {
+        try {
             serverCnxnFactory.startup(zks);
             assertTrue(ClientBase.waitForServerUp(HOST_PORT, CONNECTION_TIMEOUT));
 

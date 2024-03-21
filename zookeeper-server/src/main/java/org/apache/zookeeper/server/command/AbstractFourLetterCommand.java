@@ -77,5 +77,4 @@ public abstract class AbstractFourLetterCommand {
     }
 
     public abstract void commandRun() throws IOException;
-
 }

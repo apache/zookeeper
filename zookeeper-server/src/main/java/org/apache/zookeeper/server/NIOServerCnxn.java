@@ -92,7 +92,13 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     private final boolean clientTcpKeepAlive = Boolean.getBoolean("zookeeper.clientTcpKeepAlive");
 
-    public NIOServerCnxn(ZooKeeperServer zk, SocketChannel sock, SelectionKey sk, NIOServerCnxnFactory factory, SelectorThread selectorThread) throws IOException {
+    public NIOServerCnxn(
+            ZooKeeperServer zk,
+            SocketChannel sock,
+            SelectionKey sk,
+            NIOServerCnxnFactory factory,
+            SelectorThread selectorThread)
+            throws IOException {
         super(zk);
         this.sock = sock;
         this.sk = sk;
@@ -169,11 +175,12 @@ public class NIOServerCnxn extends ServerCnxn {
     private void handleFailedRead() throws EndOfStreamException {
         setStale();
         ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
-        throw new EndOfStreamException("Unable to read additional data from client,"
-                                       + " it probably closed the socket:"
-                                       + " address = " + sock.socket().getRemoteSocketAddress() + ","
-                                       + " session = 0x" + Long.toHexString(sessionId),
-                                       DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
+        throw new EndOfStreamException(
+                "Unable to read additional data from client,"
+                        + " it probably closed the socket:"
+                        + " address = " + sock.socket().getRemoteSocketAddress() + ","
+                        + " session = 0x" + Long.toHexString(sessionId),
+                DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
     }
 
     /** Read the request payload (everything following the length prefix) */
@@ -486,7 +493,6 @@ public class NIOServerCnxn extends ServerCnxn {
             sb.append(cbuf, off, len);
             checkFlush(false);
         }
-
     }
     /** Return if four letter word found and responded to, otw false **/
     private boolean checkFourLetterWord(final SelectionKey k, final int len) throws IOException {
@@ -521,10 +527,8 @@ public class NIOServerCnxn extends ServerCnxn {
         // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
         if (!FourLetterCommands.isEnabled(cmd)) {
             LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
-            NopCommand nopCmd = new NopCommand(
-                pwriter,
-                this,
-                cmd + " is not executed because it is not in the whitelist.");
+            NopCommand nopCmd =
+                    new NopCommand(pwriter, this, cmd + " is not executed because it is not in the whitelist.");
             nopCmd.start();
             return true;
         }
@@ -564,7 +568,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
         if (len < 0 || len > BinaryInputArchive.maxBuffer) {
             throw new IOException("Len error. "
-                    + "A message from " +  this.getRemoteSocketAddress() + " with advertised length of " + len
+                    + "A message from " + this.getRemoteSocketAddress() + " with advertised length of " + len
                     + " is either a malformed message or too large to process"
                     + " (length is greater than jute.maxbuffer=" + BinaryInputArchive.maxBuffer + ")");
         }
@@ -635,12 +639,11 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         String logMsg = String.format(
-            "Closed socket connection for client %s %s",
-            sock.socket().getRemoteSocketAddress(),
-            sessionId != 0
-                ? "which had sessionid 0x" + Long.toHexString(sessionId)
-                : "(no session established for client)"
-            );
+                "Closed socket connection for client %s %s",
+                sock.socket().getRemoteSocketAddress(),
+                sessionId != 0
+                        ? "which had sessionid 0x" + Long.toHexString(sessionId)
+                        : "(no session established for client)");
         LOG.debug(logMsg);
 
         closeSock(sock);
@@ -713,18 +716,19 @@ public class NIOServerCnxn extends ServerCnxn {
         } catch (KeeperException.NoAuthException e) {
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(
-                    LOG,
-                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                    "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId) + " (filtered by ACL)");
+                        LOG,
+                        ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                        "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId)
+                                + " (filtered by ACL)");
             }
             return;
         }
         ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire
@@ -811,5 +815,4 @@ public class NIOServerCnxn extends ServerCnxn {
     public void setClientCertificateChain(Certificate[] chain) {
         throw new UnsupportedOperationException("SSL is unsupported in NIOServerCnxn");
     }
-
 }

@@ -24,7 +24,9 @@ import java.util.Objects;
 
 public class StringUtils {
 
-    private StringUtils() {/** non instantiable and non inheritable **/}
+    private StringUtils() {
+        /** non instantiable and non inheritable **/
+    }
 
     /**
      * This method returns an immutable List&lt;String&gt;, but different from String's split()
@@ -91,5 +93,4 @@ public class StringUtils {
     public static boolean isEmpty(String str) {
         return str == null || str.length() == 0;
     }
-
 }

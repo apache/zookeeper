@@ -45,8 +45,10 @@ import org.junit.jupiter.api.io.TempDir;
 public class KerberosSecurityTestcase extends QuorumAuthTestBase {
 
     private static MiniKdc kdc;
+
     @TempDir
     static File workDir;
+
     private static Properties conf;
 
     @BeforeAll
@@ -90,5 +92,4 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
     public static Properties getConf() {
         return conf;
     }
-
 }

@@ -24,6 +24,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 public class SetTraceMaskCommand extends AbstractFourLetterCommand {
 
     long trace = 0;
+
     public SetTraceMaskCommand(PrintWriter pw, ServerCnxn serverCnxn, long trace) {
         super(pw, serverCnxn);
         this.trace = trace;
@@ -33,5 +34,4 @@ public class SetTraceMaskCommand extends AbstractFourLetterCommand {
     public void commandRun() {
         pw.print(trace);
     }
-
 }

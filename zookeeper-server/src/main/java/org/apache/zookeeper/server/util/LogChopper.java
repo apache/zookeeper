@@ -56,7 +56,8 @@ public class LogChopper {
         String txnLog = args[1];
         String choppedLog = args[2];
 
-        try (InputStream is = new BufferedInputStream(new FileInputStream(txnLog)); OutputStream os = new BufferedOutputStream(new FileOutputStream(choppedLog))) {
+        try (InputStream is = new BufferedInputStream(new FileInputStream(txnLog));
+                OutputStream os = new BufferedOutputStream(new FileOutputStream(choppedLog))) {
             long zxid = Long.decode(args[0]);
 
             if (chop(is, os, zxid)) {
@@ -79,9 +80,9 @@ public class LogChopper {
             return false;
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
-                           + fhdr.getDbid()
-                           + " txnlog format version "
-                           + fhdr.getVersion());
+                + fhdr.getDbid()
+                + " txnlog format version "
+                + fhdr.getVersion());
 
         fhdr.serialize(choppedStream, "fileheader");
         int count = 0;
@@ -131,9 +132,11 @@ public class LogChopper {
                 long txnCounter = ZxidUtils.getCounterFromZxid(txnZxid);
                 long previousEpoch = ZxidUtils.getEpochFromZxid(previousZxid);
                 if (txnEpoch == previousEpoch) {
-                    System.out.println(String.format("There is intra-epoch gap between %x and %x", previousZxid, txnZxid));
+                    System.out.println(
+                            String.format("There is intra-epoch gap between %x and %x", previousZxid, txnZxid));
                 } else if (txnCounter != 1) {
-                    System.out.println(String.format("There is inter-epoch gap between %x and %x", previousZxid, txnZxid));
+                    System.out.println(
+                            String.format("There is inter-epoch gap between %x and %x", previousZxid, txnZxid));
                 }
             }
             previousZxid = txnZxid;
@@ -154,5 +157,4 @@ public class LogChopper {
             count++;
         }
     }
-
 }

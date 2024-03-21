@@ -38,8 +38,7 @@ class JavaGenerator {
      * @param records         List of records defined within this file
      * @param outputDirectory
      */
-    JavaGenerator(String name, List<JFile> incl,
-                  List<JRecord> records, File outputDirectory) {
+    JavaGenerator(String name, List<JFile> incl, List<JRecord> records, File outputDirectory) {
         mRecList = records;
         this.outputDirectory = outputDirectory;
     }

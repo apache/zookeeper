@@ -97,5 +97,4 @@ public class ServerConfigTest {
         assertNotNull(b);
         return new File(a).equals(b);
     }
-
 }

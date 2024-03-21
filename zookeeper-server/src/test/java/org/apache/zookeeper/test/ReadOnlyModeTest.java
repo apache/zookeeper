@@ -146,8 +146,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         watcher.reset();
         qu.start(2);
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT),
-            "waiting for server up");
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT),
+                "waiting for server up");
         zk.close();
         watcher.reset();
 
@@ -196,7 +197,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
         long start = Time.currentElapsedTime();
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
-            // TODO this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to guarantee this
+            // TODO this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to
+            // guarantee this
             assertTrue(Time.currentElapsedTime() - start < 30000, "Can't connect to the server");
         }
 
@@ -226,8 +228,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
 
         watcher.reset();
         qu.start(2);
-        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT),
-            "waiting for server up");
+        assertTrue(
+                ClientBase.waitForServerUp("127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT),
+                "waiting for server up");
         LOG.info("Server 127.0.0.1:{} is up", qu.getPeer(2).clientPort);
         // ZOOKEEPER-2722: wait until we can connect to a read-write server after the quorum
         // is formed. Otherwise, it is possible that client first connects to a read-only server,
@@ -301,8 +304,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
             // if we don't suspend a peer it will rejoin a quorum
-            qu.getPeer(1).peer
-                    .setSuspended(true);
+            qu.getPeer(1).peer.setSuspended(true);
 
             // start two servers to form a quorum; client should detect this and
             // connect to one of them
@@ -314,8 +316,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
             zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             // resume poor fellow
-            qu.getPeer(1).peer
-                    .setSuspended(false);
+            qu.getPeer(1).peer.setSuspended(false);
 
             String log = os.toString();
             assertFalse(StringUtils.isEmpty(log), "OutputStream doesn't have any log messages");

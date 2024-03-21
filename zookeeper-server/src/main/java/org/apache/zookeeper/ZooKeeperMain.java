@@ -83,14 +83,12 @@ public class ZooKeeperMain {
         commandMap.put("printwatches", "on|off");
         commandMap.put("quit", "");
         Stream.of(CommandFactory.Command.values())
-            .map(command -> CommandFactory.getInstance(command))
-            // add all commands to commandMapCli and commandMap
-            .forEach(cliCommand ->{
-                cliCommand.addToMap(commandMapCli);
-                commandMap.put(
-                        cliCommand.getCmdStr(),
-                        cliCommand.getOptionStr());
-            });
+                .map(command -> CommandFactory.getInstance(command))
+                // add all commands to commandMapCli and commandMap
+                .forEach(cliCommand -> {
+                    cliCommand.addToMap(commandMapCli);
+                    commandMap.put(cliCommand.getCmdStr(), cliCommand.getOptionStr());
+                });
     }
 
     static void usage() {
@@ -111,13 +109,11 @@ public class ZooKeeperMain {
             }
             if (connectLatch != null) {
                 // connection success
-                if (event.getType() == Event.EventType.None
-                    && event.getState() == Event.KeeperState.SyncConnected) {
+                if (event.getType() == Event.EventType.None && event.getState() == Event.KeeperState.SyncConnected) {
                     connectLatch.countDown();
                 }
             }
         }
-
     }
 
     /**
@@ -223,7 +219,6 @@ public class ZooKeeperMain {
             cmdArgs = args;
             return true;
         }
-
     }
 
     /**
@@ -231,7 +226,6 @@ public class ZooKeeperMain {
      * or for zk nodes if the token to complete begins with /
      *
      */
-
     protected void addToHistory(int i, String cmd) {
         history.put(i, cmd);
     }
@@ -285,7 +279,6 @@ public class ZooKeeperMain {
                 throw new IOException(KeeperException.create(KeeperException.Code.CONNECTIONLOSS));
             }
         }
-
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -318,7 +311,8 @@ public class ZooKeeperMain {
                 Object console = consoleC.getConstructor().newInstance();
 
                 Object completor = completorC.getConstructor(ZooKeeper.class).newInstance(zk);
-                Method addCompletor = consoleC.getMethod("addCompleter", Class.forName("jline.console.completer.Completer"));
+                Method addCompletor =
+                        consoleC.getMethod("addCompleter", Class.forName("jline.console.completer.Completer"));
                 addCompletor.invoke(console, completor);
 
                 String line;
@@ -327,11 +321,10 @@ public class ZooKeeperMain {
                     executeLine(line);
                 }
             } catch (ClassNotFoundException
-                | NoSuchMethodException
-                | InvocationTargetException
-                | IllegalAccessException
-                | InstantiationException e
-            ) {
+                    | NoSuchMethodException
+                    | InvocationTargetException
+                    | IllegalAccessException
+                    | InstantiationException e) {
                 LOG.debug("Unable to start jline", e);
                 jlinemissing = true;
             }
@@ -441,5 +434,4 @@ public class ZooKeeperMain {
         }
         return watch;
     }
-
 }

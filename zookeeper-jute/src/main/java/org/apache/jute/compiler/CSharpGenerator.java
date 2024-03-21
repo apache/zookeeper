@@ -37,8 +37,7 @@ public class CSharpGenerator {
      * @param rlist           List of records defined within this file
      * @param outputDirectory
      */
-    CSharpGenerator(String name, List<JFile> ilist, List<JRecord> rlist,
-                    File outputDirectory) {
+    CSharpGenerator(String name, List<JFile> ilist, List<JRecord> rlist, File outputDirectory) {
         this.outputDirectory = outputDirectory;
         mRecList = rlist;
     }

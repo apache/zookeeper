@@ -35,7 +35,7 @@ public class ZKAuditProvider {
     static {
         auditEnabled = Boolean.getBoolean(AUDIT_ENABLE);
         if (auditEnabled) {
-            //initialise only when audit logging is enabled
+            // initialise only when audit logging is enabled
             auditLogger = getAuditLogger();
             LOG.info("ZooKeeper audit is enabled.");
         } else {
@@ -49,8 +49,8 @@ public class ZKAuditProvider {
             auditLoggerClass = Slf4jAuditLogger.class.getName();
         }
         try {
-            Constructor<?> clientCxnConstructor = Class.forName(auditLoggerClass)
-                    .getDeclaredConstructor();
+            Constructor<?> clientCxnConstructor =
+                    Class.forName(auditLoggerClass).getDeclaredConstructor();
             AuditLogger auditLogger = (AuditLogger) clientCxnConstructor.newInstance();
             auditLogger.initialize();
             return auditLogger;
@@ -66,8 +66,15 @@ public class ZKAuditProvider {
         return auditEnabled;
     }
 
-    public static void log(String user, String operation, String znode, String acl,
-                           String createMode, String session, String ip, Result result) {
+    public static void log(
+            String user,
+            String operation,
+            String znode,
+            String acl,
+            String createMode,
+            String session,
+            String ip,
+            Result result) {
         auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
     }
 
@@ -84,8 +91,15 @@ public class ZKAuditProvider {
     /**
      * A helper api for creating an AuditEvent object.
      */
-    static AuditEvent createLogEvent(String user, String operation, String znode, String acl,
-                                     String createMode, String session, String ip, Result result) {
+    static AuditEvent createLogEvent(
+            String user,
+            String operation,
+            String znode,
+            String acl,
+            String createMode,
+            String session,
+            String ip,
+            Result result) {
         AuditEvent event = new AuditEvent(result);
         event.addEntry(FieldName.SESSION, session);
         event.addEntry(FieldName.USER, user);
@@ -129,5 +143,4 @@ public class ZKAuditProvider {
     public static String getZKUser() {
         return ServerCnxnFactory.getUserName();
     }
-
 }

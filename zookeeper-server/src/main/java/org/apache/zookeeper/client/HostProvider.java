@@ -71,5 +71,4 @@ public interface HostProvider {
      * @return true if changing connections is necessary for load-balancing, false otherwise
      */
     boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost);
-
 }

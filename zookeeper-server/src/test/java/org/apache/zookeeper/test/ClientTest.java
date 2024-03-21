@@ -254,7 +254,6 @@ public class ClientTest extends ClientBase {
                 }
             }
         }
-
     }
 
     /**
@@ -436,9 +435,11 @@ public class ClientTest extends ClientBase {
             // Test child watch and create with sequence
             zk.getChildren("/pat/ben", true);
             for (int i = 0; i < 10; i++) {
-                zk.create("/pat/ben/"
-                                  + i
-                                  + "-", Integer.toString(i).getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                zk.create(
+                        "/pat/ben/" + i + "-",
+                        Integer.toString(i).getBytes(),
+                        Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT_SEQUENTIAL);
             }
             children = zk.getChildren("/pat/ben", false);
             Collections.sort(children);
@@ -568,7 +569,6 @@ public class ClientTest extends ClientBase {
                 zk.close();
             }
         }
-
     }
 
     @Test
@@ -584,7 +584,6 @@ public class ClientTest extends ClientBase {
                 zk.close();
             }
         }
-
     }
 
     private void verifyCreateFails(String path, ZooKeeper zk) throws Exception {
@@ -658,7 +657,7 @@ public class ClientTest extends ClientBase {
             // catch this.
         }
 
-        //check for the code path that throws at server
+        // check for the code path that throws at server
         PrepRequestProcessor.setFailCreate(true);
         try {
             zk.create("/m", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -721,7 +720,6 @@ public class ClientTest extends ClientBase {
                 LOG.error("test failed", t);
             }
         }
-
     }
 
     /**
@@ -794,7 +792,7 @@ public class ClientTest extends ClientBase {
         final String path = "/m1";
 
         RequestHeader h = new RequestHeader();
-        h.setType(888);  // This code does not exists
+        h.setType(888); // This code does not exists
         ExistsRequest request = new ExistsRequest();
         request.setPath(path);
         request.setWatch(false);
@@ -831,11 +829,18 @@ public class ClientTest extends ClientBase {
             for (int i = 0; i < 20; ++i) {
                 final CountDownLatch latch = new CountDownLatch(1);
                 final AtomicInteger rc = new AtomicInteger(0);
-                zk.setData("/testnode", "".getBytes(), -1, (retcode, path, ctx, stat) -> {
-                    rc.set(retcode);
-                    latch.countDown();
-                }, null);
-                assertTrue(latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS), "setData should complete within 5s");
+                zk.setData(
+                        "/testnode",
+                        "".getBytes(),
+                        -1,
+                        (retcode, path, ctx, stat) -> {
+                            rc.set(retcode);
+                            latch.countDown();
+                        },
+                        null);
+                assertTrue(
+                        latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS),
+                        "setData should complete within 5s");
                 assertEquals(Code.OK.intValue(), rc.get(), "setData should have succeeded");
             }
             zk.delete("/testnode", -1);
@@ -846,5 +851,4 @@ public class ClientTest extends ClientBase {
             }
         }
     }
-
 }

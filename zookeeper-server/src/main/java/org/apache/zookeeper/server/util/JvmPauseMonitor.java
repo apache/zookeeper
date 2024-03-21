@@ -51,16 +51,19 @@ public class JvmPauseMonitor {
 
     /** The target sleep time */
     protected long sleepTimeMs;
+
     public static final String SLEEP_TIME_MS_KEY = "jvm.pause.sleep.time.ms";
     public static final long SLEEP_TIME_MS_DEFAULT = 500;
 
     /** log WARN if we detect a pause longer than this threshold */
     protected long warnThresholdMs;
+
     public static final String WARN_THRESHOLD_KEY = "jvm.pause.warn-threshold.ms";
     public static final long WARN_THRESHOLD_DEFAULT = 10000;
 
     /** log INFO if we detect a pause longer than this threshold */
     protected long infoThresholdMs;
+
     public static final String INFO_THRESHOLD_KEY = "jvm.pause.info-threshold.ms";
     public static final long INFO_THRESHOLD_DEFAULT = 1000;
 
@@ -117,7 +120,8 @@ public class JvmPauseMonitor {
         return totalGcExtraSleepTime;
     }
 
-    private String formatMessage(long extraSleepTime, Map<String, GcTimes> gcTimesAfterSleep, Map<String, GcTimes> gcTimesBeforeSleep) {
+    private String formatMessage(
+            long extraSleepTime, Map<String, GcTimes> gcTimesAfterSleep, Map<String, GcTimes> gcTimesBeforeSleep) {
 
         Set<String> gcBeanNames = new HashSet<>(gcTimesAfterSleep.keySet());
         gcBeanNames.retainAll(gcTimesBeforeSleep.keySet());
@@ -130,11 +134,10 @@ public class JvmPauseMonitor {
             }
         }
 
-        String ret = String.format("Detected pause in JVM or host machine (eg GC): pause of approximately %d ms, "
-                                   + "total pause: info level: %d, warn level: %d %n",
-                                   extraSleepTime,
-                                   numGcInfoThresholdExceeded,
-                                   numGcWarnThresholdExceeded);
+        String ret = String.format(
+                "Detected pause in JVM or host machine (eg GC): pause of approximately %d ms, "
+                        + "total pause: info level: %d, warn level: %d %n",
+                extraSleepTime, numGcInfoThresholdExceeded, numGcWarnThresholdExceeded);
         if (gcDiffs.isEmpty()) {
             ret += ("No GCs detected");
         } else {
@@ -174,7 +177,6 @@ public class JvmPauseMonitor {
         public String toString() {
             return "count=" + gcCount + " time=" + gcTimeMillis + "ms";
         }
-
     }
 
     private class JVMMonitor implements Runnable {
@@ -182,7 +184,11 @@ public class JvmPauseMonitor {
         @Override
         public void run() {
             Map<String, GcTimes> gcTimesBeforeSleep = getGcTimes();
-            LOG.info("Starting JVM Pause Monitor with infoThresholdMs:{} warnThresholdMs:{} and sleepTimeMs:{}", infoThresholdMs, warnThresholdMs, sleepTimeMs);
+            LOG.info(
+                    "Starting JVM Pause Monitor with infoThresholdMs:{} warnThresholdMs:{} and sleepTimeMs:{}",
+                    infoThresholdMs,
+                    warnThresholdMs,
+                    sleepTimeMs);
             while (shouldRun) {
                 long startTime = Instant.now().toEpochMilli();
                 try {
@@ -207,7 +213,5 @@ public class JvmPauseMonitor {
                 gcTimesBeforeSleep = gcTimesAfterSleep;
             }
         }
-
     }
-
 }

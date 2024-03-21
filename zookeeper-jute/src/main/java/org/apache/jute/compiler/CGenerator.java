@@ -41,8 +41,7 @@ class CGenerator {
      * @param rlist           List of records defined within this file
      * @param outputDirectory
      */
-    CGenerator(String name, List<JFile> ilist, List<JRecord> rlist,
-               File outputDirectory) {
+    CGenerator(String name, List<JFile> ilist, List<JRecord> rlist, File outputDirectory) {
         this.outputDirectory = outputDirectory;
         mName = (new File(name)).getName();
         mInclFiles = ilist;
@@ -57,14 +56,12 @@ class CGenerator {
     void genCode() throws IOException {
         if (!outputDirectory.exists()) {
             if (!outputDirectory.mkdirs()) {
-                throw new IOException("unable to create output directory "
-                        + outputDirectory);
+                throw new IOException("unable to create output directory " + outputDirectory);
             }
         }
 
         try (FileWriter c = new FileWriter(new File(outputDirectory, mName + ".c"));
-             FileWriter h = new FileWriter(new File(outputDirectory, mName + ".h"));
-        ) {
+                FileWriter h = new FileWriter(new File(outputDirectory, mName + ".h")); ) {
             h.write("/**\n");
             h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
             h.write("* or more contributor license agreements.  See the NOTICE file\n");

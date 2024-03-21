@@ -55,5 +55,4 @@ public class BufferStatsTest {
         assertEquals(-1, stats.getMinBufferSize());
         assertEquals(-1, stats.getMaxBufferSize());
     }
-
 }

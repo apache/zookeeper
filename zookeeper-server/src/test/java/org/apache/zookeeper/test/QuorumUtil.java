@@ -53,8 +53,8 @@ public class QuorumUtil {
     // TODO refactor QuorumBase to be special case of this
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumUtil.class);
-    private static final Set<QuorumPeer.ServerState> CONNECTED_STATES = new TreeSet<>(
-        Arrays.asList(QuorumPeer.ServerState.LEADING, QuorumPeer.ServerState.FOLLOWING, QuorumPeer.ServerState.OBSERVING));
+    private static final Set<QuorumPeer.ServerState> CONNECTED_STATES = new TreeSet<>(Arrays.asList(
+            QuorumPeer.ServerState.LEADING, QuorumPeer.ServerState.FOLLOWING, QuorumPeer.ServerState.OBSERVING));
 
     public static class PeerStruct {
 
@@ -62,7 +62,6 @@ public class QuorumUtil {
         public QuorumPeer peer;
         public File dataDir;
         public int clientPort;
-
     }
 
     private final Map<Long, QuorumServer> peersView = new HashMap<>();
@@ -114,13 +113,30 @@ public class QuorumUtil {
                 ps.clientPort = PortAssignment.unique();
                 peers.put(i, ps);
 
-                peersView.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", PortAssignment.unique()), new InetSocketAddress("127.0.0.1", ps.clientPort), LearnerType.PARTICIPANT));
+                peersView.put(
+                        Long.valueOf(i),
+                        new QuorumServer(
+                                i,
+                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                                new InetSocketAddress("127.0.0.1", ps.clientPort),
+                                LearnerType.PARTICIPANT));
                 hostPort += "127.0.0.1:" + ps.clientPort + ((i == ALL) ? "" : ",");
             }
             for (int i = 1; i <= ALL; ++i) {
                 PeerStruct ps = peers.get(i);
                 LOG.info("Creating QuorumPeer {}; public port {}", i, ps.clientPort);
-                ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+                ps.peer = new QuorumPeer(
+                        peersView,
+                        ps.dataDir,
+                        ps.dataDir,
+                        ps.clientPort,
+                        electionAlg,
+                        ps.id,
+                        tickTime,
+                        initLimit,
+                        syncLimit,
+                        connectToLearnerMasterLimit);
                 assertEquals(ps.clientPort, ps.peer.getClientPort());
             }
         } catch (Exception e) {
@@ -152,7 +168,8 @@ public class QuorumUtil {
 
         LOG.info("Checking ports {}", hostPort);
         for (String hp : hostPort.split(",")) {
-            assertTrue(ClientBase.waitForServerUp(hp, ClientBase.CONNECTION_TIMEOUT), "waiting for server " + hp + " up");
+            assertTrue(
+                    ClientBase.waitForServerUp(hp, ClientBase.CONNECTION_TIMEOUT), "waiting for server " + hp + " up");
             LOG.info("{} is accepting client connections", hp);
         }
 
@@ -206,7 +223,17 @@ public class QuorumUtil {
     public void start(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer {}; public port {}", ps.id, ps.clientPort);
-        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        ps.peer = new QuorumPeer(
+                peersView,
+                ps.dataDir,
+                ps.dataDir,
+                ps.clientPort,
+                electionAlg,
+                ps.id,
+                tickTime,
+                initLimit,
+                syncLimit,
+                connectToLearnerMasterLimit);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
@@ -225,7 +252,17 @@ public class QuorumUtil {
     public void startThenShutdown(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer {}; public port {}", ps.id, ps.clientPort);
-        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        ps.peer = new QuorumPeer(
+                peersView,
+                ps.dataDir,
+                ps.dataDir,
+                ps.clientPort,
+                electionAlg,
+                ps.id,
+                tickTime,
+                initLimit,
+                syncLimit,
+                connectToLearnerMasterLimit);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
@@ -280,8 +317,8 @@ public class QuorumUtil {
 
     public boolean allPeersAreConnected() {
         return peers.values().stream()
-          .map(ps -> ps.peer)
-          .allMatch(peer -> CONNECTED_STATES.contains(peer.getPeerState()));
+                .map(ps -> ps.peer)
+                .allMatch(peer -> CONNECTED_STATES.contains(peer.getPeerState()));
     }
 
     public QuorumPeer getLeaderQuorumPeer() {
@@ -342,5 +379,4 @@ public class QuorumUtil {
     public String getConnectionStringForServer(final int index) {
         return "127.0.0.1:" + getPeer(index).clientPort;
     }
-
 }

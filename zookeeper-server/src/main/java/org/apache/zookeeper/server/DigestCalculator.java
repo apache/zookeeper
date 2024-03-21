@@ -32,7 +32,6 @@ public class DigestCalculator {
     // we changed the digest method or fields.
     private static final int DIGEST_VERSION = 2;
 
-
     /**
      * Calculate the digest based on the given params.
      *
@@ -120,5 +119,4 @@ public class DigestCalculator {
     int getDigestVersion() {
         return DIGEST_VERSION;
     }
-
 }

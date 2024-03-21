@@ -33,7 +33,8 @@ import org.junit.jupiter.api.Test;
 public class BufferSizeTest extends ClientBase {
 
     public static final int TEST_MAXBUFFER = 100;
-    private static final File TEST_DATA = new File(System.getProperty("test.data.dir", "src/test/resources/data"), "buffersize");
+    private static final File TEST_DATA =
+            new File(System.getProperty("test.data.dir", "src/test/resources/data"), "buffersize");
 
     private ZooKeeper zk;
 
@@ -85,7 +86,6 @@ public class BufferSizeTest extends ClientBase {
     private interface ClientOp {
 
         void execute(byte[] data) throws Exception;
-
     }
 
     @Test
@@ -130,5 +130,4 @@ public class BufferSizeTest extends ClientBase {
             tmpDir = oldTmpDir;
         }
     }
-
 }

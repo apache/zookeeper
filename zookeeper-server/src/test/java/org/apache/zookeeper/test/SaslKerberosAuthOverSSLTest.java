@@ -59,8 +59,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
     private static File kdcWorkDir;
     private static Properties conf;
 
-
-
     @BeforeAll
     public static void setupKdc() {
         startMiniKdc();
@@ -71,8 +69,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         stopMiniKdc();
         FileUtils.deleteQuietly(kdcWorkDir);
     }
-
-
 
     @BeforeEach
     @Override
@@ -90,7 +86,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         super.setUp();
     }
 
-
     @AfterEach
     @Override
     public void tearDown() throws Exception {
@@ -98,7 +93,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         clearSslSetting(clientX509Util);
         clearSaslConfig();
     }
-
 
     @Test
     public void testAuth() throws Exception {
@@ -112,7 +106,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
             zk.close();
         }
     }
-
 
     public void initSaslConfig() throws Exception {
 
@@ -192,7 +185,8 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
 
     public ClientX509Util setUpSSLWithNoAuth() {
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        System.setProperty(
+                ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty("zookeeper.ssl.clientAuth", "none");
@@ -221,8 +215,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         clientX509Util.close();
     }
 
-
-
     public static void startMiniKdc() {
         try {
             kdcWorkDir = createEmptyTestDir();
@@ -234,7 +226,6 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
         } catch (Exception e) {
             throw new RuntimeException("failed to start MiniKdc", e);
         }
-
     }
 
     public static void stopMiniKdc() {
@@ -242,5 +233,4 @@ public class SaslKerberosAuthOverSSLTest extends ClientBase {
             kdc.stop();
         }
     }
-
 }

@@ -82,9 +82,10 @@ public class LocalSessionRequestTest extends ZKTestCase {
         QuorumPeer peer = qb.getPeerList().get(peerId);
         ZKDatabase db = peer.getActiveServer().getZKDatabase();
         for (Proposal p : db.getCommittedLog()) {
-            assertFalse(p.getRequest().sessionId == sessionId,
-                    "Should not see " + Request.op2String(p.getRequest().type)
-                            + " request from local session 0x" + session + " on the " + peerType);
+            assertFalse(
+                    p.getRequest().sessionId == sessionId,
+                    "Should not see " + Request.op2String(p.getRequest().type) + " request from local session 0x"
+                            + session + " on the " + peerType);
         }
     }
 
@@ -103,7 +104,8 @@ public class LocalSessionRequestTest extends ZKTestCase {
         String[] hostPorts = qb.hostPort.split(",");
 
         CountdownWatcher watcher = new CountdownWatcher();
-        DisconnectableZooKeeper client = new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
+        DisconnectableZooKeeper client =
+                new DisconnectableZooKeeper(hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         long localSessionId1 = client.getSessionId();
@@ -138,7 +140,5 @@ public class LocalSessionRequestTest extends ZKTestCase {
         validateRequestLog(localSessionId2, verifyPeerIdx);
 
         qb.shutdownServers();
-
     }
-
 }

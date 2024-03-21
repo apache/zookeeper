@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.controller;
 
 import org.junit.Assert;
@@ -101,5 +100,4 @@ public class ControllerClientServerTest extends ControllerTestBase {
     public void verifyLeaderElectionCommand() {
         Assert.assertTrue(commandClient.trySendCommand(ControlCommand.Action.ELECTNEWLEADER));
     }
-
 }

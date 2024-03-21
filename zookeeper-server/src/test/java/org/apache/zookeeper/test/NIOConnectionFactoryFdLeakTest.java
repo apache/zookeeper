@@ -62,5 +62,4 @@ public class NIOConnectionFactoryFdLeakTest extends ZKTestCase {
         // On my box, if selector.close() is not called fd diff is > 700.
         assertTrue(((endFdCount - startFdCount) < 50), "Possible fd leakage");
     }
-
 }

@@ -64,8 +64,8 @@ public class TraceFormatter {
                     path = new String(b);
                 }
             }
-            System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
-                    DateFormat.LONG).format(new Date(time))
+            System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG)
+                            .format(new Date(time))
                     + ": "
                     + (char) app
                     + " id=0x"
@@ -82,5 +82,4 @@ public class TraceFormatter {
                     + len + " path=" + path);
         }
     }
-
 }

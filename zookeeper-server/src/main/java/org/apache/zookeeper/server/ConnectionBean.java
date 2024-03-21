@@ -164,5 +164,4 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     public long getLastLatency() {
         return stats.getLastLatency();
     }
-
 }
