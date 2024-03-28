@@ -556,7 +556,6 @@ public class Learner {
         readPacket(qp);
         Deque<Long> packetsCommitted = new ArrayDeque<>();
         Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
-        Deque<Request> requestsToAck = new ArrayDeque<>();
 
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
@@ -756,26 +755,51 @@ public class Learner {
                     sock.setSoTimeout(self.tickTime * self.syncLimit);
                     self.setSyncMode(QuorumPeer.SyncMode.NONE);
                     zk.startupWithoutServing();
-                    if (zk instanceof FollowerZooKeeperServer) {
+                    if (zk instanceof FollowerZooKeeperServer && !packetsCommitted.isEmpty()) {
                         long startTime = Time.currentElapsedTime();
                         FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-                        for (PacketInFlight p : packetsNotCommitted) {
-                            final Request request = fzk.appendRequest(p.hdr, p.rec, p.digest);
-                            requestsToAck.add(request);
+
+                        /*
+                         * @see https://github.com/apache/zookeeper/pull/1848
+                         * Log and process the pending txns in "packetsNotCommitted"
+                         * according to "packetsCommitted", which have been committed
+                         * by the leader. For these committed proposals, there is no
+                         * need to reply ack.
+                         *
+                         * @see https://issues.apache.org/jira/browse/ZOOKEEPER-4394
+                         * Keep the outstanding proposals in "packetsNotCommitted" to
+                         * avoid NullPointerException when receiving COMMIT packet(s)
+                         * right after replying NEWLEADER ack.
+                         */
+                        while (!packetsCommitted.isEmpty()) {
+                            long zxid = packetsCommitted.removeFirst();
+                            pif = packetsNotCommitted.peekFirst();
+                            if (pif == null) {
+                                LOG.warn("Committing 0x{}, but got no proposal", Long.toHexString(zxid));
+                                continue;
+                            } else if (pif.hdr.getZxid() != zxid) {
+                                LOG.warn("Committing 0x{}, but next proposal is 0x{}",
+                                        Long.toHexString(zxid), Long.toHexString(pif.hdr.getZxid()));
+                                continue;
+                            }
+                            packetsNotCommitted.removeFirst();
+                            fzk.appendRequest(pif.hdr, pif.rec, pif.digest);
+                            fzk.commit(zxid);
                         }
 
-                        // persist the txns to disk
+                        // @see https://issues.apache.org/jira/browse/ZOOKEEPER-4646
+                        // Make sure to persist the txns to disk before replying NEWLEADER ack.
                         fzk.getZKDatabase().commit();
-                        LOG.info("{} txns have been persisted and it took {}ms",
-                        packetsNotCommitted.size(), Time.currentElapsedTime() - startTime);
-                        packetsNotCommitted.clear();
+                        LOG.info("It took {}ms to persist and commit pending txns. "
+                                        + "{} txns left in packetsNotCommitted",
+                                Time.currentElapsedTime() - startTime, packetsNotCommitted.size());
                     }
 
-                    // set the current epoch after all the tnxs are persisted
+                    // ZOOKEEPER-4643 / ZOOKEEPER-4785: set the current epoch after txns are persisted
                     self.setCurrentEpoch(newEpoch);
                     LOG.info("Set the current epoch to {}", newEpoch);
 
-                    // send NEWLEADER ack after all the tnxs are persisted
+                    // send NEWLEADER ack after the txns are persisted
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     LOG.info("Sent NEWLEADER ack to leader with zxid {}", Long.toHexString(newLeaderZxid));
                     break;
@@ -796,15 +820,6 @@ public class Learner {
 
         // We need to log the stuff that came in between the snapshot and the uptodate
         if (zk instanceof FollowerZooKeeperServer) {
-            // reply ACK of PROPOSAL after ACK of NEWLEADER to avoid leader shutdown due to timeout
-            // on waiting for a quorum of followers
-            for (final Request request : requestsToAck) {
-                final QuorumPacket ackPacket = new QuorumPacket(Leader.ACK, request.getHdr().getZxid(), null, null);
-                writePacket(ackPacket, false);
-            }
-            writePacket(null, true);
-            requestsToAck.clear();
-
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
             for (PacketInFlight p : packetsNotCommitted) {
                 fzk.logRequest(p.hdr, p.rec, p.digest);
