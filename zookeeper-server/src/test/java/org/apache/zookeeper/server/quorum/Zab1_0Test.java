@@ -741,8 +741,8 @@ public class Zab1_0Test extends ZKTestCase {
 
                     readPacketSkippingPing(ia, qp);
                     assertEquals(Leader.ACKEPOCH, qp.getType());
-                    assertEquals(0, qp.getZxid());
-                    assertEquals(ZxidUtils.makeZxid(0, 0), ByteBuffer.wrap(qp.getData()).getInt());
+                    assertEquals(ZxidUtils.makeZxid(0, 0), qp.getZxid());
+                    assertEquals(0, ByteBuffer.wrap(qp.getData()).getInt());
                     assertEquals(1, f.self.getAcceptedEpoch());
                     assertEquals(0, f.self.getCurrentEpoch());
 
@@ -765,11 +765,6 @@ public class Zab1_0Test extends ZKTestCase {
                     qp.setZxid(0);
                     oa.writeRecord(qp, null);
 
-                    // Read the uptodate ack
-                    readPacketSkippingPing(ia, qp);
-                    assertEquals(Leader.ACK, qp.getType());
-                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-
                     // Get the ack of the new leader
                     readPacketSkippingPing(ia, qp);
                     assertEquals(Leader.ACK, qp.getType());
@@ -777,24 +772,16 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(1, f.self.getAcceptedEpoch());
                     assertEquals(1, f.self.getCurrentEpoch());
 
-                    //Wait for the transactions to be written out. The thread that writes them out
-                    // does not send anything back when it is done.
-                    long start = System.currentTimeMillis();
-                    while (createSessionZxid != f.fzk.getLastProcessedZxid()
-                                   && (System.currentTimeMillis() - start) < 50) {
-                        Thread.sleep(1);
-                    }
+                    // Read the uptodate ack
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.ACK, qp.getType());
+                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
 
                     assertEquals(createSessionZxid, f.fzk.getLastProcessedZxid());
 
                     // Make sure the data was recorded in the filesystem ok
                     ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
-                    start = System.currentTimeMillis();
                     zkDb2.loadDataBase();
-                    while (zkDb2.getSessionWithTimeOuts().isEmpty() && (System.currentTimeMillis() - start) < 50) {
-                        Thread.sleep(1);
-                        zkDb2.loadDataBase();
-                    }
                     LOG.info("zkdb2 sessions:{}", zkDb2.getSessions());
                     LOG.info("zkdb2 with timeouts:{}", zkDb2.getSessionWithTimeOuts());
                     assertNotNull(zkDb2.getSessionWithTimeOuts().get(4L));
