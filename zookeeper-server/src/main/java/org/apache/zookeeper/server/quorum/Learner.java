@@ -555,7 +555,7 @@ public class Learner {
         boolean syncSnapshot = false;
         readPacket(qp);
         Deque<Long> packetsCommitted = new ArrayDeque<>();
-        Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
+        Deque<PacketInFlight> packetsNotLogged = new ArrayDeque<>();
 
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
@@ -644,11 +644,11 @@ public class Learner {
                         self.setLastSeenQuorumVerifier(qv, true);
                     }
 
-                    packetsNotCommitted.add(pif);
+                    packetsNotLogged.add(pif);
                     break;
                 case Leader.COMMIT:
                 case Leader.COMMITANDACTIVATE:
-                    pif = packetsNotCommitted.peekFirst();
+                    pif = packetsNotLogged.peekFirst();
                     if (pif.hdr.getZxid() == qp.getZxid() && qp.getType() == Leader.COMMITANDACTIVATE) {
                         QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData(), UTF_8));
                         boolean majorChange = self.processReconfig(
@@ -667,7 +667,7 @@ public class Learner {
                                 Long.toHexString(pif.hdr.getZxid()));
                         } else {
                             zk.processTxn(pif.hdr, pif.rec);
-                            packetsNotCommitted.remove();
+                            packetsNotLogged.remove();
                         }
                     } else {
                         packetsCommitted.add(qp.getZxid());
@@ -709,7 +709,7 @@ public class Learner {
                         // Apply to db directly if we haven't taken the snapshot
                         zk.processTxn(packet.hdr, packet.rec);
                     } else {
-                        packetsNotCommitted.add(packet);
+                        packetsNotLogged.add(packet);
                         packetsCommitted.add(qp.getZxid());
                     }
 
@@ -758,19 +758,19 @@ public class Learner {
 
                         /*
                          * @see https://github.com/apache/zookeeper/pull/1848
-                         * Persist and process the committed txns in "packetsNotCommitted"
+                         * Persist and process the committed txns in "packetsNotLogged"
                          * according to "packetsCommitted", which have been committed by
                          * the leader. For these committed proposals, there is no need to
                          * reply ack.
                          *
                          * @see https://issues.apache.org/jira/browse/ZOOKEEPER-4394
-                         * Keep the outstanding proposals in "packetsNotCommitted" to avoid
+                         * Keep the outstanding proposals in "packetsNotLogged" to avoid
                          * NullPointerException when the follower receives COMMIT packet(s)
                          * right after replying NEWLEADER ack.
                          */
                         while (!packetsCommitted.isEmpty()) {
                             long zxid = packetsCommitted.removeFirst();
-                            pif = packetsNotCommitted.peekFirst();
+                            pif = packetsNotLogged.peekFirst();
                             if (pif == null) {
                                 LOG.warn("Committing 0x{}, but got no proposal", Long.toHexString(zxid));
                                 continue;
@@ -779,7 +779,7 @@ public class Learner {
                                         Long.toHexString(zxid), Long.toHexString(pif.hdr.getZxid()));
                                 continue;
                             }
-                            packetsNotCommitted.removeFirst();
+                            packetsNotLogged.removeFirst();
                             fzk.appendRequest(pif.hdr, pif.rec, pif.digest);
                             fzk.processTxn(pif.hdr, pif.rec);
                         }
@@ -788,8 +788,8 @@ public class Learner {
                         // Make sure to persist the txns to disk before replying NEWLEADER ack.
                         fzk.getZKDatabase().commit();
                         LOG.info("It took {}ms to persist and commit txns in packetsCommitted. "
-                                        + "{} outstanding txns left in packetsNotCommitted",
-                                Time.currentElapsedTime() - startTime, packetsNotCommitted.size());
+                                        + "{} outstanding txns left in packetsNotLogged",
+                                Time.currentElapsedTime() - startTime, packetsNotLogged.size());
                     }
 
                     // @see https://issues.apache.org/jira/browse/ZOOKEEPER-4643
@@ -799,7 +799,7 @@ public class Learner {
                     LOG.info("Set the current epoch to {}", newEpoch);
 
                     // Now we almost complete the synchronization phase. Start RequestProcessors
-                    // to asynchronously process the pending txns in  "packetsNotCommitted"  and
+                    // to asynchronously process the pending txns in  "packetsNotLogged"  and
                     // "packetsCommitted" later.
                     sock.setSoTimeout(self.tickTime * self.syncLimit);
                     self.setSyncMode(QuorumPeer.SyncMode.NONE);
@@ -827,10 +827,10 @@ public class Learner {
         // We need to log the stuff that came in between the snapshot and the uptodate
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotCommitted) {
+            for (PacketInFlight p : packetsNotLogged) {
                 fzk.logRequest(p.hdr, p.rec, p.digest);
             }
-            LOG.info("{} txns have been logged asynchronously", packetsNotCommitted.size());
+            LOG.info("{} txns have been logged asynchronously", packetsNotLogged.size());
 
             for (Long zxid : packetsCommitted) {
                 fzk.commit(zxid);
@@ -840,7 +840,7 @@ public class Learner {
             // Similar to follower, we need to log requests between the snapshot
             // and UPTODATE
             ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotCommitted) {
+            for (PacketInFlight p : packetsNotLogged) {
                 Long zxid = packetsCommitted.peekFirst();
                 if (p.hdr.getZxid() != zxid) {
                     // log warning message if there is no matching commit

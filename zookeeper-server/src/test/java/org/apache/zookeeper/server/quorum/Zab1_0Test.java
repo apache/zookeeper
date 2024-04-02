@@ -871,6 +871,7 @@ public class Zab1_0Test extends ZKTestCase {
 
                     qp.setType(Leader.NEWLEADER);
                     qp.setZxid(ZxidUtils.makeZxid(1, 0));
+                    qp.setData(null);
                     oa.writeRecord(qp, null);
 
                     // Get the ack of the new leader
@@ -897,10 +898,12 @@ public class Zab1_0Test extends ZKTestCase {
                     // Leader commits proposalZxid right after it sends NEWLEADER to follower
                     qp.setType(Leader.COMMIT);
                     qp.setZxid(proposalZxid);
+                    qp.setData(null);
                     oa.writeRecord(qp, null);
 
                     qp.setType(Leader.UPTODATE);
                     qp.setZxid(0);
+                    qp.setData(null);
                     oa.writeRecord(qp, null);
 
                     // Read the uptodate ack
