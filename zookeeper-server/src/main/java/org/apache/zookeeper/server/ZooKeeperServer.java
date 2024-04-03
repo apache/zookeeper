@@ -553,7 +553,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         .filter(session -> zkDb.getSessionWithTimeOuts().get(session) == null)
                         .forEach(session -> killSession(session, zkDb.getDataTreeLastProcessedZxid()));
 
-        // Make a clean snapshot
+        // Make a clean snapshot if needed
+        /* A snapshot is not needed when loading data during leader election. A new snapshot is not needed to return to
+         * the current state because the current state was reached by loading the data tree using an old snapshot.
+         * During leader election, there are no ongoing transactions that could be lost either. If a snapshot is needed
+         * to send to a learner during leader election, that snapshot will be taken as part of leader election, so
+         * snapshotting does not need to be done here as well.
+         */
         if (needSnapshot) {
             takeSnapshot();
         }
