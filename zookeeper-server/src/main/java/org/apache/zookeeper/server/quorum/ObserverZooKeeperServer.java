@@ -128,12 +128,12 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
-        super.shutdown();
+        super.shutdown(fullyShutDown);
         if (syncRequestProcessorEnabled && syncProcessor != null) {
             syncProcessor.shutdown();
         }
