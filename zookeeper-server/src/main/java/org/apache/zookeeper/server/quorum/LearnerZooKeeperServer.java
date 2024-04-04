@@ -154,6 +154,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     @Override
     public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
+            super.shutdown(fullyShutDown);
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
