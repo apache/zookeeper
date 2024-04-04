@@ -160,16 +160,16 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
         }
         LOG.info("Shutting down");
         try {
-            super.shutdown(fullyShutDown);
-        } catch (Exception e) {
-            LOG.warn("Ignoring unexpected exception during shutdown", e);
-        }
-        try {
             if (syncProcessor != null) {
                 syncProcessor.shutdown();
             }
         } catch (Exception e) {
             LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
+        }
+        try {
+            super.shutdown(fullyShutDown);
+        } catch (Exception e) {
+            LOG.warn("Ignoring unexpected exception during shutdown", e);
         }
     }
 
