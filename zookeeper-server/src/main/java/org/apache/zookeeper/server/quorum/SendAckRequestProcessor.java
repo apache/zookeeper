@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.quorum;
 import java.io.Flushable;
 import java.io.IOException;
 import java.net.Socket;
-
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
