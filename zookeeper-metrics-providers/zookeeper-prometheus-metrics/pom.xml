@@ -33,6 +33,7 @@
 
   <properties>
       <prometheus.version>0.9.0</prometheus.version>
+      <datasketches.version>4.2.0</datasketches.version>
   </properties>
   <dependencies>
     <dependency>
@@ -62,7 +63,7 @@
     <dependency>
       <groupId>org.apache.datasketches</groupId>
       <artifactId>datasketches-java</artifactId>
-      <version>4.2.0</version>
+      <version>${datasketches.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
