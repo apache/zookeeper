@@ -18,17 +18,22 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
 
 public class EphemeralNodeThrottlingTest extends QuorumPeerTestBase {
 
@@ -67,7 +72,7 @@ public class EphemeralNodeThrottlingTest extends QuorumPeerTestBase {
         int cumulativeBytes = 0;
         int i = 0;
         while (cumulativeBytes <= DEFAULT_EPHEMERALNODES_TOTAL_BYTE_LIMIT) {
-            cumulativeBytes += BinaryOutputArchive.getSerializedStringByteSize(TEST_PATH +i);
+            cumulativeBytes += BinaryOutputArchive.getSerializedStringByteSize(TEST_PATH + i);
             try {
                 leaderServer.create(TEST_PATH + i++, new byte[512], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             } catch (Exception e) {

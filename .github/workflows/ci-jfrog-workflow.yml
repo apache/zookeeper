@@ -20,8 +20,6 @@ name: Publish to LinkedIn JFrog
 
 on:
   release:
-    branches:
-      - 'li-dev/**'
     types: [published]
 jobs:
   deploy:
