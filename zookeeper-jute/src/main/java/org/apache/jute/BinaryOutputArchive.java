@@ -108,7 +108,7 @@ public class BinaryOutputArchive implements OutputArchive {
         }
 
         // Always add 4 bytes to size as we call writeInt(bb.remaining(), "len") when writing to DataOutput
-        int length_descriptor_size = 4;
+        int lengthDescriptorSize = 4;
 
         int size = 0;
         final int len = s.length();
@@ -122,7 +122,7 @@ public class BinaryOutputArchive implements OutputArchive {
                 size = Math.addExact(size, 3);
             }
         }
-        return Math.addExact(size, length_descriptor_size);
+        return Math.addExact(size, lengthDescriptorSize);
     }
 
     public void writeString(String s, String tag) throws IOException {
