@@ -70,9 +70,21 @@ public:
 
     void setUp() {
         zoo_set_log_stream(logfile);
+        zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+        stopServer();
+    }
+
+    void tearDown() {
+        startServer();
     }
 
     void startServer() {
+        char cmd[1024];
+        sprintf(cmd, "%s start", ZKSERVER_CMD);
+        CPPUNIT_ASSERT(system(cmd) == 0);
+    }
+
+    void startServerRequireSASLAuth() {
         char cmd[1024];
         sprintf(cmd, "%s startRequireSASLAuth", ZKSERVER_CMD);
         CPPUNIT_ASSERT(system(cmd) == 0);
@@ -85,7 +97,7 @@ public:
     }
 
     void testServerRequireClientSASL() {
-        startServer();
+        startServerRequireSASLAuth();
 
         watchctx_t ctx;
         int rc = 0;
