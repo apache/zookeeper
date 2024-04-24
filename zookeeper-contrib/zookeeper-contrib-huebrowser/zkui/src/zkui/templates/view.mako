@@ -96,7 +96,7 @@ ${shared.info_button(url('zkui.views.tree', id=cluster['id'], path='/'), 'View Z
     ${show_stats(leader)}
     
     <tr><td>Followers</td>
-      <td>${leader.get('zk_followers', '')}</td>
+      <td>${leader.get('zk_learners', '')}</td>
     </tr>
 
     <tr><td>Synced Followers</td>

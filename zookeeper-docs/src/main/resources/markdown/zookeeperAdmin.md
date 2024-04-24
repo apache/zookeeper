@@ -2490,7 +2490,7 @@ Moving forward, Four Letter Words will be deprecated, please use
                   zk_watch_count  0
                   zk_ephemerals_count 0
                   zk_approximate_data_size    27
-                  zk_followers    4                   - only exposed by the Leader
+                  zk_learners    4                    - only exposed by the Leader
                   zk_synced_followers 4               - only exposed by the Leader
                   zk_pending_syncs    0               - only exposed by the Leader
                   zk_open_file_descriptor_count 23    - only available on Unix platforms
