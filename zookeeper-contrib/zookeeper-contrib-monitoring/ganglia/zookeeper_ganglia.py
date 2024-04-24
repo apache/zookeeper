@@ -212,7 +212,7 @@ def metric_init(params=None):
         'zk_approximate_data_size': {'units': 'bytes'},
         'zk_open_file_descriptor_count': {'units': 'descriptors'},
         'zk_max_file_descriptor_count': {'units': 'descriptors'},
-        'zk_followers': {'units': 'nodes'},
+        'zk_learners': {'units': 'nodes'},
         'zk_synced_followers': {'units': 'nodes'},
         'zk_pending_syncs': {'units': 'syncs'},
         'zk_last_proposal_size': {'units': 'bytes'},
