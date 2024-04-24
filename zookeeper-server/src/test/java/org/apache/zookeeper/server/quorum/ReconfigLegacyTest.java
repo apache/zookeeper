@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.quorum.QuorumPeerMainTLSTest.getClientTLSConfigs;
+import static org.apache.zookeeper.server.quorum.QuorumPeerMainTLSTest.getServerTLSConfigs;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -25,21 +27,54 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.Security;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Properties;
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.X509KeyType;
+import org.apache.zookeeper.common.X509TestContext;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
 
 public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
     private static final int SERVER_COUNT = 3;
+    private static File tempDir;
+    private static X509TestContext x509TestContext = null;
+
+    @BeforeClass
+    public static void beforeAll() throws Exception {
+        Security.addProvider(new BouncyCastleProvider());
+        tempDir = ClientBase.createEmptyTestDir();
+        x509TestContext = X509TestContext.newBuilder()
+            .setTempDir(tempDir)
+            .setKeyStoreKeyType(X509KeyType.EC)
+            .setTrustStoreKeyType(X509KeyType.EC)
+            .build();
+    }
+
+    @AfterClass
+    public static void afterAll() {
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+        try {
+            FileUtils.deleteDirectory(tempDir);
+        } catch (IOException e) {
+            // ignore
+        }
+    }
 
     @Before
     public void setup() {
@@ -59,12 +94,12 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
         String server;
-        ArrayList<String> allServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=localhost:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;localhost:" + clientPorts[i];
+                + ":participant;localhost:" + clientPorts[i];
             allServers.add(server);
             sb.append(server + "\n");
         }
@@ -135,6 +170,12 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         }
     }
 
+    @Test
+    public void testReconfigRemoveClientFromStatic() throws Exception {
+        testReconfigRemoveClientFromStatic(true);
+        testReconfigRemoveClientFromStatic(false);
+    }
+
     /**
      * https://issues.apache.org/jira/browse/ZOOKEEPER-1992
      * 1. When a server starts from old style static config, without a client port in the server
@@ -143,21 +184,24 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
      *    and new port added to dynamic file.
      * @throws Exception
      */
-    @Test
-    public void testReconfigRemoveClientFromStatic() throws Exception {
+    public void testReconfigRemoveClientFromStatic(boolean isSecure) throws Exception {
         final int[] clientPorts = new int[SERVER_COUNT];
+        final int[] secureClientPorts = new int[SERVER_COUNT];
+        final int[] adminServerPorts = new int[SERVER_COUNT];
         final int[] quorumPorts = new int[SERVER_COUNT];
         final int[] electionPorts = new int[SERVER_COUNT];
 
         final int changedServerId = 0;
-        final int newClientPort = PortAssignment.unique();
+        final int newClientPortOrSecureClientPort = PortAssignment.unique();
 
         StringBuilder sb = new StringBuilder();
-        ArrayList<String> allServers = new ArrayList<String>();
-        ArrayList<String> newServers = new ArrayList<String>();
+        ArrayList<String> allServers = new ArrayList<>();
+        ArrayList<String> newServers = new ArrayList<>();
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
+            secureClientPorts[i] = PortAssignment.unique();
+            adminServerPorts[i] = PortAssignment.unique();
             quorumPorts[i] = PortAssignment.unique();
             electionPorts[i] = PortAssignment.unique();
 
@@ -166,7 +210,12 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             sb.append(server + "\n");
 
             if (i == changedServerId) {
-                newServers.add(server + ";0.0.0.0:" + newClientPort);
+                if (isSecure) {
+                    newServers.add(server + ";;0.0.0.0:" + newClientPortOrSecureClientPort);
+                } else {
+                    newServers.add(server + ";0.0.0.0:" + newClientPortOrSecureClientPort);
+                }
+
             } else {
                 newServers.add(server);
             }
@@ -177,27 +226,51 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         ZooKeeper[] zk = new ZooKeeper[SERVER_COUNT];
         ZooKeeperAdmin[] zkAdmin = new ZooKeeperAdmin[SERVER_COUNT];
 
+        Map<String, String> configMap = getServerTLSConfigs(x509TestContext);
+        StringBuilder configBuilder = new StringBuilder();
+        for (Map.Entry<String, String> entry : configMap.entrySet()) {
+            configBuilder.append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+        }
+
         // Start the servers with a static config file, without a dynamic config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], quorumCfgSection, false);
+            if (isSecure) {
+                mt[i] = new MainThread(i, MainThread.UNSET_STATIC_CLIENTPORT, adminServerPorts[i], secureClientPorts[i], quorumCfgSection, configBuilder.toString(), null, false, null);
+            } else {
+                mt[i] = new MainThread(i, clientPorts[i], adminServerPorts[i], quorumCfgSection, null, null, false);
+            }
             mt[i].start();
+        }
+
+
+        ZKClientConfig clientConfig;
+        if (isSecure) {
+            clientConfig = getClientTLSConfigs(x509TestContext);
+        } else {
+            clientConfig = null;
         }
 
         // Check that when a server starts from old style config, it should keep the client
         // port in static config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
+            String cnxnString = "127.0.0.1:" + (isSecure ? secureClientPorts[i] : clientPorts[i]);
             assertTrue(
-                    "waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
-            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
-            zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+                "waiting for server " + i + " being up",
+                ClientBase.waitForServerUp(cnxnString, CONNECTION_TIMEOUT, isSecure, clientConfig));
+            zk[i] = ClientBase.createZKClient(cnxnString, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, clientConfig);
+            zkAdmin[i] = new ZooKeeperAdmin(cnxnString, ClientBase.CONNECTION_TIMEOUT, this, clientConfig);
             zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
 
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
 
             assertTrue(cfg.containsKey("dynamicConfigFile"));
-            assertTrue(cfg.containsKey("clientPort"));
+            if (isSecure) {
+                assertTrue(cfg.containsKey("secureClientPort"));
+            } else {
+                assertTrue(cfg.containsKey("clientPort"));
+            }
+
         }
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
 
@@ -214,10 +287,11 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             ReconfigTest.testServerHasConfig(zk[i], newServers, null);
             Properties staticCfg = readPropertiesFromFile(mt[i].confFile);
+            String configKey = isSecure ? "secureClientPort" : "clientPort";
             if (i == changedServerId) {
-                assertFalse(staticCfg.containsKey("clientPort"));
+                assertFalse(staticCfg.containsKey(configKey));
             } else {
-                assertTrue(staticCfg.containsKey("clientPort"));
+                assertTrue(staticCfg.containsKey(configKey));
             }
         }
 
@@ -253,7 +327,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             clientPorts[i] = PortAssignment.unique();
             server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
-                     + ":participant;127.0.0.1:" + clientPorts[i];
+                + ":participant;127.0.0.1:" + clientPorts[i];
             sb.append(server + "\n");
         }
         String currentQuorumCfgSection = sb.toString();

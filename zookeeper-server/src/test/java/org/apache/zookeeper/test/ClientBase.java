@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.net.ssl.SSLContext;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -51,9 +52,13 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -127,6 +132,12 @@ public abstract class ClientBase extends ZKTestCase {
         public synchronized boolean isConnected() {
             return connected;
         }
+
+        protected synchronized String connectionDescription() {
+            return String.format("connected(%s), syncConnected(%s), readOnlyConnected(%s)",
+                connected, syncConnected, readOnlyConnected);
+        }
+
         public synchronized void waitForConnected(long timeout) throws InterruptedException, TimeoutException {
             long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
@@ -135,8 +146,7 @@ public abstract class ClientBase extends ZKTestCase {
                 left = expire - Time.currentElapsedTime();
             }
             if (!connected) {
-                throw new TimeoutException("Failed to connect to ZooKeeper server.");
-
+                throw new TimeoutException("Failed to connect to ZooKeeper server: " + connectionDescription());
             }
         }
         public synchronized void waitForSyncConnected(long timeout) throws InterruptedException, TimeoutException {
@@ -147,18 +157,22 @@ public abstract class ClientBase extends ZKTestCase {
                 left = expire - Time.currentElapsedTime();
             }
             if (!syncConnected) {
-                throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
+                throw new TimeoutException(
+                    "Failed to connect to read-write ZooKeeper server: "
+                        + connectionDescription());
             }
         }
         public synchronized void waitForReadOnlyConnected(long timeout) throws InterruptedException, TimeoutException {
-            long expire = System.currentTimeMillis() + timeout;
+            long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
             while (!readOnlyConnected && left > 0) {
                 wait(left);
-                left = expire - System.currentTimeMillis();
+                left = expire - Time.currentElapsedTime();
             }
             if (!readOnlyConnected) {
-                throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
+                throw new TimeoutException(
+                    "Failed to connect in read-only mode to ZooKeeper server: "
+                        + connectionDescription());
             }
         }
         public synchronized void waitForDisconnected(long timeout) throws InterruptedException, TimeoutException {
@@ -169,8 +183,7 @@ public abstract class ClientBase extends ZKTestCase {
                 left = expire - Time.currentElapsedTime();
             }
             if (connected) {
-                throw new TimeoutException("Did not disconnect");
-
+                throw new TimeoutException("Did not disconnect: " + connectionDescription());
             }
         }
 
@@ -191,6 +204,10 @@ public abstract class ClientBase extends ZKTestCase {
 
     private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
+
+    protected TestableZooKeeper createClient(String hp, int timeout) throws IOException, InterruptedException {
+        return createClient(new CountdownWatcher(), hp, timeout);
+    }
 
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp) throws IOException, InterruptedException {
         return createClient(watcher, hp, CONNECTION_TIMEOUT);
@@ -233,7 +250,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     }
     public static List<HostPort> parseHostPortList(String hplist) {
-        ArrayList<HostPort> alist = new ArrayList<HostPort>();
+        ArrayList<HostPort> alist = new ArrayList<>();
         for (String hp : hplist.split(",")) {
             int idx = hp.lastIndexOf(':');
             String host = hp.substring(0, idx);
@@ -249,16 +266,27 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     public static boolean waitForServerUp(String hp, long timeout) {
-        return waitForServerUp(hp, timeout, false);
+        return waitForServerUp(hp, timeout, false, null);
     }
 
     public static boolean waitForServerUp(String hp, long timeout, boolean secure) {
+        return waitForServerUp(hp, timeout, secure, null);
+    }
+
+    public static boolean waitForServerUp(String hp, long timeout, boolean secure, ZKConfig zkConfig) {
         long start = Time.currentElapsedTime();
         while (true) {
             try {
                 // if there are multiple hostports, just take the first one
                 HostPort hpobj = parseHostPortList(hp).get(0);
-                String result = send4LetterWord(hpobj.host, hpobj.port, "stat", secure);
+                SSLContext sslContext = null;
+                String result;
+                if (zkConfig != null) {
+                    try (X509Util x509Util = new ClientX509Util()) {
+                        sslContext = x509Util.createSSLContext(zkConfig);
+                    }
+                }
+                result = send4LetterWord(hpobj.host, hpobj.port, "stat", secure, 5000, sslContext);
                 if (result.startsWith("Zookeeper version:") && !result.contains("READ-ONLY")) {
                     return true;
                 }
@@ -281,6 +309,7 @@ public abstract class ClientBase extends ZKTestCase {
                 // ignore
             }
         }
+        LOG.error("server failed to come up: {}", hp);
         return false;
     }
 
@@ -338,7 +367,7 @@ public abstract class ClientBase extends ZKTestCase {
         thread.join(millis);
         if (thread.isAlive()) {
             LOG.error("Thread {} : {}", thread.getName(), Arrays.toString(thread.getStackTrace()));
-            assertFalse("thread " + thread.getName() + " still alive after join", true);
+            fail("thread " + thread.getName() + " still alive after join");
         }
     }
 
@@ -351,6 +380,9 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     static File createTmpDir(File parentDir, boolean createInitFile) throws IOException {
+        if (!parentDir.exists()) {
+            parentDir.mkdir();
+        }
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
@@ -383,22 +415,29 @@ public abstract class ClientBase extends ZKTestCase {
         return Integer.parseInt(portstr);
     }
 
+    public static void startServerInstance(File dataDir,
+        ServerCnxnFactory factory,
+        String hostPort,
+        int serverId) throws IOException, InterruptedException {
+        startServerInstance(dataDir, factory, hostPort, serverId, null);
+    }
+
     /**
      * Starting the given server instance
      */
     public static void startServerInstance(
-            File dataDir,
-            ServerCnxnFactory factory,
-            String hostPort,
-            int serverId) throws IOException, InterruptedException {
+        File dataDir,
+        ServerCnxnFactory factory,
+        String hostPort,
+        int serverId, ZKConfig zkConfig) throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
         assertTrue(
-                "waiting for server up",
-                ClientBase.waitForServerUp("127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure()));
+            "waiting for server up",
+            ClientBase.waitForServerUp("127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure(), zkConfig));
     }
 
     /**
@@ -416,9 +455,9 @@ public abstract class ClientBase extends ZKTestCase {
      *      for more information.
      */
     public static ServerCnxnFactory createNewServerInstance(
-            ServerCnxnFactory factory,
-            String hostPort,
-            int maxCnxns) throws IOException, InterruptedException {
+        ServerCnxnFactory factory,
+        String hostPort,
+        int maxCnxns) throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("CREATING server instance 127.0.0.1:{}", port);
         if (factory == null) {
@@ -447,8 +486,8 @@ public abstract class ClientBase extends ZKTestCase {
             final int PORT = getPort(hostPort);
 
             assertTrue(
-                    "waiting for server down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT, factory.isSecure()));
+                "waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + PORT, CONNECTION_TIMEOUT, factory.isSecure()));
         }
     }
 
@@ -465,7 +504,7 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     protected void setUpAll() throws Exception {
-        allClients = new LinkedList<ZooKeeper>();
+        allClients = new LinkedList<>();
         allClientsSetup = true;
     }
 
@@ -738,9 +777,15 @@ public abstract class ClientBase extends ZKTestCase {
         return createZKClient(cxnString, sessionTimeout, CONNECTION_TIMEOUT);
     }
 
-    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout, long connectionTimeout) throws IOException {
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
+        long connectionTimeout) throws IOException {
+        return createZKClient(cxnString, sessionTimeout, connectionTimeout, new ZKClientConfig());
+    }
+
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
+        long connectionTimeout, ZKClientConfig config) throws IOException {
         CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher);
+        ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher, config);
         try {
             watcher.waitForConnected(connectionTimeout);
         } catch (InterruptedException | TimeoutException e) {

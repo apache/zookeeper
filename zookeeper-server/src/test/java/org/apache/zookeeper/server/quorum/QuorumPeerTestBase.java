@@ -60,14 +60,17 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
     @After
     public void tearDown() throws Exception {
-        if (servers == null || servers.mt == null) {
+        if (servers == null) {
             LOG.info("No servers to shutdown!");
             return;
         }
-        for (int i = 0; i < numServers; i++) {
-            if (i < servers.mt.length) {
-                servers.mt[i].shutdown();
-            }
+
+        if (servers.zk != null) {
+            servers.shutdownAllClients();
+        }
+
+        if (servers.mt != null) {
+            servers.shutDownAllServers();
         }
     }
 
@@ -407,6 +410,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         MainThread[] mt;
         ZooKeeper[] zk;
         int[] clientPorts;
+        public int[] adminPorts;
 
         public void shutDownAllServers() throws InterruptedException {
             for (MainThread t : mt) {
@@ -414,10 +418,19 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
 
+        public void shutdownAllClients() throws InterruptedException {
+            for (ZooKeeper zk : zk) {
+                zk.close(5000);
+            }
+        }
+
         public void restartAllServersAndClients(Watcher watcher) throws IOException, InterruptedException {
+            int index = 0;
             for (MainThread t : mt) {
                 if (!t.isAlive()) {
+                    System.setProperty("zookeeper.admin.serverPort", String.valueOf(adminPorts[index]));
                     t.start();
+                    index++;
                 }
             }
             for (int i = 0; i < zk.length; i++) {
@@ -498,6 +511,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                     i, PortAssignment.unique(), PortAssignment.unique(), role,
                     svrs.clientPorts[i]));
         }
+
+        svrs.adminPorts = new int[SERVER_COUNT];
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            svrs.adminPorts[i] = PortAssignment.unique();
+        }
+
         String quorumCfgSection = sb.toString();
 
         svrs.mt = new MainThread[SERVER_COUNT];
@@ -508,6 +527,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } else {
                 svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection);
             }
+            System.setProperty("zookeeper.admin.serverPort", String.valueOf(svrs.adminPorts[i]));
             svrs.mt[i].start();
             svrs.restartClient(i, this);
         }

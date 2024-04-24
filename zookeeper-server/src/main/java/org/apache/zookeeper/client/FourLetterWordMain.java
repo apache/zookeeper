@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.client;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -90,30 +91,55 @@ public class FourLetterWordMain {
         String cmd,
         boolean secure,
         int timeout) throws IOException, SSLContextException {
-        LOG.info("connecting to {} {}", host, port);
-        Socket sock;
-        InetSocketAddress hostaddress = host != null
-            ? new InetSocketAddress(host, port)
-            : new InetSocketAddress(InetAddress.getByName(null), port);
-        if (secure) {
-            LOG.info("using secure socket");
-            try (X509Util x509Util = new ClientX509Util()) {
-                SSLContext sslContext = x509Util.getDefaultSSLContext();
+        return send4LetterWord(host, port, cmd, secure, timeout, null);
+    }
+
+    /**
+     * Send the 4letterword
+     * @param host the destination host
+     * @param port the destination port
+     * @param cmd the 4letterword
+     * @param secure whether to use SSL
+     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
+     * @param sslContext SSL context
+     * @return server response
+     * @throws java.io.IOException
+     * @throws SSLContextException
+     */
+    public static String send4LetterWord(
+        String host,
+        int port,
+        String cmd,
+        boolean secure,
+        int timeout,
+        SSLContext sslContext) throws IOException, SSLContextException {
+        LOG.info("connecting to {}:{} (secure={})", host, port, secure);
+
+        Socket sock = null;
+        BufferedReader reader = null;
+        try {
+            InetSocketAddress hostaddress = host != null
+                ? new InetSocketAddress(host, port)
+                : new InetSocketAddress(InetAddress.getByName(null), port);
+            if (secure) {
+                LOG.info("using secure socket");
+                if (sslContext == null) {
+                    try (X509Util x509Util = new ClientX509Util()) {
+                        sslContext = x509Util.getDefaultSSLContext();
+                    }
+                }
                 SSLSocketFactory socketFactory = sslContext.getSocketFactory();
                 SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
                 sslSock.connect(hostaddress, timeout);
                 sslSock.startHandshake();
                 sock = sslSock;
+            } else {
+                sock = new Socket();
+                sock.connect(hostaddress, timeout);
             }
-        } else {
-            sock = new Socket();
-            sock.connect(hostaddress, timeout);
-        }
-        sock.setSoTimeout(timeout);
-        BufferedReader reader = null;
-        try {
+            sock.setSoTimeout(timeout);
             OutputStream outstream = sock.getOutputStream();
-            outstream.write(cmd.getBytes());
+            outstream.write(cmd.getBytes(UTF_8));
             outstream.flush();
 
             // this replicates NC - close the output stream before reading
@@ -132,7 +158,9 @@ public class FourLetterWordMain {
         } catch (SocketTimeoutException e) {
             throw new IOException("Exception while executing four letter word: " + cmd, e);
         } finally {
-            sock.close();
+            if (sock != null) {
+                sock.close();
+            }
             if (reader != null) {
                 reader.close();
             }
