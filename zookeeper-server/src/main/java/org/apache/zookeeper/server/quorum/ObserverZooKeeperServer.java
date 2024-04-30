@@ -44,7 +44,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
      * take periodic snapshot. Default is ON.
      */
 
-    private boolean syncRequestProcessorEnabled = this.self.getSyncEnabled();
+    private final boolean syncRequestProcessorEnabled = this.self.getSyncEnabled();
 
     /*
      * Pending sync requests
@@ -125,18 +125,6 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     @Override
     public String getState() {
         return "observer";
-    }
-
-    @Override
-    public synchronized void shutdown() {
-        if (!canShutdown()) {
-            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
-        }
-        super.shutdown();
-        if (syncRequestProcessorEnabled && syncProcessor != null) {
-            syncProcessor.shutdown();
-        }
     }
 
     @Override

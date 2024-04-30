@@ -190,8 +190,9 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
+            super.shutdown(fullyShutDown);
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
@@ -206,7 +207,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
         self.adminServer.setZooKeeperServer(null);
 
         // shutdown the server itself
-        super.shutdown();
+        super.shutdown(fullyShutDown);
     }
 
     @Override

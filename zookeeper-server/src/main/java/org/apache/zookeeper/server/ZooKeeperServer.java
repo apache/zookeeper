@@ -924,7 +924,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return state == State.RUNNING;
     }
 
-    public void shutdown() {
+    public final void shutdown() {
         shutdown(false);
     }
 
