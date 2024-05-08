@@ -54,6 +54,8 @@ import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.RateLogger;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.apache.zookeeper.metrics.impl.BaseMetricsProvider;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -66,7 +68,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.6.0
  */
-public class PrometheusMetricsProvider implements MetricsProvider {
+public class PrometheusMetricsProvider extends BaseMetricsProvider implements MetricsProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrometheusMetricsProvider.class);
     private static final String LABEL = "key";
@@ -348,6 +350,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         @Override
         public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
+            if (getSummarySetBlackList().contains(name)) {
+                return new NullMetricsProvider.NullSummarySet();
+            }
             if (detailLevel == DetailLevel.BASIC) {
                 return basicSummarySets.computeIfAbsent(name, (n) -> {
                     if (summarySets.containsKey(n)) {

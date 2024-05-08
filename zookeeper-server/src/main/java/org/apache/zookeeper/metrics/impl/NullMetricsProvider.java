@@ -36,7 +36,7 @@ import org.apache.zookeeper.metrics.SummarySet;
 public class NullMetricsProvider implements MetricsProvider {
 
     /**
-     * Instance of NullMetricsProvider useful for tests.
+     * Instance of NullMetricsProvider useful for tests and balck list.
      */
     public static final MetricsProvider INSTANCE = new NullMetricsProvider();
 
@@ -146,7 +146,7 @@ public class NullMetricsProvider implements MetricsProvider {
 
     }
 
-    private static final class NullSummarySet implements SummarySet {
+    public static final class NullSummarySet implements SummarySet {
 
         private static final NullSummarySet INSTANCE = new NullSummarySet();
 
