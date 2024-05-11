@@ -436,7 +436,7 @@ in the unlikely event a recent log has become corrupted). This
 can be run as a cron job on the ZooKeeper server machines to
 clean up the logs daily.
 
-    java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar:lib/logback-core-1.2.10.jar:conf org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
+    CLASSPATH='lib/*:conf' java org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
 
 
 Automatic purging of the snapshots and corresponding

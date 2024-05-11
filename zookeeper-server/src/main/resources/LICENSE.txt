@@ -210,6 +210,6 @@ This distribution bundles jline 2.14.6, which is available under the
 2-clause BSD License. For details, see a copy of the license in
 lib/jline-2.14.6.LICENSE.txt
 
-This distribution bundles SLF4J 1.7.30, which is available under the MIT
+This distribution bundles SLF4J 2.0.13, which is available under the MIT
 License. For details, see a copy of the license in
-lib/slf4j-1.7.30.LICENSE.txt
+lib/slf4j-2.0.13.LICENSE.txt
