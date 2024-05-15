@@ -29,7 +29,7 @@ version of ZooKeeper is 3.8.x and the **current** version is 3.9.x. Once a new m
 version is expected to be decommissioned soon and in approximately half a year will be announced as End-of-Life. During 
 the half year grace period only security and critical fixes are expected to be released for the version. After EoL is 
 announced no further patches are provided by the community. All ZooKeeper releases will remain accessible 
-from the official Apache Archives.
+from [the official Apache Archives](https://archive.apache.org/dist/zookeeper/).
 
 <a name="download"></a>
 ## Download
