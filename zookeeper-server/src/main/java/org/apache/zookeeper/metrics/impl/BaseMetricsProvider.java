@@ -28,7 +28,7 @@ import java.util.List;
  * 提供默认的实现，当前包含summarySet黑名单功能。
  */
 public class BaseMetricsProvider {
-    public static String summarySetBlackList = "zookeeper.summarySetBlackList";
+    public static final String summarySetBlackList = "zookeeper.summarySetBlackList";
 
     public static final List<String> getSummarySetBlackList() {
         String summarySetBlackListConfig = System.getProperty(summarySetBlackList);
