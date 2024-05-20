@@ -18,14 +18,13 @@
 
 package org.apache.zookeeper.metrics.impl;
 
-import org.apache.zookeeper.metrics.MetricsProvider;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.zookeeper.metrics.MetricsProvider;
 
 /**
  * Base implementation of {@link MetricsProvider}.<br>
- * 提供默认的实现，当前包含summarySet黑名单功能。
+ * Provide a default implementation that currently includes the summarySet blacklist feature.
  */
 public class BaseMetricsProvider {
     public static final String summarySetBlackList = "zookeeper.summarySetBlackList";

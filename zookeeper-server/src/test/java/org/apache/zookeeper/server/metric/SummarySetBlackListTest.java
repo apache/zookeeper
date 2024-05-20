@@ -18,15 +18,13 @@
 
 package org.apache.zookeeper.server.metric;
 
+import static org.junit.Assert.assertTrue;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.zookeeper.metrics.impl.BaseMetricsProvider;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.assertTrue;
 
 public class SummarySetBlackListTest {
 
