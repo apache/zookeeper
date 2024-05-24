@@ -41,7 +41,7 @@ public class StatsTrackTest {
          * the stat string should be of the form count=int,bytes=long
          * if stats is called with null the count and bytes are initialized
          * to -1.
-         * @param stats the stat string to be intialized with
+         * @param stats the stat string to be initialized with
          */
         public OldStatsTrack(String stats) {
             if (stats == null) {
@@ -85,7 +85,7 @@ public class StatsTrackTest {
         }
 
         /**
-         * set teh bytes for this stat tracker.
+         * set the bytes for this stat tracker.
          *
          * @param bytes
          *            the bytes to set with

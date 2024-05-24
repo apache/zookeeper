@@ -262,7 +262,7 @@ public class ClientTest extends ClientBase {
      * in the right order.
      */
     @Test
-    public void testMutipleWatcherObjs() throws IOException, InterruptedException, KeeperException {
+    public void testMultipleWatcherObjs() throws IOException, InterruptedException, KeeperException {
         ZooKeeper zk = createClient(new CountdownWatcher(), hostPort);
         try {
             MyWatcher[] watchers = new MyWatcher[100];

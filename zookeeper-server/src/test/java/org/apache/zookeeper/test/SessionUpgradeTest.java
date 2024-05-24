@@ -94,7 +94,7 @@ public class SessionUpgradeTest extends ZKTestCase {
         byte[] localSessionPwd = zk.getSessionPasswd().clone();
 
         // Try connecting with the same session id on a different
-        // server.  This should fail since it is a local sesion.
+        // server.  This should fail since it is a local session.
         try {
             watcher.reset();
             DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher, localSessionId, localSessionPwd);

@@ -186,9 +186,9 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         assertEquals(sum, values.get("sum_" + metricName), "expected sum is: " + sum);
     }
 
-    private void checkTimeMetric(long actual, long lBoundrary, long hBoundrary) {
-        assertThat(actual, greaterThanOrEqualTo(lBoundrary));
-        assertThat(actual, lessThanOrEqualTo(hBoundrary));
+    private void checkTimeMetric(long actual, long lBoundary, long hBoundary) {
+        assertThat(actual, greaterThanOrEqualTo(lBoundary));
+        assertThat(actual, lessThanOrEqualTo(hBoundary));
     }
 
     private Request createReadRequest(long sessionId, int xid) {
@@ -386,7 +386,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         commitProcessor.processRequest(createReadRequest(1L, 4));
         requestScheduled.await(5, TimeUnit.SECONDS);
 
-        //add a commit request to trigger waitForEmptyPool, which will record number of requests being proccessed
+        //add a commit request to trigger waitForEmptyPool, which will record number of requests being processed
         poolEmptied = new CountDownLatch(1);
         commitProcessor.commit(createWriteRequest(1L, 1));
         poolEmptied.await(5, TimeUnit.SECONDS);

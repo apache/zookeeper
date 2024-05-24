@@ -51,14 +51,14 @@ public class SnapStream {
 
     private static final Logger LOG = LoggerFactory.getLogger(SnapStream.class);
 
-    public static final String ZOOKEEPER_SHAPSHOT_STREAM_MODE = "zookeeper.snapshot.compression.method";
+    public static final String ZOOKEEPER_SNAPSHOT_STREAM_MODE = "zookeeper.snapshot.compression.method";
 
     private static StreamMode streamMode = StreamMode.fromString(
-        System.getProperty(ZOOKEEPER_SHAPSHOT_STREAM_MODE,
+        System.getProperty(ZOOKEEPER_SNAPSHOT_STREAM_MODE,
                            StreamMode.DEFAULT_MODE.getName()));
 
     static {
-        LOG.info("{} = {}", ZOOKEEPER_SHAPSHOT_STREAM_MODE, streamMode);
+        LOG.info("{} = {}", ZOOKEEPER_SNAPSHOT_STREAM_MODE, streamMode);
     }
 
     public enum StreamMode {
@@ -182,7 +182,7 @@ public class SnapStream {
     /**
      * Verifies that the file is a valid snapshot. Snapshot may be invalid if
      * it's incomplete as in a situation when the server dies while in the
-     * process of storing a snapshot. Any files that are improperly formated
+     * process of storing a snapshot. Any files that are improperly formatted
      * or corrupted are invalid. Any file that is not a snapshot is also an
      * invalid snapshot.
      *

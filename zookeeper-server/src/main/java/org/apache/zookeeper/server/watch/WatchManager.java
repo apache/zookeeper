@@ -137,7 +137,7 @@ public class WatchManager implements IWatchManager {
     }
 
     @Override
-    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet supress) {
+    public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
         Set<Watcher> watchers = new HashSet<>();
         synchronized (this) {
@@ -182,7 +182,7 @@ public class WatchManager implements IWatchManager {
         }
 
         for (Watcher w : watchers) {
-            if (supress != null && supress.contains(w)) {
+            if (suppress != null && suppress.contains(w)) {
                 continue;
             }
             if (w instanceof ServerWatcher) {

@@ -468,7 +468,7 @@ public class ZKDatabase {
     }
 
     /**
-     * the process txn on the data and perform digest comparision.
+     * the process txn on the data and perform digest comparison.
      * @param hdr the txnheader for the txn
      * @param txn the transaction that needs to be processed
      * @param digest the expected digest. A null value would skip the check
@@ -666,7 +666,7 @@ public class ZKDatabase {
     /**
      * append to the underlying transaction log
      * @param si the request to append
-     * @return true if the append was succesfull and false if not
+     * @return true if the append was successful and false if not
      */
     public boolean append(Request si) throws IOException {
         if (this.snapLog.append(si)) {

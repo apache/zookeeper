@@ -1211,7 +1211,7 @@ property, when available, is noted below.
     The default value is false.
 
 * *serializeLastProcessedZxid.enabled*
-  (Jave system property: **zookeeper.serializeLastProcessedZxid.enabled**)
+  (Java system property: **zookeeper.serializeLastProcessedZxid.enabled**)
   **New in 3.9.0:**
   If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
   when restore. Defaults to true. Needs to be enabled for performing snapshot and restore

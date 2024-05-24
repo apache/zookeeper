@@ -74,7 +74,7 @@ int addrvec_grow(addrvec_t *avec, uint32_t grow_amount);
 int addrvec_grow_default(addrvec_t *avec);
 
 /**
- * Check if an addrvec contains the specificed sockaddr_storage value.
+ * Check if an addrvec contains the specified sockaddr_storage value.
  * \returns 1 if it contains the value and 0 otherwise.
  */
 int addrvec_contains(const addrvec_t *avec, const struct sockaddr_storage *addr);

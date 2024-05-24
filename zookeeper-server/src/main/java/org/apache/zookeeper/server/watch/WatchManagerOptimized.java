@@ -312,7 +312,7 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
     @Override
     public WatchesReport getWatches() {
         Map<Long, Set<String>> id2paths = new HashMap<>();
-        for (Entry<Watcher, Set<String>> e : getWatcher2PathesMap().entrySet()) {
+        for (Entry<Watcher, Set<String>> e : getWatcher2PathsMap().entrySet()) {
             Long id = ((ServerCnxn) e.getKey()).getSessionId();
             Set<String> paths = new HashSet<>(e.getValue());
             id2paths.put(id, paths);
@@ -349,7 +349,7 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
      * May cause OOM if there are lots of watches, might better to forbid
      * it in this class.
      */
-    public Map<Watcher, Set<String>> getWatcher2PathesMap() {
+    public Map<Watcher, Set<String>> getWatcher2PathsMap() {
         Map<Watcher, Set<String>> watcher2paths = new HashMap<>();
         for (Entry<String, BitHashSet> e : pathWatches.entrySet()) {
             String path = e.getKey();
@@ -390,7 +390,7 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
                 }
             }
         } else {
-            for (Entry<Watcher, Set<String>> e : getWatcher2PathesMap().entrySet()) {
+            for (Entry<Watcher, Set<String>> e : getWatcher2PathsMap().entrySet()) {
                 pwriter.print("0x");
                 pwriter.println(Long.toHexString(((ServerCnxn) e.getKey()).getSessionId()));
                 for (String path : e.getValue()) {

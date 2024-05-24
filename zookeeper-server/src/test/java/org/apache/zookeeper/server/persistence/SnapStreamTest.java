@@ -39,7 +39,7 @@ public class SnapStreamTest {
 
     @AfterEach
     public void tearDown() {
-        System.clearProperty(SnapStream.ZOOKEEPER_SHAPSHOT_STREAM_MODE);
+        System.clearProperty(SnapStream.ZOOKEEPER_SNAPSHOT_STREAM_MODE);
         SnapStream.setStreamMode(StreamMode.DEFAULT_MODE);
     }
 
