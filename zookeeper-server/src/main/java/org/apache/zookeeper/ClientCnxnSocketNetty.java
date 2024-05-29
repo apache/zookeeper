@@ -354,9 +354,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         boolean anyPacketsSent = false;
         while (true) {
             if (p != WakeupPacket.getInstance()) {
-                if ((p.requestHeader != null)
-                    && (p.requestHeader.getType() != ZooDefs.OpCode.ping)
-                    && (p.requestHeader.getType() != ZooDefs.OpCode.auth)) {
+                if (p.requestHeader != null && p.requestHeader.getXid() >= 0) {
                     p.requestHeader.setXid(cnxn.getXid());
                     synchronized (pendingQueue) {
                         pendingQueue.add(p);
