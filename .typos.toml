@@ -33,6 +33,9 @@
 "thr" = "thr"
 "ths" = "ths"
 "wew" = "wew"
+# keep for comptability
+"pathes" = "pathes"
+"shapshot" = "shapshot"
 # keyword fp
 "atend" = "atend"
 "chec" = "chec"
