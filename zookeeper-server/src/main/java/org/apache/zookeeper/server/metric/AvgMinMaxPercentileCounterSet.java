@@ -70,6 +70,14 @@ public class AvgMinMaxPercentileCounterSet extends Metric implements SummarySet 
     }
 
     @Override
+    public void remove(String key) {
+        if (key == null) {
+            return;
+        }
+        counters.remove(key);
+    }
+
+    @Override
     public Map<String, Object> values() {
         Map<String, Object> m = new LinkedHashMap<>();
         for (Map.Entry<String, AvgMinMaxPercentileCounter> entry : counters.entrySet()) {

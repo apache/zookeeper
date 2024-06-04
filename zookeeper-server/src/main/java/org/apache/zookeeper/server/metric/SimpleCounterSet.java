@@ -42,6 +42,14 @@ public class SimpleCounterSet extends Metric implements CounterSet {
     }
 
     @Override
+    public void remove(String key) {
+        if (key == null) {
+            return;
+        }
+        counters.remove(key);
+    }
+
+    @Override
     public void reset() {
         counters.values().forEach(SimpleCounter::reset);
     }

@@ -2416,5 +2416,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         ServerMetrics.getMetrics().QUOTA_EXCEEDED_ERROR_PER_NAMESPACE.add(namespace, 1);
     }
+
+    static void removeQuotaExceededMetrics(final String namespace) {
+        if (namespace == null) {
+            return;
+        }
+        ServerMetrics.getMetrics().QUOTA_EXCEEDED_ERROR_PER_NAMESPACE.remove(namespace);
+    }
 }
 
