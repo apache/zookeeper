@@ -47,9 +47,12 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     private static int SERVER_COUNT = 3;
     private MainThread[] mt = new MainThread[SERVER_COUNT];
 
+    /**
+     * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-4837.
+     */
     @Test
     @Timeout(value = 300)
-    public void testEphemeralNodeDeletionNewBug() throws Exception {
+    public void testEphemeralNodeDeletionZK4837() throws Exception {
         final int[] clientPorts = new int[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
         String server;
@@ -63,7 +66,6 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         String currentQuorumCfgSection = sb.toString();
         // start all the servers
         for (int i = 0; i < SERVER_COUNT; i++) {
-            final int customId = i;
             mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false) {
                 @Override
                 public TestQPMain getTestQPMain() {
@@ -133,7 +135,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         assertNodeNotExist(nodePath, 2);
         assertNodeNotExist(nodePath, 1);
 
-        // Node is not deleted from 0
+        // If buggy, node is not deleted from 0
         assertNodeNotExist(nodePath, 0);
     }
 
