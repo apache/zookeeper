@@ -572,13 +572,11 @@ public class DataTreeTest extends ZKTestCase {
         readBytes1 += CHILD2PATH.length() + DataTree.STAT_OVERHEAD_BYTES;
         dt.getChildren(TOP1PATH, new Stat(), null);
         readBytes1 += TOP1PATH.length() + CHILD1.length() + CHILD2.length() + DataTree.STAT_OVERHEAD_BYTES;
-        dt.deleteNode(TOP1PATH, 1);
-        writeBytes1 += TOP1PATH.length();
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         System.out.println("values:" + values);
         assertEquals(writeBytes1, values.get("sum_" + TOP1 + "_write_per_namespace"));
-        assertEquals(5L, values.get("cnt_" + TOP1 + "_write_per_namespace"));
+        assertEquals(4L, values.get("cnt_" + TOP1 + "_write_per_namespace"));
         assertEquals(writeBytes2, values.get("sum_" + TOP2 + "_write_per_namespace"));
         assertEquals(1L, values.get("cnt_" + TOP2 + "_write_per_namespace"));
 
@@ -586,6 +584,7 @@ public class DataTreeTest extends ZKTestCase {
         assertEquals(3L, values.get("cnt_" + TOP1 + "_read_per_namespace"));
         assertEquals(readBytes2, values.get("sum_" + TOP2 + "_read_per_namespace"));
         assertEquals(1L, values.get("cnt_" + TOP2 + "_read_per_namespace"));
+        dt.deleteNode(TOP1PATH, 1);
     }
 
     /**
