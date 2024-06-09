@@ -1,5 +1,8 @@
 package org.apache.zookeeper.faaskeeper;
-import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 enum StorageType {
     PERSISTENT, KEY_VALUE, IN_MEMORY;
@@ -72,14 +75,15 @@ class AWSConfig {
         return dataBucket;
     }
 
-    public static AWSConfig deserialize(Map<String, String> data) {
+    public static AWSConfig deserialize(String dataBucket) {
         AWSConfig cfg = new AWSConfig();
-        cfg.dataBucket = data.get("data-bucket");
+        cfg.dataBucket = dataBucket;
         return cfg;
     }
 }
 
-class FaasKeeperConfig {
+public class FaasKeeperConfig {
+    private int port;
     private boolean verbose;
     private CloudProvider provider;
     private String region;
@@ -89,6 +93,10 @@ class FaasKeeperConfig {
     private QueueType writerQueue;
     private AWSConfig providerCfg;
     private ClientChannel clientChannel;
+
+    public int getPort() {
+        return port;
+    }
 
     public boolean isVerbose() {
         return verbose;
@@ -126,19 +134,56 @@ class FaasKeeperConfig {
         return clientChannel;
     }
 
-    public static FaasKeeperConfig deserialize(Map<String, String> data) {
+    public static FaasKeeperConfig deserialize(String jsonString) throws JsonProcessingException, Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(jsonString);
+
+        // Benchmarking config not used currently
+        // JsonNode configurationNode = rootNode.get("configuration");
+        // boolean benchmarking = configurationNode.get("benchmarking").asText().equals("True");
+        // int benchmarkingFrequency = configurationNode.get("benchmarking-frequency").asInt();
+
         FaasKeeperConfig cfg = new FaasKeeperConfig();
-        cfg.verbose = Boolean.parseBoolean(data.get("verbose"));
-        cfg.provider = CloudProvider.deserialize(data.get("cloud-provider"));
-        cfg.region = data.get("deployment-region");
-        cfg.deploymentName = data.get("deployment-name");
-        cfg.heartbeatFrequency = Integer.parseInt(data.get("heartbeat-frequency"));
-        cfg.userStorage = StorageType.deserialize(data.get("user-storage"));
-        cfg.writerQueue = QueueType.deserialize(data.get("worker-queue"));
-        cfg.clientChannel = ClientChannel.deserialize(data.get("client-channel"));
+        
+        cfg.port = rootNode.get("port").asInt();
+        if (cfg.port <= 0 || cfg.port > 65535) {
+            throw new Exception("Port number is out of range: " + cfg.port);
+        }
+
+        cfg.verbose = rootNode.get("verbose").asBoolean();
+        cfg.provider = CloudProvider.deserialize(rootNode.get("cloud-provider").asText());
+
+        cfg.region = rootNode.get("deployment-region").asText();
+        if (cfg.region == "") {
+            throw new Exception("Deployment region is not set");
+        }
+
+        cfg.deploymentName = rootNode.get("deployment-name").asText();
+        if (cfg.deploymentName == "") {
+            throw new Exception("Deployment name is not set");
+        }
+
+        cfg.heartbeatFrequency = rootNode.get("heartbeat-frequency").asInt();
+        if (cfg.heartbeatFrequency <= 0) {
+            throw new Exception("Invalid heartbeat frequency: " + Integer.toString(cfg.heartbeatFrequency));
+        }
+
+        cfg.userStorage = StorageType.deserialize(rootNode.get("user-storage").asText());
+        cfg.writerQueue = QueueType.deserialize(rootNode.get("worker-queue").asText());
+        cfg.clientChannel = ClientChannel.deserialize(rootNode.get("client-channel").asText());
 
         if (cfg.provider == CloudProvider.AWS) {
-            cfg.providerCfg = AWSConfig.deserialize(data);
+            JsonNode awsNode = rootNode.get("aws");
+            if (awsNode == null) {
+                throw new Exception("AWS configuration missing in config.");
+            }
+
+            String dataBucket = awsNode.get("data-bucket").asText();
+            if (dataBucket == "") {
+                throw new Exception("Data bucket is not set in aws configuration");
+            }
+
+            cfg.providerCfg = AWSConfig.deserialize(dataBucket);
         } else {
             throw new UnsupportedOperationException("Provider not supported");
         }
