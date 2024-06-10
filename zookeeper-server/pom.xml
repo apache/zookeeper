@@ -187,6 +187,20 @@
       <artifactId>commons-io</artifactId>
       <scope>compile</scope>
     </dependency>
+
+    <!-- FK Deps begin -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>dynamodb</artifactId>
+      <version>2.20.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.16.0</version>
+    </dependency>
+    <!-- FK Deps end -->
+
   </dependencies>
 
   <build>

@@ -6,10 +6,10 @@ package org.apache.zookeeper.faaskeeper;
 
 public abstract class ProviderClient {
 
-    protected FaasKeeperConfig config;
+    protected static FaasKeeperConfig config;
 
     public ProviderClient(FaasKeeperConfig cfg) {
-        this.config = cfg;
+        config = cfg;
     }
 
     // public abstract SimpleEntry<Node, Optional<Watch>> getData(String path, WatchCallbackType watch, SimpleEntry<String, Integer> listenAddress);

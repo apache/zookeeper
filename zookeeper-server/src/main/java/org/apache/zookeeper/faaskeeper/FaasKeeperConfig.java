@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+
 enum StorageType {
     PERSISTENT, KEY_VALUE, IN_MEMORY;
 
@@ -133,6 +135,14 @@ public class FaasKeeperConfig {
     public ClientChannel getClientChannel() {
         return clientChannel;
     }
+
+    public static FaasKeeperConfig buildFromConfigJson(String configFilePath) throws IOException, JsonProcessingException, Exception {
+        String content = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(configFilePath)));
+        FaasKeeperConfig cfg = FaasKeeperConfig.deserialize(content);
+        return cfg;
+    }
+
+    public FaasKeeperConfig() {}
 
     public static FaasKeeperConfig deserialize(String jsonString) throws JsonProcessingException, Exception {
         ObjectMapper objectMapper = new ObjectMapper();
