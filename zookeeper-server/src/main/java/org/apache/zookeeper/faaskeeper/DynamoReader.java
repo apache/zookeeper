@@ -33,6 +33,8 @@ public class DynamoReader {
             return Base64.getEncoder().encodeToString((byte[]) value);
         } else if (value instanceof String){
             return (String) value;
+        } else if (value instanceof Integer) {
+            return String.valueOf(value);
         } else {
             LOG.error("Unhandled datatype in dynamoDBValue. Default toString() value will be returned");
             return value.toString();

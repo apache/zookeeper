@@ -64,8 +64,9 @@ class CreateNode extends RequestOperation {
 
     public Map<String, Object> generateRequest() {
         Map<String, Object> requestData = new HashMap<>();
+        requestData.put("op", "create_node");
         requestData.put("path", this.path);
-        requestData.put("sessionId", this.sessionId);
+        requestData.put("session_id", this.sessionId);
         requestData.put("version", -1);
         // FIXME: Handle flags in FK. 0 is passed  as flag instead of actual value
         requestData.put("flags", 0);

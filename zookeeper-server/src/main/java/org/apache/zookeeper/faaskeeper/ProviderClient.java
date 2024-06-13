@@ -1,5 +1,7 @@
 package org.apache.zookeeper.faaskeeper;
 
+import java.util.Map;
+
 // import java.util.List;
 // import java.util.Optional;
 // import java.util.AbstractMap.SimpleEntry;
@@ -19,6 +21,8 @@ public abstract class ProviderClient {
     // public abstract SimpleEntry<List<Node>, Optional<Watch>> getChildren(String path, boolean includeData);
 
     public abstract void registerSession(String sessionId, String sourceAddr, boolean heartbeat);
+
+    public abstract void sendRequest(String requestId, Map <String, Object> data) throws Exception;
 
     // public abstract Watch registerWatch(Node node, WatchType watchType, WatchCallbackType watch, SimpleEntry<String, Integer> listenAddress);
 

@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FaasKeeperClient {
+    // TODO: Move this reqId to the queue once implemented
+    private int reqIdTempRemoveLater = 0;
     private FaasKeeperConfig cfg;
     private int port;
     private boolean heartbeat = true;
@@ -56,6 +58,15 @@ public class FaasKeeperClient {
             LOG.error("Error in creating client", e);
             throw e;
         }
+    }
+
+    // flags represents createmode in its bit representation
+    public String create(String path, byte[] value, int flags) throws Exception {
+        String requestId = sessionId + "-" + String.valueOf(reqIdTempRemoveLater);
+        reqIdTempRemoveLater = reqIdTempRemoveLater + 1;
+        CreateNode requestOp = new CreateNode(sessionId, path, value, flags);
+        providerClient.sendRequest(requestId, requestOp.generateRequest());
+        return path;
     }
 }
 

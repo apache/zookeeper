@@ -45,6 +45,7 @@ public class AwsClient extends ProviderClient {
         
         this.userTable = String.format("faaskeeper-%s-users", config.getDeploymentName());
         this.writerQueueName = String.format("faaskeeper-%s-writer-sqs.fifo", config.getDeploymentName());
+        // this.writerQueueName = "fk-test.fifo";
         this.writerQueueUrl = sqs.getQueueUrl(writerQueueName).getQueueUrl();
     }
 
@@ -71,9 +72,13 @@ public class AwsClient extends ProviderClient {
 
     public void sendRequest(String requestId, Map <String, Object> data) throws Exception {
         try {
-            if (config.getWriterQueue() == QueueType.SQS) {
+            if (config.getWriterQueue() == QueueType.SQS) { 
                 ObjectMapper objectMapper = new ObjectMapper();
-                String serializedData = objectMapper.writeValueAsString(data);
+                
+                // Format data for ddb format and convert to JSON string
+                String serializedData = objectMapper.writeValueAsString(DynamoReader.convertItems(data));
+                // String serializedData = objectMapper.writeValueAsString(data);
+
                 LOG.info("Attempting to send msg: " + serializedData);
 
                 SendMessageRequest send_msg_request = new SendMessageRequest()
