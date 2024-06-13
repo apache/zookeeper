@@ -41,8 +41,8 @@ public class QuorumUtilTest extends ZKTestCase {
     /**
      * <p>
      * This test ensures that all JXM beans associated to a {@link QuorumPeer}
-     * are unregistered when shuted down ({@link QuorumUtil#shutdown(int)}). It
-     * allows a successfulrestarting of several zookeeper servers (
+     * are unregistered when shut down ({@link QuorumUtil#shutdown(int)}). It
+     * allows a successful restarting of several zookeeper servers (
      * {@link QuorumPeer}) running on the same JVM.
      * <p>
      * See ZOOKEEPER-1214 for details.

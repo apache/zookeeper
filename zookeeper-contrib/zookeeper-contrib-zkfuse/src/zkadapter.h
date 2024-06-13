@@ -616,7 +616,7 @@ class ZooKeeperAdapter
 
         /**
          * Returns the remaining connect timeout. The timeout resets
-         * to {@link #m_connectTimeout} on a successfulconnection to the ZK.
+         * to {@link #m_connectTimeout} on a successful connection to the ZK.
          * 
          * @return the remaining connect timeout, in milliseconds
          */
