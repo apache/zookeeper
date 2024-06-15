@@ -298,7 +298,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public void writeTempDynamicConfigFile(String nextQuorumCfgSection, String version) throws IOException {
-            File nextDynamicConfigFile = new File(tmpDir, "zoo.cfg" + QuorumPeerConfig.nextDynamicConfigFileSuffix);
+            File nextDynamicConfigFile = new File(tmpDir, "zoo.cfg" + QuorumPeerConfig.NEXT_DYNAMIC_CONFIG_FILE_SUFFIX);
             FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
             fwriter.write(nextQuorumCfgSection + "\n" + "version=" + version);
             fwriter.flush();
