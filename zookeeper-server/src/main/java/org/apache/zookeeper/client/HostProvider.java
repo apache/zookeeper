@@ -38,7 +38,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  *
  * Different HostProvider could be imagined:
  *
- * * A HostProvider that loads the list of Hosts from an URL or from DNS
+ * * A HostProvider that loads the list of Hosts from a URL or from DNS
  * * A HostProvider that re-resolves the InetSocketAddress after a timeout.
  * * A HostProvider that prefers nearby hosts.
  */
