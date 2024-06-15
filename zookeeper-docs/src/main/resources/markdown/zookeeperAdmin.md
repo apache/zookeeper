@@ -727,6 +727,12 @@ property, when available, is noted below.
     will allow the client to negotiate. Defaults to 20 times
     the **tickTime**.
 
+* *registerShutdownHook* :
+    (No Java system property)
+    **New in 3.9.0:**
+    When set to true the ZooKeeper will register a hook to respond to SIGTERM signals and shutdown
+    gracefully (closing opened connections). Defaults to false for backward compatibility.
+
 * *fsync.warningthresholdms* :
     (Java system property: **zookeeper.fsync.warningthresholdms**)
     **New in 3.3.4:** A
