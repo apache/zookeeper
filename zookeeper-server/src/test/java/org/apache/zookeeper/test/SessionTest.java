@@ -121,8 +121,8 @@ public class SessionTest extends ZKTestCase {
     // TODO this test is failing due to client close race condition fixing in separate patch for ZOOKEEPER-63
     //    /**
     //     * this test checks to see if the sessionid that was created for the
-    //     * first zookeeper client can be reused for the second one immidiately
-    //     * after the first client closes and the new client resues them.
+    //     * first zookeeper client can be reused for the second one immediately
+    //     * after the first client closes and the new client reuses them.
     //     * @throws IOException
     //     * @throws InterruptedException
     //     * @throws KeeperException

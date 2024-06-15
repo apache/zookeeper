@@ -51,7 +51,7 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
         /**
          * Base directory of the server.
          * The system will create a temporary configuration file inside this directory.
-         * Please remember that dynamic configuration files wil be saved into this directory by default.
+         * Please remember that dynamic configuration files will be saved into this directory by default.
          * <p>
          * If you do not set a 'dataDir' configuration entry the system will use a subdirectory of baseDir.
          * @param baseDir

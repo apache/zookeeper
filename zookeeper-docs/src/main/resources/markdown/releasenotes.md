@@ -184,7 +184,7 @@ Version 2.2.1 code, documentation, binaries, etc... are still accessible on [Sou
 |[ZOOKEEPER-189](https://issues.apache.org/jira/browse/ZOOKEEPER-189)|forrest build not validated xml of input documents|
 |[ZOOKEEPER-188](https://issues.apache.org/jira/browse/ZOOKEEPER-188)|Check that election port is present for all servers|
 |[ZOOKEEPER-185](https://issues.apache.org/jira/browse/ZOOKEEPER-185)|Improved version of FLETest|
-|[ZOOKEEPER-184](https://issues.apache.org/jira/browse/ZOOKEEPER-184)|tests: An explicit include derective is needed for the usage of memcpy functions|
+|[ZOOKEEPER-184](https://issues.apache.org/jira/browse/ZOOKEEPER-184)|tests: An explicit include directive is needed for the usage of memcpy functions|
 |[ZOOKEEPER-183](https://issues.apache.org/jira/browse/ZOOKEEPER-183)|Array subscript is above array bounds in od_completion, src/cli.c.|
 |[ZOOKEEPER-182](https://issues.apache.org/jira/browse/ZOOKEEPER-182)|zookeeper_init accepts empty host-port string and returns valid pointer to zhandle_t.|
 |[ZOOKEEPER-17](https://issues.apache.org/jira/browse/ZOOKEEPER-17)|zookeeper_init doc needs clarification|
@@ -228,7 +228,7 @@ Version 2.2.1 code, documentation, binaries, etc... are still accessible on [Sou
 |[ZOOKEEPER-56](https://issues.apache.org/jira/browse/ZOOKEEPER-56)|Add clover support to build.xml.|
 |[ZOOKEEPER-75](https://issues.apache.org/jira/browse/ZOOKEEPER-75)|register the ZooKeeper mailing lists with nabble.com|
 |[ZOOKEEPER-54](https://issues.apache.org/jira/browse/ZOOKEEPER-54)|remove sleeps in the tests.|
-|[ZOOKEEPER-55](https://issues.apache.org/jira/browse/ZOOKEEPER-55)|build.xml failes to retrieve a release number from SVN and the ant target "dist" fails|
+|[ZOOKEEPER-55](https://issues.apache.org/jira/browse/ZOOKEEPER-55)|build.xml fails to retrieve a release number from SVN and the ant target "dist" fails|
 |[ZOOKEEPER-89](https://issues.apache.org/jira/browse/ZOOKEEPER-89)|invoke WhenOwnerListener.whenNotOwner when the ZK connection fails|
 |[ZOOKEEPER-90](https://issues.apache.org/jira/browse/ZOOKEEPER-90)|invoke WhenOwnerListener.whenNotOwner when the ZK session expires and the znode is the leader|
 |[ZOOKEEPER-82](https://issues.apache.org/jira/browse/ZOOKEEPER-82)|Make the ZooKeeperServer more DI friendly.|

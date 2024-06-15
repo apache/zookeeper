@@ -309,7 +309,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         assertEquals(output[0], 1, "Expecting old value 1 since 2 isn't committed yet");
 
-        // Do some other update, so we bump the maxCommttedZxid
+        // Do some other update, so we bump the maxCommittedZxid
         // by setting the value to 2
         servers.zk[nonleader].setData(path + nonleader, input, -1);
 

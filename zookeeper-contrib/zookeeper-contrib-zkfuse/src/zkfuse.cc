@@ -320,7 +320,7 @@ enum ZkFuseNameType {
      */
     ZkFuseNameRegType = 1,
     /**
-      ZkFuse path is synthesized and identifies the chidlren part of a
+      ZkFuse path is synthesized and identifies the children part of a
       ZooKeeper node, i.e.  Posix directory semantics is expected.
      */
     ZkFuseNameDirType = 2
@@ -707,7 +707,7 @@ class ZkFuseHandleManager : boost::noncopyable
   ZkFuseHandleManagerFactory - factory for ZkFuseHandleManager.
   
   This is the only way to create a ZkFuseHandleManager instance. 
-  to make sure that _thisWeakPtr of the instance is intialized 
+  to make sure that _thisWeakPtr of the instance is initialized
   after the instance is created.
  */
 class ZkFuseHandleManagerFactory
@@ -1354,7 +1354,7 @@ class ZkFuseFile : boost::noncopyable
          */
         uint32_t version;
         /**
-          Acces time in milliseconds.
+          Access time in milliseconds.
          */
         uint64_t atime;
         /**
@@ -1535,7 +1535,7 @@ class ZkFuseFile : boost::noncopyable
     /**
       Remove a ZkFuse directory.
 
-      If force is true, then the ZooKeeper node and its decendants
+      If force is true, then the ZooKeeper node and its descendants
       will be deleted.
 
       If force is false, then this method implements the semantics
@@ -1614,7 +1614,7 @@ class ZkFuseFile : boost::noncopyable
         the ZooKeeper node has no data.
       - If the ZkFuse regular file represents the data part of the 
         ZooKeeper node which is presented as a ZkFuse regular file,
-        the ZooKeeper node and its decendants are deleted.
+        the ZooKeeper node and its descendants are deleted.
 
       Returns -EISDIR if the ZkFuse regular file cannot be deleted
       because ZkFuse consider it to be a directory.
@@ -1711,7 +1711,7 @@ class ZkFuseFile : boost::noncopyable
       Get attributes without accessing metadata.
       
       The atime and mtime returned does not take into consideration
-      overrides present in a matadata file.
+      overrides present in a metadata file.
 
       \return 0 if successful, otherwise negative errno.
       \param stbuf return attributes here.
@@ -1836,7 +1836,7 @@ class ZkFuseFile : boost::noncopyable
       a client is trying to open the path. \see _refCount.
       Sets deleted to true. \see _deleted.
       Sets number of currently directory opens to zero. \see _openDirCount.
-      Invalidate cach for children information and data. 
+      Invalidate cache for children information and data.
 
       \param manager the ZkFuseHandleManager instance who is creating this 
                      ZkFuseFile instance.
@@ -2909,7 +2909,7 @@ class ZkFuseFile : boost::noncopyable
     /**
       Remove a ZkFuse directory.
 
-      If force is true, then the ZooKeeper node and its decendants
+      If force is true, then the ZooKeeper node and its descendants
       will be deleted.
 
       If force is false, then this method implements the semantics
@@ -2956,7 +2956,7 @@ class ZkFuseFile : boost::noncopyable
         the ZooKeeper node has no data.
       - If the ZkFuse regular file represents the data part of the 
         ZooKeeper node which is presented as a ZkFuse regular file,
-        the ZooKeeper node and its decendants are deleted.
+        the ZooKeeper node and its descendants are deleted.
 
       Returns -EISDIR if the ZkFuse regular file cannot be deleted
       because ZkFuse consider it to be a directory.
@@ -3043,7 +3043,7 @@ ZkFuseHandleManager::allocate(const std::string & path, bool & newFile)
             /* Not really supposed to invoke the new ZkFuseFile instance 
              * because this method is not supposed to invoke ZkFuseFile
              * methods that while holding _mutex. However, it is safe
-             * to do without casuing deadlock because these methods
+             * to do without causing deadlock because these methods
              * are known not to invoke other methods, especially one
              * that invoke this ZkFuseHandleManager instance.
              */

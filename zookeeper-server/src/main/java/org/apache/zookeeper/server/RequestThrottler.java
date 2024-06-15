@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * the connection layer always allows a connection to send at least one request
  * before disabling selection on that connection. Thus, in a scenario with 40000
  * client connections, the total number of requests inflight may be as high as
- * 40000 even if the <code>globalOustandingLimit</code> was set lower.
+ * 40000 even if the <code>globalOutstandingLimit</code> was set lower.
  *
  * The RequestThrottler addresses this issue by adding additional queueing. When
  * enabled, client connections no longer submit requests directly to the request

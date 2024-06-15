@@ -307,7 +307,7 @@ public class ZNodeResource {
             throw new WebApplicationException(Response.status(
                     Response.Status.BAD_REQUEST).entity(
                     new ZError(ui.getRequestUri().toString(), path
-                            + " bad operaton " + op)).build());
+                            + " bad operation " + op)).build());
         }
 
         if (setNull.equals("true")) {
@@ -358,7 +358,7 @@ public class ZNodeResource {
             throw new WebApplicationException(Response.status(
                     Response.Status.BAD_REQUEST).entity(
                     new ZError(ui.getRequestUri().toString(), path
-                            + " bad operaton " + op)).build());
+                            + " bad operation " + op)).build());
         }
 
         if (setNull.equals("true")) {

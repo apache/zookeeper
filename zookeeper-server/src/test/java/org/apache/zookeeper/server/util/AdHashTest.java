@@ -52,7 +52,7 @@ public class AdHashTest extends ZKTestCase {
     }
 
     /**
-     * Test thhe add and remove digest from AdHash is working as expected.
+     * Test the add and remove digest from AdHash is working as expected.
      */
     @Test
     public void testAdHash() throws Exception {

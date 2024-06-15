@@ -56,7 +56,7 @@ public class ObserverTest extends QuorumPeerTestBase implements Watcher {
      * (and will not come up with standalone server).
      */
     @Test
-    public void testObserverWithStandlone() throws Exception {
+    public void testObserverWithStandalone() throws Exception {
         ClientBase.setupTestEnv();
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
 

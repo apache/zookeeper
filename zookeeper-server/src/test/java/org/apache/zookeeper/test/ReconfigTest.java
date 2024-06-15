@@ -553,7 +553,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
 
         // during first and second iteration, leavingIndex will correspond to a
         // follower
-        // during third and fouth iteration leavingIndex will be the index of
+        // during third and fourth iteration leavingIndex will be the index of
         // the leader
         int changingIndex = (leaderIndex == 1) ? 2 : 1;
 

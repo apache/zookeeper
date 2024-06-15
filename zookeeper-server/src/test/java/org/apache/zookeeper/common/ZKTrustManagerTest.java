@@ -125,7 +125,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         });
     }
 
-    private X509Certificate[] createSelfSignedCertifcateChain(String ipAddress, String hostname) throws Exception {
+    private X509Certificate[] createSelfSignedCertificateChain(String ipAddress, String hostname) throws Exception {
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
         nameBuilder.addRDN(BCStyle.CN, "NOT_LOCALHOST");
         Date notBefore = new Date();
@@ -163,7 +163,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, false,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, HOSTNAME);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(IP_ADDRESS, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(0)).getInetAddress();
         assertTrue(hostnameVerifier.hosts.isEmpty());
@@ -177,7 +177,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, true,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, HOSTNAME);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(IP_ADDRESS, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(0)).getInetAddress();
 
@@ -192,7 +192,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, null);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(IP_ADDRESS, null);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(1)).getInetAddress();
 
@@ -207,7 +207,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, false,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(null, HOSTNAME);
         zkTrustManager.checkServerTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(1)).getInetAddress();
 
@@ -222,7 +222,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, false, true,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(1)).getInetAddress();
 
@@ -237,7 +237,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true,
                 false, hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(0)).getInetAddress();
 
@@ -252,7 +252,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, true,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(IP_ADDRESS, null);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(IP_ADDRESS, null);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(1)).getInetAddress();
 
@@ -267,7 +267,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
         ZKTrustManager zkTrustManager = new ZKTrustManager(mockX509ExtendedTrustManager, true, true,
                 hostnameVerifier);
 
-        X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
+        X509Certificate[] certificateChain = createSelfSignedCertificateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
         verify(mockSocket, times(1)).getInetAddress();
 

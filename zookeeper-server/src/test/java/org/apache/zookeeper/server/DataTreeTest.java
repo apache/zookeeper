@@ -260,7 +260,7 @@ public class DataTreeTest extends ZKTestCase {
 
     /* ZOOKEEPER-3531 - org.apache.zookeeper.server.DataTree#serialize calls the aclCache.serialize when doing
      * dataree serialization, however, org.apache.zookeeper.server.ReferenceCountedACLCache#serialize
-     * could get stuck at OutputArchieve.writeInt due to potential network/disk issues.
+     * could get stuck at OutputArchive.writeInt due to potential network/disk issues.
      * This can cause the system experiences hanging issues similar to ZooKeeper-2201.
      * This test verifies the fix that we should not hold ACL cache during dumping aclcache to snapshots
     */

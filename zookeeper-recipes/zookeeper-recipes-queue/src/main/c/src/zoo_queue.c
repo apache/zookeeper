@@ -249,7 +249,7 @@ ZOOAPI int zkr_queue_remove(zkr_queue_t *queue, char *buffer, int *buffer_len){
  *
  * Whichever thread is last to call their required function disposes of the latch.
  *
- * The latch may disposed if no threads will call the waiting, marking, or triggering functions using take_latch_destroy_syncrhonized().
+ * The latch may disposed if no threads will call the waiting, marking, or triggering functions using take_latch_destroy_synchronized().
  */
 
 struct take_latch {

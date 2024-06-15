@@ -169,7 +169,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * i.e., 5 sessions, each has different amount or read requests, followed by
      * single write and afterwards single read. The idea is to check that all of
      * the reads that can be processed concurrently do so, and that none of the
-     * uncommited requests, followed by the reads are processed.
+     * uncommitted requests, followed by the reads are processed.
      */
     @Test
     public void processAsMuchUncommittedRequestsAsPossibleTest() throws Exception {
@@ -224,7 +224,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      */
     @Test
     public void processAllFollowingUncommittedAfterFirstCommitTest() throws Exception {
-        final String path = "/testUncommittedFollowingCommited";
+        final String path = "/testUncommittedFollowingCommitted";
         Set<Request> shouldBeInPending = new HashSet<>();
         Set<Request> shouldBeProcessedAfterPending = new HashSet<>();
 

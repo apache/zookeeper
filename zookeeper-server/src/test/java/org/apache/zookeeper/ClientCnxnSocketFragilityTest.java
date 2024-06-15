@@ -316,7 +316,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         @Override
         protected void onConnecting(InetSocketAddress addr) {
             if (closing) {
-                LOG.info("Attempt to connnecting {} {} {}", addr, closing, state);
+                LOG.info("Attempt to connecting {} {} {}", addr, closing, state);
                 ///////// Unsafe Region ////////
                 // Slow down and zoom out the unsafe point to make risk
                 // The unsafe point is that startConnect happens after sendThread.close

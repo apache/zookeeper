@@ -198,7 +198,7 @@ public class LearnerHandlerTest extends ZKTestCase {
     }
 
     /**
-     * Test cases when leader has empty commitedLog
+     * Test cases when leader has empty committedLog
      */
     @Test
     public void testEmptyCommittedLog() throws Exception {
@@ -327,7 +327,7 @@ public class LearnerHandlerTest extends ZKTestCase {
     public void testTxnLogProposalIteratorClosure() throws Exception {
         long peerZxid;
 
-        // CommmitedLog is empty, we will use txnlog up to lastProcessZxid
+        // CommittedLog is empty, we will use txnlog up to lastProcessZxid
         db = new MockZKDatabase(null) {
             @Override
             public Iterator<Proposal> getProposalsFromTxnLog(long peerZxid, long limit) {
@@ -346,13 +346,13 @@ public class LearnerHandlerTest extends ZKTestCase {
     }
 
     /**
-     * Test cases when txnlog is enabled and commitedLog is empty
+     * Test cases when txnlog is enabled and committedLog is empty
      */
     @Test
     public void testTxnLogOnly() throws Exception {
         long peerZxid;
 
-        // CommmitedLog is empty, we will use txnlog up to lastProcessZxid
+        // CommittedLog is empty, we will use txnlog up to lastProcessZxid
         db.lastProcessedZxid = 7;
         db.txnLog.add(createProposal(2));
         db.txnLog.add(createProposal(3));

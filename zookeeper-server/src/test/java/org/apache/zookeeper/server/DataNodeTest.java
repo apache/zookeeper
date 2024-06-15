@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 public class DataNodeTest {
 
     @Test
-    public void testGetChildrenShouldReturnEmptySetWhenThereAreNoChidren() {
+    public void testGetChildrenShouldReturnEmptySetWhenThereAreNoChildren() {
         // create DataNode and call getChildren
         DataNode dataNode = new DataNode();
         Set<String> children = dataNode.getChildren();

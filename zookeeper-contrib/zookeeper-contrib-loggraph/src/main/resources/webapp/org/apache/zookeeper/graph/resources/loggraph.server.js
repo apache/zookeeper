@@ -250,8 +250,8 @@ LogGraph.ServerGraph.message = function(graph, src, srctime, dst, zxid) {
 	var ty = (this.src.y + this.dst.y)/2;
 	var t = paper.text(tx, ty, this.name);
 	
-	var gradiant = (this.dst.y - this.src.y)/(dstx - srcx);
-	var angle = Math.atan(gradiant) * 57.2958;
+	var gradient = (this.dst.y - this.src.y)/(dstx - srcx);
+	var angle = Math.atan(gradient) * 57.2958;
 	t.rotate(angle, true);
 	
 	var arrowl = paper.path("M" + dstx + " " + this.dst.y + " L" + (dstx - 10) +" " + this.dst.y);

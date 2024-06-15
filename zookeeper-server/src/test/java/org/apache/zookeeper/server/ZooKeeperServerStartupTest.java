@@ -186,11 +186,11 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
                 try {
                     servcnxnf.startup(zks);
                 } catch (IOException e) {
-                    LOG.error("Unexcepted exception during server startup", e);
+                    LOG.error("Unexpected exception during server startup", e);
                     // Ignoring exception. If there is an ioexception
                     // then one of the following assertion will fail
                 } catch (InterruptedException e) {
-                    LOG.error("Unexcepted exception during server startup", e);
+                    LOG.error("Unexpected exception during server startup", e);
                     // Ignoring exception. If there is an interrupted exception
                     // then one of the following assertion will fail
                 }

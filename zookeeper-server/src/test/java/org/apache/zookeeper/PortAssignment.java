@@ -107,7 +107,7 @@ public final class PortAssignment {
      * uses these 2 pieces of information to split the available ports into
      * disjoint ranges.  Each JUnit process only assigns ports from its own range
      * in order to prevent bind errors during concurrent test runs.  If any of
-     * this information is unavailable or unparseable, then the default behavior
+     * this information is unavailable or unparsable, then the default behavior
      * is for this process to use the entire available port range.  This is
      * expected when running tests outside of Ant.
      *

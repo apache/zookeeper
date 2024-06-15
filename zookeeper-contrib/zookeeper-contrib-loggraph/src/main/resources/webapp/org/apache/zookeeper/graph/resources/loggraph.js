@@ -99,7 +99,7 @@ LogGraph = function(canvas, status) {
 
 
     /***
-     * TODO: refactor these to load the data first, before handing to a draw funciton. 
+     * TODO: refactor these to load the data first, before handing to a draw function.
      *       We shouldn't pass the async q into the drawing function
      */
     this.showLogs = function() {

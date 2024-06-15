@@ -553,7 +553,7 @@ public abstract class ClientBase extends ZKTestCase {
         Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree", "StandaloneServer_port");
         // Remove beans which are related to zk client sessions. Strong
         // assertions cannot be done for these client sessions because
-        // registeration of these beans with server will happen only on their
+        // registration of these beans with server will happen only on their
         // respective reconnection interval
         verifyUnexpectedBeans(children);
     }

@@ -167,17 +167,17 @@ public class NodeViewerMetaData extends ZooInspectorNodeViewer {
 
                 private String formatValByKeyType(String key, String value) {
                     if(key==null) return value;
-                    String formatedVal=value;
+                    String formattedVal=value;
                     switch (key){
                         case "Ephemeral Owner":
                             try{
-                                formatedVal = String.format("0x%x", Long.parseLong(value));
+                                formattedVal = String.format("0x%x", Long.parseLong(value));
                             }catch (NumberFormatException e){
                                 LoggerFactory.getLogger().warn("parse {}'s value {} to hex fail",key,value,e);
                             }
                             break;
                     }
-                    return formatedVal;
+                    return formattedVal;
                 }
             };
             worker.execute();

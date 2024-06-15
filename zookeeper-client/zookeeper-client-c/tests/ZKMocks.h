@@ -443,7 +443,7 @@ public:
     void returnSessionExpired(){ sessionExpired=true; }
     
     // this is a one shot trigger that gets reset back to false
-    // next recv call will return 0 length, thus simulating a connecton loss
+    // next recv call will return 0 length, thus simulating a connection loss
     volatile bool connectionLost;
     void setConnectionLost() {connectionLost=true;}
     

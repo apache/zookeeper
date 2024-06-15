@@ -52,7 +52,7 @@ public class ZooKeeperThreadTest extends ZKTestCase {
             super(threadName, new ZooKeeperServerListener() {
 
                 @Override
-                public void notifyStopping(String threadName, int erroCode) {
+                public void notifyStopping(String threadName, int errorCode) {
 
                 }
             });

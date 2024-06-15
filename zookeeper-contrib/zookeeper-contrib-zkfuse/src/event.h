@@ -183,7 +183,7 @@ class GenericEvent {
          * \brief Constructor.
          * 
          * @param type the type of this event
-         * @param eventWarpper the wrapper around event's data
+         * @param eventWrapper the wrapper around event's data
          */
         GenericEvent(int type, AbstractEventWrapper *eventWrapper) : 
             m_type(type), m_eventWrapper(eventWrapper) {

@@ -34,7 +34,7 @@ We found that because the set of objects when the Leader broadcast *PROPOSE* is 
 Therefore, we have made amendments in the spec. When the Leader broadcasts *PROPOSE*, the set of sending objects has been changed from *ackldRecv* to *ackeRecv*. We successfully discovered errors introduced by the vague description of **Q** in the protocol through model checking, and fixed them in the specification.
 
 ## (Issue 2) Issue introduced by lack of client request logic
-Since there is not discriptions about client request, we need to add a process that describes the Leader receives a client request and encapsulates the request as a new log entry and appends it to the local log. This process are represented as action *LeaderProcessRequest* in the spec.
+Since there is no descriptions about client request, we need to add a process that describes the Leader receives a client request and encapsulates the request as a new log entry and appends it to the local log. This process are represented as action *LeaderProcessRequest* in the spec.
 
 In our original specification, when Follower receives the message *PROPOSE*, the *zxid* of the proposed log entry should be the successor *zxid* of the latest local log entry‘s *zxid*, otherwise it will be regarded as an illegal *PROPOSE*.
 

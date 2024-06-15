@@ -83,7 +83,7 @@ int pthread_detach(pthread_t _thread)
 }
 
 void pthread_mutexattr_init(pthread_mutexattr_t* ignore){}
-void pthread_mutexattr_settype(pthread_mutexattr_t* ingore_attr, int ignore){}
+void pthread_mutexattr_settype(pthread_mutexattr_t* ignore_attr, int ignore){}
 void pthread_mutexattr_destroy(pthread_mutexattr_t* ignore_attr){}
        
 int 

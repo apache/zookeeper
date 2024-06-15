@@ -1,13 +1,13 @@
 Release 2.1.1
 2008-04-30 Andrew Kornev <akornev@users.sourceforge.net>
 
-    * changed the distributino package name to "c-client-src"
+    * changed the distributions package name to "c-client-src"
     
 Release 2.1.0
 2008-04-30 Andrew Kornev <akornev@users.sourceforge.net>
 
     * added the client latency diagnostics; the client prints a warning when the
-      reponse latency exceeds 20ms
+      response latency exceeds 20ms
 
     * modified logging format to report the znode path for which the zookeeper 
       operation is called
@@ -31,12 +31,12 @@ Release 1.1.3
     * get_xid() is not thread-safe (xid initialization race condition 
       in the multi-threaded mode).
     
-    * the I/O thread doesn’t automatically terminate on AUTH_FAILURE and 
+    * the I/O thread doesn't automatically terminate on AUTH_FAILURE and
       SESSION_EXPIRED events.
       
     * all session events should be processed on the completion thread. 
     
-    * PING operation doesn’t atomically enqueue the completion and 
+    * PING operation doesn't atomically enqueue the completion and
       send buffers like other operations do.
       
     * corrected zookeeper_init() doxygen docs.

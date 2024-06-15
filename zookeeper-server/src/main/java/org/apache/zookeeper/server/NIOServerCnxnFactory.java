@@ -192,7 +192,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 if (!reconfiguring) {
                     NIOServerCnxnFactory.this.stop();
                 }
-                LOG.info("accept thread exitted run method");
+                LOG.info("accept thread exited run method");
             }
         }
 
@@ -394,7 +394,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 // This will wake up the accept thread and the other selector
                 // threads, and tell the worker thread pool to begin shutdown.
                 NIOServerCnxnFactory.this.stop();
-                LOG.info("selector thread exitted run method");
+                LOG.info("selector thread exited run method");
             }
         }
 
@@ -543,7 +543,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     private class ConnectionExpirerThread extends ZooKeeperThread {
 
         ConnectionExpirerThread() {
-            super("ConnnectionExpirer");
+            super("ConnectionExpirer");
         }
 
         public void run() {
@@ -561,7 +561,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 }
 
             } catch (InterruptedException e) {
-                LOG.info("ConnnectionExpirerThread interrupted");
+                LOG.info("ConnectionExpirerThread interrupted");
             }
         }
 

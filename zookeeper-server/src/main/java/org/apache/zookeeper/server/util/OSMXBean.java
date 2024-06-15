@@ -84,7 +84,7 @@ public class OSMXBean {
                 return (Long) mBeanMethod.invoke(unixos);
             }
         } catch (Exception e) {
-            LOG.warn("Not able to load class or method for com.sun.managment.UnixOperatingSystemMXBean.", e);
+            LOG.warn("Not able to load class or method for com.sun.management.UnixOperatingSystemMXBean.", e);
         }
         return null;
     }

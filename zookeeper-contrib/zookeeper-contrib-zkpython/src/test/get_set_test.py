@@ -70,7 +70,7 @@ class GetSetTest(zktestbase.TestBase):
     def test_stat_deleted_node(self):
         """
         Test for a bug that surfaced when trying to build a
-        stat object from a non-existant node.
+        stat object from a non-existent node.
 
         """
         self.ensureDeleted("/zk-python-test-deleteme")

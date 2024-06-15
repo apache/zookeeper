@@ -116,7 +116,7 @@ public class PurgeTxnTest extends ZKTestCase {
 
     /**
      * Tests purge when logs are rolling or a new snapshot is created, then
-     * these newer files should alse be excluded in the current cycle.
+     * these newer files should also be excluded in the current cycle.
      *
      * For frequent snapshotting, configured SnapCount to 30. There are three
      * threads which will create 1000 znodes each and simultaneously do purge

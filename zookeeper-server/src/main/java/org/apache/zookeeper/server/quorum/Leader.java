@@ -873,7 +873,7 @@ public class Leader extends LearnerMaster {
             closeSockets();
         }
 
-        // NIO should not accept conenctions
+        // NIO should not accept connections
         self.setZooKeeperServer(null);
         self.adminServer.setZooKeeperServer(null);
         self.closeAllConnections();
@@ -904,8 +904,8 @@ public class Leader extends LearnerMaster {
     }
 
     /** In a reconfig operation, this method attempts to find the best leader for next configuration.
-     *  If the current leader is a voter in the next configuartion, then it remains the leader.
-     *  Otherwise, choose one of the new voters that acked the reconfiguartion, such that it is as
+     *  If the current leader is a voter in the next configuration, then it remains the leader.
+     *  Otherwise, choose one of the new voters that acked the reconfiguration, such that it is as
      * up-to-date as possible, i.e., acked as many outstanding proposals as possible.
      *
      * @param reconfigProposal
@@ -982,7 +982,7 @@ public class Leader extends LearnerMaster {
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
             LOG.warn(
-                "Commiting zxid 0x{} from {} not first!",
+                "Committing zxid 0x{} from {} not first!",
                 Long.toHexString(zxid),
                 followerAddr);
             LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));

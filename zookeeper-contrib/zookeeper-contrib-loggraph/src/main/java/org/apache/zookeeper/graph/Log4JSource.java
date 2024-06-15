@@ -289,7 +289,7 @@ public class Log4JSource implements LogSource {
 	String line = in.readLine();
 	Matcher m = null;
 
-	// if we have read data from the file, and it matchs the timep pattern
+	// if we have read data from the file, and it matches the timep pattern
 	if ((line != null) && (m = timep.matcher(line)).lookingAt()) {
 	    starttime = timestampFromText(dateformat, m.group(1));
 	} else {

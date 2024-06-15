@@ -44,7 +44,7 @@ public final class ConnectStringParser {
     private final ArrayList<InetSocketAddress> serverAddresses = new ArrayList<>();
 
     /**
-     * Parse host and port by spliting client connectString
+     * Parse host and port by splitting client connectString
      * with support for IPv6 literals
      * @throws IllegalArgumentException
      *             for an invalid chroot path.

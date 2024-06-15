@@ -57,7 +57,7 @@ public class WriteLock extends ProtocolSupport {
     private LockZooKeeperOperation zop;
 
     /**
-     * zookeeper contructor for writelock.
+     * zookeeper constructor for writelock.
      *
      * @param zookeeper zookeeper client instance
      * @param dir the parent path you want to use for locking
@@ -73,7 +73,7 @@ public class WriteLock extends ProtocolSupport {
     }
 
     /**
-     * zookeeper contructor for writelock with callback.
+     * zookeeper constructor for writelock with callback.
      *
      * @param zookeeper the zookeeper client instance
      * @param dir the parent path you want to use for locking
@@ -174,10 +174,10 @@ public class WriteLock extends ProtocolSupport {
     private class LockZooKeeperOperation implements ZooKeeperOperation {
 
         /**
-         * find if we have been created earler if not create our node.
+         * find if we have been created earlier if not create our node.
          *
          * @param prefix the prefix node
-         * @param zookeeper teh zookeeper client
+         * @param zookeeper the zookeeper client
          * @param dir the dir paretn
          * @throws KeeperException
          * @throws InterruptedException
@@ -225,7 +225,7 @@ public class WriteLock extends ProtocolSupport {
                     // lets force the recreation of the id
                     id = null;
                 } else {
-                    // lets sort them explicitly (though they do seem to come back in order ususally :)
+                    // lets sort them explicitly (though they do seem to come back in order usually :)
                     SortedSet<ZNodeName> sortedNames = new TreeSet<>();
                     for (String name : names) {
                         sortedNames.add(new ZNodeName(dir + "/" + name));

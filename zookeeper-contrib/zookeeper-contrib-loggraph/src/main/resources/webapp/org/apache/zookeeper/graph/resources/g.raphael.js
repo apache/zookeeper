@@ -58,7 +58,7 @@
     };
 
     Raphael.fn.g.finger = function (x, y, width, height, dir, ending, isPath) {
-        // dir 0 for horisontal and 1 for vertical
+        // dir 0 for horizontal and 1 for vertical
         if ((dir && !height) || (!dir && !width)) {
             return isPath ? "" : this.path();
         }

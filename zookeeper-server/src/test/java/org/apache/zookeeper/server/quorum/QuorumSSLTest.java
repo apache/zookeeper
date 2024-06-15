@@ -195,7 +195,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         rootKeyPair = createKeyPair();
         contentSigner = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(rootKeyPair.getPrivate());
-        rootCertificate = createSelfSignedCertifcate(rootKeyPair);
+        rootCertificate = createSelfSignedCertificate(rootKeyPair);
 
         // Write the truststore
         KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -304,7 +304,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     }
 
-    private X509Certificate createSelfSignedCertifcate(KeyPair keyPair) throws Exception {
+    private X509Certificate createSelfSignedCertificate(KeyPair keyPair) throws Exception {
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
         nameBuilder.addRDN(BCStyle.CN, HOSTNAME);
         BigInteger serialNumber = new BigInteger(128, new Random());

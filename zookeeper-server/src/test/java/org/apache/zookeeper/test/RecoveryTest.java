@@ -55,7 +55,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
      * server to restart within the connection timeout period.
      *
      * Also note that the client latches are used to eliminate any chance
-     * of spurrious connectionloss exceptions on the read ops. Specifically
+     * of spurious connectionloss exceptions on the read ops. Specifically
      * a sync operation will throw this exception if the server goes down
      * (as recognized by the client) during the operation. If the operation
      * occurs after the server is down, but before the client recognizes

@@ -72,7 +72,7 @@ VARIABLE outOfElection
 \* recvQueue[i]: The queue of received notifications or timeout signals in server i.
 VARIABLE recvQueue
 
-\* A veriable to wait for new notifications, corresponding to line 1050 in FastLeaderElection.java.
+\* A variable to wait for new notifications, corresponding to line 1050 in FastLeaderElection.java.
 VARIABLE waitNotmsg
 
 \* leadingVoteSet[i]: The set of voters that follow i.

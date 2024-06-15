@@ -204,7 +204,7 @@ public class BlueThrottle {
         logWeighedThrottlingSetting();
     }
 
-    /* Varation of Integer.getInteger for real number properties */
+    /* Variation of Integer.getInteger for real number properties */
     private static double getDoubleProp(String name, double def) {
         String val = System.getProperty(name);
         if (val != null) {

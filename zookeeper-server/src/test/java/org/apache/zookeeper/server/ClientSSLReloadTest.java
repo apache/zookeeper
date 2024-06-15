@@ -102,13 +102,13 @@ public class ClientSSLReloadTest extends ZKTestCase {
      * 3) ZK client will connect to the server on the secure client port using keyStoreFile1 and trustStoreFile1.
      * 4) Update the keyStoreFile1 and trustStoreFile1 files in the filesystem with keyStoreFile2 and trustStoreFile2.
      * 5) Till FileChangeWatcher thread is triggered & SSLContext options are reset, ZK client should continue to connect.
-     *    In Junit tests, FileChangeWatcher thread is not triggered immediately upon certifcate update in the filesystem.
-     * 6) Once the certficates are reloaded by the server, ZK client connect will fail.
+     *    In Junit tests, FileChangeWatcher thread is not triggered immediately upon certificate update in the filesystem.
+     * 6) Once the certificates are reloaded by the server, ZK client connect will fail.
      * 7) Next, create a new ZK client with updated keystore & truststore paths (keyStoreFile2 and trustStoreFile2).
      * 8) Server should accept the connection on the secure client port.
      */
     @Test
-    public void certficateReloadTest() throws Exception {
+    public void certificateReloadTest() throws Exception {
 
         final Properties configZookeeper = getServerConfig();
         try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded

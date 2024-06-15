@@ -26,7 +26,7 @@ UPDATE: Make the incremental changes into the live ZK-tree from saved XML, essen
 lly after running the diff.
 
 DUMP: Dumps the ZK-tree on the standard output device reading either from live ZK
-server or XML file. Like export, ZK-subtree can be dumped with optionaly
+server or XML file. Like export, ZK-subtree can be dumped with optionally
 providing the path to the ZK-subtree, and till a certain depth of the (sub)tree.
 
 The exported ZK data into XML file can be shortened by only keeping the static ZK

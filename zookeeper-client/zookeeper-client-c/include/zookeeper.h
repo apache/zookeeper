@@ -108,7 +108,7 @@ enum ZOO_ERRORS {
   ZBADARGUMENTS = -8, /*!< Invalid arguments */
   ZINVALIDSTATE = -9, /*!< Invliad zhandle state */
   ZNEWCONFIGNOQUORUM = -13, /*!< No quorum of new config is connected and
-                                 up-to-date with the leader of last commmitted
+                                 up-to-date with the leader of last committed
                                  config - try invoking reconfiguration after new
                                  servers are connected and synced */
   ZRECONFIGINPROGRESS = -14, /*!< Reconfiguration requested while another
@@ -697,7 +697,7 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
  * \return ZOK on success or one of the following errcodes on failure:
  * ZBADARGUMENTS - invalid input parameters
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
- * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details
  */
 ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
 
@@ -1779,7 +1779,7 @@ typedef enum {
  * \param wtype the watcher type to be removed
  * \param watcher the watcher to be removed, if null all watches for that
  * path (and watcher type) will be removed
- * \param watcherCtx the contex associated with the watcher to be removed
+ * \param watcherCtx the context associated with the watcher to be removed
  * \param local whether the watches will be removed locally even if there is
  * no server connection
  * \return the return code for the function call.
@@ -1789,7 +1789,7 @@ typedef enum {
  * or ZOO_AUTH_FAILED_STATE
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
  */
 ZOOAPI int zoo_aremove_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local,
@@ -1810,7 +1810,7 @@ ZOOAPI int zoo_aremove_watches(zhandle_t *zh, const char *path,
  * or ZOO_AUTH_FAILED_STATE
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
  */
 ZOOAPI int zoo_remove_all_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, int local);
@@ -1830,7 +1830,7 @@ ZOOAPI int zoo_remove_all_watches(zhandle_t *zh, const char *path,
  * or ZOO_AUTH_FAILED_STATE
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
 */
 ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, int local, void_completion_t *completion,
@@ -2434,7 +2434,7 @@ ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_resul
  * \param wtype the watcher type to be removed
  * \param watcher the watcher to be removed, if null all watches for that
  * path (and watcher type) will be removed
- * \param watcherCtx the contex associated with the watcher to be removed
+ * \param watcherCtx the context associated with the watcher to be removed
  * \param local whether the watches will be removed locally even if there is
  * no server connection
  * \return the return code for the function call.
@@ -2444,7 +2444,7 @@ ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_resul
  * or ZOO_AUTH_FAILED_STATE
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
  */
 ZOOAPI int zoo_remove_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local);

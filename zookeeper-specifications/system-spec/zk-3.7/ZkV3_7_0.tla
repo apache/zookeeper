@@ -119,7 +119,7 @@ VARIABLE msgs       \* Simulates network channel.
 
 \* Variables about status of cluster network and node presence.
 VARIABLES status,    \* Whether the server is online or offline.
-          partition  \* network partion.
+          partition  \* network partition.
 
 \* Variables only used in verifying properties.
 VARIABLES epochLeader,       \* Set of leaders in every epoch.
@@ -143,7 +143,7 @@ VARIABLES epochLeader,       \* Set of leaders in every epoch.
                    \* to compare ids between servers.
     \* Update: we have transformed idTable from variable to function.
 
-\*VARIABLE clientReuqest \* Start from 0, and increases monotonically
+\*VARIABLE clientRequest \* Start from 0, and increases monotonically
                          \* when LeaderProcessRequest performed. To
                          \* avoid existing two requests with same value. 
     \* Update: Remove it to recorder.nClientRequest.
@@ -797,7 +797,7 @@ LeaderProcessFOLLOWERINFO(i, j) ==
                  /\ \/ /\ zabState[i] = DISCOVERY
                        /\ UNCHANGED violatedInvariants
                     \/ /\ zabState[i] /= DISCOVERY
-                       /\ PrintT("Exception: waitingFotNewEpoch true," \o
+                       /\ PrintT("Exception: waitingForNewEpoch true," \o
                           " while zabState not DISCOVERY.")
                        /\ violatedInvariants' = [violatedInvariants EXCEPT !.stateInconsistent = TRUE]
                  /\ tempMaxEpoch' = [tempMaxEpoch EXCEPT ![i] = IF lastAcceptedEpoch >= tempMaxEpoch[i] 
@@ -895,20 +895,20 @@ UpdateAckSid(his, lastSeenIndex, target) ==
 
 \* return -1: this zxid appears at least twice; Len(his) + 1: does not exist;
 \* 1 ~ Len(his): exists and appears just once.
-RECURSIVE ZxidToIndexHepler(_,_,_,_)
-ZxidToIndexHepler(his, zxid, cur, appeared) == 
+RECURSIVE ZxidToIndexHelper(_,_,_,_)
+ZxidToIndexHelper(his, zxid, cur, appeared) ==
         IF cur > Len(his) THEN cur  
         ELSE IF TxnZxidEqual(his[cur], zxid) 
              THEN CASE appeared = TRUE -> -1
                   []   OTHER           -> Minimum( { cur, 
-                            ZxidToIndexHepler(his, zxid, cur + 1, TRUE) } ) 
-             ELSE ZxidToIndexHepler(his, zxid, cur + 1, appeared)
+                            ZxidToIndexHelper(his, zxid, cur + 1, TRUE) } )
+             ELSE ZxidToIndexHelper(his, zxid, cur + 1, appeared)
 
 ZxidToIndex(his, zxid) == IF ZxidEqual( zxid, <<0, 0>> ) THEN 0
                           ELSE IF Len(his) = 0 THEN 1
                                ELSE LET len == Len(his) IN
                                     IF \E idx \in 1..len: TxnZxidEqual(his[idx], zxid)
-                                    THEN ZxidToIndexHepler(his, zxid, 1, FALSE)
+                                    THEN ZxidToIndexHelper(his, zxid, 1, FALSE)
                                     ELSE len + 1
 
 \* Find index idx which meets: 
@@ -963,7 +963,7 @@ LastSnapshot(i) == IF zabState[i] = BROADCAST THEN lastSnapshot[i]
                         []   OTHER -> lastSnapshot[i]
 
 \* To compress state space, 
-\* 1. we merge sending SNAP and outputing snapshot buffer into sending SNAP, and
+\* 1. we merge sending SNAP and outputting snapshot buffer into sending SNAP, and
 \* 2. substitute sub sequence of history for snapshot of data tree.
 SerializeSnapshot(i, idx) == IF idx <= 0 THEN << >>
                              ELSE SubSeq(history[i], 1, idx)
@@ -1618,7 +1618,7 @@ FollowerCommitInBatches(i) ==
            /\ lastProcessed' = [lastProcessed EXCEPT ![i] = lastCommitted'[i]]
            /\ UNCHANGED violatedInvariants
         \/ /\ ~match
-           /\ PrintT("Warn: Committing zxid withou see txn. /" \o 
+           /\ PrintT("Warn: Committing zxid without see txn. /" \o
                 "Committing zxid != pending txn zxid.")
            /\ violatedInvariants' = [violatedInvariants EXCEPT 
                         !.commitInconsistent = TRUE ]

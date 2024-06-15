@@ -52,7 +52,7 @@ public class ContainerManager {
 
     /**
      * @param zkDb the ZK database
-     * @param requestProcessor request processer - used to inject delete
+     * @param requestProcessor request processor - used to inject delete
      *                         container requests
      * @param checkIntervalMs how often to check containers in milliseconds
      * @param maxPerMinute the max containers to delete per second - avoids
@@ -64,7 +64,7 @@ public class ContainerManager {
 
     /**
      * @param zkDb the ZK database
-     * @param requestProcessor request processer - used to inject delete
+     * @param requestProcessor request processor - used to inject delete
      *                         container requests
      * @param checkIntervalMs how often to check containers in milliseconds
      * @param maxPerMinute the max containers to delete per second - avoids

@@ -149,7 +149,7 @@ public class ZKClientConfigTest {
 
         // property is set but can not be parsed to int, we should get the
         // NumberFormatException
-        conf.setProperty(ZKConfig.JUTE_MAXBUFFER, "InvlaidIntValue123");
+        conf.setProperty(ZKConfig.JUTE_MAXBUFFER, "InvalidIntValue123");
         try {
             result = conf.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
             fail("NumberFormatException is expected");

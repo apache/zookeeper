@@ -59,7 +59,7 @@ class CreationTest(zktestbase.TestBase):
 
     def test_exception_paths(self):
         """
-        Make sure common exceptions due to API misuse are correctly propogated
+        Make sure common exceptions due to API misuse are correctly propagated
         """
         self.assertRaises(zookeeper.BadArgumentsException,
                           zookeeper.create,

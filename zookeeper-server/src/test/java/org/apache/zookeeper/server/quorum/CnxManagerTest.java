@@ -309,14 +309,14 @@ public class CnxManagerTest extends ZKTestCase {
         final QuorumPeer peer = new QuorumPeer(unresolvablePeers, ClientBase.createTmpDir(), ClientBase.createTmpDir(), 2181, 3, myid, 1000, 2, 2, 2);
         final QuorumCnxManager cnxManager = peer.createCnxnManager();
         final QuorumCnxManager.Listener listener = cnxManager.listener;
-        final AtomicBoolean errorHappend = new AtomicBoolean(false);
-        listener.setSocketBindErrorHandler(() -> errorHappend.set(true));
+        final AtomicBoolean errorHappened = new AtomicBoolean(false);
+        listener.setSocketBindErrorHandler(() -> errorHappened.set(true));
         listener.start();
         // listener thread should stop and throws error which notify QuorumPeer about error.
         // QuorumPeer should start shutdown process
         listener.join(15000); // set wait time, if listener contains bug and thread not stops.
         assertFalse(listener.isAlive());
-        assertTrue(errorHappend.get());
+        assertTrue(errorHappened.get());
         assertFalse(listener.isAlive(), QuorumPeer.class.getSimpleName() + " not stopped after " + "listener thread death");
     }
 
