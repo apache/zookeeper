@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import static org.apache.zookeeper.KeeperException.Code.NOAUTH;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -28,15 +29,19 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CliException;
+import org.apache.zookeeper.cli.CliParseException;
 import org.apache.zookeeper.cli.CliWrapperException;
 import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
@@ -450,6 +455,81 @@ public class ZooKeeperTest extends ClientBase {
         assertEquals(version + 1, stat.getVersion());
         zkMain.cl.parseCommand(cmdstring3);
         assertFalse(zkMain.processZKCmd(zkMain.cl));
+    }
+
+    @Test
+    public void testSetCommandInvalidOptions() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String invalid1 = "set /node4 data -f";
+        String invalid2 = "set /node4 data -f filename";
+        String invalid3 = "set /node4";
+
+        assertThrows(CliParseException.class, () -> {
+            zkMain.cl.parseCommand(invalid1);
+            zkMain.processZKCmd(zkMain.cl);
+        });
+
+        assertThrows(CliParseException.class, () -> {
+            zkMain.cl.parseCommand(invalid2);
+            zkMain.processZKCmd(zkMain.cl);
+        });
+
+        assertThrows(CliParseException.class, () -> {
+            zkMain.cl.parseCommand(invalid3);
+            zkMain.processZKCmd(zkMain.cl);
+        });
+    }
+
+    @Test
+    public void testSetGetByteArray() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        Path tmpSetFile = null;
+        Path tmpGetFile = null;
+
+        try {
+            tmpSetFile = Files.createTempFile("test", "set");
+            Random random = new Random();
+            // Generate random byte array
+            byte[] data = new byte[1 + random.nextInt(1024)];
+            random.nextBytes(data);
+
+            String createCmd = "create -e /node ";
+            zkMain.cl.parseCommand(createCmd);
+            zkMain.processZKCmd(zkMain.cl);
+
+            String setFileCmd = "set /node -f " + tmpSetFile.toString();
+            Files.write(tmpSetFile, data);
+            zkMain.cl.parseCommand(setFileCmd);
+            assertFalse(zkMain.processZKCmd(zkMain.cl));
+
+            tmpGetFile = Files.createTempFile("test", "get");
+            String getFileCmd = "get /node -f " + tmpGetFile.toString();
+
+            // Existing file should not be overwritten
+            assertThrows(CliException.class, () -> {
+                zkMain.cl.parseCommand(getFileCmd);
+                zkMain.processZKCmd(zkMain.cl);
+            });
+
+            // Delete the temporary file
+            Files.deleteIfExists(tmpGetFile);
+
+            zkMain.cl.parseCommand(getFileCmd);
+            assertFalse(zkMain.processZKCmd(zkMain.cl));
+
+            // Verify that the file contents are the same
+            byte[] readData = Files.readAllBytes(tmpGetFile);
+            assertArrayEquals(data, readData);
+        } finally {
+            if (tmpSetFile != null) {
+                Files.deleteIfExists(tmpSetFile);
+            }
+            if (tmpGetFile != null) {
+                Files.deleteIfExists(tmpGetFile);
+            }
+        }
     }
 
     @Test
