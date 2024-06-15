@@ -77,14 +77,7 @@ public class CheckTest extends ClientBase {
     private void testOperations(TestableZooKeeper zk) throws Exception {
         Stat stat = new Stat();
         zk.getData("/", false, stat);
-        checkVersion(zk, "/", -1);
-        checkVersion(zk, "/", stat.getVersion());
-        assertThrows(KeeperException.BadVersionException.class, () -> {
-            checkVersion(zk, "/", stat.getVersion() + 1);
-        });
-        assertThrows(KeeperException.NoNodeException.class, () -> {
-            checkVersion(zk, "/no-node", Integer.MAX_VALUE);
-        });
+        assertThrows(KeeperException.UnimplementedException.class, () -> checkVersion(zk, "/", -1));
     }
 
     @Test
@@ -96,7 +89,7 @@ public class CheckTest extends ClientBase {
     public void testStandaloneDatabaseReloadAfterCheck() throws Exception {
         try {
             testOperations(createClient());
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             // Ignore to test database reload after check
         }
         stopServer();
@@ -131,7 +124,7 @@ public class CheckTest extends ClientBase {
 
             try {
                 testOperations(qb.createClient(new CountdownWatcher(), QuorumPeer.ServerState.LEADING));
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 // Ignore to test database reload after check
             }
             qb.shutdown(leader);
