@@ -51,7 +51,6 @@ import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
-import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.hamcrest.CoreMatchers;
@@ -123,7 +122,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testCounterSet_single() throws Exception {
         // create and register a CounterSet
-        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final String name = "quota_exceeded_error_per_namespace";
         final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
         final String[] keys = {"ns1", "ns2"};
         final int count = 3;
@@ -155,7 +154,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testCounterSet_multiple() throws Exception {
-        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final String name = "quota_exceeded_error_per_namespace";
 
         final String[] names = new String[]{name + "_1", name + "_2"};
         final String[] keys = new String[]{"ns21", "ns22"};
@@ -202,7 +201,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testCounterSet_negativeValue() {
         // create and register a CounterSet
-        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final String name = "quota_exceeded_error_per_namespace";
         final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
 
         // add negative value and make sure no exception is thrown
@@ -212,7 +211,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testCounterSet_nullKey() {
         // create and register a CounterSet
-        final String name = QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+        final String name = "quota_exceeded_error_per_namespace";
         final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
 
         // increment the count with null key and make sure no exception is thrown
@@ -504,7 +503,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testGaugeSet_singleGaugeSet() throws Exception {
-        final String name = QuotaMetricsUtils.QUOTA_BYTES_LIMIT_PER_NAMESPACE;
+        final String name = "quota_bytes_limit_per_namespace";
         final Number[] values = {10.0, 100.0};
         final String[] keys = {"ns11", "ns12"};
         final Map<String, Number> metricsMap = new HashMap<>();
@@ -549,8 +548,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testGaugeSet_multipleGaugeSets() throws Exception {
         final String[] names = new String[] {
-                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE,
-                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
+                "quota_count_limit_per_namespace",
+                "quota_count_usage_per_namespace"
         };
 
         final Number[] values = new Number[] {20.0, 200.0};
@@ -610,8 +609,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     @Test
     public void testGaugeSet_overwriteRegister() {
         final String[] names = new String[] {
-                QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE,
-                QuotaMetricsUtils.QUOTA_COUNT_USAGE_PER_NAMESPACE
+                "quota_count_limit_per_namespace",
+                "quota_count_usage_per_namespace"
         };
 
         final int count = names.length;
@@ -638,7 +637,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
 
     @Test
     public void testGaugeSet_nullKey() {
-        final String name = QuotaMetricsUtils.QUOTA_COUNT_LIMIT_PER_NAMESPACE;
+        final String name = "quota_count_limit_per_namespace";
         final Map<String, Number> metricsMap = new HashMap<>();
         metricsMap.put(null, 10.0);
 
