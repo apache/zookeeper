@@ -20,14 +20,16 @@ package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -549,16 +551,10 @@ public class ClientTest extends ClientBase {
             zk.create(queue_handle + "/element", "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             List<String> children = zk.getChildren(queue_handle, true);
             assertEquals(children.size(), 2);
+            children.sort(Comparator.naturalOrder());
             String child1 = children.get(0);
             String child2 = children.get(1);
-            int compareResult = child1.compareTo(child2);
-            assertNotSame(compareResult, 0);
-            if (compareResult < 0) {
-            } else {
-                String temp = child1;
-                child1 = child2;
-                child2 = temp;
-            }
+            assertNotEquals(child1, child2);
             String child1data = new String(zk.getData(queue_handle + "/" + child1, false, null));
             String child2data = new String(zk.getData(queue_handle + "/" + child2, false, null));
             assertEquals(child1data, "0");
@@ -569,6 +565,35 @@ public class ClientTest extends ClientBase {
             }
         }
 
+    }
+
+    // Test that long sequential nodes are being created correctly,
+    // with 0-padding in the node names and monotonically increased in lexicographically order.
+    @Test
+    public void testLongSequentialNodes() throws IOException, InterruptedException, KeeperException {
+        assertEquals(19, String.format("%d", Long.MAX_VALUE).length());
+        assertEquals("0000000000000000001", String.format(Locale.ENGLISH, "%019d", 1L));
+
+        String parent_path = "/SEQUENCE";
+        String prefix_path = parent_path + "/TEST";
+
+        try (ZooKeeper zk = createClient()) {
+            zk.create(parent_path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            Stat stat1 = new Stat();
+            Stat stat2 = new Stat();
+            String sequential_path1 = zk.create(prefix_path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_LONG, stat1);
+            String sequential_path2 = zk.create(prefix_path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_LONG, stat2);
+
+            assertTrue(sequential_path1.compareTo(sequential_path2) < 0);
+
+            List<String> children = zk.getChildren(parent_path, false);
+            assertEquals(2, children.size());
+
+            // This is the internal detail, it is ok to rewrite if changed in the future.
+            assertEquals(sequential_path1, String.format("%s%019d", prefix_path, stat1.getCzxid()));
+            assertEquals(sequential_path2, String.format("%s%019d", prefix_path, stat2.getCzxid()));
+        }
     }
 
     @Test
