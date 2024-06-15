@@ -294,6 +294,25 @@ public class ZKDatabase {
     }
 
     /**
+     * load the database from the disk onto memory and also add
+     * the transactions to the committedlog in memory
+     * until the checkpoint zxid
+     * 
+     * @return the last valid zxid on disk
+     * @throws IOException
+     */
+    public long loadDataBase(long zxid) throws IOException {
+        long startTime = Time.currentElapsedTime();
+        long newZxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener, zxid);
+        initialized = true;
+        long loadTime = Time.currentElapsedTime() - startTime;
+        ServerMetrics.getMetrics().DB_INIT_TIME.add(loadTime);
+        LOG.info("Snapshot loaded in {} ms, highest zxid is 0x{}, digest is {}",
+                loadTime, Long.toHexString(zxid), dataTree.getTreeDigest());
+        return newZxid;
+    }
+
+    /**
      * Fast forward the database adding transactions from the committed log into memory.
      * @return the last valid zxid.
      * @throws IOException
@@ -602,7 +621,7 @@ public class ZKDatabase {
             return false;
         }
 
-        loadDataBase();
+        loadDataBase(zxid);
         return true;
     }
 
