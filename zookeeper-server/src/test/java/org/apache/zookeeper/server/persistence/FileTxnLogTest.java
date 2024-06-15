@@ -25,11 +25,17 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DummyWatcher;
@@ -294,6 +300,73 @@ public class FileTxnLogTest extends ZKTestCase {
             assertArrayEquals(bytes, data, "Missmatch data");
             assertTrue(zxids.contains(stat.getMzxid()), "Unknown zxid ");
         }
+    }
+
+    private void prepareTxnLogs(File dir, int n) throws IOException {
+        FileTxnLog.setTxnLogSizeLimit(1);
+        FileTxnLog log = new FileTxnLog(dir);
+        CreateRequest record = new CreateRequest(null, new byte[NODE_SIZE],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag());
+        int zxid = 1;
+        for (int i = 0; i < n; i++) {
+            log.append(new Request(0, 0, 0, new TxnHeader(0, 0, zxid, 0, -1), record, zxid));
+            zxid++;
+            log.commit();
+        }
+        log.close();
+    }
+
+    public void testEmptyTxnLog(boolean clearTail) throws IOException {
+        // prepare a database with logs
+        File tmpDir = ClientBase.createTmpDir();
+        LOG.info("tmp dir: {}", tmpDir.getPath());
+        ClientBase.setupTestEnv();
+        prepareTxnLogs(tmpDir, 4);
+
+        // clear the log
+        List<File> files = Arrays.
+                stream(Objects.requireNonNull(tmpDir.listFiles((File f, String name) -> name.startsWith("log.")))).
+                sorted(Comparator.comparing(File::getName)).
+                collect(Collectors.toList());
+        File toClear;
+        if (clearTail) {
+            toClear = files.get(files.size() - 1);
+        } else {
+            toClear = files.get(files.size() - 2);
+        }
+        PrintWriter writer = new PrintWriter(toClear);
+        writer.close();
+        LOG.info("Txn log file {} cleared", toClear.getName());
+
+        // open txn log
+        boolean isEof = false;
+        try {
+            FileTxnLog.FileTxnIterator itr = new FileTxnLog.FileTxnIterator(tmpDir, 0x0, false);
+            while (itr.next()) {}
+        } catch (EOFException ex) {
+            isEof = true;
+        }
+
+        if (clearTail) {
+            FileTxnLog.FileTxnIterator itr = new FileTxnLog.FileTxnIterator(tmpDir, 0x0, false);
+            while (itr.next()) {}
+        } else {
+            assertTrue(isEof, "Mid txn log file empty should throw Exception");
+        }
+    }
+
+    @Test
+    public void testEmptyTailTxnLog() throws IOException {
+        long limit = FileTxnLog.getTxnLogSizeLimit();
+        testEmptyTxnLog(true);
+        FileTxnLog.setTxnLogSizeLimit(limit);
+    }
+
+    @Test
+    public void testEmptyMidTxnLog() throws IOException {
+        long limit = FileTxnLog.getTxnLogSizeLimit();
+        testEmptyTxnLog(false);
+        FileTxnLog.setTxnLogSizeLimit(limit);
     }
 
     private int calculateSingleRecordLength(TxnHeader txnHeader, Record record) throws IOException {
