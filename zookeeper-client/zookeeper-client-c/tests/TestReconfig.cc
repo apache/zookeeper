@@ -499,7 +499,7 @@ public:
             found = seen.find(next.str());
             CPPUNIT_ASSERT_MESSAGE(next.str() + " in seen list",
                                    found == string::npos);
-            seen += found + ", ";
+            seen += next.str() + ", ";
         }
 
         // Now it should start connecting to the old servers
@@ -516,7 +516,7 @@ public:
             // Assert not in seen list then append
             found = seen.find(next.str());
             CPPUNIT_ASSERT(found == string::npos);
-            seen += found + ", ";
+            seen += next.str() + ", ";
         }
 
         // NOW it goes back to normal as we've tried all the new and old
