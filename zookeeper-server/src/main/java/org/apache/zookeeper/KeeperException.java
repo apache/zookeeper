@@ -514,6 +514,8 @@ public abstract class KeeperException extends Exception {
             return "Quota has exceeded";
         case THROTTLEDOP:
             return "Op throttled due to high load";
+        case REQUESTTIMEOUT:
+            return "Request timeout";
         default:
             return "Unknown error " + code;
         }
