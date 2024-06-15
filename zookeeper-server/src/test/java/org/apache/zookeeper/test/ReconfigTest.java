@@ -804,7 +804,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
                 Thread.sleep(1000);
                 zkArr[serverIndex].setData("/test", "teststr".getBytes(), -1);
                 fail("New client connected to new client port!");
-            } catch (KeeperException.ConnectionLossException e) {
+            } catch (KeeperException.ConnectionLossException | KeeperException.SessionExpiredException e) {
                 // Exception is expected
             }
 
