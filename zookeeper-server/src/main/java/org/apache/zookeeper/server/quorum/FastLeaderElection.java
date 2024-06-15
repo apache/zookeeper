@@ -968,11 +968,10 @@ public class FastLeaderElection implements Election {
                  * Otherwise processes new notification.
                  */
                 if (n == null) {
-                    if (manager.haveDelivered()) {
-                        sendNotifications();
-                    } else {
+                    if (!manager.haveDelivered()) {
                         manager.connectAll();
                     }
+                    sendNotifications();
 
                     /*
                      * Exponential backoff
