@@ -196,6 +196,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
     private final String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
     private final String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
+    private final String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
     private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
@@ -270,6 +271,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslHostnameVerificationEnabledProperty;
     }
 
+    public String getSslClientHostnameVerificationEnabledProperty() {
+        return sslClientHostnameVerificationEnabledProperty;
+    }
+
     public String getSslCrlEnabledProperty() {
         return sslCrlEnabledProperty;
     }
@@ -305,7 +310,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public boolean isClientHostnameVerificationEnabled(ZKConfig config) {
-        return isServerHostnameVerificationEnabled(config) && shouldVerifyClientHostname();
+        return isServerHostnameVerificationEnabled(config)
+            && config.getBoolean(this.getSslClientHostnameVerificationEnabledProperty(), shouldVerifyClientHostname());
     }
 
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
