@@ -7,6 +7,10 @@ import java.util.UUID; // Added UUID import
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.zookeeper.faaskeeper.queue.EventQueue;
+import org.apache.zookeeper.faaskeeper.queue.SqsListener;
+
+
 public class FaasKeeperClient {
     // TODO: Move this reqId to the queue once implemented
     private int reqIdTempRemoveLater = 0;
@@ -15,6 +19,7 @@ public class FaasKeeperClient {
     private boolean heartbeat = true;
     private String sessionId;
     private ProviderClient providerClient;
+    private SqsListener responseHandler;
     private static Map<String, Class<? extends ProviderClient>> providers = new HashMap<>();
     private static final Logger LOG;
     static {
@@ -37,9 +42,10 @@ public class FaasKeeperClient {
 
     public String start() {
         LOG.info("Starting FK connection");
-        this.sessionId = UUID.randomUUID().toString().substring(0, 8);
+        responseHandler = new SqsListener(new EventQueue(), cfg);
+        sessionId = UUID.randomUUID().toString().substring(0, 8);
         // TODO: Add queues implementation + add source_addr IP calculation
-        this.providerClient.registerSession(sessionId, "", this.heartbeat);
+        providerClient.registerSession(sessionId, "", this.heartbeat);
         LOG.info("Connection successful. sessionID = " + sessionId);
         return sessionId;
     }
@@ -48,6 +54,7 @@ public class FaasKeeperClient {
         // TODO: stop threads and clear queues
         // TODO: deregister session
         LOG.info("Closing FK connection");
+        responseHandler.stop();
     }
 
     public static FaasKeeperClient buildClient(String configFilePath, int port, boolean heartbeat) throws Exception {

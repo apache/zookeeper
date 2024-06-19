@@ -8,10 +8,14 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.Message;
 import org.apache.zookeeper.faaskeeper.FaasKeeperConfig;
-// import com.example.FaasKeeperConfig;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+
 // import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -45,6 +49,7 @@ public class SqsListener implements Runnable {
         // this.eventQueue = eventQueue;
         // this.latch = new CountDownLatch(1);
         this.executorService = Executors.newSingleThreadExecutor();
+        this.start();
     }
 
     public void start() {
@@ -53,7 +58,7 @@ public class SqsListener implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Start SQS response listener thread");
+        LOG.debug("Starting SQS listener loop");
 
         while (running) {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(clientQueueUrl)
@@ -63,7 +68,6 @@ public class SqsListener implements Runnable {
             List<Message> messages = result.getMessages();
 
             if (messages.isEmpty()) {
-                LOG.info("Client queue empty");
                 continue;
             }
 
@@ -73,6 +77,14 @@ public class SqsListener implements Runnable {
                 Message msg = messages.get(i);
                 // JSONObject data = new JSONObject(msg.getBody());
                 LOG.info("Received message: " + msg.getBody());
+                ObjectMapper objectMapper = new ObjectMapper();
+
+                try {
+                    JsonNode node = objectMapper.readTree(msg.getBody());
+                } catch (JsonProcessingException e) {
+                    LOG.error("Error parsing message body: " + e.getMessage());
+                    continue;
+                }
 
                 // if (data.has("type") && "heartbeat".equals(data.getString("type"))) {
                 //     // FIXME: add heartbeats
@@ -87,11 +99,12 @@ public class SqsListener implements Runnable {
 
             if (!deleteEntries.isEmpty()) {
                 DeleteMessageBatchRequest deleteRequest = new DeleteMessageBatchRequest(clientQueueUrl, deleteEntries);
+                // What if this throws an error?
                 sqs.deleteMessageBatch(deleteRequest);
             }
         }
 
-        System.out.println("Close SQS response listener thread");
+        LOG.debug("SQS listener loop exited successfully");
         // latch.countDown();
     }
 
@@ -101,6 +114,7 @@ public class SqsListener implements Runnable {
             // latch.await();
             this.future.get();
             executorService.shutdown();
+            LOG.info("Successfully stopped SQS listener thread");
         } catch (InterruptedException e) {
             LOG.error("SqsListener Thread shutdown interrupted: ", e);
         } catch(ExecutionException e) {
