@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.faaskeeper.queue.EventQueue;
 import org.apache.zookeeper.faaskeeper.queue.SqsListener;
 
-
 public class FaasKeeperClient {
     // TODO: Move this reqId to the queue once implemented
     private int reqIdTempRemoveLater = 0;
@@ -20,6 +19,7 @@ public class FaasKeeperClient {
     private String sessionId;
     private ProviderClient providerClient;
     private SqsListener responseHandler;
+    private EventQueue eventQueue;
     private static Map<String, Class<? extends ProviderClient>> providers = new HashMap<>();
     private static final Logger LOG;
     static {
@@ -34,6 +34,7 @@ public class FaasKeeperClient {
             this.heartbeat = heartbeat;
             Class<? extends ProviderClient> providerClass = providers.get(CloudProvider.serialize(this.cfg.getCloudProvider()));
             this.providerClient = providerClass.getDeclaredConstructor(FaasKeeperConfig.class).newInstance(this.cfg);
+            this.eventQueue = new EventQueue();
         } catch (Exception e) {
             LOG.error("Error in initializing provider client", e);
             throw new RuntimeException("Error in initializing provider client", e);
@@ -42,7 +43,7 @@ public class FaasKeeperClient {
 
     public String start() {
         LOG.info("Starting FK connection");
-        responseHandler = new SqsListener(new EventQueue(), cfg);
+        responseHandler = new SqsListener(eventQueue, cfg);
         sessionId = UUID.randomUUID().toString().substring(0, 8);
         // TODO: Add queues implementation + add source_addr IP calculation
         providerClient.registerSession(sessionId, "", this.heartbeat);

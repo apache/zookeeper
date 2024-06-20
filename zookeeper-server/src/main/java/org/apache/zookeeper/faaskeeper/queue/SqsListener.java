@@ -9,14 +9,13 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.Message;
 import org.apache.zookeeper.faaskeeper.FaasKeeperConfig;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+// import java.util.Optional;
 
-// import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,7 +28,7 @@ public class SqsListener implements Runnable {
     private final AmazonSQS sqs;
     private final String clientQueueUrl;
     private final String clientQueueName;
-    // private final EventQueue eventQueue;
+    private final EventQueue eventQueue;
     private Future<?> future;
     // private final CountDownLatch latch;
     private final ExecutorService executorService;
@@ -46,7 +45,7 @@ public class SqsListener implements Runnable {
 
         this.clientQueueName = String.format("faaskeeper-%s-client-sqs", config.getDeploymentName());
         this.clientQueueUrl = sqs.getQueueUrl(clientQueueName).getQueueUrl();
-        // this.eventQueue = eventQueue;
+        this.eventQueue = eventQueue;
         // this.latch = new CountDownLatch(1);
         this.executorService = Executors.newSingleThreadExecutor();
         this.start();
@@ -75,24 +74,34 @@ public class SqsListener implements Runnable {
 
             for (int i = 0; i < messages.size(); i++) {
                 Message msg = messages.get(i);
-                // JSONObject data = new JSONObject(msg.getBody());
                 LOG.info("Received message: " + msg.getBody());
                 ObjectMapper objectMapper = new ObjectMapper();
 
                 try {
                     JsonNode node = objectMapper.readTree(msg.getBody());
-                } catch (JsonProcessingException e) {
-                    LOG.error("Error parsing message body: " + e.getMessage());
+
+                    if (node.has("type") && node.get("type").asText().equals("heartbeat")) {
+                        // TODO: Handle heartbeat
+                        LOG.info("Heartbeat message received");
+                    } else if (node.has("watch-event")) {
+                        // Add watch notif to event queue
+                        LOG.info("Watch notification received");
+                    } else {
+                        LOG.info("Cloud indirect request received");
+                        eventQueue.addIndirectResult(node);
+                        // TODO: Remove this code later. It was just for testing event queue
+                        // Optional<EventQueueItem> item = eventQueue.get();
+                        // if (item.isPresent()) {
+                        //     LOG.info("Q item found !!");
+                        //     CloudIndirectResult e = (CloudIndirectResult) item.get();
+                        //     LOG.info(e.result.toString());
+                        //     LOG.info(e.getEventType());
+                        // }
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error processing message: " + msg.getBody(), e);
                     continue;
                 }
-
-                // if (data.has("type") && "heartbeat".equals(data.getString("type"))) {
-                //     // FIXME: add heartbeats
-                // } else if (data.has("watch-event")) {
-                //     // eventQueue.addWatchNotification(data);
-                // } else {
-                //     // eventQueue.addIndirectResult(data);
-                // }
 
                 deleteEntries.add(new DeleteMessageBatchRequestEntry(String.valueOf(i), msg.getReceiptHandle()));
             }
