@@ -1,4 +1,4 @@
-package org.apache.zookeeper.faaskeeper.queue;
+package org.apache.zookeeper.faaskeeper.thread;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
-// import java.util.Optional;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +22,8 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.zookeeper.faaskeeper.queue.EventQueue;;
 
 public class SqsListener implements Runnable {
     private final AmazonSQS sqs;
@@ -123,7 +124,7 @@ public class SqsListener implements Runnable {
             // latch.await();
             this.future.get();
             executorService.shutdown();
-            LOG.info("Successfully stopped SQS listener thread");
+            LOG.debug("Successfully stopped SQS listener thread");
         } catch (InterruptedException e) {
             LOG.error("SqsListener Thread shutdown interrupted: ", e);
         } catch(ExecutionException e) {

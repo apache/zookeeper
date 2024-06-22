@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
+import org.apache.zookeeper.faaskeeper.model.QueueType;
+
 enum StorageType {
     PERSISTENT, KEY_VALUE, IN_MEMORY;
 
@@ -17,21 +19,6 @@ enum StorageType {
                 return KEY_VALUE;
             default:
                 throw new IllegalArgumentException("Unknown StorageType: " + val);
-        }
-    }
-}
-
-enum QueueType {
-    DYNAMODB, SQS;
-
-    public static QueueType deserialize(String val) {
-        switch (val) {
-            case "dynamodb":
-                return DYNAMODB;
-            case "sqs":
-                return SQS;
-            default:
-                throw new IllegalArgumentException("Unknown QueueType: " + val);
         }
     }
 }

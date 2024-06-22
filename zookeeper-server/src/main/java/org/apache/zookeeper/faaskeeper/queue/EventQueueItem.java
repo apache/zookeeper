@@ -1,5 +1,8 @@
 package org.apache.zookeeper.faaskeeper.queue;
+import java.util.concurrent.CompletableFuture;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.zookeeper.faaskeeper.model.Operation;
 
 public abstract class EventQueueItem {
     public JsonNode result;
@@ -47,9 +50,15 @@ class CloudDirectResult extends EventQueueItem {
     }
 }
 
-class CloudExpectedtResult extends EventQueueItem {
-    public CloudExpectedtResult(JsonNode result) {
-        super(result);
+class CloudExpectedResult extends EventQueueItem {
+    public final int requestID;
+    public final Operation op;
+    public final CompletableFuture<?> future;
+    public CloudExpectedResult(int requestID, Operation op, CompletableFuture<?> future) {
+        super(null);
+        this.requestID = requestID;
+        this.op = op;
+        this.future = future;
     }
 
     public String getEventType() {

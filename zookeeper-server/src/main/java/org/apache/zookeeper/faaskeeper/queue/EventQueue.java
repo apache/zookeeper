@@ -7,7 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import org.apache.zookeeper.faaskeeper.model.Operation;
 
 public class EventQueue {
     private static final Logger LOG;
@@ -50,6 +54,18 @@ public class EventQueue {
         }
         try {
             queue.add(new CloudIndirectResult(result));
+        } catch (IllegalStateException e) {
+            LOG.error("EventQueue add item failed", e);
+            throw e;
+        }
+    }
+
+    public void addExpectedResult(int requestID, Operation op, CompletableFuture<?> future) throws Exception {
+        if (closing) {
+            throw new Exception("Cannot add result to queue: EventQueue has been closed");
+        }
+        try {
+            queue.add(new CloudExpectedResult(requestID, op, future));
         } catch (IllegalStateException e) {
             LOG.error("EventQueue add item failed", e);
             throw e;
