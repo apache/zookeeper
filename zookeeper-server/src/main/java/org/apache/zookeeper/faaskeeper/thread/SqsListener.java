@@ -35,7 +35,7 @@ public class SqsListener implements Runnable {
     private final ExecutorService executorService;
     private volatile boolean running = true;
     private static final Logger LOG;
-        static {
+    static {
         LOG = LoggerFactory.getLogger(SqsListener.class);
     }
 
@@ -83,21 +83,13 @@ public class SqsListener implements Runnable {
 
                     if (node.has("type") && node.get("type").asText().equals("heartbeat")) {
                         // TODO: Handle heartbeat
-                        LOG.info("Heartbeat message received");
+                        LOG.debug("Heartbeat message received");
                     } else if (node.has("watch-event")) {
                         // Add watch notif to event queue
-                        LOG.info("Watch notification received");
+                        LOG.debug("Watch notification received");
                     } else {
-                        LOG.info("Cloud indirect request received");
+                        LOG.debug("Cloud indirect request received");
                         eventQueue.addIndirectResult(node);
-                        // TODO: Remove this code later. It was just for testing event queue
-                        // Optional<EventQueueItem> item = eventQueue.get();
-                        // if (item.isPresent()) {
-                        //     LOG.info("Q item found !!");
-                        //     CloudIndirectResult e = (CloudIndirectResult) item.get();
-                        //     LOG.info(e.result.toString());
-                        //     LOG.info(e.getEventType());
-                        // }
                     }
                 } catch (Exception e) {
                     LOG.error("Error processing message: " + msg.getBody(), e);

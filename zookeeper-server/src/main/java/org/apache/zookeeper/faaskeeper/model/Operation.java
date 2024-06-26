@@ -27,22 +27,3 @@ public abstract class Operation {
 
     public abstract String getName();
 }
-
-/**
- * Base class for all operations submitted to FK work queue.
- */
-abstract class RequestOperation extends Operation {
-    public RequestOperation(String sessionId, String path) {
-        super(sessionId, path);
-    }
-
-    public RequestOperation(Map<String, Object> data) {
-        super((String) data.get("sessionId"), (String) data.get("path"));
-    }
-
-    public abstract Map<String, Object> generateRequest();
-
-    public boolean isCloudRequest() {
-        return true;
-    }
-}

@@ -1,15 +1,18 @@
 package org.apache.zookeeper.faaskeeper.queue;
-import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.zookeeper.faaskeeper.model.Operation;
 
+// TODO: Move JsonNode result to CloudIndirect reuslt. Its not needed in base class
 public abstract class EventQueueItem {
     public JsonNode result;
-    
+    private long timestamp;
 
     public EventQueueItem(JsonNode result) {
         this.result = result;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 }
 
@@ -27,51 +30,5 @@ enum EventType {
 
     public String getValue() {
         return value;
-    }
-}
-
-class CloudIndirectResult extends EventQueueItem {
-    public CloudIndirectResult(JsonNode result) {
-        super(result);
-    }
-
-    public String getEventType() {
-        return EventType.CLOUD_INDIRECT_RESULT.getValue();
-    }
-}
-
-class CloudDirectResult extends EventQueueItem {
-    public CloudDirectResult(JsonNode result) {
-        super(result);
-    }
-
-    public String getEventType() {
-        return EventType.CLOUD_DIRECT_RESULT.getValue();
-    }
-}
-
-class CloudExpectedResult extends EventQueueItem {
-    public final int requestID;
-    public final Operation op;
-    public final CompletableFuture<?> future;
-    public CloudExpectedResult(int requestID, Operation op, CompletableFuture<?> future) {
-        super(null);
-        this.requestID = requestID;
-        this.op = op;
-        this.future = future;
-    }
-
-    public String getEventType() {
-        return EventType.CLOUD_EXPECTED_RESULT.getValue();
-    }
-}
-
-class WatchNotification extends EventQueueItem {
-    public WatchNotification(JsonNode result) {
-        super(result);
-    }
-
-    public String getEventType() {
-        return EventType.WATCH_NOTIFICATION.getValue();
     }
 }

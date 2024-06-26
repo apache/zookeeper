@@ -11,7 +11,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.zookeeper.faaskeeper.model.Operation;
+import org.apache.zookeeper.faaskeeper.model.RequestOperation;
+import org.apache.zookeeper.faaskeeper.model.Node;
 
 public class EventQueue {
     private static final Logger LOG;
@@ -45,8 +46,18 @@ public class EventQueue {
     // public void addExpectedResult(int requestId, Operation request, Future future) {
     // }
 
-    // public void addDirectResult(int requestId, Object result, Future future) {
-    // }
+    public void addDirectResult(int requestId, Object result, CompletableFuture<Object> future) throws Exception {
+        if (closing) {
+            throw new Exception("Cannot add result to queue: EventQueue has been closed");
+        }
+
+        try {
+            queue.add(new CloudDirectResult<>(requestId, result, future));
+        } catch (IllegalStateException e) {
+            LOG.error("EventQueue add item failed", e);
+            throw e;
+        }
+    }
 
     public void addIndirectResult(JsonNode result) throws Exception {
         if (closing) {
@@ -60,7 +71,7 @@ public class EventQueue {
         }
     }
 
-    public void addExpectedResult(int requestID, Operation op, CompletableFuture<?> future) throws Exception {
+    public void addExpectedResult(int requestID, RequestOperation op, CompletableFuture<Node> future) throws Exception {
         if (closing) {
             throw new Exception("Cannot add result to queue: EventQueue has been closed");
         }

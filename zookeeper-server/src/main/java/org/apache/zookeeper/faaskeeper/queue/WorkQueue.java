@@ -25,12 +25,12 @@ public class WorkQueue {
         closing = false;
     }
 
-    public void addRequest(Operation op, CompletableFuture<?> future) throws Exception {
+    public <T> void addRequest(Operation op, CompletableFuture<T> future) throws Exception {
         if (closing) {
             throw new Exception("Cannot add result to queue: WorkQueue has been closed");
         }
         try {
-            queue.add(new WorkQueueItem(requestCount, op, future));
+            queue.add(new WorkQueueItem<>(requestCount, op, future));
             // TODO: remove this log
             LOG.debug("Pushed item to workqueue");
             requestCount += 1;
@@ -53,6 +53,7 @@ public class WorkQueue {
         closing = true;
     }
 
+    // TODO: Decide if waitClose is needed to be used anywhere
     public void waitClose(float timeout, float interval) throws TimeoutException {
         long start = System.currentTimeMillis();
         while(!queue.isEmpty() && System.currentTimeMillis() - start < timeout * 1000) {

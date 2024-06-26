@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.faaskeeper.queue.EventQueue;
 import org.apache.zookeeper.faaskeeper.queue.WorkQueue;
+import org.apache.zookeeper.faaskeeper.thread.SorterThread;
 import org.apache.zookeeper.faaskeeper.thread.SqsListener;
 import org.apache.zookeeper.faaskeeper.thread.SubmitterThread;
 
@@ -19,6 +20,7 @@ import org.apache.zookeeper.faaskeeper.provider.ProviderClient;
 import org.apache.zookeeper.faaskeeper.provider.AwsClient;
 import org.apache.zookeeper.faaskeeper.model.Node;
 import org.apache.zookeeper.faaskeeper.model.CreateNode;
+import org.apache.zookeeper.faaskeeper.model.RegisterSession;
 
 public class FaasKeeperClient {
     // TODO: Move this reqId to the queue once implemented
@@ -30,6 +32,7 @@ public class FaasKeeperClient {
     private ProviderClient providerClient;
     private SqsListener responseHandler;
     private SubmitterThread workThread;
+    private SorterThread sorterThread;
     private EventQueue eventQueue;
     private WorkQueue workQueue;
     private static Map<String, Class<? extends ProviderClient>> providers = new HashMap<>();
@@ -54,23 +57,38 @@ public class FaasKeeperClient {
         }
     }
 
-    public String start() {
+    public String start() throws Exception {
         LOG.info("Starting FK connection");
         responseHandler = new SqsListener(eventQueue, cfg);
         sessionId = UUID.randomUUID().toString().substring(0, 8);
+
         // TODO: Add queues implementation + add source_addr IP calculation
-        providerClient.registerSession(sessionId, "", this.heartbeat);
+        // providerClient.registerSession(sessionId, "", this.heartbeat);
+
+        workThread = new SubmitterThread(workQueue, eventQueue, providerClient, sessionId);
+        sorterThread = new SorterThread(eventQueue);
+
+        RegisterSession requestOp = new RegisterSession(sessionId, "", this.heartbeat);
+        CompletableFuture<Object> future = new CompletableFuture<Object>();
+        workQueue.addRequest(requestOp, future);
+        Object o = future.get();
+        System.out.println(o);
+        // TODO: replace this sleep with future.get()
+        // Thread.sleep(5000); // Sleep for 5 seconds
+
         LOG.info("Connection successful. sessionID = " + sessionId);
-        workThread = new SubmitterThread(workQueue, providerClient, sessionId);
         return sessionId;
     }
 
-    public void stop() {
-        // TODO: stop threads and clear queues
+    public void stop() throws Exception {
         // TODO: deregister session
         LOG.info("Closing FK connection");
+        workQueue.close();
+        workQueue.waitClose(5, 1);
+        eventQueue.close();
         responseHandler.stop();
         workThread.stop();
+        sorterThread.stop();
     }
 
     public static FaasKeeperClient buildClient(String configFilePath, int port, boolean heartbeat) throws Exception {
@@ -90,7 +108,7 @@ public class FaasKeeperClient {
         CreateNode requestOp = new CreateNode(sessionId, path, value, flags);
         providerClient.sendRequest(requestId, requestOp.generateRequest());
         // TODO: Push to submitter thread and wait() on a future
-        
+    
         return path;
     }
 
@@ -99,7 +117,7 @@ public class FaasKeeperClient {
         CreateNode requestOp = new CreateNode(sessionId, path, value, flags);
         CompletableFuture<Node> future = new CompletableFuture<Node>();
         workQueue.addRequest(requestOp, future);
-        return new CompletableFuture<Node>();
+        return future;
     }
 }
 
