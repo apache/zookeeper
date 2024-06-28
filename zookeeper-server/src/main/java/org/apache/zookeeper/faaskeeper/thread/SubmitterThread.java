@@ -75,7 +75,7 @@ public class SubmitterThread implements Runnable {
                 } else if (request.operation instanceof DirectOperation) {
                     String opName = request.operation.getName();
 
-                    if (opName == "register_session") {
+                    if ("register_session".equals(opName)) {
                         RegisterSession op = (RegisterSession) request.operation;
                         providerClient.registerSession(op.getSessionId(), op.sourceAddr, op.heartbeat);
                         eventQueue.addDirectResult(request.requestID, null, request.future);

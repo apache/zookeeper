@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.Queue;
 import java.util.LinkedList;
 
@@ -23,6 +24,7 @@ import org.apache.zookeeper.faaskeeper.model.Node;
 
 
 public class SorterThread implements Runnable {
+    private Future<?> threadFuture;
     private final ExecutorService executorService;
     private volatile boolean running = true;
     private final EventQueue eventQueue;
@@ -38,7 +40,7 @@ public class SorterThread implements Runnable {
     }
 
     public void start() {
-        executorService.submit(this);
+        threadFuture = executorService.submit(this);
     }
 
     @Override
@@ -113,7 +115,14 @@ public class SorterThread implements Runnable {
 
     public void stop() {
         running = false;
-        executorService.shutdown();
-        LOG.debug("Successfully stopped SorterThread");
+        try {
+            threadFuture.get();
+            executorService.shutdown();
+            LOG.debug("Successfully stopped SorterThread");
+        } catch (InterruptedException e) {
+            LOG.error("SorterThread shutdown interrupted: ", e);
+        } catch(ExecutionException e) {
+            LOG.error("Error in SorterThread execution: ", e);
+        }
     }
 }

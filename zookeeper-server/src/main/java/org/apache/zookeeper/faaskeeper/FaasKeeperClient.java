@@ -62,19 +62,13 @@ public class FaasKeeperClient {
         responseHandler = new SqsListener(eventQueue, cfg);
         sessionId = UUID.randomUUID().toString().substring(0, 8);
 
-        // TODO: Add queues implementation + add source_addr IP calculation
-        // providerClient.registerSession(sessionId, "", this.heartbeat);
-
         workThread = new SubmitterThread(workQueue, eventQueue, providerClient, sessionId);
         sorterThread = new SorterThread(eventQueue);
 
         RegisterSession requestOp = new RegisterSession(sessionId, "", this.heartbeat);
         CompletableFuture<Object> future = new CompletableFuture<Object>();
         workQueue.addRequest(requestOp, future);
-        Object o = future.get();
-        System.out.println(o);
-        // TODO: replace this sleep with future.get()
-        // Thread.sleep(5000); // Sleep for 5 seconds
+        future.get();
 
         LOG.info("Connection successful. sessionID = " + sessionId);
         return sessionId;
@@ -103,13 +97,9 @@ public class FaasKeeperClient {
 
     // flags represents createmode in its bit representation
     public String create(String path, byte[] value, int flags) throws Exception {
-        String requestId = sessionId + "-" + String.valueOf(reqIdTempRemoveLater);
-        reqIdTempRemoveLater = reqIdTempRemoveLater + 1;
-        CreateNode requestOp = new CreateNode(sessionId, path, value, flags);
-        providerClient.sendRequest(requestId, requestOp.generateRequest());
-        // TODO: Push to submitter thread and wait() on a future
-    
-        return path;
+        CompletableFuture<Node> future = createAsync(path, value, flags);
+        Node n = future.get();
+        return n.getPath();
     }
 
     // TODO: Make async method

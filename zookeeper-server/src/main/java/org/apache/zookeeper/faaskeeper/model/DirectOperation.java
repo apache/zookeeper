@@ -26,4 +26,3 @@ public abstract class DirectOperation extends Operation {
         return watch;
     }
 }
-

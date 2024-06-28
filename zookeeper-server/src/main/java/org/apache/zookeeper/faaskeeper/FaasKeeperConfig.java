@@ -151,12 +151,12 @@ public class FaasKeeperConfig {
         cfg.provider = CloudProvider.deserialize(rootNode.get("cloud-provider").asText());
 
         cfg.region = rootNode.get("deployment-region").asText();
-        if (cfg.region == "") {
+        if ("".equals(cfg.region)) {
             throw new Exception("Deployment region is not set");
         }
 
         cfg.deploymentName = rootNode.get("deployment-name").asText();
-        if (cfg.deploymentName == "") {
+        if ("".equals(cfg.deploymentName)) {
             throw new Exception("Deployment name is not set");
         }
 
@@ -176,7 +176,7 @@ public class FaasKeeperConfig {
             }
 
             String dataBucket = awsNode.get("data-bucket").asText();
-            if (dataBucket == "") {
+            if ("".equals(dataBucket)) {
                 throw new Exception("Data bucket is not set in aws configuration");
             }
 

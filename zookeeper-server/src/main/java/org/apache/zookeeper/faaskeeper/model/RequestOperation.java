@@ -1,6 +1,9 @@
 package org.apache.zookeeper.faaskeeper.model;
 
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,11 +31,20 @@ public abstract class RequestOperation extends Operation {
         if ("success".equals(status)) {
             Node n = new Node(result.get("path").asText());
             try {
-                // TODO: Implement version
-                // n.setCreated(new Version(SystemCounter.fromRawData((List<Integer>) result.get("system_counter")), null));
+                JsonNode sysCounterNode = result.get("system_counter");
+                if (sysCounterNode.isArray()) {
+                    List<BigInteger> sysCounter = new ArrayList<>();
+                    for (JsonNode val: sysCounterNode) {
+                        sysCounter.add(new BigInteger(val.asText()));
+                    }
+                    n.setCreated(new Version(SystemCounter.fromRawData(sysCounter), null));
+                } else {
+                    throw new IllegalArgumentException("System counter data is not an array");
+                }
                 future.complete(n);
             } catch (Exception e) {
-                future.completeExceptionally(new RuntimeException("Error setting created version: ", e));
+                System.out.println(e);
+                future.completeExceptionally(e);
             }
         } else {
             String reason = result.get("reason").asText();

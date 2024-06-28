@@ -1,7 +1,6 @@
 package org.apache.zookeeper.faaskeeper.model;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +10,8 @@ public class Node {
     private byte[] data;
     private String dataB64;
     private List<String> children;
-    // private Version createdVersion;
-    // private Version modifiedVersion;
+    private Version createdVersion;
+    private Version modifiedVersion;
 
     public Node(String path) {
         this.path = path;
@@ -67,35 +66,35 @@ public class Node {
         this.dataB64 = data;
     }
 
-    // public boolean hasCreated() {
-    //     return this.createdVersion != null;
-    // }
+    public boolean hasCreated() {
+        return this.createdVersion != null;
+    }
 
-    // public Version getCreated() {
-    //     if (this.createdVersion == null) {
-    //         throw new IllegalStateException("Created version is null");
-    //     }
-    //     return this.createdVersion;
-    // }
+    public Version getCreated() {
+        if (this.createdVersion == null) {
+            throw new IllegalStateException("Created version is null");
+        }
+        return this.createdVersion;
+    }
 
-    // public void setCreated(Version val) {
-    //     this.createdVersion = val;
-    // }
+    public void setCreated(Version val) {
+        this.createdVersion = val;
+    }
 
-    // public Version getModified() {
-    //     if (this.modifiedVersion == null) {
-    //         throw new IllegalStateException("Modified version is null");
-    //     }
-    //     return this.modifiedVersion;
-    // }
+    public Version getModified() {
+        if (this.modifiedVersion == null) {
+            throw new IllegalStateException("Modified version is null");
+        }
+        return this.modifiedVersion;
+    }
 
-    // public void setModified(Version val) {
-    //     this.modifiedVersion = val;
-    // }
+    public void setModified(Version val) {
+        this.modifiedVersion = val;
+    }
 
-    // public boolean hasModified() {
-    //     return this.modifiedVersion != null;
-    // }
+    public boolean hasModified() {
+        return this.modifiedVersion != null;
+    }
 
     public Map<String, Object> serialize() {
         Map<String, Object> dataDict = new HashMap<>();
@@ -103,16 +102,16 @@ public class Node {
             dataDict.put("data", new String(this.data));
         }
 
-        // Map<String, Object> versionDict = new HashMap<>();
-        // if (this.createdVersion != null) {
-        //     versionDict.put("version", Map.of("created", this.createdVersion.serialize()));
-        // }
-        // if (this.modifiedVersion != null) {
-        //     if (!versionDict.containsKey("version")) {
-        //         versionDict.put("version", new HashMap<>());
-        //     }
-        //     ((Map<String, Object>) versionDict.get("version")).put("modified", this.modifiedVersion.serialize());
-        // }
+        Map<String, Object> versionDict = new HashMap<>();
+        if (this.createdVersion != null) {
+            versionDict.put("version", Map.of("created", this.createdVersion.serialize()));
+        }
+        if (this.modifiedVersion != null) {
+            if (!versionDict.containsKey("version")) {
+                versionDict.put("version", new HashMap<>());
+            }
+            ((Map<String, Object>) versionDict.get("version")).put("modified", this.modifiedVersion.serialize());
+        }
 
         Map<String, Object> childrenDict = new HashMap<>();
         if (this.children != null) {
@@ -121,7 +120,7 @@ public class Node {
         Map<String, Object> result = new HashMap<>();
         result.put("path", this.path);
         result.putAll(dataDict);
-        // result.putAll(versionDict);
+        result.putAll(versionDict);
         result.putAll(childrenDict);
         return result;
     }
