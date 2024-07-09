@@ -267,9 +267,9 @@ public final class ServerMetrics {
         WATCH_BYTES = metricsContext.getCounter("watch_bytes");
 
         JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
-        JVM_HEAP_BYTES_USED = metricsContext.getSummary("jvm_memory_bytes_used", DetailLevel.ADVANCED);
-        JVM_HEAP_BYTES_MAX = metricsContext.getSummary("jvm_memory_bytes_max", DetailLevel.ADVANCED);
-        JVM_HEAP_BYTES_FREE = metricsContext.getSummary("jvm_memory_bytes_free", DetailLevel.ADVANCED);
+        JVM_HEAP_BYTES_USED = metricsContext.getSummary("jvm_mem_bytes_used", DetailLevel.ADVANCED);
+        JVM_HEAP_BYTES_MAX = metricsContext.getSummary("jvm_mem_bytes_max", DetailLevel.ADVANCED);
+        JVM_HEAP_BYTES_FREE = metricsContext.getSummary("jvm_mem_bytes_free", DetailLevel.ADVANCED);
 
         QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
     }
