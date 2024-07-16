@@ -194,7 +194,7 @@ public class QuorumPeerConfigTest {
         zkProp.setProperty("localSessionsEnabled", "yes");
         try {
             quorumPeerConfig.parseProperties(zkProp);
-            fail("Must throw exception as 'yes' is not accpetable for parseBoolean!");
+            fail("Must throw exception as 'yes' is not acceptable for parseBoolean!");
         } catch (ConfigException e) {
             // expected
         }

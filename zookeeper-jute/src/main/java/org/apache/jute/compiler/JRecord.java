@@ -407,7 +407,7 @@ public class JRecord extends JCompType {
         if (!pkgdir.exists()) {
             // create the pkg directory
             if (!pkgdir.mkdirs()) {
-                throw new IOException("Cannnot create directory: " + pkgpath);
+                throw new IOException("Cannot create directory: " + pkgpath);
             }
         } else if (!pkgdir.isDirectory()) {
             throw new IOException(pkgpath + " is not a directory.");
@@ -580,7 +580,7 @@ public class JRecord extends JCompType {
         if (!outputDirectory.exists()) {
             // create the pkg directory
             if (!outputDirectory.mkdirs()) {
-                throw new IOException("Cannnot create directory: " + outputDirectory);
+                throw new IOException("Cannot create directory: " + outputDirectory);
             }
         } else if (!outputDirectory.isDirectory()) {
             throw new IOException(outputDirectory + " is not a directory.");

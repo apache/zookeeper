@@ -120,7 +120,7 @@ public class QuorumTest extends ZKTestCase {
         // Test view contains other servers
         assertTrue(qb.s1.viewContains(qb.s2.getMyId()));
 
-        // Test view does not contain non-existant servers
+        // Test view does not contain non-existent servers
         assertFalse(qb.s1.viewContains(-1L));
     }
 
@@ -178,7 +178,7 @@ public class QuorumTest extends ZKTestCase {
 
     @Test
     public void testMultipleWatcherObjs() throws IOException, InterruptedException, KeeperException {
-        ct.testMutipleWatcherObjs();
+        ct.testMultipleWatcherObjs();
     }
 
     /**

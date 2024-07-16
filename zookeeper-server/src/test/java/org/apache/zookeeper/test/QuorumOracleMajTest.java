@@ -69,13 +69,13 @@ public class QuorumOracleMajTest extends QuorumBaseOracle_2Nodes {
             s = s2;
         }
 
-        noDropConectionTest(s);
+        noDropConnectionTest(s);
 
         dropConnectionTest(s, leader);
 
     }
 
-    private void noDropConectionTest(QuorumPeer s) {
+    private void noDropConnectionTest(QuorumPeer s) {
         Leader.Proposal p = new Leader.Proposal();
 
 

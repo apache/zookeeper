@@ -976,7 +976,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     /**
      * This method checks out the acl making sure it isn't null or empty,
      * it has valid schemes and ids, and expanding any relative ids that
-     * depend on the requestor's authentication information.
+     * depend on the requester's authentication information.
      *
      * @param authInfo list of ACL IDs associated with the client connection
      * @param acls list of ACLs being assigned to the node (create or setACL operation)
@@ -1004,7 +1004,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 rv.add(a);
             } else if (id.getScheme().equals("auth")) {
                 // This is the "auth" id, so we have to expand it to the
-                // authenticated ids of the requestor
+                // authenticated ids of the requester
                 boolean authIdValid = false;
                 for (Id cid : authInfo) {
                     ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(cid.getScheme());

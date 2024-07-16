@@ -500,7 +500,7 @@ namespace zktreeutil
                     0,
                     buffer, &len, stat );
         } while (rc != ZOK && rh.handleRC(rc));
-        if (rc != ZOK) // checl return code
+        if (rc != ZOK) // check return code
         {
             std::cerr << "[zktreeutil] Error in fetching value of " << path << std::endl;
             throw ZooKeeperException( string("Unable to get data of node ") + path, rc );

@@ -291,7 +291,7 @@ public class FileTxnLogTest extends ZKTestCase {
         for (long i = 0; i < txnCount; i++) {
             Stat stat = new Stat();
             byte[] data = db.getData("/node-" + i, stat, null);
-            assertArrayEquals(bytes, data, "Missmatch data");
+            assertArrayEquals(bytes, data, "Mismatch data");
             assertTrue(zxids.contains(stat.getMzxid()), "Unknown zxid ");
         }
     }

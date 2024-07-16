@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is intented to ensure the correct functionality of
+ * This class is intended to ensure the correct functionality of
  * {@link QuorumUtil} helper.
  */
 public class QuorumUtilTest extends ZKTestCase {
@@ -41,8 +41,8 @@ public class QuorumUtilTest extends ZKTestCase {
     /**
      * <p>
      * This test ensures that all JXM beans associated to a {@link QuorumPeer}
-     * are unregistered when shuted down ({@link QuorumUtil#shutdown(int)}). It
-     * allows a successfull restarting of several zookeeper servers (
+     * are unregistered when shut down ({@link QuorumUtil#shutdown(int)}). It
+     * allows a successful restarting of several zookeeper servers (
      * {@link QuorumPeer}) running on the same JVM.
      * <p>
      * See ZOOKEEPER-1214 for details.
@@ -77,9 +77,9 @@ public class QuorumUtilTest extends ZKTestCase {
             break;
         }
 
-        LOG.info(">-->> Shuting down server [{}]", firstFollowerIndex);
+        LOG.info(">-->> Shutting down server [{}]", firstFollowerIndex);
         qU.shutdown(firstFollowerIndex);
-        LOG.info(">-->> Shuting down server [{}]", secondFollowerIndex);
+        LOG.info(">-->> Shutting down server [{}]", secondFollowerIndex);
         qU.shutdown(secondFollowerIndex);
         LOG.info(">-->> Restarting server [{}]", firstFollowerIndex);
         qU.restart(firstFollowerIndex);

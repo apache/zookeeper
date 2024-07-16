@@ -10,7 +10,7 @@
   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
   http://standards.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html
 
-- Rename classes to avoid redundand "ZooInspector" prefix.
+- Rename classes to avoid redundant "ZooInspector" prefix.
 
 - Ant build file has hard coded log4j dependency. (ZK will move to maven anyways...)
 
