@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -236,7 +237,7 @@ public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListene
                 }
 
                 if (w instanceof ServerWatcher) {
-                    ((ServerWatcher) w).process(e, acl);
+                    ((ServerWatcher) w).process(e, Objects.requireNonNull(acl));
                 } else {
                     w.process(e);
                 }

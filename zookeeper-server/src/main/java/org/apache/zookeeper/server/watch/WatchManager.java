@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -186,7 +187,7 @@ public class WatchManager implements IWatchManager {
                 continue;
             }
             if (w instanceof ServerWatcher) {
-                ((ServerWatcher) w).process(e, acl);
+                ((ServerWatcher) w).process(e, Objects.requireNonNull(acl));
             } else {
                 w.process(e);
             }
