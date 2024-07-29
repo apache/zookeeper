@@ -447,7 +447,7 @@ public class DataTree {
         }
         List<ACL> parentAcl;
         synchronized (parent) {
-            parentAcl = getACL(parent);
+            parentAcl = getACL(parent, false);
 
             // Add the ACL to ACL cache first, to avoid the ACL not being
             // created race condition during fuzzy snapshot sync.
@@ -566,7 +566,7 @@ public class DataTree {
         List<ACL> acl;
         nodes.remove(path);
         synchronized (node) {
-            acl = getACL(node);
+            acl = getACL(node, false);
             aclCache.removeUsage(node.acl);
             nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
@@ -576,7 +576,7 @@ public class DataTree {
         // separate patch.
         List<ACL> parentAcl;
         synchronized (parent) {
-            parentAcl = getACL(parent);
+            parentAcl = getACL(parent, false);
             long owner = node.stat.getEphemeralOwner();
             EphemeralType ephemeralType = EphemeralType.get(owner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -638,7 +638,7 @@ public class DataTree {
         List<ACL> acl;
         byte[] lastData;
         synchronized (n) {
-            acl = getACL(n);
+            acl = getACL(n, false);
             lastData = n.data;
             nodes.preChange(path, n);
             n.data = data;
@@ -790,8 +790,12 @@ public class DataTree {
     }
 
     public List<ACL> getACL(DataNode node) {
+        return getACL(node, true);
+    }
+
+    private List<ACL> getACL(DataNode node, boolean mustSucceed) {
         synchronized (node) {
-            return aclCache.convertLong(node.acl);
+            return aclCache.convertLong(node.acl, mustSucceed);
         }
     }
 
