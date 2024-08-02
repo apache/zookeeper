@@ -55,9 +55,12 @@ import org.apache.zookeeper.server.RateLogger;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.ssl.KeyStoreScanner;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +104,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
     private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
     private String host = "0.0.0.0";
-    private int port = 7000;
+    private int httpPort = -1;
+    private int httpsPort = -1;
     private boolean exportJvmInfo = true;
     private Server server;
     private final MetricsServletImpl servlet = new MetricsServletImpl();
@@ -111,11 +115,48 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private long workerShutdownTimeoutMs = 1000;
     private Optional<ExecutorService> executorOptional = Optional.empty();
 
+    // Constants for SSL configuration
+    public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
+    public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
+    public static final String SSL_KEYSTORE_PASSWORD = "ssl.keyStore.password";
+    public static final String SSL_KEYSTORE_TYPE = "ssl.keyStore.type";
+    public static final String SSL_TRUSTSTORE_LOCATION = "ssl.trustStore.location";
+    public static final String SSL_TRUSTSTORE_PASSWORD = "ssl.trustStore.password";
+    public static final String SSL_TRUSTSTORE_TYPE = "ssl.trustStore.type";
+    public static final String SSL_X509_CN = "ssl.x509.cn";
+    public static final String SSL_X509_REGEX_CN = "ssl.x509.cn.regex";
+    public static final String SSL_NEED_CLIENT_AUTH = "ssl.need.client.auth";
+    public static final String SSL_WANT_CLIENT_AUTH = "ssl.want.client.auth";
+
+    private String keyStorePath;
+    private String keyStorePassword;
+    private String keyStoreType;
+    private String trustStorePath;
+    private String trustStorePassword;
+    private String trustStoreType;
+    private boolean needClientAuth = true;
+    private boolean wantClientAuth = true;
+
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
         LOG.info("Initializing metrics, configuration: {}", configuration);
         this.host = configuration.getProperty("httpHost", "0.0.0.0");
-        this.port = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
+        if (configuration.containsKey("httpsPort")) {
+            this.httpsPort = Integer.parseInt(configuration.getProperty("httpsPort"));
+            this.keyStorePath = configuration.getProperty(SSL_KEYSTORE_LOCATION);
+            this.keyStorePassword = configuration.getProperty(SSL_KEYSTORE_PASSWORD);
+            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE);
+            this.trustStorePath = configuration.getProperty(SSL_TRUSTSTORE_LOCATION);
+            this.trustStorePassword = configuration.getProperty(SSL_TRUSTSTORE_PASSWORD);
+            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE);
+            this.needClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_NEED_CLIENT_AUTH, "true"));
+            this.wantClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_WANT_CLIENT_AUTH, "true"));
+            //check if httpPort is also configured
+            this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "-1"));
+        } else {
+            // Use the default HTTP port (7000) or the configured port if HTTPS is not set.
+            this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
+        }
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
         this.numWorkerThreads = Integer.parseInt(
                 configuration.getProperty(NUM_WORKER_THREADS, "1"));
@@ -129,12 +170,29 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public void start() throws MetricsProviderLifeCycleException {
         this.executorOptional = createExecutor();
         try {
-            LOG.info("Starting /metrics HTTP endpoint at host: {}, port: {}, exportJvmInfo: {}",
-                    host, port, exportJvmInfo);
+            LOG.info("Starting /metrics {} endpoint at HTTP port: {}, HTTPS port: {}, exportJvmInfo: {}",
+                    httpPort > 0 ? httpPort : "disabled",
+                    httpsPort > 0 ? httpsPort : "disabled",
+                    exportJvmInfo);
             if (exportJvmInfo) {
                 DefaultExports.initialize();
             }
-            server = new Server(new InetSocketAddress(host, port));
+            if (httpPort == -1) {
+                server = new Server();
+            } else {
+                server = new Server(new InetSocketAddress(host, httpPort));
+            }
+            if (httpsPort != -1) {
+                SslContextFactory sslServerContextFactory = new SslContextFactory.Server();
+                configureSslContextFactory(sslServerContextFactory);
+                KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslServerContextFactory);
+                keystoreScanner.setScanInterval(SCAN_INTERVAL);
+                server.addBean(keystoreScanner);
+                ServerConnector connector = new ServerConnector(server, sslServerContextFactory);
+                connector.setPort(httpsPort);
+                connector.setHost(host);
+                server.addConnector(connector);
+            }
             ServletContextHandler context = new ServletContextHandler();
             context.setContextPath("/");
             constrainTraceMethod(context);
@@ -154,6 +212,44 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             }
             throw new MetricsProviderLifeCycleException(err);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void configureSslContextFactory(SslContextFactory sslServerContextFactory) {
+        if (keyStorePath != null) {
+            sslServerContextFactory.setKeyStorePath(keyStorePath);
+        } else {
+            LOG.error("KeyStore configuration is incomplete keyStorePath: {}", keyStorePath);
+            throw new IllegalStateException("KeyStore configuration is incomplete keyStorePath: " + keyStorePath);
+        }
+        if (keyStorePassword != null) {
+            sslServerContextFactory.setKeyStorePassword(keyStorePassword);
+        } else {
+            LOG.error("keyStorePassword configuration is incomplete ");
+            throw new IllegalStateException("keyStorePassword configuration is incomplete ");
+        }
+        if (keyStoreType != null) {
+            sslServerContextFactory.setKeyStoreType(keyStoreType);
+        }
+        if (trustStorePath != null) {
+            sslServerContextFactory.setTrustStorePath(trustStorePath);
+        } else {
+            LOG.error("TrustStore configuration is incomplete trustStorePath: {}", trustStorePath);
+            throw new IllegalStateException("TrustStore configuration is incomplete trustStorePath: " + trustStorePath);
+        }
+        if (trustStorePassword != null) {
+            sslServerContextFactory.setTrustStorePassword(trustStorePassword);
+        } else {
+            LOG.error("trustStorePassword configuration is incomplete");
+            throw new IllegalStateException("trustStorePassword configuration is incomplete");
+        }
+        if (trustStoreType != null) {
+            sslServerContextFactory.setTrustStoreType(trustStoreType);
+        }
+        sslServerContextFactory
+                .setNeedClientAuth(needClientAuth);
+        sslServerContextFactory
+                .setWantClientAuth(wantClientAuth);
     }
 
     // for tests
