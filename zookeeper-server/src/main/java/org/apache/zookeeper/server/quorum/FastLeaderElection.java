@@ -702,7 +702,7 @@ public class FastLeaderElection implements Election {
                 qv.toString().getBytes(UTF_8));
 
             LOG.debug(
-                "Sending Notification: {} (n.leader), 0x{} (n.peerEpoch), 0x{} (n.zxid), 0x{} (n.round), {} (recipient),"
+                "Sending Notification: {} (n.leader), 0x{} (n.zxid), 0x{} (n.peerEpoch), 0x{} (n.round), {} (recipient),"
                     + " {} (myid) ",
                 proposedLeader,
                 Long.toHexString(proposedZxid),
@@ -1074,7 +1074,7 @@ public class FastLeaderElection implements Election {
                         * In ZOOKEEPER-3922, we separate the behaviors of FOLLOWING and LEADING.
                         * To avoid the duplication of codes, we create a method called followingBehavior which was used to
                         * shared by FOLLOWING and LEADING. This method returns a Vote. When the returned Vote is null, it follows
-                        * the original idea to break swtich statement; otherwise, a valid returned Vote indicates, a leader
+                        * the original idea to break switch statement; otherwise, a valid returned Vote indicates, a leader
                         * is generated.
                         *
                         * The reason why we need to separate these behaviors is to make the algorithm runnable for 2-node

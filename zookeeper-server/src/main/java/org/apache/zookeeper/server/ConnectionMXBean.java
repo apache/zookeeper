@@ -48,7 +48,7 @@ public interface ConnectionMXBean {
      */
     long getPacketsSent();
     /**
-     * @return number of requets being processed
+     * @return number of requests being processed
      */
     long getOutstandingRequests();
     /**
@@ -62,7 +62,7 @@ public interface ConnectionMXBean {
      */
     void terminateSession();
     /**
-     * Terminate thei client connection. The client will immediately attempt to
+     * Terminate the client connection. The client will immediately attempt to
      * reconnect with the same session id.
      */
     void terminateConnection();

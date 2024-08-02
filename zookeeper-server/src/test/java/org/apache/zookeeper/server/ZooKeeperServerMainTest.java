@@ -198,7 +198,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         // inject problem in server
         ZooKeeperServer zooKeeperServer = main.getCnxnFactory().getZooKeeperServer();
         FileTxnSnapLog snapLog = zooKeeperServer.getTxnLogFactory();
-        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataDir(), snapLog.getSnapDir()) {
+        FileTxnSnapLog fileTxnSnapLogWithError = new FileTxnSnapLog(snapLog.getDataLogDir(), snapLog.getSnapDir()) {
             @Override
             public void commit() throws IOException {
                 throw new IOException("Input/output error");
@@ -210,7 +210,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         try {
             // do create operation, so that injected IOException is thrown
             zk.create("/foo2", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            fail("IOException is expected as error is injected in transaction log commit funtionality");
+            fail("IOException is expected as error is injected in transaction log commit functionality");
         } catch (Exception e) {
             // do nothing
         }

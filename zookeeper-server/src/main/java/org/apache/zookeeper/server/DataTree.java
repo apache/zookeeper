@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -445,7 +445,10 @@ public class DataTree {
         if (parent == null) {
             throw new NoNodeException();
         }
+        List<ACL> parentAcl;
         synchronized (parent) {
+            parentAcl = getACL(parent);
+
             // Add the ACL to ACL cache first, to avoid the ACL not being
             // created race condition during fuzzy snapshot sync.
             //
@@ -518,8 +521,9 @@ public class DataTree {
             updateQuotaStat(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, Event.EventType.NodeCreated, zxid);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged, zxid);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated, zxid, acl);
+        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
+            Event.EventType.NodeChildrenChanged, zxid, parentAcl);
     }
 
     /**
@@ -559,8 +563,10 @@ public class DataTree {
         if (node == null) {
             throw new NoNodeException();
         }
+        List<ACL> acl;
         nodes.remove(path);
         synchronized (node) {
+            acl = getACL(node);
             aclCache.removeUsage(node.acl);
             nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
@@ -568,7 +574,9 @@ public class DataTree {
         // Synchronized to sync the containers and ttls change, probably
         // only need to sync on containers and ttls, will update it in a
         // separate patch.
+        List<ACL> parentAcl;
         synchronized (parent) {
+            parentAcl = getACL(parent);
             long owner = node.stat.getEphemeralOwner();
             EphemeralType ephemeralType = EphemeralType.get(owner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -615,9 +623,10 @@ public class DataTree {
                 "childWatches.triggerWatch " + parentName);
         }
 
-        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted, zxid);
-        childWatches.triggerWatch(path, EventType.NodeDeleted, zxid, processed);
-        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName, EventType.NodeChildrenChanged, zxid);
+        WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted, zxid, acl);
+        childWatches.triggerWatch(path, EventType.NodeDeleted, zxid, acl, processed);
+        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
+            EventType.NodeChildrenChanged, zxid, parentAcl);
     }
 
     public Stat setData(String path, byte[] data, int version, long zxid, long time) throws NoNodeException {
@@ -626,8 +635,10 @@ public class DataTree {
         if (n == null) {
             throw new NoNodeException();
         }
+        List<ACL> acl;
         byte[] lastData;
         synchronized (n) {
+            acl = getACL(n);
             lastData = n.data;
             nodes.preChange(path, n);
             n.data = data;
@@ -649,7 +660,7 @@ public class DataTree {
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastData));
 
         updateWriteStat(path, dataBytes);
-        dataWatches.triggerWatch(path, EventType.NodeDataChanged, zxid);
+        dataWatches.triggerWatch(path, EventType.NodeDataChanged, zxid, acl);
         return s;
     }
 
@@ -969,46 +980,43 @@ public class DataTree {
 
                 boolean post_failed = false;
                 for (Txn subtxn : txns) {
-                    ByteBuffer bb = ByteBuffer.wrap(subtxn.getData());
-                    Record record;
+                    final Supplier<Record> supplier;
                     switch (subtxn.getType()) {
                     case OpCode.create:
                     case OpCode.create2:
-                        record = new CreateTxn();
+                        supplier = CreateTxn::new;
                         break;
                     case OpCode.createTTL:
-                        record = new CreateTTLTxn();
+                        supplier = CreateTTLTxn::new;
                         break;
                     case OpCode.createContainer:
-                        record = new CreateContainerTxn();
+                        supplier = CreateContainerTxn::new;
                         break;
                     case OpCode.delete:
                     case OpCode.deleteContainer:
-                        record = new DeleteTxn();
+                        supplier = DeleteTxn::new;
                         break;
                     case OpCode.setData:
-                        record = new SetDataTxn();
+                        supplier = SetDataTxn::new;
                         break;
                     case OpCode.error:
-                        record = new ErrorTxn();
+                        supplier = ErrorTxn::new;
                         post_failed = true;
                         break;
                     case OpCode.check:
-                        record = new CheckVersionTxn();
+                        supplier = CheckVersionTxn::new;
                         break;
                     default:
                         throw new IOException("Invalid type of op: " + subtxn.getType());
                     }
 
-                    assert record != null;
-
-                    ByteBufferInputStream.byteBuffer2Record(bb, record);
-
+                    final Record record;
                     if (failed && subtxn.getType() != OpCode.error) {
                         int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
-
                         subtxn.setType(OpCode.error);
                         record = new ErrorTxn(ec);
+                    } else {
+                        record = RequestRecord.fromBytes(subtxn.getData()).readRecord(supplier);
                     }
 
                     assert !failed || (subtxn.getType() == OpCode.error);

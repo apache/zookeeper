@@ -533,7 +533,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
 
         /**
-         * Call the callack and update Prometheus Gauge. This method is called
+         * Call the callback and update Prometheus Gauge. This method is called
          * when the server is polling for a value.
          */
         private void sample() {

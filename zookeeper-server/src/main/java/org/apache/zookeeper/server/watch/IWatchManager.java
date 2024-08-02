@@ -19,9 +19,11 @@
 package org.apache.zookeeper.server.watch;
 
 import java.io.PrintWriter;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.data.ACL;
 
 public interface IWatchManager {
 
@@ -114,10 +116,11 @@ public interface IWatchManager {
      * @param path znode path
      * @param type the watch event type
      * @param zxid the zxid for the corresponding change that triggered this event
+     * @param acl ACL of the znode in path
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(String path, EventType type, long zxid);
+    WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl);
 
     /**
      * Distribute the watch event for the given path, but ignore those
@@ -130,7 +133,7 @@ public interface IWatchManager {
      *
      * @return the watchers have been notified
      */
-    WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, WatcherOrBitSet suppress);
+    WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress);
 
     /**
      * Get the size of watchers.

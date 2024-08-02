@@ -1005,7 +1005,7 @@ public:
     void testChroot() {
         // the c client async callbacks do
         // not callback with the path, so
-        // we dont need to test taht for now
+        // we dont need to test that for now
         // we should fix that though soon!
         watchctx_t ctx, ctx_ch;
         zhandle_t *zk, *zk_ch;

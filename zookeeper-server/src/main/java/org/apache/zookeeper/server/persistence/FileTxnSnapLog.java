@@ -51,10 +51,10 @@ import org.slf4j.LoggerFactory;
  */
 public class FileTxnSnapLog {
 
-    //the directory containing the
+    //the directory containing
     //the transaction logs
     final File dataDir;
-    //the directory containing the
+    //the directory containing
     //the snapshot directory
     final File snapDir;
     TxnLog txnLog;
@@ -204,11 +204,11 @@ public class FileTxnSnapLog {
     }
 
     /**
-     * get the datadir used by this filetxn
+     * get the data log dir used by this filetxn
      * snap log
-     * @return the data dir
+     * @return the data log dir
      */
-    public File getDataDir() {
+    public File getDataLogDir() {
         return this.dataDir;
     }
 

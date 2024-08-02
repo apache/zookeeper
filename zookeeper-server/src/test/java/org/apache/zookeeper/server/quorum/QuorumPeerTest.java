@@ -30,8 +30,8 @@ import java.util.Map;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class QuorumPeerTest {
 
@@ -45,9 +45,8 @@ public class QuorumPeerTest {
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2301
      */
     @Test
-    public void testQuorumPeerListendOnSpecifiedClientIP() throws IOException {
+    public void testQuorumPeerListendOnSpecifiedClientIP(@TempDir File dataDir) throws IOException {
         long myId = 1;
-        File dataDir = ClientBase.createTmpDir();
         int clientPort = PortAssignment.unique();
         Map<Long, QuorumServer> peersView = new HashMap<>();
         InetAddress clientIP = InetAddress.getLoopbackAddress();

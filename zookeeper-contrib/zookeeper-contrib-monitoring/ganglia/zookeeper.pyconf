@@ -43,7 +43,7 @@ collection_group {
   metric { name = "zk_approximate_data_size" }
   metric { name = "zk_open_file_descriptor_count" }
   metric { name = "zk_max_file_descriptor_count" }
-  metric { name = "zk_followers" }
+  metric { name = "zk_learners" }
   metric { name = "zk_synced_followers" }
   metric { name = "zk_pending_syncs" }
   metric { name = "zk_last_proposal_size" }

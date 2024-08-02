@@ -18,11 +18,11 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -107,7 +107,7 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         while (itr.hasNext()) {
             Proposal proposal = itr.next();
             TxnLogEntry logEntry = SerializeUtils.deserializeTxn(
-                    proposal.packet.getData());
+                    proposal.getQuorumPacket().getData());
             TxnHeader hdr = logEntry.getHeader();
             Record rec = logEntry.getTxn();
             if (hdr.getType() == OpCode.create) {
@@ -117,7 +117,7 @@ public class GetProposalFromTxnTest extends ZKTestCase {
         }
 
         // All zxid should match what we created
-        assertTrue(Arrays.equals(zxids, retrievedZxids.toArray(new Long[0])), "Zxids missmatches");
+        assertArrayEquals(zxids, retrievedZxids.toArray(new Long[0]), "Zxids mismatches");
 
         // There should be 2000 create requests
         assertTrue((createCount == MSG_COUNT), "create proposal count == " + MSG_COUNT);

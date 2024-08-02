@@ -50,7 +50,8 @@ public class SimpleRequestRecord implements RequestRecord {
             return bytes;
         }
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(
+                ZooKeeperServer.intBufferStartingSizeBytes)) {
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             record.serialize(boa, "request");
             bytes = baos.toByteArray();

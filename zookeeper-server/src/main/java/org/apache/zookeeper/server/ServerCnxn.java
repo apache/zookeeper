@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -35,13 +34,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.compat.ProtocolManager;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.Counter;
@@ -54,7 +52,7 @@ import org.slf4j.LoggerFactory;
  * Interface to a Server connection - represents a connection from a client
  * to the server.
  */
-public abstract class ServerCnxn implements Stats, Watcher {
+public abstract class ServerCnxn implements Stats, ServerWatcher {
 
     // This is just an arbitrary object to represent requests issued by
     // (aka owned by) this class
@@ -173,29 +171,27 @@ public abstract class ServerCnxn implements Stats, Watcher {
      * @param r reply payload, can be null
      * @param tag Jute serialization tag, can be null
      * @param cacheKey Key for caching the serialized payload. A null value prevents caching.
-     * @param stat Stat information for the the reply payload, used for cache invalidation.
+     * @param stat Stat information for the reply payload, used for cache invalidation.
      *             A value of 0 prevents caching.
      * @param opCode The op code appertains to the corresponding request of the response,
      *               used to decide which cache (e.g. read response cache,
      *               list of children response cache, ...) object to look up to when applicable.
      */
-    public abstract int sendResponse(ReplyHeader h, Record r, String tag,
-                                      String cacheKey, Stat stat, int opCode) throws IOException;
+    public abstract int sendResponse(
+            ReplyHeader h,
+            Record r,
+            String tag,
+            String cacheKey,
+            Stat stat,
+            int opCode
+    ) throws IOException;
 
     public int sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
         return sendResponse(h, r, tag, null, null, -1);
     }
 
-    protected byte[] serializeRecord(Record record) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(ZooKeeperServer.intBufferStartingSizeBytes);
-        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-        bos.writeRecord(record, null);
-        return baos.toByteArray();
-    }
-
-    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String tag,
-                                     String cacheKey, Stat stat, int opCode) throws IOException {
-        byte[] header = serializeRecord(h);
+    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String cacheKey, Stat stat, int opCode) throws IOException {
+        byte[] header = RequestRecord.fromRecord(h).readBytes();
         byte[] data = null;
         if (r != null) {
             ResponseCache cache = null;
@@ -221,18 +217,18 @@ public abstract class ServerCnxn implements Stats, Watcher {
                 // Use cache to get serialized data.
                 //
                 // NB: Tag is ignored both during cache lookup and serialization,
-                // since is is not used in read responses, which are being cached.
+                // since it is not used in read responses, which are being cached.
                 data = cache.get(cacheKey, stat);
                 if (data == null) {
                     // Cache miss, serialize the response and put it in cache.
-                    data = serializeRecord(r);
+                    data = RequestRecord.fromRecord(r).readBytes();
                     cache.put(cacheKey, data, stat);
                     cacheMiss.add(1);
                 } else {
                     cacheHit.add(1);
                 }
             } else {
-                data = serializeRecord(r);
+                data = RequestRecord.fromRecord(r).readBytes();
             }
         }
         int dataLength = data == null ? 0 : data.length;
@@ -258,7 +254,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
     /* notify the client the session is closing and close/cleanup socket */
     public abstract void sendCloseSession();
 
-    public abstract void process(WatchedEvent event);
+    public void process(WatchedEvent event) {
+        process(event, null);
+    }
+
+    public abstract void process(WatchedEvent event, List<ACL> znodeAcl);
 
     public abstract long getSessionId();
 

@@ -47,6 +47,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,14 +81,12 @@ public class CommitProcessorTest extends ZKTestCase {
 
     boolean stopped;
     TestZooKeeperServer zks;
-    File tmpDir;
     ArrayList<TestClientThread> testClients = new ArrayList<>();
     CommitProcessor commitProcessor;
 
-    public void setUp(int numCommitThreads, int numClientThreads, int writePercent) throws Exception {
+    public void setUp(int numCommitThreads, int numClientThreads, int writePercent, File tmpDir) throws Exception {
         stopped = false;
         System.setProperty(CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, Integer.toString(numCommitThreads));
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);
         zks.startup();
@@ -102,10 +101,10 @@ public class CommitProcessorTest extends ZKTestCase {
         int numCommitThreads,
         int numReadOnlyClientThreads,
         int mixWorkloadClientThreads,
-        int writePercent) throws Exception {
+        int writePercent,
+        File tmpDir) throws Exception {
         stopped = false;
         System.setProperty(CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, Integer.toString(numCommitThreads));
-        tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new TestZooKeeperServer(tmpDir, tmpDir, 4000);
         zks.startup();
@@ -130,9 +129,6 @@ public class CommitProcessorTest extends ZKTestCase {
         for (TestClientThread client : testClients) {
             client.interrupt();
             client.join();
-        }
-        if (tmpDir != null) {
-            assertTrue(ClientBase.recursiveDelete(tmpDir), "delete " + tmpDir.toString());
         }
         processedReadRequests.set(0);
         processedWriteRequests.set(0);
@@ -199,10 +195,10 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     @Test
-    public void testNoCommitWorkersReadOnlyWorkload() throws Exception {
+    public void testNoCommitWorkersReadOnlyWorkload(@TempDir File tmpDir) throws Exception {
         int numClients = 10;
         LOG.info("testNoCommitWorkersReadOnlyWorkload");
-        setUp(0, numClients, 0);
+        setUp(0, numClients, 0, tmpDir);
         synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
@@ -213,10 +209,10 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     @Test
-    public void testNoCommitWorkersMixedWorkload() throws Exception {
+    public void testNoCommitWorkersMixedWorkload(@TempDir File tmpDir) throws Exception {
         int numClients = 10;
         LOG.info("testNoCommitWorkersMixedWorkload 25w/75r workload test");
-        setUp(0, numClients, 25);
+        setUp(0, numClients, 25, tmpDir);
         synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
@@ -225,10 +221,10 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     @Test
-    public void testOneCommitWorkerReadOnlyWorkload() throws Exception {
+    public void testOneCommitWorkerReadOnlyWorkload(@TempDir File tmpDir) throws Exception {
         int numClients = 10;
         LOG.info("testOneCommitWorkerReadOnlyWorkload");
-        setUp(1, numClients, 0);
+        setUp(1, numClients, 0, tmpDir);
         synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
@@ -239,8 +235,8 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     @Test
-    public void testOneCommitWorkerMixedWorkload() throws Exception {
-        setUp(1, 10, 25);
+    public void testOneCommitWorkerMixedWorkload(@TempDir File tmpDir) throws Exception {
+        setUp(1, 10, 25, tmpDir);
         LOG.info("testOneCommitWorkerMixedWorkload 25w/75r workload test");
         synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
@@ -250,10 +246,10 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     @Test
-    public void testManyCommitWorkersReadOnly() throws Exception {
+    public void testManyCommitWorkersReadOnly(@TempDir File tmpDir) throws Exception {
         int numClients = 10;
         LOG.info("testManyCommitWorkersReadOnly");
-        setUp(10, numClients, 0);
+        setUp(10, numClients, 0, tmpDir);
         synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);
         }
@@ -264,8 +260,8 @@ public class CommitProcessorTest extends ZKTestCase {
     }
 
     @Test
-    public void testManyCommitWorkersMixedWorkload() throws Exception {
-        setUp(16, 8, 8, 25);
+    public void testManyCommitWorkersMixedWorkload(@TempDir File tmpDir) throws Exception {
+        setUp(16, 8, 8, 25, tmpDir);
         LOG.info("testManyCommitWorkersMixedWorkload 8X0w/100r + 8X25w/75r workload test");
         synchronized (this) {
             wait(TEST_RUN_TIME_IN_MS);

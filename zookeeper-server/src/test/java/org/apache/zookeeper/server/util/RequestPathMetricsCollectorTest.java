@@ -61,21 +61,21 @@ public class RequestPathMetricsCollectorTest {
     @Test
     public void testTrimPath() {
         //normal cases
-        String trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 1);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1"));
-        trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 2);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1/p2"));
-        trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 3);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1/p2/p3"));
-        trimedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 4);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1/p2/p3"));
+        String trimmedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 1);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1"));
+        trimmedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 2);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1/p2"));
+        trimmedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 3);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1/p2/p3"));
+        trimmedPath = RequestPathMetricsCollector.trimPathDepth("/p1/p2/p3", 4);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1/p2/p3"));
         //some extra symbols
-        trimedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 3);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1 next/p2.index/p3:next"));
-        trimedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 2);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1 next/p2.index"));
-        trimedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 6);
-        assertTrue(trimedPath.equalsIgnoreCase("/p1 next/p2.index/p3:next"));
+        trimmedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 3);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1 next/p2.index/p3:next"));
+        trimmedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 2);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1 next/p2.index"));
+        trimmedPath = RequestPathMetricsCollector.trimPathDepth("//p1 next/p2.index/p3:next", 6);
+        assertTrue(trimmedPath.equalsIgnoreCase("/p1 next/p2.index/p3:next"));
     }
 
     @Test

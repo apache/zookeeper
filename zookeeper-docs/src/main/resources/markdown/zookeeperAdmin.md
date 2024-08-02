@@ -436,7 +436,7 @@ in the unlikely event a recent log has become corrupted). This
 can be run as a cron job on the ZooKeeper server machines to
 clean up the logs daily.
 
-    java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar:lib/logback-core-1.2.10.jar:conf org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
+    CLASSPATH='lib/*:conf' java org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
 
 
 Automatic purging of the snapshots and corresponding
@@ -1211,7 +1211,7 @@ property, when available, is noted below.
     The default value is false.
 
 * *serializeLastProcessedZxid.enabled*
-  (Jave system property: **zookeeper.serializeLastProcessedZxid.enabled**)
+  (Java system property: **zookeeper.serializeLastProcessedZxid.enabled**)
   **New in 3.9.0:**
   If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
   when restore. Defaults to true. Needs to be enabled for performing snapshot and restore
@@ -1859,8 +1859,10 @@ New features that are currently considered experimental.
     (Java system property: **readonlymode.enabled**)
     **New in 3.4.0:**
     Setting this value to true enables Read Only Mode server
-    support (disabled by default). ROM allows clients
-    sessions which requested ROM support to connect to the
+    support (disabled by default).
+    *localSessionsEnabled* has to be activated to serve clients.
+    A downgrade of an existing connections is currently not supported.
+    ROM allows clients sessions which requested ROM support to connect to the
     server even when the server might be partitioned from
     the quorum. In this mode ROM clients can still read
     values from the ZK service, but will be unable to write
@@ -2488,7 +2490,7 @@ Moving forward, Four Letter Words will be deprecated, please use
                   zk_watch_count  0
                   zk_ephemerals_count 0
                   zk_approximate_data_size    27
-                  zk_followers    4                   - only exposed by the Leader
+                  zk_learners    4                    - only exposed by the Leader
                   zk_synced_followers 4               - only exposed by the Leader
                   zk_pending_syncs    0               - only exposed by the Leader
                   zk_open_file_descriptor_count 23    - only available on Unix platforms

@@ -29,7 +29,7 @@
   
   Software systems of any significant complexity require mechanisms for data 
 interchange with the outside world. These interchanges typically involve the
-marshaling and unmarshaling of logical units of data to and from data streams
+marshaling and unmarshalling of logical units of data to and from data streams
 (files, network connections, memory buffers etc.). Applications usually have
 some code for serializing and deserializing the data types that they manipulate
 embedded in them. The work of serialization has several features that make
@@ -49,7 +49,7 @@ at
 <ul> 
 <li> enabling the specification of simple serializable data types (records) 
 <li> enabling the generation of code in multiple target languages for
-marshaling and unmarshaling such types
+marshaling and unmarshalling such types
 <li> providing target language specific support that will enable application 
 programmers to incorporate generated code into their applications
 </ul>
@@ -397,7 +397,7 @@ namespace links {
 
 Each field within the record will cause the generation of a private member
 declaration of the appropriate type in the class declaration, and one or more
-acccessor methods. The generated class will implement the serialize and
+accessor methods. The generated class will implement the serialize and
 deserialize methods defined in hadoop::Record+. It will also 
 implement the inspection methods type and signature from
 hadoop::Record. A default constructor and virtual destructor will also

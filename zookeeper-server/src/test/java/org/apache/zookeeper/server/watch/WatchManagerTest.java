@@ -133,7 +133,7 @@ public class WatchManagerTest extends ZKTestCase {
         public void run() {
             while (!stopped) {
                 String path = PATH_PREFIX + r.nextInt(paths);
-                WatcherOrBitSet s = manager.triggerWatch(path, EventType.NodeDeleted, -1);
+                WatcherOrBitSet s = manager.triggerWatch(path, EventType.NodeDeleted, -1, null);
                 if (s != null) {
                     triggeredCount.addAndGet(s.size());
                 }
@@ -756,7 +756,7 @@ public class WatchManagerTest extends ZKTestCase {
         //path2 is watched by watcher1
         manager.addWatch(path2, watcher1);
 
-        manager.triggerWatch(path3, EventType.NodeCreated, 1);
+        manager.triggerWatch(path3, EventType.NodeCreated, 1, null);
         //path3 is not being watched so metric is 0
         checkMetrics("node_created_watch_count", 0L, 0L, 0D, 0L, 0L);
         // Watchers shouldn't have received any events yet so the zxid should be -1.
@@ -764,19 +764,19 @@ public class WatchManagerTest extends ZKTestCase {
         checkMostRecentWatchedEvent(watcher2, null, null, -1);
 
         //path1 is watched by two watchers so two fired
-        manager.triggerWatch(path1, EventType.NodeCreated, 2);
+        manager.triggerWatch(path1, EventType.NodeCreated, 2, null);
         checkMetrics("node_created_watch_count", 2L, 2L, 2D, 1L, 2L);
         checkMostRecentWatchedEvent(watcher1, path1, EventType.NodeCreated, 2);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeCreated, 2);
 
         //path2 is watched by one watcher so one fired now total is 3
-        manager.triggerWatch(path2, EventType.NodeCreated, 3);
+        manager.triggerWatch(path2, EventType.NodeCreated, 3, null);
         checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
         checkMostRecentWatchedEvent(watcher1, path2, EventType.NodeCreated, 3);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeCreated, 2);
 
         //watches on path1 are no longer there so zero fired
-        manager.triggerWatch(path1, EventType.NodeDataChanged, 4);
+        manager.triggerWatch(path1, EventType.NodeDataChanged, 4, null);
         checkMetrics("node_changed_watch_count", 0L, 0L, 0D, 0L, 0L);
         checkMostRecentWatchedEvent(watcher1, path2, EventType.NodeCreated, 3);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeCreated, 2);
@@ -788,12 +788,12 @@ public class WatchManagerTest extends ZKTestCase {
         //path2 is watched by watcher1
         manager.addWatch(path2, watcher1);
 
-        manager.triggerWatch(path1, EventType.NodeDataChanged, 5);
+        manager.triggerWatch(path1, EventType.NodeDataChanged, 5, null);
         checkMetrics("node_changed_watch_count", 2L, 2L, 2D, 1L, 2L);
         checkMostRecentWatchedEvent(watcher1, path1, EventType.NodeDataChanged, 5);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeDataChanged, 5);
 
-        manager.triggerWatch(path2, EventType.NodeDeleted, 6);
+        manager.triggerWatch(path2, EventType.NodeDeleted, 6, null);
         checkMetrics("node_deleted_watch_count", 1L, 1L, 1D, 1L, 1L);
         checkMostRecentWatchedEvent(watcher1, path2, EventType.NodeDeleted, 6);
         checkMostRecentWatchedEvent(watcher2, path1, EventType.NodeDataChanged, 5);

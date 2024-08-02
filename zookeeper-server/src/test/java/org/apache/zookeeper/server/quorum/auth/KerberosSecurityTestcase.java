@@ -18,14 +18,11 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.io.TempDir;
 
 /*
  * This code is originally from HDFS, see the similarly named file there
@@ -48,7 +45,8 @@ import org.junit.jupiter.api.BeforeAll;
 public class KerberosSecurityTestcase extends QuorumAuthTestBase {
 
     private static MiniKdc kdc;
-    private static File workDir;
+    @TempDir
+    static File workDir;
     private static Properties conf;
 
     @BeforeAll
@@ -59,37 +57,13 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
     @AfterAll
     public static void tearDownSasl() throws Exception {
         stopMiniKdc();
-        FileUtils.deleteQuietly(workDir);
     }
 
     public static void startMiniKdc() throws Exception {
-        createTestDir();
         createMiniKdcConf();
 
         kdc = new MiniKdc(conf, workDir);
         kdc.start();
-    }
-
-    /**
-     * Create a working directory, it should be the build directory. Under this
-     * directory an ApacheDS working directory will be created, this directory
-     * will be deleted when the MiniKdc stops.
-     *
-     * @throws IOException
-     */
-    public static void createTestDir() throws IOException {
-        workDir = createTmpDir(new File(System.getProperty("build.test.dir", "build")));
-    }
-
-    static File createTmpDir(File parentDir) throws IOException {
-        File tmpFile = File.createTempFile("test", ".junit", parentDir);
-        // don't delete tmpFile - this ensures we don't attempt to create
-        // a tmpDir with a duplicate name
-        File tmpDir = new File(tmpFile + ".dir");
-        // never true if tmpfile does it's job
-        assertFalse(tmpDir.exists());
-        assertTrue(tmpDir.mkdirs());
-        return tmpDir;
     }
 
     /**

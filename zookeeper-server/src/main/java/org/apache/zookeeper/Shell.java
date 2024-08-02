@@ -33,10 +33,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
@@ -103,6 +105,24 @@ public abstract class Shell {
         }
 
         return new String[]{ULIMIT_COMMAND, "-v", String.valueOf(memoryLimit)};
+    }
+
+    /**
+     * Check if running in Windows Subsystem for Linux
+     * @return
+     * @throws IOException
+     */
+    public static boolean isWsl() throws IOException {
+        if (WINDOWS) {
+            return false;
+        }
+        final File f = new File("/proc/version");
+        if (!f.exists()) {
+            return false;
+        }
+        final String output = FileUtils.readFileToString(f, StandardCharsets.UTF_8.name());
+        return (output != null)
+                && System.getProperty("os.name").startsWith("Linux") && output.toLowerCase().contains("microsoft");
     }
 
     /** Set to true on Windows platforms */

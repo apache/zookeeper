@@ -37,7 +37,7 @@ limitations under the License.
 
 ### [Eclipse Communication Framework](http://www.eclipse.org/ecf)
   - The Eclipse ECF project provides an implementation of its Abstract Discovery services using Zookeeper. ECF itself
-  is used in many projects providing base functionallity for communication, all based on OSGi [1].
+  is used in many projects providing base functionality for communication, all based on OSGi [1].
 
 ### [Eclipse Gyrex](http://www.eclipse.org/gyrex)
   - The Eclipse Gyrex project provides a platform for building your own Java OSGi based clouds. 
@@ -60,7 +60,7 @@ limitations under the License.
 
 ### [Neo4j](https://neo4j.com/)
   - Neo4j is a Graph Database. It's a disk based, ACID compliant transactional storage engine for big graphs and fast graph traversals,
-    using external indicies like Lucene/Solr for global searches.
+    using external indices like Lucene/Solr for global searches.
   - We use ZooKeeper in the Neo4j High Availability components for write-master election,
     read slave coordination and other cool stuff. ZooKeeper is a great and focused project - we like! [1].
 

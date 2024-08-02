@@ -88,27 +88,41 @@ feature is disabled by default, and has to be explicitly turned on via
 
 ### Specifying the client port
 
-A client port of a server is the port on which the server accepts
-client connection requests. Starting with 3.5.0 the
-_clientPort_ and _clientPortAddress_ configuration parameters should no longer be used. Instead,
-this information is now part of the server keyword specification, which
+A client port of a server is the port on which the server accepts plaintext (non-TLS) client connection requests 
+and secure client port is the port on which the server accepts TLS client connection requests. 
+
+Starting with 3.5.0 the
+_clientPort_ and _clientPortAddress_ configuration parameters should no longer be used in zoo.cfg. 
+
+Starting with 3.10.0 the
+_secureClientPort_ and _secureClientPortAddress_ configuration parameters should no longer be used in zoo.cfg.
+
+Instead, this information is now part of the server keyword specification, which
 becomes as follows:
 
-    server.<positive id> = <address1>:<port1>:<port2>[:role];[<client port address>:]<client port>**
+    server.<positive id> = <address1>:<quorum port>:<leader election port>[:role];[[<client port address>:]<client port>][;[<secure client port address>:]<secure client port>]
 
-The client port specification is to the right of the semicolon. The
-client port address is optional, and if not specified it defaults to
-"0.0.0.0". As usual, role is also optional, it can be
-_participant_ or _observer_
-(_participant_ by default).
+- [New in ZK 3.10.0] The client port specification is optional and is to the right of the
+  first semicolon. The secure client port specification is also optional and is to the right
+  of the second semicolon. However, both the client port and secure client port specification
+  cannot be omitted, at least one of them should be present. If the user intends to omit client
+  port specification and provide only secure client port specification (TLS-only server), a second
+  semicolon should still be specified to indicate an empty client port specification (see last 
+  example below). In either spec, the port address is optional, and if not specified it defaults 
+  to "0.0.0.0".
+- As usual, role is also optional, it can be _participant_ or _observer_ (_participant_ by default).
 
 Examples of legal server statements:
 
-    server.5 = 125.23.63.23:1234:1235;1236
-    server.5 = 125.23.63.23:1234:1235:participant;1236
-    server.5 = 125.23.63.23:1234:1235:observer;1236
-    server.5 = 125.23.63.23:1234:1235;125.23.63.24:1236
-    server.5 = 125.23.63.23:1234:1235:participant;125.23.63.23:1236
+    server.5 = 125.23.63.23:1234:1235;1236                                             (non-TLS server)
+    server.5 = 125.23.63.23:1234:1235;1236;1237                                        (non-TLS + TLS server)
+    server.5 = 125.23.63.23:1234:1235;;1237                                            (TLS-only server)
+    server.5 = 125.23.63.23:1234:1235:participant;1236                                 (non-TLS server)
+    server.5 = 125.23.63.23:1234:1235:observer;1236                                    (non-TLS server)
+    server.5 = 125.23.63.23:1234:1235;125.23.63.24:1236                                (non-TLS server)
+    server.5 = 125.23.63.23:1234:1235:participant;125.23.63.23:1236                    (non-TLS server)
+    server.5 = 125.23.63.23:1234:1235:participant;125.23.63.23:1236;125.23.63.23:1237  (non-TLS + TLS server)
+    server.5 = 125.23.63.23:1234:1235:participant;;125.23.63.23:1237                   (TLS-only server)
 
 
 <a name="sc_multiaddress"></a>

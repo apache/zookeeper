@@ -114,7 +114,7 @@ public class ServerCnxnTest extends ClientBase {
             // After the socket is closed, when the client tries to read a
             // line of text it will throw java.net.SocketException.
             // @see jira issue ZOOKEEPER-1862
-            LOG.info("Connnection is expired", ioe);
+            LOG.info("Connection is expired", ioe);
         }
         return sb;
     }

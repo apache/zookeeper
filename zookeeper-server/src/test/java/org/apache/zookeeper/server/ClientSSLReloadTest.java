@@ -43,6 +43,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +53,10 @@ public class ClientSSLReloadTest extends ZKTestCase {
     private X509TestContext x509TestContext1;
     private X509TestContext x509TestContext2;
 
-    private File dir1;
-    private File dir2;
+    @TempDir
+    File dir1;
+    @TempDir
+    File dir2;
 
     private File keyStoreFile1;
     private File trustStoreFile1;
@@ -63,9 +66,6 @@ public class ClientSSLReloadTest extends ZKTestCase {
 
     @BeforeEach
     public void setup() throws Exception {
-
-        dir1 = ClientBase.createEmptyTestDir();
-        dir2 = ClientBase.createEmptyTestDir();
 
         Security.addProvider(new BouncyCastleProvider());
 
@@ -92,12 +92,6 @@ public class ClientSSLReloadTest extends ZKTestCase {
 
     @AfterEach
     public void teardown() throws Exception {
-        try {
-            FileUtils.deleteDirectory(dir1);
-            FileUtils.deleteDirectory(dir2);
-        } catch (IOException e) {
-            // ignore
-        }
         Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
     }
 
@@ -108,13 +102,13 @@ public class ClientSSLReloadTest extends ZKTestCase {
      * 3) ZK client will connect to the server on the secure client port using keyStoreFile1 and trustStoreFile1.
      * 4) Update the keyStoreFile1 and trustStoreFile1 files in the filesystem with keyStoreFile2 and trustStoreFile2.
      * 5) Till FileChangeWatcher thread is triggered & SSLContext options are reset, ZK client should continue to connect.
-     *    In Junit tests, FileChangeWatcher thread is not triggered immediately upon certifcate update in the filesystem.
-     * 6) Once the certficates are reloaded by the server, ZK client connect will fail.
+     *    In Junit tests, FileChangeWatcher thread is not triggered immediately upon certificate update in the filesystem.
+     * 6) Once the certificates are reloaded by the server, ZK client connect will fail.
      * 7) Next, create a new ZK client with updated keystore & truststore paths (keyStoreFile2 and trustStoreFile2).
      * 8) Server should accept the connection on the secure client port.
      */
     @Test
-    public void certficateReloadTest() throws Exception {
+    public void certificateReloadTest() throws Exception {
 
         final Properties configZookeeper = getServerConfig();
         try (ZooKeeperServerEmbedded zkServer = ZooKeeperServerEmbedded

@@ -71,7 +71,7 @@ public class LocalSessionRequestTest extends ZKTestCase {
     }
 
     /**
-     * Walk through the target peer commmittedLog.
+     * Walk through the target peer committedLog.
      * @param sessionId
      * @param peerId
      */
@@ -82,8 +82,8 @@ public class LocalSessionRequestTest extends ZKTestCase {
         QuorumPeer peer = qb.getPeerList().get(peerId);
         ZKDatabase db = peer.getActiveServer().getZKDatabase();
         for (Proposal p : db.getCommittedLog()) {
-            assertFalse(p.request.sessionId == sessionId,
-                    "Should not see " + Request.op2String(p.request.type)
+            assertFalse(p.getRequest().sessionId == sessionId,
+                    "Should not see " + Request.op2String(p.getRequest().type)
                             + " request from local session 0x" + session + " on the " + peerType);
         }
     }
