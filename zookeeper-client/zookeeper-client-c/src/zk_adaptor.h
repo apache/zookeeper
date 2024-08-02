@@ -173,6 +173,7 @@ struct adaptor_threads {
 #else
      int self_pipe[2];
 #endif
+     int terminate_completion;
 };
 #endif
 
