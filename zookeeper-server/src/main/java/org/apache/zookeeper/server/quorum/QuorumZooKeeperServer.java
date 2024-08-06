@@ -183,7 +183,14 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     }
 
     @Override
-    protected void setState(State state) {
+    protected synchronized void setState(State state) {
+        if (this.state == State.ERROR) {
+            if (state == State.RUNNING || state == State.INITIAL) {
+                // ZOOKEEPER-4203
+                LOG.warn("QuorumZooKeeperServer refuses to change state from {} to {}", this.state, state);
+                return;
+            }
+        }
         this.state = state;
     }
 

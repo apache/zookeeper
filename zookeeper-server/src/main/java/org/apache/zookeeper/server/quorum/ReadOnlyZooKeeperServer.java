@@ -230,7 +230,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     }
 
     @Override
-    protected void setState(State state) {
+    protected synchronized void setState(State state) {
         this.state = state;
     }
 
