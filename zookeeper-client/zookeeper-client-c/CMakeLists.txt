@@ -189,6 +189,7 @@ endif()
 
 if(CYRUS_SASL_FOUND)
   list(APPEND zookeeper_sources src/zk_sasl.c)
+  set(LIBS ${LIBS} -lsasl2)
 endif()
 
 if(WIN32)
@@ -212,6 +213,7 @@ if(NOT WITH_OPENSSL STREQUAL "OFF")
   if(OPENSSL_FOUND)
     target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
     target_link_libraries(zookeeper PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    set(LIBS ${LIBS} -lssl -lcrypto)
     message("-- OpenSSL libraries found! will build with SSL support.")
   else()
     message("-- WARNING: unable to find OpenSSL libraries! will build without SSL support.")
@@ -290,3 +292,31 @@ if(WANT_CPPUNIT)
     "ZKROOT=${CMAKE_CURRENT_SOURCE_DIR}/../.."
     "CLASSPATH=$CLASSPATH:$CLOVER_HOME/lib/clover*.jar")
 endif()
+
+# set up `make install`.
+# headers end up in /usr/local/include/zookeeper/*.h
+# (with /usr/local being overrideable by using --prefix etc)
+INSTALL(FILES
+    include/zookeeper.h
+    include/proto.h
+    include/config.h
+    include/zookeeper_version.h
+    include/winconfig.h
+    include/zookeeper_log.h
+    include/recordio.h
+    generated/zookeeper.jute.h
+  DESTINATION include/zookeeper/)
+# libzookeeper.a ends up in /usr/local/lib/libzookeeper.a
+INSTALL(TARGETS zookeeper
+  ARCHIVE DESTINATION lib)
+
+if (UNIX)
+  INCLUDE(FindPkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    # generate .pc and install
+    CONFIGURE_FILE("libzookeeper.pc.in" "libzookeeper.pc" @ONLY)
+    INSTALL(FILES libzookeeper.pc
+      DESTINATION lib/pkgconfig)
+  endif()
+endif()
+
