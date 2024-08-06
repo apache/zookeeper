@@ -126,6 +126,72 @@ public class FileSnap implements SnapShot {
     }
 
     /**
+     * deserialize a data tree from the most recent snapshot before the checkpoint zxid
+     * 
+     * @return the zxid of the snapshot
+     */
+    public long deserialize(DataTree dt, Map<Long, Integer> sessions, long zxid) throws IOException {
+        // we run through 100 snapshots (not all of them)
+        // if we cannot get it running within 100 snapshots
+        // we should give up
+        List<File> snapList = findNValidSnapshots(100);
+        if (snapList.size() == 0) {
+            return -1L;
+        }
+        File snap = null;
+        long snapZxid = -1;
+        boolean foundValid = false;
+        for (int i = 0, snapListSize = snapList.size(); i < snapListSize; i++) {
+            snap = snapList.get(i);
+            LOG.info("Reading snapshot {}", snap);
+            snapZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
+
+            // if this snapshot has a higher zxid than the checkpoint zxid, skip and continue to the previous snapshot
+            if (snapZxid > zxid) {
+                continue;
+            }
+
+            try (CheckedInputStream snapIS = SnapStream.getInputStream(snap)) {
+                InputArchive ia = BinaryInputArchive.getArchive(snapIS);
+                deserialize(dt, sessions, ia);
+                SnapStream.checkSealIntegrity(snapIS, ia);
+
+                // Digest feature was added after the CRC to make it backward
+                // compatible, the older code can still read snapshots which
+                // includes digest.
+                //
+                // To check the intact, after adding digest we added another
+                // CRC check.
+                if (dt.deserializeZxidDigest(ia, snapZxid)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
+                // deserialize lastProcessedZxid and check inconsistency
+                if (dt.deserializeLastProcessedZxid(ia)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
+                foundValid = true;
+                break;
+            } catch (IOException e) {
+                LOG.warn("problem reading snap file {}", snap, e);
+            }
+        }
+        if (!foundValid) {
+            throw new IOException("Not able to find valid snapshots in " + snapDir);
+        }
+        dt.lastProcessedZxid = snapZxid;
+        lastSnapshotInfo = new SnapshotInfo(dt.lastProcessedZxid, snap.lastModified() / 1000);
+
+        // compare the digest if this is not a fuzzy snapshot, we want to compare
+        // and find inconsistent asap.
+        if (dt.getDigestFromLoadedSnapshot() != null) {
+            dt.compareSnapshotDigests(dt.lastProcessedZxid);
+        }
+        return dt.lastProcessedZxid;
+    }
+
+    /**
      * deserialize the datatree from an inputarchive
      * @param dt the datatree to be serialized into
      * @param sessions the sessions to be filled up
