@@ -934,7 +934,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             String configStr = testServerHasConfig(zkArr[i], null, null);
             QuorumVerifier qv = qu.getPeer(i).peer.configFromString(configStr);
             long version = qv.getVersion();
-            assertTrue(version == 0x100000000L);
+            assertTrue(version == 0x10000000000L);
         }
     }
 
