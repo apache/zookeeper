@@ -1170,7 +1170,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             bos.writeInt(-1, "len");
-            rsp.serialize(bos, "connect");
+            cnxn.protocolManager.serializeConnectResponse(rsp, bos);
             baos.close();
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
             bb.putInt(bb.remaining() - 4).rewind();
