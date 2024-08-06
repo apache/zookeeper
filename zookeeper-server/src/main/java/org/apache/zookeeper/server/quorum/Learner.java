@@ -392,7 +392,7 @@ public class Learner {
         }
 
         private Socket connectToLeader() throws IOException, X509Exception, InterruptedException {
-            Socket sock = createSocket();
+            Socket sock = null;
 
             // leader connection timeout defaults to tickTime * initLimit
             int connectTimeout = self.tickTime * self.initLimit;
@@ -406,8 +406,12 @@ public class Learner {
             int remainingTimeout;
             long startNanoTime = nanoTime();
 
-            for (int tries = 0; tries < 5 && socket.get() == null; tries++) {
+            for (int tries = 0; tries < 5; tries++) {
                 try {
+                    sock = createSocket();
+                    if (socket.get() == null) {
+                        continue;
+                    }
                     // recalculate the init limit time because retries sleep for 1000 milliseconds
                     remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1_000_000);
                     if (remainingTimeout <= 0) {
@@ -447,7 +451,6 @@ public class Learner {
                           remainingTimeout,
                           address,
                           e);
-                        sock = createSocket();
                     }
                 }
                 Thread.sleep(leaderConnectDelayDuringRetryMs);
