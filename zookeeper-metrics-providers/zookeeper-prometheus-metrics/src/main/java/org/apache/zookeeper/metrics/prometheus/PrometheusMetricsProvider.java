@@ -20,22 +20,19 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.SketchesSummary;
 import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -51,7 +48,6 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
-import org.apache.zookeeper.server.RateLogger;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
@@ -79,13 +75,17 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * Number of worker threads for reporting Prometheus summary metrics.
      * Default value is 1.
      * If the number is less than 1, the main thread will be used.
+     * @deprecated This configuration is ignored. See details in ZOOKEEPER-4741
      */
+    @Deprecated
     static final String NUM_WORKER_THREADS = "numWorkerThreads";
 
     /**
      * The max queue size for Prometheus summary metrics reporting task.
      * Default value is 1000000.
+     * @deprecated This configuration is ignored. See details in ZOOKEEPER-4741
      */
+    @Deprecated
     static final String MAX_QUEUE_SIZE = "maxQueueSize";
 
     /**
@@ -95,6 +95,11 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     static final String WORKER_SHUTDOWN_TIMEOUT_MS = "workerShutdownTimeoutMs";
 
     /**
+     * The interval in seconds for Prometheus summary metrics rotation. Default value is 60.
+     */
+    static final String PROMETHEUS_SUMMARY_ROTATE_SECONDS = "prometheusMetricsSummaryRotateSeconds";
+
+    /**
      * We are using the 'defaultRegistry'.
      * <p>
      * When you are running ZooKeeper (server or client) together with other
@@ -102,7 +107,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * </p>
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
-    private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
     private String host = "0.0.0.0";
     private int httpPort = -1;
     private int httpsPort = -1;
@@ -110,10 +114,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private Server server;
     private final MetricsServletImpl servlet = new MetricsServletImpl();
     private final Context rootContext = new Context();
-    private int numWorkerThreads = 1;
-    private int maxQueueSize = 1000000;
     private long workerShutdownTimeoutMs = 1000;
-    private Optional<ExecutorService> executorOptional = Optional.empty();
+    private int summaryRotateSeconds = 60;
+    private ScheduledExecutorService executorService;
 
     // Constants for SSL configuration
     public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
@@ -158,17 +161,18 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
         }
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
-        this.numWorkerThreads = Integer.parseInt(
-                configuration.getProperty(NUM_WORKER_THREADS, "1"));
-        this.maxQueueSize = Integer.parseInt(
-                configuration.getProperty(MAX_QUEUE_SIZE, "1000000"));
+        if (configuration.containsKey(NUM_WORKER_THREADS) || configuration.containsKey(MAX_QUEUE_SIZE)) {
+            LOG.warn("The configuration {} and {} are deprecated, it is ignored. See details in ZOOKEEPER-4741",
+                    NUM_WORKER_THREADS, MAX_QUEUE_SIZE);
+        }
         this.workerShutdownTimeoutMs = Long.parseLong(
                 configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
+        this.summaryRotateSeconds = Integer.parseInt(
+                configuration.getProperty(PROMETHEUS_SUMMARY_ROTATE_SECONDS, "60"));
     }
 
     @Override
     public void start() throws MetricsProviderLifeCycleException {
-        this.executorOptional = createExecutor();
         try {
             LOG.info("Starting /metrics {} endpoint at HTTP port: {}, HTTPS port: {}, exportJvmInfo: {}",
                     httpPort > 0 ? httpPort : "disabled",
@@ -199,6 +203,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             server.setHandler(context);
             context.addServlet(new ServletHolder(servlet), "/metrics");
             server.start();
+            executorService = new ScheduledThreadPoolExecutor(1, new PrometheusWorkerThreadFactory());
+            startSummaryRotateScheduleTask();
         } catch (Exception err) {
             LOG.error("Cannot start /metrics server", err);
             if (server != null) {
@@ -579,79 +585,70 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
-    private class PrometheusSummary implements Summary {
+    // VisibleForTesting
+    class PrometheusSummary implements Summary {
 
-        private final io.prometheus.client.Summary inner;
+        // VisibleForTesting
+        SketchesSummary inner;
         private final String name;
 
         public PrometheusSummary(String name, MetricsContext.DetailLevel level) {
             this.name = name;
             if (level == MetricsContext.DetailLevel.ADVANCED) {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
-                        .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
-                        .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
+                this.inner = SketchesSummary.build(name, name)
+                        .quantile(0.5) // Add 50th percentile (= median)
+                        .quantile(0.9) // Add 90th percentile
+                        .quantile(0.99) // Add 99th percentile
                         .register(collectorRegistry);
             } else {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
+                this.inner = SketchesSummary.build(name, name)
+                        .quantile(0.5) // Add 50th percentile (= median) with 5% tolerated error
                         .register(collectorRegistry);
             }
         }
 
         @Override
         public void add(long delta) {
-            reportMetrics(() -> observe(delta));
-        }
-
-        private void observe(final long delta) {
             try {
                 inner.observe(delta);
-            } catch (final IllegalArgumentException err) {
+            } catch (IllegalArgumentException err) {
                 LOG.error("invalid delta {} for metric {}", delta, name, err);
             }
         }
     }
 
-    private class PrometheusLabelledSummary implements SummarySet {
+    // VisibleForTesting
+    class PrometheusLabelledSummary implements SummarySet {
 
-        private final io.prometheus.client.Summary inner;
+        // VisibleForTesting
+        final SketchesSummary inner;
         private final String name;
 
         public PrometheusLabelledSummary(String name, MetricsContext.DetailLevel level) {
             this.name = name;
             if (level == MetricsContext.DetailLevel.ADVANCED) {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
+                this.inner = SketchesSummary.build(name, name)
                         .labelNames(LABELS)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
-                        .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
-                        .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
+                        .quantile(0.5) // Add 50th percentile (= median)
+                        .quantile(0.9) // Add 90th percentile
+                        .quantile(0.99) // Add 99th percentile
                         .register(collectorRegistry);
             } else {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
+                this.inner = SketchesSummary.build(name, name)
                         .labelNames(LABELS)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
+                        .quantile(0.5) // Add 50th percentile (= median)
                         .register(collectorRegistry);
             }
         }
 
         @Override
         public void add(String key, long value) {
-            reportMetrics(() -> observe(key, value));
-        }
-
-        private void observe(final String key, final long value) {
             try {
                 inner.labels(key).observe(value);
-            } catch (final IllegalArgumentException err) {
+            } catch (IllegalArgumentException err) {
                 LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
             }
         }
-
     }
 
     class MetricsServletImpl extends MetricsServlet {
@@ -666,39 +663,31 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
-    private Optional<ExecutorService> createExecutor() {
-        if (numWorkerThreads < 1) {
-            LOG.info("Executor service was not created as numWorkerThreads {} is less than 1", numWorkerThreads);
-            return Optional.empty();
-        }
-
-        final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(maxQueueSize);
-        final ThreadPoolExecutor executor = new ThreadPoolExecutor(numWorkerThreads,
-                numWorkerThreads,
-                0L,
-                TimeUnit.MILLISECONDS,
-                queue, new PrometheusWorkerThreadFactory());
-        LOG.info("Executor service was created with numWorkerThreads {} and maxQueueSize {}",
-                numWorkerThreads,
-                maxQueueSize);
-        return Optional.of(executor);
+    private void startSummaryRotateScheduleTask() {
+        executorService.scheduleAtFixedRate(() -> {
+            try {
+                rootContext.summaries.values().forEach(s -> s.inner.rotate());
+                rootContext.summarySets.values().forEach(s -> s.inner.rotate());
+                rootContext.basicSummaries.values().forEach(s -> s.inner.rotate());
+                rootContext.basicSummarySets.values().forEach(s -> s.inner.rotate());
+            } catch (Exception err) {
+                LOG.error("Cannot rotate summaries", err);
+            }
+        }, summaryRotateSeconds, summaryRotateSeconds, TimeUnit.SECONDS);
     }
 
     private void shutdownExecutor() {
-        if (executorOptional.isPresent()) {
-            LOG.info("Shutdown executor service with timeout {}", workerShutdownTimeoutMs);
-            final ExecutorService executor = executorOptional.get();
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
-                    LOG.error("Not all the Prometheus worker threads terminated properly after {} timeout",
-                            workerShutdownTimeoutMs);
-                    executor.shutdownNow();
-                }
-            } catch (final Exception e) {
-                LOG.error("Error occurred while terminating Prometheus worker threads", e);
-                executor.shutdownNow();
+        LOG.info("Shutdown executor service with timeout {}", workerShutdownTimeoutMs);
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
+                LOG.error("Not all the Prometheus worker threads terminated properly after {} timeout",
+                        workerShutdownTimeoutMs);
+                executorService.shutdownNow();
             }
+        } catch (final Exception e) {
+            LOG.error("Error occurred while terminating Prometheus worker threads", e);
+            executorService.shutdownNow();
         }
     }
 
@@ -711,19 +700,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             final Thread thread = new Thread(runnable, threadName);
             thread.setDaemon(true);
             return thread;
-        }
-    }
-
-    private void reportMetrics(final Runnable task) {
-        if (executorOptional.isPresent()) {
-            try {
-                executorOptional.get().submit(task);
-            } catch (final RejectedExecutionException e) {
-                rateLogger.rateLimitLog("Prometheus metrics reporting task queue size exceeded the max",
-                        String.valueOf(maxQueueSize));
-            }
-        } else {
-            task.run();
         }
     }
 }
