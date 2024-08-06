@@ -2709,6 +2709,31 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
+     * Synchronous sync. Flushes channel between process and leader.
+     *
+     * @param path the given path
+     * @throws KeeperException If the server signals an error with a non-zero error code
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public void sync(final String path) throws KeeperException, InterruptedException {
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.sync);
+        SyncRequest request = new SyncRequest();
+        SyncResponse response = new SyncResponse();
+        request.setPath(serverPath);
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
+        }
+    }
+
+    /**
      * Asynchronous sync. Flushes channel between process and leader.
      * @param path
      * @param cb a handler for the callback
