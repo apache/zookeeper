@@ -513,9 +513,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     *  Restore sessions and data
+     * Restore sessions and data, takes a snapshot by default
      */
     public void loadData() throws IOException, InterruptedException {
+        loadData(true);
+    }
+
+    /**
+     * Restore sessions and data
+     * @param needSnapshot if true, take a snapshot after loading data
+     */
+    public void loadData(boolean needSnapshot) throws IOException, InterruptedException {
         /*
          * When a new leader starts executing Leader#lead, it
          * invokes this method. The database, however, has been
@@ -545,8 +553,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         .filter(session -> zkDb.getSessionWithTimeOuts().get(session) == null)
                         .forEach(session -> killSession(session, zkDb.getDataTreeLastProcessedZxid()));
 
-        // Make a clean snapshot
-        takeSnapshot();
+        // Make a clean snapshot if needed
+        /* A snapshot is not needed when loading data during leader election. A new snapshot is not needed to return to
+         * the current state because the current state was reached by loading the data tree using an old snapshot.
+         * During leader election, there are no ongoing transactions that could be lost either. If a snapshot is needed
+         * to send to a learner during leader election, that snapshot will be taken as part of leader election, so
+         * snapshotting does not need to be done here as well.
+         */
+        if (needSnapshot) {
+            takeSnapshot();
+        }
     }
 
     public File takeSnapshot() throws IOException {
