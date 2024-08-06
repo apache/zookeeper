@@ -90,6 +90,11 @@ public class SaslServerCallbackHandler implements CallbackHandler {
         // check to see if this user is in the user password database.
         if (credentials.get(nc.getDefaultName()) == null) {
             LOG.warn("User '{}' not found in list of DIGEST-MD5 authenticateable users.", nc.getDefaultName());
+            // ZOOKEEPER-4839
+            // Incorrect usernames also need to be stored
+            // in order to clear the usernames of previously
+            // successfully logged-in users.
+            userName = nc.getDefaultName();
             return;
         }
         nc.setName(nc.getDefaultName());
@@ -103,7 +108,9 @@ public class SaslServerCallbackHandler implements CallbackHandler {
         } else if (credentials.containsKey(userName)) {
             pc.setPassword(credentials.get(userName).toCharArray());
         } else {
-            LOG.warn("No password found for user: {}", userName);
+            // No user found, should clear the password
+            pc.clearPassword();
+            LOG.warn("No password found for user: {}, clear current password", userName);
         }
     }
 
