@@ -53,7 +53,7 @@ public class DatadirCleanupManager {
 
     private final int snapRetainCount;
 
-    private final int purgeInterval;
+    private final int purgeIntervalInMs;
 
     private Timer timer;
 
@@ -70,13 +70,13 @@ public class DatadirCleanupManager {
      * @param purgeInterval
      *            purge interval in hours
      */
-    public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount, int purgeInterval) {
+    public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount, int purgeIntervalInMs) {
         this.snapDir = snapDir;
         this.dataLogDir = dataLogDir;
         this.snapRetainCount = snapRetainCount;
-        this.purgeInterval = purgeInterval;
+        this.purgeIntervalInMs = purgeIntervalInMs;
         LOG.info("autopurge.snapRetainCount set to {}", snapRetainCount);
-        LOG.info("autopurge.purgeInterval set to {}", purgeInterval);
+        LOG.info("autopurge.purgeInterval set to {}", purgeIntervalInMs);
     }
 
     /**
@@ -97,14 +97,14 @@ public class DatadirCleanupManager {
             return;
         }
         // Don't schedule the purge task with zero or negative purge interval.
-        if (purgeInterval <= 0) {
+        if (purgeIntervalInMs <= 0) {
             LOG.info("Purge task is not scheduled.");
             return;
         }
 
         timer = new Timer("PurgeTask", true);
         TimerTask task = new PurgeTask(dataLogDir, snapDir, snapRetainCount);
-        timer.scheduleAtFixedRate(task, 0, TimeUnit.HOURS.toMillis(purgeInterval));
+        timer.scheduleAtFixedRate(task, 0, purgeIntervalInMs);
 
         purgeTaskStatus = PurgeTaskStatus.STARTED;
     }
@@ -179,8 +179,8 @@ public class DatadirCleanupManager {
      *
      * @return the purge interval in hours.
      */
-    public int getPurgeInterval() {
-        return purgeInterval;
+    public int getPurgeIntervalInMs() {
+        return purgeIntervalInMs;
     }
 
     /**
