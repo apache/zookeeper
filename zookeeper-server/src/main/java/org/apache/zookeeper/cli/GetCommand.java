@@ -19,6 +19,11 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -38,10 +43,11 @@ public class GetCommand extends CliCommand {
     static {
         options.addOption("s", false, "stats");
         options.addOption("w", false, "watch");
+        options.addOption("f", true, "output file name");
     }
 
     public GetCommand() {
-        super("get", "[-s] [-w] path");
+        super("get", "[-s] [-w] path [-f output_file_name]");
     }
 
     @Override
@@ -93,7 +99,19 @@ public class GetCommand extends CliCommand {
             throw new CliWrapperException(ex);
         }
         data = (data == null) ? "null".getBytes() : data;
-        out.println(new String(data, UTF_8));
+
+        if (!cl.hasOption("f")) {
+            out.println(new String(data, UTF_8));
+        } else {
+            try {
+                Path filePath = Paths.get(cl.getOptionValue("f"));
+                // Don't overwrite existing file
+                Files.write(filePath, data, StandardOpenOption.CREATE_NEW);
+            } catch (IOException ex) {
+                throw new CliException(ex);
+            }
+        }
+
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);
         }
