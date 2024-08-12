@@ -243,8 +243,8 @@ public class Request {
         // make sure this is always synchronized with Zoodefs!!
         switch (type) {
         case OpCode.notification:
-            return false;
         case OpCode.check:
+            return false;
         case OpCode.closeSession:
         case OpCode.create:
         case OpCode.create2:
