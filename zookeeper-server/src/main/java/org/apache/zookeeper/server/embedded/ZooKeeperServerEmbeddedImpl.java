@@ -119,7 +119,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             // Start and schedule the the purge task
             purgeMgr = new DatadirCleanupManager(config
                     .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+                    .getSnapRetainCount(), config.getPurgeIntervalInMs());
             purgeMgr.start();
 
             thread = new Thread("zkservermainrunner") {
@@ -155,7 +155,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             };
             purgeMgr = new DatadirCleanupManager(config
                     .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+                    .getSnapRetainCount(), config.getPurgeIntervalInMs());
             purgeMgr.start();
             thread = new Thread("zkservermainrunner") {
                 @Override
