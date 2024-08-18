@@ -19,6 +19,7 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.zookeeper.cli.CommandUsageHelper.getUsage;
 import java.util.Base64;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -37,13 +38,13 @@ public class SetCommand extends CliCommand {
     private CommandLine cl;
 
     static {
-        options.addOption("s", false, "stats");
-        options.addOption("v", true, "version");
-        options.addOption("b", false, "base64");
+        options.addOption("s", false, "Print znode stats additionally");
+        options.addOption("v", true, "Set with an expected version");
+        options.addOption("b", false, "Supply data in base64 format");
     }
 
     public SetCommand() {
-        super("set", "[-s] [-v version] [-b] path data");
+        super("set", getUsage("set path data [-s] [-v version] [-b]", options));
     }
 
     @Override

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import static org.apache.zookeeper.cli.CommandUsageHelper.getUsage;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -35,14 +36,14 @@ public class GetCommand extends CliCommand {
     private CommandLine cl;
 
     static {
-        options.addOption("s", false, "stats");
-        options.addOption("w", false, "watch");
-        options.addOption("b", false, "base64");
-        options.addOption("x", false, "hexdump");
+        options.addOption("s", false, "Print znode stats additionally");
+        options.addOption("w", false, "Watch for changes on the znode");
+        options.addOption("b", false, "Output data in base64 format");
+        options.addOption("x", false, "Output data in hexdump format");
     }
 
     public GetCommand() {
-        super("get", "[-s] [-w] [-b] [-x] path");
+        super("get", getUsage("[-s] [-w] [-b] [-x] path", options));
     }
 
     @Override
