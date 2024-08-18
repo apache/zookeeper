@@ -44,7 +44,7 @@ public class SetCommand extends CliCommand {
     }
 
     public SetCommand() {
-        super("set", getUsage("set path data [-s] [-v version] [-b]", options));
+        super("set", getUsage("path data [-s] [-v version] [-b]", options));
     }
 
     @Override
