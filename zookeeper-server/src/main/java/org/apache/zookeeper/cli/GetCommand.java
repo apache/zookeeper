@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.cli;
 
-import static org.apache.zookeeper.cli.CommandUsageHelper.getUsage;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -43,7 +42,7 @@ public class GetCommand extends CliCommand {
     }
 
     public GetCommand() {
-        super("get", getUsage("[-s] [-w] [-b] [-x] path", options));
+        super("get", "[-s] [-w] [-b] [-x] path", options);
     }
 
     @Override

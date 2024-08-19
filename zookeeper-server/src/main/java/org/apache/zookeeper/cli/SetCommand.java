@@ -19,7 +19,6 @@
 package org.apache.zookeeper.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.zookeeper.cli.CommandUsageHelper.getUsage;
 import java.util.Base64;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -44,7 +43,7 @@ public class SetCommand extends CliCommand {
     }
 
     public SetCommand() {
-        super("set", getUsage("path data [-s] [-v version] [-b]", options));
+        super("set", "path data [-s] [-v version] [-b]", options);
     }
 
     @Override
