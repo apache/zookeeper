@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.cli;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -36,12 +35,14 @@ public class GetCommand extends CliCommand {
     private CommandLine cl;
 
     static {
-        options.addOption("s", false, "stats");
-        options.addOption("w", false, "watch");
+        options.addOption("s", false, "Print znode stats additionally");
+        options.addOption("w", false, "Watch for changes on the znode");
+        options.addOption("b", false, "Output data in base64 format");
+        options.addOption("x", false, "Output data in hexdump format");
     }
 
     public GetCommand() {
-        super("get", "[-s] [-w] path");
+        super("get", "[-s] [-w] [-b] [-x] path", options);
     }
 
     @Override
@@ -92,8 +93,15 @@ public class GetCommand extends CliCommand {
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
+        OutputFormatter formatter = PlainOutputFormatter.INSTANCE;
+        if (cl.hasOption("b")) {
+            formatter = Base64OutputFormatter.INSTANCE;
+        }
+        if (cl.hasOption("x")) {
+            formatter = HexDumpOutputFormatter.INSTANCE;
+        }
         data = (data == null) ? "null".getBytes() : data;
-        out.println(new String(data, UTF_8));
+        out.println(formatter.format(data));
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);
         }
