@@ -20,6 +20,8 @@ package org.apache.zookeeper.cli;
 
 import java.io.PrintStream;
 import java.util.Map;
+import javax.annotation.Nullable;
+import org.apache.commons.cli.Options;
 import org.apache.zookeeper.ZooKeeper;
 
 /**
@@ -32,6 +34,8 @@ public abstract class CliCommand {
     protected PrintStream err;
     private String cmdStr;
     private String optionStr;
+    @Nullable
+    private Options options;
 
     /**
      * a CLI command with command string and options.
@@ -40,10 +44,22 @@ public abstract class CliCommand {
      * @param optionStr the string used to call this command
      */
     public CliCommand(String cmdStr, String optionStr) {
+        this(cmdStr, optionStr, null);
+    }
+
+    /**
+     * a CLI command with command string and options.
+     * Using System.out and System.err for printing
+     * @param cmdStr the string used to call this command
+     * @param optionStr the string used to call this command
+     * @param options the command options
+     */
+    public CliCommand(String cmdStr, String optionStr, Options options) {
         this.out = System.out;
         this.err = System.err;
         this.cmdStr = cmdStr;
         this.optionStr = optionStr;
+        this.options = options;
     }
 
     /**
@@ -88,7 +104,7 @@ public abstract class CliCommand {
      * get a usage string, contains the command and the options
      */
     public String getUsageStr() {
-        return cmdStr + " " + optionStr;
+        return CommandUsageHelper.getUsage(cmdStr + " " + optionStr, options);
     }
 
     /**
