@@ -17,17 +17,15 @@
  */
 package org.apache.zookeeper.server.auth;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.servlet.http.HttpServletRequest;
-
 import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.SKIP_X_FORWARDED_FOR_KEY;
 import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.X_FORWARDED_FOR_HEADER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import javax.servlet.http.HttpServletRequest;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class IPAuthenticationProviderTest {
 
