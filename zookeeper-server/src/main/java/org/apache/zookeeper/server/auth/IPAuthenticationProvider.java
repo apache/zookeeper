@@ -23,12 +23,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 
 public class IPAuthenticationProvider implements AuthenticationProvider {
     public static final String X_FORWARDED_FOR_HEADER_NAME = "X-Forwarded-For";
+
+    static final String SKIP_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.skipxforwardedfor";
 
     public String getScheme() {
         return "ip";
@@ -150,6 +153,10 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
      * @return IP address
      */
     public static String getClientIPAddress(final HttpServletRequest request) {
+        if (Boolean.getBoolean(SKIP_X_FORWARDED_FOR_KEY)) {
+            return request.getRemoteAddr();
+        }
+
         // to handle the case that a HTTP(s) client connects via a proxy or load balancer
         final String xForwardedForHeader = request.getHeader(X_FORWARDED_FOR_HEADER_NAME);
         if (xForwardedForHeader == null) {
