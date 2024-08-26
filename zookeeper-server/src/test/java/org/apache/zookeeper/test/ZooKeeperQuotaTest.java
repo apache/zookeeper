@@ -116,7 +116,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         stopServer();
         startServer();
         ZooKeeperServer server = serverFactory.getZooKeeperServer();
-        assertNotNull(server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path), "Quota is still set");
+        assertNotNull("Quota is still set", server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path));
     }
 
     @Test
