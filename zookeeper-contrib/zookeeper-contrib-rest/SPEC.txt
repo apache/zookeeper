@@ -39,7 +39,7 @@ that are easy and familiar to program against, and deployed as part of
 the language runtime. Thus, for simple CRUD clients, an HTTP gateway
 would be a less cumbersome interface than the ZooKeeper library.
 
-This document describes a gatway for using HTTP to interact with a
+This document describes a gateway for using HTTP to interact with a
 ZooKeeper repository.
 
 Binding ZooKeeper to HTTP
@@ -72,7 +72,7 @@ best practice.
 Root
 ----
 
-The following examples assume that the ZooKeeper znode heirarchy is
+The following examples assume that the ZooKeeper znode hierarchy is
 bound to the root of the HTTP servers namespace. This may not be the
 case in practice however, the gateway may bind to some prefix, for
 example the URL for accessing /a/b/c may be:
@@ -128,14 +128,14 @@ a new session.
 
 If the session creation is successful, then a 201 code will be returned.
 
-A session is just an UUID that you can pass around as a parameter and
-the REST server will foward your request on the attached persistent 
+A session is just a UUID that you can pass around as a parameter and
+the REST server will forward your request on the attached persistent
 connection.
 
 Keeping a session alive
 -----------------------
 
-To keep a session alive you must send hearbeat requests:
+To keep a session alive you must send heartbeat requests:
 
   PUT /sessions/v1/<SESSION-UUID> HTTP/1.1
 

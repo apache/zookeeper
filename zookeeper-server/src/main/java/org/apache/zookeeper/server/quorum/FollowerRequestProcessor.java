@@ -108,6 +108,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
                 case OpCode.reconfig:
                 case OpCode.setACL:
                 case OpCode.multi:
+                case OpCode.check:
                     zks.getFollower().request(request);
                     break;
                 case OpCode.createSession:

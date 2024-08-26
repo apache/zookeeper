@@ -115,7 +115,7 @@ ls $DATALOGDIR || fail $LINENO
 stop
 
 #
-# verify autocreate diabled
+# verify autocreate disabled
 #
 export ZOO_DATADIR_AUTOCREATE_DISABLE=1
 

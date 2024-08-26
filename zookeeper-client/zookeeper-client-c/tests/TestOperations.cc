@@ -582,7 +582,7 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
     }
 
-    // ZOOKEEPER-2891: Invalid processing of zookeeper_close for mutli-request
+    // ZOOKEEPER-2891: Invalid processing of zookeeper_close for multi-request
     // while there is a multi request waiting for being processed
     // call zookeeper_close() from the main event loop
     // assert the completion callback is called with status ZCLOSING
@@ -626,7 +626,7 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res1.rc_);
     }
 
-    // ZOOKEEPER-2891: Invalid processing of zookeeper_close for mutli-request
+    // ZOOKEEPER-2891: Invalid processing of zookeeper_close for multi-request
     // send some request #1 (not a multi request)
     // then, while there is a multi request #2 waiting for being processed
     // call zookeeper_close() from the completion callback of request #1

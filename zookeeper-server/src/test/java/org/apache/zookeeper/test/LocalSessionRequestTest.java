@@ -71,7 +71,7 @@ public class LocalSessionRequestTest extends ZKTestCase {
     }
 
     /**
-     * Walk through the target peer commmittedLog.
+     * Walk through the target peer committedLog.
      * @param sessionId
      * @param peerId
      */

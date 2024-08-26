@@ -76,7 +76,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     /**
-     * See ZOOKEEPER-1319 - verify that a lagging follwer resyncs correctly
+     * See ZOOKEEPER-1319 - verify that a lagging follower resyncs correctly
      *
      * 1) start with down quorum
      * 2) start leader/follower1, add some data
@@ -314,7 +314,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         // Wait until all updates return
         if (!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-            LOG.warn("Did not aquire semaphore fast enough");
+            LOG.warn("Did not acquire semaphore fast enough");
         }
         mytestfooThread.join(ClientBase.CONNECTION_TIMEOUT);
         if (mytestfooThread.isAlive()) {
@@ -471,7 +471,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         // Wait until all updates return
         if (!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-            LOG.warn("Did not aquire semaphore fast enough");
+            LOG.warn("Did not acquire semaphore fast enough");
         }
         mytestfooThread.join(ClientBase.CONNECTION_TIMEOUT);
         if (mytestfooThread.isAlive()) {
@@ -518,7 +518,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     /**
-     * Wait for all server to have the same lastProccessedZxid. Timeout in seconds
+     * Wait for all server to have the same lastProcessedZxid. Timeout in seconds
      */
     private boolean waitForSync(QuorumUtil qu, int index, int timeout) throws InterruptedException {
         LOG.info("Wait for server to sync");

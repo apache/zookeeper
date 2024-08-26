@@ -128,7 +128,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                     try {
                         maincluster.runFromConfig(config);
                         maincluster.close();
-                        LOG.info("ZK server died. Requsting stop on JVM");
+                        LOG.info("ZK server died. Requesting stop on JVM");
                         if (!stopping) {
                             ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
                         }

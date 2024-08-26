@@ -179,11 +179,11 @@ public class QuorumDigestTest extends QuorumPeerTestBase {
         // start the follower and observer to have a diff sync
         startServers(targets);
 
-        long misMatchCount = getMismatchDigestCount();
-        assertNotEquals(0L, misMatchCount);
+        long mismatchCount = getMismatchDigestCount();
+        assertNotEquals(0L, mismatchCount);
 
         triggerOps(leader, "/p2");
-        assertNotEquals(misMatchCount, getMismatchDigestCount());
+        assertNotEquals(mismatchCount, getMismatchDigestCount());
     }
 
     private void stopServers(List<Integer> sids) throws InterruptedException {

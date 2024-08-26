@@ -26,7 +26,7 @@ class CloseDeadlockTest(zktestbase.TestBase):
   https://issues.apache.org/jira/browse/ZOOKEEPER-763
 
   zookeeper.close blocks on waiting for all completions to
-  finish. Previously it was doing so while holding teh GIL, stopping
+  finish. Previously it was doing so while holding the GIL, stopping
   any completions from actually continuing.
 
   This test is a failure if it does not exit within a few seconds.

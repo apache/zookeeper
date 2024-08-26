@@ -505,7 +505,7 @@ ZooKeeperAdapter::verifyConnection() throw(ZooKeeperException)
             if (m_state != AS_CONNECTING) {
                 LOG_TRACE( LOG, 
                            "yes. Checking if allowed to auto-reconnect..." );
-                //...not in progres, so check if we can reconnect
+                //...not in progress, so check if we can reconnect
                 if (!m_zkConfig.getAutoReconnect()) {
                     //...too bad, disallowed :(
                     LOG_TRACE( LOG, "no. Sorry." );

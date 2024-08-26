@@ -1357,7 +1357,7 @@ public class ZooKeeper implements AutoCloseable {
      * of the node by getChildren calls.
      * <p>
      * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     * Arrays larger than this will cause a KeeperException to be thrown.
      *
      * @param path
      *                the path for the node
@@ -1439,7 +1439,7 @@ public class ZooKeeper implements AutoCloseable {
      * of the node by getChildren calls.
      * <p>
      * The maximum allowable size of the data array is 1 MB (1,048,576 bytes).
-     * Arrays larger than this will cause a KeeperExecption to be thrown.
+     * Arrays larger than this will cause a KeeperException to be thrown.
      *
      * @param path
      *                the path for the node
@@ -2319,7 +2319,7 @@ public class ZooKeeper implements AutoCloseable {
      * @return the stat of the node.
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
-     * @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
+     * @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalid.
      * @throws IllegalArgumentException if an invalid path is specified
      */
     public Stat setACL(final String path, List<ACL> acl, int aclVersion) throws KeeperException, InterruptedException {

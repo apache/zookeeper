@@ -145,7 +145,7 @@ int oa_serialize_buffer(struct oarchive *oa, const char *name,
         return rc;
     // this means a buffer of NUll 
     // with size of -1. This is 
-    // waht we use in java serialization for NULL
+    // what we use in java serialization for NULL
     if (b->len == -1) {
       return rc;
     }
