@@ -316,29 +316,58 @@ public class FileTxnLogTest extends ZKTestCase {
         log.close();
     }
 
-    public void testEmptyTxnLog(boolean clearTail) throws IOException {
+    @Test
+    public void testEmptyTailTxnLog() throws IOException {
+        long limit = FileTxnLog.getTxnLogSizeLimit();
+
         // prepare a database with logs
         File tmpDir = ClientBase.createTmpDir();
-        LOG.info("tmp dir: {}", tmpDir.getPath());
         ClientBase.setupTestEnv();
         prepareTxnLogs(tmpDir, 4);
 
-        // clear the log
+        // find the tail log and clear
         List<File> files = Arrays.
                 stream(Objects.requireNonNull(tmpDir.listFiles((File f, String name) -> name.startsWith("log.")))).
                 sorted(Comparator.comparing(File::getName)).
                 collect(Collectors.toList());
-        File toClear;
-        if (clearTail) {
-            toClear = files.get(files.size() - 1);
-        } else {
-            toClear = files.get(files.size() - 2);
-        }
+        File toClear = files.get(files.size() - 1);
         PrintWriter writer = new PrintWriter(toClear);
         writer.close();
-        LOG.info("Txn log file {} cleared", toClear.getName());
+        LOG.info("Clear the tail log file {}", toClear.getName());
 
-        // open txn log
+        // open txn log and iterate
+        try {
+            FileTxnLog.FileTxnIterator itr = new FileTxnLog.FileTxnIterator(tmpDir, 0x0, false);
+            while (itr.next()) {}
+        } catch (EOFException ex) {}
+
+        FileTxnLog.FileTxnIterator itr = new FileTxnLog.FileTxnIterator(tmpDir, 0x0, false);
+        while (itr.next()) {}
+
+        FileTxnLog.setTxnLogSizeLimit(limit);
+    }
+
+    @Test
+    public void testEmptyMedianTxnLog() throws IOException {
+        long limit = FileTxnLog.getTxnLogSizeLimit();
+
+        // prepare a database with logs
+        File tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+        prepareTxnLogs(tmpDir, 4);
+
+        // find the median log and clear
+        List<File> files = Arrays.
+                stream(Objects.requireNonNull(tmpDir.listFiles((File f, String name) -> name.startsWith("log.")))).
+                sorted(Comparator.comparing(File::getName)).
+                collect(Collectors.toList());
+        File toClear = files.get(files.size() - 2);
+
+        PrintWriter writer = new PrintWriter(toClear);
+        writer.close();
+        LOG.info("Clear the median log file {}", toClear.getName());
+
+        // open txn log and iterate, should throw EOFException
         boolean isEof = false;
         try {
             FileTxnLog.FileTxnIterator itr = new FileTxnLog.FileTxnIterator(tmpDir, 0x0, false);
@@ -346,26 +375,8 @@ public class FileTxnLogTest extends ZKTestCase {
         } catch (EOFException ex) {
             isEof = true;
         }
+        assertTrue(isEof, "Median txn log file empty should throw Exception");
 
-        if (clearTail) {
-            FileTxnLog.FileTxnIterator itr = new FileTxnLog.FileTxnIterator(tmpDir, 0x0, false);
-            while (itr.next()) {}
-        } else {
-            assertTrue(isEof, "Mid txn log file empty should throw Exception");
-        }
-    }
-
-    @Test
-    public void testEmptyTailTxnLog() throws IOException {
-        long limit = FileTxnLog.getTxnLogSizeLimit();
-        testEmptyTxnLog(true);
-        FileTxnLog.setTxnLogSizeLimit(limit);
-    }
-
-    @Test
-    public void testEmptyMidTxnLog() throws IOException {
-        long limit = FileTxnLog.getTxnLogSizeLimit();
-        testEmptyTxnLog(false);
         FileTxnLog.setTxnLogSizeLimit(limit);
     }
 
