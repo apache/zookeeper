@@ -44,6 +44,7 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
@@ -104,7 +105,7 @@ public class QuorumPeerConfig {
 
     protected QuorumVerifier quorumVerifier = null, lastSeenQuorumVerifier = null;
     protected int snapRetainCount = 3;
-    protected int purgeInterval = 0;
+    protected int purgeIntervalInMs = 0;
     protected boolean syncEnabled = true;
 
     protected String initialConfig;
@@ -336,7 +337,11 @@ public class QuorumPeerConfig {
             } else if (key.equals("autopurge.snapRetainCount")) {
                 snapRetainCount = Integer.parseInt(value);
             } else if (key.equals("autopurge.purgeInterval")) {
-                purgeInterval = Integer.parseInt(value);
+                if (Character.isDigit(value.charAt(value.length() - 1))) {
+                    purgeIntervalInMs = Time.parseTimeInterval(value) * Time.HOUR; // default is hours for backward compatibility
+                } else {
+                    purgeIntervalInMs = Time.parseTimeInterval(value);
+                }
             } else if (key.equals("standaloneEnabled")) {
                 setStandaloneEnabled(parseBoolean(key, value));
             } else if (key.equals("reconfigEnabled")) {
@@ -898,8 +903,8 @@ public class QuorumPeerConfig {
         return snapRetainCount;
     }
 
-    public int getPurgeInterval() {
-        return purgeInterval;
+    public int getPurgeIntervalInMs() {
+        return purgeIntervalInMs;
     }
 
     public boolean getSyncEnabled() {

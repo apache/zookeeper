@@ -130,7 +130,7 @@ public class QuorumPeerMain {
             config.getDataDir(),
             config.getDataLogDir(),
             config.getSnapRetainCount(),
-            config.getPurgeInterval());
+            config.getPurgeIntervalInMs());
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
