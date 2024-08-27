@@ -723,7 +723,7 @@ public class FileTxnLog implements TxnLog, Closeable {
                     // before the header was written.
                     if (storedFiles.isEmpty() && this.logFile.length() == 0) {
                         boolean deleted = this.logFile.delete();
-                        LOG.warn("Delete empty log file at the tail to recover from corruption. file: {}, deleted: {}",
+                        LOG.warn("Delete empty tail log file to recover from corruption, rebooting server. file: {}, deleted: {}",
                                 this.logFile.getName(), deleted);
                     }
                     throw ex;
