@@ -798,13 +798,6 @@ public class Learner {
                     self.setCurrentEpoch(newEpoch);
                     LOG.info("Set the current epoch to {}", newEpoch);
 
-                    // Now we almost complete the synchronization phase. Start RequestProcessors
-                    // to asynchronously process the pending txns in  "packetsNotLogged"  and
-                    // "packetsCommitted" later.
-                    sock.setSoTimeout(self.tickTime * self.syncLimit);
-                    self.setSyncMode(QuorumPeer.SyncMode.NONE);
-                    zk.startupWithoutServing();
-
                     // send NEWLEADER ack after the committed txns are persisted
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     LOG.info("Sent NEWLEADER ack to leader with zxid {}", Long.toHexString(newLeaderZxid));
@@ -814,7 +807,9 @@ public class Learner {
         }
         ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
-        zk.startServing();
+        sock.setSoTimeout(self.tickTime * self.syncLimit);
+        self.setSyncMode(QuorumPeer.SyncMode.NONE);
+        zk.startup();
         /*
          * Update the election vote here to ensure that all members of the
          * ensemble report the same vote to new servers that start up and
