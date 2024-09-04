@@ -46,7 +46,7 @@ public interface TxnLog extends Closeable {
     void rollLog() throws IOException;
 
     /**
-     * Append a request to the transaction log with a digset
+     * Append a request to the transaction log with a digest
      * @param request the request to be appended
      * returns true iff something appended, otw false
      * @throws IOException
