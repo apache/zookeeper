@@ -113,21 +113,23 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
     class CustomClientCnxn extends ClientCnxn {
 
         CustomClientCnxn(
-            String chrootPath,
             HostProvider hostProvider,
             int sessionTimeout,
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
             boolean canBeReadOnly
         ) throws IOException {
             super(
-                chrootPath,
                 hostProvider,
                 sessionTimeout,
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
+                sessionId,
+                sessionPasswd,
                 canBeReadOnly);
         }
 
@@ -151,21 +153,23 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
 
         @Override
         ClientCnxn createConnection(
-            String chrootPath,
             HostProvider hostProvider,
             int sessionTimeout,
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
             boolean canBeReadOnly
         ) throws IOException {
             return new CustomClientCnxn(
-                chrootPath,
                 hostProvider,
                 sessionTimeout,
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
+                sessionId,
+                sessionPasswd,
                 canBeReadOnly);
         }
 

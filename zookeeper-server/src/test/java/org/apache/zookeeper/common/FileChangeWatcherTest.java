@@ -31,17 +31,17 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.test.ClientBase;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FileChangeWatcherTest extends ZKTestCase {
 
-    private static File tempDir;
-    private static File tempFile;
+    @TempDir
+    static File tempDir;
+    static File tempFile;
 
     private static final Logger LOG = LoggerFactory.getLogger(FileChangeWatcherTest.class);
 
@@ -49,18 +49,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
 
     @BeforeAll
     public static void createTempFile() throws IOException {
-        tempDir = ClientBase.createEmptyTestDir();
         tempFile = File.createTempFile("zk_test_", "", tempDir);
-        tempFile.deleteOnExit();
-    }
-
-    @AfterAll
-    public static void cleanupTempDir() {
-        try {
-            FileUtils.deleteDirectory(tempDir);
-        } catch (IOException e) {
-            // ignore
-        }
     }
 
     @Test

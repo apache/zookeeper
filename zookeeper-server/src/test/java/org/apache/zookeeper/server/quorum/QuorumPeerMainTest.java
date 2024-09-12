@@ -309,7 +309,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         assertEquals(output[0], 1, "Expecting old value 1 since 2 isn't committed yet");
 
-        // Do some other update, so we bump the maxCommttedZxid
+        // Do some other update, so we bump the maxCommittedZxid
         // by setting the value to 2
         servers.zk[nonleader].setData(path + nonleader, input, -1);
 
@@ -935,7 +935,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             // Assert
             FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
-            assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataDir().getAbsolutePath());
+            assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataLogDir().getAbsolutePath());
             assertEquals(Paths.get(dataDir.getAbsolutePath(), "version-2").toString(), txnFactory.getSnapDir().getAbsolutePath());
         } finally {
             FileUtils.deleteDirectory(dataDir);

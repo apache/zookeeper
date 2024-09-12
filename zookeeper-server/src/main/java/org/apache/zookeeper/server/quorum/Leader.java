@@ -88,14 +88,60 @@ public class Leader extends LearnerMaster {
 
     public static class Proposal extends SyncedLearnerTracker {
 
-        public QuorumPacket packet;
-        public Request request;
+        private QuorumPacket packet;
+        protected Request request;
+
+        public Proposal() {
+        }
+
+        public Proposal(QuorumPacket packet) {
+            this.packet = packet;
+        }
+
+        public Proposal(Request request, QuorumPacket packet) {
+            this.request = request;
+            this.packet = packet;
+        }
+
+        public QuorumPacket getQuorumPacket() {
+            return packet;
+        }
+
+        public Request getRequest() {
+            return request;
+        }
+
+        public long getZxid() {
+            return packet.getZxid();
+        }
 
         @Override
         public String toString() {
             return packet.getType() + ", " + packet.getZxid() + ", " + request;
         }
+    }
 
+    public static class PureRequestProposal extends Proposal {
+
+        public PureRequestProposal(Request request) {
+            this.request = request;
+        }
+
+        @Override
+        public QuorumPacket getQuorumPacket() {
+            byte[] data = request.getSerializeData();
+            return new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
+        }
+
+        @Override
+        public long getZxid() {
+            return request.zxid;
+        }
+
+        @Override
+        public String toString() {
+            return request.toString();
+        }
     }
 
     // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
@@ -827,7 +873,7 @@ public class Leader extends LearnerMaster {
             closeSockets();
         }
 
-        // NIO should not accept conenctions
+        // NIO should not accept connections
         self.setZooKeeperServer(null);
         self.adminServer.setZooKeeperServer(null);
         self.closeAllConnections();
@@ -864,8 +910,8 @@ public class Leader extends LearnerMaster {
     }
 
     /** In a reconfig operation, this method attempts to find the best leader for next configuration.
-     *  If the current leader is a voter in the next configuartion, then it remains the leader.
-     *  Otherwise, choose one of the new voters that acked the reconfiguartion, such that it is as
+     *  If the current leader is a voter in the next configuration, then it remains the leader.
+     *  Otherwise, choose one of the new voters that acked the reconfiguration, such that it is as
      * up-to-date as possible, i.e., acked as many outstanding proposals as possible.
      *
      * @param reconfigProposal
@@ -943,7 +989,7 @@ public class Leader extends LearnerMaster {
         // commit proposals in order
         if (zxid != lastCommitted + 1) {
             LOG.warn(
-                "Commiting zxid 0x{} from {} not first!",
+                "Committing zxid 0x{} from {} not first!",
                 Long.toHexString(zxid),
                 followerAddr);
             LOG.warn("First is 0x{}", Long.toHexString(lastCommitted + 1));
@@ -1265,9 +1311,7 @@ public class Leader extends LearnerMaster {
         proposalStats.setLastBufferSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
 
-        Proposal p = new Proposal();
-        p.packet = pp;
-        p.request = request;
+        Proposal p = new Proposal(request, pp);
 
         synchronized (this) {
             p.addQuorumVerifier(self.getQuorumVerifier());

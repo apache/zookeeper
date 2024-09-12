@@ -42,6 +42,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
@@ -179,8 +180,6 @@ public class ClientCnxn {
      * read-only clients only.
      */
     private boolean readOnly;
-
-    final String chrootPath;
 
     final SendThread sendThread;
 
@@ -346,9 +345,8 @@ public class ClientCnxn {
     /**
      * Creates a connection object. The actual network connect doesn't get
      * established until needed. The start() instance method must be called
-     * subsequent to construction.
+     * after construction.
      *
-     * @param chrootPath the chroot of this client. Should be removed from this Class in ZOOKEEPER-838
      * @param hostProvider the list of ZooKeeper servers to connect to
      * @param sessionTimeout the timeout for connections.
      * @param clientConfig the client configuration.
@@ -357,7 +355,6 @@ public class ClientCnxn {
      * @param canBeReadOnly whether the connection is allowed to go to read-only mode in case of partitioning
      */
     public ClientCnxn(
-        String chrootPath,
         HostProvider hostProvider,
         int sessionTimeout,
         ZKClientConfig clientConfig,
@@ -366,7 +363,6 @@ public class ClientCnxn {
         boolean canBeReadOnly
     ) throws IOException {
         this(
-            chrootPath,
             hostProvider,
             sessionTimeout,
             clientConfig,
@@ -380,9 +376,8 @@ public class ClientCnxn {
     /**
      * Creates a connection object. The actual network connect doesn't get
      * established until needed. The start() instance method must be called
-     * subsequent to construction.
+     * after construction.
      *
-     * @param chrootPath the chroot of this client. Should be removed from this Class in ZOOKEEPER-838
      * @param hostProvider the list of ZooKeeper servers to connect to
      * @param sessionTimeout the timeout for connections.
      * @param clientConfig the client configuration.
@@ -394,7 +389,6 @@ public class ClientCnxn {
      * @throws IOException in cases of broken network
      */
     public ClientCnxn(
-        String chrootPath,
         HostProvider hostProvider,
         int sessionTimeout,
         ZKClientConfig clientConfig,
@@ -404,7 +398,6 @@ public class ClientCnxn {
         byte[] sessionPasswd,
         boolean canBeReadOnly
     ) throws IOException {
-        this.chrootPath = chrootPath;
         this.hostProvider = hostProvider;
         this.sessionTimeout = sessionTimeout;
         this.clientConfig = clientConfig;
@@ -660,9 +653,7 @@ public class ClientCnxn {
                                 rc,
                                 clientPath,
                                 p.ctx,
-                                (chrootPath == null
-                                    ? rsp.getPath()
-                                    : rsp.getPath().substring(chrootPath.length())));
+                                rsp.getPath());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null);
                         }
@@ -674,9 +665,7 @@ public class ClientCnxn {
                                     rc,
                                     clientPath,
                                     p.ctx,
-                                    (chrootPath == null
-                                            ? rsp.getPath()
-                                            : rsp.getPath().substring(chrootPath.length())),
+                                    rsp.getPath(),
                                     rsp.getStat());
                         } else {
                             cb.processResult(rc, clientPath, p.ctx, null, null);
@@ -733,7 +722,7 @@ public class ClientCnxn {
                 for (Entry<EventType, Set<Watcher>> entry : materializedWatchers.entrySet()) {
                     Set<Watcher> watchers = entry.getValue();
                     if (watchers.size() > 0) {
-                        queueEvent(p.watchDeregistration.getClientPath(), err, watchers, entry.getKey());
+                        queueEvent(p.watchDeregistration.getServerPath(), err, watchers, entry.getKey());
                         // ignore connectionloss when removing from local
                         // session
                         p.replyHeader.setErr(Code.OK.intValue());
@@ -757,13 +746,13 @@ public class ClientCnxn {
         }
     }
 
-    void queueEvent(String clientPath, int err, Set<Watcher> materializedWatchers, EventType eventType) {
+    void queueEvent(String serverPath, int err, Set<Watcher> materializedWatchers, EventType eventType) {
         KeeperState sessionState = KeeperState.SyncConnected;
         if (KeeperException.Code.SESSIONEXPIRED.intValue() == err
             || KeeperException.Code.CONNECTIONLOSS.intValue() == err) {
             sessionState = Event.KeeperState.Disconnected;
         }
-        WatchedEvent event = new WatchedEvent(eventType, sessionState, clientPath);
+        WatchedEvent event = new WatchedEvent(eventType, sessionState, serverPath);
         eventThread.queueEvent(event, materializedWatchers);
     }
 
@@ -854,19 +843,7 @@ public class ClientCnxn {
         private final ClientCnxnSocket clientCnxnSocket;
         private boolean isFirstConnect = true;
         private volatile ZooKeeperSaslClient zooKeeperSaslClient;
-
-        private String stripChroot(String serverPath) {
-            if (serverPath.startsWith(chrootPath)) {
-                if (serverPath.length() == chrootPath.length()) {
-                    return "/";
-                }
-                return serverPath.substring(chrootPath.length());
-            } else if (serverPath.startsWith(ZooDefs.ZOOKEEPER_NODE_SUBTREE)) {
-                return serverPath;
-            }
-            LOG.warn("Got server path {} which is not descendant of chroot path {}.", serverPath, chrootPath);
-            return serverPath;
-        }
+        private final AtomicReference<Login> loginRef = new AtomicReference<>();
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
@@ -894,13 +871,6 @@ public class ClientCnxn {
                     Long.toHexString(sessionId));
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
-
-                // convert from a server path to a client path
-                if (chrootPath != null) {
-                    String serverPath = event.getPath();
-                    String clientPath = stripChroot(serverPath);
-                    event.setPath(clientPath);
-                }
 
                 WatchedEvent we = new WatchedEvent(event, replyHdr.getZxid());
                 LOG.debug("Got {} for session id 0x{}", we, Long.toHexString(sessionId));
@@ -1010,11 +980,11 @@ public class ClientCnxn {
                 List<String> persistentRecursiveWatches = watchManager.getPersistentRecursiveWatchList();
                 if (!dataWatches.isEmpty() || !existWatches.isEmpty() || !childWatches.isEmpty()
                         || !persistentWatches.isEmpty() || !persistentRecursiveWatches.isEmpty()) {
-                    Iterator<String> dataWatchesIter = prependChroot(dataWatches).iterator();
-                    Iterator<String> existWatchesIter = prependChroot(existWatches).iterator();
-                    Iterator<String> childWatchesIter = prependChroot(childWatches).iterator();
-                    Iterator<String> persistentWatchesIter = prependChroot(persistentWatches).iterator();
-                    Iterator<String> persistentRecursiveWatchesIter = prependChroot(persistentRecursiveWatches).iterator();
+                    Iterator<String> dataWatchesIter = dataWatches.iterator();
+                    Iterator<String> existWatchesIter = existWatches.iterator();
+                    Iterator<String> childWatchesIter = childWatches.iterator();
+                    Iterator<String> persistentWatchesIter = persistentWatches.iterator();
+                    Iterator<String> persistentRecursiveWatchesIter = persistentRecursiveWatches.iterator();
                     long setWatchesLastZxid = lastZxid;
 
                     while (dataWatchesIter.hasNext() || existWatchesIter.hasNext() || childWatchesIter.hasNext()
@@ -1084,23 +1054,6 @@ public class ClientCnxn {
             LOG.debug("Session establishment request sent on {}", clientCnxnSocket.getRemoteSocketAddress());
         }
 
-        private List<String> prependChroot(List<String> paths) {
-            if (chrootPath != null && !paths.isEmpty()) {
-                for (int i = 0; i < paths.size(); ++i) {
-                    String clientPath = paths.get(i);
-                    String serverPath;
-                    // handle clientPath = "/"
-                    if (clientPath.length() == 1) {
-                        serverPath = chrootPath;
-                    } else {
-                        serverPath = chrootPath + clientPath;
-                    }
-                    paths.set(i, serverPath);
-                }
-            }
-            return paths;
-        }
-
         private void sendPing() {
             lastPingSentNs = System.nanoTime();
             RequestHeader h = new RequestHeader(ClientCnxn.PING_XID, OpCode.ping);
@@ -1136,10 +1089,8 @@ public class ClientCnxn {
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
                 try {
-                    if (zooKeeperSaslClient != null) {
-                        zooKeeperSaslClient.shutdown();
-                    }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(SaslServerPrincipal.getServerPrincipal(addr, clientConfig), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(
+                        SaslServerPrincipal.getServerPrincipal(addr, clientConfig), clientConfig, loginRef);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1307,8 +1258,9 @@ public class ClientCnxn {
             }
             eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Closed, null));
 
-            if (zooKeeperSaslClient != null) {
-                zooKeeperSaslClient.shutdown();
+            Login l = loginRef.getAndSet(null);
+            if (l != null) {
+                l.shutdown();
             }
             ZooTrace.logTraceMessage(
                 LOG,
@@ -1479,6 +1431,11 @@ public class ClientCnxn {
 
         public ZooKeeperSaslClient getZooKeeperSaslClient() {
             return zooKeeperSaslClient;
+        }
+
+        // VisibleForTesting
+        Login getLogin() {
+            return loginRef.get();
         }
     }
 

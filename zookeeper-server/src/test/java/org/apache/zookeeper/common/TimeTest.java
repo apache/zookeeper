@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.common;
 
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Calendar;
 import java.util.Date;
@@ -101,4 +102,31 @@ public class TimeTest extends ClientBase {
         assertEquals(calculatedDate, realDate);
     }
 
+    @Test
+    public void testParseTimeInterval() throws Exception {
+        assertEquals(0, Time.parseTimeInterval("0"));
+        assertEquals(0, Time.parseTimeInterval("0s"));
+        assertEquals(0, Time.parseTimeInterval("0m"));
+        assertEquals(0, Time.parseTimeInterval("0h"));
+        assertEquals(0, Time.parseTimeInterval("0d"));
+        assertEquals(1000, Time.parseTimeInterval("1000"));
+        assertEquals(Time.SECOND, Time.parseTimeInterval("1s"));
+        assertEquals(Time.MINUTE, Time.parseTimeInterval("1m"));
+        assertEquals(Time.HOUR, Time.parseTimeInterval("1h"));
+        assertEquals(Time.DAY, Time.parseTimeInterval("1d"));
+        assertEquals(1234, Time.parseTimeInterval("1234ms"));
+        assertEquals(Time.parseTimeInterval("60s"), Time.parseTimeInterval("1m"));
+        assertEquals(Time.parseTimeInterval("120m"), Time.parseTimeInterval("2h"));
+        assertEquals(Time.parseTimeInterval("72h"), Time.parseTimeInterval("3d"));
+        try {
+            Time.parseTimeInterval("2x");
+            fail("should have thrown NumberFormatException");
+        } catch (NumberFormatException e) {
+        }
+        try {
+            Time.parseTimeInterval("");
+            fail("should have thrown NumberFormatException");
+        } catch (NumberFormatException e) {
+        }
+    }
 }

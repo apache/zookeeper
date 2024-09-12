@@ -436,7 +436,7 @@ in the unlikely event a recent log has become corrupted). This
 can be run as a cron job on the ZooKeeper server machines to
 clean up the logs daily.
 
-    java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar:lib/logback-core-1.2.10.jar:conf org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
+    CLASSPATH='lib/*:conf' java org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
 
 
 Automatic purging of the snapshots and corresponding
@@ -1211,7 +1211,7 @@ property, when available, is noted below.
     The default value is false.
 
 * *serializeLastProcessedZxid.enabled*
-  (Jave system property: **zookeeper.serializeLastProcessedZxid.enabled**)
+  (Java system property: **zookeeper.serializeLastProcessedZxid.enabled**)
   **New in 3.9.0:**
   If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
   when restore. Defaults to true. Needs to be enabled for performing snapshot and restore
@@ -1572,6 +1572,16 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
         - 1. Regenerate `superDigest` when migrating to new algorithm.
         - 2. `SetAcl` for a znode which already had a digest auth of old algorithm.
 
+* *IPAuthenticationProvider.skipxforwardedfor* :
+    (Java system property: **zookeeper.IPAuthenticationProvider.skipxforwardedfor**)
+    **New in 3.9.3:**
+    IPAuthenticationProvider needs the client IP address to authenticate the user.
+    By default, it tries to read **X-Forwarded-For** HTTP header first and if it's not
+    found, reads the **Host** header. Some proxy configuration requires this to
+    properly identify the client IP, but we can disable it relying only on the **Host**
+    header by setting this config option to **true**.
+    Default value is **false**.
+
 * *X509AuthenticationProvider.superUser* :
     (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)
     The SSL-backed way to enable a ZooKeeper ensemble
@@ -1709,13 +1719,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)
     **New in 3.5.5:**
     Specifies to protocol to be used in client and quorum TLS negotiation.
-    Default: TLSv1.2
+    Default: TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
 
 * *ssl.enabledProtocols* and *ssl.quorum.enabledProtocols* :
     (Java system properties: **zookeeper.ssl.enabledProtocols** and **zookeeper.ssl.quorum.enabledProtocols**)
     **New in 3.5.5:**
     Specifies the enabled protocols in client and quorum TLS negotiation.
-    Default: value of `protocol` property
+    Default: TLSv1.3, TLSv1.2 if value of `protocol` property is TLSv1.3. TLSv1.2 if `protocol` is TLSv1.2.
 
 * *ssl.ciphersuites* and *ssl.quorum.ciphersuites* :
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
@@ -1859,8 +1869,10 @@ New features that are currently considered experimental.
     (Java system property: **readonlymode.enabled**)
     **New in 3.4.0:**
     Setting this value to true enables Read Only Mode server
-    support (disabled by default). ROM allows clients
-    sessions which requested ROM support to connect to the
+    support (disabled by default).
+    *localSessionsEnabled* has to be activated to serve clients.
+    A downgrade of an existing connections is currently not supported.
+    ROM allows clients sessions which requested ROM support to connect to the
     server even when the server might be partitioned from
     the quorum. In this mode ROM clients can still read
     values from the ZK service, but will be unable to write
@@ -2488,7 +2500,7 @@ Moving forward, Four Letter Words will be deprecated, please use
                   zk_watch_count  0
                   zk_ephemerals_count 0
                   zk_approximate_data_size    27
-                  zk_followers    4                   - only exposed by the Leader
+                  zk_learners    4                    - only exposed by the Leader
                   zk_synced_followers 4               - only exposed by the Leader
                   zk_pending_syncs    0               - only exposed by the Leader
                   zk_open_file_descriptor_count 23    - only available on Unix platforms
@@ -2594,6 +2606,26 @@ The AdminServer is enabled by default, but can be disabled by either:
 
 Note that the TCP four-letter word interface is still available if
 the AdminServer is disabled.
+
+##### Configuring AdminServer for SSL/TLS
+- Generating the **keystore.jks** and **truststore.jks** which can be found in the [Quorum TLS](http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Quorum+TLS).
+- Add the following configuration settings to the `zoo.cfg` config file:
+
+```
+admin.portUnification=true
+ssl.quorum.keyStore.location=/path/to/keystore.jks
+ssl.quorum.keyStore.password=password
+ssl.quorum.trustStore.location=/path/to/truststore.jks
+ssl.quorum.trustStore.password=password
+```
+- Verify that the following entries in the logs can be seen:
+
+```
+2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@123] - Successfully loaded private key from /data/software/cert/keystore.jks
+2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@124] - Successfully loaded certificate authority from /data/software/cert/truststore.jks
+
+2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
+```
 
 Available commands include:
 

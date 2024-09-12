@@ -83,7 +83,7 @@ public class RequestPathMetricsCollector {
     public static final String PATH_STATS_COLLECTOR_DELAY = "zookeeper.pathStats.delay";
     public static final String PATH_STATS_TOP_PATH_MAX = "zookeeper.pathStats.topPathMax";
     public static final String PATH_STATS_ENABLED = "zookeeper.pathStats.enabled";
-    private static final String PATH_SEPERATOR = "/";
+    private static final String PATH_SEPARATOR = "/";
 
     private final Map<String, PathStatsQueue> immutableRequestsMap;
     private final ScheduledThreadPoolExecutor scheduledExecutor;
@@ -156,9 +156,9 @@ public class RequestPathMetricsCollector {
     static String trimPathDepth(String path, int maxDepth) {
         int count = 0;
         StringBuilder sb = new StringBuilder();
-        StringTokenizer pathTokenizer = new StringTokenizer(path, PATH_SEPERATOR);
+        StringTokenizer pathTokenizer = new StringTokenizer(path, PATH_SEPARATOR);
         while (pathTokenizer.hasMoreElements() && count++ < maxDepth) {
-            sb.append(PATH_SEPERATOR);
+            sb.append(PATH_SEPARATOR);
             sb.append(pathTokenizer.nextToken());
         }
         path = sb.toString();

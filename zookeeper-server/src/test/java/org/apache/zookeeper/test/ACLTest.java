@@ -19,7 +19,10 @@
 package org.apache.zookeeper.test;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
@@ -27,22 +30,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,11 +70,10 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testNettyIpAuthDefault() throws Exception {
+    public void testNettyIpAuthDefault(@TempDir File tmpDir) throws Exception {
         String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         ClientBase.setupTestEnv();
-        File tmpDir = ClientBase.createTmpDir();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -96,8 +102,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testDisconnectedAddAuth() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testDisconnectedAddAuth(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
@@ -127,8 +132,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
      * node is actually working.
      */
     @Test
-    public void testAcls() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testAcls(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
@@ -217,8 +221,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testNullACL() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testNullACL(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -258,8 +261,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
-    public void testNullValueACL() throws Exception {
-        File tmpDir = ClientBase.createTmpDir();
+    public void testNullValueACL(@TempDir File tmpDir) throws Exception {
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
@@ -302,4 +304,89 @@ public class ACLTest extends ZKTestCase implements Watcher {
         }
     }
 
+    @Test
+    public void testExistACLCheck(@TempDir File tmpDir) throws Exception {
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        String path = "/testExistACLCheck";
+        String data = "/testExistACLCheck-data";
+        try {
+            LOG.info("starting up the zookeeper server .. waiting");
+            assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being up");
+            ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
+            try {
+                Stat stat = zk.exists(path, false);
+                assertNull(stat);
+                zk.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                stat = zk.exists(path, false);
+                assertNotNull(stat);
+                assertEquals(data.length(), stat.getDataLength());
+
+                zk.delete(path, -1);
+                ArrayList<ACL> acls = new ArrayList<>();
+                acls.add(new ACL(ZooDefs.Perms.WRITE, Ids.ANYONE_ID_UNSAFE));
+                zk.create(path, data.getBytes(), acls, CreateMode.PERSISTENT);
+                try {
+                    stat = zk.exists(path, false);
+                    fail("exists should throw NoAuthException when don't have read permission");
+                } catch (KeeperException.NoAuthException e) {
+                    //expected
+                }
+
+                zk.delete(path, -1);
+                acls = new ArrayList<>();
+                acls.add(new ACL(ZooDefs.Perms.READ, Ids.ANYONE_ID_UNSAFE));
+                zk.create(path, data.getBytes(), acls, CreateMode.PERSISTENT);
+                stat = zk.exists(path, false);
+                assertNotNull(stat);
+                assertEquals(data.length(), stat.getDataLength());
+            } finally {
+                zk.close();
+            }
+        } finally {
+            f.shutdown();
+            zks.shutdown();
+            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+        }
+    }
+
+    @Test
+    public void testExistACLCheckAtRootPath(@TempDir File tmpDir) throws Exception {
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        try {
+            LOG.info("starting up the zookeeper server .. waiting");
+            assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server being up");
+            ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
+            try {
+                String data = "/testExistACLCheckAtRootPath-data";
+                zk.create("/a", data.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                ArrayList<ACL> acls = new ArrayList<>();
+                acls.add(new ACL(0, Ids.ANYONE_ID_UNSAFE));
+                zk.setACL("/", acls, -1);
+
+                Stat stat = zk.exists("/a", false);
+                assertNotNull(stat);
+                assertEquals(data.length(), stat.getDataLength());
+                try {
+                    stat = zk.exists("/", false);
+                    fail("exists should throw NoAuthException when removing root path's ACL permission");
+                } catch (KeeperException.NoAuthException e) {
+                    //expected
+                }
+            } finally {
+                zk.close();
+            }
+        } finally {
+            f.shutdown();
+            zks.shutdown();
+            assertTrue(ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT), "waiting for server down");
+        }
+    }
 }

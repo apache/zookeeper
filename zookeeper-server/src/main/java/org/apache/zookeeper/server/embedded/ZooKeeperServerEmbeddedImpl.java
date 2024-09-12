@@ -119,7 +119,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             // Start and schedule the the purge task
             purgeMgr = new DatadirCleanupManager(config
                     .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+                    .getSnapRetainCount(), config.getPurgeIntervalInMs());
             purgeMgr.start();
 
             thread = new Thread("zkservermainrunner") {
@@ -128,7 +128,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                     try {
                         maincluster.runFromConfig(config);
                         maincluster.close();
-                        LOG.info("ZK server died. Requsting stop on JVM");
+                        LOG.info("ZK server died. Requesting stop on JVM");
                         if (!stopping) {
                             ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
                         }
@@ -155,7 +155,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             };
             purgeMgr = new DatadirCleanupManager(config
                     .getDataDir(), config.getDataLogDir(), config
-                    .getSnapRetainCount(), config.getPurgeInterval());
+                    .getSnapRetainCount(), config.getPurgeIntervalInMs());
             purgeMgr.start();
             thread = new Thread("zkservermainrunner") {
                 @Override

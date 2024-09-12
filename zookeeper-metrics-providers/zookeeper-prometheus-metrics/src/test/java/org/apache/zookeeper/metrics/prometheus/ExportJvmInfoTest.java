@@ -19,7 +19,6 @@
 package org.apache.zookeeper.metrics.prometheus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import io.prometheus.client.CollectorRegistry;
 import java.util.Properties;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +26,7 @@ import org.junit.jupiter.api.Test;
  * Tests about Prometheus Metrics Provider. Please note that we are not testing
  * Prometheus but our integration.
  */
-public class ExportJvmInfoTest {
+public class ExportJvmInfoTest extends PrometheusMetricsTestBase {
 
     @Test
     public void exportInfo() throws Exception {
@@ -40,7 +39,6 @@ public class ExportJvmInfoTest {
     }
 
     private void runTest(boolean exportJvmInfo) throws Exception {
-        CollectorRegistry.defaultRegistry.clear();
         PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
         try {
             Properties configuration = new Properties();

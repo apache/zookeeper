@@ -130,7 +130,7 @@ public abstract class ServerCnxnFactory {
         startup(zkServer, true);
     }
 
-    // This method is to maintain compatiblity of startup(zks) and enable sharing of zks
+    // This method is to maintain compatibility of startup(zks) and enable sharing of zks
     // when we add secureCnxnFactory.
     public abstract void startup(ZooKeeperServer zkServer, boolean startServer) throws IOException, InterruptedException;
 

@@ -571,7 +571,7 @@ public class MultiOperationTest extends ClientBase {
     @ValueSource(booleans = {true, false})
     public void testDeleteUpdateConflict(boolean useAsync) throws Exception {
 
-        /* Delete of a node folowed by an update of the (now) deleted node */
+        /* Delete of a node followed by an update of the (now) deleted node */
         try {
             multi(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -590,7 +590,7 @@ public class MultiOperationTest extends ClientBase {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testGetResults(boolean useAsync) throws Exception {
-        /* Delete of a node folowed by an update of the (now) deleted node */
+        /* Delete of a node followed by an update of the (now) deleted node */
         Iterable<Op> ops = Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.delete("/multi", 0),
@@ -667,9 +667,9 @@ public class MultiOperationTest extends ClientBase {
 
     private void opEquals(OpResult expected, OpResult value, OpResult near) {
         assertEquals(value, value);
-        assertFalse(value.equals(new Object()));
-        assertFalse(value.equals(near));
-        assertFalse(value.equals(value instanceof CreateResult ? new ErrorResult(1) : new CreateResult("nope2")));
+        assertNotEquals(value, new Object());
+        assertNotEquals(value, near);
+        assertNotEquals(value, (value instanceof CreateResult ? new ErrorResult(1) : new CreateResult("nope2")));
         assertTrue(value.equals(expected));
     }
 

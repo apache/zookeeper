@@ -456,7 +456,7 @@ public:
         zh=zookeeper_init("localhost:2121",activeWatcher,10000,TEST_CLIENT_ID,
                 &watcher,0);
         CPPUNIT_ASSERT(zh!=0);
-        // wait till watcher proccessing has completed (the connection 
+        // wait till watcher processing has completed (the connection
         // established event)
         CPPUNIT_ASSERT(ensureCondition(
                 deliveryTracker.isWatcherProcessingCompleted(),1000)<1000);

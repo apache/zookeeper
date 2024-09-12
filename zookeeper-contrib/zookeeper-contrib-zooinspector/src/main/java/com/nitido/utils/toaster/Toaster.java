@@ -142,7 +142,7 @@ public class Toaster
 
 
 		/***
-		 * Simple costructor that initialized components...
+		 * Simple constructor that initialized components...
 		 */
 		public SingleToaster()
 		{

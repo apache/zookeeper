@@ -18,6 +18,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.KeeperException;
@@ -69,6 +71,17 @@ public class QuorumServerTest extends ZKTestCase {
         expected = "example.com:1234:1236:participant;0.0.0.0:1237";
         qs = new QuorumServer(0, provided);
         assertEquals(expected, qs.toString(), "Use hostname");
+
+        provided = "example.com:1234:1236:participant;1237;1238";
+        expected = "example.com:1234:1236:participant;0.0.0.0:1237;0.0.0.0:1238";
+        qs = new QuorumServer(0, provided);
+        assertEquals(expected, qs.toString(), "clientPort and secureClientPort");
+
+        provided = ipv4config + ":participant;;1.2.3.4:1237";
+        expected = ipv4config + ":participant;;1.2.3.4:1237";
+        qs = new QuorumServer(0, provided);
+        assertEquals(expected, qs.toString(), "Only secureClientPort");
+
     }
 
     @Test
@@ -112,6 +125,9 @@ public class QuorumServerTest extends ZKTestCase {
         System.setProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED, "true");
         QuorumServer qs = new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236");
         assertEquals("127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant", qs.toString(), "MultiAddress parse error");
+
+        qs = new QuorumServer(0, "127.0.0.1:1234:1236|127.0.0.1:2234:2236;1237;1238");
+        assertEquals("127.0.0.1:1234:1236|127.0.0.1:2234:2236:participant;0.0.0.0:1237;0.0.0.0:1238", qs.toString(), "MultiAddress parse with clientPort and secureClientPort");
     }
 
     @Test
@@ -145,6 +161,33 @@ public class QuorumServerTest extends ZKTestCase {
             );
             server1.checkAddressDuplicate(server2);
         });
+    }
+
+    @Test
+    public void testClientAddrAndSecureClientAddr() throws ConfigException {
+        QuorumPeer.QuorumServer qs = new QuorumPeer.QuorumServer(0, "example.com:1234:1236:participant;1237;1238");
+        assertNotNull(qs.clientAddr, "clientPort specified");
+        assertNotNull(qs.secureClientAddr, "secureClientPort specified");
+
+        qs = new QuorumPeer.QuorumServer(0, "example.com:1234:1236:participant;;1238");
+        assertNull(qs.clientAddr, "clientPort not specified");
+        assertNotNull(qs.secureClientAddr, "secureClientPort specified");
+
+        qs = new QuorumPeer.QuorumServer(0, "example.com:1234:1236:participant;1237;");
+        assertNotNull(qs.clientAddr, "clientPort specified");
+        assertNull(qs.secureClientAddr, "secureClientPort not specified");
+
+        qs = new QuorumPeer.QuorumServer(0, "example.com:1234:1236:participant;1237");
+        assertNotNull(qs.clientAddr, "clientPort specified");
+        assertNull(qs.secureClientAddr, "secureClientPort not specified");
+
+        qs = new QuorumPeer.QuorumServer(0, "example.com:1234:1236:participant");
+        assertNull(qs.clientAddr, "clientPort not specified");
+        assertNull(qs.secureClientAddr, "secureClientPort not specified");
+
+        qs = new QuorumPeer.QuorumServer(0, "example.com:1234:1236:participant;;");
+        assertNull(qs.clientAddr, "clientPort not specified");
+        assertNull(qs.secureClientAddr, "secureClientPort not specified");
     }
 
 }

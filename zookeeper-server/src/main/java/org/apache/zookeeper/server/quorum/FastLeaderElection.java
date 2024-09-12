@@ -702,14 +702,14 @@ public class FastLeaderElection implements Election {
                 qv.toString().getBytes(UTF_8));
 
             LOG.debug(
-                "Sending Notification: {} (n.leader), 0x{} (n.zxid), 0x{} (n.round), {} (recipient),"
-                    + " {} (myid), 0x{} (n.peerEpoch) ",
+                "Sending Notification: {} (n.leader), 0x{} (n.zxid), 0x{} (n.peerEpoch), 0x{} (n.round), {} (recipient),"
+                    + " {} (myid) ",
                 proposedLeader,
                 Long.toHexString(proposedZxid),
+                Long.toHexString(proposedEpoch),
                 Long.toHexString(logicalclock.get()),
                 sid,
-                self.getMyId(),
-                Long.toHexString(proposedEpoch));
+                self.getMyId());
 
             sendqueue.offer(notmsg);
         }
@@ -722,12 +722,13 @@ public class FastLeaderElection implements Election {
      */
     protected boolean totalOrderPredicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch) {
         LOG.debug(
-            "id: {}, proposed id: {}, zxid: 0x{}, proposed zxid: 0x{}",
+            "id: {}, proposed id: {}, zxid: 0x{}, proposed zxid: 0x{}, epoch: 0x{}, proposed epoch: 0x{}",
             newId,
             curId,
             Long.toHexString(newZxid),
-            Long.toHexString(curZxid));
-
+            Long.toHexString(curZxid),
+            Long.toHexString(newEpoch),
+            Long.toHexString(curEpoch));
         if (self.getQuorumVerifier().getWeight(newId) == 0) {
             return false;
         }
@@ -1073,7 +1074,7 @@ public class FastLeaderElection implements Election {
                         * In ZOOKEEPER-3922, we separate the behaviors of FOLLOWING and LEADING.
                         * To avoid the duplication of codes, we create a method called followingBehavior which was used to
                         * shared by FOLLOWING and LEADING. This method returns a Vote. When the returned Vote is null, it follows
-                        * the original idea to break swtich statement; otherwise, a valid returned Vote indicates, a leader
+                        * the original idea to break switch statement; otherwise, a valid returned Vote indicates, a leader
                         * is generated.
                         *
                         * The reason why we need to separate these behaviors is to make the algorithm runnable for 2-node

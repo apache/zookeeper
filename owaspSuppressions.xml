@@ -38,10 +38,17 @@
       <!-- https://github.com/jeremylong/DependencyCheck/issues/1653
            False positive on Netty 4.x-->
       <cve>CVE-2018-12056</cve>
+      <!-- ZOOKEEPER-4755: looks like a real vulnerability in Netty,
+           but no report or patch has been published so far.  This has
+           to be monitored and will probably have to be remediated.
+
+           https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-4586
+      -->
+      <cve>CVE-2023-4586</cve>
    </suppress>
    <suppress>
       <!-- Seems like false positive - we are not using Prometheus
-           2.x, rather the client which lastest is 0.6. at the time of
+           2.x, rather the client which latest is 0.6. at the time of
            this writing  -->
       <cve>CVE-2019-3826</cve>
    </suppress>

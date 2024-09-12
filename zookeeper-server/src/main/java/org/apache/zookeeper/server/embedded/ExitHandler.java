@@ -21,7 +21,7 @@ package org.apache.zookeeper.server.embedded;
 /**
  * Behaviour of the server in case of internal error.
  * When you are running tests you will use {@link #LOG_ONLY},
- * but please take care of using {@link #EXIT} when runnning in production.
+ * but please take care of using {@link #EXIT} when running in production.
  */
 public enum ExitHandler {
     /**

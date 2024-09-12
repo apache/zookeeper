@@ -64,7 +64,7 @@ public class SyncRequestProcessorMetricTest {
         }).when(nextProcessor).processRequest(any(Request.class));
     }
 
-    private Request createRquest(long sessionId, int xid) {
+    private Request createRequest(long sessionId, int xid) {
         return new Request(null, sessionId, xid, ZooDefs.OpCode.setData, RequestRecord.fromBytes(new byte[10]), null);
     }
 
@@ -72,7 +72,7 @@ public class SyncRequestProcessorMetricTest {
     public void testSyncProcessorMetrics() throws Exception {
         SyncRequestProcessor syncProcessor = new SyncRequestProcessor(zks, nextProcessor);
         for (int i = 0; i < 500; i++) {
-            syncProcessor.processRequest(createRquest(1, i));
+            syncProcessor.processRequest(createRequest(1, i));
         }
 
         Map<String, Object> values = MetricsUtils.currentServerMetrics();

@@ -174,10 +174,10 @@ public class GetEphemeralsTest extends ClientBase {
         }
     }
 
-    private String[] generatePaths(int persistantCnt, int ephemeralCnt) throws KeeperException, InterruptedException {
+    private String[] generatePaths(int persistentCnt, int ephemeralCnt) throws KeeperException, InterruptedException {
 
-        final String[] expected = new String[persistantCnt * ephemeralCnt];
-        for (int p = 0; p < persistantCnt; p++) {
+        final String[] expected = new String[persistentCnt * ephemeralCnt];
+        for (int p = 0; p < persistentCnt; p++) {
             String base = BASE + p;
             zk.create(base, base.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             for (int e = 0; e < ephemeralCnt; e++) {

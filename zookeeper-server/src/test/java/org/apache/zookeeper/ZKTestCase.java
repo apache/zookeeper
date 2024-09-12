@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.hamcrest.CustomMatcher;
@@ -56,6 +57,25 @@ public class ZKTestCase {
 
     protected String getTestName() {
         return testName;
+    }
+
+    public void syncClient(ZooKeeper zk, boolean synchronous) throws KeeperException {
+        if (synchronous) {
+            try {
+                zk.sync("/");
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+            return;
+        }
+        final CompletableFuture<KeeperException.Code> synced = new CompletableFuture<>();
+        zk.sync("/", (rc, path, ctx) -> {
+            synced.complete(KeeperException.Code.get(rc));
+        }, null);
+        KeeperException.Code code = synced.join();
+        if (code != KeeperException.Code.OK) {
+            throw KeeperException.create(code);
+        }
     }
 
     @BeforeAll

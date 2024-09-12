@@ -58,20 +58,19 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
     @Override
     public Proposal next() {
 
-        Proposal p = new Proposal();
+        Proposal p;
         try {
             byte[] serializedData = Util.marshallTxnEntry(itr.getHeader(), itr.getTxn(), itr.getDigest());
 
             QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader().getZxid(), serializedData, null);
-            p.packet = pp;
-            p.request = null;
-
+            p = new Proposal(pp);
             // This is the only place that can throw IO exception
             hasNext = itr.next();
 
         } catch (IOException e) {
             LOG.error("Unable to read txnlog from disk", e);
             hasNext = false;
+            p = new Proposal();
         }
 
         return p;

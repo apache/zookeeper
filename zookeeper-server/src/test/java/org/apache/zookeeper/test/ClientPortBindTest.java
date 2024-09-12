@@ -33,6 +33,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,7 @@ public class ClientPortBindTest extends ZKTestCase {
      * Verify that the server binds to the specified address
      */
     @Test
-    public void testBindByAddress() throws Exception {
+    public void testBindByAddress(@TempDir File tmpDir) throws Exception {
         String bindAddress = null;
         Enumeration<NetworkInterface> intfs = NetworkInterface.getNetworkInterfaces();
         // if we have a loopback and it has an address use it
@@ -77,8 +78,6 @@ public class ClientPortBindTest extends ZKTestCase {
         LOG.info("Using {} as the bind address", bindAddress);
         final String HOSTPORT = bindAddress + ":" + PORT;
         LOG.info("Using {} as the host/port", HOSTPORT);
-
-        File tmpDir = ClientBase.createTmpDir();
 
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);

@@ -25,23 +25,23 @@ import org.apache.zookeeper.Watcher.WatcherType;
 
 /**
  * Handles the special case of removing watches which has registered for a
- * client path
+ * server path
  */
 public class WatchDeregistration {
 
-    private final String clientPath;
+    private final String serverPath;
     private final Watcher watcher;
     private final WatcherType watcherType;
     private final boolean local;
     private final ZKWatchManager zkManager;
 
     public WatchDeregistration(
-        String clientPath,
+        String serverPath,
         Watcher watcher,
         WatcherType watcherType,
         boolean local,
         ZKWatchManager zkManager) {
-        this.clientPath = clientPath;
+        this.serverPath = serverPath;
         this.watcher = watcher;
         this.watcherType = watcherType;
         this.local = local;
@@ -56,16 +56,16 @@ public class WatchDeregistration {
      *            watch on the path.
      */
     public Map<EventType, Set<Watcher>> unregister(int rc) throws KeeperException {
-        return zkManager.removeWatcher(clientPath, watcher, watcherType, local, rc);
+        return zkManager.removeWatcher(serverPath, watcher, watcherType, local, rc);
     }
 
     /**
-     * Returns client path which has specified for unregistering its watcher
+     * Returns server path which has specified for unregistering its watcher
      *
-     * @return client path
+     * @return server path
      */
-    public String getClientPath() {
-        return clientPath;
+    public String getServerPath() {
+        return serverPath;
     }
 
 }

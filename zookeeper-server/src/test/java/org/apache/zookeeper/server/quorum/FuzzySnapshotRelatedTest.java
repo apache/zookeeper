@@ -177,7 +177,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     }
 
     /**
-     * It's possibel during SNAP sync, the parent is serialized before the
+     * It's possible during SNAP sync, the parent is serialized before the
      * child get deleted during sending the snapshot over.
      *
      * In which case, we need to make sure the pzxid get correctly updated

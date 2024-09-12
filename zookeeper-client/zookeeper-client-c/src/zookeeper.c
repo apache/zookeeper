@@ -1571,7 +1571,7 @@ static int get_next_server_in_reconfig(zhandle_t *zh)
 /**
  * Cycle through our server list to the correct 'next' server. The 'next' server
  * to connect to depends upon whether we're in a 'reconfig' mode or not. Reconfig
- * mode means we've upated the server list and are now trying to find a server
+ * mode means we've updated the server list and are now trying to find a server
  * to connect to. Once we get connected, we are no longer in the reconfig mode.
  * Similarly, if we try to connect to all the servers in the new configuration
  * and failed, reconfig mode is set to false.
@@ -1622,7 +1622,7 @@ const char* zoo_get_current_server(zhandle_t* zh)
 }
 
 /**
- * deallocated the free_path only its beeen allocated
+ * deallocated the free_path only its been allocated
  * and not equal to path
  */
 void free_duplicate_path(const char *free_path, const char* path) {
@@ -2873,7 +2873,7 @@ static void finalize_session_establishment(zhandle_t *zh) {
     PROCESS_SESSION_EVENT(zh, zh->state);
 
     if (has_sasl_client(zh)) {
-        /* some packets might have been delayed during SASL negotiaton. */
+        /* some packets might have been delayed during SASL negotiation. */
         adaptor_send_queue(zh, 0);
     }
 }
@@ -3830,7 +3830,7 @@ int zookeeper_close(zhandle_t *zh)
          * completions from calling zookeeper_close before we have
          * completed the adaptor_finish call below. */
 
-    /* Signal any syncronous completions before joining the threads */
+    /* Signal any synchronous completions before joining the threads */
         enter_critical(zh);
         free_completions(zh,1,ZCLOSING);
         leave_critical(zh);
@@ -5008,7 +5008,7 @@ const char* zerror(int c)
     case ZINVALIDSTATE:
       return "invalid zhandle state";
     case ZNEWCONFIGNOQUORUM:
-      return "no quorum of new config is connected and up-to-date with the leader of last commmitted config - try invoking reconfiguration after new servers are connected and synced";
+      return "no quorum of new config is connected and up-to-date with the leader of last committed config - try invoking reconfiguration after new servers are connected and synced";
     case ZRECONFIGINPROGRESS:
       return "Another reconfiguration is in progress -- concurrent reconfigs not supported (yet)";
     case ZAPIERROR:

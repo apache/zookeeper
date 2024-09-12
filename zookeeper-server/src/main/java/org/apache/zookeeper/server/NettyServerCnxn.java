@@ -38,11 +38,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.security.cert.Certificate;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ConnectRequest;
@@ -161,7 +165,18 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public void process(WatchedEvent event) {
+    public void process(WatchedEvent event, List<ACL> znodeAcl) {
+        try {
+            zkServer.checkACL(this, znodeAcl, ZooDefs.Perms.READ, getAuthInfo(), event.getPath(), null);
+        } catch (KeeperException.NoAuthException e) {
+            if (LOG.isTraceEnabled()) {
+                ZooTrace.logTraceMessage(
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId) + " (filtered by ACL)");
+            }
+            return;
+        }
         ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
@@ -190,7 +205,7 @@ public class NettyServerCnxn extends ServerCnxn {
         if (closingChannel || !channel.isOpen()) {
             return 0;
         }
-        ByteBuffer[] bb = serialize(h, r, tag, cacheKey, stat, opCode);
+        ByteBuffer[] bb = serialize(h, r, cacheKey, stat, opCode);
         int responseSize = bb[0].getInt();
         bb[0].rewind();
         sendBuffer(bb);
@@ -527,8 +542,8 @@ public class NettyServerCnxn extends ServerCnxn {
                         }
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
-                            LOG.info("Closing connection to {} because the server is not ready",
-                                    getRemoteSocketAddress());
+                            LOG.info("Closing connection to {} because the server is not ready (server state is: {})",
+                                getRemoteSocketAddress(), zks == null ? "unknown" : zks.getState());
                             close(DisconnectReason.IO_EXCEPTION);
                             return;
                         }

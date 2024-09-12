@@ -733,7 +733,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 syncThrottler = null;
             }
             String remoteAddr = getRemoteAddress();
-            LOG.warn("******* GOODBYE {} ********", remoteAddr);
+            LOG.warn("******* GOODBYE sid:{} {} ********", getSid(), remoteAddr);
             messageTracker.dumpToLog(remoteAddr);
             shutdown();
         }
@@ -957,7 +957,7 @@ public class LearnerHandler extends ZooKeeperThread {
         while (itr.hasNext()) {
             Proposal propose = itr.next();
 
-            long packetZxid = propose.packet.getZxid();
+            long packetZxid = propose.getZxid();
             // abort if we hit the limit
             if ((maxZxid != null) && (packetZxid > maxZxid)) {
                 break;
@@ -1020,7 +1020,7 @@ public class LearnerHandler extends ZooKeeperThread {
 
             // Since this is already a committed proposal, we need to follow
             // it by a commit packet
-            queuePacket(propose.packet);
+            queuePacket(propose.getQuorumPacket());
             queueOpPacket(Leader.COMMIT, packetZxid);
             queuedZxid = packetZxid;
 
