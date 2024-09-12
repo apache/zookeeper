@@ -2346,6 +2346,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         acceptedEpoch = e;
     }
 
+    private void recreateSocketAddressesFromQV(QuorumVerifier qv) {
+        for (QuorumServer qs : qv.getAllMembers().values()) {
+            qs.recreateSocketAddresses();
+        }
+    }
+
     public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE) {
         if (!isReconfigEnabled()) {
             LOG.debug("Reconfig feature is disabled, skip reconfig processing.");
@@ -2368,6 +2374,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         // already a Follower/Observer, only
         // for Learner):
         initConfigInZKDatabase();
+
+        recreateSocketAddressesFromQV(prevQV);
+        recreateSocketAddressesFromQV(qv);
 
         if (prevQV.getVersion() < qv.getVersion() && !prevQV.equals(qv)) {
             Map<Long, QuorumServer> newMembers = qv.getAllMembers();
