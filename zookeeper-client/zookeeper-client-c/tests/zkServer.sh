@@ -183,7 +183,10 @@ start|startClean|startRequireSASLAuth|startCleanReadOnly)
     mkdir -p "${certs_dir}"
     cp ${tests_dir}/../ssl/gencerts.sh "${certs_dir}/"  > /dev/null
     cd ${certs_dir} > /dev/null
-    ./gencerts.sh > ./gencerts.stdout 2> ./gencerts.stderr
+    # GitHub is providing us hostnames with more than 64 characters now.
+    # And there are no cppunit tests do hostname verification currently,
+    # so we could set CN to arbitrary hostname for now.
+    ./gencerts.sh tests.zookeeper.apache.org > ./gencerts.stdout 2> ./gencerts.stderr
     cd - > /dev/null
 
 
