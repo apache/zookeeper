@@ -30,7 +30,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 public class IPAuthenticationProvider implements AuthenticationProvider {
     public static final String X_FORWARDED_FOR_HEADER_NAME = "X-Forwarded-For";
 
-    static final String SKIP_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.skipxforwardedfor";
+    static final String USE_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.usexforwardedfor";
 
     public String getScheme() {
         return "ip";
@@ -152,7 +152,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
      * @return IP address
      */
     public static String getClientIPAddress(final HttpServletRequest request) {
-        if (Boolean.getBoolean(SKIP_X_FORWARDED_FOR_KEY)) {
+        if (!Boolean.getBoolean(USE_X_FORWARDED_FOR_KEY)) {
             return request.getRemoteAddr();
         }
 
