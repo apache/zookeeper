@@ -23,13 +23,24 @@ import static org.mockito.Mockito.mock;
 import java.util.Arrays;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 
-public class IPAuthTest extends ZKTestCase {
+public class IPAuthTest {
+    @Before
+    public void setUp() {
+        System.setProperty(IPAuthenticationProvider.USE_X_FORWARDED_FOR_KEY, "true");
+    }
+
+    @After
+    public void tearDown() {
+        System.clearProperty(IPAuthenticationProvider.USE_X_FORWARDED_FOR_KEY);
+    }
+
     @Test
     public void testHandleAuthentication_Forwarded() {
         final IPAuthenticationProvider provider = new IPAuthenticationProvider();

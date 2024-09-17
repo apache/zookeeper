@@ -30,7 +30,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 public class IPAuthenticationProvider implements AuthenticationProvider {
     public static final String X_FORWARDED_FOR_HEADER_NAME = "X-Forwarded-For";
 
-    static final String USE_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.usexforwardedfor";
+    public static final String USE_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.usexforwardedfor";
 
     public String getScheme() {
         return "ip";
