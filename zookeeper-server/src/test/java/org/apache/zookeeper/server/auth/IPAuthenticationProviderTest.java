@@ -17,7 +17,7 @@
  */
 package org.apache.zookeeper.server.auth;
 
-import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.SKIP_X_FORWARDED_FOR_KEY;
+import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.USE_X_FORWARDED_FOR_KEY;
 import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.X_FORWARDED_FOR_HEADER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
@@ -33,19 +33,33 @@ public class IPAuthenticationProviderTest {
 
   @Before
   public void setUp() throws Exception {
-    System.clearProperty(SKIP_X_FORWARDED_FOR_KEY);
+    System.clearProperty(USE_X_FORWARDED_FOR_KEY);
     request = mock(HttpServletRequest.class);
   }
 
   @After
   public void tearDown() {
-    System.clearProperty(SKIP_X_FORWARDED_FOR_KEY);
+    System.clearProperty(USE_X_FORWARDED_FOR_KEY);
   }
 
   @Test
   public void testGetClientIPAddressSkipXForwardedFor() {
     // Arrange
-    System.setProperty(SKIP_X_FORWARDED_FOR_KEY, "true");
+    System.setProperty(USE_X_FORWARDED_FOR_KEY, "false");
+    doReturn("192.168.1.1").when(request).getRemoteAddr();
+    doReturn("192.168.1.2,192.168.1.3,192.168.1.4").when(request).getHeader(X_FORWARDED_FOR_HEADER_NAME);
+
+    // Act
+    String clientIp = IPAuthenticationProvider.getClientIPAddress(request);
+
+    // Assert
+    assertEquals("192.168.1.1", clientIp);
+  }
+
+  @Test
+  public void testGetClientIPAddressDefaultBehaviour() {
+    // Arrange
+    System.clearProperty(USE_X_FORWARDED_FOR_KEY);
     doReturn("192.168.1.1").when(request).getRemoteAddr();
     doReturn("192.168.1.2,192.168.1.3,192.168.1.4").when(request).getHeader(X_FORWARDED_FOR_HEADER_NAME);
 
@@ -59,7 +73,7 @@ public class IPAuthenticationProviderTest {
   @Test
   public void testGetClientIPAddressWithXForwardedFor() {
     // Arrange
-    System.setProperty(SKIP_X_FORWARDED_FOR_KEY, "false");
+    System.setProperty(USE_X_FORWARDED_FOR_KEY, "true");
     doReturn("192.168.1.1").when(request).getRemoteAddr();
     doReturn("192.168.1.2,192.168.1.3,192.168.1.4").when(request).getHeader(X_FORWARDED_FOR_HEADER_NAME);
 
@@ -73,7 +87,7 @@ public class IPAuthenticationProviderTest {
   @Test
   public void testGetClientIPAddressMissingXForwardedFor() {
     // Arrange
-    System.setProperty(SKIP_X_FORWARDED_FOR_KEY, "false");
+    System.setProperty(USE_X_FORWARDED_FOR_KEY, "false");
     doReturn("192.168.1.1").when(request).getRemoteAddr();
 
     // Act
