@@ -86,3 +86,10 @@ jobs:
         name: failsafe-reports-${{ matrix.profile.name }}
         path: ./**/target/failsafe-reports/
         if-no-files-found: ignore
+    - name: Upload cppunit test logs
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: cppunit-logs-${{ matrix.profile.name }}
+        path: ./zookeeper-client/zookeeper-client-c/target/c/TEST-*.txt
+        if-no-files-found: ignore
