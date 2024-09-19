@@ -89,11 +89,12 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      * @param hdr the txn header
      * @param txn the txn
      * @param digest the digest of txn
+     * @return a request moving through a chain of RequestProcessors
      */
-    public void appendRequest(final TxnHeader hdr, final Record txn, final TxnDigest digest) throws IOException {
-        final Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
-        request.setTxnDigest(digest);
+    public Request appendRequest(final TxnHeader hdr, final Record txn, final TxnDigest digest) throws IOException {
+        final Request request = buildRequestToProcess(hdr, txn, digest);
         getZKDatabase().append(request);
+        return request;
     }
 
     /**
