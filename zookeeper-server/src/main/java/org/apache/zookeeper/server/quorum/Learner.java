@@ -797,6 +797,8 @@ public class Learner {
                     // Update current epoch after the committed txns are persisted
                     self.setCurrentEpoch(newEpoch);
                     LOG.info("Set the current epoch to {}", newEpoch);
+                    sock.setSoTimeout(self.tickTime * self.syncLimit);
+                    self.setSyncMode(QuorumPeer.SyncMode.NONE);
 
                     // send NEWLEADER ack after the committed txns are persisted
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
@@ -807,8 +809,6 @@ public class Learner {
         }
         ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
-        sock.setSoTimeout(self.tickTime * self.syncLimit);
-        self.setSyncMode(QuorumPeer.SyncMode.NONE);
         zk.startup();
         /*
          * Update the election vote here to ensure that all members of the
