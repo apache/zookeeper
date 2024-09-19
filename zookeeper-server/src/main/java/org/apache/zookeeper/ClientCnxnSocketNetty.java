@@ -206,7 +206,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                 connectFuture = null;
             }
             if (channel != null) {
-                channel.close().syncUninterruptibly();
+                channel.close();
                 channel = null;
             }
         } finally {
