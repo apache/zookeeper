@@ -152,23 +152,18 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    public synchronized void shutdown() {
-        if (!canShutdown()) {
-            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
-            return;
-        }
-        LOG.info("Shutting down");
-        try {
-            super.shutdown();
-        } catch (Exception e) {
-            LOG.warn("Ignoring unexpected exception during shutdown", e);
-        }
+    protected void shutdownComponents() {
         try {
             if (syncProcessor != null) {
                 syncProcessor.shutdown();
             }
         } catch (Exception e) {
             LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
+        }
+        try {
+            super.shutdownComponents();
+        } catch (Exception e) {
+            LOG.warn("Ignoring unexpected exception during shutdown", e);
         }
     }
 

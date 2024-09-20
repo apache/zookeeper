@@ -916,26 +916,26 @@ public class Learner {
     }
 
     void closeSocket() {
-        if (sock != null) {
-            if (sockBeingClosed.compareAndSet(false, true)) {
-                if (closeSocketAsync) {
-                    final Thread closingThread = new Thread(() -> closeSockSync(), "CloseSocketThread(sid:" + zk.getServerId());
-                    closingThread.setDaemon(true);
-                    closingThread.start();
-                } else {
-                    closeSockSync();
-                }
+        if (sockBeingClosed.compareAndSet(false, true)) {
+            if (sock == null) { // Closing before establishing the connection is a noop
+                return;
+            }
+            Socket socket = sock;
+            sock = null;
+            if (closeSocketAsync) {
+                final Thread closingThread = new Thread(() -> closeSockSync(socket), "CloseSocketThread(sid:" + zk.getServerId());
+                closingThread.setDaemon(true);
+                closingThread.start();
+            } else {
+                closeSockSync(socket);
             }
         }
     }
 
-    void closeSockSync() {
+    private static void closeSockSync(Socket socket) {
         try {
             long startTime = Time.currentElapsedTime();
-            if (sock != null) {
-                sock.close();
-                sock = null;
-            }
+            socket.close();
             ServerMetrics.getMetrics().SOCKET_CLOSING_TIME.add(Time.currentElapsedTime() - startTime);
         } catch (IOException e) {
             LOG.warn("Ignoring error closing connection to leader", e);

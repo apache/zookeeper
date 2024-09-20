@@ -294,7 +294,7 @@ public class ZKDatabase {
     }
 
     /**
-     * Fast forward the database adding transactions from the committed log into memory.
+     * Fast-forward the database adding transactions from the committed log into memory.
      * @return the last valid zxid.
      * @throws IOException
      */

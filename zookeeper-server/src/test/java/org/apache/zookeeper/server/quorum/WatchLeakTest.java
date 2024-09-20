@@ -97,7 +97,7 @@ public class WatchLeakTest {
             }
         });
 
-        ZKDatabase database = new ZKDatabase(null);
+        ZKDatabase database = new ZKDatabase(mock(FileTxnSnapLog.class));
         database.setlastProcessedZxid(2L);
         QuorumPeer quorumPeer = mock(QuorumPeer.class);
         FileTxnSnapLog logfactory = mock(FileTxnSnapLog.class);
