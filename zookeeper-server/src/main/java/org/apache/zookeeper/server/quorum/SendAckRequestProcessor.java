@@ -46,7 +46,7 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
                 learner.writePacket(qp, false);
             } catch (IOException e) {
                 LOG.warn("Closing connection to leader, exception during packet send", e);
-                learner.closeSockSync();
+                learner.closeSocket();
             }
         }
     }
@@ -56,7 +56,7 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
             learner.writePacket(null, true);
         } catch (IOException e) {
             LOG.warn("Closing connection to leader, exception during packet send", e);
-            learner.closeSockSync();
+            learner.closeSocket();
         }
     }
 
