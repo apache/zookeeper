@@ -313,6 +313,87 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * this function restores the server
+     * database after reading from the
+     * snapshots and transaction logs
+     * until the checkpoint zxid.
+     * 
+     * @param dt       the datatree to be restored
+     * @param sessions the sessions to be restored
+     * @param listener the playback listener to run on the
+     *                 database restoration
+     * @return the highest zxid restored
+     * @throws IOException
+     */
+    public long restore(DataTree dt, Map<Long, Integer> sessions, PlayBackListener listener, long zxid)
+            throws IOException {
+        long snapLoadingStartTime = Time.currentElapsedTime();
+        long deserializeResult = snapLog.deserialize(dt, sessions, zxid);
+        ServerMetrics.getMetrics().STARTUP_SNAP_LOAD_TIME.add(Time.currentElapsedTime() - snapLoadingStartTime);
+        FileTxnLog txnLog = new FileTxnLog(dataDir);
+        boolean trustEmptyDB;
+        File initFile = new File(dataDir.getParent(), "initialize");
+        if (Files.deleteIfExists(initFile.toPath())) {
+            LOG.info("Initialize file found, an empty database will not block voting participation");
+            trustEmptyDB = true;
+        } else {
+            trustEmptyDB = autoCreateDB;
+        }
+
+        RestoreFinalizer finalizer = () -> {
+            long highestZxid = fastForwardFromEdits(dt, sessions, listener);
+            // The snapshotZxidDigest will reset after replaying the txn of the
+            // zxid in the snapshotZxidDigest, if it's not reset to null after
+            // restoring, it means either there are not enough txns to cover that
+            // zxid or that txn is missing
+            DataTree.ZxidDigest snapshotZxidDigest = dt.getDigestFromLoadedSnapshot();
+            if (snapshotZxidDigest != null) {
+                LOG.warn(
+                        "Highest txn zxid 0x{} is not covering the snapshot digest zxid 0x{}, "
+                                + "which might lead to inconsistent state",
+                        Long.toHexString(highestZxid),
+                        Long.toHexString(snapshotZxidDigest.getZxid()));
+            }
+            return highestZxid;
+        };
+
+        if (-1L == deserializeResult) {
+            /*
+             * this means that we couldn't find any snapshot, so we need to
+             * initialize an empty database (reported in ZOOKEEPER-2325)
+             */
+            if (txnLog.getLastLoggedZxid() != -1) {
+                // ZOOKEEPER-3056: provides an escape hatch for users upgrading
+                // from old versions of zookeeper (3.4.x, pre 3.5.3).
+                if (!trustEmptySnapshot) {
+                    throw new IOException(EMPTY_SNAPSHOT_WARNING + "Something is broken!");
+                } else {
+                    LOG.warn("{}This should only be allowed during upgrading.", EMPTY_SNAPSHOT_WARNING);
+                    return finalizer.run();
+                }
+            }
+
+            if (trustEmptyDB) {
+                /*
+                 * TODO: (br33d) we should either put a ConcurrentHashMap on restore()
+                 * or use Map on save()
+                 */
+                save(dt, (ConcurrentHashMap<Long, Integer>) sessions, false);
+
+                /* return a zxid of 0, since we know the database is empty */
+                return 0L;
+            } else {
+                /* return a zxid of -1, since we are possibly missing data */
+                LOG.warn("Unexpected empty data tree, setting zxid to -1");
+                dt.lastProcessedZxid = -1L;
+                return -1L;
+            }
+        }
+
+        return finalizer.run();
+    }
+
+    /**
      * This function will fast forward the server database to have the latest
      * transactions in it.  This is the same as restore, but only reads from
      * the transaction logs and not restores from a snapshot.

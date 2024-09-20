@@ -48,6 +48,98 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     private MainThread[] mt = new MainThread[SERVER_COUNT];
 
     /**
+     * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-4837.
+     */
+    @Test
+    @Timeout(value = 300)
+    public void testEphemeralNodeDeletionZK4837() throws Exception {
+        final int[] clientPorts = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        String server;
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+        // start all the servers
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false) {
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new MockTestQPMain();
+                }
+            };
+            Thread.sleep(1000);
+            mt[i].start();
+        }
+
+        // ensure all servers started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+        }
+
+        // Check that node 1 is the initial leader
+        assertEquals(1, mt[1].getQuorumPeer().getLeaderId());
+
+        CountdownWatcher watch = new CountdownWatcher();
+        // QuorumPeer l = getByServerState(mt, ServerState.LEADING);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT, watch);
+        watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+
+        Stat firstEphemeralNode = new Stat();
+
+        // 1: create ephemeral node
+        String nodePath = "/e1";
+        zk.create(nodePath, "1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, firstEphemeralNode);
+
+        // 2: Inject network error
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            CustomQuorumPeer cqp = (CustomQuorumPeer) mt[i].getQuorumPeer();
+            cqp.setInjectError(true);
+        }
+
+        // 3: Quit
+        zk.close();
+
+        // 4: Wait until node 1 and node 2 have removed the ephemeral node
+        while (true) {
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+
+            if (mt[1].getQuorumPeer().getZkDb().getSessionCount() == 0
+                    && mt[2].getQuorumPeer().getZkDb().getSessionCount() == 0) {
+
+                // Double check
+                Thread.sleep(1000);
+                if (mt[1].getQuorumPeer().getZkDb().getSessionCount() == 0
+                        && mt[2].getQuorumPeer().getZkDb().getSessionCount() == 0) {
+                    break;
+                }
+            }
+        }
+
+        // 5: Remove network error
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            CustomQuorumPeer cqp = (CustomQuorumPeer) mt[i].getQuorumPeer();
+            cqp.setInjectError(false);
+        }
+
+        // Node must have been deleted from 1 and 2
+        assertNodeNotExist(nodePath, 2);
+        assertNodeNotExist(nodePath, 1);
+
+        // If buggy, node is not deleted from 0
+        assertNodeNotExist(nodePath, 0);
+    }
+
+    /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2355.
      * ZooKeeper ephemeral node is never deleted if follower fail while reading
      * the proposal packet.
@@ -154,6 +246,18 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         // ephemeral node is getting deleted.
         assertNull(nodeAtFollower, "After session close ephemeral node must be deleted");
         followerZK.close();
+    }
+
+    void assertNodeNotExist(String nodePath, int idx) throws Exception {
+        QuorumPeer qp = mt[idx].getQuorumPeer();
+
+        CountdownWatcher watch = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + qp.getClientPort(), ClientBase.CONNECTION_TIMEOUT, watch);
+        watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+
+        Stat exists = zk.exists(nodePath, false);
+        zk.close();
+        assertNull(exists, "Node must have been deleted from the node " + idx);
     }
 
     @AfterEach

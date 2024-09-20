@@ -41,6 +41,16 @@ public interface SnapShot {
     long deserialize(DataTree dt, Map<Long, Integer> sessions) throws IOException;
 
     /**
+     * deserialize a data tree from the last valid snapshot before the checkpoint zxid and return the last zxid that was deserialized
+     * 
+     * @param dt       the datatree to be deserialized into
+     * @param sessions the sessions to be deserialized into
+     * @return the last zxid that was deserialized from the snapshot
+     * @throws IOException
+     */
+    long deserialize(DataTree dt, Map<Long, Integer> sessions, long zxid) throws IOException;
+
+    /**
      * persist the datatree and the sessions into a persistence storage
      * @param dt the datatree to be serialized
      * @param sessions the session timeouts to be serialized
