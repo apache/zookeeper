@@ -486,6 +486,10 @@ public class Leader extends LearnerMaster {
     // VisibleForTesting
     protected final Proposal newLeaderProposal = new Proposal();
 
+    protected LearnerCnxAcceptor createLearnerCnxAcceptor() {
+        return new LearnerCnxAcceptor();
+    }
+
     class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
 
         private final AtomicBoolean stop = new AtomicBoolean(false);
@@ -506,7 +510,7 @@ public class Leader extends LearnerMaster {
                 CountDownLatch latch = new CountDownLatch(serverSockets.size());
 
                 serverSockets.forEach(serverSocket ->
-                        executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
+                        executor.submit(createLearnerCnxAcceptorHandler(serverSocket, latch)));
 
                 try {
                     latch.await();
@@ -524,6 +528,11 @@ public class Leader extends LearnerMaster {
                     }
                 }
             }
+        }
+
+        protected LearnerCnxAcceptorHandler createLearnerCnxAcceptorHandler(
+                ServerSocket serverSocket, CountDownLatch latch) {
+            return new LearnerCnxAcceptorHandler(serverSocket, latch);
         }
 
         public void halt() {
@@ -563,7 +572,7 @@ public class Leader extends LearnerMaster {
                 Socket socket = null;
                 boolean error = false;
                 try {
-                    socket = serverSocket.accept();
+                    socket = acceptSocketFrom(serverSocket);
 
                     // start with the initLimit, once the ack is processed
                     // in LearnerHandler switch to the syncLimit
@@ -596,6 +605,10 @@ public class Leader extends LearnerMaster {
                         }
                     }
                 }
+            }
+
+            protected Socket acceptSocketFrom(ServerSocket serverSocket) throws IOException {
+                return serverSocket.accept();
             }
 
         }
@@ -649,7 +662,7 @@ public class Leader extends LearnerMaster {
 
             // Start thread that waits for connection requests from
             // new followers.
-            cnxAcceptor = new LearnerCnxAcceptor();
+            cnxAcceptor = createLearnerCnxAcceptor();
             cnxAcceptor.start();
 
             long epoch = getEpochToPropose(self.getMyId(), self.getAcceptedEpoch());
@@ -1567,7 +1580,7 @@ public class Leader extends LearnerMaster {
     /**
      * Start up Leader ZooKeeper server and initialize zxid to the new epoch
      */
-    private synchronized void startZkServer() {
+    protected synchronized void startZkServer() {
         // Update lastCommitted and Db's zxid to a value representing the new epoch
         lastCommitted = zk.getZxid();
         LOG.info("Have quorum of supporters, sids: [{}]; starting up and setting last processed zxid: 0x{}",

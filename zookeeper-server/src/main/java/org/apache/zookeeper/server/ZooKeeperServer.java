@@ -881,7 +881,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @param state new server state.
      */
-    protected void setState(State state) {
+    protected synchronized void setState(State state) {
         this.state = state;
         // Notify server state changes to the registered shutdown handler, if any.
         if (zkShutdownHandler != null) {
@@ -900,15 +900,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @return true if the server is running or server hits an error, false
      *         otherwise.
      */
-    protected boolean canShutdown() {
+    protected synchronized boolean canShutdown() {
         return state == State.RUNNING || state == State.ERROR;
     }
 
     /**
      * @return true if the server is running, false otherwise.
      */
-    public boolean isRunning() {
+    public synchronized boolean isRunning() {
         return state == State.RUNNING;
+    }
+
+    /**
+     * @return true if the server is initial, false otherwise.
+     */
+    public synchronized boolean isInitial() {
+        return state == State.INITIAL;
     }
 
     public void shutdown() {
@@ -1223,7 +1230,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     // processor it should wait for setting up the request
                     // processor chain. The state will be updated to RUNNING
                     // after the setup.
-                    while (state == State.INITIAL) {
+                    while (isInitial()) {
                         wait(1000);
                     }
                 } catch (InterruptedException e) {
@@ -1245,13 +1252,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     // processor it should wait for setting up the request
                     // processor chain. The state will be updated to RUNNING
                     // after the setup.
-                    while (state == State.INITIAL) {
+                    while (isInitial()) {
                         wait(1000);
                     }
                 } catch (InterruptedException e) {
                     LOG.warn("Unexpected interruption", e);
                 }
-                if (firstProcessor == null || state != State.RUNNING) {
+                if (firstProcessor == null || !isRunning()) {
                     throw new RuntimeException("Not started");
                 }
             }
