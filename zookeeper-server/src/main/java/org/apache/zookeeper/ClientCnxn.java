@@ -1152,6 +1152,7 @@ public class ClientCnxn {
                         startConnect(serverAddress);
                         // Update now to start the connection timer right after we make a connection attempt
                         clientCnxnSocket.updateNow();
+                        clientCnxnSocket.updateLastSend();
                     }
 
                     if (state.isConnected()) {
@@ -1189,7 +1190,7 @@ public class ClientCnxn {
                         }
                         to = readTimeout - clientCnxnSocket.getIdleRecv();
                     } else {
-                        to = connectTimeout - clientCnxnSocket.getIdleRecv();
+                        to = connectTimeout - clientCnxnSocket.getIdleSend();
                     }
 
                     int expiration = expirationTimeout - clientCnxnSocket.getIdleRecv();
