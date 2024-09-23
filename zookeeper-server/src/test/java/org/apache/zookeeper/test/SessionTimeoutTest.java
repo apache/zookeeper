@@ -20,9 +20,15 @@ package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
@@ -48,6 +54,30 @@ public class SessionTimeoutTest extends ClientBase {
         zk = createClient();
     }
 
+    private static class BusyServer implements AutoCloseable {
+        private final ServerSocket server;
+        private final Socket client;
+
+        public BusyServer() throws IOException {
+            this.server = new ServerSocket(0, 1);
+            this.client = new Socket("127.0.0.1", server.getLocalPort());
+        }
+
+        public int getLocalPort() {
+            return server.getLocalPort();
+        }
+
+        public String getHostPort() {
+            return String.format("127.0.0.1:%d", getLocalPort());
+        }
+
+        @Override
+        public void close() throws Exception {
+            client.close();
+            server.close();
+        }
+    }
+
     @Test
     public void testSessionExpiration() throws InterruptedException, KeeperException {
         final CountDownLatch expirationLatch = new CountDownLatch(1);
@@ -70,6 +100,80 @@ public class SessionTimeoutTest extends ClientBase {
             gotException = true;
         }
         assertTrue(gotException);
+    }
+
+    @Test
+    public void testSessionRecoveredAfterMultipleFailedAttempts() throws Exception {
+        // stop client also to gain less distraction
+        zk.close();
+
+        try (BusyServer busyServer = new BusyServer()) {
+            List<String> servers = Arrays.asList(
+                    busyServer.getHostPort(),
+                    busyServer.getHostPort(),
+                    hostPort,
+                    busyServer.getHostPort(),
+                    busyServer.getHostPort(),
+                    busyServer.getHostPort()
+                    );
+            String connectString = String.join(",", servers);
+
+            zk = createClient(new CountdownWatcher(), connectString);
+            stopServer();
+
+            // Wait beyond connectTimeout but not sessionTimeout.
+            Thread.sleep(zk.getSessionTimeout() / 2);
+
+            CompletableFuture<Void> connected = new CompletableFuture<>();
+            zk.register(event -> {
+                if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    connected.complete(null);
+                } else {
+                    connected.completeExceptionally(new KeeperException.SessionExpiredException());
+                }
+            });
+
+            startServer();
+            connected.join();
+        }
+    }
+
+    @Test
+    public void testSessionExpirationAfterAllServerDown() throws Exception {
+        // stop client also to gain less distraction
+        zk.close();
+
+        // small connection timeout to gain quick ci feedback
+        int sessionTimeout = 3000;
+        CompletableFuture<Void> expired = new CompletableFuture<>();
+        zk = createClient(new CountdownWatcher(), hostPort, sessionTimeout);
+        zk.register(event -> {
+            if (event.getState() == Watcher.Event.KeeperState.Expired) {
+                expired.complete(null);
+            }
+        });
+        stopServer();
+        expired.join();
+        assertThrows(KeeperException.SessionExpiredException.class, () -> zk.exists("/", null));
+    }
+
+    @Test
+    public void testSessionExpirationWhenNoServerUp() throws Exception {
+        // stop client also to gain less distraction
+        zk.close();
+
+        stopServer();
+
+        // small connection timeout to gain quick ci feedback
+        int sessionTimeout = 3000;
+        CompletableFuture<Void> expired = new CompletableFuture<>();
+        new TestableZooKeeper(hostPort, sessionTimeout, event -> {
+            if (event.getState() == Watcher.Event.KeeperState.Expired) {
+                expired.complete(null);
+            }
+        });
+        expired.join();
+        assertThrows(KeeperException.SessionExpiredException.class, () -> zk.exists("/", null));
     }
 
     @Test

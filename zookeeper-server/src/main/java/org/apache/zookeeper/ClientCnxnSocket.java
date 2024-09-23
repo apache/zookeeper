@@ -65,7 +65,9 @@ abstract class ClientCnxnSocket {
     protected ByteBuffer incomingBuffer = lenBuffer;
     protected final AtomicLong sentCount = new AtomicLong(0L);
     protected final AtomicLong recvCount = new AtomicLong(0L);
+    // Used for reactive timeout detection, say connection read timeout and session expiration timeout.
     protected long lastHeard;
+    // Used for proactive timeout detection, say ping timeout and connection establishment timeout.
     protected long lastSend;
     protected long now;
     protected ClientCnxn.SendThread sendThread;
