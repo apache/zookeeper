@@ -24,6 +24,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Set;
+import java.util.function.Supplier;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
@@ -55,9 +57,10 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                     "SASL-authentication failed because the specified JAAS configuration section '%s' could not be found.",
                     loginContext));
             }
-            SaslQuorumServerCallbackHandler saslServerCallbackHandler = new SaslQuorumServerCallbackHandler(
-                Configuration.getConfiguration(), loginContext, authzHosts);
-            serverLogin = new Login(loginContext, saslServerCallbackHandler, new ZKConfig());
+            Supplier<CallbackHandler> callbackSupplier = () -> {
+                return new SaslQuorumServerCallbackHandler(entries, authzHosts);
+            };
+            serverLogin = new Login(loginContext, callbackSupplier, new ZKConfig());
             serverLogin.startThreadIfNeeded();
         } catch (Throwable e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);
@@ -86,7 +89,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                 serverLogin.getSubject(),
                 QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
                 QuorumAuth.QUORUM_SERVER_SASL_DIGEST,
-                serverLogin.callbackHandler,
+                serverLogin.newCallbackHandler(),
                 LOG);
             while (!ss.isComplete()) {
                 challenge = ss.evaluateResponse(token);

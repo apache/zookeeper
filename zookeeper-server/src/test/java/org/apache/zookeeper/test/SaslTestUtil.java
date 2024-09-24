@@ -28,6 +28,7 @@ public class SaslTestUtil extends ClientBase {
     // The maximum time (in milliseconds) a client should take to observe
     // a disconnect event of the same client from server.
     static Integer CLIENT_DISCONNECT_TIMEOUT = 3000;
+    static String SUPER_USER_NAME = "super";
     static String requireSASLAuthProperty = "zookeeper.sessionRequireClientSASLAuth";
     static String authProviderProperty = "zookeeper.authProvider.1";
     static String authProvider = "org.apache.zookeeper.server.auth.SASLAuthenticationProvider";
@@ -35,6 +36,10 @@ public class SaslTestUtil extends ClientBase {
     static String jaasConfig = "java.security.auth.login.config";
 
     static String createJAASConfigFile(String fileName, String password) {
+        return createJAASConfigFile(fileName, SUPER_USER_NAME, password);
+    }
+
+    static String createJAASConfigFile(String fileName, String userName, String password) {
         String ret = null;
         try {
             File tmpDir = createTmpDir();
@@ -47,7 +52,7 @@ public class SaslTestUtil extends ClientBase {
                     + "};\n"
                     + "Client {\n"
                     + "       " + digestLoginModule + " required\n"
-                    + "       username=\"super\"\n"
+                    + "       username=\"" + userName + "\"\n"
                     + "       password=\"" + password + "\";\n"
                     + "};" + "\n");
             fwriter.close();

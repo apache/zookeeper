@@ -127,7 +127,9 @@ public class KerberosTicketRenewalTest {
     private CountDownLatch continueRefreshThread = new CountDownLatch(1);
 
     public TestableKerberosLogin() throws LoginException {
-      super(JAAS_CONFIG_SECTION, (callbacks) -> {}, new ZKConfig());
+      super(JAAS_CONFIG_SECTION, () -> {
+        return (callbacks) -> {};
+      }, new ZKConfig());
     }
 
     @Override
