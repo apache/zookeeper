@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +28,6 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import org.apache.zookeeper.server.auth.DigestLoginModule;
@@ -53,16 +51,8 @@ public class SaslQuorumServerCallbackHandler implements CallbackHandler {
     private final Set<String> authzHosts;
 
     public SaslQuorumServerCallbackHandler(
-        Configuration configuration,
-        String serverSection,
-        Set<String> authzHosts) throws IOException {
-        AppConfigurationEntry[] configurationEntries = configuration.getAppConfigurationEntry(serverSection);
-
-        if (configurationEntries == null) {
-            String errorMessage = "Could not find a '" + serverSection + "' entry in this configuration: Server cannot start.";
-            LOG.error(errorMessage);
-            throw new IOException(errorMessage);
-        }
+        AppConfigurationEntry[] configurationEntries,
+        Set<String> authzHosts) {
 
         Map<String, String> credentials = new HashMap<>();
         boolean isDigestAuthn = true;

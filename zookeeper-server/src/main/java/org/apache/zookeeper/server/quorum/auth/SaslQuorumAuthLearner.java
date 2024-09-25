@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.function.Supplier;
 import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
@@ -62,9 +64,13 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     "SASL-authentication failed because the specified JAAS configuration section '%s' could not be found.",
                     loginContext));
             }
+
+            Supplier<CallbackHandler> callbackSupplier = () -> {
+                return new SaslClientCallbackHandler(null, "QuorumLearner");
+            };
             this.learnerLogin = new Login(
                 loginContext,
-                new SaslClientCallbackHandler(null, "QuorumLearner"),
+                callbackSupplier,
                 new ZKConfig());
             this.learnerLogin.startThreadIfNeeded();
         } catch (LoginException e) {

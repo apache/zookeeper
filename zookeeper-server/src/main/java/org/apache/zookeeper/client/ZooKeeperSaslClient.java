@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
@@ -240,9 +242,10 @@ public class ZooKeeperSaslClient {
         try {
             if (loginRef.get() == null) {
                 LOG.debug("JAAS loginContext is: {}", loginContext);
-                // note that the login object is static: it's shared amongst all zookeeper-related connections.
-                // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
-                Login l = new Login(loginContext, new SaslClientCallbackHandler(null, "Client"), clientConfig);
+                Supplier<CallbackHandler> callbackHandlerSupplier = () -> {
+                    return new SaslClientCallbackHandler(null, "Client");
+                };
+                Login l = new Login(loginContext, callbackHandlerSupplier, clientConfig);
                 if (loginRef.compareAndSet(null, l)) {
                     l.startThreadIfNeeded();
                 }
