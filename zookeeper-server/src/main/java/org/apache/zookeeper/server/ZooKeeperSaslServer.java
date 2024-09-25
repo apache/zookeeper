@@ -41,7 +41,7 @@ public class ZooKeeperSaslServer {
     private SaslServer createSaslServer(final Login login) {
         synchronized (login) {
             Subject subject = login.getSubject();
-            return SecurityUtils.createSaslServer(subject, "zookeeper", "zk-sasl-md5", login.callbackHandler, LOG);
+            return SecurityUtils.createSaslServer(subject, "zookeeper", "zk-sasl-md5", login.newCallbackHandler(), LOG);
         }
     }
 
