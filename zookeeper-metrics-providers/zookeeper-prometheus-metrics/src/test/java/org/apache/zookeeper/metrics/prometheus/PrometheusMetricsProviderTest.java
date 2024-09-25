@@ -314,7 +314,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                     assertEquals(20, value);
                     break;
                 default:
-                    fail("unespected key " + k);
+                    fail("unexpected key " + k);
                     break;
             }
         }
@@ -369,7 +369,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                     assertEquals(20, value);
                     break;
                 default:
-                    fail("unespected key " + k);
+                    fail("unexpected key " + k);
                     break;
             }
         }
@@ -443,6 +443,73 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     }
 
     @Test
+    public void testSummary_customMetricsPrefix() throws Exception {
+        final Properties config = new Properties();
+        config.setProperty("numWorkerThreads", "0"); // sync behavior for test
+        config.setProperty("httpHost", "127.0.0.1"); // local host for test
+        config.setProperty("httpPort", "0"); // ephemeral port
+        config.setProperty("exportJvmInfo", "false");
+        config.setProperty("metricsPrefix", "zookeeper_");
+
+        PrometheusMetricsProvider metricsProvider = null;
+        try {
+            metricsProvider = new PrometheusMetricsProvider();
+            metricsProvider.configure(config);
+            metricsProvider.start();
+
+            Summary summary = metricsProvider.getRootContext()
+                .getSummary("cc", MetricsContext.DetailLevel.BASIC);
+            summary.add(10);
+            summary.add(10);
+            int[] count = {0};
+            metricsProvider.dump((k, v) -> {
+                    count[0]++;
+                    int value = ((Number) v).intValue();
+
+                    switch (k) {
+                        case "zookeeper_cc{quantile=\"0.5\"}":
+                            assertEquals(10, value);
+                            break;
+                        case "zookeeper_cc_count":
+                            assertEquals(2, value);
+                            break;
+                        case "zookeeper_cc_sum":
+                            assertEquals(20, value);
+                            break;
+                        default:
+                            fail("unexpected key " + k);
+                            break;
+                    }
+                }
+            );
+            assertEquals(3, count[0]);
+            count[0] = 0;
+
+            // we always must get the same object
+            assertSame(summary, metricsProvider.getRootContext()
+                .getSummary("cc", MetricsContext.DetailLevel.BASIC));
+
+            try {
+                metricsProvider.getRootContext()
+                    .getSummary("cc", MetricsContext.DetailLevel.ADVANCED);
+                fail("Can't get the same summary with a different DetailLevel");
+            } catch (IllegalArgumentException err) {
+                assertThat(err.getMessage(), containsString("Already registered"));
+            }
+
+            String res = callServlet();
+            assertThat(res, containsString("# TYPE cc summary"));
+            assertThat(res, CoreMatchers.containsString("cc_sum 20.0"));
+            assertThat(res, CoreMatchers.containsString("cc_count 2.0"));
+            assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
+        } finally {
+            if (metricsProvider != null) {
+                metricsProvider.stop();
+            }
+        }
+    }
+
+  @Test
     public void testSummarySet() throws Exception {
         final String name = "ss";
         final String[] keys = {"ns1", "ns2"};
