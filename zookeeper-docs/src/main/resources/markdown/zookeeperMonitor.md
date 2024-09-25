@@ -44,39 +44,40 @@ All the metrics are included in the `ServerMetrics.java`.
 
 ### Pre-requisites:
 - Enable the `Prometheus MetricsProvider` by setting the following in `zoo.cfg`:
-  ```bash
+  ```conf
   metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
   ```
 
 - The port for Prometheus metrics can be configured using:
-  ```bash
+  ```conf
   metricsProvider.httpPort=7000  # Default port is 7000
   ```
 
 #### Enabling HTTPS for Prometheus Metrics:
+
 ZooKeeper also supports SSL for Prometheus metrics, which provides secure data transmission. To enable this, configure an HTTPS port and set up SSL certificates as follows:
 
 - Define the HTTPS port:
-  ```bash
+  ```conf
   metricsProvider.httpPorts=4443
   ```
 
 - Configure the SSL key store (holds the server’s private key and certificates):
-  ```bash
+  ```conf
   metricsProvider.ssl.keyStore.location=/path/to/keystore.jks
   metricsProvider.ssl.keyStore.password=your_keystore_password
   metricsProvider.ssl.keyStore.type=jks  # Default is JKS
   ```
 
 - Configure the SSL trust store (used to verify client certificates):
-  ```bash
+  ```conf
   metricsProvider.ssl.trustStore.location=/path/to/truststore.jks
   metricsProvider.ssl.trustStore.password=your_truststore_password
   metricsProvider.ssl.trustStore.type=jks  # Default is JKS
   ```
 
 - **Note**: You can enable both HTTP and HTTPS simultaneously by defining both ports:
-  ```bash
+  ```conf
   metricsProvider.httpPorts=7000
   metricsProvider.httpsPorts=4443
   ```
