@@ -195,4 +195,17 @@ public class BinaryInputArchiveTest {
     return buf.array();
   }
 
+    @Test
+    public void testTotalBufferSizeShouldNotBeMoreThanIntegerMaxValue()
+            throws IOException {
+        int maxBufferSize = 1 * 1024 * 1024 * 1024; // buffer size 1GB
+        int extraMaxBufferSize = maxBufferSize;
+        int recordSize = 1000;
+        BinaryInputArchive ia =
+                getBinaryInputArchive(recordSize, maxBufferSize, extraMaxBufferSize);
+        String s = ia.readString("");
+        assertNotNull(s);
+        assertEquals(recordSize, s.getBytes().length);
+    }
+
 }
