@@ -59,7 +59,7 @@ ZooKeeper also supports SSL for Prometheus metrics, which provides secure data t
 
 - Define the HTTPS port:
   ```conf
-  metricsProvider.httpPorts=4443
+  metricsProvider.httpsPort=4443
   ```
 
 - Configure the SSL key store (holds the server’s private key and certificates):
@@ -78,8 +78,8 @@ ZooKeeper also supports SSL for Prometheus metrics, which provides secure data t
 
 - **Note**: You can enable both HTTP and HTTPS simultaneously by defining both ports:
   ```conf
-  metricsProvider.httpPorts=7000
-  metricsProvider.httpsPorts=4443
+  metricsProvider.httpPort=7000
+  metricsProvider.httpsPort=4443
   ```
 ### Prometheus
 - Running a [Prometheus](https://prometheus.io/) monitoring service is the easiest way to ingest and record ZooKeeper's metrics.
