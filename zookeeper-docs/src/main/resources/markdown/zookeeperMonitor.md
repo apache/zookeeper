@@ -41,11 +41,49 @@ All the metrics are included in the `ServerMetrics.java`.
 
 <a name="Prometheus"></a>
 
+
+### Pre-requisites:
+- Enable the `Prometheus MetricsProvider` by setting the following in `zoo.cfg`:
+  ```conf
+  metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
+  ```
+
+- The port for Prometheus metrics can be configured using:
+  ```conf
+  metricsProvider.httpPort=7000  # Default port is 7000
+  ```
+
+#### Enabling HTTPS for Prometheus Metrics:
+
+ZooKeeper also supports SSL for Prometheus metrics, which provides secure data transmission. To enable this, configure an HTTPS port and set up SSL certificates as follows:
+
+- Define the HTTPS port:
+  ```conf
+  metricsProvider.httpsPort=4443
+  ```
+
+- Configure the SSL key store (holds the server’s private key and certificates):
+  ```conf
+  metricsProvider.ssl.keyStore.location=/path/to/keystore.jks
+  metricsProvider.ssl.keyStore.password=your_keystore_password
+  metricsProvider.ssl.keyStore.type=jks  # Default is JKS
+  ```
+
+- Configure the SSL trust store (used to verify client certificates):
+  ```conf
+  metricsProvider.ssl.trustStore.location=/path/to/truststore.jks
+  metricsProvider.ssl.trustStore.password=your_truststore_password
+  metricsProvider.ssl.trustStore.type=jks  # Default is JKS
+  ```
+
+- **Note**: You can enable both HTTP and HTTPS simultaneously by defining both ports:
+  ```conf
+  metricsProvider.httpPort=7000
+  metricsProvider.httpsPort=4443
+  ```
 ### Prometheus
 - Running a [Prometheus](https://prometheus.io/) monitoring service is the easiest way to ingest and record ZooKeeper's metrics.
-- Pre-requisites:
-  - enable the `Prometheus MetricsProvider` by setting `metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider` in the zoo.cfg.
-  - the Port is also configurable by setting `metricsProvider.httpPort`（the default value:7000）
+
 - Install Prometheus:
   Go to the official website download [page](https://prometheus.io/download/), download the latest release.
   
