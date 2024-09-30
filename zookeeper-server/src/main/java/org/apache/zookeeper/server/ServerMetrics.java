@@ -269,6 +269,8 @@ public final class ServerMetrics {
         JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
 
         QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
+
+        REPLY_ERROR_COUNT = metricsContext.getCounterSet("reply_error_count");
     }
 
     /**
@@ -546,6 +548,8 @@ public final class ServerMetrics {
     public final Summary JVM_PAUSE_TIME;
 
     public final CounterSet QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+
+    public final CounterSet REPLY_ERROR_COUNT;
 
     private final MetricsProvider metricsProvider;
 
