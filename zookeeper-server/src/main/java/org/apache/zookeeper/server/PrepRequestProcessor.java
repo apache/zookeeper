@@ -41,6 +41,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringConvertUtil;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
@@ -380,6 +381,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             path = setDataRequest.getPath();
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
+            //add by our team
+            checkIpLimited(request);
             zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
             zks.checkQuota(path, nodeRecord.data, setDataRequest.getData(), OpCode.setData);
             int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
@@ -550,6 +553,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             validatePath(path, request.sessionId);
             List<ACL> listACL = fixupACL(path, request.authInfo, setAclRequest.getAcl());
             nodeRecord = getRecordForPath(path);
+            //add by our team
+            checkIpLimited(request);
             zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.ADMIN, request.authInfo, path, listACL);
             newVersion = checkAndIncVersion(nodeRecord.stat.getAversion(), setAclRequest.getVersion(), path);
             request.setTxn(new SetACLTxn(path, listACL, newVersion));
@@ -616,6 +621,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             path = checkVersionRequest.getPath();
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
+            //add by our team
+            checkIpLimited(request);
             zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
             request.setTxn(new CheckVersionTxn(
                 path,
@@ -660,7 +667,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
 
         List<ACL> listACL = fixupACL(path, request.authInfo, acl);
         ChangeRecord parentRecord = getRecordForPath(parentPath);
-
+        //add by our team
+        checkIpLimited(request);
         zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
         int parentCVersion = parentRecord.stat.getCversion();
         if (createMode.isSequential()) {
@@ -1123,4 +1131,32 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
         request.setTxnDigest(new TxnDigest(digestCalculator.getDigestVersion(), preCalculatedDigest.treeDigest));
     }
+
+    // add by our team
+    /** This is a save method and internal error will not affect server to handle request*/
+    static void checkIpLimited(Request request) throws KeeperException.NoAuthException {
+        if (NIOServerCnxnFactory.skipLimitedIp.get()) {
+            return;
+        }
+
+        try {
+
+            if (null == request || null == request.cnxn
+                    || null == request.cnxn.getRemoteSocketAddress()
+                    || null == request.cnxn.getRemoteSocketAddress().getAddress()
+                    || null == request.cnxn.getRemoteSocketAddress().getAddress().getHostAddress()) {
+                return;
+            }
+            String clientIp = StringConvertUtil.trimToEmpty(request.cnxn.getRemoteSocketAddress().getAddress().getHostAddress());
+            if (!NIOServerCnxnFactory.limitedIpMap.containsKey(clientIp)) {
+                return;
+            }
+        } catch (Exception e) {
+            LOG.error("Error when check ip limit, request: " + request + ", error: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
+        throw new KeeperException.NoAuthException();
+    }
+
 }
