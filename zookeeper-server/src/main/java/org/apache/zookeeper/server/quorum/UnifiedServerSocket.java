@@ -37,14 +37,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A ServerSocket that can act either as a regular ServerSocket, as a SSLServerSocket, or as both, depending on
+ * A ServerSocket that can act either as a regular ServerSocket, as an SSLServerSocket, or as both, depending on
  * the constructor parameters and on the type of client (TLS or plaintext) that connects to it.
  * The constructors have the same signature as constructors of ServerSocket, with the addition of two parameters
  * at the beginning:
  * <ul>
  *     <li>X509Util - provides the SSL context to construct a secure socket when a client connects with TLS.</li>
  *     <li>boolean allowInsecureConnection - when true, acts as a hybrid server socket (plaintext / TLS). When
- *         false, acts as a SSLServerSocket (rejects plaintext connections).</li>
+ *         false, acts as an SSLServerSocket (rejects plaintext connections).</li>
  * </ul>
  * The <code>!allowInsecureConnection</code> mode is needed so we can update the SSLContext (in particular, the
  * key store and/or trust store) without having to re-create the server socket. By starting with a plaintext socket
@@ -146,7 +146,7 @@ public class UnifiedServerSocket extends ServerSocket {
      * read or write from the socket will cause the socket to detect if the connected client is attempting
      * to establish a TLS or plaintext connection. This is done by doing a blocking read of 5 bytes off the
      * socket and checking if the bytes look like the start of a TLS ClientHello message. If it looks like
-     * the client is attempting to connect with TLS, the internal socket is upgraded to a SSLSocket. If not,
+     * the client is attempting to connect with TLS, the internal socket is upgraded to an SSLSocket. If not,
      * any bytes read from the socket are pushed back to the input stream, and the socket continues
      * to be treated as a plaintext socket.
      *
