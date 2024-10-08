@@ -50,6 +50,7 @@ limitations under the License.
 ## Task
 
 * [ZOOKEEPER-4820](https://issues.apache.org/jira/browse/ZOOKEEPER-4820) - zookeeper pom leaks logback dependency
+* [ZOOKEEPER-4868](https://issues.apache.org/jira/browse/ZOOKEEPER-4868) - Bump commons-io library to 2.14.0
 
 
 &nbsp;
