@@ -49,14 +49,18 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.util.LogChopper;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
@@ -315,7 +319,7 @@ public class TxnLogToolkit implements Closeable {
      * @return the formatted string
      */
     // @VisibleForTesting
-    static String getFormattedTxnStr(Record txn) {
+    static String getFormattedTxnStr(Record txn) throws IOException {
         StringBuilder txnData = new StringBuilder();
         if (txn == null) {
             return txnData.toString();
@@ -338,6 +342,12 @@ public class TxnLogToolkit implements Closeable {
             txnData.append(createTTLTxn.getPath() + "," + checkNullToEmpty(createTTLTxn.getData()))
                    .append("," + createTTLTxn.getAcl() + "," + createTTLTxn.getParentCVersion())
                    .append("," + createTTLTxn.getTtl());
+        } else if (txn instanceof DeleteTxn) {
+            DeleteTxn deleteTxn = ((DeleteTxn) txn);
+            txnData.append(deleteTxn.getPath());
+        } else if (txn instanceof CheckVersionTxn) {
+            CheckVersionTxn checkVersionTxn = ((CheckVersionTxn) txn);
+            txnData.append(checkVersionTxn.getPath()).append(",").append(checkVersionTxn.getVersion());
         } else if (txn instanceof MultiTxn) {
             MultiTxn multiTxn = ((MultiTxn) txn);
             List<Txn> txnList = multiTxn.getTxns();
@@ -351,7 +361,7 @@ public class TxnLogToolkit implements Closeable {
                 if (t.getType() == ZooDefs.OpCode.error) {
                     txnData.append(ByteBuffer.wrap(t.getData()).getInt());
                 } else {
-                    txnData.append(checkNullToEmpty(t.getData()));
+                    txnData.append(getFormattedTxnStr(deserializeSubTxn(t)));
                 }
             }
         } else {
@@ -359,6 +369,40 @@ public class TxnLogToolkit implements Closeable {
         }
 
         return txnData.toString();
+    }
+
+    private static Record deserializeSubTxn(Txn txn) throws IOException {
+        Record record;
+        switch (txn.getType()) {
+            case ZooDefs.OpCode.create:
+            case ZooDefs.OpCode.create2:
+                record = new CreateTxn();
+                break;
+            case ZooDefs.OpCode.createTTL:
+                record = new CreateTTLTxn();
+                break;
+            case ZooDefs.OpCode.createContainer:
+                record = new CreateContainerTxn();
+                break;
+            case ZooDefs.OpCode.delete:
+            case ZooDefs.OpCode.deleteContainer:
+                record = new DeleteTxn();
+                break;
+            case ZooDefs.OpCode.setData:
+                record = new SetDataTxn();
+                break;
+            case ZooDefs.OpCode.error:
+                record = new ErrorTxn();
+                break;
+            case ZooDefs.OpCode.check:
+                record = new CheckVersionTxn();
+                break;
+            default:
+                throw new IOException("Unsupported Txn with type=" + txn.getType());
+        }
+        ByteBuffer bb = ByteBuffer.wrap(txn.getData());
+        ByteBufferInputStream.byteBuffer2Record(bb, record);
+        return record;
     }
 
     private static String checkNullToEmpty(byte[] data) {

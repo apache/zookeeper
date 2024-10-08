@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -37,10 +38,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.CheckVersionTxn;
+import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateTTLTxn;
+import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.MultiTxn;
+import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,27 +104,31 @@ public class TxnLogToolkitTest {
 
     @Test
     public void testMultiTxnDecode() throws IOException {
-        //MultiTxn with four ops, and the first op error.
+        // MultiTxn with multi ops including errors
         List<Txn> txns = new ArrayList<>();
-        int type = -1;
-        for (int i = 0; i < 4; i++) {
-            ErrorTxn txn;
-            if (i == 0) {
-                txn = new ErrorTxn(KeeperException.Code.NONODE.intValue());
-            } else {
-                txn = new ErrorTxn(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
-            }
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                txn.serialize(boa, "request");
-                ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-                txns.add(new Txn(type, bb.array()));
-            }
-        }
+        txns.add(newSubTxn(ZooDefs.OpCode.error, new ErrorTxn(KeeperException.Code.NONODE.intValue())));
+        txns.add(newSubTxn(ZooDefs.OpCode.error, new ErrorTxn(KeeperException.Code.RUNTIMEINCONSISTENCY.intValue())));
+        txns.add(newSubTxn(ZooDefs.OpCode.create, new CreateTxn("/test", "test-data".getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, true, 1)));
+        txns.add(newSubTxn(ZooDefs.OpCode.createContainer, new CreateContainerTxn("/test_container", "test-data".getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, 2)));
+        txns.add(newSubTxn(ZooDefs.OpCode.createTTL, new CreateTTLTxn("/test_container", "test-data".getBytes(StandardCharsets.UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, 2, 20)));
+        txns.add(newSubTxn(ZooDefs.OpCode.setData, new SetDataTxn("/test_set_data", "test-data".getBytes(StandardCharsets.UTF_8), 4)));
+        txns.add(newSubTxn(ZooDefs.OpCode.delete, new DeleteTxn("/test_delete")));
+        txns.add(newSubTxn(ZooDefs.OpCode.check, new CheckVersionTxn("/test_check_version", 5)));
         MultiTxn multiTxn = new MultiTxn(txns);
-
         String formattedTxnStr = TxnLogToolkit.getFormattedTxnStr(multiTxn);
-        assertEquals("error:-101;error:-2;error:-2;error:-2", formattedTxnStr);
+        assertEquals("error:-101;error:-2;create:/test,test-data,[31,s{'world,'anyone}\n"
+                    + "],true,1;createContainer:/test_container,test-data,[31,s{'world,'anyone}\n"
+                    + "],2;createTTL:/test_container,test-data,[31,s{'world,'anyone}\n"
+                    + "],2,20;setData:/test_set_data,test-data,4;delete:/test_delete;check:/test_check_version,5", formattedTxnStr);
+    }
+
+    private static Txn newSubTxn(int type, Record record) throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+            record.serialize(boa, "request");
+            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+            return new Txn(type, bb.array());
+        }
     }
 
     @Test
