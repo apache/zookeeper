@@ -2153,42 +2153,97 @@ static void free_key_list(char **list, int count)
     free(list);
 }
 
+/* ZOOKEEPER-706: If a session has a large number of watches set then
+ * attempting to re-establish those watches after a connection loss may
+ * fail due to the SetWatches request exceeding the server's configured
+ * jute.maxBuffer value. To avoid this we instead split the watch
+ * re-establishement across multiple SetWatches calls. This constant
+ * controls the size of each call. It is set to 128kB to be conservative
+ * with respect to the server's 1MB default for jute.maxBuffer.
+ */
+static const int SET_WATCHES_MAX_LENGTH = 128*1024;
+
 static int send_set_watches(zhandle_t *zh)
 {
     struct oarchive *oa;
     struct RequestHeader h = {SET_WATCHES_XID, ZOO_SETWATCHES_OP};
+    struct SetWatches all_watchs;
     struct SetWatches req;
-    int rc;
+    int batch_len = 0;
+    int index = 0;
+    long total_len = 0;
+    int i, max_count = 0;
+    int rc = ZOK;
 
-    req.relativeZxid = zh->last_zxid;
+    all_watchs.relativeZxid = zh->last_zxid;
     lock_watchers(zh);
-    req.dataWatches.data = collect_keys(zh->active_node_watchers, (int*)&req.dataWatches.count);
-    req.existWatches.data = collect_keys(zh->active_exist_watchers, (int*)&req.existWatches.count);
-    req.childWatches.data = collect_keys(zh->active_child_watchers, (int*)&req.childWatches.count);
+    all_watchs.dataWatches.data = collect_keys(zh->active_node_watchers, (int*)&all_watchs.dataWatches.count);
+    all_watchs.existWatches.data = collect_keys(zh->active_exist_watchers, (int*)&all_watchs.existWatches.count);
+    all_watchs.childWatches.data = collect_keys(zh->active_child_watchers, (int*)&all_watchs.childWatches.count);
     unlock_watchers(zh);
+    max_count = all_watchs.dataWatches.count;
+    max_count = (max_count > all_watchs.existWatches.count)?max_count:all_watchs.existWatches.count;
+    max_count = (max_count > all_watchs.childWatches.count)?max_count:all_watchs.childWatches.count;
+    memset(&req, 0, sizeof(struct SetWatches));
+    req.relativeZxid = all_watchs.relativeZxid;
+    for (i = 0; i < max_count; i++) {
+        if (i < all_watchs.dataWatches.count) {
+            req.dataWatches.count++;
+            batch_len += strlen(all_watchs.dataWatches.data[i]);
+        }
+        if (i < all_watchs.existWatches.count) {
+            req.existWatches.count++;
+            batch_len += strlen(all_watchs.existWatches.data[i]);
+        }
+        if (i < all_watchs.childWatches.count) {
+            req.childWatches.count++;
+            batch_len += strlen(all_watchs.childWatches.data[i]);
+        }
+        /* append data if not last or less than max limit*/
+        if ((batch_len < SET_WATCHES_MAX_LENGTH) && (i < (max_count - 1))) {
+            continue;
+        }
 
-    // return if there are no pending watches
-    if (!req.dataWatches.count && !req.existWatches.count &&
-        !req.childWatches.count) {
-        free_key_list(req.dataWatches.data, req.dataWatches.count);
-        free_key_list(req.existWatches.data, req.existWatches.count);
-        free_key_list(req.childWatches.data, req.childWatches.count);
-        return ZOK;
+        LOG_DEBUG(LOGCALLBACK(zh), "batch_len=%d, i = %d, max_count=%d, index=%d.", batch_len, i, max_count, index);
+        if (req.dataWatches.count) {
+            req.dataWatches.data = all_watchs.dataWatches.data + index;
+        }
+        if (req.existWatches.count) {
+            req.existWatches.data = all_watchs.existWatches.data + index;
+        }
+        if (req.childWatches.count) {
+            req.childWatches.data = all_watchs.childWatches.data + index;
+        }
+        
+        oa = create_buffer_oarchive();
+        rc = serialize_RequestHeader(oa, "header", &h);
+        rc = rc < 0 ? rc : serialize_SetWatches(oa, "req", &req);
+        /* add this buffer to the head of the send queue */
+        rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
+        get_buffer_len(oa));
+        if (rc < 0) {
+            LOG_ERROR(LOGCALLBACK(zh), "add watches request fail, data len:%d", get_buffer_len(oa));
+            close_buffer_oarchive(&oa, 1);
+            break;
+        }
+        total_len += get_buffer_len(oa);
+        LOG_DEBUG(LOGCALLBACK(zh), "add watches request [len:%d] to buffer.", get_buffer_len(oa));
+        /* We queued the buffer, so don't free it */
+        close_buffer_oarchive(&oa, 0);
+        
+        index = i + 1;
+        batch_len = 0;
+        memset(&req, 0, sizeof(struct SetWatches));
+        req.relativeZxid = all_watchs.relativeZxid;
     }
-
-
-    oa = create_buffer_oarchive();
-    rc = serialize_RequestHeader(oa, "header", &h);
-    rc = rc < 0 ? rc : serialize_SetWatches(oa, "req", &req);
-    /* add this buffer to the head of the send queue */
-    rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
-    free_key_list(req.dataWatches.data, req.dataWatches.count);
-    free_key_list(req.existWatches.data, req.existWatches.count);
-    free_key_list(req.childWatches.data, req.childWatches.count);
-    LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request to %s",zoo_get_current_server(zh));
+    if (total_len > (long)(2 * SET_WATCHES_MAX_LENGTH)) {
+        LOG_WARN(LOGCALLBACK(zh), "watchers register to %s that may be overload, total len:%ld", 
+                            zoo_get_current_server(zh), total_len);
+    }
+    free_key_list(all_watchs.dataWatches.data, all_watchs.dataWatches.count);
+    free_key_list(all_watchs.existWatches.data, all_watchs.existWatches.count);
+    free_key_list(all_watchs.childWatches.data, all_watchs.childWatches.count);
+    LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request [len:%ld] to %s", total_len, zoo_get_current_server(zh));
     return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
