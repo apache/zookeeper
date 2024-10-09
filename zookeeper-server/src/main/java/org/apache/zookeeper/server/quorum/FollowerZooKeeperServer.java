@@ -69,7 +69,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
+        commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), getZooKeeperServerListener());
         commitProcessor.start();
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         ((FollowerRequestProcessor) firstProcessor).start();
@@ -125,9 +125,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         }
 
         Request r = pendingSyncs.remove();
-        if (r instanceof LearnerSyncRequest) {
-            LearnerSyncRequest lsr = (LearnerSyncRequest) r;
-            lsr.fh.queuePacket(new QuorumPacket(Leader.SYNC, 0, null, null));
+        if (r.getOwner() instanceof LearnerHandler) {
+            ((LearnerHandler) r.getOwner()).queuePacket(new QuorumPacket(Leader.SYNC, 0, null, null));
         }
         commitProcessor.commit(r);
     }
