@@ -43,6 +43,9 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
@@ -70,7 +73,10 @@ import org.apache.zookeeper.ZooKeeper.WatchRegistration;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -1307,10 +1313,7 @@ public class ClientCnxn {
             Socket sock = null;
             BufferedReader br = null;
             try {
-                sock = new Socket(addr.getHostString(), addr.getPort());
-                sock.setSoLinger(false, -1);
-                sock.setSoTimeout(1000);
-                sock.setTcpNoDelay(true);
+                sock = newSocket(addr);
                 sock.getOutputStream().write("isro".getBytes());
                 sock.getOutputStream().flush();
                 sock.shutdownOutput();
@@ -1318,7 +1321,7 @@ public class ClientCnxn {
                 result = br.readLine();
             } catch (ConnectException e) {
                 // ignore, this just means server is not up
-            } catch (IOException e) {
+            } catch (IOException | X509Exception.SSLContextException e) {
                 // some unexpected error, warn about it
                 LOG.warn("Exception while seeking for r/w server.", e);
             } finally {
@@ -1346,6 +1349,28 @@ public class ClientCnxn {
                 throw new RWServerFoundException("Majority server found at "
                                                  + addr.getHostString() + ":" + addr.getPort());
             }
+        }
+
+        private Socket newSocket(InetSocketAddress addr) throws IOException, X509Exception.SSLContextException {
+            boolean useSecure = clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT);
+            Socket sock;
+            if (useSecure) {
+                try (X509Util util = new ClientX509Util()) {
+                    SSLContext sslContext = util.createSSLContext(clientConfig);
+                    SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+                    SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
+                    sslSock.connect(addr);
+                    sslSock.startHandshake();
+                    sock = sslSock;
+                }
+            } else {
+                sock = new Socket(addr.getHostString(), addr.getPort());
+            }
+
+            sock.setSoLinger(false, -1);
+            sock.setSoTimeout(1000);
+            sock.setTcpNoDelay(true);
+            return sock;
         }
 
         private void cleanup() {
