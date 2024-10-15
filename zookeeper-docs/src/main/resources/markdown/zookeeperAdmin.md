@@ -772,6 +772,10 @@ property, when available, is noted below.
     time interval in hours for which the purge task has to
     be triggered. Set to a positive integer (1 and above)
     to enable the auto purging. Defaults to 0.
+    **Suffix support added in 3.10.0:** The interval is specified as an integer with an optional suffix to indicate the time unit.
+    Supported suffixes are: `ms` for milliseconds, `s` for seconds, `m` for minutes, `h` for hours, and `d` for days.
+    For example, "10m" represents 10 minutes, and "5h" represents 5 hours.
+    If no suffix is provided, the default unit is hours.
 
 * *syncEnabled* :
     (Java system property: **zookeeper.observer.syncEnabled**)
