@@ -37,24 +37,28 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.slf4j.LoggerFactory;
 
 public class ReadOnlyModeWithSSLTest extends ZKTestCase {
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ReadOnlyModeWithSSLTest.class);
     private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
     private QuorumUtil qu = new QuorumUtil(1);
     private ClientX509Util clientX509Util;
+    private ZKClientConfig clientConfig;
 
     @BeforeEach
     public void setUp() throws Exception {
-        System.setProperty("readonlymode.enabled", "true");
-        System.setProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY, Boolean.TRUE.toString());
         clientX509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
+        clientConfig = new ZKClientConfig();
+        clientConfig.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
+        clientConfig.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
+        clientConfig.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
+        clientConfig.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
+        clientConfig.setProperty(clientX509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
+        clientConfig.setProperty(clientX509Util.getSslTruststorePasswdProperty(), "testpass");
+        System.setProperty("readonlymode.enabled", "true");
+        System.setProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY, Boolean.TRUE.toString());
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
-        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
-        System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
         System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
         System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
         System.setProperty(clientX509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
@@ -65,8 +69,6 @@ public class ReadOnlyModeWithSSLTest extends ZKTestCase {
     public void tearDown() throws Exception {
         System.clearProperty(NettyServerCnxnFactory.PORT_UNIFICATION_KEY);
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
-        System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
-        System.clearProperty(ZKClientConfig.SECURE_CLIENT);
         System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
         System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
         System.clearProperty(clientX509Util.getSslKeystorePasswdPathProperty());
@@ -96,7 +98,7 @@ public class ReadOnlyModeWithSSLTest extends ZKTestCase {
 
             qu.shutdown(2);
             ClientBase.CountdownWatcher watcher = new ClientBase.CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true);
+            ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT, watcher, true, clientConfig);
             watcher.waitForConnected(CONNECTION_TIMEOUT);
 
             // if we don't suspend a peer it will rejoin a quorum

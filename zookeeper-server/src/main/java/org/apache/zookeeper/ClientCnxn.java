@@ -1300,11 +1300,10 @@ public class ClientCnxn {
         private void pingRwServer() throws RWServerFoundException {
             String result = null;
             InetSocketAddress addr = hostProvider.next(0);
-            boolean useSecure = clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT);
 
             LOG.info("Checking server {} for being r/w. Timeout {}", addr, pingRwTimeout);
             try {
-                result = FourLetterWordMain.send4LetterWord(addr.getHostString(), addr.getPort(), "isro", useSecure, 1000);
+                result = FourLetterWordMain.send4LetterWord(addr.getHostString(), addr.getPort(), "isro", 1000, clientConfig);
             } catch (ConnectException e) {
                 // ignore, this just means server is not up
             } catch (IOException | X509Exception.SSLContextException e) {
