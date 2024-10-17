@@ -32,7 +32,8 @@ limitations under the License.
 * [ZOOKEEPER-4814](https://issues.apache.org/jira/browse/ZOOKEEPER-4814) - Protocol desynchronization after Connect for (some) old clients
 * [ZOOKEEPER-4839](https://issues.apache.org/jira/browse/ZOOKEEPER-4839) - When DigestMD5 is used to enable mandatory client authentication,Users that do not exist can log in
 * [ZOOKEEPER-4843](https://issues.apache.org/jira/browse/ZOOKEEPER-4843) - Encountering an &#39;Unreasonable Length&#39; error when configuring jute.maxbuffer to 1GB or more
-            
+* [ZOOKEEPER-4876](https://issues.apache.org/jira/browse/ZOOKEEPER-4876) - jetty-http-9.4.53.v20231009.jar: CVE-2024-6763(3.7)
+
 ## New Feature
 
 * [ZOOKEEPER-4747](https://issues.apache.org/jira/browse/ZOOKEEPER-4747) - Java api lacks synchronous version of sync() call
