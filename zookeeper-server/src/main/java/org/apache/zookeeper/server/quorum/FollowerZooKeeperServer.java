@@ -25,6 +25,7 @@ import javax.management.JMException;
 import org.apache.jute.Record;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
@@ -199,7 +200,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     private Request buildRequestToProcess(final TxnHeader hdr, final Record txn, final TxnDigest digest) {
         final Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
         request.setTxnDigest(digest);
-        if ((request.zxid & 0xffffffffL) != 0) {
+        if (ZxidUtils.getCounterFromZxid(request.zxid) != 0) {
             pendingTxns.add(request);
         }
         return request;
