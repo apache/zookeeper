@@ -28,6 +28,7 @@ import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
@@ -69,9 +70,17 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.createContainer:
                     op = AuditConstants.OP_CREATE;
                     CreateRequest createRequest = request.readRequestRecord(CreateRequest::new);
-                    createMode = getCreateMode(createRequest);
+                    createMode = getCreateMode(createRequest.getFlags());
                     if (failedTxn) {
                         path = createRequest.getPath();
+                    }
+                    break;
+                case ZooDefs.OpCode.createTTL:
+                    op = AuditConstants.OP_CREATE;
+                    CreateTTLRequest createTtlRequest = request.readRequestRecord(CreateTTLRequest::new);
+                    createMode = getCreateMode(createTtlRequest.getFlags());
+                    if (failedTxn) {
+                        path = createTtlRequest.getPath();
                     }
                     break;
                 case ZooDefs.OpCode.delete:
@@ -172,8 +181,8 @@ public final class AuditHelper {
         ZKAuditProvider.log(user, operation, znode, acl, createMode, session, ip, result);
     }
 
-    private static String getCreateMode(CreateRequest createRequest) throws KeeperException {
-        return CreateMode.fromFlag(createRequest.getFlags()).toString().toLowerCase();
+    private static String getCreateMode(int createFlags) throws KeeperException {
+        return CreateMode.fromFlag(createFlags).toString().toLowerCase();
     }
 
     private static Map<String, String> getCreateModes(Request request)
@@ -188,7 +197,7 @@ public final class AuditHelper {
                     || op.getType() == ZooDefs.OpCode.createContainer) {
                 CreateRequest requestRecord = (CreateRequest) op.toRequestRecord();
                 createModes.put(requestRecord.getPath(),
-                        getCreateMode(requestRecord));
+                        getCreateMode(requestRecord.getFlags()));
             }
         }
         return createModes;
