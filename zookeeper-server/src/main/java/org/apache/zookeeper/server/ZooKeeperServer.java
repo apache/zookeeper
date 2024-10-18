@@ -1811,7 +1811,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     }
                 }
             } catch (SaslException e) {
-                LOG.warn("Client {} failed to SASL authenticate: {}", cnxn.getRemoteSocketAddress(), e);
+                LOG.warn("Client {} failed to SASL authenticate", cnxn.getRemoteSocketAddress(), e);
                 if (shouldAllowSaslFailedClientsConnect() && !authHelper.isSaslAuthRequired()) {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
@@ -2375,7 +2375,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 try {
                     request.cnxn.sendResponse(rh, null, null);
                 } catch (IOException e) {
-                    LOG.error("IOException : {}", e);
+                    LOG.error("IOException", e);
                 }
             }
         }
