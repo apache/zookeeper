@@ -66,8 +66,8 @@ public class DatadirCleanupManager {
      *            transaction log directory
      * @param snapRetainCount
      *            number of snapshots to be retained after purge
-     * @param purgeInterval
-     *            purge interval in hours
+     * @param purgeIntervalInMs
+     *            purge interval in milliseconds
      */
     public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount, int purgeIntervalInMs) {
         this.snapDir = snapDir;
