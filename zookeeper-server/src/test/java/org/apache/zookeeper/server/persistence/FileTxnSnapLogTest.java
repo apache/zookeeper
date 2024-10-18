@@ -40,19 +40,24 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.ReferenceCountedACLCache;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileTxnSnapLogTest {
+    private static final Logger LOG = LoggerFactory.getLogger(FileTxnSnapLogTest.class);
 
     private File tmpDir;
 
@@ -361,6 +366,79 @@ public class FileTxnSnapLogTest {
         assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, leaderDataTree.getACL(a1));
 
         assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, followerDataTree.getACL(a1));
+    }
+
+    // ZOOKEEPER-4846
+    @Test
+    public void testDeleteWithMissingACL() throws IOException {
+        File dataDir = ClientBase.createEmptyTestDir();
+        FileTxnSnapLog snapLog = new FileTxnSnapLog(dataDir, dataDir);
+
+        DataTree dataTree = new DataTree();
+        int zxid = 1;
+
+        TxnHeader hdr;
+        Record txn;
+        Request req;
+
+        // Fully-processed node.
+        hdr = new TxnHeader(1, zxid, zxid, zxid, ZooDefs.OpCode.create);
+        txn = new CreateTxn("/bar", "bar".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, -1);
+        req = new Request(0, 0, 0, hdr, txn, 0);
+
+        dataTree.processTxn(hdr, txn);
+        snapLog.append(req);
+        ++zxid;
+
+        hdr = new TxnHeader(1, zxid, zxid, zxid, ZooDefs.OpCode.delete);
+        txn = new DeleteTxn("/foo");
+        req = new Request(0, 0, 0, hdr, txn, 0);
+
+        // The removal of /foo is added to the log, but NOT included
+        // in the DataTree
+        // dataTree.processTxn(hdr, txn);
+        snapLog.append(req);
+        ++zxid;
+
+        // Close log.1
+        snapLog.txnLog.rollLog();
+
+        // Ensure we have a /foo node in the tree...
+        hdr = new TxnHeader(1, zxid, zxid, zxid, ZooDefs.OpCode.create);
+        txn = new CreateTxn("/foo", "foo".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
+        req = new Request(0, 0, 0, hdr, txn, 0);
+
+        dataTree.processTxn(hdr, txn);
+        snapLog.append(req);
+        ++zxid;
+
+        // ... but simulate a "fuzzy" snapshot starting with the
+        // creation of /bar.
+        dataTree.lastProcessedZxid -= 2;
+
+        // Remove /foo's ACL from the cache, as it was not known at
+        // the beginning of the "fuzzy" snapshot simulation.
+        ReferenceCountedACLCache aclCache = dataTree.getReferenceCountedAclCache();
+        Long aclNr = aclCache.convertAcls(ZooDefs.Ids.CREATOR_ALL_ACL);
+        aclCache.removeUsage(aclNr);
+        aclCache.removeUsage(aclNr);
+
+        // Write the snapshot.
+        ConcurrentHashMap<Long, Integer> sessions = new ConcurrentHashMap<>();
+        File snapshotFile = snapLog.save(dataTree, sessions, true);
+        LOG.info("Snapshot written to {}", snapshotFile);
+
+        // Close everything.
+        snapLog.close();
+
+        // Reload DB.
+        FileTxnSnapLog snapLog2 = new FileTxnSnapLog(dataDir, dataDir);
+        DataTree dataTree2 = new DataTree();
+        long restoredZxid = snapLog2.restore(dataTree2, sessions,
+            (TxnHeader _hdr, Record _txn, TxnDigest _digest) ->
+                LOG.info("Loaded {} {} {}", _hdr, _txn, _digest));
+
+        assertEquals(zxid - 1, restoredZxid);
     }
 
     @Test
