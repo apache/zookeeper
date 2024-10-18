@@ -1754,6 +1754,12 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Disabling it only recommended for testing purposes.
     Default: true
 
+* *ssl.clientHostnameVerification* and *ssl.quorum.clientHostnameVerification* :
+    (Java system properties: **zookeeper.ssl.clientHostnameVerification** and **zookeeper.ssl.quorum.clientHostnameVerification**)
+    **New in (INSERT VERSION HERE):**
+    Specifies whether the client's hostname verification is enabled in client and quorum TLS negotiation process.
+    Default: true for quorum, false for clients
+
 * *ssl.crl* and *ssl.quorum.crl* :
     (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
     **New in 3.5.5:**
