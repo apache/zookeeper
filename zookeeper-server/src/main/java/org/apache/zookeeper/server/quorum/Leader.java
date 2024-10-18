@@ -410,7 +410,7 @@ public class Leader extends LearnerMaster {
 
     /**
      * This message type is sent by the leader to indicate that the follower is
-     * now uptodate andt can start responding to clients.
+     * now uptodate and can start responding to clients.
      */
     static final int UPTODATE = 12;
 

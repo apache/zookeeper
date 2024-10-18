@@ -402,7 +402,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         }
     }
 
-    // *************** <END> CientCnxnSocketNetty </END> ******************
+    // *************** <END> ClientCnxnSocketNetty </END> ******************
     private static class WakeupPacket {
 
         private static final Packet instance = new Packet(null, null, null, null, null);
