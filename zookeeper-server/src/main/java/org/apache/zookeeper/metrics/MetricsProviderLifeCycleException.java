@@ -19,7 +19,7 @@
 package org.apache.zookeeper.metrics;
 
 /**
- * A generic exception thrown during the life cycle of a MetricsProvider.
+ * A generic exception thrown during the lifecycle of a MetricsProvider.
  * <p>These exception will prevent the system from booting.</p>
  * <p>Normally these exception will be ignored during shutdown.</p>
  */
