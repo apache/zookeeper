@@ -42,6 +42,8 @@ public class FourLetterWordMain {
 
     //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
     private static final int DEFAULT_SOCKET_TIMEOUT = 5000;
+    private static final boolean DEFAULT_TCP_NO_DELAY = true;
+    private static final boolean DEFAULT_TCP_LINGER_ON = false;
     protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordMain.class);
     /**
      * Send the 4letterword
@@ -109,8 +111,8 @@ public class FourLetterWordMain {
             String host,
             int port,
             String cmd,
-            int timeout,
-            ZKClientConfig clientConfig) throws SSLContextException, IOException {
+            ZKClientConfig clientConfig,
+            int timeout) throws SSLContextException, IOException {
         boolean useSecure = clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT);
         SSLContext sslContext = null;
         if (useSecure) {
@@ -134,11 +136,40 @@ public class FourLetterWordMain {
      * @throws SSLContextException
      */
     public static String send4LetterWord(
+            String host,
+            int port,
+            String cmd,
+            boolean secure,
+            int timeout,
+            SSLContext sslContext) throws IOException, SSLContextException {
+        return send4LetterWord(host, port, cmd, secure,
+                timeout, DEFAULT_TCP_NO_DELAY, DEFAULT_TCP_LINGER_ON, -1, sslContext);
+    }
+
+    /**
+     * Send the 4letterword
+     * @param host the destination host
+     * @param port the destination port
+     * @param cmd the 4letterword
+     * @param secure whether to use SSL
+     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
+     * @param tcpNoDelay tcp option no-delay
+     * @param soLingerOn tcp option linger-on
+     * @param soLinger tcp option linger
+     * @param sslContext SSL context
+     * @return server response
+     * @throws java.io.IOException
+     * @throws SSLContextException
+     */
+    public static String send4LetterWord(
         String host,
         int port,
         String cmd,
         boolean secure,
         int timeout,
+        boolean tcpNoDelay,
+        boolean soLingerOn,
+        int soLinger,
         SSLContext sslContext) throws IOException, SSLContextException {
         LOG.info("connecting to {}:{} (secure={})", host, port, secure);
 
@@ -164,7 +195,9 @@ public class FourLetterWordMain {
                 sock = new Socket();
                 sock.connect(hostaddress, timeout);
             }
+            sock.setSoLinger(soLingerOn, soLinger);
             sock.setSoTimeout(timeout);
+            sock.setTcpNoDelay(tcpNoDelay);
             OutputStream outstream = sock.getOutputStream();
             outstream.write(cmd.getBytes(UTF_8));
             outstream.flush();
