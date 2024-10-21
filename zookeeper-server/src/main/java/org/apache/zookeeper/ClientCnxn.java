@@ -19,13 +19,10 @@
 package org.apache.zookeeper;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -67,10 +64,12 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
+import org.apache.zookeeper.client.FourLetterWordMain;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -1303,42 +1302,16 @@ public class ClientCnxn {
             InetSocketAddress addr = hostProvider.next(0);
 
             LOG.info("Checking server {} for being r/w. Timeout {}", addr, pingRwTimeout);
-
-            Socket sock = null;
-            BufferedReader br = null;
             try {
-                sock = new Socket(addr.getHostString(), addr.getPort());
-                sock.setSoLinger(false, -1);
-                sock.setSoTimeout(1000);
-                sock.setTcpNoDelay(true);
-                sock.getOutputStream().write("isro".getBytes());
-                sock.getOutputStream().flush();
-                sock.shutdownOutput();
-                br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-                result = br.readLine();
+                result = FourLetterWordMain.send4LetterWord(addr.getHostString(), addr.getPort(), "isro", clientConfig, 1000);
             } catch (ConnectException e) {
                 // ignore, this just means server is not up
-            } catch (IOException e) {
+            } catch (IOException | X509Exception.SSLContextException e) {
                 // some unexpected error, warn about it
                 LOG.warn("Exception while seeking for r/w server.", e);
-            } finally {
-                if (sock != null) {
-                    try {
-                        sock.close();
-                    } catch (IOException e) {
-                        LOG.warn("Unexpected exception", e);
-                    }
-                }
-                if (br != null) {
-                    try {
-                        br.close();
-                    } catch (IOException e) {
-                        LOG.warn("Unexpected exception", e);
-                    }
-                }
             }
 
-            if ("rw".equals(result)) {
+            if ("rw\n".equals(result)) {
                 pingRwTimeout = minPingRwTimeout;
                 // save the found address so that it's used during the next
                 // connection attempt
