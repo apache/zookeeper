@@ -109,8 +109,8 @@ public class FourLetterWordMain {
             String host,
             int port,
             String cmd,
-            int timeout,
-            ZKClientConfig clientConfig) throws SSLContextException, IOException {
+            ZKClientConfig clientConfig,
+            int timeout) throws SSLContextException, IOException {
         boolean useSecure = clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT);
         SSLContext sslContext = null;
         if (useSecure) {
@@ -164,7 +164,9 @@ public class FourLetterWordMain {
                 sock = new Socket();
                 sock.connect(hostaddress, timeout);
             }
+            sock.setSoLinger(false, -1);
             sock.setSoTimeout(timeout);
+            sock.setTcpNoDelay(true);
             OutputStream outstream = sock.getOutputStream();
             outstream.write(cmd.getBytes(UTF_8));
             outstream.flush();

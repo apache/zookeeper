@@ -1303,7 +1303,7 @@ public class ClientCnxn {
 
             LOG.info("Checking server {} for being r/w. Timeout {}", addr, pingRwTimeout);
             try {
-                result = FourLetterWordMain.send4LetterWord(addr.getHostString(), addr.getPort(), "isro", 1000, clientConfig);
+                result = FourLetterWordMain.send4LetterWord(addr.getHostString(), addr.getPort(), "isro", clientConfig, 1000);
             } catch (ConnectException e) {
                 // ignore, this just means server is not up
             } catch (IOException | X509Exception.SSLContextException e) {
