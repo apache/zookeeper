@@ -18,6 +18,10 @@
 
 package org.apache.jute.compiler;
 
+
+import org.apache.jute.compiler.generated.Rcc;
+import org.apache.jute.compiler.generated.Token;
+
 /**
  * Abstract Base class for all types supported by Hadoop Record I/O.
  */
@@ -56,12 +60,50 @@ public abstract class JType {
         return "    " + mCName + " " + name + ";\n";
     }
 
+    String genCDecl(Token token) {
+        return getCComments(token) + genCDecl(token.image);
+    }
+
     public String genCsharpDecl(String name) {
         return "  private " + mCsharpName + " " + name + ";\n";
     }
 
     String genJavaDecl(String fname) {
         return "  private " + mJavaName + " " + fname + ";\n";
+    }
+
+    String genJavaDecl(Token token) {
+        return getJavaComments(token) + genJavaDecl(token.image);
+    }
+
+    protected String getJavaComments(Token token) {
+        String comments = "";
+        if (token == null || token.beginLine != token.endLine) {
+            return comments;
+        }
+        Token specialToken = Rcc.getFieldSpecialToken(token.beginLine);
+
+        if (specialToken == null || specialToken.image == null || specialToken.image.isEmpty()) {
+            return comments;
+        }
+
+        comments = "  /**\n   * " + specialToken.image.trim() + "\n   */\n";
+        return comments;
+    }
+
+    protected String getCComments(Token token) {
+        String comments = "";
+        if (token == null || token.beginLine != token.endLine) {
+            return comments;
+        }
+        Token specialToken = Rcc.getFieldSpecialToken(token.beginLine);
+
+        if (specialToken == null || specialToken.image == null || specialToken.image.isEmpty()) {
+            return comments;
+        }
+
+        comments = "    /* " + specialToken.image.trim() + " */\n";
+        return comments;
     }
 
     String genJavaConstructorParam(String fname) {
