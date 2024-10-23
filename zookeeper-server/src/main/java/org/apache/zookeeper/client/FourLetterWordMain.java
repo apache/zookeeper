@@ -99,6 +99,33 @@ public class FourLetterWordMain {
      * @param host the destination host
      * @param port the destination port
      * @param cmd the 4letterword
+     * @param clientConfig client config
+     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
+     * @return server response
+     * @throws SSLContextException
+     * @throws IOException
+     */
+    public static String send4LetterWord(
+            String host,
+            int port,
+            String cmd,
+            ZKClientConfig clientConfig,
+            int timeout) throws SSLContextException, IOException {
+        boolean useSecure = clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT);
+        SSLContext sslContext = null;
+        if (useSecure) {
+            try (X509Util x509Util = new ClientX509Util()) {
+                sslContext = x509Util.createSSLContext(clientConfig);
+            }
+        }
+        return send4LetterWord(host, port, cmd, useSecure, timeout, sslContext);
+    }
+
+    /**
+     * Send the 4letterword
+     * @param host the destination host
+     * @param port the destination port
+     * @param cmd the 4letterword
      * @param secure whether to use SSL
      * @param timeout in milliseconds, maximum time to wait while connecting/reading data
      * @param sslContext SSL context
@@ -137,7 +164,9 @@ public class FourLetterWordMain {
                 sock = new Socket();
                 sock.connect(hostaddress, timeout);
             }
+            sock.setSoLinger(false, -1);
             sock.setSoTimeout(timeout);
+            sock.setTcpNoDelay(true);
             OutputStream outstream = sock.getOutputStream();
             outstream.write(cmd.getBytes(UTF_8));
             outstream.flush();
