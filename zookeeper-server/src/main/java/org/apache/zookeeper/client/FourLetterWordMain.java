@@ -99,8 +99,8 @@ public class FourLetterWordMain {
      * @param host the destination host
      * @param port the destination port
      * @param cmd the 4letterword
-     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
      * @param clientConfig client config
+     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
      * @return server response
      * @throws SSLContextException
      * @throws IOException
