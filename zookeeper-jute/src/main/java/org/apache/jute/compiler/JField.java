@@ -18,6 +18,8 @@
 
 package org.apache.jute.compiler;
 
+import org.apache.jute.compiler.generated.Token;
+
 /**
  *
  */
@@ -26,11 +28,17 @@ public class JField {
     private String mName;
 
     /**
+     * field name token.
+     */
+    private Token mNameToken;
+
+    /**
      * Creates a new instance of JField.
      */
-    public JField(JType type, String name) {
+    public JField(JType type, Token token) {
         mType = type;
-        mName = name;
+        mName = token.image;
+        mNameToken = token;
     }
 
     public String getSignature() {
@@ -42,7 +50,7 @@ public class JField {
     }
 
     public String genCDecl() {
-        return mType.genCDecl(mName);
+        return mType.genCDecl(mNameToken);
     }
 
     public String genCsharpDecl() {
@@ -54,7 +62,7 @@ public class JField {
     }
 
     public String genJavaDecl() {
-        return mType.genJavaDecl(mName);
+        return mType.genJavaDecl(mNameToken);
     }
 
     public String genJavaConstructorParam(String fname) {

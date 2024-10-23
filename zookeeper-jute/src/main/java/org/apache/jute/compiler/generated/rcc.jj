@@ -34,6 +34,12 @@ import java.io.IOException;
 @SuppressWarnings("unused")
 public class Rcc {
     private static Hashtable<String, JRecord> recTab = new Hashtable<String, JRecord>();
+
+    /**
+    * key: Line number  value: End of line comments
+    * Used to obtain line ending comments
+    */
+    private static Hashtable<Integer, Token> fieldSpecialTokenMap  = new Hashtable<Integer, Token>();
     private static String curDir = System.getProperty("user.dir");
     private static String curFileName;
     private static String curModuleName;
@@ -96,6 +102,24 @@ public class Rcc {
             } catch (IOException e) {
             }
         }
+    }
+
+    public static Token getFieldSpecialToken(int line) {
+        return fieldSpecialTokenMap.get(line);
+    }
+
+    public static void putFieldSpecialToken(Token fieldToken) {
+        if (fieldToken == null || fieldToken.specialToken == null) {
+            return;
+        }
+
+        Token tmp = fieldToken;
+        while ((tmp = tmp.specialToken) != null && tmp.image != null) {
+            if (tmp.beginLine == tmp.endLine) {
+                fieldSpecialTokenMap.putIfAbsent(tmp.beginLine, tmp);
+            }
+        }
+
     }
 }
 
@@ -246,7 +270,10 @@ String ModuleName() :
 }
 {
     t = <IDENT_TKN>
-    { name += t.image; }
+    {
+        Rcc.putFieldSpecialToken(t);
+        name += t.image;
+    }
     (
         <DOT_TKN>
         t = <IDENT_TKN>
@@ -274,9 +301,12 @@ JRecord Record() :
     ArrayList<JField> flist = new ArrayList<JField>();
     Token t;
     JField f;
+    // Get the comments on the class token
+    Token recordTkn;
+    Token rbraceTkn;
 }
 {
-    <RECORD_TKN>
+    recordTkn = <RECORD_TKN>
     t = <IDENT_TKN>
     { rname = t.image; }
     <LBRACE_TKN>
@@ -285,11 +315,14 @@ JRecord Record() :
         { flist.add(f); }
         <SEMICOLON_TKN>
     )+
-    <RBRACE_TKN>
+
+    // Get the line ending comment of the last attribute
+    rbraceTkn = <RBRACE_TKN>
     {
         String fqn = curModuleName + "." + rname;
-        JRecord r = new JRecord(fqn, flist);
+        JRecord r = new JRecord(fqn, flist, recordTkn);
         recTab.put(fqn, r);
+        Rcc.putFieldSpecialToken(rbraceTkn);
         return r;
     }
 }
@@ -302,36 +335,34 @@ JField Field() :
 {
     jt = Type()
     t = <IDENT_TKN>
-    { return new JField(jt, t.image); }
+    { return new JField(jt, t); }
 }
 
 JType Type() :
 {
     JType jt;
-    Token t;
+    Token t = null;
     String rname;
 }
 {
-    jt = Map()
-    { return jt; }
+    (jt = Map()
 |   jt = Vector()
-    { return jt; }
-|   <BYTE_TKN>
-    { return new JByte(); }
-|   <BOOLEAN_TKN>
-    { return new JBoolean(); }
-|   <INT_TKN>
-    { return new JInt(); }
-|   <LONG_TKN>
-    { return new JLong(); }
-|   <FLOAT_TKN>
-    { return new JFloat(); }
-|   <DOUBLE_TKN>
-    { return new JDouble(); }
-|   <USTRING_TKN>
-    { return new JString(); }
-|   <BUFFER_TKN>
-    { return new JBuffer(); }
+|   t = <BYTE_TKN>
+    { jt = new JByte(); }
+|   t = <BOOLEAN_TKN>
+    { jt = new JBoolean(); }
+|   t = <INT_TKN>
+    { jt = new JInt(); }
+|   t = <LONG_TKN>
+    { jt = new JLong(); }
+|   t = <FLOAT_TKN>
+    { jt = new JFloat(); }
+|   t = <DOUBLE_TKN>
+    { jt = new JDouble(); }
+|   t = <USTRING_TKN>
+    { jt = new JString(); }
+|   t = <BUFFER_TKN>
+    { jt = new JBuffer(); }
 |   rname = ModuleName()
     {
         if (rname.indexOf('.', 0) < 0) {
@@ -343,6 +374,11 @@ JType Type() :
             System.exit(1);
         }
         return r;
+    })
+
+    {
+        Rcc.putFieldSpecialToken(t);
+        return jt;
     }
 }
 
@@ -350,25 +386,33 @@ JMap Map() :
 {
     JType jt1;
     JType jt2;
+    Token t;
 }
 {
-    <MAP_TKN>
+    t = <MAP_TKN>
     <LT_TKN>
     jt1 = Type()
     <COMMA_TKN>
     jt2 = Type()
     <GT_TKN>
-    { return new JMap(jt1, jt2); }
+    {
+        Rcc.putFieldSpecialToken(t);
+        return new JMap(jt1, jt2);
+    }
 }
 
 JVector Vector() :
 {
     JType jt;
+    Token t;
 }
 {
-    <VECTOR_TKN>
+    t = <VECTOR_TKN>
     <LT_TKN>
     jt = Type()
     <GT_TKN>
-    { return new JVector(jt); }
+    {
+        Rcc.putFieldSpecialToken(t);
+        return new JVector(jt);
+    }
 }

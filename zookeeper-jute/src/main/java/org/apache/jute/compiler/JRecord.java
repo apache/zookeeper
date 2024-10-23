@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
+import org.apache.jute.compiler.generated.Token;
 
 /**
  *
@@ -36,11 +38,12 @@ public class JRecord extends JCompType {
     private String mName;
     private String mModule;
     private List<JField> mFields;
+    private Token mRecordToken;
 
     /**
      * Creates a new instance of JRecord.
      */
-    public JRecord(String name, ArrayList<JField> flist) {
+    public JRecord(String name, ArrayList<JField> flist, Token token) {
         super("struct " + name.substring(name.lastIndexOf('.') + 1),
                 name.replaceAll("\\.", "::"), getCsharpFQName(name), name, "Record", name, getCsharpFQName("IRecord"));
         mFQName = name;
@@ -48,6 +51,7 @@ public class JRecord extends JCompType {
         mName = name.substring(idx + 1);
         mModule = name.substring(0, idx);
         mFields = flist;
+        mRecordToken = token;
     }
 
     public String getName() {
@@ -208,6 +212,11 @@ public class JRecord extends JCompType {
             }
         }
         String recName = getName();
+
+        String recordComments = getRecordComments();
+        if (recordComments != null && !recordComments.isEmpty()) {
+            h.write(recordComments);
+        }
         h.write("struct " + recName + " {\n");
         for (JField f : mFields) {
             h.write(f.genCDecl());
@@ -436,6 +445,10 @@ public class JRecord extends JCompType {
             jj.write("import org.apache.jute.*;\n");
             jj.write("import org.apache.jute.Record; // JDK14 needs explicit import due to clash with java.lang.Record\n");
             jj.write("import org.apache.yetus.audience.InterfaceAudience;\n");
+            String recordComments = getRecordComments();
+            if (recordComments != null && !recordComments.isEmpty()) {
+                jj.write(recordComments);
+            }
             jj.write("@InterfaceAudience.Public\n");
             jj.write("public class " + getName() + " implements Record {\n");
             for (Iterator<JField> i = mFields.iterator(); i.hasNext(); ) {
@@ -766,5 +779,31 @@ public class JRecord extends JCompType {
             }
         }
         return fQName.toString();
+    }
+
+    protected String getRecordComments() {
+        if (mRecordToken == null || mRecordToken.specialToken == null) {
+            return null;
+        }
+
+        StringJoiner joiner = new StringJoiner("\n * ", "/**\n * ", "\n */\n");
+        Token tmpTkn = mRecordToken.specialToken;
+        while (tmpTkn.specialToken != null) {
+            tmpTkn = tmpTkn.specialToken;
+        }
+
+        while (tmpTkn != null) {
+            String image = tmpTkn.image.trim();
+            tmpTkn = tmpTkn.next;
+            if (image.startsWith("//")) {
+                image = image.replace("//", "").trim();
+            }
+            if (image.isEmpty()) {
+                continue;
+            }
+            joiner.add(image);
+        }
+
+        return joiner.toString();
     }
 }
