@@ -33,8 +33,11 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -44,12 +47,17 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
+    private static final Logger LOG = LoggerFactory.getLogger(LeaderZooKeeperServer.class);
 
     private ContainerManager containerManager;  // guarded by sync
 
     CommitProcessor commitProcessor;
 
     PrepRequestProcessor prepRequestProcessor;
+
+    SyncRequestProcessor syncProcessor;
+    private final ParticipantRequestSyncer requestSyncer =
+        new ParticipantRequestSyncer(this, LOG, r -> syncProcessor.processRequest(r));
 
     /**
      * @throws IOException
@@ -68,8 +76,10 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
         commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
         commitProcessor.start();
+        AckRequestProcessor ackProcessor = new AckRequestProcessor(getLeader());
+        syncProcessor = new SyncRequestProcessor(this, ackProcessor);
+        syncProcessor.start();
         ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
-        proposalProcessor.initialize();
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();
         firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
@@ -159,6 +169,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         if (containerManager != null) {
             containerManager.stop();
         }
+        syncProcessor.shutdown();
         super.shutdownComponents();
     }
 
@@ -167,6 +178,21 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
         int globalOutstandingLimit = super.getGlobalOutstandingLimit() / divisor;
         return globalOutstandingLimit;
+    }
+
+    @Override
+    public void confirmRolloverEpoch(long newEpoch) {
+        getLeader().rolloverLeaderEpoch(newEpoch);
+        super.confirmRolloverEpoch(newEpoch);
+    }
+
+    public void logRequest(Request request) {
+        requestSyncer.syncRequest(request);
+    }
+
+    public void commit(Request request) {
+        commitProcessor.commit(request);
+        requestSyncer.finishCommit(request.zxid);
     }
 
     @Override
