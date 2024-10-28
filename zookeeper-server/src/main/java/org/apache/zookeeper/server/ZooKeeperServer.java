@@ -2375,7 +2375,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 try {
                     request.cnxn.sendResponse(rh, null, null);
                 } catch (IOException e) {
-                    LOG.error("IOException", e);
+                    LOG.warn("IOException", e);
                 }
             }
         }
