@@ -1324,8 +1324,8 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     if (cert) {
         zh->fd->cert = calloc(1, sizeof(zcert_t));
         memcpy(zh->fd->cert, cert, sizeof(zcert_t));
-        free(cert.certstr);
-        free(cert.ca);
+        free(cert->certstr);
+        free(cert->ca);
     }
 
 #ifdef _WIN32
