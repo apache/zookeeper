@@ -692,6 +692,7 @@ static void destroy(zhandle_t *zh)
 #ifdef HAVE_OPENSSL_H
     if (zh->fd->cert) {
         free(zh->fd->cert->certstr);
+        free(zh->fd->cert->ca);
         free(zh->fd->cert);
         zh->fd->cert = NULL;
     }
@@ -3873,8 +3874,6 @@ int zookeeper_close(zhandle_t *zh)
     LOG_INFO(LOGCALLBACK(zh), "Freeing zookeeper resources for sessionId=%#llx\n", zh->client_id.client_id);
     destroy(zh);
     adaptor_destroy(zh);
-    free(zh->fd->cert->certstr);
-    free(zh->fd->cert->ca);
     free(zh->fd);
     free(zh);
 #ifdef _WIN32
