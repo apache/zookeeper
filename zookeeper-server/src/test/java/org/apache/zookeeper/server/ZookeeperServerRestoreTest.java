@@ -74,7 +74,7 @@ public class ZookeeperServerRestoreTest extends ZKTestCase {
             }
 
             // take Snapshot
-            final File snapshotFile = zks.takeSnapshot(false, false, true);
+            final File snapshotFile = zks.takeSnapshot(false, false);
             final long lastZxidFromSnapshot = Util.getZxidFromName(snapshotFile.getName(), SNAPSHOT_FILE_PREFIX);
 
             // zk2 create more test data after snapshotting
