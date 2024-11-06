@@ -95,6 +95,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="https://www.apache.org/security/">Web page</a> for more information.</p>
 <h2>Vulnerability reports</h2>
 <ul>
+<li><a href="#CVE-2024-51504">CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server</a></li>
 <li><a href="#CVE-2024-23944">CVE-2024-23944: Information disclosure in persistent watcher handling</a></li>
 <li><a href="#CVE-2023-44981">CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication</a></li>
 <li><a href="#CVE-2019-0201">CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper</a></li>
@@ -102,6 +103,19 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <li><a href="#CVE-2017-5637">CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)</a></li>
 <li><a href="#CVE-2016-5017">CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell</a></li>
 </ul>
+<p><a name="CVE-2024-51504"></a></p>
+<h3>CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server</h3>
+<p>Severity: important</p>
+<p>Affected versions:</p>
+<ul>
+<li>Apache ZooKeeper 3.9.0 before 3.9.3</li>
+</ul>
+<p>Description:</p>
+<p>When using IPAuthenticationProvider in ZooKeeper Admin Server there is a possibility of Authentication Bypass by Spoofing -- this only impacts IP based authentication implemented in ZooKeeper Admin Server. Default configuration of client's IP address detection in IPAuthenticationProvider, which uses HTTP request headers, is weak and allows an attacker to bypass authentication via spoofing client's IP address in request headers. Default configuration honors X- Forwarded-For HTTP header to read client's IP address. X-Forwarded-For request header is mainly used by proxy servers to identify the client and can be easily spoofed by an attacker pretending that the request comes from a different IP address. Admin Server commands, such as snapshot and restore arbitrarily can be executed on successful exploitation which could potentially lead to information leakage or service availability issues. Users are recommended to upgrade to version 3.9.3, which fixes this issue.</p>
+<p>Credit:</p>
+<p>4ra1n (reporter) Y4tacker (reporter)</p>
+<p>References:</p>
+<p><a href="https://zookeeper.apache.org/">https://zookeeper.apache.org/</a> <a href="https://www.cve.org/CVERecord?id=CVE-2024-51504">https://www.cve.org/CVERecord?id=CVE-2024-51504</a></p>
 <p><a name="CVE-2024-23944"></a></p>
 <h3>CVE-2024-23944: Information disclosure in persistent watcher handling</h3>
 <p>Severity: critical</p>
