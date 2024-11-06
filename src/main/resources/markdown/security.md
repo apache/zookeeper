@@ -30,12 +30,51 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 
 ## Vulnerability reports
 
+* [CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server](#CVE-2024-51504)
 * [CVE-2024-23944: Information disclosure in persistent watcher handling](#CVE-2024-23944)
 * [CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication](#CVE-2023-44981)
 * [CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper](#CVE-2019-0201)
 * [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+<a name="CVE-2024-51504"></a>
+### CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server
+
+Severity: important
+
+Affected versions:
+
+- Apache ZooKeeper 3.9.0 before 3.9.3
+
+Description:
+
+When using IPAuthenticationProvider in ZooKeeper Admin Server there is
+a possibility of Authentication Bypass by Spoofing -- this only impacts
+IP based authentication implemented in ZooKeeper Admin Server. Default
+configuration of client's IP address detection
+in IPAuthenticationProvider, which uses HTTP request headers, is
+weak and allows an attacker to bypass authentication via spoofing
+client's IP address in request headers. Default configuration honors X-
+Forwarded-For HTTP header to read client's IP address. X-Forwarded-For
+request header is mainly used by proxy servers to identify the client
+and can be easily spoofed by an attacker pretending that the request
+comes from a different IP address. Admin Server commands, such as
+snapshot and restore arbitrarily can be executed on successful
+exploitation which could potentially lead to information leakage or
+service availability issues. Users are recommended to upgrade to
+version 3.9.3, which fixes this issue.
+
+Credit:
+
+4ra1n (reporter)
+Y4tacker (reporter)
+
+References:
+
+[https://zookeeper.apache.org/](https://zookeeper.apache.org/)
+[https://www.cve.org/CVERecord?id=CVE-2024-51504](https://www.cve.org/CVERecord?id=CVE-2024-51504)
 
 
 <a name="CVE-2024-23944"></a>
