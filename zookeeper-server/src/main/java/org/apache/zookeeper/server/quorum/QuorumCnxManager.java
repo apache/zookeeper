@@ -502,8 +502,9 @@ public class QuorumCnxManager {
             return false;
         }
 
+        // ZOOKEEPER-4886: small observer can't join quorum, so need use getView()
         // authenticate learner
-        QuorumPeer.QuorumServer qps = self.getVotingView().get(sid);
+        QuorumPeer.QuorumServer qps = self.getView().get(sid);
         if (qps != null) {
             // TODO - investigate why reconfig makes qps null.
             authLearner.authenticate(sock, qps.hostname);
