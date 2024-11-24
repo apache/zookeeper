@@ -81,7 +81,7 @@ public class SaslAuthFailTest extends ClientBase {
     @BeforeAll
     public static void beforeClass() throws Exception {
         // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
-        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "true");
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
     }
 
     @AfterAll
