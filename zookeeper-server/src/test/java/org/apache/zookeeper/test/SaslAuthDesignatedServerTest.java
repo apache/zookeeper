@@ -34,7 +34,6 @@ import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperSaslServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SaslAuthDesignatedServerTest extends ClientBase {
