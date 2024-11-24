@@ -44,7 +44,6 @@ import org.junit.jupiter.api.Timeout;
 public class QuorumDigestAuthTest extends QuorumAuthTestBase {
 
     static {
-        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         String jaasEntries = "QuorumServer {\n"
                              + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
                              + "       user_test=\"mypassword\";\n"
@@ -77,12 +76,12 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             mainThread.deleteBaseDir();
         }
         super.tearDown();
-        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     @AfterAll
     public static void cleanup() {
         cleanupJaasConfig();
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     /**
