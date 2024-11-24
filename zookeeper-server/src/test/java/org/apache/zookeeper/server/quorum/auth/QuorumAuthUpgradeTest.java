@@ -28,12 +28,14 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -67,6 +69,12 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         setupJaasConfig(jaasEntries);
     }
 
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
+    }
+
     @AfterEach
     @Override
     public void tearDown() throws Exception {
@@ -77,6 +85,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
     @AfterAll
     public static void cleanup() {
         cleanupJaasConfig();
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     /**

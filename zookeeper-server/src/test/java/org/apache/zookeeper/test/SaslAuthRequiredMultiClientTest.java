@@ -25,6 +25,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.X509Util;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,8 @@ public class SaslAuthRequiredMultiClientTest extends ClientBase {
 
     @BeforeAll
     public static void setUpBeforeClass() {
+        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         System.setProperty(SaslTestUtil.requireSASLAuthProperty, "true");
         System.setProperty(SaslTestUtil.authProviderProperty, SaslTestUtil.authProvider);
         System.setProperty(SaslTestUtil.jaasConfig, SaslTestUtil.createJAASConfigFile("jaas.conf", "test"));
@@ -43,6 +46,7 @@ public class SaslAuthRequiredMultiClientTest extends ClientBase {
         System.clearProperty(SaslTestUtil.requireSASLAuthProperty);
         System.clearProperty(SaslTestUtil.authProviderProperty);
         System.clearProperty(SaslTestUtil.jaasConfig);
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     @Test

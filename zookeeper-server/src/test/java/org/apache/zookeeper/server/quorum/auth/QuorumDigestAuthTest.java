@@ -27,6 +27,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
@@ -36,12 +37,14 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 public class QuorumDigestAuthTest extends QuorumAuthTestBase {
 
     static {
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         String jaasEntries = "QuorumServer {\n"
                              + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
                              + "       user_test=\"mypassword\";\n"
@@ -60,6 +63,12 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         setupJaasConfig(jaasEntries);
     }
 
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
+    }
+
     @AfterEach
     @Override
     public void tearDown() throws Exception {
@@ -68,6 +77,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             mainThread.deleteBaseDir();
         }
         super.tearDown();
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     @AfterAll

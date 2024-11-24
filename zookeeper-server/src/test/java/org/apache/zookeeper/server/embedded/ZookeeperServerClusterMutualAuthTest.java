@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 import javax.security.auth.login.Configuration;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,6 +40,8 @@ public class ZookeeperServerClusterMutualAuthTest {
 
     @BeforeAll
     public static void setUpEnvironment() {
+        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         System.setProperty("java.security.auth.login.config", new File("src/test/resources/embedded/test_jaas_server_auth.conf")
                 .getAbsolutePath());
         Configuration.getConfiguration().refresh();
@@ -52,6 +55,7 @@ public class ZookeeperServerClusterMutualAuthTest {
         System.clearProperty("zookeeper.4lw.commands.whitelist");
         System.clearProperty("java.security.auth.login.config");
         Configuration.getConfiguration().refresh();
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     @TempDir

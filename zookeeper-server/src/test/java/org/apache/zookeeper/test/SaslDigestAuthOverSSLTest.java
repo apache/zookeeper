@@ -35,6 +35,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,6 +88,8 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
 
 
     public void initSaslConfig() {
+        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         System.setProperty(LOGIN_CONTEXT_NAME_KEY, "ClientUsingDigest");
         try {
@@ -117,6 +120,7 @@ public class SaslDigestAuthOverSSLTest extends ClientBase {
         FileUtils.deleteQuietly(saslConfFile);
         System.clearProperty(Environment.JAAS_CONF_KEY);
         System.clearProperty("zookeeper.authProvider.1");
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     public ClientX509Util setUpSSLWithNoAuth() {
