@@ -41,16 +41,15 @@ import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.SaslAuthTestBase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthTest extends ClientBase {
+public class SaslAuthTest extends SaslAuthTestBase {
 
     @BeforeAll
     public static void init() {
-        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
-        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         try {
             File tmpDir = createTmpDir();
@@ -94,7 +93,6 @@ public class SaslAuthTest extends ClientBase {
     public static void clean() {
         System.clearProperty("zookeeper.authProvider.1");
         System.clearProperty("java.security.auth.login.config");
-        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     private final CountDownLatch authFailed = new CountDownLatch(1);
