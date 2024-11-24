@@ -22,7 +22,13 @@ import org.apache.zookeeper.common.X509Util;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
-public class SaslAuthTestBase extends ClientBase {
+/**
+ * Created as a base class for Digest Auth based SASL authentication tests.
+ * We need to disable Fips mode, otherwise DIGEST-MD5 cannot be used.
+ *
+ * @see org.apache.zookeeper.server.quorum.auth.DigestSecurityTestcase
+ */
+public class SaslAuthDigestTestBase extends ClientBase {
 
   @BeforeAll
   public static void beforeClass() throws Exception {
