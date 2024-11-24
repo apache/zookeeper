@@ -36,16 +36,13 @@ import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthDesignatedClientTest extends ClientBase {
+public class SaslAuthDesignatedClientTest extends SaslAuthTestBase {
 
     static {
-        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
-        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, "MyZookeeperClient");
 

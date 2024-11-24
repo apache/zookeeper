@@ -72,7 +72,7 @@ public final class SecurityUtils {
             // instead.
             // FIPS-mode: don't try DIGEST-MD5, just return error
             if (X509Util.getFipsMode(config)) {
-                LOG.warn("Fips mode is enabled and cannot use GSSAPI as SASL mechanism, because no principals found");
+                LOG.warn("{} will not use DIGEST-MD5 as SASL mechanism, because FIPS mode is not enabled.", entity);
                 return null;
             }
             LOG.info("{} will use DIGEST-MD5 as SASL mechanism.", entity);

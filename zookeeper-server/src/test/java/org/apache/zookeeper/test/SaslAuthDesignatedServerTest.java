@@ -30,13 +30,10 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperSaslServer;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthDesignatedServerTest extends ClientBase {
+public class SaslAuthDesignatedServerTest extends SaslAuthTestBase {
 
     public static int AUTHENTICATION_TIMEOUT = 30000;
 
@@ -83,17 +80,6 @@ public class SaslAuthDesignatedServerTest extends ClientBase {
             }
         }
 
-    }
-
-    @BeforeAll
-    public static void setupClass() throws Exception {
-        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
-        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
-    }
-
-    @AfterAll
-    public static void teardownClass() throws Exception {
-        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     @Test

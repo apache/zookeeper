@@ -40,7 +40,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslSuperUserTest extends ClientBase {
+public class SaslSuperUserTest extends SaslAuthTestBase {
 
     private static Id otherSaslUser = new Id("sasl", "joe");
     private static Id otherDigestUser;
@@ -51,8 +51,6 @@ public class SaslSuperUserTest extends ClientBase {
 
     @BeforeAll
     public static void setupStatic() throws Exception {
-        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
-        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "false");
         oldAuthProvider = System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         oldClientConfigSection = System.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY);
 
@@ -89,7 +87,6 @@ public class SaslSuperUserTest extends ClientBase {
         restoreProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, oldClientConfigSection);
         restoreProperty("java.security.auth.login.config", oldLoginConfig);
         restoreProperty(ZooKeeperServer.SASL_SUPER_USER, oldSuperUser);
-        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     private static void restoreProperty(String property, String oldValue) {
