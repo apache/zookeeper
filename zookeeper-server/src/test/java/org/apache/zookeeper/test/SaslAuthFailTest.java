@@ -28,6 +28,9 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.X509Util;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class SaslAuthFailTest extends ClientBase {
@@ -73,6 +76,17 @@ public class SaslAuthFailTest extends ClientBase {
             }
         }
 
+    }
+
+    @BeforeAll
+    public static void beforeClass() throws Exception {
+        // Need to disable Fips-mode, because we use DIGEST-MD5 mech for Sasl
+        System.setProperty(X509Util.FIPS_MODE_PROPERTY, "true");
+    }
+
+    @AfterAll
+    public static void afterClass() throws Exception {
+        System.clearProperty(X509Util.FIPS_MODE_PROPERTY);
     }
 
     @Test
