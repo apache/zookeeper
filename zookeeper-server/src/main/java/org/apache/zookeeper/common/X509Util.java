@@ -69,6 +69,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     private static final String REJECT_CLIENT_RENEGOTIATION_PROPERTY = "jdk.tls.rejectClientInitiatedRenegotiation";
     private static final String FIPS_MODE_PROPERTY = "zookeeper.fips-mode";
+    private static final boolean FIPS_MODE_DEFAULT = false;
 
     static {
         // Client-initiated renegotiation in TLS is unsafe and
@@ -259,8 +260,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return FIPS_MODE_PROPERTY;
     }
 
-    public boolean getFipsMode(ZKConfig config) {
-        return config.getBoolean(FIPS_MODE_PROPERTY, false);
+    public static boolean getFipsMode(ZKConfig config) {
+        return config.getBoolean(FIPS_MODE_PROPERTY, FIPS_MODE_DEFAULT);
     }
 
     public boolean isServerHostnameVerificationEnabled(ZKConfig config) {

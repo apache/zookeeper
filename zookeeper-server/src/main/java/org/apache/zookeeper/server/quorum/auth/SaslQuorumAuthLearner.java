@@ -88,6 +88,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
             DataInputStream din = new DataInputStream(sock.getInputStream());
             byte[] responseToken = new byte[0];
             sc = SecurityUtils.createSaslClient(
+                new ZKConfig(),
                 learnerLogin.getSubject(),
                 principalConfig,
                 QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
