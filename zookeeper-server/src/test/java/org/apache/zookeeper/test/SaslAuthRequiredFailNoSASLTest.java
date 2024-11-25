@@ -28,7 +28,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthRequiredFailNoSASLTest extends ClientBase {
+public class SaslAuthRequiredFailNoSASLTest extends SaslAuthDigestTestBase {
 
     @BeforeAll
     public static void setup() {

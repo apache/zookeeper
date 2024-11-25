@@ -33,7 +33,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZooKeeperSaslServer;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthDesignatedServerTest extends ClientBase {
+public class SaslAuthDesignatedServerTest extends SaslAuthDigestTestBase {
 
     public static int AUTHENTICATION_TIMEOUT = 30000;
 

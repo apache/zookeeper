@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Timeout;
  * quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true and quorum.auth.serverRequireSasl=true
  * Now, all the servers are fully upgraded and running in secured mode.
  */
-public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
+public class QuorumAuthUpgradeTest extends DigestSecurityTestcase {
 
     static {
         String jaasEntries = "QuorumServer {\n"
