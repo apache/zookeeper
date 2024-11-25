@@ -39,7 +39,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-public class QuorumDigestAuthTest extends QuorumAuthTestBase {
+public class QuorumDigestAuthTest extends DigestSecurityTestcase {
 
     static {
         String jaasEntries = "QuorumServer {\n"

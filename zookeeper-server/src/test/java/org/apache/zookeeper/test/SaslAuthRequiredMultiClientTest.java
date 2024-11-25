@@ -29,7 +29,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthRequiredMultiClientTest extends ClientBase {
+public class SaslAuthRequiredMultiClientTest extends SaslAuthDigestTestBase {
 
     @BeforeAll
     public static void setUpBeforeClass() {
