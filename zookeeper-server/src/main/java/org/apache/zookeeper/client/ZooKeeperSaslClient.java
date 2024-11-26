@@ -247,7 +247,7 @@ public class ZooKeeperSaslClient {
                     l.startThreadIfNeeded();
                 }
             }
-            return SecurityUtils.createSaslClient(loginRef.get().getSubject(),
+            return SecurityUtils.createSaslClient(clientConfig, loginRef.get().getSubject(),
                 servicePrincipal, "zookeeper", "zk-sasl-md5", LOG, "Client");
         } catch (LoginException e) {
             // We throw LoginExceptions...
