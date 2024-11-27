@@ -62,7 +62,7 @@ public class ZookeeperServerSnapshotTest extends ZKTestCase {
             }
 
             // takeSnapshot
-            zks.takeSnapshot(false, false, true);
+            zks.takeSnapshot(false, false);
 
             // clean up
             zk.close();
