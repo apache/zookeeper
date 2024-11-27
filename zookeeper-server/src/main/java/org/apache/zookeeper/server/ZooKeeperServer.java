@@ -554,7 +554,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public File takeSnapshot(boolean syncSnap) throws IOException {
-        return takeSnapshot(syncSnap, true, false);
+        return takeSnapshot(syncSnap, true);
     }
 
     /**
@@ -562,18 +562,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @param syncSnap syncSnap sync the snapshot immediately after write
      * @param isSevere if true system exist, otherwise throw IOException
-     * @param fastForwardFromEdits whether fast forward database to the latest recorded transactions
-     *
      * @return file snapshot file object
      * @throws IOException
      */
-    public synchronized File takeSnapshot(boolean syncSnap, boolean isSevere, boolean fastForwardFromEdits) throws IOException {
+    public synchronized File takeSnapshot(boolean syncSnap, boolean isSevere) throws IOException {
         long start = Time.currentElapsedTime();
         File snapFile = null;
         try {
-            if (fastForwardFromEdits) {
-                zkDb.fastForwardDataBase();
-            }
             snapFile = txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
         } catch (IOException e) {
             if (isSevere) {
