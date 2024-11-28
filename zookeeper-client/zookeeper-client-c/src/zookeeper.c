@@ -692,7 +692,6 @@ static void destroy(zhandle_t *zh)
 #ifdef HAVE_OPENSSL_H
     if (zh->fd->cert) {
         free(zh->fd->cert->certstr);
-        free(zh->fd->cert->ca);
         free(zh->fd->cert);
         zh->fd->cert = NULL;
     }
@@ -1455,7 +1454,7 @@ zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn wat
 {
     zcert_t zcert;
     zcert.certstr = strdup(cert);
-    zcert.ca = strtok(strdup(cert), ",");
+    zcert.ca = strtok(zcert.certstr, ",");
     zcert.cert = strtok(NULL, ",");
     zcert.key = strtok(NULL, ",");
     zcert.passwd = strtok(NULL, ",");       
