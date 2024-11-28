@@ -18,6 +18,9 @@
 
 package org.apache.jute.compiler;
 
+import org.apache.jute.compiler.generated.RccConstants;
+import org.apache.jute.compiler.generated.Token;
+
 /**
  *
  */
@@ -26,11 +29,50 @@ public class JField {
     private String mName;
 
     /**
+     * {@link #mType} of token.
+     */
+    private Token mTypeToken;
+
+    private Token previousToken;
+
+    /**
+     * Since we can only get the comments before the token through the {@link Token#specialToken},
+     * we need to save the next token to get the end-of-line comment.
+     *
+     * <p>It may be the type of the next field, or it may be {@link RccConstants#RBRACE_TKN} of the class.
+     */
+    private Token nextToken;
+
+    /**
      * Creates a new instance of JField.
      */
     public JField(JType type, String name) {
         mType = type;
         mName = name;
+    }
+
+    public Token getTypeToken() {
+        return mTypeToken;
+    }
+
+    public void setTypeToken(Token typeToken) {
+        this.mTypeToken = typeToken;
+    }
+
+    public Token getNextToken() {
+        return nextToken;
+    }
+
+    public void setNextToken(Token nextToken) {
+        this.nextToken = nextToken;
+    }
+
+    public Token getPreviousToken() {
+        return previousToken;
+    }
+
+    public void setPreviousToken(Token previousToken) {
+        this.previousToken = previousToken;
     }
 
     public String getSignature() {
