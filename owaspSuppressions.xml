@@ -28,6 +28,10 @@
       <cve>CVE-2018-8088</cve>
    </suppress>
    <suppress>
+      <!-- ZOOKEEPER-4662 -->
+      <cve>CVE-2022-31514</cve>
+   </suppress>
+   <suppress>
       <!-- ZOOKEEPER-4660 -->
       <cve>CVE-2021-37533</cve>
    </suppress>
