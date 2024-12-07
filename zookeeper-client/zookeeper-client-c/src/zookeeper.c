@@ -1454,7 +1454,7 @@ zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn wat
 {
     zcert_t zcert;
     zcert.certstr = strdup(cert);
-    zcert.ca = strtok(strdup(cert), ",");
+    zcert.ca = strtok(zcert.certstr, ",");
     zcert.cert = strtok(NULL, ",");
     zcert.key = strtok(NULL, ",");
     zcert.passwd = strtok(NULL, ",");       
