@@ -491,7 +491,7 @@ public class Learner {
         /*
          * Add sid to payload
          */
-        LearnerInfo li = new LearnerInfo(self.getMyId(), 0x10000, self.getQuorumVerifier().getVersion());
+        LearnerInfo li = new LearnerInfo(self.getMyId(), 0x11000, self.getQuorumVerifier().getVersion());
         ByteArrayOutputStream bsid = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
         boa.writeRecord(li, "LearnerInfo");
@@ -499,10 +499,20 @@ public class Learner {
 
         writePacket(qp, true);
         readPacket(qp);
-        final long newEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
+        long newEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
         if (qp.getType() == Leader.LEADERINFO) {
             // we are connected to a 1.0 server so accept the new epoch and read the next packet
             leaderProtocolVersion = ByteBuffer.wrap(qp.getData()).getInt();
+
+            if (leaderProtocolVersion >= 0x11000) {
+                /**
+                 * The Leader is a new version with adjusted zxid bit length,
+                 * thus Followers and Observers also adjust their zxid bit length accordingly.
+                 */
+                ZxidUtils.setEpochHighPosition40();
+                self.setCurrentEpochPosition(40);
+                newEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
+            }
             byte[] epochBytes = new byte[4];
             final ByteBuffer wrappedEpochBytes = ByteBuffer.wrap(epochBytes);
             if (newEpoch > self.getAcceptedEpoch()) {
