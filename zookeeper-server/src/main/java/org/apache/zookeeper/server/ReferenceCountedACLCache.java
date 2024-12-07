@@ -80,7 +80,11 @@ public class ReferenceCountedACLCache {
      * @param longVal
      * @return a list of ACLs that map to the long
      */
-    public synchronized List<ACL> convertLong(Long longVal) {
+    public List<ACL> convertLong(Long longVal) {
+        return convertLong(longVal, true);
+    }
+
+    public synchronized List<ACL> convertLong(Long longVal, boolean mustSucceed) {
         if (longVal == null) {
             return null;
         }
@@ -89,8 +93,12 @@ public class ReferenceCountedACLCache {
         }
         List<ACL> acls = longKeyMap.get(longVal);
         if (acls == null) {
-            LOG.error("ERROR: ACL not available for long {}", longVal);
-            throw new RuntimeException("Failed to fetch acls for " + longVal);
+            if (!mustSucceed) {
+                LOG.warn("ACL not available for long {}", longVal);
+            } else {
+                LOG.error("ERROR: ACL not available for long {}", longVal);
+                throw new RuntimeException("Failed to fetch acls for " + longVal);
+            }
         }
         return acls;
     }
