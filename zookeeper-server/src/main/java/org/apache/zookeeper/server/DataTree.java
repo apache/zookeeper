@@ -611,22 +611,36 @@ public class DataTree {
         }
 
         updateWriteStat(path, 0L);
+        // root node path is ""
+        if ("".equals(parentName)) {
+            removeNameSpace(path);
+        }
 
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "dataWatches.triggerWatch " + path);
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "dataWatches.triggerWatch " + path);
             ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "childWatches.triggerWatch " + parentName);
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "childWatches.triggerWatch " + parentName);
         }
 
         WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted, zxid, acl);
         childWatches.triggerWatch(path, EventType.NodeDeleted, zxid, acl, processed);
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
-            EventType.NodeChildrenChanged, zxid, parentAcl);
+                EventType.NodeChildrenChanged, zxid, parentAcl);
+    }
+
+    private void removeNameSpace(String path) {
+        final String namespace = PathUtils.getTopNamespace(path);
+        if (namespace == null) {
+            return;
+        }
+        ServerMetrics.getMetrics().WRITE_PER_NAMESPACE.remove(namespace);
+        ServerMetrics.getMetrics().READ_PER_NAMESPACE.remove(namespace);
+        ServerMetrics.getMetrics().QUOTA_EXCEEDED_ERROR_PER_NAMESPACE.remove(namespace);
     }
 
     public Stat setData(String path, byte[] data, int version, long zxid, long time) throws NoNodeException {
