@@ -39,12 +39,12 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.SaslAuthDigestTestBase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthTest extends ClientBase {
+public class SaslAuthTest extends SaslAuthDigestTestBase {
 
     @BeforeAll
     public static void init() {

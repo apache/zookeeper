@@ -111,32 +111,8 @@ SKIP :
 
 SPECIAL_TOKEN :
 {
-  "//" : WithinOneLineComment
-}
-
-<WithinOneLineComment> SPECIAL_TOKEN :
-{
-  <("\n" | "\r" | "\r\n" )> : DEFAULT
-}
-
-<WithinOneLineComment> MORE :
-{
-  <~[]>
-}
-
-SPECIAL_TOKEN :
-{
-  "/*" : WithinMultiLineComment
-}
-
-<WithinMultiLineComment> SPECIAL_TOKEN :
-{
-  "*/" : DEFAULT
-}
-
-<WithinMultiLineComment> MORE :
-{
-  <~[]>
+    <ONE_LINE_COMMENT: "//" (~["\n","\r"])*>
+|   <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
 }
 
 TOKEN :
@@ -274,21 +250,32 @@ JRecord Record() :
     ArrayList<JField> flist = new ArrayList<JField>();
     Token t;
     JField f;
+    // Get the comments on the class token
+    Token recordTkn;
+    Token typeTkn;
+    Token previousToken = null;
 }
 {
-    <RECORD_TKN>
+    recordTkn = <RECORD_TKN>
     t = <IDENT_TKN>
     { rname = t.image; }
-    <LBRACE_TKN>
+    previousToken = <LBRACE_TKN>
     (
+        {typeTkn = getToken(1);}
         f = Field()
         { flist.add(f); }
         <SEMICOLON_TKN>
+        {
+            f.setTypeToken(typeTkn);
+            f.setPreviousToken(previousToken);
+            f.setNextToken(getToken(1));
+            previousToken = typeTkn;
+        }
     )+
     <RBRACE_TKN>
     {
         String fqn = curModuleName + "." + rname;
-        JRecord r = new JRecord(fqn, flist);
+        JRecord r = new JRecord(fqn, flist, recordTkn);
         recTab.put(fqn, r);
         return r;
     }

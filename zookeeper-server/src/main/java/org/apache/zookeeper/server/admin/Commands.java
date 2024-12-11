@@ -783,7 +783,7 @@ public class Commands {
 
             // take snapshot and stream out data if needed
             try {
-                final File snapshotFile = zkServer.takeSnapshot(false, false, true);
+                final File snapshotFile = zkServer.takeSnapshot(false, false);
                 final long lastZxid = Util.getZxidFromName(snapshotFile.getName(), SNAPSHOT_FILE_PREFIX);
                 response.addHeader(RESPONSE_HEADER_LAST_ZXID, "0x" + ZxidUtils.zxidToString(lastZxid));
 

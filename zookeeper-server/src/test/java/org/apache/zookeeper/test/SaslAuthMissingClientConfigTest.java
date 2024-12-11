@@ -29,7 +29,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.junit.jupiter.api.Test;
 
-public class SaslAuthMissingClientConfigTest extends ClientBase {
+public class SaslAuthMissingClientConfigTest extends SaslAuthDigestTestBase {
 
     static {
         System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");

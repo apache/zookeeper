@@ -39,7 +39,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class SaslSuperUserTest extends ClientBase {
+public class SaslSuperUserTest extends SaslAuthDigestTestBase {
 
     private static Id otherSaslUser = new Id("sasl", "joe");
     private static Id otherDigestUser;

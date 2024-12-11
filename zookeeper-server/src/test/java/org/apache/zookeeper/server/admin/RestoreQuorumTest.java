@@ -85,7 +85,7 @@ public class RestoreQuorumTest extends QuorumPeerTestBase {
 
             // create more data after restore
             for (int i = NODE_COUNT * 2; i < NODE_COUNT * 3; i++) {
-                servers.zk[leaderId].create(PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+                servers.zk[leaderId].create(PATH + "/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
 
             // validate all servers have expected data

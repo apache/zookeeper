@@ -106,7 +106,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                     x509Util.getSslTruststorePasswdProperty(),
                     x509Util.getSslTruststorePasswdPathProperty());
             String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
-            boolean fipsMode = x509Util.getFipsMode(config);
+            boolean fipsMode = X509Util.getFipsMode(config);
 
             if (trustStoreLocation.isEmpty()) {
                 LOG.warn("Truststore not specified for client connection");

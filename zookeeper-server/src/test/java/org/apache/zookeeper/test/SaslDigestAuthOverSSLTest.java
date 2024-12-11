@@ -41,7 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
-public class SaslDigestAuthOverSSLTest extends ClientBase {
+public class SaslDigestAuthOverSSLTest extends SaslAuthDigestTestBase {
 
     private ClientX509Util clientX509Util;
     private File saslConfFile;

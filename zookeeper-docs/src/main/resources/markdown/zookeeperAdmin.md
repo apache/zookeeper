@@ -1754,6 +1754,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Disabling it only recommended for testing purposes.
     Default: true
 
+* *ssl.clientHostnameVerification* and *ssl.quorum.clientHostnameVerification* :
+    (Java system properties: **zookeeper.ssl.clientHostnameVerification** and **zookeeper.ssl.quorum.clientHostnameVerification**)
+    **New in 3.9.4:**
+    Specifies whether the client's hostname verification is enabled in client and quorum TLS negotiation process.
+    This option requires the corresponding *hostnameVerification* option to be `true`, or it will be ignored.
+    Default: true for quorum, false for clients
+
 * *ssl.crl* and *ssl.quorum.crl* :
     (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
     **New in 3.5.5:**
@@ -1859,10 +1866,14 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *fips-mode* :
     (Java system property: **zookeeper.fips-mode**)
     **New in 3.8.2:**
-    Enable FIPS compatibility mode in ZooKeeper. If enabled, the custom trust manager (`ZKTrustManager`) that is used for 
-    hostname verification will be disabled in order to comply with FIPS requirements. As a consequence, hostname verification is not
-    available in the Quorum protocol, but still can be set in client-server communication. Default: **true** (3.9.0+), 
-    **false** (3.8.x)
+    Enable FIPS compatibility mode in ZooKeeper. If enabled, the following things will be changed in order to comply 
+    with FIPS requirements:
+    * Custom trust manager (`ZKTrustManager`) that is used for hostname verification will be disabled. As a consequence, 
+      hostname verification is not available in the Quorum protocol, but still can be set in client-server communication. 
+    * DIGEST-MD5 Sasl auth mechanism will be disabled in Quorum and ZooKeeper Sasl clients. Only GSSAPI (Kerberos)
+      can be used.
+    
+    Default: **true** (3.9.0+), **false** (3.8.x)
 
 <a name="Experimental+Options%2FFeatures"></a>
 

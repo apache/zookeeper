@@ -73,7 +73,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
     private static final String REJECT_CLIENT_RENEGOTIATION_PROPERTY = "jdk.tls.rejectClientInitiatedRenegotiation";
-    private static final String FIPS_MODE_PROPERTY = "zookeeper.fips-mode";
+    public static final String FIPS_MODE_PROPERTY = "zookeeper.fips-mode";
+    private static final boolean FIPS_MODE_DEFAULT = true;
     public static final String TLS_1_1 = "TLSv1.1";
     public static final String TLS_1_2 = "TLSv1.2";
     public static final String TLS_1_3 = "TLSv1.3";
@@ -196,6 +197,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
     private final String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
     private final String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
+    private final String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
     private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
@@ -270,6 +272,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslHostnameVerificationEnabledProperty;
     }
 
+    public String getSslClientHostnameVerificationEnabledProperty() {
+        return sslClientHostnameVerificationEnabledProperty;
+    }
+
     public String getSslCrlEnabledProperty() {
         return sslCrlEnabledProperty;
     }
@@ -296,8 +302,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return FIPS_MODE_PROPERTY;
     }
 
-    public boolean getFipsMode(ZKConfig config) {
-        return config.getBoolean(FIPS_MODE_PROPERTY, true);
+    public static boolean getFipsMode(ZKConfig config) {
+        return config.getBoolean(FIPS_MODE_PROPERTY, FIPS_MODE_DEFAULT);
     }
 
     public boolean isServerHostnameVerificationEnabled(ZKConfig config) {
@@ -305,7 +311,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public boolean isClientHostnameVerificationEnabled(ZKConfig config) {
-        return isServerHostnameVerificationEnabled(config) && shouldVerifyClientHostname();
+        return isServerHostnameVerificationEnabled(config)
+            && config.getBoolean(this.getSslClientHostnameVerificationEnabledProperty(), shouldVerifyClientHostname());
     }
 
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
