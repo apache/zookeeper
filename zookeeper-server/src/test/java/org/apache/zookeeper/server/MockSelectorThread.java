@@ -27,6 +27,7 @@ public class MockSelectorThread extends NIOServerCnxnFactory.SelectorThread {
         fact.super(0);
     }
 
+    @Override
     public boolean addInterestOpsUpdateRequest(SelectionKey sk) {
         return super.addInterestOpsUpdateRequest(sk);
     }
