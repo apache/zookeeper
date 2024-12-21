@@ -135,6 +135,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final String CLOSE_SESSION_TXN_ENABLED = "zookeeper.closeSessionTxn.enabled";
     private static boolean closeSessionTxnEnabled = true;
     private volatile CountDownLatch restoreLatch;
+    // exclusive lock for taking snapshot and restore
+    private final Object snapshotAndRestoreLock = new Object();
 
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
@@ -565,11 +567,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @return file snapshot file object
      * @throws IOException
      */
-    public synchronized File takeSnapshot(boolean syncSnap, boolean isSevere) throws IOException {
+    public File takeSnapshot(boolean syncSnap, boolean isSevere) throws IOException {
         long start = Time.currentElapsedTime();
         File snapFile = null;
         try {
-            snapFile = txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
+            synchronized (snapshotAndRestoreLock) {
+                snapFile = txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
+            }
         } catch (IOException e) {
             if (isSevere) {
                 LOG.error("Severe unrecoverable error, exiting", e);
@@ -593,7 +597,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @Return last processed zxid
      * @throws IOException
      */
-    public synchronized long restoreFromSnapshot(final InputStream inputStream) throws IOException {
+    public long restoreFromSnapshot(final InputStream inputStream) throws IOException {
         if (inputStream == null) {
             throw new IllegalArgumentException("InputStream can not be null when restoring from snapshot");
         }
@@ -618,9 +622,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         restoreLatch = new CountDownLatch(1);
 
         try {
-            // set to the new zkDatabase
-            setZKDatabase(newZKDatabase);
-
+            synchronized (snapshotAndRestoreLock) {
+                // set to the new zkDatabase
+                setZKDatabase(newZKDatabase);
+            }
             // re-create SessionTrack
             createSessionTracker();
         } finally {
