@@ -1235,7 +1235,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 } else {
                     throw new IOException(
                         "The current epoch, " + ZxidUtils.zxidToString(currentEpoch)
-                            + ", is older than the last zxid, " + lastProcessedZxid);
+                            + ", is older than the last zxid, " + Long.toHexString(lastProcessedZxid));
                 }
             }
             try {
@@ -1578,6 +1578,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     } else {
                         try {
                             reconfigFlagClear();
+                            checkSuspended();
                             if (shuttingDownLE) {
                                 shuttingDownLE = false;
                                 startLeaderElection();
@@ -2262,7 +2263,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.zkDb = database;
     }
 
-    protected ZKDatabase getZkDb() {
+    public ZKDatabase getZkDb() {
         return zkDb;
     }
 
