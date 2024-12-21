@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
-import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,9 +108,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 updateLastSend();
                 // If we already started writing p, p.bb will already exist
                 if (p.bb == null) {
-                    if ((p.requestHeader != null)
-                        && (p.requestHeader.getType() != OpCode.ping)
-                        && (p.requestHeader.getType() != OpCode.auth)) {
+                    if (p.requestHeader != null && p.requestHeader.getXid() >= 0) {
                         p.requestHeader.setXid(cnxn.getXid());
                     }
                     p.createBB();
@@ -120,9 +117,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 if (!p.bb.hasRemaining()) {
                     sentCount.getAndIncrement();
                     outgoingQueue.removeFirstOccurrence(p);
-                    if (p.requestHeader != null
-                        && p.requestHeader.getType() != OpCode.ping
-                        && p.requestHeader.getType() != OpCode.auth) {
+                    if (p.requestHeader != null && p.requestHeader.getXid() >= 0) {
                         synchronized (pendingQueue) {
                             pendingQueue.add(p);
                         }
