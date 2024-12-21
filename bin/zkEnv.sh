@@ -146,8 +146,18 @@ fi
 
 # default heap for zookeeper server
 ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
-export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
+if [[ "${ZK_SERVER_HEAP}" =~ ^[0-9]+.*[0-9]+$ ]]
+then
+    export SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
+else
+    export SERVER_JVMFLAGS="${ZK_SERVER_HEAP} $SERVER_JVMFLAGS"
+fi
 
 # default heap for zookeeper client
 ZK_CLIENT_HEAP="${ZK_CLIENT_HEAP:-256}"
-export CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
+if [[ "${ZK_CLIENT_HEAP}" =~ ^[0-9]+.*[0-9]+$ ]]
+then
+    export CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
+else    
+    export CLIENT_JVMFLAGS="${ZK_CLIENT_HEAP} $CLIENT_JVMFLAGS"
+fi
