@@ -27,8 +27,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -39,6 +41,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderCapturingLifecycle;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithConfiguration;
@@ -46,7 +49,9 @@ import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithE
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStart;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStop;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -55,7 +60,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Test stand-alone server.
- *
  */
 public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
@@ -76,7 +80,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         }
 
         public MainThread(int clientPort, Integer secureClientPort, boolean preCreateDirs, String configs)
-                throws  IOException {
+                throws IOException {
             this(clientPort, secureClientPort,
                     preCreateDirs, ClientBase.createTmpDir(), configs);
         }
@@ -158,7 +162,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             return main.getCnxnFactory();
         }
 
-        public ServerCnxnFactory getSecureCnxnFactory(){
+        public ServerCnxnFactory getSecureCnxnFactory() {
             return main.getSecureCnxnFactory();
         }
 
@@ -225,7 +229,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     /**
      * Tests that the ZooKeeper server will fail to start if the
      * snapshot directory is read only.
-     *
+     * <p>
      * This test will fail if it is executed as root user.
      */
     @Test
@@ -264,7 +268,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     /**
      * Tests that the ZooKeeper server will fail to start if the
      * transaction log directory is read only.
-     *
+     * <p>
      * This test will fail if it is executed as root user.
      */
     @Test
@@ -344,11 +348,11 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final int minSessionTimeout = 20 * tickTime + 1000; // min is higher
         final int maxSessionTimeout = tickTime * 2 - 100; // max is lower
         final String configs = "maxSessionTimeout="
-                                       + maxSessionTimeout
-                                       + "\n"
-                                       + "minSessionTimeout="
-                                       + minSessionTimeout
-                                       + "\n";
+                + maxSessionTimeout
+                + "\n"
+                + "minSessionTimeout="
+                + minSessionTimeout
+                + "\n";
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         String[] args = new String[1];
         args[0] = main.confFile.toString();
@@ -409,8 +413,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         final int CLIENT_PORT = PortAssignment.unique();
         final String configs = "metricsProvider.className="
-                                       + MetricsProviderWithErrorInConfigure.class.getName()
-                                       + "\n";
+                + MetricsProviderWithErrorInConfigure.class.getName()
+                + "\n";
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         String[] args = new String[1];
         args[0] = main.confFile.toString();
@@ -465,9 +469,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final int CLIENT_PORT = PortAssignment.unique();
         MetricsProviderWithConfiguration.httpPort.set(0);
         final String configs = "metricsProvider.className="
-                                       + MetricsProviderWithConfiguration.class.getName()
-                                       + "\n"
-                                       + "metricsProvider.httpPort=1234\n";
+                + MetricsProviderWithConfiguration.class.getName()
+                + "\n"
+                + "metricsProvider.httpPort=1234\n";
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
@@ -501,9 +505,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         final int CLIENT_PORT = PortAssignment.unique();
         final String configs = "metricsProvider.className="
-                                       + MetricsProviderCapturingLifecycle.class.getName()
-                                       + "\n"
-                                       + "metricsProvider.httpPort=1234\n";
+                + MetricsProviderCapturingLifecycle.class.getName()
+                + "\n"
+                + "metricsProvider.httpPort=1234\n";
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
@@ -570,11 +574,11 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final int minSessionTimeout = tickTime * 2 - 100;
         final int maxSessionTimeout = 20 * tickTime + 1000;
         final String configs = "maxSessionTimeout="
-                                       + maxSessionTimeout
-                                       + "\n"
-                                       + "minSessionTimeout="
-                                       + minSessionTimeout
-                                       + "\n";
+                + maxSessionTimeout
+                + "\n"
+                + "minSessionTimeout="
+                + minSessionTimeout
+                + "\n";
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
@@ -647,7 +651,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             }
         }
         if (!f.delete()) {
-        // double check for the file existence
+            // double check for the file existence
 
             if (f.exists()) {
                 throw new IOException("Failed to delete file: " + f);
@@ -672,4 +676,70 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         }
     }
 
+    private static final int SERVER_COUNT = 5;
+    private final QuorumPeerTestBase.MainThread[] threads = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
+
+    @Test
+    public void checkNodeExistInCluster() throws Exception {
+        final int[] clientPorts = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        String server;
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+        // start all the servers
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            threads[i] = new QuorumPeerTestBase.MainThread(i, clientPorts[i], currentQuorumCfgSection, false) {
+                @Override
+                public QuorumPeerTestBase.TestQPMain getTestQPMain() {
+                    return new QuorumPeerTestBase.TestQPMain();
+                }
+            };
+            threads[i].start();
+        }
+
+        // ensure all servers started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+        }
+        // create a zk client
+        ClientBase.CountdownWatcher watch = new ClientBase.CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, watch);
+        watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+
+        // zk client request to add node and children nodes
+        zk.create("/test", "10".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/test/a", "11".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk.create("/test/b", "12".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        zk.create("/test/c", "13".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+
+        // get leadere
+        QuorumPeer leader = null;
+        for (int i = threads.length - 1; i >= 0; i--) {
+            QuorumPeer quorumPeer = threads[i].getQuorumPeer();
+            if (null != quorumPeer && QuorumPeer.ServerState.LEADING == quorumPeer.getPeerState()) {
+                leader = quorumPeer;
+            }
+        }
+        assertNotNull(leader, "Leader can't be null");
+
+        // get the children number of the node "/test"
+        List<String> collect = zk.getChildren("/test", true).stream().collect(Collectors.toList());
+        assertEquals(3, collect.size(), "Collect node success with correct number");
+        // check assigned node exist in cluster
+        Stat exists = zk.exists("/test", watch);
+        assertNotNull(exists, "Node exists");
+
+        // close zk server and client
+        zk.close();
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            threads[i].shutdown();
+        }
+    }
 }
