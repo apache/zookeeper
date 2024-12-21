@@ -168,16 +168,24 @@ public class Request {
                 && this.type != OpCode.createSession;
     }
 
+    private long approximateSize = 0;
+
     public byte[] getSerializeData() {
         if (this.hdr == null) {
             return null;
         }
         try {
-            return Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
+            byte[] bytes = Util.marshallTxnEntry(this.hdr, this.txn, this.txnDigest);
+            approximateSize = bytes.length;
+            return bytes;
         } catch (IOException e) {
             LOG.error("This really should be impossible.", e);
             return new byte[32];
         }
+    }
+
+    public long getApproximateSize() {
+        return approximateSize;
     }
 
     /**
