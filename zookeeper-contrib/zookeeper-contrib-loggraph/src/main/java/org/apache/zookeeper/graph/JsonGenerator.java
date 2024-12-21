@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.HashSet;
@@ -116,8 +117,8 @@ public class JsonGenerator {
 				else if ((m = newElectionP.matcher(e.getEntry())).find()) {
 					Iterator<Integer> iterator = servers.iterator();
 					long zxid = Long.valueOf(m.group(2));
-					int count = (int)zxid;// & 0xFFFFFFFFL;
-					int epoch = (int)Long.rotateRight(zxid, 32);// >> 32;
+					int count = ZxidUtils.getCounterFromZxid(zxid);
+					int epoch = ZxidUtils.getEpochFromZxid(zxid);
 
 					if (leader != 0 && epoch > curEpoch) {
 						JsonNode stateChange = add("stateChange", e.getTimestamp(), leader, "INIT");
@@ -149,8 +150,8 @@ public class JsonGenerator {
 					int dst = e.getNode();
 					long epoch2 = Long.valueOf(m.group(3));
 
-					int count = (int)zxid;// & 0xFFFFFFFFL;
-					int epoch = (int)Long.rotateRight(zxid, 32);// >> 32;
+					int count = ZxidUtils.getCounterFromZxid(zxid);
+					int epoch = ZxidUtils.getEpochFromZxid(zxid);
 
 					if (leader != 0 && epoch > curEpoch) {
 						JsonNode stateChange = add("stateChange", e.getTimestamp(), leader, "INIT");
