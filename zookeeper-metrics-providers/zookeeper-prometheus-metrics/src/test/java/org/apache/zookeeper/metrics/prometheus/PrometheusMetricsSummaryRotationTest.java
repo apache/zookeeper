@@ -49,7 +49,8 @@ public class PrometheusMetricsSummaryRotationTest {
         configuration.setProperty("httpHost", "127.0.0.1"); // local host for test
         configuration.setProperty("httpPort", "0"); // ephemeral port
         configuration.setProperty("exportJvmInfo", "false");
-        configuration.setProperty("prometheusMetricsSummaryRotateSeconds", String.valueOf(summaryRotateSeconds));
+        configuration.setProperty(PrometheusMetricsProvider.PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS,
+                String.valueOf(summaryRotateSeconds));
         provider.configure(configuration);
         provider.start();
     }
