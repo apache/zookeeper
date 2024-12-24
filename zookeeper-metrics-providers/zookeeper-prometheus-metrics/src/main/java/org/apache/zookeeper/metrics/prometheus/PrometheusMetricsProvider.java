@@ -94,7 +94,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     /**
      * The interval in seconds for Prometheus summary metrics rotation. Default value is 60.
      */
-    static final String PROMETHEUS_SUMMARY_ROTATE_SECONDS = "prometheusMetricsSummaryRotateSeconds";
+    static final String PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS = "prometheusMetricsSummaryRotateIntervalSeconds";
 
     /**
      * We are using the 'defaultRegistry'.
