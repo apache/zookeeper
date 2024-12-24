@@ -211,6 +211,11 @@ public class SketchesSummary extends SimpleCollector<SketchesSummary.Child> impl
         noLabelsChild.observe(amt);
     }
 
+    /**
+     * Swap the current and replacement sketches under the hood.
+     * <p>
+     * This should be called periodically to avoid unbounded memory usage.
+     */
     public void rotate() {
         for (Child child : children.values()) {
             child.rotate();

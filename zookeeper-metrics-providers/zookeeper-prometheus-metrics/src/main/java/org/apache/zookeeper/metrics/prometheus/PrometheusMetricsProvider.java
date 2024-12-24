@@ -92,7 +92,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     static final String WORKER_SHUTDOWN_TIMEOUT_MS = "workerShutdownTimeoutMs";
 
     /**
-     * The interval in seconds for Prometheus summary metrics rotation. Default value is 60.
+     * The interval in seconds for Prometheus summary metrics rotation.
+     * The quantiles of summary metrics from the current period are displayed in the next period.
+     * Default value is 60.
      */
     static final String PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS = "prometheusMetricsSummaryRotateIntervalSeconds";
 
@@ -127,7 +129,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         this.workerShutdownTimeoutMs = Long.parseLong(
                 configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
         this.summaryRotateSeconds = Integer.parseInt(
-                configuration.getProperty(PROMETHEUS_SUMMARY_ROTATE_SECONDS, "60"));
+                configuration.getProperty(PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS, "60"));
     }
 
     @Override

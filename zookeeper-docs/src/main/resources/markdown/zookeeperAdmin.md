@@ -2239,7 +2239,13 @@ options are used to configure the [AdminServer](#sc_adminserver).
    **New in 3.7.1:**
    The timeout in ms for Prometheus worker threads shutdown.
    Default value is 1000ms.
-   
+
+* *metricsProvider.prometheusMetricsSummaryRotateIntervalSeconds*
+   **New in 3.9.4:**
+   The interval in seconds for rotating the summary metrics.
+   The quantiles of summary metrics from the current period are displayed in the next period.
+   Default value is 60 seconds.
+
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework
