@@ -72,7 +72,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * Number of worker threads for reporting Prometheus summary metrics.
      * Default value is 1.
      * If the number is less than 1, the main thread will be used.
-     * @deprecated This configuration is ignored. See details in ZOOKEEPER-4741
+     * @deprecated This configuration is ignored. See details in ZOOKEEPER-4767
      */
     @Deprecated
     static final String NUM_WORKER_THREADS = "numWorkerThreads";
@@ -80,7 +80,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     /**
      * The max queue size for Prometheus summary metrics reporting task.
      * Default value is 1000000.
-     * @deprecated This configuration is ignored. See details in ZOOKEEPER-4741
+     * @deprecated This configuration is ignored. See details in ZOOKEEPER-4767
      */
     @Deprecated
     static final String MAX_QUEUE_SIZE = "maxQueueSize";
