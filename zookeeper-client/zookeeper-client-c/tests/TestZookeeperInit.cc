@@ -36,6 +36,7 @@ using namespace std;
 class Zookeeper_init : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_init);
+    CPPUNIT_TEST(testVersion);
     CPPUNIT_TEST(testBasic);
     CPPUNIT_TEST(testAddressResolution);
     CPPUNIT_TEST(testMultipleAddressResolution);
@@ -90,6 +91,20 @@ public:
 #endif
     }
 
+    void testVersion()
+    {
+        char EXPECTED_VERSION_STR[256];
+        EXPECTED_VERSION_STR[0] = 0;
+#ifdef ZOO_VERSION
+	snprintf(EXPECTED_VERSION_STR, sizeof(EXPECTED_VERSION_STR), "%s", ZOO_VERSION);
+#endif
+#ifdef ZOO_VERSION_MAJOR
+	// In case this test is back-ported to an earlier release.
+	snprintf(EXPECTED_VERSION_STR, sizeof(EXPECTED_VERSION_STR), "%d.%d.%d", (int)ZOO_VERSION_MAJOR, (int) ZOO_VERSION_MINOR, (int) ZOO_VERSION_PATCH);
+#endif
+	const char *version_str = zoo_version_str();
+	CPPUNIT_ASSERT_EQUAL(string(EXPECTED_VERSION_STR),string(version_str));
+    }
     void testBasic()
     {
         const string EXPECTED_HOST("127.0.0.1:2121");
