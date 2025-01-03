@@ -5052,6 +5052,8 @@ const char* zerror(int c)
       return "session closed by server because client is required to do SASL authentication";
     case ZTHROTTLEDOP:
       return "Operation was throttled due to high load";
+    case ZTOOMANYEPHEMERALS:
+      return "Adding an ephemeral with the requested path could overflow transaction size";
     }
     if (c > 0) {
       return strerror(c);
