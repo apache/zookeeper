@@ -70,7 +70,7 @@ var Class = (function() {
     return true;
   })();
 
-  function subclass() {};
+  function subclass() {}
   function create() {
     var parent = null, properties = $A(arguments);
     if (Object.isFunction(properties[0]))
@@ -1403,7 +1403,7 @@ Array.from = $A;
 })();
 function $H(object) {
   return new Hash(object);
-};
+}
 
 var Hash = Class.create(Enumerable, (function() {
   function initialize(object) {
@@ -4519,7 +4519,7 @@ Prototype.Selector = (function() {
 })();
 Prototype._original_property = window.Sizzle;
 
-;(function () {
+(function () {
   function fakeDefine(fn) {
     Prototype._actual_sizzle = fn();
   }
@@ -6273,7 +6273,7 @@ if ( typeof define === "function" && define.amd ) {
 
 })( window );
 
-;(function() {
+(function() {
   if (typeof Sizzle !== 'undefined') {
     return;
   }
@@ -6289,7 +6289,7 @@ if ( typeof define === "function" && define.amd ) {
   }
 })();
 
-;(function(engine) {
+(function(engine) {
   var extendElements = Prototype.Selector.extendElements;
 
   function select(selector, scope) {
