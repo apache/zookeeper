@@ -23,6 +23,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles client specific properties
@@ -30,6 +32,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  */
 @InterfaceAudience.Public
 public class ZKClientConfig extends ZKConfig {
+    private static final Logger LOG = LoggerFactory.getLogger(ZKClientConfig.class);
 
     public static final String ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";
@@ -142,4 +145,18 @@ public class ZKClientConfig extends ZKConfig {
         return defaultValue;
     }
 
+    @InterfaceAudience.Private
+    public long getRequestTimeout() {
+        try {
+            return getLong(
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT);
+        } catch (NumberFormatException e) {
+            LOG.error(
+                    "Configured value {} for property {} can not be parsed to long.",
+                    getProperty(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT),
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
+            throw e;
+        }
+    }
 }
