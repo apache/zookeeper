@@ -221,6 +221,39 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     }
 
     @Test
+    public void testCounterSetRemove() throws Exception {
+        // create and register a CounterSet
+        final String name = "testCounterSetRemove";
+        final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
+        final String counterSetKey = "testNameSpace";
+        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s counter", name));
+
+        counterSet.inc(counterSetKey);
+        counterSet.add(counterSetKey, 2);
+
+        // increment count then validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (final String key : Arrays.asList(counterSetKey)) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\"}", name, key), 3.0);
+        }
+        validateWithDump(expectedMetricsMap);
+
+        // remove count then validate with dump call
+        counterSet.remove(counterSetKey);
+        validateWithEmptyValues(expectedNames);
+    }
+
+    @Test
+    public void testCounterSetRemoveNullKey() {
+        // create and register a CounterSet
+        final String name = "testCounterSetRemove";
+        final CounterSet counterSet = provider.getRootContext().getCounterSet(name);
+
+        // remove count with null key and make sure no exception is thrown
+        counterSet.remove(null);
+    }
+
+    @Test
     public void testGauge() throws Exception {
         int[] values = {78, -89};
         int[] callCounts = {0, 0};
@@ -437,9 +470,90 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             }
         } finally {
             if (metricsProvider != null) {
-               metricsProvider.stop();
+                metricsProvider.stop();
             }
         }
+    }
+
+    @Test
+    public void testSummarySetWithRemove() throws Exception {
+        final String name = "summarysetremove";
+        final String[] keys = {"ns1", "ns2"};
+        final double count = 3.0;
+
+        // create and register a SummarySet
+        final SummarySet summarySet = provider.getRootContext()
+                .getSummarySet(name, MetricsContext.DetailLevel.BASIC);
+
+        // update the SummarySet multiple times
+        for (int i = 0; i < count; i++) {
+            Arrays.asList(keys).forEach(key -> summarySet.add(key, 1));
+        }
+
+        // validate with dump call
+        final Map<String, Number> expectedMetricsMap = new HashMap<>();
+        for (final String key : keys) {
+            expectedMetricsMap.put(String.format("%s{key=\"%s\",quantile=\"0.5\"}", name, key), 1.0);
+            expectedMetricsMap.put(String.format("%s_count{key=\"%s\"}", name, key), count);
+            expectedMetricsMap.put(String.format("%s_sum{key=\"%s\"}", name, key), count);
+        }
+        validateWithDump(expectedMetricsMap);
+
+        // validate with servlet call
+        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s summary", name));
+        final List<String> expectedMetrics = new ArrayList<>();
+        for (final String key : keys) {
+            expectedMetrics.add(String.format("%s{key=\"%s\",quantile=\"0.5\",} %s", name, key, 1.0));
+            expectedMetrics.add(String.format("%s_count{key=\"%s\",} %s", name, key, count));
+            expectedMetrics.add(String.format("%s_sum{key=\"%s\",} %s", name, key, count));
+        }
+        validateWithServletCall(expectedNames, expectedMetrics);
+
+        // remove the SummarySet
+        for (int i = 0; i < count; i++) {
+            Arrays.asList(keys).forEach(key -> summarySet.remove(key));
+        }
+        validateWithEmptyValues(expectedNames);
+    }
+
+    @Test
+    public void testSummarySetWithRemoveNoExistsKey() {
+        final String name = "summarysetremove";
+        final String[] keys = {"ns1", "ns2"};
+        final double count = 3.0;
+
+        // create and register a SummarySet
+        final SummarySet summarySet = provider.getRootContext()
+                .getSummarySet(name, MetricsContext.DetailLevel.BASIC);
+
+        // remove no exists key
+        for (int i = 0; i < count; i++) {
+            Arrays.asList(keys).forEach(key -> summarySet.remove(key));
+        }
+    }
+
+    @Test
+    public void testSummarySetWithRemoveNullKey() {
+        final String name = "summarysetremove";
+        final String[] keys = {"ns1", "ns2"};
+        final double count = 3.0;
+
+        // create and register a SummarySet
+        final SummarySet summarySet = provider.getRootContext()
+                .getSummarySet(name, MetricsContext.DetailLevel.BASIC);
+
+        // remove null
+        summarySet.remove(null);
+    }
+
+    private void validateWithEmptyValues(List<String> expectedNames) throws Exception {
+        // validate with dump call after remove
+        final Map<String, Number> expectedNoMetricsMap = new HashMap<>();
+        validateWithDump(expectedNoMetricsMap);
+
+        // validate with servlet call after remove
+        final List<String> expectedNoMetrics = new ArrayList<>();
+        validateWithServletCall(expectedNames, expectedNoMetrics);
     }
 
     @Test
