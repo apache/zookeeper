@@ -30,15 +30,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-/**
- * ZOOKEEPER-4886：myid small observer can't join quorum, so need use getView()
- * SASL Quorum:
- * server.11=localhost:11223:11224:participant
- * server.21=localhost:11226:11227:participant
- * server.1=localhost:11229:11230:observer
- *
- * The server.1 can't join quorum.
- */
 public class QuorumAuthObserverTest extends QuorumAuthTestBase {
 
     static {
