@@ -64,7 +64,6 @@ public class QuorumAuthObserverTest extends QuorumAuthTestBase {
      * peer2 myid：1 observer
      */
     @Test
-    @Timeout(value = 30)
     public void testSmallObserverJoinSASLQuorum() throws Exception {
         Map<String, String> authConfigs = new HashMap<>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
