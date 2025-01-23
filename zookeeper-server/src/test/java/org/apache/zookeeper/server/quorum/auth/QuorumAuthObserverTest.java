@@ -76,7 +76,7 @@ public class QuorumAuthObserverTest extends QuorumAuthTestBase {
         String[] roleList = {"participant", "participant", "observer"};
         int[] clientPorts = startQuorum(3, connectStringBuilder, authConfigs, 3, false, myidList, roleList);
 
-        // small observer can't join quorum
+        // observer with small myid should have joined the quorum
         String connectStr = "127.0.0.1:" + clientPorts[2];
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
