@@ -667,6 +667,18 @@ ZOOAPI zhandle_t *zookeeper_init_sasl(const char *host, watcher_fn fn,
 ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
   const char *realm, const char* password_file);
 
+typedef int (*zoo_sasl_password_callback_t)(const char *content, size_t content_len,
+        void *context, char *buf, size_t buf_len);
+
+typedef struct zoo_sasl_password {
+  const char *password_file;                /*!< The path of the password file */
+  void *context;                            /*!< The context used to process password */
+  zoo_sasl_password_callback_t callback;    /*!< Callback for the content in password file */
+} zoo_sasl_password_t;
+
+ZOOAPI sasl_callback_t *zoo_sasl_make_password_callbacks(const char *user,
+  const char *realm, zoo_sasl_password_t *password);
+
 #endif /* HAVE_CYRUS_SASL_H */
 
 /**
