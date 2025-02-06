@@ -492,7 +492,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
     char new_passwd[1024];
     if (secret_ctx->callback) {
-        int res = secret_ctx->callback(password, len,  secret_ctx->context,
+        int res = secret_ctx->callback(password, len, secret_ctx->context,
             new_passwd, sizeof(new_passwd));
         if (res != SASL_OK) {
             return res;
@@ -522,8 +522,7 @@ typedef int (* sasl_callback_fn_t)(void);
 
 sasl_callback_t *zoo_sasl_make_password_callbacks(const char *user,
                                                   const char *realm,
-                                                  zoo_sasl_password_t *password,
-                                                  zoo_sasl_password_callback_t callback)
+                                                  zoo_sasl_password_t *password)
 {
     struct zsasl_secret_ctx *secret_ctx;
     const char *user_ctx = NULL;

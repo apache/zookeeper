@@ -34,6 +34,7 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testServerRequireClientSASL);
 #ifdef HAVE_CYRUS_SASL_H
     CPPUNIT_TEST(testClientSASL);
+    CPPUNIT_TEST(testClientSASLWithPasswordCallback);
 #ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testClientSASLOverIPv6);
 #endif/* ZOO_IPV6_ENABLED */
@@ -140,7 +141,8 @@ public:
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-    void testClientSASLHelper(const char *hostPorts, const char *path) {
+    void testClientSASLHelper(const char *hostPorts, const char *path,
+                              const sasl_callback_t *callbacks) {
         startServer();
 
         // Initialize Cyrus SASL.
@@ -188,8 +190,55 @@ public:
         stopServer();
     }
 
+    void testClientSASLHelper(const char *hostPorts, const char *path) {
+        const sasl_callback_t *callbacks = zoo_sasl_make_basic_callbacks(
+            "myuser", NULL, "Zookeeper_SASLAuth.password");
+        testClientSASLHelper(hostPorts, path, callbacks);
+    }
+
+    void testClientSASLHelper(const char *hostPorts, const char *path,
+                              zoo_sasl_password_t *password) {
+        const sasl_callback_t *callbacks = zoo_sasl_make_password_callbacks(
+            "myuser", NULL, password);
+        testClientSASLHelper(hostPorts, path, callbacks);
+    }
+
     void testClientSASL() {
         testClientSASLHelper(hostPorts, "/clientSASL");
+    }
+
+    void decryptPassword(const char *content, size_t content_len,
+                         char *buf, size_t buf_len) {
+        CPPUNIT_ASSERT(content_len < buf_len);
+        for (size_t i = 0; i < content_len; ++i) {
+            buf[i] = content[i] - 1;
+        }
+        buf[content_len] = '\0';
+        CPPUNIT_ASSERT_EQUAL(strcmp(content, buf), 0);
+    }
+
+    static int passwordCallback(const char *content, size_t content_len,
+                                void *context, char *buf, size_t buf_len) {
+        Zookeeper_SASLAuth *auth = static_cast<Zookeeper_SASLAuth *>(context);
+        auth->decryptPassword(content, content_len, buf, buf_len);
+        return SASL_OK;
+    }
+
+    void testClientSASLWithPasswordCallback() {
+        // The name of the file where the encrypted password is saved.
+        const char *file_name = "Zookeeper_SASLAuth.password.encrypted";
+
+        // Create encrypted file for client.
+        FILE *passf = fopen(file_name, "wt");
+        CPPUNIT_ASSERT(passf);
+
+        // Encrypt the password by adding 1 to each character in "mypassword".
+        CPPUNIT_ASSERT(fputs("nzqbttxpse", passf) > 0);
+        CPPUNIT_ASSERT_EQUAL(fclose(passf), 0);
+        passf = NULL;
+
+        zoo_sasl_password_t passwd = {file_name, this, passwordCallback};
+        testClientSASLHelper(hostPorts, "/clientSASLWithPasswordCallback", &passwd);
     }
 
     void testClientSASLOverIPv6() {
