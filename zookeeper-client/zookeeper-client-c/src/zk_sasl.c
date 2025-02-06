@@ -442,6 +442,8 @@ getpassphrase(const char *prompt) {
 
 struct zsasl_secret_ctx {
     const char *password_file;
+    void *context;
+    zoo_sasl_password_callback_t callback;
     sasl_secret_t *secret;
 };
 
@@ -488,6 +490,18 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
     len = strlen(password);
 
+    char new_passwd[1024];
+    if (secret_ctx->callback) {
+        int res = secret_ctx->callback(password, len,  secret_ctx->context,
+            new_passwd, sizeof(new_passwd));
+        if (res != SASL_OK) {
+            return res;
+        }
+
+        password = new_passwd;
+        len = strlen(password);
+    }
+
     x = secret_ctx->secret = (sasl_secret_t *)realloc(
         secret_ctx->secret, sizeof(sasl_secret_t) + len);
 
@@ -506,9 +520,10 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
 typedef int (* sasl_callback_fn_t)(void);
 
-sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
-                                               const char *realm,
-                                               const char* password_file)
+sasl_callback_t *zoo_sasl_make_password_callbacks(const char *user,
+                                                  const char *realm,
+                                                  zoo_sasl_password_t *password,
+                                                  zoo_sasl_password_callback_t callback)
 {
     struct zsasl_secret_ctx *secret_ctx;
     const char *user_ctx = NULL;
@@ -521,7 +536,9 @@ sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
 
     rc = rc < 0 ? rc : _zsasl_strdup(&user_ctx, user);
     rc = rc < 0 ? rc : _zsasl_strdup(&realm_ctx, realm);
-    rc = rc < 0 ? rc : _zsasl_strdup(&secret_ctx->password_file, password_file);
+    rc = rc < 0 ? rc : _zsasl_strdup(&secret_ctx->password_file, password->password_file);
+    secret_ctx->context = password->context;
+    secret_ctx->callback = password->callback;
 
     {
         sasl_callback_t callbacks[] = {
@@ -549,6 +566,14 @@ sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
 
         return xcallbacks;
     }
+}
+
+sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
+                                               const char *realm,
+                                               const char* password_file)
+{
+    zoo_sasl_password_t password = {password_file, NULL, NULL};
+    return zoo_sasl_make_password_callbacks(user, realm, &password);
 }
 
 #ifdef __APPLE__
