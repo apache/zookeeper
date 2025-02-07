@@ -454,7 +454,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
                             sasl_secret_t **psecret)
 {
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
-    char buf[1024];
+    char buf[4096];
     char *password;
     size_t len;
     sasl_secret_t *x;
@@ -464,21 +464,17 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         return SASL_BADPARAM;
 
     if (secret_ctx->password_file) {
-        char *p;
         FILE *fh = fopen(secret_ctx->password_file, "rt");
         if (!fh)
             return SASL_FAIL;
 
-        if (!fgets(buf, sizeof(buf), fh)) {
+        len = fread(buf, sizeof(buf[0]), sizeof(buf) / sizeof(buf[0]), fh);
+        if (len < sizeof(buf) && !feof(fh)) {
             fclose(fh);
             return SASL_FAIL;
         }
 
         fclose(fh);
-
-        p = strrchr(buf, '\n');
-        if (p)
-            *p = '\0';
 
         password = buf;
     } else {
@@ -486,20 +482,34 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
         if (!password)
             return SASL_FAIL;
-    }
 
-    len = strlen(password);
+        len = strlen(password);
+    }
 
     char new_passwd[1024];
     if (secret_ctx->callback) {
+        /* 
+         * Once callback is defined, it would be used to process the content in
+         * password file, e.g. decrypting the password as it was.
+         */  
         int res = secret_ctx->callback(password, len, secret_ctx->context,
             new_passwd, sizeof(new_passwd));
         if (res != SASL_OK) {
             return res;
         }
 
+        memset(password, 0, len);
+
+        /* 
+         * Since new_passwd must be null-terminated, just use strlen() to get
+         * the length.
+         */
         password = new_passwd;
         len = strlen(password);
+    } else {
+        char *p = strrchr(buf, '\n');
+        if (p)
+            *p = '\0';
     }
 
     x = secret_ctx->secret = (sasl_secret_t *)realloc(
