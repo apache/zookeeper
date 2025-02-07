@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -629,6 +630,21 @@ public class DataTreeTest extends ZKTestCase {
         } finally {
             ZooKeeperServer.setDigestEnabled(false);
         }
+    }
+
+    @Test
+    public void testCreateNodeFixMissingACL() throws Exception {
+        DataTree dt = new DataTree();
+        ReferenceCountedACLCache aclCache = dt.getReferenceCountedAclCache();
+
+        dt.createNode("/the_parent", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 1, 1, 0);
+        Long aclId = dt.getNode("/the_parent").acl;
+        aclCache.removeUsage(aclId);
+        aclCache.purgeUnused();
+        // try to re-create the parent -> throws NodeExistsException, but fixes the deleted ACL
+        assertThrows(NodeExistsException.class, () ->
+            dt.createNode("/the_parent", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 1, 1, 0));
+        dt.createNode("/the_parent/the_child", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 2, 2, 2);
     }
 
     private DataTree buildDataTreeForTest() {
