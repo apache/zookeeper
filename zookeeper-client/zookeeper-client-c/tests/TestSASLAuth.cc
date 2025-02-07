@@ -34,6 +34,7 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testServerRequireClientSASL);
 #ifdef HAVE_CYRUS_SASL_H
     CPPUNIT_TEST(testClientSASL);
+    CPPUNIT_TEST(testClientSASLWithPasswordNewline);
     CPPUNIT_TEST(testClientSASLWithPasswordEncryptedText);
     CPPUNIT_TEST(testClientSASLWithPasswordEncryptedBinary);
 #ifdef ZOO_IPV6_ENABLED
@@ -155,8 +156,7 @@ public:
         sasl_params.service = "zookeeper";
         sasl_params.host = "zk-sasl-md5";
         sasl_params.mechlist = "DIGEST-MD5";
-        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(
-            "myuser", NULL, "Zookeeper_SASLAuth.password");
+        sasl_params.callbacks = callbacks;
 
         // Connect.
         watchctx_t ctx;
@@ -229,6 +229,16 @@ public:
         testClientSASLHelper(hostPorts, path, &passwd);
     }
 
+    void testClientSASLWithPasswordNewline() {
+        // Insert newline immediately after the correct password.
+        const char content[] = "mypassword\nabcxyz";
+        testClientSASL("Zookeeper_SASLAuth.password.newline",
+                       content,
+                       sizeof(content),
+                       "/clientSASLWithPasswordNewline",
+                       NULL);
+    }
+
     int decryptPassword(const char *content, size_t content_len,
                         char incr, char *buf, size_t buf_len) {
         CPPUNIT_ASSERT(content_len < buf_len);
@@ -236,7 +246,7 @@ public:
             buf[i] = content[i] + incr;
         }
         buf[content_len] = '\0';
-        CPPUNIT_ASSERT_EQUAL(strcmp(content, buf), 0);
+        CPPUNIT_ASSERT_EQUAL(strcmp(buf, "mypassword"), 0);
         return SASL_OK;
     }
 
