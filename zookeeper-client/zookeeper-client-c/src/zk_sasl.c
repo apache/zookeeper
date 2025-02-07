@@ -453,8 +453,9 @@ struct zsasl_secret_ctx {
 static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
                             sasl_secret_t **psecret)
 {
+    const size_t MAX_PASSWORD_LEN = 1023;
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
-    char buf[4096];
+    char buf[MAX_PASSWORD_LEN + 1];
     char *password = NULL;
     size_t len;
     sasl_secret_t *x;
@@ -471,8 +472,8 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         }
 
         /*
-         * The content of the file may be the encrypted password with binary
-         * characters, thus use fread().
+         * The file's content may be the encrypted password with binary characters,
+         * thus use fread().
          */
         len = fread(buf, sizeof(buf[0]), sizeof(buf) / sizeof(buf[0]), fh);
         if (len < sizeof(buf) && !feof(fh)) {
@@ -482,22 +483,32 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
         fclose(fh);
 
+        if (len > MAX_PASSWORD_LEN) {
+            /* 
+             * The content should not be too long for both actual and encrypted
+             * password.
+             */
+            return SASL_FAIL;
+        }
+
+        /* 
+         * Write the null terminator immediately after the last character of the
+         * content since it would be used as a null-terminated string once it is
+         * the actual password.
+         */
+        buf[len] = '\0';
         password = buf;
     }
 
-    char new_passwd[1024];
+    char new_passwd[MAX_PASSWORD_LEN + 1];
     if (secret_ctx->callback) {
         if (!password) {
             /*
-             * Callback functions only when password_file is provided.
+             * The callback takes effect only when password_file is provided.
              */
             return SASL_BADPARAM;
         }
 
-        /* 
-         * Once callback is defined, it would be used to process the content in
-         * password file, e.g. decrypting the password as it was.
-         */  
         int res = secret_ctx->callback(password, len, secret_ctx->context,
             new_passwd, sizeof(new_passwd));
         if (res != SASL_OK) {
@@ -509,9 +520,9 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         password = new_passwd;
     } else if (secret_ctx->password_file) {
         /*
-         * The original content in the file is used as the password, which must
-         * consist only of text characters (i.e., without '\0'). Just replace
-         * newline with '\0'.
+         * The file's content is the actual password, which must consist only of
+         * text characters (i.e., without null terminator). Just replace possible
+         * newline with null terminator at the end.
          */
         char *p = strrchr(password, '\n');
         if (p) {
@@ -526,7 +537,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
     }
 
     /* 
-     * Since new_passwd must be null-terminated, also use strlen() to get length.
+     * Since new_passwd must be null-terminated, also use strlen() to get the length.
      */
     len = strlen(password);
 
