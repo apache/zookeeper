@@ -521,10 +521,10 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
     } else if (secret_ctx->password_file) {
         /*
          * The file's content is the actual password, which must consist only of
-         * text characters (i.e., without null terminator). Just replace possible
-         * newline with null terminator at the end.
+         * text characters (i.e., without null terminator). The first line would
+         * be read as the password once there are multiple lines in the file.
          */
-        char *p = strrchr(password, '\n');
+        char *p = strchr(password, '\n');
         if (p) {
             *p = '\0';
         }
