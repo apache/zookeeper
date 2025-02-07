@@ -455,19 +455,25 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 {
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
     char buf[4096];
-    char *password;
+    char *password = NULL;
     size_t len;
     sasl_secret_t *x;
 
     /* paranoia check */
-    if (!conn || !psecret || id != SASL_CB_PASS)
+    if (!conn || !psecret || id != SASL_CB_PASS) {
         return SASL_BADPARAM;
+    }
 
     if (secret_ctx->password_file) {
         FILE *fh = fopen(secret_ctx->password_file, "rt");
-        if (!fh)
+        if (!fh) {
             return SASL_FAIL;
+        }
 
+        /*
+         * The content of the file may be the encrypted password with binary
+         * characters, thus use fread().
+         */
         len = fread(buf, sizeof(buf[0]), sizeof(buf) / sizeof(buf[0]), fh);
         if (len < sizeof(buf) && !feof(fh)) {
             fclose(fh);
@@ -477,17 +483,17 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         fclose(fh);
 
         password = buf;
-    } else {
-        password = getpassphrase("Password: ");
-
-        if (!password)
-            return SASL_FAIL;
-
-        len = strlen(password);
     }
 
     char new_passwd[1024];
     if (secret_ctx->callback) {
+        if (!password) {
+            /*
+             * Callback functions only when password_file is provided.
+             */
+            return SASL_BADPARAM;
+        }
+
         /* 
          * Once callback is defined, it would be used to process the content in
          * password file, e.g. decrypting the password as it was.
@@ -500,17 +506,29 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
         memset(password, 0, len);
 
-        /* 
-         * Since new_passwd must be null-terminated, just use strlen() to get
-         * the length.
-         */
         password = new_passwd;
-        len = strlen(password);
-    } else {
-        char *p = strrchr(buf, '\n');
-        if (p)
+    } else if (secret_ctx->password_file) {
+        /*
+         * The original content in the file is used as the password, which must
+         * consist only of text characters (i.e., without '\0'). Just replace
+         * newline with '\0'.
+         */
+        char *p = strrchr(password, '\n');
+        if (p) {
             *p = '\0';
+        }
+    } else {
+        password = getpassphrase("Password: ");
+
+        if (!password) {
+            return SASL_FAIL;
+        }
     }
+
+    /* 
+     * Since new_passwd must be null-terminated, also use strlen() to get length.
+     */
+    len = strlen(password);
 
     x = secret_ctx->secret = (sasl_secret_t *)realloc(
         secret_ctx->secret, sizeof(sasl_secret_t) + len);
