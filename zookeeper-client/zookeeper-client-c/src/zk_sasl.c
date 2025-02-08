@@ -484,14 +484,14 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         fclose(fh);
 
         if (len > MAX_PASSWORD_LEN) {
-            /* 
+            /*
              * The content should not be too long for both actual and encrypted
              * password.
              */
             return SASL_FAIL;
         }
 
-        /* 
+        /*
          * Write the null terminator immediately after the last character of the
          * content since it would be used as a null-terminated string once it is
          * the actual password.
@@ -536,7 +536,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         }
     }
 
-    /* 
+    /*
      * Since new_passwd must be null-terminated, also use strlen() to get the length.
      */
     len = strlen(password);
