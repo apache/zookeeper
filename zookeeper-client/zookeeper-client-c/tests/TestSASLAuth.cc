@@ -34,7 +34,8 @@ class Zookeeper_SASLAuth : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testServerRequireClientSASL);
 #ifdef HAVE_CYRUS_SASL_H
     CPPUNIT_TEST(testClientSASL);
-    CPPUNIT_TEST(testClientSASLWithPasswordNewline);
+    CPPUNIT_TEST(testClientSASLWithPasswordFileNewline);
+    CPPUNIT_TEST(testClientSASLWithPasswordFileFirstLine);
     CPPUNIT_TEST(testClientSASLWithPasswordEncryptedText);
     CPPUNIT_TEST(testClientSASLWithPasswordEncryptedBinary);
 #ifdef ZOO_IPV6_ENABLED
@@ -215,7 +216,7 @@ public:
 
     void testClientSASL(const char *password_file, const char *content, size_t content_len,
                         const char *path, zoo_sasl_password_callback_t callback) {
-        // Create file for client.
+        // Create password file for client.
         FILE *passf = fopen(password_file, "wt");
         CPPUNIT_ASSERT(passf);
 
@@ -229,19 +230,31 @@ public:
         testClientSASLHelper(hostPorts, path, &passwd);
     }
 
-    void testClientSASLWithPasswordNewline() {
-        // Insert newline immediately after the correct password.
-        const char content[] = "mypassword\nabcxyz";
+    void testClientSASLWithPasswordFileNewline() {
+        // Insert a newline immediately after the correct password.
+        const char content[] = "mypassword\nabc";
         testClientSASL("Zookeeper_SASLAuth.password.newline",
                        content,
-                       sizeof(content),
-                       "/clientSASLWithPasswordNewline",
+                       sizeof(content) - 1,
+                       "/clientSASLWithPasswordFileNewline",
+                       NULL);
+    }
+
+    void testClientSASLWithPasswordFileFirstLine() {
+        // Insert multiple newlines and check if only the first line is accepted as the
+        // actual password.
+        const char content[] = "mypassword\nabc\nxyz";
+        testClientSASL("Zookeeper_SASLAuth.password.firstline",
+                       content,
+                       sizeof(content) - 1,
+                       "/clientSASLWithPasswordFileFirstLine",
                        NULL);
     }
 
     int decryptPassword(const char *content, size_t content_len,
                         char incr, char *buf, size_t buf_len) {
         CPPUNIT_ASSERT(content_len < buf_len);
+        // A simple decryption that only increases each character by a fixed value.
         for (size_t i = 0; i < content_len; ++i) {
             buf[i] = content[i] + incr;
         }
@@ -257,7 +270,7 @@ public:
     }
 
     void testClientSASLWithPasswordEncryptedText() {
-        // Encrypt "mypassword" by substracting 1 from each character in it.
+        // Encrypt "mypassword" by substracting 1 from each character in it as plain text.
         const char content[] = {0x6C, 0x78, 0x6F, 0x60, 0x72, 0x72, 0x76, 0x6E, 0x71, 0x63};
         testClientSASL("Zookeeper_SASLAuth.password.encrypted.text",
                        content,
@@ -273,7 +286,7 @@ public:
     }
 
     void testClientSASLWithPasswordEncryptedBinary() {
-        // Encrypt "mypassword" by substracting 'a' from each character in it.
+        // Encrypt "mypassword" by substracting 'a' from each character in it as binary format.
         const char content[] = {0x0C, 0x18, 0x0F, 0x00, 0x12, 0x12, 0x16, 0x0E, 0x11, 0x03};
         testClientSASL("Zookeeper_SASLAuth.password.encrypted.binary",
                        content,
