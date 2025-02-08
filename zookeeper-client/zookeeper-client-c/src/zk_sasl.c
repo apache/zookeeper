@@ -457,7 +457,10 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
     char buf[MAX_PASSWORD_LEN + 1];
     char *password = NULL;
-    size_t len;
+    size_t len = 0;
+    int res = 0;
+    char new_passwd[MAX_PASSWORD_LEN + 1];
+    char *p = NULL;
     sasl_secret_t *x;
 
     /* paranoia check */
@@ -500,7 +503,6 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         password = buf;
     }
 
-    char new_passwd[MAX_PASSWORD_LEN + 1];
     if (secret_ctx->callback) {
         if (!password) {
             /*
@@ -509,7 +511,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
             return SASL_BADPARAM;
         }
 
-        int res = secret_ctx->callback(password, len, secret_ctx->context,
+        res = secret_ctx->callback(password, len, secret_ctx->context,
             new_passwd, sizeof(new_passwd));
         if (res != SASL_OK) {
             return res;
@@ -524,7 +526,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
          * text characters (i.e., without null terminator). The first line would
          * be read as the password once there are multiple lines in the file.
          */
-        char *p = strchr(password, '\n');
+        p = strchr(password, '\n');
         if (p) {
             *p = '\0';
         }

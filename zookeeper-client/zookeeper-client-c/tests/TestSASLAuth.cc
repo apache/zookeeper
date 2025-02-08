@@ -270,7 +270,7 @@ public:
     }
 
     void testClientSASLWithPasswordEncryptedText() {
-        // Encrypt "mypassword" by substracting 1 from each character in it as plain text.
+        // Encrypt "mypassword" by subtracting 1 from each character in it as plain text.
         const char content[] = {0x6C, 0x78, 0x6F, 0x60, 0x72, 0x72, 0x76, 0x6E, 0x71, 0x63};
         testClientSASL("Zookeeper_SASLAuth.password.encrypted.text",
                        content,
@@ -286,7 +286,7 @@ public:
     }
 
     void testClientSASLWithPasswordEncryptedBinary() {
-        // Encrypt "mypassword" by substracting 'a' from each character in it as binary format.
+        // Encrypt "mypassword" by subtracting 'a' from each character in it as binary format.
         const char content[] = {0x0C, 0x18, 0x0F, 0x00, 0x12, 0x12, 0x16, 0x0E, 0x11, 0x03};
         testClientSASL("Zookeeper_SASLAuth.password.encrypted.binary",
                        content,
