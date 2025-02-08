@@ -675,7 +675,7 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
  *
  * \param content the string read from the password file.
  * \param content_len the size of the content in bytes.
- * \param context the handback object that will be associated with the password 
+ * \param context the handback object that will be associated with the password
  *   file. The object is not used by zookeeper internally and can be null.
  * \param buf the buffer where the resulting actual password is saved, NOTE that
  *   this callback must write the null terminator immediately after the last
