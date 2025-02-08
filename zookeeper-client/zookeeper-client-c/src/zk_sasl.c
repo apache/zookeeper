@@ -478,21 +478,14 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
          * The file's content may be the encrypted password with binary characters,
          * thus use fread().
          */
-        len = fread(buf, sizeof(buf[0]), sizeof(buf) / sizeof(buf[0]), fh);
-        if (len < sizeof(buf) && !feof(fh)) {
+        len = fread(buf, sizeof(buf[0]), MAX_PASSWORD_LEN, fh);
+        if (ferror(fh)) {
             fclose(fh);
             return SASL_FAIL;
         }
 
         fclose(fh);
-
-        if (len > MAX_PASSWORD_LEN) {
-            /*
-             * The content should not be too long for both actual and encrypted
-             * password.
-             */
-            return SASL_FAIL;
-        }
+        fh = NULL;
 
         /*
          * Write the null terminator immediately after the last character of the
