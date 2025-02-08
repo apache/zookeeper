@@ -722,7 +722,7 @@ typedef struct zoo_sasl_password {
  * \param realm the "canned" response to \c SASL_CB_GETREALM, or NULL for none.
  * \param password the object defined by user to specify how the actual password
  *   is generated in response to \c SASL_CB_PASS, should never be NULL (otherwise
- *   the behaviour is undefined), see struct zoo_sasl_password for details. 
+ *   the behaviour is undefined), see struct zoo_sasl_password for details.
  * \return the freshly-malloc()ed callbacks array, or NULL if allocation
  *   failed. Deallocate with free(), but only after the corresponding
  *   ZooKeeper handle is closed.
