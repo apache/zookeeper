@@ -467,8 +467,9 @@ public class DataTree {
             // we did for the global sessions.
             Long longval = aclCache.convertAcls(acl);
 
-            Set<String> children = parent.getChildren();
-            if (children.contains(childName)) {
+            DataNode existingChild = nodes.get(path);
+            if (existingChild != null) {
+                existingChild.acl = longval;
                 throw new KeeperException.NodeExistsException();
             }
 
