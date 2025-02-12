@@ -74,15 +74,22 @@ jobs:
         MAVEN_OPTS: -Djansi.force=true
     - name: Upload unit test results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: surefire-reports-${{ matrix.profile.name }}
         path: ./**/target/surefire-reports/
         if-no-files-found: ignore
     - name: Upload integration test results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: failsafe-reports-${{ matrix.profile.name }}
         path: ./**/target/failsafe-reports/
+        if-no-files-found: ignore
+    - name: Upload cppunit test logs
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: cppunit-logs-${{ matrix.profile.name }}
+        path: ./zookeeper-client/zookeeper-client-c/target/c/TEST-*.txt
         if-no-files-found: ignore

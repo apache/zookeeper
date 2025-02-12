@@ -455,7 +455,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     }
                     if (KeeperException.Code.OK != code) {
                         zkServer.serverStats().incrementAuthFailedCount();
-                        LOG.error("Authentication failed for session 0x{}", Long.toHexString(cnxn.getSessionId()));
+                        LOG.error("Authentication failed for session 0x{} from address '{}'", Long.toHexString(cnxn.getSessionId()), cnxn.getRemoteSocketAddress());
                         cnxn.close(ServerCnxn.DisconnectReason.SASL_AUTH_FAILURE);
                         return;
                     }
@@ -466,7 +466,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 addCnxn(cnxn);
             } else {
                 zkServer.serverStats().incrementAuthFailedCount();
-                LOG.error("Unsuccessful handshake with session 0x{}", Long.toHexString(cnxn.getSessionId()));
+                LOG.error("Unsuccessful handshake with session 0x{} from address '{}'", Long.toHexString(cnxn.getSessionId()), cnxn.getRemoteSocketAddress());
                 cnxn.close(ServerCnxn.DisconnectReason.FAILED_HANDSHAKE);
             }
         }
