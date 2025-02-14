@@ -209,6 +209,14 @@ public class FileTxnLog implements TxnLog, Closeable {
     }
 
     /**
+     * Returns the reference to the current log file.
+     * @return
+     */
+    public synchronized File getCurrentFile() {
+        return logFileWrite;
+    }
+
+    /**
      * Return the current on-disk size of log size. This will be accurate only
      * after commit() is called. Otherwise, unflushed txns may not be included.
      */
@@ -385,6 +393,37 @@ public class FileTxnLog implements TxnLog, Closeable {
             LOG.warn("Unexpected exception", e);
         }
         return zxid;
+    }
+
+    /**
+     * get the last TxnHeader that was logged in the transaction logs
+     * @return the last TxnHeader containing txn metadata
+     */
+    public TxnHeader getLastLoggedTxnHeader() {
+        File[] files = getLogFiles(logDir.listFiles(), 0);
+        long maxLog = files.length > 0 ? Util
+            .getZxidFromName(files[files.length - 1].getName(), LOG_FILE_PREFIX) : -1;
+
+        TxnIterator itr = null;
+        TxnHeader hdr = null;
+        try {
+            FileTxnLog txn = new FileTxnLog(logDir);
+            itr = txn.read(maxLog);
+            do {
+                hdr = itr.getHeader();
+            } while (itr.next());
+        } catch (IOException e) {
+            LOG.warn("getLastLoggedZxidTimestampPair():: Unexpected exception", e);
+        } finally {
+            if (itr != null) {
+                try {
+                    itr.close();
+                } catch (IOException ioe) {
+                    LOG.warn("Error closing file iterator", ioe);
+                }
+            }
+        }
+        return hdr;
     }
 
     /**
