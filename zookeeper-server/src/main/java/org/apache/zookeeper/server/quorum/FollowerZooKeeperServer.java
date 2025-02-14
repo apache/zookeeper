@@ -50,6 +50,10 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(FollowerZooKeeperServer.class);
 
+    // This should be final as it is constructed with no external variables. It is not to allow mockito spy which
+    // intercepts `this`.
+    private ParticipantRequestSyncer requestSyncer;
+
     /*
      * Pending sync requests
      */ ConcurrentLinkedQueue<Request> pendingSyncs;
@@ -57,7 +61,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     /**
      * @throws IOException
      */
-    FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
+    // VisibleForTesting
+    public FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
         super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
         this.pendingSyncs = new ConcurrentLinkedQueue<>();
     }
@@ -75,12 +80,19 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         ((FollowerRequestProcessor) firstProcessor).start();
         syncProcessor = new SyncRequestProcessor(this, new SendAckRequestProcessor(getFollower()));
         syncProcessor.start();
+        requestSyncer = new ParticipantRequestSyncer(this, LOG, this::logRequest);
     }
 
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<>();
 
     public void logRequest(TxnHeader hdr, Record txn, TxnDigest digest) {
-        final Request request = buildRequestToProcess(hdr, txn, digest);
+        Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
+        request.setTxnDigest(digest);
+        requestSyncer.syncRequest(request);
+    }
+
+    private void logRequest(Request request) {
+        pendingTxns.add(request);
         syncProcessor.processRequest(request);
     }
 
@@ -116,6 +128,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         Request request = pendingTxns.remove();
         request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
         commitProcessor.commit(request);
+        requestSyncer.finishCommit(request.zxid);
     }
 
     public synchronized void sync() {
@@ -187,21 +200,5 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
         rootContext.unregisterGauge("synced_observers");
 
-    }
-
-    /**
-     * Build a request for the txn
-     * @param hdr the txn header
-     * @param txn the txn
-     * @param digest the digest of txn
-     * @return a request moving through a chain of RequestProcessors
-     */
-    private Request buildRequestToProcess(final TxnHeader hdr, final Record txn, final TxnDigest digest) {
-        final Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
-        request.setTxnDigest(digest);
-        if ((request.zxid & 0xffffffffL) != 0) {
-            pendingTxns.add(request);
-        }
-        return request;
     }
 }
