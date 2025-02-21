@@ -18,26 +18,12 @@
 # under the License.
 #
 
-#
-# If this scripted is run out of /usr/bin or some other system bin directory
-# it should be linked to and not copied. Things like java jar files are found
-# relative to the canonical path of this script.
-#
+# Install shfmt tool to search for and optionally format bash scripts
+# This is useful for other CI tools to run ShellCheck and shfmt to format
 
-# use POSIX interface, symlink is followed automatically
-ZOOBIN="${BASH_SOURCE-$0}"
-ZOOBIN="$(dirname "$ZOOBIN")"
-ZOOBINDIR="$(cd "$ZOOBIN" && pwd)"
+set -e
+set -x
 
-if [[ -e "$ZOOBIN/../libexec/zkEnv.sh" ]]; then
-  # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
-else
-  # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/zkEnv.sh
-fi
-
-# shellcheck disable=SC2206
-flags=($JVMFLAGS)
-"$JAVA" "${flags[@]}" \
-  org.apache.zookeeper.server.SnapshotComparer "$@"
+shfmt_version=3.4.3
+sudo wget "https://github.com/mvdan/sh/releases/download/v${shfmt_version}/shfmt_v${shfmt_version}_linux_amd64" -O /usr/local/bin/shfmt &&
+  sudo chmod +x /usr/local/bin/shfmt
