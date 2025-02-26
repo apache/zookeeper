@@ -223,8 +223,8 @@ public class FastLeaderElection implements Election {
             volatile boolean stop;
             QuorumCnxManager manager;
 
-            WorkerReceiver(QuorumCnxManager manager) {
-                super("WorkerReceiver");
+            WorkerReceiver(QuorumCnxManager manager, String threadName) {
+                super(threadName);
                 this.stop = false;
                 this.manager = manager;
             }
@@ -485,8 +485,8 @@ public class FastLeaderElection implements Election {
             volatile boolean stop;
             QuorumCnxManager manager;
 
-            WorkerSender(QuorumCnxManager manager) {
-                super("WorkerSender");
+            WorkerSender(QuorumCnxManager manager, String threadName) {
+                super(threadName);
                 this.stop = false;
                 this.manager = manager;
             }
@@ -523,8 +523,6 @@ public class FastLeaderElection implements Election {
 
         WorkerSender ws;
         WorkerReceiver wr;
-        Thread wsThread = null;
-        Thread wrThread = null;
 
         /**
          * Constructor of class Messenger.
@@ -533,23 +531,19 @@ public class FastLeaderElection implements Election {
          */
         Messenger(QuorumCnxManager manager) {
 
-            this.ws = new WorkerSender(manager);
+            this.ws = new WorkerSender(manager, "WorkerSender[myid=" + self.getMyId() + "]");
+            this.ws.setDaemon(true);
 
-            this.wsThread = new Thread(this.ws, "WorkerSender[myid=" + self.getMyId() + "]");
-            this.wsThread.setDaemon(true);
-
-            this.wr = new WorkerReceiver(manager);
-
-            this.wrThread = new Thread(this.wr, "WorkerReceiver[myid=" + self.getMyId() + "]");
-            this.wrThread.setDaemon(true);
+            this.wr = new WorkerReceiver(manager, "WorkerReceiver[myid=" + self.getMyId() + "]");
+            this.wr.setDaemon(true);
         }
 
         /**
          * Starts instances of WorkerSender and WorkerReceiver
          */
         void start() {
-            this.wsThread.start();
-            this.wrThread.start();
+            this.ws.start();
+            this.wr.start();
         }
 
         /**
