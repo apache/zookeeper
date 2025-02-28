@@ -470,7 +470,7 @@ public class FastLeaderElection implements Election {
                         LOG.warn("Interrupted Exception while waiting for new message", e);
                     }
                 }
-                LOG.info("WorkerReceiver is down");
+                LOG.info("{} is down", getName());
             }
 
         }
@@ -504,7 +504,7 @@ public class FastLeaderElection implements Election {
                         break;
                     }
                 }
-                LOG.info("WorkerSender is down");
+                LOG.info("{} is down", getName());
             }
 
             /**
