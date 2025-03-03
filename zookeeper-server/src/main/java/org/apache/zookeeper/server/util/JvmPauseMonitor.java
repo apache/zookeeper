@@ -205,6 +205,13 @@ public class JvmPauseMonitor {
                 }
                 totalGcExtraSleepTime += extraSleepTime;
                 gcTimesBeforeSleep = gcTimesAfterSleep;
+
+                long heapSize = Runtime.getRuntime().totalMemory();
+                long heapMaxSize = Runtime.getRuntime().maxMemory();
+                long heapFreeSize = Runtime.getRuntime().freeMemory();
+                ServerMetrics.getMetrics().JVM_HEAP_BYTES_USED.add(heapSize);
+                ServerMetrics.getMetrics().JVM_HEAP_BYTES_MAX.add(heapMaxSize);
+                ServerMetrics.getMetrics().JVM_HEAP_BYTES_FREE.add(heapFreeSize);
             }
         }
 
