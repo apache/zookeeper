@@ -1,0 +1,58 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# This workflow enforces quality checks on bash scripts in the project
+
+name: ScriptQA
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+permissions:
+  contents: read
+
+jobs:
+  shfmt:
+    name: shfmt
+    timeout-minutes: 3
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Show the first log message
+      run: git log -n1
+    - name: Install shfmt
+      run: tools/ci/install-shfmt.sh
+    - name: Checking formatting of all scripts
+      run: tools/ci/run-shfmt.sh
+
+  shellcheck:
+    name: ShellCheck
+    timeout-minutes: 3
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Show the first log message
+      run: git log -n1
+    - name: Install shfmt
+      run: tools/ci/install-shfmt.sh
+    - name: Running shellcheck on all scripts
+      run: tools/ci/run-shellcheck.sh
