@@ -40,8 +40,16 @@ public interface CounterSet {
      * Increment the value by a given amount for the given key
      * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
      *
-     * @param key the key to increment the count for the given key
+     * @param key   the key to increment the count for the given key
      * @param delta amount to increment, this cannot be a negative number.
      */
     void add(String key, long delta);
+
+    /**
+     * Remove the vale for the given key
+     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
+     *
+     * @param key the key to remove for the given key
+     */
+    void remove(String key);
 }
