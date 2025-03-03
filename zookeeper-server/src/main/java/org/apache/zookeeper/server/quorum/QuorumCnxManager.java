@@ -490,7 +490,7 @@ public class QuorumCnxManager {
 
             String addr = addressesToSend.stream()
                     .map(NetUtils::formatInetAddr).collect(Collectors.joining("|"));
-            byte[] addr_bytes = addr.getBytes();
+            byte[] addr_bytes = addr.getBytes(UTF_8);
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
             dout.flush();
