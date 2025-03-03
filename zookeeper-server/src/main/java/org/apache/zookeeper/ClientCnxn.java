@@ -219,7 +219,7 @@ public class ClientCnxn {
      * If any request's response in not received in configured requestTimeout
      * then it is assumed that the response packet is lost.
      */
-    private long requestTimeout;
+    private final long requestTimeout;
 
     ZKWatchManager getWatcherManager() {
         return watchManager;
@@ -286,6 +286,8 @@ public class ClientCnxn {
         WatchRegistration watchRegistration;
 
         WatchDeregistration watchDeregistration;
+
+        long deadline = Long.MAX_VALUE;
 
         /** Convenience ctor */
         Packet(
@@ -416,7 +418,12 @@ public class ClientCnxn {
 
         this.sendThread = new SendThread(clientCnxnSocket);
         this.eventThread = new EventThread();
-        initRequestTimeout();
+        this.requestTimeout = clientConfig.getRequestTimeout();
+        LOG.info(
+                "{} value is {}. feature enabled={}",
+                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
+                requestTimeout,
+                requestTimeout > 0);
     }
 
     public void start() {
@@ -730,8 +737,6 @@ public class ClientCnxn {
                         p.replyHeader.setErr(Code.OK.intValue());
                     }
                 }
-            } catch (KeeperException.NoWatcherException nwe) {
-                p.replyHeader.setErr(nwe.code().intValue());
             } catch (KeeperException ke) {
                 p.replyHeader.setErr(ke.code().intValue());
             }
@@ -767,21 +772,26 @@ public class ClientCnxn {
 
     }
 
-    private void conLossPacket(Packet p) {
+    private Code abortPacket(Packet p, Code cause) {
         if (p.replyHeader == null) {
-            return;
+            return cause;
         }
         switch (state) {
-        case AUTH_FAILED:
-            p.replyHeader.setErr(KeeperException.Code.AUTHFAILED.intValue());
-            break;
-        case CLOSED:
-            p.replyHeader.setErr(KeeperException.Code.SESSIONEXPIRED.intValue());
-            break;
-        default:
-            p.replyHeader.setErr(KeeperException.Code.CONNECTIONLOSS.intValue());
+            case AUTH_FAILED:
+                p.replyHeader.setErr(KeeperException.Code.AUTHFAILED.intValue());
+                break;
+            case CLOSED:
+                p.replyHeader.setErr(KeeperException.Code.SESSIONEXPIRED.intValue());
+                break;
+            default:
+                p.replyHeader.setErr(cause.intValue());
         }
         finishPacket(p);
+        return Code.CONNECTIONLOSS;
+    }
+
+    private void conLossPacket(Packet p) {
+        abortPacket(p, Code.CONNECTIONLOSS);
     }
 
     private volatile long lastZxid;
@@ -860,6 +870,8 @@ public class ClientCnxn {
 
             replyHdr.deserialize(bbia, "header");
             switch (replyHdr.getXid()) {
+            case SET_WATCHES_XID:
+                return;
             case PING_XID:
                 LOG.debug("Got ping response for session id: 0x{} after {}ms.",
                     Long.toHexString(sessionId),
@@ -1124,6 +1136,39 @@ public class ClientCnxn {
             }
         }
 
+        private long requestDeadline() {
+            if (requestTimeout == 0) {
+                return Long.MAX_VALUE;
+            }
+
+            // The correctness of following code depends on several implementation details:
+            // 1. Polling of outgoingQueue happens only in SendThread.
+            // 2. Adding to pendingQueue happens only in SendThread.
+            //
+            // It is possible for netty socket to readResponse for first pendingQueue entry
+            // while we are checking deadline for the same entry. So, it is possible that
+            // a request was responded near deadline, but we disconnect the session. Given
+            // that we are dealing with timeout, this should not be much matter.
+            //
+            // In long term, we should sequence all pendingQueue operations to SendThread.
+
+            Packet p;
+            synchronized (pendingQueue) {
+                p = pendingQueue.peek();
+            }
+            if (p != null) {
+                return p.deadline;
+            }
+
+            for (Packet packet : outgoingQueue) {
+                if (packet.requestHeader != null && packet.requestHeader.getXid() >= 0) {
+                    return packet.deadline;
+                }
+            }
+
+            return Long.MAX_VALUE;
+        }
+
         @Override
         @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
         public void run() {
@@ -1208,6 +1253,14 @@ public class ClientCnxn {
                             Long.toHexString(sessionId));
                         throw new ConnectionTimeoutException(warnInfo);
                     }
+                    long deadline = requestDeadline();
+                    if (deadline != Long.MAX_VALUE) {
+                        long now = Time.currentElapsedTime();
+                        if (now >= deadline) {
+                            throw new KeeperException.RequestTimeoutException();
+                        }
+                        to = Integer.min(to, (int) (deadline - now));
+                    }
                     if (state.isConnected()) {
                         //1000(1 second) is to prevent race condition missing to send the second ping
                         //also make sure not to send too many pings when readTimeout is small
@@ -1256,9 +1309,14 @@ public class ClientCnxn {
                             serverAddress,
                             e);
 
+                        Code cause = Code.CONNECTIONLOSS;
+                        if (e instanceof KeeperException) {
+                            cause = ((KeeperException) e).code();
+                        }
+
                         // At this point, there might still be new packets appended to outgoingQueue.
                         // they will be handled in next connection or cleared up if closed.
-                        cleanAndNotifyState();
+                        cleanAndNotifyState(cause);
                     }
                 }
             }
@@ -1289,8 +1347,8 @@ public class ClientCnxn {
                 "SendThread exited loop for session: 0x" + Long.toHexString(getSessionId()));
         }
 
-        private void cleanAndNotifyState() {
-            cleanup();
+        private void cleanAndNotifyState(Code cause) {
+            cleanup(cause);
             if (state.isAlive()) {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None, Event.KeeperState.Disconnected, null));
             }
@@ -1322,10 +1380,14 @@ public class ClientCnxn {
         }
 
         private void cleanup() {
+            cleanup(Code.CONNECTIONLOSS);
+        }
+
+        private void cleanup(Code cause) {
             clientCnxnSocket.cleanup();
             synchronized (pendingQueue) {
                 for (Packet p : pendingQueue) {
-                    conLossPacket(p);
+                    cause = abortPacket(p, cause);
                 }
                 pendingQueue.clear();
             }
@@ -1335,7 +1397,7 @@ public class ClientCnxn {
             Iterator<Packet> iter = outgoingQueue.iterator();
             while (iter.hasNext()) {
                 Packet p = iter.next();
-                conLossPacket(p);
+                cause = abortPacket(p, cause);
                 iter.remove();
             }
         }
@@ -1520,35 +1582,11 @@ public class ClientCnxn {
             watchRegistration,
             watchDeregistration);
         synchronized (packet) {
-            if (requestTimeout > 0) {
-                // Wait for request completion with timeout
-                waitForPacketFinish(r, packet);
-            } else {
-                // Wait for request completion infinitely
-                while (!packet.finished) {
-                    packet.wait();
-                }
+            while (!packet.finished) {
+                packet.wait();
             }
-        }
-        if (r.getErr() == Code.REQUESTTIMEOUT.intValue()) {
-            sendThread.cleanAndNotifyState();
         }
         return r;
-    }
-
-    /**
-     * Wait for request completion with timeout.
-     */
-    private void waitForPacketFinish(ReplyHeader r, Packet packet) throws InterruptedException {
-        long waitStartTime = Time.currentElapsedTime();
-        while (!packet.finished) {
-            packet.wait(requestTimeout);
-            if (!packet.finished && ((Time.currentElapsedTime() - waitStartTime) >= requestTimeout)) {
-                LOG.error("Timeout error occurred for the packet '{}'.", packet);
-                r.setErr(Code.REQUESTTIMEOUT.intValue());
-                break;
-            }
-        }
     }
 
     public void saslCompleted() {
@@ -1607,6 +1645,9 @@ public class ClientCnxn {
         packet.clientPath = clientPath;
         packet.serverPath = serverPath;
         packet.watchDeregistration = watchDeregistration;
+        if (requestTimeout != 0 && h.getXid() >= 0) {
+            packet.deadline = Time.currentElapsedTime() + requestTimeout;
+        }
         // The synchronized block here is for two purpose:
         // 1. synchronize with the final cleanup() in SendThread.run() to avoid race
         // 2. synchronized against each packet. So if a closeSession packet is added,
@@ -1662,25 +1703,6 @@ public class ClientCnxn {
             this.ctx = ctx;
         }
 
-    }
-
-    private void initRequestTimeout() {
-        try {
-            requestTimeout = clientConfig.getLong(
-                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
-                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT);
-            LOG.info(
-                "{} value is {}. feature enabled={}",
-                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
-                requestTimeout,
-                requestTimeout > 0);
-        } catch (NumberFormatException e) {
-            LOG.error(
-                "Configured value {} for property {} can not be parsed to long.",
-                clientConfig.getProperty(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT),
-                ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
-            throw e;
-        }
     }
 
     public ZooKeeperSaslClient getZooKeeperSaslClient() {
