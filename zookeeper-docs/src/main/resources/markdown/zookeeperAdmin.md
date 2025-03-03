@@ -2255,17 +2255,27 @@ options are used to configure the [AdminServer](#sc_adminserver).
    Number of worker threads for reporting Prometheus summary metrics. 
    Default value is 1. 
    If the number is less than 1, the main thread will be used.
+   After 3.9.4, this configuration is ignored, see detail at [ZOOKEEPER-4767][jira-4767]
     
 * *metricsProvider.maxQueueSize* :
    **New in 3.7.1:**
    The max queue size for Prometheus summary metrics reporting task.
    Default value is 1000000.
+   After 3.9.4, this configuration is ignored, see detail at [ZOOKEEPER-4767][jira-4767]
    
 * *metricsProvider.workerShutdownTimeoutMs* :
    **New in 3.7.1:**
    The timeout in ms for Prometheus worker threads shutdown.
    Default value is 1000ms.
-   
+
+* *metricsProvider.prometheusMetricsSummaryRotateIntervalSeconds*
+   **New in 3.9.4:**
+   The interval in seconds for rotating the summary metrics.
+   The quantiles of summary metrics from the current period are displayed in the next period.
+   Default value is 60 seconds.
+
+[jira-4767]: https://issues.apache.org/jira/browse/ZOOKEEPER-4767
+
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework
