@@ -1425,7 +1425,9 @@ of servers -- that is, when deploying clusters of servers.
     command must be put in this list else ZooKeeper server will
     not enable the command.
     By default the whitelist only contains "srvr" command
-    which zkServer.sh uses. The rest of four-letter word commands are disabled
+    which zkServer.sh uses. Additionally, if Read Only Mode is enabled by setting
+    Java system property **readonlymode.enabled**, then the "isro" command is
+    added to the whitelist. The rest of four-letter word commands are disabled
     by default: attempting to use them will gain a response
     ".... is not executed because it is not in the whitelist."
     Here's an example of the configuration that enables stat, ruok, conf, and isro
