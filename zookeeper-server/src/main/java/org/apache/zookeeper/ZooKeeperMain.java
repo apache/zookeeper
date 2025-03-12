@@ -405,7 +405,7 @@ public class ZooKeeperMain {
             history.put(commandCount, history.get(i));
             processCmd(cl);
         } else if (cmd.equals("history")) {
-            for (int i = commandCount - 10; i <= commandCount; ++i) {
+            for (int i = commandCount - 10; i < commandCount; ++i) {
                 if (i < 0) {
                     continue;
                 }
