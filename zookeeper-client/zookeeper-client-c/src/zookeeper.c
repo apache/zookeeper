@@ -5112,11 +5112,11 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 
 static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
-    static char buf[134] = { 0 };
+    static __thread char buf[134] = { 0 };
     char addrstr[INET6_ADDRSTRLEN] = { 0 };
     const char *fmtstring;
     void *inaddr;
-    char is_inet6 = 0;  // poor man's boolean
+    char is_inet6 = 0; // poor man's boolean
 #ifdef _WIN32
     char * addrstring;
 #endif
