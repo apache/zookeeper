@@ -669,6 +669,20 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
 
 #endif /* HAVE_CYRUS_SASL_H */
 
+
+/**
+ * \brief return the zookeeper MAJOR.MINOR.PATCH version as a string
+ *
+ * This method allows a calling program to determine at runtime if the
+ * version of the dynamically loaded zookeeper library is the same as
+ * the version of the library when the calling program was compiled.
+ *
+ * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-4556}
+
+ * \return a string "MAJOR.MINOR.PATCH"
+ */
+ZOOAPI const char* zoo_version_str();
+
 /**
  * \brief update the list of servers this client will connect to.
  *
