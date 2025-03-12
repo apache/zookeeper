@@ -215,6 +215,12 @@ counter used to store the next sequence number is a signed int
 overflow when incremented beyond 2147483647 (resulting in a
 name "<path>-2147483648").
 
+**Added in 3.10.0**: A signed long (8 bytes) sequential version is introduced
+to overcome this overflow and the undefined behavior after that point. We
+recommend you to start with this in newer ZooKeeper version, but we also do
+suggest you to reevaluate your usages in case you are either experiencing or
+worrying about above overflow.
+
 <a name="Container+Nodes"></a>
 
 #### Container Nodes
