@@ -1,0 +1,15 @@
+name: Trigger Log Analysis in Log Density
+
+on:
+  pull_request:
+
+jobs:
+  trigger-log-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send repository dispatch event
+        run: |
+          curl -X POST -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ secrets.LOG_DENSITY_PAT }}" \
+               https://api.github.com/repos/YOUR_GITHUB_USER/log-density-plugin-h25/dispatches \
+               -d '{"event_type": "zookeeper_pr_analysis", "client_payload": {"pr_number": "${{ github.event.pull_request.number }}"}}'
