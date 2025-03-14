@@ -1506,16 +1506,12 @@ public class ZooKeeper implements AutoCloseable {
     private void setCreateHeader(CreateMode createMode, RequestHeader h, boolean requestStat) {
         if (createMode.isTTL()) {
             h.setType(ZooDefs.OpCode.createTTL);
+        } else if (createMode.isContainer()) {
+            h.setType(ZooDefs.OpCode.createContainer);
+        } else if (requestStat) {
+            h.setType(ZooDefs.OpCode.create2);
         } else {
-            if (createMode.isContainer()) {
-                h.setType(ZooDefs.OpCode.createContainer);
-            } else {
-                if (requestStat) {
-                    h.setType(ZooDefs.OpCode.create2);
-                } else {
-                    h.setType(ZooDefs.OpCode.create);
-                }
-            }
+            h.setType(ZooDefs.OpCode.create);
         }
     }
 
