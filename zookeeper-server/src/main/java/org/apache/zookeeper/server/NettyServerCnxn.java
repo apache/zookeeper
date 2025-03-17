@@ -537,15 +537,15 @@ public class NettyServerCnxn extends ServerCnxn {
                                 return;
                             }
                         }
-                        if (len < 0 || len > BinaryInputArchive.maxBuffer) {
-                            throw new IOException("Len error " + len);
-                        }
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
                             LOG.info("Closing connection to {} because the server is not ready (server state is: {})",
                                 getRemoteSocketAddress(), zks == null ? "unknown" : zks.getState());
                             close(DisconnectReason.IO_EXCEPTION);
                             return;
+                        }
+                        if (len < 0 || len > BinaryInputArchive.maxBuffer) {
+                            throw new IOException("Len error " + len);
                         }
                         // checkRequestSize will throw IOException if request is rejected
                         zks.checkRequestSizeWhenReceivingMessage(len);
