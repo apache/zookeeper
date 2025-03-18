@@ -23,9 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
@@ -92,6 +97,90 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].shutdown();
         }
+    }
+
+    @Test
+    void testClientRequestTimeoutSpuriousWakeup() throws Exception {
+        Long requestTimeout = 2000L;
+        System.setProperty("zookeeper.request.timeout", requestTimeout.toString());
+        final int[] clientPorts = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        String server;
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique()
+                    + ":participant;127.0.0.1:" + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+        MainThread[] mt = new MainThread[SERVER_COUNT];
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+            mt[i].start();
+        }
+
+        // ensure server started
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT),
+                    "waiting for server " + i + " being up");
+        }
+
+        CountdownWatcher watch1 = new CountdownWatcher();
+        CustomZooKeeper zk = new CustomZooKeeper(getCxnString(clientPorts), ClientBase.CONNECTION_TIMEOUT, watch1);
+        watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+
+
+        ReplyHeader r = new ReplyHeader();
+        ClientCnxn.Packet packet = new ClientCnxn.Packet(null, null, null, null, null);
+        ClientCnxn clientCnxn = zk.getClientCnxn();
+
+        // Simulate spurious wakeup.
+        new Thread(() -> {
+            try {
+                TimeUnit.MILLISECONDS.sleep(1500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            synchronized (packet) {
+                packet.notifyAll();
+            }
+        }).start();
+
+        long startTime = System.currentTimeMillis();
+        synchronized (packet) {
+            invokeMethod(clientCnxn, "waitForPacketFinish", r, packet);
+        }
+        long cost = System.currentTimeMillis() - startTime;
+
+        LOG.info("test requestTimeout cost:{}", cost);
+        assertTrue(cost >= requestTimeout);
+        assertTrue(cost < requestTimeout + 200);
+
+        // do cleanup
+        zk.close();
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
+    }
+
+    private Object invokeMethod(final Object target,
+                                final String methodName,
+                                final Object... args) throws
+            IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        Class<?>[] argsType = Arrays.stream(args).map(Object::getClass).toArray(Class<?>[]::new);
+        Class<?> clazz = target.getClass();
+        while (clazz != null) {
+            try {
+                Method method = clazz.getDeclaredMethod(methodName, argsType);
+                method.setAccessible(true);
+                return method.invoke(target, args);
+            } catch (NoSuchMethodException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException("Method " + methodName + " not found");
     }
 
     /**
@@ -171,6 +260,10 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
                 sessionId,
                 sessionPasswd,
                 canBeReadOnly);
+        }
+
+        public ClientCnxn getClientCnxn() {
+            return cnxn;
         }
 
     }
