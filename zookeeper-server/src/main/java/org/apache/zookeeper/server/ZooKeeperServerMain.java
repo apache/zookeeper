@@ -299,12 +299,12 @@ public class ZooKeeperServerMain {
     private void metricsProviderInitialized() {
         try {
             ServerMetrics.metricsProviderInitialized(metricsProvider);
-        } catch (Exception e) {
-            if (e instanceof ClassNotFoundException) {
+        } catch (Throwable throwable) {
+            if (throwable instanceof ClassNotFoundException) {
                 LOG.warn("Metrics provider not found, metrics will not be reported");
                 return;
             }
-            throw e;
+            throw throwable;
         }
     }
 }
