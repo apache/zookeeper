@@ -366,7 +366,12 @@ public class NettyServerCnxn extends ServerCnxn {
     void processMessage(ByteBuf buf) {
         checkIsInEventLoop("processMessage");
         LOG.debug("0x{} queuedBuffer: {}", Long.toHexString(sessionId), queuedBuffer);
-
+        
+        if (closingChannel) {
+            LOG.info("Closing connection to {}", getRemoteSocketAddress());
+            return;
+        }
+        
         if (LOG.isTraceEnabled()) {
             LOG.trace("0x{} buf {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(buf));
         }
@@ -537,15 +542,15 @@ public class NettyServerCnxn extends ServerCnxn {
                                 return;
                             }
                         }
+                        if (len < 0 || len > BinaryInputArchive.maxBuffer) {
+                            throw new IOException("Len error " + len);
+                        }
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
                             LOG.info("Closing connection to {} because the server is not ready (server state is: {})",
                                 getRemoteSocketAddress(), zks == null ? "unknown" : zks.getState());
                             close(DisconnectReason.IO_EXCEPTION);
                             return;
-                        }
-                        if (len < 0 || len > BinaryInputArchive.maxBuffer) {
-                            throw new IOException("Len error " + len);
                         }
                         // checkRequestSize will throw IOException if request is rejected
                         zks.checkRequestSizeWhenReceivingMessage(len);
