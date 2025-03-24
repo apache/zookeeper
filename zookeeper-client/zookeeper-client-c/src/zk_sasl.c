@@ -453,12 +453,15 @@ struct zsasl_secret_ctx {
 static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
                             sasl_secret_t **psecret)
 {
-    const size_t MAX_PASSWORD_LEN = 1023;
+    /* Max allowed length of a password */
+    const size_t MAX_PASSWORD_LEN = 1023; 
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
-    char buf[MAX_PASSWORD_LEN + 1];
+    /* The extra 1 byte is reserved for storing the null terminator. */
+    char buf[MAX_PASSWORD_LEN + 1]; 
     char *password = NULL;
     size_t len = 0;
     int res = 0;
+    /* The extra 1 byte is reserved for storing the null terminator. */
     char new_passwd[MAX_PASSWORD_LEN + 1];
     char *p = NULL;
     sasl_secret_t *x;
@@ -481,6 +484,8 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         len = fread(buf, sizeof(buf[0]), MAX_PASSWORD_LEN, fh);
         if (ferror(fh)) {
             fclose(fh);
+            fh = NULL;
+
             return SASL_FAIL;
         }
 
@@ -505,13 +510,20 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         }
 
         res = secret_ctx->callback(password, len, secret_ctx->context,
-            new_passwd, sizeof(new_passwd));
+            new_passwd, MAX_PASSWORD_LEN, &len);
         if (res != SASL_OK) {
             return res;
         }
 
-        memset(password, 0, len);
+        if (len > MAX_PASSWORD_LEN) {
+            return SASL_BUFOVER;
+        }
 
+        /* 
+         * Append the null terminator  to the end of the password obtained from
+         * the callback function.
+         */
+        new_passwd[len] = '\0';
         password = new_passwd;
     } else if (secret_ctx->password_file) {
         /*
@@ -525,27 +537,27 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
         }
     } else {
         password = getpassphrase("Password: ");
-
         if (!password) {
             return SASL_FAIL;
         }
     }
 
     /*
-     * Since new_passwd must be null-terminated, also use strlen() to get the length.
+     * Any password, regardless of its source, is always null-terminated.
      */
     len = strlen(password);
 
     x = secret_ctx->secret = (sasl_secret_t *)realloc(
         secret_ctx->secret, sizeof(sasl_secret_t) + len);
-
     if (!x) {
         memset(password, 0, len);
         return SASL_NOMEM;
     }
 
     x->len = len;
-    strcpy((char *) x->data, password);
+
+    /* The extra 1 byte is the null terminator. */
+    memcpy(x->data, password, len + 1);
     memset(password, 0, len);
 
     *psecret = x;

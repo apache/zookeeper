@@ -680,12 +680,17 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
  * \param buf the buffer where the resulting actual password is saved, NOTE that
  *   this callback must write the null terminator immediately after the last
  *   character of the actual password, otherwise the behaviour is undefined.
- * \param buf_len the size of buf in bytes, which is also the max allowed length
- *   for the actual password (including the null terminator).
+ * \param buf_len the size of buf in bytes, is also the max allowed length of
+ *   the actual password (excluding the null terminator), which is 1023. The
+ *   1-byte difference from 1024 accounts for the null (\0) terminator. A length
+ *   of 1023 is sufficient for storing the password.
+ * \param passwd_len as an output parameter of the callback function, passwd_len
+ *   points to the actual length of the password stored in buf. Its size must not
+ *   exceed buf_len; otherwise, SASL_BUFOVER will be returned.
  * \return SASL_OK, or the possible errors defined by the SASL library.
  */
 typedef int (*zoo_sasl_password_callback_t)(const char *content, size_t content_len,
-        void *context, char *buf, size_t buf_len);
+        void *context, char *buf, size_t buf_len, size_t *passwd_len);
 
 /**
  * \brief zoo_sasl_password structure.

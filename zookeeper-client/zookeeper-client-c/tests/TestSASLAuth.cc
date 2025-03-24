@@ -252,21 +252,26 @@ public:
     }
 
     int decryptPassword(const char *content, size_t content_len,
-                        char incr, char *buf, size_t buf_len) {
-        CPPUNIT_ASSERT(content_len < buf_len);
+                        char incr, char *buf, size_t buf_len,
+                        size_t *passwd_len) {
+        CPPUNIT_ASSERT(content_len <= buf_len);
+
         // A simple decryption that only increases each character by a fixed value.
         for (size_t i = 0; i < content_len; ++i) {
             buf[i] = content[i] + incr;
         }
-        buf[content_len] = '\0';
-        CPPUNIT_ASSERT_EQUAL(strcmp(buf, "mypassword"), 0);
+        *passwd_len = content_len;
+
+        // Since null terminator has not been appended to buf, use memcmp.  
+        CPPUNIT_ASSERT_EQUAL(memcmp(buf, "mypassword", *passwd_len), 0);
         return SASL_OK;
     }
 
     static int textPasswordCallback(const char *content, size_t content_len,
-                                    void *context, char *buf, size_t buf_len) {
+                                    void *context, char *buf, size_t buf_len,
+                                    size_t *passwd_len) {
         Zookeeper_SASLAuth *auth = static_cast<Zookeeper_SASLAuth *>(context);
-        return auth->decryptPassword(content, content_len, 1, buf, buf_len);
+        return auth->decryptPassword(content, content_len, 1, buf, buf_len, passwd_len);
     }
 
     void testClientSASLWithPasswordEncryptedText() {
@@ -280,9 +285,10 @@ public:
     }
 
     static int binaryPasswordCallback(const char *content, size_t content_len,
-                                      void *context, char *buf, size_t buf_len) {
+                                      void *context, char *buf, size_t buf_len,
+                                      size_t *passwd_len) {
         Zookeeper_SASLAuth *auth = static_cast<Zookeeper_SASLAuth *>(context);
-        return auth->decryptPassword(content, content_len, 'a', buf, buf_len);
+        return auth->decryptPassword(content, content_len, 'a', buf, buf_len, passwd_len);
     }
 
     void testClientSASLWithPasswordEncryptedBinary() {
