@@ -130,7 +130,7 @@ public class ZooKeeperServerMain {
             } catch (MetricsProviderLifeCycleException error) {
                 throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
             }
-            ServerMetrics.metricsProviderInitialized(metricsProvider);
+            metricsProviderInitialized();
             ProviderRegistry.initialize();
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
@@ -294,5 +294,17 @@ public class ZooKeeperServerMain {
     }
 
     protected void serverStarted() {
+    }
+
+    private void metricsProviderInitialized() {
+        try {
+            ServerMetrics.metricsProviderInitialized(metricsProvider);
+        } catch (Exception e) {
+            if (e instanceof ClassNotFoundException) {
+                LOG.warn("Metrics provider not found, metrics will not be reported");
+                return;
+            }
+            throw e;
+        }
     }
 }
