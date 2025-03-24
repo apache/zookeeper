@@ -63,6 +63,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
     @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
+        System.setProperty("zookeeper.extendedTypesEnabled", "true");
         // setup the logger to capture all logs
         LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
         os = loggerTestTool.getOutputStream();
@@ -101,6 +102,32 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         verifyLog(
                 getAuditLog(AuditConstants.OP_CREATE, path, Result.FAILURE,
                         null, createMode), readAuditLog(os));
+    }
+
+    @Test
+    public void testCreateWithTtlAuditLogs()
+            throws KeeperException, InterruptedException, IOException {
+        final CreateMode createMode = CreateMode.PERSISTENT_WITH_TTL;
+        final String path = "/createTtlPath";
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                createMode, null, 3600);
+        // success log
+        verifyLog(
+                getAuditLog(AuditConstants.OP_CREATE, path, Result.SUCCESS,
+                        null, createMode.toString().toLowerCase()), readAuditLog(os));
+    }
+
+    @Test
+    public void testCreateSeqWithTtlAuditLogs()
+            throws KeeperException, InterruptedException, IOException {
+        final CreateMode createMode = CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
+        String path = "/createTtlPath";
+        path = zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                createMode, null, 3600);
+        // success log
+        verifyLog(
+                getAuditLog(AuditConstants.OP_CREATE, path, Result.SUCCESS,
+                        null, createMode.toString().toLowerCase()), readAuditLog(os));
     }
 
     @Test
@@ -406,6 +433,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
 
     @AfterAll
     public static void tearDownAfterClass() {
+        System.clearProperty("zookeeper.extendedTypesEnabled");
         System.clearProperty(ZKAuditProvider.AUDIT_ENABLE);
         for (int i = 0; i < SERVER_COUNT; i++) {
             try {
