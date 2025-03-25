@@ -367,6 +367,11 @@ public class NettyServerCnxn extends ServerCnxn {
         checkIsInEventLoop("processMessage");
         LOG.debug("0x{} queuedBuffer: {}", Long.toHexString(sessionId), queuedBuffer);
 
+        if (closingChannel) {
+            LOG.debug("Drop incoming message during connection closing for session 0x{}", Long.toHexString(sessionId));
+            return;
+        }
+
         if (LOG.isTraceEnabled()) {
             LOG.trace("0x{} buf {}", Long.toHexString(sessionId), ByteBufUtil.hexDump(buf));
         }
