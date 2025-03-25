@@ -249,6 +249,7 @@ set(test_sources
   tests/ThreadingUtil.cc
   tests/TestZookeeperInit.cc
   tests/TestZookeeperClose.cc
+  tests/TestSASLAuth.cc
   tests/TestReconfig.cc
   tests/TestReconfigServer.cc
   tests/TestClientRetry.cc
