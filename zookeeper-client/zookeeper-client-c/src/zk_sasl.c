@@ -442,6 +442,8 @@ getpassphrase(const char *prompt) {
 
 struct zsasl_secret_ctx {
     const char *password_file;
+    void *context;
+    zoo_sasl_password_callback_t callback;
     sasl_secret_t *secret;
 };
 
@@ -451,53 +453,111 @@ struct zsasl_secret_ctx {
 static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
                             sasl_secret_t **psecret)
 {
+    /* Max allowed length of a password */
+    const size_t MAX_PASSWORD_LEN = 1023; 
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
-    char buf[1024];
-    char *password;
-    size_t len;
+    /* The extra 1 byte is reserved for storing the null terminator. */
+    char buf[MAX_PASSWORD_LEN + 1]; 
+    char *password = NULL;
+    size_t len = 0;
+    int res = 0;
+    /* The extra 1 byte is reserved for storing the null terminator. */
+    char new_passwd[MAX_PASSWORD_LEN + 1];
+    char *p = NULL;
     sasl_secret_t *x;
 
     /* paranoia check */
-    if (!conn || !psecret || id != SASL_CB_PASS)
+    if (!conn || !psecret || id != SASL_CB_PASS) {
         return SASL_BADPARAM;
+    }
 
     if (secret_ctx->password_file) {
-        char *p;
         FILE *fh = fopen(secret_ctx->password_file, "rt");
-        if (!fh)
+        if (!fh) {
             return SASL_FAIL;
+        }
 
-        if (!fgets(buf, sizeof(buf), fh)) {
+        /*
+         * The file's content may be the encrypted password with binary characters,
+         * thus use fread().
+         */
+        len = fread(buf, sizeof(buf[0]), MAX_PASSWORD_LEN, fh);
+        if (ferror(fh)) {
             fclose(fh);
+            fh = NULL;
+
             return SASL_FAIL;
         }
 
         fclose(fh);
+        fh = NULL;
 
-        p = strrchr(buf, '\n');
-        if (p)
-            *p = '\0';
-
+        /*
+         * Write the null terminator immediately after the last character of the
+         * content since it would be used as a null-terminated string once it is
+         * the actual password.
+         */
+        buf[len] = '\0';
         password = buf;
-    } else {
-        password = getpassphrase("Password: ");
-
-        if (!password)
-            return SASL_FAIL;
     }
 
+    if (secret_ctx->callback) {
+        if (!password) {
+            /*
+             * The callback takes effect only when password_file is provided.
+             */
+            return SASL_BADPARAM;
+        }
+
+        res = secret_ctx->callback(password, len, secret_ctx->context,
+            new_passwd, MAX_PASSWORD_LEN, &len);
+        if (res != SASL_OK) {
+            return res;
+        }
+
+        if (len > MAX_PASSWORD_LEN) {
+            return SASL_BUFOVER;
+        }
+
+        /* 
+         * Append the null terminator  to the end of the password obtained from
+         * the callback function.
+         */
+        new_passwd[len] = '\0';
+        password = new_passwd;
+    } else if (secret_ctx->password_file) {
+        /*
+         * The file's content is the actual password, which must consist only of
+         * text characters (i.e., without null terminator). The first line would
+         * be read as the password once there are multiple lines in the file.
+         */
+        p = strchr(password, '\n');
+        if (p) {
+            *p = '\0';
+        }
+    } else {
+        password = getpassphrase("Password: ");
+        if (!password) {
+            return SASL_FAIL;
+        }
+    }
+
+    /*
+     * Any password, regardless of its source, is always null-terminated.
+     */
     len = strlen(password);
 
     x = secret_ctx->secret = (sasl_secret_t *)realloc(
         secret_ctx->secret, sizeof(sasl_secret_t) + len);
-
     if (!x) {
         memset(password, 0, len);
         return SASL_NOMEM;
     }
 
     x->len = len;
-    strcpy((char *) x->data, password);
+
+    /* The extra 1 byte is the null terminator. */
+    memcpy(x->data, password, len + 1);
     memset(password, 0, len);
 
     *psecret = x;
@@ -506,9 +566,9 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
 
 typedef int (* sasl_callback_fn_t)(void);
 
-sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
-                                               const char *realm,
-                                               const char* password_file)
+sasl_callback_t *zoo_sasl_make_password_callbacks(const char *user,
+                                                  const char *realm,
+                                                  zoo_sasl_password_t *password)
 {
     struct zsasl_secret_ctx *secret_ctx;
     const char *user_ctx = NULL;
@@ -521,7 +581,9 @@ sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
 
     rc = rc < 0 ? rc : _zsasl_strdup(&user_ctx, user);
     rc = rc < 0 ? rc : _zsasl_strdup(&realm_ctx, realm);
-    rc = rc < 0 ? rc : _zsasl_strdup(&secret_ctx->password_file, password_file);
+    rc = rc < 0 ? rc : _zsasl_strdup(&secret_ctx->password_file, password->password_file);
+    secret_ctx->context = password->context;
+    secret_ctx->callback = password->callback;
 
     {
         sasl_callback_t callbacks[] = {
@@ -549,6 +611,14 @@ sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
 
         return xcallbacks;
     }
+}
+
+sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
+                                               const char *realm,
+                                               const char* password_file)
+{
+    zoo_sasl_password_t password = {password_file, NULL, NULL};
+    return zoo_sasl_make_password_callbacks(user, realm, &password);
 }
 
 #ifdef __APPLE__
