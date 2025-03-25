@@ -677,13 +677,9 @@ ZOOAPI sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
  * \param content_len the size of the content in bytes.
  * \param context the handback object that will be associated with the password
  *   file. The object is not used by zookeeper internally and can be null.
- * \param buf the buffer where the resulting actual password is saved, NOTE that
- *   this callback must write the null terminator immediately after the last
- *   character of the actual password, otherwise the behaviour is undefined.
- * \param buf_len the size of buf in bytes, is also the max allowed length of
- *   the actual password (excluding the null terminator), which is 1023. The
- *   1-byte difference from 1024 accounts for the null (\0) terminator. A length
- *   of 1023 is sufficient for storing the password.
+ * \param buf the buffer where the resulting actual password is saved.
+ * \param buf_len the size of buf in bytes, which is also the max allowed
+ *   password length.
  * \param passwd_len as an output parameter of the callback function, passwd_len
  *   points to the actual length of the password stored in buf. Its size must not
  *   exceed buf_len; otherwise, SASL_BUFOVER will be returned.
