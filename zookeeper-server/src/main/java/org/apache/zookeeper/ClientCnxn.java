@@ -1615,14 +1615,16 @@ public class ClientCnxn {
      * Wait for request completion with timeout.
      */
     private void waitForPacketFinish(ReplyHeader r, Packet packet) throws InterruptedException {
-        long waitStartTime = Time.currentElapsedTime();
-        while (!packet.finished) {
-            packet.wait(requestTimeout);
-            if (!packet.finished && ((Time.currentElapsedTime() - waitStartTime) >= requestTimeout)) {
-                LOG.error("Timeout error occurred for the packet '{}'.", packet);
-                r.setErr(Code.REQUESTTIMEOUT.intValue());
-                break;
-            }
+        long remainingTime = requestTimeout;
+        while (!packet.finished && remainingTime > 0) {
+            long waitStartTime = Time.currentElapsedTime();
+            packet.wait(remainingTime);
+            remainingTime -= (Time.currentElapsedTime() - waitStartTime);
+        }
+
+        if (!packet.finished) {
+            LOG.error("Timeout error occurred for the packet '{}'.", packet);
+            r.setErr(Code.REQUESTTIMEOUT.intValue());
         }
     }
 
