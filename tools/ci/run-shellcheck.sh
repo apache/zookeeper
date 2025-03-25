@@ -18,26 +18,11 @@
 # under the License.
 #
 
-#
-# If this scripted is run out of /usr/bin or some other system bin directory
-# it should be linked to and not copied. Things like java jar files are found
-# relative to the canonical path of this script.
-#
+# Run ShellCheck on all bash scripts
 
-# use POSIX interface, symlink is followed automatically
-ZOOBIN="${BASH_SOURCE-$0}"
-ZOOBIN="$(dirname "$ZOOBIN")"
-ZOOBINDIR="$(cd "$ZOOBIN" && pwd)"
+set -e
 
-if [[ -e "$ZOOBIN/../libexec/zkEnv.sh" ]]; then
-  # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
-else
-  # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/zkEnv.sh
-fi
+mapfile -t filestocheck < <(shfmt -f .)
 
-# shellcheck disable=SC2206
-flags=($JVMFLAGS)
-"$JAVA" "${flags[@]}" \
-  org.apache.zookeeper.server.SnapshotComparer "$@"
+set -x
+shellcheck -P SCRIPTDIR -x "${filestocheck[@]}"
