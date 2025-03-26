@@ -335,6 +335,10 @@ public class Leader extends LearnerMaster {
         this.self = self;
         this.proposalStats = new BufferStats();
 
+        // A new Leader node has been elected, therefore the zxid bit length is synchronously increased.
+        ZxidUtils.setEpochHighPosition40();
+        self.setCurrentEpochPosition(40);
+
         Set<InetSocketAddress> addresses;
         if (self.getQuorumListenOnAllIPs()) {
             addresses = self.getQuorumAddress().getWildcardAddresses();
@@ -662,7 +666,7 @@ public class Leader extends LearnerMaster {
 
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(), null, null);
 
-            if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
+            if (ZxidUtils.getCounterFromZxid(newLeaderProposal.packet.getZxid()) != 0) {
                 LOG.info("NEWLEADER proposal has Zxid of {}", Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
 
@@ -743,7 +747,7 @@ public class Leader extends LearnerMaster {
             /**
              * WARNING: do not use this for anything other than QA testing
              * on a real cluster. Specifically to enable verification that quorum
-             * can handle the lower 32bit roll-over issue identified in
+             * can handle the lower 40bit roll-over issue identified in
              * ZOOKEEPER-1277. Without this option it would take a very long
              * time (on order of a month say) to see the 4 billion writes
              * necessary to cause the roll-over to occur.
@@ -755,7 +759,7 @@ public class Leader extends LearnerMaster {
             String initialZxid = System.getProperty("zookeeper.testingonly.initialZxid");
             if (initialZxid != null) {
                 long zxid = Long.parseLong(initialZxid);
-                zk.setZxid((zk.getZxid() & 0xffffffff00000000L) | zxid);
+                zk.setZxid(ZxidUtils.clearCounter(zk.getZxid()) | zxid);
             }
 
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
@@ -1065,7 +1069,7 @@ public class Leader extends LearnerMaster {
             LOG.trace("outstanding proposals all");
         }
 
-        if ((zxid & 0xffffffffL) == 0) {
+        if (ZxidUtils.getCounterFromZxid(zxid) == 0) {
             /*
              * We no longer process NEWLEADER ack with this method. However,
              * the learner sends an ack back to the leader after it gets
@@ -1298,11 +1302,11 @@ public class Leader extends LearnerMaster {
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         /**
-         * Address the rollover issue. All lower 32bits set indicate a new leader
+         * Address the rollover issue. All lower 40bits set indicate a new leader
          * election. Force a re-election instead. See ZOOKEEPER-1277
          */
-        if ((request.zxid & 0xffffffffL) == 0xffffffffL) {
-            String msg = "zxid lower 32 bits have rolled over, forcing re-election, and therefore new epoch start";
+        if (ZxidUtils.getCounterFromZxid(request.zxid) == ZxidUtils.getCounterLowPosition()) {
+            String msg = "zxid lower 40 bits have rolled over, forcing re-election, and therefore new epoch start";
             shutdown(msg);
             throw new XidRolloverException(msg);
         }
