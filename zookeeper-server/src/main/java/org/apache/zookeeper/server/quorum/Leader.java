@@ -33,7 +33,6 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,6 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.security.sasl.SaslException;
@@ -86,10 +86,17 @@ public class Leader extends LearnerMaster {
         LOG.info("TCP NoDelay set to: {}", nodelay);
     }
 
+    // This must be an invalid session id.
+    static final long PING_SESSION_END = 0;
+
+    private static final int PING_PAYLOAD_TYPE_QUORUM_SYNC = 1;
+
     public static class Proposal extends SyncedLearnerTracker {
 
         private QuorumPacket packet;
         protected Request request;
+        public long pingXid = -1;
+        public final List<Request> pendingSyncs = new ArrayList<>();
 
         public Proposal() {
         }
@@ -115,9 +122,18 @@ public class Leader extends LearnerMaster {
             return packet.getZxid();
         }
 
+        boolean isRead() {
+            return pingXid > 0;
+        }
+
+        boolean isWrite() {
+            return !isRead();
+        }
+
         @Override
         public String toString() {
-            return packet.getType() + ", " + packet.getZxid() + ", " + request;
+            return packet.getType() + ", 0x" + Long.toHexString(packet.getZxid()) + ", " + request
+                + ", " + pingXid + ", " + pendingSyncs;
         }
     }
 
@@ -194,6 +210,14 @@ public class Leader extends LearnerMaster {
 
     // list of followers that are ready to follow (i.e synced with the leader)
     private final HashSet<LearnerHandler> forwardingFollowers = new HashSet<>();
+    volatile int followersProtocolVersion = ProtocolVersion.CURRENT;
+
+    void recalculateFollowersVersion() {
+        followersProtocolVersion = forwardingFollowers.stream()
+            .mapToInt(LearnerHandler::getVersion)
+            .min()
+            .orElse(ProtocolVersion.CURRENT);
+    }
 
     /**
      * Returns a copy of the current forwarding follower snapshot
@@ -219,6 +243,7 @@ public class Leader extends LearnerMaster {
     void addForwardingFollower(LearnerHandler lh) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
+            recalculateFollowersVersion();
             /*
             * Any changes on forwardiongFollowers could possible affect the need of Oracle.
             * */
@@ -261,11 +286,11 @@ public class Leader extends LearnerMaster {
         }
     }
 
-    // Pending sync requests. Must access under 'this' lock.
-    private final Map<Long, List<LearnerSyncRequest>> pendingSyncs = new HashMap<>();
+    long quorumPingXid = 0;
+    private final AtomicInteger pendingSyncs = new AtomicInteger();
 
     public synchronized int getNumPendingSyncs() {
-        return pendingSyncs.size();
+        return pendingSyncs.get();
     }
 
     //Follower counter
@@ -293,6 +318,7 @@ public class Leader extends LearnerMaster {
     public void removeLearnerHandler(LearnerHandler peer) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.remove(peer);
+            recalculateFollowersVersion();
         }
         synchronized (learners) {
             learners.remove(peer);
@@ -698,10 +724,7 @@ public class Leader extends LearnerMaster {
                 }
             }
 
-            newLeaderProposal.addQuorumVerifier(self.getQuorumVerifier());
-            if (self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()) {
-                newLeaderProposal.addQuorumVerifier(self.getLastSeenQuorumVerifier());
-            }
+            setupQuorumTracker(newLeaderProposal);
 
             // We have to get at least a majority of servers in sync with
             // us. We do this by waiting for the NEWLEADER packet to get
@@ -789,11 +812,7 @@ public class Leader extends LearnerMaster {
                     // track synced learners to make sure we still have a
                     // quorum of current (and potentially next pending) view.
                     SyncedLearnerTracker syncedAckSet = new SyncedLearnerTracker();
-                    syncedAckSet.addQuorumVerifier(self.getQuorumVerifier());
-                    if (self.getLastSeenQuorumVerifier() != null
-                        && self.getLastSeenQuorumVerifier().getVersion() > self.getQuorumVerifier().getVersion()) {
-                        syncedAckSet.addQuorumVerifier(self.getLastSeenQuorumVerifier());
-                    }
+                    setupQuorumTracker(syncedAckSet);
 
                     syncedAckSet.addAck(self.getMyId());
 
@@ -968,6 +987,13 @@ public class Leader extends LearnerMaster {
      * @return True if committed, otherwise false.
      **/
     public synchronized boolean tryToCommit(Proposal p, long zxid, SocketAddress followerAddr) {
+        // in order to be committed, a proposal must be accepted by a quorum.
+        //
+        // getting a quorum from all necessary configurations.
+        if (!p.hasAllQuorums()) {
+            return false;
+        }
+
         // make sure that ops are committed in order. With reconfigurations it is now possible
         // that different operations wait for different sets of acks, and we still want to enforce
         // that they are committed in order. Currently we only permit one outstanding reconfiguration
@@ -975,15 +1001,16 @@ public class Leader extends LearnerMaster {
         // pending all wait for a quorum of old and new config, so it's not possible to get enough acks
         // for an operation without getting enough acks for preceding ops. But in the future if multiple
         // concurrent reconfigs are allowed, this can happen.
-        if (outstandingProposals.containsKey(zxid - 1)) {
-            return false;
-        }
-
-        // in order to be committed, a proposal must be accepted by a quorum.
-        //
-        // getting a quorum from all necessary configurations.
-        if (!p.hasAllQuorums()) {
-            return false;
+        Proposal previous = outstandingProposals.get(zxid - 1);
+        if (previous != null) {
+            if (previous.isWrite()) {
+                return false;
+            }
+            // It is possible in case of downgrading, leader probably will never get enough acks.
+            //
+            // These lines are probably should be reverted in new major version.
+            outstandingProposals.remove(zxid - 1);
+            commitQuorumSync(previous);
         }
 
         // commit proposals in order
@@ -1033,11 +1060,7 @@ public class Leader extends LearnerMaster {
             inform(p);
         }
         zk.commitProcessor.commit(p.request);
-        if (pendingSyncs.containsKey(zxid)) {
-            for (LearnerSyncRequest r : pendingSyncs.remove(zxid)) {
-                sendSync(r);
-            }
-        }
+        commitPendingSyncs(p);
 
         return true;
     }
@@ -1059,6 +1082,9 @@ public class Leader extends LearnerMaster {
         if (LOG.isTraceEnabled()) {
             LOG.trace("Ack zxid: 0x{}", Long.toHexString(zxid));
             for (Proposal p : outstandingProposals.values()) {
+                if (p.isRead()) {
+                    continue;
+                }
                 long packetZxid = p.packet.getZxid();
                 LOG.trace("outstanding proposal: 0x{}", Long.toHexString(packetZxid));
             }
@@ -1090,6 +1116,12 @@ public class Leader extends LearnerMaster {
         if (p == null) {
             LOG.warn("Trying to commit future proposal: zxid 0x{} from {}", Long.toHexString(zxid), followerAddr);
             return;
+        } else if (p.isRead()) {
+            // The write proposal with same zxid is completed, dated write ack should be filtered out by
+            // above `lastCommitted >= zxid`.
+            LOG.error("Receive ack for quorum read proposal: lastCommitted {}, zxid 0x{}, proposal {}, follower {}",
+                Long.toHexString(lastCommitted), Long.toHexString(zxid), p, followerAddr);
+            return;
         }
 
         if (ackLoggingFrequency > 0 && (zxid % ackLoggingFrequency == 0)) {
@@ -1119,6 +1151,64 @@ public class Leader extends LearnerMaster {
                 }
             }
         }
+    }
+
+    void setupQuorumTracker(SyncedLearnerTracker tracker) {
+        QuorumVerifier verifier = self.getQuorumVerifier();
+        QuorumVerifier lastSeen = self.getLastSeenQuorumVerifier();
+        tracker.addQuorumVerifier(verifier);
+        if (lastSeen != null && lastSeen.getVersion() > verifier.getVersion()) {
+            tracker.addQuorumVerifier(lastSeen);
+        }
+    }
+
+    private synchronized void commitQuorumSync(Proposal p) {
+        sendSync(p.request);
+        pendingSyncs.decrementAndGet();
+        commitPendingSyncs(p);
+    }
+
+    private synchronized void processQuorumSyncAck(long sid, long zxid, long xid) {
+        Proposal p = outstandingProposals.get(zxid);
+        if (p == null) {
+            LOG.debug("Receive dated quorum sync zxid 0x{}, xid {} with no ping", Long.toHexString(zxid), xid);
+            return;
+        }
+        if (p.isWrite()) {
+            // This is not possible as write proposal will get new zxid.
+            LOG.error("Receive quorum sync zxid 0x{}, xid {}, proposal {}", Long.toHexString(zxid), xid, p);
+            return;
+        } else if (xid < p.pingXid) {
+            // It is possible to issue two quorum sync with no write in between.
+            LOG.debug("Receive dated quorum sync zxid 0x{}, xid {}, ping {}", Long.toHexString(zxid), xid, p);
+            return;
+        } else if (xid > p.pingXid) {
+            // It is not possible as new syncs are either collapsed into old one or
+            // started after old one completed.
+            LOG.error("Receive quorum sync zxid 0x{}, xid {}, dated ping {}", Long.toHexString(zxid), xid, p);
+            return;
+        }
+        p.addAck(sid);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Receive quorum sync zxid 0x{}, xid {}, ping {}, acks {}", Long.toHexString(zxid), xid, p, p.ackSetsToString());
+        }
+        if (p.hasAllQuorums()) {
+            outstandingProposals.remove(zxid);
+            commitQuorumSync(p);
+        }
+    }
+
+    @Override
+    void processPing(long sid, long zxid, byte[] payload) throws IOException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(payload);
+        DataInputStream dis = new DataInputStream(bis);
+        int type = dis.readInt();
+        if (type != PING_PAYLOAD_TYPE_QUORUM_SYNC) {
+            String msg = String.format("invalid ping payload type: %d", type);
+            throw new IOException(msg);
+        }
+        long xid = dis.readLong();
+        processQuorumSyncAck(sid, zxid, xid);
     }
 
     static class ToBeAppliedRequestProcessor implements RequestProcessor {
@@ -1314,16 +1404,11 @@ public class Leader extends LearnerMaster {
         Proposal p = new Proposal(request, pp);
 
         synchronized (this) {
-            p.addQuorumVerifier(self.getQuorumVerifier());
-
             if (request.getHdr().getType() == OpCode.reconfig) {
                 self.setLastSeenQuorumVerifier(request.qv, true);
             }
 
-            if (self.getQuorumVerifier().getVersion() < self.getLastSeenQuorumVerifier().getVersion()) {
-                p.addQuorumVerifier(self.getLastSeenQuorumVerifier());
-            }
-
+            setupQuorumTracker(p);
             LOG.debug("Proposing:: {}", request);
 
             lastProposed = p.packet.getZxid();
@@ -1334,26 +1419,74 @@ public class Leader extends LearnerMaster {
         return p;
     }
 
+    private static byte[] createQuorumSyncPingPayload(long xid) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        DataOutputStream output = new DataOutputStream(stream);
+        try {
+            output.writeLong(PING_SESSION_END);
+            output.writeInt(PING_PAYLOAD_TYPE_QUORUM_SYNC);
+            output.writeLong(xid);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        return stream.toByteArray();
+    }
+
+    private Proposal createQuorumSyncProposal(Request r) {
+        quorumPingXid += 1;
+        byte[] payload = createQuorumSyncPingPayload(quorumPingXid);
+        QuorumPacket packet = new QuorumPacket(Leader.PING, lastProposed, payload, null);
+        Proposal p = new Proposal();
+        p.request = r;
+        p.packet = packet;
+        p.pingXid = quorumPingXid;
+        setupQuorumTracker(p);
+        p.addAck(self.getMyId());
+        return p;
+    }
+
     /**
      * Process sync requests
      *
      * @param r the request
      */
-
-    public synchronized void processSync(LearnerSyncRequest r) {
-        if (outstandingProposals.isEmpty()) {
+    public synchronized void processSync(Request r) {
+        Proposal p = outstandingProposals.get(lastProposed);
+        if (p != null) {
+            p.pendingSyncs.add(r);
+            pendingSyncs.incrementAndGet();
+        } else if (followersProtocolVersion < ProtocolVersion.V3_10_0) {
             sendSync(r);
         } else {
-            pendingSyncs.computeIfAbsent(lastProposed, k -> new ArrayList<>()).add(r);
+            p = createQuorumSyncProposal(r);
+            if (p.hasAllQuorums()) {
+                // single server distributed mode.
+                sendSync(r);
+                return;
+            }
+            outstandingProposals.put(lastProposed, p);
+            pendingSyncs.incrementAndGet();
+            sendPacket(p.packet);
+        }
+    }
+
+    private synchronized void commitPendingSyncs(Proposal p) {
+        for (Request r : p.pendingSyncs) {
+            pendingSyncs.decrementAndGet();
+            sendSync(r);
         }
     }
 
     /**
      * Sends a sync message to the appropriate server
      */
-    public void sendSync(LearnerSyncRequest r) {
-        QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
-        r.fh.queuePacket(qp);
+    public void sendSync(Request r) {
+        if (r.getOwner() instanceof LearnerHandler) {
+            QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+            ((LearnerHandler) r.getOwner()).queuePacket(qp);
+        } else {
+            zk.commitProcessor.commit(r);
+        }
     }
 
     /**
