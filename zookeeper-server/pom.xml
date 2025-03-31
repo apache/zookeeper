@@ -121,9 +121,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-       <groupId>io.dropwizard.metrics</groupId>
-       <artifactId>metrics-core</artifactId>
-       <scope>provided</scope>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kerby</groupId>
@@ -210,12 +210,6 @@
               <locale>en_US</locale>
               <timeZone>UTC</timeZone>
             </configuration>
-          </execution>
-          <execution>
-            <id>parse-version</id>
-            <goals>
-              <goal>parse-version</goal>
-            </goals>
           </execution>
           <execution>
             <phase>generate-sources</phase>
@@ -346,7 +340,7 @@
           </execution>
         </executions>
       </plugin>
-     </plugins>
+    </plugins>
   </build>
 
 </project>
