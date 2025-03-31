@@ -109,7 +109,7 @@ export CLASSPATH
 read_only=
 # shellcheck disable=SC2206
 PROPERTIES=($EXTRA_JVM_ARGS "-Dzookeeper.extendedTypesEnabled=true" "-Dznode.container.checkIntervalMs=100")
-if [[ $1 == "xstartRequireSASLAuth" ]]; then
+if [[ $1 == "startRequireSASLAuth" ]]; then
   PROPERTIES=("-Dzookeeper.sessionRequireClientSASLAuth=true" "${PROPERTIES[@]}"
     "-Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider")
   if [[ -n $2 ]]; then
