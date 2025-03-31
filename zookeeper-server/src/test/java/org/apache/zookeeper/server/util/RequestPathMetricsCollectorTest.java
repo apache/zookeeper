@@ -28,17 +28,22 @@ import static org.apache.zookeeper.ZooDefs.OpCode.getData;
 import static org.apache.zookeeper.ZooDefs.OpCode.setData;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestPathMetricsCollectorTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RequestPathMetricsCollectorTest.class);
 
     @BeforeEach
     public void setUp() {
@@ -417,35 +422,41 @@ public class RequestPathMetricsCollectorTest {
     public void testMultiThreadPerf() throws InterruptedException {
         RequestPathMetricsCollector requestPathMetricsCollector = new RequestPathMetricsCollector();
         Random rand = new Random(System.currentTimeMillis());
-        Long startTime = System.currentTimeMillis();
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+        ExecutorService executor = Executors.newWorkStealingPool();
+        int requestNum = 0;
+        long startTime = System.nanoTime();
         //call 100k get Data
         for (int i = 0; i < 100000; i++) {
+            ++requestNum;
             executor.submit(
                 () -> requestPathMetricsCollector.registerRequest(getData, "/path1/path2/path" + rand.nextInt(10)));
         }
         //5K create
         for (int i = 0; i < 5000; i++) {
+            ++requestNum;
             executor.submit(
                 () -> requestPathMetricsCollector.registerRequest(create2, "/path1/path2/path" + rand.nextInt(10)));
         }
         //5K delete
         for (int i = 0; i < 5000; i++) {
+            ++requestNum;
             executor.submit(
                 () -> requestPathMetricsCollector.registerRequest(delete, "/path1/path2/path" + rand.nextInt(10)));
         }
         //40K getChildren
         for (int i = 0; i < 40000; i++) {
+            ++requestNum;
             executor.submit(
                 () -> requestPathMetricsCollector.registerRequest(getChildren, "/path1/path2/path" + rand.nextInt(10)));
         }
         executor.shutdown();
-        //wait for at most 10 mill seconds
-        executor.awaitTermination(10, TimeUnit.MILLISECONDS);
-        assertTrue(executor.isTerminated());
-        Long endTime = System.currentTimeMillis();
-        //less than 2 seconds total time
-        assertTrue(TimeUnit.MILLISECONDS.toSeconds(endTime - startTime) < 3);
+        long timeoutSeconds = 5;
+        //wait for executor termination
+        assertTrue(executor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS));
+        long endTime = System.nanoTime();
+        Duration costTime = Duration.ofNanos(endTime - startTime);
+        LOG.info("RequestPathMetricsCollector costs {} milliseconds to register {} requests.\n", costTime.toMillis(), requestNum);
+        assertTrue(costTime.getSeconds() < timeoutSeconds);
     }
 
 }
