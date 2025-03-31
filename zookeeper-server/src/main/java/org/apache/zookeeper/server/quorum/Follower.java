@@ -49,7 +49,8 @@ public class Follower extends Learner {
 
     ObserverMaster om;
 
-    Follower(final QuorumPeer self, final FollowerZooKeeperServer zk) {
+    // VisibleForTesting
+    public Follower(final QuorumPeer self, final FollowerZooKeeperServer zk) {
         this.self = Objects.requireNonNull(self);
         this.fzk = Objects.requireNonNull(zk);
         this.zk = zk;
