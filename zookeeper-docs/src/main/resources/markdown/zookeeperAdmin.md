@@ -1738,7 +1738,9 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
     **New in 3.5.5:**
     Specifies the enabled cipher suites to be used in client and quorum TLS negotiation.
-    Default: Enabled cipher suites depend on the Java runtime version being used.
+    Default: None, the JVM defaults are used (3.10.0+),
+    Enabled cipher suites are hard coded, with the ordering dependent on whether Java 8, or Java 9+ is used.
+    For Java 8 the list begins with the TLSv1.2 CBC ciphers, while for Java 9+ it begins with the TLSv1.2 CBM ciphers (3.5.5-3.9.x).
 
 * *ssl.context.supplier.class* and *ssl.quorum.context.supplier.class* :
     (Java system properties: **zookeeper.ssl.context.supplier.class** and **zookeeper.ssl.quorum.context.supplier.class**)
@@ -1876,6 +1878,17 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
       can be used.
     
     Default: **true** (3.9.0+), **false** (3.8.x)
+
+##### Cipher handling changes
+
+From 3.5.5 to 3.9 a hard coded default cipher list was used, with the ordering
+dependent on whether it is run Java 8 or a later version.
+
+In 3.9 the list on Java 8 is: *TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256*
+
+In 3.10 the list on Java 8 is: *TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256*
+
+In 3.10 there is no hardcoded list, and the JVM defaults are used.
 
 <a name="Experimental+Options%2FFeatures"></a>
 

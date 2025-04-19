@@ -80,7 +80,10 @@ public class ClientX509Util extends X509Util {
         }
 
         sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
-        sslContextBuilder.protocols(getEnabledProtocols(config));
+        String[] enabledProtocols = getEnabledProtocols(config);
+        if (enabledProtocols != null) {
+            sslContextBuilder.protocols(enabledProtocols);
+        }
         Iterable<String> enabledCiphers = getCipherSuites(config);
         if (enabledCiphers != null) {
             sslContextBuilder.ciphers(enabledCiphers);
@@ -121,7 +124,10 @@ public class ClientX509Util extends X509Util {
         }
 
         sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
-        sslContextBuilder.protocols(getEnabledProtocols(config));
+        String[] enabledProtocols = getEnabledProtocols(config);
+        if (enabledProtocols != null) {
+            sslContextBuilder.protocols(enabledProtocols);
+        }
         sslContextBuilder.clientAuth(getClientAuth(config).toNettyClientAuth());
         Iterable<String> enabledCiphers = getCipherSuites(config);
         if (enabledCiphers != null) {
@@ -155,7 +161,7 @@ public class ClientX509Util extends X509Util {
     private String[] getEnabledProtocols(final ZKConfig config) {
         String enabledProtocolsInput = config.getProperty(getSslEnabledProtocolsProperty());
         if (enabledProtocolsInput == null) {
-            return new String[]{ config.getProperty(getSslProtocolProperty(), DEFAULT_PROTOCOL) };
+            return null;
         }
         return enabledProtocolsInput.split(",");
     }
@@ -167,10 +173,7 @@ public class ClientX509Util extends X509Util {
     private Iterable<String> getCipherSuites(final ZKConfig config) {
         String cipherSuitesInput = config.getProperty(getSslCipherSuitesProperty());
         if (cipherSuitesInput == null) {
-            if (getSslProvider(config) != SslProvider.JDK) {
-                return null;
-            }
-            return Arrays.asList(X509Util.getDefaultCipherSuites());
+            return null;
         } else {
             return Arrays.asList(cipherSuitesInput.split(","));
         }

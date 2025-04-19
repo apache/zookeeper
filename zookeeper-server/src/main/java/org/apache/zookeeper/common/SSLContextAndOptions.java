@@ -160,7 +160,7 @@ public class SSLContextAndOptions {
     private String[] getCipherSuites(final ZKConfig config) {
         String cipherSuitesInput = config.getProperty(x509Util.getSslCipherSuitesProperty());
         if (cipherSuitesInput == null) {
-            return X509Util.getDefaultCipherSuites();
+            return null;
         } else {
             return cipherSuitesInput.split(",");
         }
