@@ -178,7 +178,7 @@ public class ResponseCacheTest extends ClientBase {
         checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
                 "response_packet_get_children_cache_misses");
 
-        for (int i = 0; i < cacheSize*2; ++i) {
+        for (int i = 0; i < cacheSize * 2; ++i) {
             checkPath(path + "/a", zk, 2);
             checkPath(path + "/x/y" + i, zk, 0);
 
