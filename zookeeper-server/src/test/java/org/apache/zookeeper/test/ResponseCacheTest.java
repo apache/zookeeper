@@ -79,6 +79,7 @@ public class ResponseCacheTest extends ClientBase {
         Stat writeStat = new Stat();
         Stat readStat = new Stat();
         byte[] readData = null;
+        int cacheSize = Integer.getInteger(ZooKeeperServer.GET_DATA_RESPONSE_CACHE_SIZE);
         int reads = 10;
         long expectedHits = 0;
         long expectedMisses = 0;
@@ -88,7 +89,7 @@ public class ResponseCacheTest extends ClientBase {
         LOG.info("caching: {}", useCache);
 
         if (useCache) {
-            assertEquals(zks.getReadResponseCache().getCacheSize(), 32);
+            assertEquals(zks.getReadResponseCache().getCacheSize(), cacheSize);
             assertEquals(zks.getGetChildrenResponseCache().getCacheSize(), 64);
         }
 
@@ -146,15 +147,21 @@ public class ResponseCacheTest extends ClientBase {
         createPath(path + "/a/b/e/g", zk);
         createPath(path + "/a/b/e/h", zk);
 
+        createPath(path + "/x", zk);
+        for (int i = 0; i < cacheSize * 2; ++i) {
+            createPath(path + "/x/y" + i, zk);
+        }
+
         checkPath(path + "/a", zk, 2);
         checkPath(path + "/a/b", zk, 2);
         checkPath(path + "/a/c", zk, 0);
         checkPath(path + "/a/b/d", zk, 0);
         checkPath(path + "/a/b/e", zk, 3);
         checkPath(path + "/a/b/e/h", zk, 0);
+        checkPath(path + "/x", zk, cacheSize * 2);
 
         if (useCache) {
-            expectedMisses += 6;
+            expectedMisses += 7;
         }
 
         checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
@@ -170,6 +177,19 @@ public class ResponseCacheTest extends ClientBase {
 
         checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
                 "response_packet_get_children_cache_misses");
+
+        for (int i = 0; i < cacheSize * 2; ++i) {
+            checkPath(path + "/a", zk, 2);
+            checkPath(path + "/x/y" + i, zk, 0);
+
+            if (useCache) {
+                expectedHits += 1;
+                expectedMisses += 1;
+            }
+
+            checkCacheStatus(expectedHits, expectedMisses, "response_packet_get_children_cache_hits",
+                    "response_packet_get_children_cache_misses");
+        }
     }
 
     private void createPath(String path, ZooKeeper zk) throws Exception {
