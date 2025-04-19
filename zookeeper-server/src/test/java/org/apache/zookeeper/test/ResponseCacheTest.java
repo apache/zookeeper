@@ -148,7 +148,7 @@ public class ResponseCacheTest extends ClientBase {
         createPath(path + "/a/b/e/h", zk);
 
         createPath(path + "/x", zk);
-        for (int i = 0; i < cacheSize*2; ++i) {
+        for (int i = 0; i < cacheSize * 2; ++i) {
             createPath(path + "/x/y" + i, zk);
         }
 
