@@ -180,7 +180,7 @@ public class ResponseCacheTest extends ClientBase {
 
         for (int i = 0; i < cacheSize*2; ++i) {
             checkPath(path + "/a", zk, 2);
-            checkPath(path + "/x/y"+i, zk, 0);
+            checkPath(path + "/x/y" + i, zk, 0);
 
             if (useCache) {
                 expectedHits += 1;
