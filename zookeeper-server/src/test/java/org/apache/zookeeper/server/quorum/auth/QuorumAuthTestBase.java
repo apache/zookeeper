@@ -103,16 +103,28 @@ public class QuorumAuthTestBase extends ZKTestCase {
     }
 
     protected int[] startQuorum(final int serverCount, StringBuilder connectStr, Map<String, String> authConfigs,
-        int authServerCount, boolean multiAddress) throws IOException {
+                                int authServerCount, boolean multiAddress) throws IOException {
+        int[] defaultMyidList = new int[serverCount];
+        String[] defaultRoleList = new String[serverCount];
+        for (int i = 0; i < serverCount; i++) {
+            defaultMyidList[i] = i;
+            defaultRoleList[i] = "participant";
+        }
+        return startQuorum(serverCount, connectStr, authConfigs, authServerCount, multiAddress, defaultMyidList, defaultRoleList);
+    }
+
+    protected int[] startQuorum(final int serverCount, StringBuilder connectStr, Map<String, String> authConfigs,
+        int authServerCount, boolean multiAddress, int[] myidList, String[] roleList) throws IOException {
         final int[] clientPorts = new int[serverCount];
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < serverCount; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = String.format("server.%d=localhost:%d:%d", i, PortAssignment.unique(), PortAssignment.unique());
+            String server = String.format("server.%d=localhost:%d:%d", myidList[i], PortAssignment.unique(), PortAssignment.unique());
             if (multiAddress) {
                 server = server + String.format("|localhost:%d:%d", PortAssignment.unique(), PortAssignment.unique());
             }
-            sb.append(server + ":participant\n");
+
+            sb.append(server + ":" + roleList[i] + "\n");
             connectStr.append("127.0.0.1:" + clientPorts[i]);
             if (i < serverCount - 1) {
                 connectStr.append(",");
@@ -122,11 +134,11 @@ public class QuorumAuthTestBase extends ZKTestCase {
         // servers with authentication interfaces configured
         int i = 0;
         for (; i < authServerCount; i++) {
-            startServer(authConfigs, clientPorts, quorumCfg, i);
+            startServer(authConfigs, clientPorts, quorumCfg, i, myidList);
         }
         // servers without any authentication configured
         for (int j = 0; j < serverCount - authServerCount; j++, i++) {
-            MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg);
+            MainThread mthread = new MainThread(myidList[i], clientPorts[i], quorumCfg);
             mt.add(mthread);
             mthread.start();
         }
@@ -137,14 +149,25 @@ public class QuorumAuthTestBase extends ZKTestCase {
         Map<String, String> authConfigs,
         final int[] clientPorts,
         String quorumCfg,
-        int i) throws IOException {
-        MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg, authConfigs);
+        int i,
+        int[] myidList) throws IOException {
+        MainThread mthread = new MainThread(myidList[i], clientPorts[i], quorumCfg, authConfigs);
         mt.add(mthread);
         mthread.start();
     }
 
     protected void startServer(MainThread restartPeer, Map<String, String> authConfigs) throws IOException {
         MainThread mthread = new MainThread(restartPeer.getMyid(), restartPeer.getClientPort(), restartPeer.getQuorumCfgSection(), authConfigs);
+        mt.add(mthread);
+        mthread.start();
+    }
+
+    protected void startServer(
+            Map<String, String> authConfigs,
+            final int clientPort,
+            String quorumCfg,
+            int myid) throws IOException {
+        MainThread mthread = new MainThread(myid, clientPort, quorumCfg, authConfigs);
         mt.add(mthread);
         mthread.start();
     }
