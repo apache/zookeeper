@@ -2146,8 +2146,9 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     maximum interval in milliseconds that a container that has never had
     any children is retained. Should be long enough for your client to
     create the container, do any needed work and then create children.
-    Default is "0" which is used to indicate that containers
-    that have never had any children are never deleted.
+    Default is "300000"(a.k.a. 5 minutes) since 3.10.0, for earlier versions,
+    it is "0" which is used to indicate that containers that have never had
+    any children are never deleted.
 
 <a name="sc_debug_observability_config"></a>
 

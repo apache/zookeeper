@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.management.JMException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
@@ -78,13 +77,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     private synchronized void setupContainerManager() {
-        containerManager = new ContainerManager(
-            getZKDatabase(),
-            prepRequestProcessor,
-            Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-            Integer.getInteger("znode.container.maxPerMinute", 10000),
-            Long.getLong("znode.container.maxNeverUsedIntervalMs", 0)
-        );
+        containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor);
     }
 
     @Override
