@@ -54,6 +54,20 @@ public class ContainerManager {
      * @param zkDb the ZK database
      * @param requestProcessor request processor - used to inject delete
      *                         container requests
+     */
+    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor) {
+        this(
+            zkDb, requestProcessor,
+            Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
+            Integer.getInteger("znode.container.maxPerMinute", 10000),
+            Long.getLong("znode.container.maxNeverUsedIntervalMs", TimeUnit.MINUTES.toMillis(5))
+        );
+    }
+
+    /**
+     * @param zkDb the ZK database
+     * @param requestProcessor request processor - used to inject delete
+     *                         container requests
      * @param checkIntervalMs how often to check containers in milliseconds
      * @param maxPerMinute the max containers to delete per second - avoids
      *                     herding of container deletions
