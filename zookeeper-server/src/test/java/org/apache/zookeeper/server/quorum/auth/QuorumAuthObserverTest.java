@@ -29,7 +29,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-public class QuorumAuthObserverTest extends QuorumAuthTestBase {
+public class QuorumAuthObserverTest extends DigestSecurityTestcase {
 
     static {
         String jaasEntries = "QuorumServer {\n"
