@@ -67,7 +67,7 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
 
     private void testMaxZooKeeperClients(String serverCnxnFactory) throws Exception {
         final int clientPorts[] = new int[SERVER_COUNT];
-        int maxCnxns = 2;
+        final int maxCnxns = 2;
         StringBuilder sb = new StringBuilder();
         sb.append("maxCnxns=" + maxCnxns + "\n");
         sb.append("serverCnxnFactory=" + serverCnxnFactory + "\n");
@@ -108,9 +108,13 @@ public class ZooKeeperServerMaxCnxnsTest extends QuorumPeerTestBase {
                 }
             }
         };
-        for (int i = 0; i < maxAllowedConnection; i++) {
-            clients[i] = new ZooKeeper(cxnString, ClientBase.CONNECTION_TIMEOUT, watcher);
-            Thread.sleep(100);
+        // There are could be concurrent races to make maxCnxns restriction not accurate.
+        // So we connect to each server with maxCnxns connections to overcome this.
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            String addr = "127.0.0.1:" + clientPorts[i];
+            for (int j = 0; j < maxCnxns; j++) {
+                clients[i * maxCnxns + j] = new ZooKeeper(addr, ClientBase.CONNECTION_TIMEOUT, watcher);
+            }
         }
         countDownLatch.await();
         // reaching this point indicates that all maxAllowedConnection connected
