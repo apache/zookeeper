@@ -96,7 +96,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                 BusyServer server = new BusyServer();
                 ZooKeeper zk = new ZooKeeper(server.getHostPort(), (int) sessionTimeout.toMillis(), null) {
                 @Override
-                ClientCnxn createConnection(HostProvider hostProvider, int sessionTimeout, ZKClientConfig clientConfig, Watcher defaultWatcher, ClientCnxnSocket clientCnxnSocket, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) throws IOException {
+                ClientCnxn createConnection(HostProvider hostProvider, int sessionTimeout, long newSessionTimeout, ZKClientConfig clientConfig, Watcher defaultWatcher, ClientCnxnSocket clientCnxnSocket, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) throws IOException {
                     ClientCnxnSocketNIO socket = spy((ClientCnxnSocketNIO) clientCnxnSocket);
 
                     doAnswer(mock -> {
@@ -110,7 +110,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                     }).when(socket).createSock();
 
                     nioSelector.set(socket.getSelector());
-                    return super.createConnection(hostProvider, sessionTimeout, clientConfig, defaultWatcher, socket, sessionId, sessionPasswd, canBeReadOnly);
+                    return super.createConnection(hostProvider, sessionTimeout, newSessionTimeout, clientConfig, defaultWatcher, socket, sessionId, sessionPasswd, canBeReadOnly);
                 }
             }) {
 
@@ -328,6 +328,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         public CustomClientCnxn(
             HostProvider hostProvider,
             int sessionTimeout,
+            long newSessionTimeout,
             ZKClientConfig zkClientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
@@ -338,6 +339,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             super(
                 hostProvider,
                 sessionTimeout,
+                newSessionTimeout,
                 zkClientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
@@ -403,6 +405,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         ClientCnxn createConnection(
             HostProvider hostProvider,
             int sessionTimeout,
+            long newSessionTimeout,
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
@@ -415,6 +418,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(
                 hostProvider,
                 sessionTimeout,
+                newSessionTimeout,
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
