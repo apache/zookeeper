@@ -21,8 +21,10 @@ package org.apache.zookeeper.client;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
 import org.apache.zookeeper.Watcher;
@@ -37,6 +39,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 public class ZooKeeperBuilder {
     private final String connectString;
     private final int sessionTimeout;
+    private long newSessionTimeout = Long.MAX_VALUE;
     private Function<Collection<InetSocketAddress>, HostProvider> hostProvider;
     private Watcher defaultWatcher;
     private boolean canBeReadOnly = false;
@@ -127,6 +130,21 @@ public class ZooKeeperBuilder {
     }
 
     /**
+     * Specifies timeout to establish a brand-new session.
+     *
+     * @param timeout timeout to get {@link org.apache.zookeeper.Watcher.Event.KeeperState#Expired} in
+     *                establishing a brand-new session. {@code null}, which is the default, means endless
+     *                retry until connected, {@code Duration.ZERO} means a sensible value deduced from
+     *                specified session timeout.
+     * @return this
+     * @since 3.10.0
+     */
+    public ZooKeeperBuilder withNewSessionTimeout(@Nullable Duration timeout) {
+        this.newSessionTimeout = timeout == null ? Long.MAX_VALUE : timeout.toMillis();
+        return this;
+    }
+
+    /**
      * Specifies the client config used to construct ZooKeeper instances.
      *
      * @param clientConfig
@@ -150,6 +168,7 @@ public class ZooKeeperBuilder {
         return new ZooKeeperOptions(
             connectString,
             sessionTimeout,
+            newSessionTimeout,
             defaultWatcher,
             hostProvider,
             canBeReadOnly,

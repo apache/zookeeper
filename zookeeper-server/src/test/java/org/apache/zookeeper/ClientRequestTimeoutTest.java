@@ -225,6 +225,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
         CustomClientCnxn(
             HostProvider hostProvider,
             int sessionTimeout,
+            long newSessionTimeout,
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
@@ -235,6 +236,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             super(
                 hostProvider,
                 sessionTimeout,
+                newSessionTimeout,
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
@@ -286,6 +288,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
         ClientCnxn createConnection(
             HostProvider hostProvider,
             int sessionTimeout,
+            long newSessionTimeout,
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
@@ -296,6 +299,7 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             return new CustomClientCnxn(
                 hostProvider,
                 sessionTimeout,
+                newSessionTimeout,
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
