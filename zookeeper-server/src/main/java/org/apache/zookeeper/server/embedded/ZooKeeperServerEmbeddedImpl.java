@@ -116,7 +116,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                 }
             };
 
-            // Start and schedule the the purge task
+            // Start and schedule the purge task
             purgeMgr = new DatadirCleanupManager(config
                     .getDataDir(), config.getDataLogDir(), config
                     .getSnapRetainCount(), config.getPurgeIntervalInMs());

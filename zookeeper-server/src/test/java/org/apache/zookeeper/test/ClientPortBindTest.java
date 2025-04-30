@@ -84,7 +84,7 @@ public class ClientPortBindTest extends ZKTestCase {
 
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(new InetSocketAddress(bindAddress, PORT), -1);
         f.startup(zks);
-        LOG.info("starting up the the server, waiting");
+        LOG.info("starting up the server, waiting");
 
         assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server up");
         ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
