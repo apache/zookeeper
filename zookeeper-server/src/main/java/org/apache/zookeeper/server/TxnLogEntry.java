@@ -47,4 +47,8 @@ public final class TxnLogEntry {
     public TxnDigest getDigest() {
         return digest;
     }
+
+    public Request toRequest() {
+        return new Request(header, txn, digest);
+    }
 }

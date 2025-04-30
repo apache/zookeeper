@@ -1846,13 +1846,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         cnxn.sendResponse(replyHeader, record, "response");
     }
 
-    // entry point for quorum/Learner.java
-    public ProcessTxnResult processTxn(TxnHeader hdr, Record txn) {
-        processTxnForSessionEvents(null, hdr, txn);
-        return processTxnInDB(hdr, txn, null);
-    }
-
-    // entry point for FinalRequestProcessor.java
     public ProcessTxnResult processTxn(Request request) {
         TxnHeader hdr = request.getHdr();
         processTxnForSessionEvents(request, hdr, request.getTxn());
@@ -1864,8 +1857,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (!writeRequest && !quorumRequest) {
             return new ProcessTxnResult();
         }
+
+        ProcessTxnResult rc;
         synchronized (outstandingChanges) {
-            ProcessTxnResult rc = processTxnInDB(hdr, request.getTxn(), request.getTxnDigest());
+            rc = processTxnInDB(hdr, request.getTxn(), request.getTxnDigest());
 
             // request.hdr is set for write requests, which are the only ones
             // that add to outstandingChanges.
@@ -1886,13 +1881,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     }
                 }
             }
-
-            // do not add non quorum packets to the queue.
-            if (quorumRequest) {
-                getZKDatabase().addCommittedProposal(request);
-            }
-            return rc;
         }
+
+        // do not add non quorum packets to the queue.
+        if (quorumRequest) {
+            getZKDatabase().addCommittedProposal(request);
+        }
+        return rc;
     }
 
     private void processTxnForSessionEvents(Request request, TxnHeader hdr, Record txn) {
