@@ -4650,7 +4650,13 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     struct RequestHeader h = {get_xid(), ZOO_MULTI_OP};
     struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
-    completion_head_t clist = { 0 };
+    completion_head_t clist;
+
+    /* initialize mutex and condition variable in clist */
+    clist.head = NULL;
+    clist.last = NULL;
+    pthread_mutex_init(&clist.lock, NULL);
+    pthread_cond_init(&clist.cond, NULL);
 
     int rc = serialize_RequestHeader(oa, "header", &h);
 
