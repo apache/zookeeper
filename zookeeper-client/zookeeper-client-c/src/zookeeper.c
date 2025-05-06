@@ -2769,27 +2769,30 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
             errno = EINVAL;
             return ZBADARGUMENTS;
         }
-        /*CLIENT CA FILE (With Certificate Chain)*/
-        if (SSL_CTX_use_certificate_chain_file(*ctx, fd->cert->cert) != 1) {
-            SSL_CTX_free(*ctx);
-            LOG_ERROR(LOGCALLBACK(zh), "Failed to load client certificate chain from %s", fd->cert->cert);
-            errno = EINVAL;
-            return ZBADARGUMENTS;
-        }
-        /*CLIENT PRIVATE KEY*/
-        SSL_CTX_set_default_passwd_cb_userdata(*ctx, fd->cert->passwd);
-        if (SSL_CTX_use_PrivateKey_file(*ctx, fd->cert->key, SSL_FILETYPE_PEM) != 1) {
-            SSL_CTX_free(*ctx);
-            LOG_ERROR(LOGCALLBACK(zh), "Failed to load client private key from %s", fd->cert->key);
-            errno = EINVAL;
-            return ZBADARGUMENTS;
-        }
-        /*CHECK*/
-        if (SSL_CTX_check_private_key(*ctx) != 1) {
-            SSL_CTX_free(*ctx);
-            LOG_ERROR(LOGCALLBACK(zh), "SSL_CTX_check_private_key failed");
-            errno = EINVAL;
-            return ZBADARGUMENTS;
+        if (fd->cert->cert != NULL && fd->cert->passwd != NULL && fd->cert->key != NULL)
+        {
+            /*CLIENT CA FILE (With Certificate Chain)*/
+            if (SSL_CTX_use_certificate_chain_file(*ctx, fd->cert->cert) != 1) {
+                SSL_CTX_free(*ctx);
+                LOG_ERROR(LOGCALLBACK(zh), "Failed to load client certificate chain from %s", fd->cert->cert);
+                errno = EINVAL;
+                return ZBADARGUMENTS;
+            }
+            /*CLIENT PRIVATE KEY*/
+            SSL_CTX_set_default_passwd_cb_userdata(*ctx, fd->cert->passwd);
+            if (SSL_CTX_use_PrivateKey_file(*ctx, fd->cert->key, SSL_FILETYPE_PEM) != 1) {
+                SSL_CTX_free(*ctx);
+                LOG_ERROR(LOGCALLBACK(zh), "Failed to load client private key from %s", fd->cert->key);
+                errno = EINVAL;
+                return ZBADARGUMENTS;
+            }
+            /*CHECK*/
+            if (SSL_CTX_check_private_key(*ctx) != 1) {
+                SSL_CTX_free(*ctx);
+                LOG_ERROR(LOGCALLBACK(zh), "SSL_CTX_check_private_key failed");
+                errno = EINVAL;
+                return ZBADARGUMENTS;
+            }
         }
         /*MULTIPLE HANDSHAKE*/
         SSL_CTX_set_mode(*ctx, SSL_MODE_AUTO_RETRY);
