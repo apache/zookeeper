@@ -4651,6 +4651,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
     completion_head_t clist;
+    int rc;
 
     /* initialize mutex and condition variable in clist */
     clist.head = NULL;
@@ -4660,7 +4661,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     pthread_cond_init(&clist.cond, NULL);
 #endif
 
-    int rc = serialize_RequestHeader(oa, "header", &h);
+    rc = serialize_RequestHeader(oa, "header", &h);
 
     int index = 0;
     for (index=0; index < count; index++) {
