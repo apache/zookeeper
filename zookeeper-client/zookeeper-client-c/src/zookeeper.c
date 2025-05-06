@@ -4655,8 +4655,10 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     /* initialize mutex and condition variable in clist */
     clist.head = NULL;
     clist.last = NULL;
+#ifdef THREADED
     pthread_mutex_init(&clist.lock, NULL);
     pthread_cond_init(&clist.cond, NULL);
+#endif
 
     int rc = serialize_RequestHeader(oa, "header", &h);
 
