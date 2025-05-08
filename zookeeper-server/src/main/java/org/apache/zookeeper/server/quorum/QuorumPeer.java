@@ -1570,7 +1570,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                             LOG.warn("Unexpected exception", e);
                             setPeerState(ServerState.LOOKING);
                         } finally {
-                            // If the thread is in the the grace period, interrupt
+                            // If the thread is in the grace period, interrupt
                             // to come out of waiting.
                             roZkMgr.interrupt();
                             roZk.shutdown();

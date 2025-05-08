@@ -73,7 +73,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
             final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
             ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
             f.startup(zks);
-            LOG.info("starting up the the server, waiting");
+            LOG.info("starting up the server, waiting");
 
             assertTrue(ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server up");
 

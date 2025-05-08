@@ -503,7 +503,7 @@ public class QuorumCnxManager {
         }
 
         // authenticate learner
-        QuorumPeer.QuorumServer qps = self.getVotingView().get(sid);
+        QuorumPeer.QuorumServer qps = self.getView().get(sid);
         if (qps != null) {
             // TODO - investigate why reconfig makes qps null.
             authLearner.authenticate(sock, qps.hostname);

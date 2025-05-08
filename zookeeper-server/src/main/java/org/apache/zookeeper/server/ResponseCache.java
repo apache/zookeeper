@@ -33,8 +33,13 @@ public class ResponseCache {
     public static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
     private final int cacheSize;
     private static class Entry {
-        public Stat stat;
-        public byte[] data;
+        public final Stat stat;
+        public final byte[] data;
+
+        Entry(Stat stat, byte[] data) {
+            this.stat = stat;
+            this.data = data;
+        }
     }
 
     private final Map<String, Entry> cache;
@@ -50,10 +55,7 @@ public class ResponseCache {
     }
 
     public void put(String path, byte[] data, Stat stat) {
-        Entry entry = new Entry();
-        entry.data = data;
-        entry.stat = stat;
-        cache.put(path, entry);
+        cache.put(path, new Entry(stat, data));
     }
 
     public byte[] get(String key, Stat stat) {
@@ -76,10 +78,10 @@ public class ResponseCache {
 
     private static class LRUCache<K, V> extends LinkedHashMap<K, V> {
 
-        private int cacheSize;
+        private final int cacheSize;
 
         LRUCache(int cacheSize) {
-            super(cacheSize / 4);
+            super(cacheSize / 4, 0.75f, true);
             this.cacheSize = cacheSize;
         }
 
