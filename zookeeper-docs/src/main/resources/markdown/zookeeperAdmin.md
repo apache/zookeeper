@@ -1739,7 +1739,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
     **New in 3.5.5:**
     Specifies the enabled cipher suites to be used in client and quorum TLS negotiation.
-    Default: JVM defaults since 3.10.0, and hard coded cipher suites for 3.9 and earlier versions. See [TLS Cipher Suites](#sc_tls_cipher_suites).
+    Default: JDK defaults since 3.10.0, and hard coded cipher suites for 3.9 and earlier versions. See [TLS Cipher Suites](#sc_tls_cipher_suites).
 
 * *ssl.context.supplier.class* and *ssl.quorum.context.supplier.class* :
     (Java system properties: **zookeeper.ssl.context.supplier.class** and **zookeeper.ssl.quorum.context.supplier.class**)
