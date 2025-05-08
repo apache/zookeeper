@@ -1,6 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+# @filteredBuildComment@
+
 AC_PREREQ(2.59)
 
 AC_INIT([zookeeper C client],@parsedVersion.majorVersion@.@parsedVersion.minorVersion@.@parsedVersion.incrementalVersion@,[user@zookeeper.apache.org],[zookeeper])

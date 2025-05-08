@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# @filteredBuildComment@
+
 cmake_minimum_required(VERSION 3.5)
 
 project(zookeeper VERSION @parsedVersion.majorVersion@.@parsedVersion.minorVersion@.@parsedVersion.incrementalVersion@)

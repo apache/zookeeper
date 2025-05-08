@@ -32,6 +32,7 @@
   <description>ZooKeeper c client</description>
 
   <properties>
+    <filteredBuildComment>This file is GENERATED. Developers should edit the template in src/main/c-filtered/</filteredBuildComment>
     <c-test-coverage-arg> </c-test-coverage-arg>
   </properties>
 
