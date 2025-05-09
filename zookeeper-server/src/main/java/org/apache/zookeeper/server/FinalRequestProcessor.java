@@ -585,6 +585,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             err = Code.MARSHALLINGERROR;
         }
 
+        updateReplyErrorCountMetrics(err);
+
         ReplyHeader hdr = new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
         updateStats(request, lastOp, lastZxid);
@@ -623,6 +625,12 @@ public class FinalRequestProcessor implements RequestProcessor {
             LOG.error("FIXMSG", e);
         } finally {
             ServerMetrics.getMetrics().RESPONSE_BYTES.add(responseSize);
+        }
+    }
+
+    private void updateReplyErrorCountMetrics(Code errorCode) {
+        if (!Code.OK.equals(errorCode)) {
+            ServerMetrics.getMetrics().REPLY_ERROR_COUNT.add(errorCode.name(), 1);
         }
     }
 
