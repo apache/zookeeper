@@ -58,6 +58,7 @@ import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.Leader.PureRequestProposal;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -81,6 +82,8 @@ public class ZKDatabase {
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected FileTxnSnapLog snapLog;
     protected long minCommittedLog, maxCommittedLog;
+
+    private final boolean allowDiscontinuousProposals = Boolean.getBoolean("zookeeper.test.allowDiscontinuousProposals");
 
     /**
      * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
@@ -170,8 +173,6 @@ public class ZKDatabase {
      * data structures in zkdatabase.
      */
     public void clear() {
-        minCommittedLog = 0;
-        maxCommittedLog = 0;
         /* to be safe we just create a new
          * datatree.
          */
@@ -182,6 +183,8 @@ public class ZKDatabase {
         try {
             lock.lock();
             committedLog.clear();
+            minCommittedLog = 0;
+            maxCommittedLog = 0;
         } finally {
             lock.unlock();
         }
@@ -320,17 +323,30 @@ public class ZKDatabase {
         WriteLock wl = logLock.writeLock();
         try {
             wl.lock();
-            if (committedLog.size() > commitLogCount) {
-                committedLog.remove();
-                minCommittedLog = committedLog.peek().getZxid();
-            }
             if (committedLog.isEmpty()) {
                 minCommittedLog = request.zxid;
                 maxCommittedLog = request.zxid;
+            } else if (request.zxid <= maxCommittedLog) {
+                // This could happen if lastProcessedZxid is rewinded and database is re-synced.
+                // Currently, it only happens in test codes, but it should also be safe for production path.
+                return;
+            } else if (!allowDiscontinuousProposals
+                    && request.zxid != maxCommittedLog + 1
+                    && ZxidUtils.getEpochFromZxid(request.zxid) <= ZxidUtils.getEpochFromZxid(maxCommittedLog)) {
+                String msg = String.format(
+                    "Committed proposal cached out of order: 0x%s is not the next proposal of 0x%s",
+                    ZxidUtils.zxidToString(request.zxid),
+                    ZxidUtils.zxidToString(maxCommittedLog));
+                LOG.error(msg);
+                throw new IllegalStateException(msg);
             }
             PureRequestProposal p = new PureRequestProposal(request);
             committedLog.add(p);
             maxCommittedLog = p.getZxid();
+            if (committedLog.size() > commitLogCount) {
+                committedLog.remove();
+                minCommittedLog = committedLog.peek().getZxid();
+            }
         } finally {
             wl.unlock();
         }
