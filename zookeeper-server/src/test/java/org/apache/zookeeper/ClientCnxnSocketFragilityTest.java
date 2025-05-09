@@ -282,6 +282,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         public CustomClientCnxn(
             HostProvider hostProvider,
             int sessionTimeout,
+            long newSessionTimeout,
             ZKClientConfig zkClientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
@@ -292,6 +293,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             super(
                 hostProvider,
                 sessionTimeout,
+                newSessionTimeout,
                 zkClientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
@@ -357,6 +359,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
         ClientCnxn createConnection(
             HostProvider hostProvider,
             int sessionTimeout,
+            long newSessionTimeout,
             ZKClientConfig clientConfig,
             Watcher defaultWatcher,
             ClientCnxnSocket clientCnxnSocket,
@@ -369,6 +372,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             ClientCnxnSocketFragilityTest.this.cnxn = new CustomClientCnxn(
                 hostProvider,
                 sessionTimeout,
+                newSessionTimeout,
                 clientConfig,
                 defaultWatcher,
                 clientCnxnSocket,
