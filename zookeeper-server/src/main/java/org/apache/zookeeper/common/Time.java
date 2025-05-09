@@ -64,7 +64,6 @@ public class Time {
      * @param str the interval string
      * @return interval in milliseconds
      */
-
     public static int parseTimeInterval(String str) {
         try {
             int len = str.length();
@@ -95,4 +94,27 @@ public class Time {
         }
     }
 
+    /**
+     * Format milliseconds time interval with the highest time unit suffix.
+     *
+     * <p>See {@link #parseTimeInterval(String)} for supported suffixes.
+     *
+     * @param ms milliseconds
+     * @return string formatted with the highest time unit suffix or "0" if {@code ms} is 0
+     */
+    public static String formatTimeIntervalMs(long ms) {
+        if (ms == 0) {
+            return "0";
+        } else if (ms % DAY == 0) {
+            return ms / DAY + "d";
+        } else if (ms % HOUR == 0) {
+            return ms / HOUR + "h";
+        } else if (ms % MINUTE == 0) {
+            return ms / MINUTE + "m";
+        } else if (ms % SECOND == 0) {
+            return ms / SECOND + "s";
+        } else {
+            return ms + "ms";
+        }
+    }
 }

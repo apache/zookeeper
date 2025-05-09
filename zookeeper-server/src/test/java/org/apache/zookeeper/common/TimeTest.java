@@ -129,4 +129,27 @@ public class TimeTest extends ClientBase {
         } catch (NumberFormatException e) {
         }
     }
+
+    @Test
+    public void testFormatTimeInterval() throws Exception {
+        assertEquals("0", Time.formatTimeIntervalMs(0));
+        assertEquals("0", Time.formatTimeIntervalMs(Time.parseTimeInterval("0")));
+        assertEquals("0", Time.formatTimeIntervalMs(Time.parseTimeInterval("0ms")));
+        assertEquals("0", Time.formatTimeIntervalMs(Time.parseTimeInterval("0s")));
+        assertEquals("0", Time.formatTimeIntervalMs(Time.parseTimeInterval("0m")));
+        assertEquals("0", Time.formatTimeIntervalMs(Time.parseTimeInterval("0h")));
+        assertEquals("0", Time.formatTimeIntervalMs(Time.parseTimeInterval("0d")));
+        assertEquals("500ms", Time.formatTimeIntervalMs(Time.parseTimeInterval("500ms")));
+        assertEquals("1m", Time.formatTimeIntervalMs(Time.parseTimeInterval("60s")));
+        assertEquals("61s", Time.formatTimeIntervalMs(Time.parseTimeInterval("61s")));
+        assertEquals("59m", Time.formatTimeIntervalMs(Time.parseTimeInterval("59m")));
+        assertEquals("1h", Time.formatTimeIntervalMs(Time.parseTimeInterval("60m")));
+        assertEquals("2h", Time.formatTimeIntervalMs(Time.parseTimeInterval("120m")));
+        assertEquals("61m", Time.formatTimeIntervalMs(Time.parseTimeInterval("61m")));
+        assertEquals("23h", Time.formatTimeIntervalMs(Time.parseTimeInterval("23h")));
+        assertEquals("1d", Time.formatTimeIntervalMs(Time.parseTimeInterval("24h")));
+        assertEquals("2d", Time.formatTimeIntervalMs(Time.parseTimeInterval("48h")));
+        assertEquals("25h", Time.formatTimeIntervalMs(Time.parseTimeInterval("25h")));
+        assertEquals("2d", Time.formatTimeIntervalMs(Time.parseTimeInterval("2d")));
+    }
 }

@@ -903,6 +903,16 @@ public class QuorumPeerConfig {
         return snapRetainCount;
     }
 
+    /**
+     * Use {@link #getPurgeIntervalInMs()} instead.
+     *
+     * @return purge interval in hour unit or 0 if less than one hour.
+     */
+    @Deprecated
+    public int getPurgeInterval() {
+        return purgeIntervalInMs / Time.HOUR;
+    }
+
     public int getPurgeIntervalInMs() {
         return purgeIntervalInMs;
     }
