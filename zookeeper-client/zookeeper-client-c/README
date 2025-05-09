@@ -101,3 +101,23 @@ In order to be able to use the zookeeper API in your application you have to
 
 Please take a look at cli.c to understand how to use the two API types. 
 (TODO: some kind of short tutorial would be helpful, I guess)
+
+How to build your own project in Windows or Linux use the c api:
+For example :
+we use the cmakefile to build project
+
+   IF (WIN32)
+      MESSAGE(STATUS "Now is windows")
+      add_definitions(-DUSE_STATIC_LIB -DTHREADED)
+      link_libraries(zookeeper.lib)
+      target_link_libraries(test_zookeeper_c zookeeper.lib hashtable.lib ws2_32.lib)
+   ELSEIF (UNIX)
+      MESSAGE(STATUS "Now is UNIX-like OS's.")
+      link_libraries(zookeeper_mt)
+      target_link_libraries(test_zookeeper_c -lzookeeper_mt)
+   ENDIF ()
+
+notice: In windows we use the zookeeper static lib so u should add DUSE_STATIC_LIB and DTHREADED in your cmake project
+and do not forget to add the link the project with zookeeper.lib hashtable.lib ws2_32.lib .
+please enjoy.
+
