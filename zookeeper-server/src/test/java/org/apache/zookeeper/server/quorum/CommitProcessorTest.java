@@ -300,7 +300,7 @@ public class CommitProcessorTest extends ZKTestCase {
             // ValidateProcessor is set up in a similar fashion to ToBeApplied
             // processor, so it can do pre/post validating of requests
             ValidateProcessor validateProcessor = new ValidateProcessor(finalProcessor);
-            commitProcessor = new CommitProcessor(validateProcessor, "1", true, null);
+            commitProcessor = new CommitProcessor(validateProcessor, "1", null);
             validateProcessor.setCommitProcessor(commitProcessor);
             commitProcessor.start();
             MockProposalRequestProcessor proposalProcessor = new MockProposalRequestProcessor(commitProcessor);
