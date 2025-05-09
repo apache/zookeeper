@@ -810,6 +810,21 @@ public class Learner {
         ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
         writePacket(ack, true);
         zk.startup();
+
+        long lastCommittedZxid = zk.getLastProcessedZxid();
+        long lastCommittedEpoch = ZxidUtils.getEpochFromZxid(lastCommittedZxid);
+        if (ZxidUtils.isLastEpochZxid(lastCommittedZxid)) {
+            lastCommittedEpoch += 1;
+        }
+        LOG.debug("lastCommittedZxid {}, lastCommittedEpoch {} newEpoch {}",
+                Long.toHexString(lastCommittedZxid), lastCommittedEpoch, newEpoch);
+        if (lastCommittedEpoch > newEpoch) {
+            LOG.info("Switch to new leader epoch {} from {}", lastCommittedEpoch, newEpoch);
+            newEpoch = lastCommittedEpoch;
+            self.setAcceptedEpoch(newEpoch);
+            self.setCurrentEpoch(newEpoch);
+        }
+
         /*
          * Update the election vote here to ensure that all members of the
          * ensemble report the same vote to new servers that start up and
