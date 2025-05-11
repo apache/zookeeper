@@ -124,7 +124,7 @@
             </goals>
             <configuration>
                <target>
-                  <replaceregexp file="include/zookeeper_version.h" match="project.*" replace="project(zookeeper VERSION ${project.version})" byline="true" />
+                  <replaceregexp file="include/zookeeper_version.h" match="\#define ZOO_VERSION.*" replace="#define ZOO_VERSION &quot;${project.version}&quot;" byline="true" />
                   <replace file="include/zookeeper_version.h" value="">
                       <replaceToken>-SNAPSHOT</replaceToken>
                   </replace>
