@@ -1192,7 +1192,7 @@ public class ClientCnxn {
                         to = connectTimeout - clientCnxnSocket.getIdleSend();
                     }
 
-                    int expiration = expirationTimeout - clientCnxnSocket.getIdleRecv();
+                    int expiration = sessionId == 0 ? Integer.MAX_VALUE : expirationTimeout - clientCnxnSocket.getIdleRecv();
                     if (expiration <= 0) {
                         String warnInfo = String.format(
                             "Client session timed out, have not heard from server in %dms for session id 0x%s",
