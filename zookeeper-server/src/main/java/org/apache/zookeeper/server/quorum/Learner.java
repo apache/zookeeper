@@ -82,6 +82,10 @@ public class Learner {
         Record rec;
         TxnDigest digest;
 
+        Request toRequest() {
+            return new Request(hdr, rec, digest);
+        }
+
     }
 
     QuorumPeer self;
@@ -630,11 +634,21 @@ public class Learner {
                     pif.hdr = logEntry.getHeader();
                     pif.rec = logEntry.getTxn();
                     pif.digest = logEntry.getDigest();
-                    if (pif.hdr.getZxid() != lastQueued + 1) {
-                        LOG.warn(
-                            "Got zxid 0x{} expected 0x{}",
+                    if (lastQueued == 0) {
+                        LOG.info("DIFF sync got first proposal 0x{}", Long.toHexString(pif.hdr.getZxid()));
+                    } else if (pif.hdr.getZxid() != lastQueued + 1) {
+                        if (ZxidUtils.getEpochFromZxid(pif.hdr.getZxid()) <= ZxidUtils.getEpochFromZxid(lastQueued)) {
+                            String msg = String.format("DIFF sync got proposal 0x%s which is not next of last proposal 0x%s",
+                                Long.toHexString(pif.hdr.getZxid()),
+                                Long.toHexString(lastQueued));
+                            LOG.error(msg);
+                            throw new Exception(msg);
+                        }
+                        // We can't tell whether it is a data loss. Given that new epoch is rare,
+                        // log at warn should not be too verbose.
+                        LOG.warn("DIFF sync got new epoch proposal 0x{}, last proposal 0x{}",
                             Long.toHexString(pif.hdr.getZxid()),
-                            Long.toHexString(lastQueued + 1));
+                            Long.toHexString(lastQueued));
                     }
                     lastQueued = pif.hdr.getZxid();
 
@@ -666,7 +680,7 @@ public class Learner {
                                 Long.toHexString(qp.getZxid()),
                                 Long.toHexString(pif.hdr.getZxid()));
                         } else {
-                            zk.processTxn(pif.hdr, pif.rec);
+                            zk.processTxn(pif.toRequest());
                             packetsNotLogged.remove();
                         }
                     } else {
@@ -696,18 +710,27 @@ public class Learner {
                         packet.rec = logEntry.getTxn();
                         packet.hdr = logEntry.getHeader();
                         packet.digest = logEntry.getDigest();
-                        // Log warning message if txn comes out-of-order
-                        if (packet.hdr.getZxid() != lastQueued + 1) {
-                            LOG.warn(
-                                "Got zxid 0x{} expected 0x{}",
-                                Long.toHexString(packet.hdr.getZxid()),
-                                Long.toHexString(lastQueued + 1));
+                        if (lastQueued == 0) {
+                            LOG.info("DIFF sync got first proposal 0x{}", Long.toHexString(packet.hdr.getZxid()));
+                        } else if (packet.hdr.getZxid() != lastQueued + 1) {
+                            if (ZxidUtils.getEpochFromZxid(packet.hdr.getZxid()) <= ZxidUtils.getEpochFromZxid(lastQueued)) {
+                                String msg = String.format("DIFF sync got proposal 0x%s which is not next of last proposal 0x%s",
+                                    Long.toHexString(packet.hdr.getZxid()),
+                                    Long.toHexString(lastQueued));
+                                LOG.error(msg);
+                                throw new Exception(msg);
+                            }
+                            // We can't tell whether it is a data loss. Given that new epoch is rare,
+                            // log at warn should not be too verbose.
+                            LOG.warn("DIFF sync got new epoch proposal 0x{}, last proposal 0x{}",
+                                    Long.toHexString(packet.hdr.getZxid()),
+                                    Long.toHexString(lastQueued));
                         }
                         lastQueued = packet.hdr.getZxid();
                     }
                     if (!writeToTxnLog) {
                         // Apply to db directly if we haven't taken the snapshot
-                        zk.processTxn(packet.hdr, packet.rec);
+                        zk.processTxn(packet.toRequest());
                     } else {
                         packetsNotLogged.add(packet);
                         packetsCommitted.add(qp.getZxid());
@@ -780,8 +803,8 @@ public class Learner {
                                 continue;
                             }
                             packetsNotLogged.removeFirst();
-                            fzk.appendRequest(pif.hdr, pif.rec, pif.digest);
-                            fzk.processTxn(pif.hdr, pif.rec);
+                            fzk.appendRequest(pif.toRequest());
+                            fzk.processTxn(pif.toRequest());
                         }
 
                         // @see https://issues.apache.org/jira/browse/ZOOKEEPER-4646
@@ -823,7 +846,7 @@ public class Learner {
         if (zk instanceof FollowerZooKeeperServer) {
             FollowerZooKeeperServer fzk = (FollowerZooKeeperServer) zk;
             for (PacketInFlight p : packetsNotLogged) {
-                fzk.logRequest(p.hdr, p.rec, p.digest);
+                fzk.logRequest(p.toRequest());
             }
             LOG.info("{} txns have been logged asynchronously", packetsNotLogged.size());
 
@@ -847,8 +870,7 @@ public class Learner {
                     continue;
                 }
                 packetsCommitted.remove();
-                Request request = new Request(p.hdr.getClientId(), p.hdr.getCxid(), p.hdr.getType(), p.hdr, p.rec, -1);
-                request.setTxnDigest(p.digest);
+                Request request = p.toRequest();
                 ozk.commitRequest(request);
             }
         } else {
