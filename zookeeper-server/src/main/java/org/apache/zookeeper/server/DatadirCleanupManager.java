@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +76,7 @@ public class DatadirCleanupManager {
         this.snapRetainCount = snapRetainCount;
         this.purgeIntervalInMs = purgeIntervalInMs;
         LOG.info("autopurge.snapRetainCount set to {}", snapRetainCount);
-        LOG.info("autopurge.purgeInterval set to {}", purgeIntervalInMs);
+        LOG.info("autopurge.purgeInterval set to {}", Time.formatTimeIntervalMs(purgeIntervalInMs));
     }
 
     /**
