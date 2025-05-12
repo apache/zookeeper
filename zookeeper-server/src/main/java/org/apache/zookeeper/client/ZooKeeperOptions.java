@@ -32,6 +32,7 @@ import org.apache.zookeeper.Watcher;
 public class ZooKeeperOptions {
     private final String connectString;
     private final int sessionTimeout;
+    private final long newSessionTimeout;
     private final Watcher defaultWatcher;
     private final Function<Collection<InetSocketAddress>, HostProvider> hostProvider;
     private final boolean canBeReadOnly;
@@ -41,6 +42,7 @@ public class ZooKeeperOptions {
 
     ZooKeeperOptions(String connectString,
                      int sessionTimeout,
+                     long newSessionTimeout,
                      Watcher defaultWatcher,
                      Function<Collection<InetSocketAddress>, HostProvider> hostProvider,
                      boolean canBeReadOnly,
@@ -49,6 +51,7 @@ public class ZooKeeperOptions {
                      ZKClientConfig clientConfig) {
         this.connectString = connectString;
         this.sessionTimeout = sessionTimeout;
+        this.newSessionTimeout = newSessionTimeout;
         this.hostProvider = hostProvider;
         this.defaultWatcher = defaultWatcher;
         this.canBeReadOnly = canBeReadOnly;
@@ -63,6 +66,10 @@ public class ZooKeeperOptions {
 
     public int getSessionTimeout() {
         return sessionTimeout;
+    }
+
+    public long getNewSessionTimeout() {
+        return newSessionTimeout;
     }
 
     public Watcher getDefaultWatcher() {
