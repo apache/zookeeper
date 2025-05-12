@@ -3596,12 +3596,16 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
         watcher_registration_t* wo, completion_head_t *clist,
         watcher_deregistration_t* wdo)
 {
+
+    completion_list_t *c = NULL;
+#ifdef THREADED
     if (clist != NULL) {
         pthread_mutex_init(clist->lock, 0);
         pthread_cond_init(clist->cond, 0);
     }
+#endif
 
-    completion_list_t *c = calloc(1, sizeof(completion_list_t));
+    c = calloc(1, sizeof(completion_list_t));
     if (!c) {
         LOG_ERROR(LOGCALLBACK(zh), "out of memory");
         return 0;
@@ -3651,11 +3655,12 @@ static void destroy_completion_entry(completion_list_t* c){
         destroy_watcher_deregistration(c->watcher_deregistration);
         if(c->buffer!=0)
             free_buffer(c->buffer);
-
-        if (c->c != NULL) {
-            pthread_mutex_destroy(c->c->lock);
-            pthread_cond_destroy(c->c->cond);
+#ifdef THREADED
+        if (c->c != NULL && c->c->clist != NULL) {
+            pthread_mutex_destroy(c->c->clist->lock);
+            pthread_cond_destroy(c->c->clist->cond);
         }
+#endif
         free(c);
     }
 }
