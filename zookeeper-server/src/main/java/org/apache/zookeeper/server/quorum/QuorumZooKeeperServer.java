@@ -123,6 +123,43 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     }
 
     /**
+     * This must only be called after the rollover txn has been persisted as it bumps `currentEpoch`.
+     *
+     * <p>Note that it is possible for leader/follower to commit a proposal while it has not yet persisted
+     * that proposal.
+     *
+     * <p>See {@link Learner#registerWithLeader(int)} and {@link Leader#getEpochToPropose(long, long)} for details
+     * of {@link org.apache.zookeeper.server.quorum.QuorumPeer.ZabState#DISCOVERY} phase.
+     *
+     * <p>See {@link Learner#syncWithLeader(long)} for details of
+     * {@link org.apache.zookeeper.server.quorum.QuorumPeer.ZabState#SYNCHRONIZATION} phase.
+     */
+    public void fenceRolloverEpoch(long newEpoch) throws IOException {
+        // Once majority nodes increase their `acceptedEpoch`, the `newEpoch` is fenced in future elections.
+        self.setAcceptedEpoch(newEpoch);
+
+        // There is no DIFF to synchronize.
+        //
+        // It is erroneous to bump `currentEpoch` before persisting the rollover proposal.
+        //
+        // 1. Leader is able to commit a proposal even if it has not yet persisted the proposal.
+        // 2. `peerEpoch`(a.k.a. `currentEpoch`) take higher priority than `lastLoggedZxid`.
+        //
+        // So, if `currentEpoch` is bumped before persisting the rollover proposal, restarted
+        // leader could win election and truncate committed proposals in other nodes.
+        //
+        // The above applies to followers also.
+        self.setCurrentEpoch(newEpoch);
+    }
+
+    public void confirmRolloverEpoch(long newEpoch) {
+        // Quorum confirms this, there is no chance for others to rule
+        // this new epoch. So it is safe to broadcast this fact, even
+        // though we may not persist rollover txn yet.
+        self.updateElectionVote(newEpoch);
+    }
+
+    /**
      * Implements the SessionUpgrader interface,
      *
      * @param sessionId

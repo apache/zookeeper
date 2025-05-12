@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,8 +27,9 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
@@ -228,18 +230,14 @@ public class ZxidRolloverTest extends ZKTestCase {
      */
     private int createNodes(ZooKeeper zk, int start, int count) throws Exception {
         LOG.info("Creating nodes {} thru {}", start, (start + count));
-        int j = 0;
-        try {
-            for (int i = start; i < start + count; i++) {
-                zk.create("/foo" + i, new byte[0], Ids.READ_ACL_UNSAFE, CreateMode.EPHEMERAL);
-                j++;
-            }
-        } catch (ConnectionLossException e) {
-            // this is ok - the leader has dropped leadership
-            waitForClientsConnected();
+        for (int i = start; i < start + count; i++) {
+            Stat stat = new Stat();
+            zk.create("/foo" + i, new byte[0], ZooDefs.Ids.READ_ACL_UNSAFE, CreateMode.EPHEMERAL, stat);
+            LOG.info("STAT: {}", Long.toHexString(stat.getCzxid()));
         }
-        return j;
+        return count;
     }
+
     /**
      * Verify the expected znodes were created and that the last znode, which
      * caused the roll-over, did not.
@@ -247,15 +245,15 @@ public class ZxidRolloverTest extends ZKTestCase {
     private void checkNodes(ZooKeeper zk, int start, int count) throws Exception {
         LOG.info("Validating nodes {} thru {}", start, (start + count));
         for (int i = start; i < start + count; i++) {
-            assertNotNull(zk.exists("/foo" + i, false));
-            LOG.error("Exists zxid:{}", Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
+            Stat stat = zk.exists("/foo" + i, false);
+            assertNotNull(stat);
+            LOG.info("Exists zxid:{}", Long.toHexString(stat.getCzxid()));
         }
         assertNull(zk.exists("/foo" + (start + count), false));
     }
 
     /**
-     * Prior to the fix this test would hang for a while, then fail with
-     * connection loss.
+     * Verify that operations during zxid rollover should be fine.
      */
     @Test
     public void testSimpleRolloverFollower() throws Exception {
@@ -265,6 +263,8 @@ public class ZxidRolloverTest extends ZKTestCase {
         int countCreated = createNodes(zk, 0, 10);
 
         checkNodes(zk, 0, countCreated);
+
+        assertEquals(10, countCreated);
     }
 
     /**
@@ -308,8 +308,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 60);
+        assertEquals(60, countCreated);
     }
 
     /**
@@ -350,8 +349,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 60);
+        assertEquals(60, countCreated);
     }
 
     /**
@@ -395,8 +393,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 50);
+        assertEquals(50, countCreated);
     }
 
     /**
@@ -442,8 +439,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 70);
+        assertEquals(70, countCreated);
     }
 
 }
