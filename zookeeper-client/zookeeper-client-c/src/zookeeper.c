@@ -3596,6 +3596,11 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
         watcher_registration_t* wo, completion_head_t *clist,
         watcher_deregistration_t* wdo)
 {
+    if (clist != NULL) {
+        pthread_mutex_init(clist->lock, 0);
+        pthread_cond_init(clist->cond, 0);
+    }
+
     completion_list_t *c = calloc(1, sizeof(completion_list_t));
     if (!c) {
         LOG_ERROR(LOGCALLBACK(zh), "out of memory");
@@ -3646,6 +3651,11 @@ static void destroy_completion_entry(completion_list_t* c){
         destroy_watcher_deregistration(c->watcher_deregistration);
         if(c->buffer!=0)
             free_buffer(c->buffer);
+
+        if (c->c != NULL) {
+            pthread_mutex_destroy(c->c->lock);
+            pthread_cond_destroy(c->c->cond);
+        }
         free(c);
     }
 }
@@ -4653,14 +4663,6 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     completion_head_t clist;
     int rc, index;
 
-    /* initialize mutex and condition variable in clist */
-    clist.head = NULL;
-    clist.last = NULL;
-#ifdef THREADED
-    pthread_mutex_init(&clist.lock, NULL);
-    pthread_cond_init(&clist.cond, NULL);
-#endif
-
     rc = serialize_RequestHeader(oa, "header", &h);
 
     for (index=0; index < count; index++) {
@@ -4685,7 +4687,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 result->valuelen = op->create_op.buflen;
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, &clist);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->create_op.path);
                 break;
@@ -4697,7 +4699,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, &clist);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->delete_op.path);
                 break;
@@ -4712,7 +4714,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 result->stat = op->set_op.stat;
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, 0);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, &clist);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->set_op.path);
                 break;
@@ -4725,7 +4727,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 rc = rc < 0 ? rc : serialize_CheckVersionRequest(oa, "req", &req);
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, &clist);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->check_op.path);
                 break;
