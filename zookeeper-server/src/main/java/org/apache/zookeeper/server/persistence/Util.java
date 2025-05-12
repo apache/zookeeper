@@ -45,6 +45,28 @@ import org.slf4j.LoggerFactory;
  */
 public class Util {
 
+    /**
+     * Constants and enums added for backup and restore.
+     */
+    public static final String SNAP_PREFIX = FileSnap.SNAPSHOT_FILE_PREFIX;
+    public static final String TXLOG_PREFIX = FileTxnLog.LOG_FILE_PREFIX;
+
+    public enum FileType {
+        SNAPSHOT,
+        TXNLOG;
+
+        public static FileType fromPrefix(String prefix) {
+            switch (prefix) {
+                case SNAP_PREFIX:
+                    return SNAPSHOT;
+                case TXLOG_PREFIX:
+                    return TXNLOG;
+                default:
+                    throw new IllegalArgumentException("Unknown FileType prefix: " + prefix);
+            }
+        }
+    }
+
     private static final Logger LOG = LoggerFactory.getLogger(Util.class);
     private static final String SNAP_DIR = "snapDir";
     private static final String LOG_DIR = "logDir";
@@ -145,6 +167,26 @@ public class Util {
             }
         }
         return zxid;
+    }
+
+    /**
+     * Returns a ZxidRange whose high Zxid could be absent.
+     * @param name
+     * @param prefix
+     * @return
+     */
+    public static ZxidRange getZxidRangeFromName(String name, String prefix) {
+        ZxidRange zxidRange = ZxidRange.INVALID;
+        String nameParts[] = name.split("[\\.-]");
+        try {
+            if (nameParts.length == 2 && nameParts[0].equals(prefix)) {
+                zxidRange = new ZxidRange(Long.parseLong(nameParts[1], 16));
+            } else if (nameParts.length == 3 && nameParts[0].equals(prefix)) {
+                zxidRange = new ZxidRange(Long.parseLong(nameParts[1], 16),
+                    Long.parseLong(nameParts[2], 16));
+            }
+        } catch (NumberFormatException e) {}
+        return zxidRange;
     }
 
     /**
