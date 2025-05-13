@@ -3600,8 +3600,8 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
     completion_list_t *c = NULL;
 #ifdef THREADED
     if (clist != NULL) {
-        pthread_mutex_init(&clist.lock, 0);
-        pthread_cond_init(&clist.cond, 0);
+        pthread_mutex_init(&clist->lock, 0);
+        pthread_cond_init(&clist->cond, 0);
     }
 #endif
 
@@ -3656,9 +3656,9 @@ static void destroy_completion_entry(completion_list_t* c){
         if(c->buffer!=0)
             free_buffer(c->buffer);
 #ifdef THREADED
-        if (c.c != 0 && c.c.clist != 0) {
-            pthread_mutex_destroy(c.c.clist.lock);
-            pthread_cond_destroy(c.c.clist.cond);
+        if (c->c != 0 && c->c.clist != 0) {
+            pthread_mutex_destroy(c->c.clist.lock);
+            pthread_cond_destroy(c->c.clist.cond);
         }
 #endif
         free(c);
