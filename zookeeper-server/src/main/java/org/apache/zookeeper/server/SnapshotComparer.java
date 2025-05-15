@@ -287,41 +287,42 @@ public class SnapshotComparer {
       }
     } else {
       // interactive mode
-      Scanner scanner = new Scanner(System.in);
-      int currentDepth = 0;
-      while (currentDepth < maxDepth) {
-        System.out.println(String.format("Current depth is %d", currentDepth));
-        System.out.println("- Press enter to move to print current depth layer;\n- Type a number to jump to and print all nodes at a given depth;\n- Enter an ABSOLUTE path to print the immediate subtree of a node. Path must start with '/'.");
-        String input = scanner.nextLine();
-        printThresholdInfo(byteThreshold, nodeThreshold);
-        if (input.isEmpty()) {
-          // input is Enter
-          System.out.println(String.format("Analysis for depth %d", currentDepth));
-          compareLine(left, right, currentDepth, byteThreshold, nodeThreshold, debug, interactive);
-          currentDepth++;
-        } else {
-          // input is a path
-          if (input.startsWith("/")){
-            System.out.println(String.format("Analysis for node %s", input));
-            compareSubtree(left, right, input, byteThreshold, nodeThreshold, debug, interactive);
+      try (Scanner scanner = new Scanner(System.in)) {
+        int currentDepth = 0;
+        while (currentDepth < maxDepth) {
+          System.out.println(String.format("Current depth is %d", currentDepth));
+          System.out.println("- Press enter to move to print current depth layer;\n- Type a number to jump to and print all nodes at a given depth;\n- Enter an ABSOLUTE path to print the immediate subtree of a node. Path must start with '/'.");
+          String input = scanner.nextLine();
+          printThresholdInfo(byteThreshold, nodeThreshold);
+          if (input.isEmpty()) {
+            // input is Enter
+            System.out.println(String.format("Analysis for depth %d", currentDepth));
+            compareLine(left, right, currentDepth, byteThreshold, nodeThreshold, debug, interactive);
+            currentDepth++;
           } else {
-            // input is a number
-            try {
-              int depth = Integer.parseInt(input);
-              if (depth < 0 || depth >= maxDepth) {
-                System.out.println(String.format("Depth must be in range [%d, %d]", 0, maxDepth - 1));
-                continue;
+            // input is a path
+            if (input.startsWith("/")){
+              System.out.println(String.format("Analysis for node %s", input));
+              compareSubtree(left, right, input, byteThreshold, nodeThreshold, debug, interactive);
+            } else {
+              // input is a number
+              try {
+                int depth = Integer.parseInt(input);
+                if (depth < 0 || depth >= maxDepth) {
+                  System.out.println(String.format("Depth must be in range [%d, %d]", 0, maxDepth - 1));
+                  continue;
+                }
+                currentDepth = depth;
+                System.out.println(String.format("Analysis for depth %d", currentDepth));
+                compareLine(left, right, currentDepth, byteThreshold, nodeThreshold, debug, interactive);
+              } catch (NumberFormatException ex) {
+                // input is invalid
+                System.out.println(String.format("Input %s is not valid. Depth must be in range [%d, %d]. Path must be an absolute path which starts with '/'.", input, 0, maxDepth - 1));
               }
-              currentDepth = depth;
-              System.out.println(String.format("Analysis for depth %d", currentDepth));
-              compareLine(left, right, currentDepth, byteThreshold, nodeThreshold, debug, interactive);
-            } catch (NumberFormatException ex) {
-              // input is invalid
-              System.out.println(String.format("Input %s is not valid. Depth must be in range [%d, %d]. Path must be an absolute path which starts with '/'.", input, 0, maxDepth - 1));
             }
           }
+          System.out.println("");
         }
-        System.out.println("");
       }
     }
     System.out.println("All layers compared.");
