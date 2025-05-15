@@ -3174,7 +3174,7 @@ static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, st
     assert(clist);
     deserialize_MultiHeader(ia, "multiheader", &mhdr);
     while (!mhdr.done) {
-        completion_list_t *entry = dequeue_completion(clist);
+        completion_list_t *entry = dequeue_completion_nolock(clist);
         assert(entry);
 
         if (mhdr.type == -1) {
@@ -3596,7 +3596,10 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
         watcher_registration_t* wo, completion_head_t *clist,
         watcher_deregistration_t* wdo)
 {
-    completion_list_t *c = calloc(1, sizeof(completion_list_t));
+
+    completion_list_t *c = NULL;
+
+    c = calloc(1, sizeof(completion_list_t));
     if (!c) {
         LOG_ERROR(LOGCALLBACK(zh), "out of memory");
         return 0;
@@ -4651,10 +4654,10 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
     completion_head_t clist = { 0 };
+    int rc, index;
 
-    int rc = serialize_RequestHeader(oa, "header", &h);
+    rc = serialize_RequestHeader(oa, "header", &h);
 
-    int index = 0;
     for (index=0; index < count; index++) {
         const zoo_op_t *op = ops+index;
         zoo_op_result_t *result = results+index;
@@ -4728,7 +4731,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 return ZUNIMPLEMENTED;
         }
 
-        queue_completion(&clist, entry, 0);
+        queue_completion_nolock(&clist, entry, 0);
     }
 
     rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
