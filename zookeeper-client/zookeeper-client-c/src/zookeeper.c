@@ -3174,7 +3174,7 @@ static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, st
     assert(clist);
     deserialize_MultiHeader(ia, "multiheader", &mhdr);
     while (!mhdr.done) {
-        completion_list_t *entry = dequeue_completion(clist);
+        completion_list_t *entry = dequeue_completion_nolock(clist);
         assert(entry);
 
         if (mhdr.type == -1) {
@@ -3598,12 +3598,6 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
 {
 
     completion_list_t *c = NULL;
-#ifdef THREADED
-    if (clist != NULL) {
-        pthread_mutex_init(&clist->lock, 0);
-        pthread_cond_init(&clist->cond, 0);
-    }
-#endif
 
     c = calloc(1, sizeof(completion_list_t));
     if (!c) {
@@ -3655,12 +3649,6 @@ static void destroy_completion_entry(completion_list_t* c){
         destroy_watcher_deregistration(c->watcher_deregistration);
         if(c->buffer!=0)
             free_buffer(c->buffer);
-#ifdef THREADED
-        if (c->c != 0 && c->c.clist != 0) {
-            pthread_mutex_destroy(c->c.clist.lock);
-            pthread_cond_destroy(c->c.clist.cond);
-        }
-#endif
         free(c);
     }
 }
@@ -4665,7 +4653,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     struct RequestHeader h = {get_xid(), ZOO_MULTI_OP};
     struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
-    completion_head_t clist;
+    completion_head_t clist = { 0 };
     int rc, index;
 
     rc = serialize_RequestHeader(oa, "header", &h);
@@ -4692,7 +4680,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 result->valuelen = op->create_op.buflen;
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, &clist);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->create_op.path);
                 break;
@@ -4704,7 +4692,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, &clist);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->delete_op.path);
                 break;
@@ -4719,7 +4707,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 result->stat = op->set_op.stat;
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, &clist);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, 0);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->set_op.path);
                 break;
@@ -4732,7 +4720,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 rc = rc < 0 ? rc : serialize_CheckVersionRequest(oa, "req", &req);
 
                 enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, &clist);
+                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
                 leave_critical(zh);
                 free_duplicate_path(req.path, op->check_op.path);
                 break;
@@ -4743,7 +4731,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 return ZUNIMPLEMENTED;
         }
 
-        queue_completion(&clist, entry, 0);
+        queue_completion_nolock(&clist, entry, 0);
     }
 
     rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
