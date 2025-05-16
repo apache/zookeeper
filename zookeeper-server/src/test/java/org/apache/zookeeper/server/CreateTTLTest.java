@@ -22,11 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
@@ -38,6 +40,7 @@ import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
@@ -91,6 +94,10 @@ public class CreateTTLTest extends ClientBase {
         fakeElapsed.set(1000);
         containerManager.checkContainers();
         assertNull(zk.exists("/foo", false), "Ttl node should have been deleted");
+
+        // validate deleted TTL nodes count
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+        assertTrue((long) metrics.get("ttl_node_deleted_count") >= 1);
     }
 
     @Test
