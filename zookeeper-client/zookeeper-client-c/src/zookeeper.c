@@ -3139,10 +3139,9 @@ error:
 }
 //#endif
 
-completion_list_t *dequeue_completion(completion_head_t *list)
-{
+completion_list_t *dequeue_completion_nolock(completion_head_t *list) {
+
     completion_list_t *cptr;
-    lock_completion_list(list);
     cptr = list->head;
     if (cptr) {
         list->head = cptr->next;
@@ -3151,6 +3150,14 @@ completion_list_t *dequeue_completion(completion_head_t *list)
             list->last = 0;
         }
     }
+    return cptr;
+}
+
+completion_list_t *dequeue_completion(completion_head_t *list)
+{
+    completion_list_t *cptr;
+    lock_completion_list(list);
+    cptr = dequeue_completion_nolock(list);
     unlock_completion_list(list);
     return cptr;
 }
@@ -3159,7 +3166,7 @@ completion_list_t *dequeue_completion(completion_head_t *list)
 static void cleanup_failed_multi(zhandle_t *zh, int xid, int rc, completion_list_t *cptr) {
     completion_list_t *entry;
     completion_head_t *clist = &cptr->c.clist;
-    while ((entry = dequeue_completion(clist)) != NULL) {
+    while ((entry = dequeue_completion_nolock(clist)) != NULL) {
         // Fake failed response for all sub-requests
         deserialize_response(zh, entry->c.type, xid, 1, rc, entry, NULL);
         destroy_completion_entry(entry);
