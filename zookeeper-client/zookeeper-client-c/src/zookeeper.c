@@ -3603,10 +3603,7 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
         watcher_registration_t* wo, completion_head_t *clist,
         watcher_deregistration_t* wdo)
 {
-
-    completion_list_t *c = NULL;
-
-    c = calloc(1, sizeof(completion_list_t));
+    completion_list_t *c = calloc(1, sizeof(completion_list_t));
     if (!c) {
         LOG_ERROR(LOGCALLBACK(zh), "out of memory");
         return 0;
@@ -4661,10 +4658,10 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
     completion_head_t clist = { 0 };
-    int rc, index;
 
-    rc = serialize_RequestHeader(oa, "header", &h);
+    int rc = serialize_RequestHeader(oa, "header", &h);
 
+    int index = 0;
     for (index=0; index < count; index++) {
         const zoo_op_t *op = ops+index;
         zoo_op_result_t *result = results+index;
