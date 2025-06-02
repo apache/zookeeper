@@ -212,6 +212,10 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #endif
 #ifdef HAVE_OPENSSL_H
     CPPUNIT_TEST(testSSL);
+    CPPUNIT_TEST(testSSLNoClientCert);
+
+    // Order after above two tests as it changes ssl.clientAuth
+    CPPUNIT_TEST(testSSLServerOnly);
 #endif
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testCreateContainer);
@@ -311,6 +315,12 @@ public:
     void startServer() {
         char cmd[1024];
         sprintf(cmd, "%s start %s", ZKSERVER_CMD, getHostPorts());
+        CPPUNIT_ASSERT(system(cmd) == 0);
+    }
+
+    void startServer(const char *envs) {
+        char cmd[1024];
+        sprintf(cmd, "%s %s start %s", envs, ZKSERVER_CMD, getHostPorts());
         CPPUNIT_ASSERT(system(cmd) == 0);
     }
 
@@ -879,15 +889,28 @@ public:
     }
 
 #ifdef HAVE_OPENSSL_H
-    void testSSL() {
+    int checkSSL(const char *path, const char *certs) {
         watchctx_t ctx;
         zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
-        zhandle_t *zk = createSSLClient("127.0.0.1:22281", "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password", &ctx);
+        zhandle_t *zk = createSSLClient("127.0.0.1:22281", certs, &ctx);
         CPPUNIT_ASSERT(zk);
         int rc = 0;
-        rc = zoo_create(zk, "/ssl", NULL, -1,
-                        &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
-        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+        return zoo_create(zk, path, NULL, -1, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+    }
+
+    void testSSL() {
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, checkSSL("/ssl", "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password"));
+    }
+
+    void testSSLNoClientCert() {
+        CPPUNIT_ASSERT(ZOK != checkSSL("/ssl-no-client-cert", "/tmp/certs/server.crt"));
+    }
+
+    void testSSLServerOnly() {
+        stopServer();
+        startServer("CLIENT_AUTH=none");
+
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, checkSSL("/ssl-server-only", "/tmp/certs/server.crt"));
     }
 #endif
 
