@@ -539,6 +539,27 @@ public class Learner {
         }
     }
 
+    long enforceContinuousProposal(long lastQueued, PacketInFlight pif) throws Exception {
+        if (lastQueued == 0) {
+            LOG.info("DIFF sync got first proposal 0x{}", Long.toHexString(pif.hdr.getZxid()));
+        } else if (pif.hdr.getZxid() != lastQueued + 1) {
+            if (ZxidUtils.getEpochFromZxid(pif.hdr.getZxid()) <= ZxidUtils.getEpochFromZxid(lastQueued)) {
+                String msg = String.format(
+                    "DIFF sync got proposal 0x%s, last queued 0x%s, expected 0x%s",
+                    Long.toHexString(pif.hdr.getZxid()), Long.toHexString(lastQueued),
+                    Long.toHexString(lastQueued + 1));
+                LOG.error(msg);
+                throw new Exception(msg);
+            }
+            // We can't tell whether it is a data loss. Given that new epoch is rare,
+            // log at warn should not be too verbose.
+            LOG.warn("DIFF sync got new epoch proposal 0x{}, last queued 0x{}, expected 0x{}",
+                Long.toHexString(pif.hdr.getZxid()), Long.toHexString(lastQueued),
+                Long.toHexString(lastQueued + 1));
+        }
+        return pif.hdr.getZxid();
+    }
+
     /**
      * Finally, synchronize our history with the Leader (if Follower)
      * or the LearnerMaster (if Observer).
@@ -613,6 +634,8 @@ public class Learner {
             zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
             zk.createSessionTracker();
 
+            // TODO: Ideally, this should be lastProcessZxid(a.k.a. QuorumPacket::zxid from above), but currently
+            // LearnerHandler does not guarantee this. So, let's be conservative and keep it unchange for now.
             long lastQueued = 0;
 
             // in Zab V1.0 (ZK 3.4+) we might take a snapshot when we get the NEWLEADER message, but in pre V1.0
@@ -634,23 +657,7 @@ public class Learner {
                     pif.hdr = logEntry.getHeader();
                     pif.rec = logEntry.getTxn();
                     pif.digest = logEntry.getDigest();
-                    if (lastQueued == 0) {
-                        LOG.info("DIFF sync got first proposal 0x{}", Long.toHexString(pif.hdr.getZxid()));
-                    } else if (pif.hdr.getZxid() != lastQueued + 1) {
-                        if (ZxidUtils.getEpochFromZxid(pif.hdr.getZxid()) <= ZxidUtils.getEpochFromZxid(lastQueued)) {
-                            String msg = String.format("DIFF sync got proposal 0x%s which is not next of last proposal 0x%s",
-                                Long.toHexString(pif.hdr.getZxid()),
-                                Long.toHexString(lastQueued));
-                            LOG.error(msg);
-                            throw new Exception(msg);
-                        }
-                        // We can't tell whether it is a data loss. Given that new epoch is rare,
-                        // log at warn should not be too verbose.
-                        LOG.warn("DIFF sync got new epoch proposal 0x{}, last proposal 0x{}",
-                            Long.toHexString(pif.hdr.getZxid()),
-                            Long.toHexString(lastQueued));
-                    }
-                    lastQueued = pif.hdr.getZxid();
+                    lastQueued = enforceContinuousProposal(lastQueued, pif);
 
                     if (pif.hdr.getType() == OpCode.reconfig) {
                         SetDataTxn setDataTxn = (SetDataTxn) pif.rec;
@@ -710,23 +717,7 @@ public class Learner {
                         packet.rec = logEntry.getTxn();
                         packet.hdr = logEntry.getHeader();
                         packet.digest = logEntry.getDigest();
-                        if (lastQueued == 0) {
-                            LOG.info("DIFF sync got first proposal 0x{}", Long.toHexString(packet.hdr.getZxid()));
-                        } else if (packet.hdr.getZxid() != lastQueued + 1) {
-                            if (ZxidUtils.getEpochFromZxid(packet.hdr.getZxid()) <= ZxidUtils.getEpochFromZxid(lastQueued)) {
-                                String msg = String.format("DIFF sync got proposal 0x%s which is not next of last proposal 0x%s",
-                                    Long.toHexString(packet.hdr.getZxid()),
-                                    Long.toHexString(lastQueued));
-                                LOG.error(msg);
-                                throw new Exception(msg);
-                            }
-                            // We can't tell whether it is a data loss. Given that new epoch is rare,
-                            // log at warn should not be too verbose.
-                            LOG.warn("DIFF sync got new epoch proposal 0x{}, last proposal 0x{}",
-                                    Long.toHexString(packet.hdr.getZxid()),
-                                    Long.toHexString(lastQueued));
-                        }
-                        lastQueued = packet.hdr.getZxid();
+                        lastQueued = enforceContinuousProposal(lastQueued, packet);
                     }
                     if (!writeToTxnLog) {
                         // Apply to db directly if we haven't taken the snapshot
@@ -803,8 +794,9 @@ public class Learner {
                                 continue;
                             }
                             packetsNotLogged.removeFirst();
-                            fzk.appendRequest(pif.toRequest());
-                            fzk.processTxn(pif.toRequest());
+                            Request request = pif.toRequest();
+                            fzk.appendRequest(request);
+                            fzk.processTxn(request);
                         }
 
                         // @see https://issues.apache.org/jira/browse/ZOOKEEPER-4646
