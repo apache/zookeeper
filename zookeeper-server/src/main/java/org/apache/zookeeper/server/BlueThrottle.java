@@ -325,8 +325,13 @@ public class BlueThrottle {
         long diff = now - lastTime;
 
         if (diff > fillTime) {
-            int refill = (int) (diff * fillCount / fillTime);
-            tokens = Math.min(tokens + refill, maxTokens);
+            long refill = diff * fillCount / fillTime;
+            tokens = (int) Math.min(tokens + refill, maxTokens);
+            if (tokens < 0) {
+                tokens = maxTokens;
+                LOG.error("Throttle config values {}({}) and {}({}) are insane and cause long integer overflow after {}ms",
+                        CONNECTION_THROTTLE_FILL_TIME, fillTime, CONNECTION_THROTTLE_FILL_COUNT, fillCount, diff);
+            }
             lastTime = now;
         }
 
