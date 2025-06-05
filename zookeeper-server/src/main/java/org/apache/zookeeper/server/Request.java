@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.AuthUtil;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -362,6 +363,10 @@ public class Request {
         default:
             return false;
         }
+    }
+
+    public boolean isRollover() {
+        return isQuorum() && zxid > 0 && ZxidUtils.isLastEpochZxid(zxid);
     }
 
     public static String op2String(int op) {
