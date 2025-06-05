@@ -28,6 +28,7 @@ import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
@@ -210,7 +211,7 @@ public class ZxidRolloverTest extends ZKTestCase {
 
     /** Reset the next zxid to be near epoch end */
     private void adjustEpochNearEnd() {
-        zksLeader.setZxid((zksLeader.getZxid() & 0xffffffff00000000L) | 0xfffffffcL);
+        zksLeader.setZxid(ZxidUtils.clearCounter(zksLeader.getZxid()) | 0xfffffffffcL);
     }
 
     @AfterEach
