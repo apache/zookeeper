@@ -202,12 +202,8 @@ public class Observer extends Learner {
         case Leader.INFORM:
             ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             logEntry = SerializeUtils.deserializeTxn(qp.getData());
-            hdr = logEntry.getHeader();
-            txn = logEntry.getTxn();
-            digest = logEntry.getDigest();
-            Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, 0);
+            Request request = logEntry.toRequest();
             request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
-            request.setTxnDigest(digest);
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer) zk;
             obs.commitRequest(request);
             break;
@@ -219,13 +215,10 @@ public class Observer extends Learner {
             byte[] remainingdata = new byte[buffer.remaining()];
             buffer.get(remainingdata);
             logEntry = SerializeUtils.deserializeTxn(remainingdata);
-            hdr = logEntry.getHeader();
             txn = logEntry.getTxn();
-            digest = logEntry.getDigest();
             QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) txn).getData(), UTF_8));
 
-            request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, 0);
-            request.setTxnDigest(digest);
+            request = logEntry.toRequest();
             obs = (ObserverZooKeeperServer) zk;
 
             boolean majorChange = self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
