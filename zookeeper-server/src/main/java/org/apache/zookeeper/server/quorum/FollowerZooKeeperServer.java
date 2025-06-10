@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.management.JMException;
-import org.apache.jute.Record;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.server.ExitCode;
@@ -33,8 +32,6 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.txn.TxnDigest;
-import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,20 +76,17 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<>();
 
-    public void logRequest(TxnHeader hdr, Record txn, TxnDigest digest) {
-        final Request request = buildRequestToProcess(hdr, txn, digest);
+    public void logRequest(Request request) {
+        if ((request.zxid & 0xffffffffL) != 0) {
+            pendingTxns.add(request);
+        }
         syncProcessor.processRequest(request);
     }
 
     /**
-     * Build a request for the txn and append it to the transaction log
-     * @param hdr the txn header
-     * @param txn the txn
-     * @param digest the digest of txn
+     * Append txn request to the transaction log directly without go through request processors.
      */
-    public void appendRequest(final TxnHeader hdr, final Record txn, final TxnDigest digest) throws IOException {
-        final Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
-        request.setTxnDigest(digest);
+    public void appendRequest(Request request) throws IOException {
         getZKDatabase().append(request);
     }
 
@@ -187,21 +181,5 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         MetricsContext rootContext = ServerMetrics.getMetrics().getMetricsProvider().getRootContext();
         rootContext.unregisterGauge("synced_observers");
 
-    }
-
-    /**
-     * Build a request for the txn
-     * @param hdr the txn header
-     * @param txn the txn
-     * @param digest the digest of txn
-     * @return a request moving through a chain of RequestProcessors
-     */
-    private Request buildRequestToProcess(final TxnHeader hdr, final Record txn, final TxnDigest digest) {
-        final Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
-        request.setTxnDigest(digest);
-        if ((request.zxid & 0xffffffffL) != 0) {
-            pendingTxns.add(request);
-        }
-        return request;
     }
 }
