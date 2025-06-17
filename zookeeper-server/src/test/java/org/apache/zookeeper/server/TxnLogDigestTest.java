@@ -60,6 +60,7 @@ public class TxnLogDigestTest extends ClientBase {
 
     @BeforeEach
     public void setUp() throws Exception {
+        System.setProperty("zookeeper.test.allowDiscontinuousProposals", "true");
         super.setUp();
         server = serverFactory.getZooKeeperServer();
         zk = createClient();
@@ -67,6 +68,7 @@ public class TxnLogDigestTest extends ClientBase {
 
     @AfterEach
     public void tearDown() throws Exception {
+        System.clearProperty("zookeeper.test.allowDiscontinuousProposals");
         // server will be closed in super.tearDown
         super.tearDown();
 
