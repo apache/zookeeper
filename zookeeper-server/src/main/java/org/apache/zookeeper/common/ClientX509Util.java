@@ -79,7 +79,19 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(tm);
         }
 
-        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        SslProvider sslProvider = getSslProvider(config);
+        sslContextBuilder.sslProvider(sslProvider);
+        // Note that sslContextBuilder.enableOcsp() doesn't do anything, unless the default BoringSSL
+        // tcnative dependency is replaced with an OpenSsl one.
+        if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
+            sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        }
+        // Explicit option takes precedence if set
+        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+            sslContextBuilder.enableOcsp(true);
+        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+            sslContextBuilder.enableOcsp(false);
+        }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -88,11 +100,11 @@ public class ClientX509Util extends X509Util {
         if (enabledCiphers != null) {
             sslContextBuilder.ciphers(enabledCiphers);
         }
-        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
-        if (getFipsMode(config) && isServerHostnameVerificationEnabled(config)) {
+        if ((getFipsMode(config) || config.getProperty(getSslKeystoreLocationProperty(), "").isEmpty())
+                && isServerHostnameVerificationEnabled(config)) {
             return addHostnameVerification(sslContext1, "Server");
         } else {
             return sslContext1;
@@ -123,7 +135,16 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(trustManager);
         }
 
-        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        SslProvider sslProvider = getSslProvider(config);
+        sslContextBuilder.sslProvider(sslProvider);
+        if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
+            sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        }
+        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+            sslContextBuilder.enableOcsp(true);
+        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+            sslContextBuilder.enableOcsp(false);
+        }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -133,7 +154,6 @@ public class ClientX509Util extends X509Util {
         if (enabledCiphers != null) {
             sslContextBuilder.ciphers(enabledCiphers);
         }
-        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
@@ -191,15 +211,21 @@ public class ClientX509Util extends X509Util {
 
         boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty());
         boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+        TriState sslRevocationEnabled = config.getTristate(getSslRevocationEnabledProperty());
+        boolean disableLegacyRevocationLogic = config.getBoolean(getSslDisableLegacyRevocationLogicProperty());
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
 
         if (trustStoreLocation.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
+            LOG.info("The following options are ignored: {}, {}, {}, {}.\n{} and {} will behave as in FIPS mode.",
+                    getSslCrlEnabledProperty(), getSslOcspEnabledProperty(), getSslRevocationEnabledProperty(),
+                    getSslDisableLegacyRevocationLogicProperty(), getSslHostnameVerificationEnabledProperty(),
+                    getSslClientHostnameVerificationEnabledProperty());
             return null;
         } else {
             return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
-                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
+                sslCrlEnabled, sslOcspEnabled, sslRevocationEnabled, disableLegacyRevocationLogic, sslServerHostnameVerificationEnabled,
                 sslClientHostnameVerificationEnabled, getFipsMode(config));
         }
     }
