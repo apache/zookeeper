@@ -584,6 +584,7 @@ public class DataTree {
                 containers.remove(path);
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.remove(path);
+                ServerMetrics.getMetrics().TTL_NODE_DELETED_COUNT.add(1);
             } else if (owner != 0) {
                 Set<String> nodes = ephemerals.get(owner);
                 if (nodes != null) {

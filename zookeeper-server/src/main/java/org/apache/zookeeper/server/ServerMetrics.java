@@ -269,6 +269,8 @@ public final class ServerMetrics {
         JVM_PAUSE_TIME = metricsContext.getSummary("jvm_pause_time_ms", DetailLevel.ADVANCED);
 
         QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
+
+        TTL_NODE_DELETED_COUNT = metricsContext.getCounter("ttl_node_deleted_count");
     }
 
     /**
@@ -546,6 +548,11 @@ public final class ServerMetrics {
     public final Summary JVM_PAUSE_TIME;
 
     public final CounterSet QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
+
+    /**
+     * Count of deleted TTL nodes
+     */
+    public final Counter TTL_NODE_DELETED_COUNT;
 
     private final MetricsProvider metricsProvider;
 
