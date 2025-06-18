@@ -79,7 +79,11 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(tm);
         }
 
-        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        SslProvider sslProvider = getSslProvider(config);
+        sslContextBuilder.sslProvider(sslProvider);
+        if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
+            sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -88,7 +92,6 @@ public class ClientX509Util extends X509Util {
         if (enabledCiphers != null) {
             sslContextBuilder.ciphers(enabledCiphers);
         }
-        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
@@ -123,7 +126,11 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(trustManager);
         }
 
-        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        SslProvider sslProvider = getSslProvider(config);
+        sslContextBuilder.sslProvider(sslProvider);
+        if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
+            sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -133,7 +140,6 @@ public class ClientX509Util extends X509Util {
         if (enabledCiphers != null) {
             sslContextBuilder.ciphers(enabledCiphers);
         }
-        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
