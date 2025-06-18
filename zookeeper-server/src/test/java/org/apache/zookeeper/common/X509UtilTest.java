@@ -269,6 +269,42 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
+    public void testOCSPCRLTransparentFalse(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.FALSE.toString());
+        System.setProperty("com.sun.security.enableCRLDP", Boolean.FALSE.toString());
+        Security.setProperty("ocsp.enable", Boolean.FALSE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "system");
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "system");
+        x509Util.getDefaultSSLContext();
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testOCSPCRLTransparentTrue(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.TRUE.toString());
+        System.setProperty("com.sun.security.enableCRLDP", Boolean.TRUE.toString());
+        Security.setProperty("ocsp.enable", Boolean.TRUE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "system");
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "system");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLSocket(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {

@@ -85,8 +85,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                     x509Util.getSslKeystorePasswdPathProperty());
             String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
-            boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
-            boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
+            Boolean crlEnabled = config.getTriState(x509Util.getSslOcspEnabledProperty());
+            Boolean ocspEnabled = config.getTriState(x509Util.getSslOcspEnabledProperty());
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
             X509KeyManager km = null;
