@@ -164,6 +164,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private final String sslRevocationEnabledProperty = getConfigPrefix() + "revocationEnabled";
+    private final String sslDisableLegacyRevocationLogic = getConfigPrefix() + "disableLegacyRevocationLogic";
+    private final String sslTcnativeOcspEnabledProperty = getConfigPrefix() + ".tcnative.ocsp";
     private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
     private final String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
@@ -246,6 +249,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslOcspEnabledProperty() {
         return sslOcspEnabledProperty;
+    }
+
+    public String getSslRevocationEnabledProperty() {
+        return sslRevocationEnabledProperty;
+    }
+
+    public String getSslTcnativeOcspEnabledProperty() {
+        return sslTcnativeOcspEnabledProperty;
+    }
+
+    public String getSslDisableLegacyRevocationLogicProperty() {
+        return sslDisableLegacyRevocationLogic;
     }
 
     public String getSslClientAuthProperty() {
@@ -394,6 +409,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+        TriState sslRevocationEnabled = config.getTristate(this.sslRevocationEnabledProperty);
+        boolean disableLegacyRevocationLogic = config.getBoolean(this.sslDisableLegacyRevocationLogic);
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
         boolean fipsMode = getFipsMode(config);
@@ -404,7 +421,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             try {
                 trustManagers = new TrustManager[]{
                     createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled,
-                        sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled,
+                        sslOcspEnabled, sslRevocationEnabled, disableLegacyRevocationLogic, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled,
                         fipsMode)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
@@ -521,6 +538,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @param crlEnabled                        enable CRL (certificate revocation list) checks.
      * @param ocspEnabled                       enable OCSP (online certificate status protocol)
      *                                          checks.
+     * @param revocationEnabled                 Enable certificate revocation checks
+     * @param disableLegacyRevocationLogic      if true certificate revocation will only be affected
+     *                                          by revocationEnabled and the JVM system properties
      * @param serverHostnameVerificationEnabled if true, verify hostnames of
      *                                          remote servers that client
      *                                          sockets created by this
@@ -539,6 +559,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String trustStoreTypeProp,
         boolean crlEnabled,
         boolean ocspEnabled,
+        TriState revocationEnabled,
+        boolean disableLegacyRevocationLogic,
         final boolean serverHostnameVerificationEnabled,
         final boolean clientHostnameVerificationEnabled,
         final boolean fipsMode) throws TrustManagerException {
@@ -549,13 +571,24 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             KeyStore ts = loadTrustStore(trustStoreLocation, trustStorePassword, trustStoreTypeProp);
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             if (crlEnabled || ocspEnabled) {
-                pbParams.setRevocationEnabled(true);
+                if (!disableLegacyRevocationLogic) {
+                    pbParams.setRevocationEnabled(true);
+                }
                 System.setProperty("com.sun.net.ssl.checkRevocation", "true");
                 System.setProperty("com.sun.security.enableCRLDP", "true");
                 if (ocspEnabled) {
                     Security.setProperty("ocsp.enable", "true");
                 }
             } else {
+                if (!disableLegacyRevocationLogic) {
+                    pbParams.setRevocationEnabled(false);
+                }
+            }
+
+            // Setting revocationEnabled explicitly takes precedence
+            if (revocationEnabled.isTrue()) {
+                pbParams.setRevocationEnabled(true);
+            } else if (revocationEnabled.isFalse()) {
                 pbParams.setRevocationEnabled(false);
             }
 
