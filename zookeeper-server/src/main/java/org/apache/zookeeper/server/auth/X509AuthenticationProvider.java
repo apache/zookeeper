@@ -32,6 +32,7 @@ import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.TriState;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
@@ -85,8 +86,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                     x509Util.getSslKeystorePasswdPathProperty());
             String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
-            Boolean crlEnabled = config.getTriState(x509Util.getSslOcspEnabledProperty());
-            Boolean ocspEnabled = config.getTriState(x509Util.getSslOcspEnabledProperty());
+            TriState crlEnabled = config.getTriState(x509Util.getSslOcspEnabledProperty());
+            TriState ocspEnabled = config.getTriState(x509Util.getSslOcspEnabledProperty());
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
             X509KeyManager km = null;

@@ -240,15 +240,9 @@ public class ZKConfig {
      * exists and is case insensitive equal to the string {@code "system"}.
      * Returns {@code Boolean.False} otherwise.
      */
-    public Boolean getTriState(String key) {
+    public TriState getTriState(String key) {
         String propertyValue = getProperty(key);
-        if (propertyValue != null && propertyValue.equalsIgnoreCase("system")) {
-            return null;
-        } else if (propertyValue == null) {
-            return false;
-        } else {
-            return Boolean.parseBoolean(propertyValue.trim());
-        }
+        return TriState.parse(propertyValue);
     }
 
     /**

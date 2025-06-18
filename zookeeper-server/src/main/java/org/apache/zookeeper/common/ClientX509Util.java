@@ -79,7 +79,7 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(tm);
         }
 
-        if (config.getTriState(getSslOcspEnabledProperty()) != null) {
+        if (!config.getTriState(getSslOcspEnabledProperty()).isSystem()) {
             sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         }
         String[] enabledProtocols = getEnabledProtocols(config);
@@ -125,7 +125,7 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(trustManager);
         }
 
-        if (config.getTriState(getSslOcspEnabledProperty()) != null) {
+        if (!config.getTriState(getSslOcspEnabledProperty()).isSystem()) {
             sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         }
         String[] enabledProtocols = getEnabledProtocols(config);
@@ -193,8 +193,8 @@ public class ClientX509Util extends X509Util {
             getSslTruststorePasswdPathProperty());
         String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
 
-        Boolean sslCrlEnabled = config.getTriState(getSslCrlEnabledProperty());
-        Boolean sslOcspEnabled = config.getTriState(getSslOcspEnabledProperty());
+        TriState sslCrlEnabled = config.getTriState(getSslCrlEnabledProperty());
+        TriState sslOcspEnabled = config.getTriState(getSslOcspEnabledProperty());
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
 

@@ -392,8 +392,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String trustStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
         String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
 
-        Boolean sslCrlEnabled = config.getTriState(this.sslCrlEnabledProperty);
-        Boolean sslOcspEnabled = config.getTriState(this.sslOcspEnabledProperty);
+        TriState sslCrlEnabled = config.getTriState(this.sslCrlEnabledProperty);
+        TriState sslOcspEnabled = config.getTriState(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
         boolean fipsMode = getFipsMode(config);
@@ -537,8 +537,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String trustStoreLocation,
         String trustStorePassword,
         String trustStoreTypeProp,
-        Boolean crlEnabled,
-        Boolean ocspEnabled,
+        TriState crlEnabled,
+        TriState ocspEnabled,
         final boolean serverHostnameVerificationEnabled,
         final boolean clientHostnameVerificationEnabled,
         final boolean fipsMode) throws TrustManagerException {
@@ -549,18 +549,12 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             KeyStore ts = loadTrustStore(trustStoreLocation, trustStorePassword, trustStoreTypeProp);
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             // Leave CRL/OCSP JVM global properties alone both are set to "system" (represented as null)
-            if (crlEnabled != null || ocspEnabled != null) {
-                if (crlEnabled == null) {
-                    crlEnabled = false;
-                }
-                if (ocspEnabled == null) {
-                    ocspEnabled = false;
-                }
-	            if (crlEnabled || ocspEnabled) {
+            if (!crlEnabled.isSystem() || !ocspEnabled.isSystem()) {
+	            if (crlEnabled.isTrue() || ocspEnabled.isTrue()) {
 	                pbParams.setRevocationEnabled(true);
 	                System.setProperty("com.sun.net.ssl.checkRevocation", "true");
 	                System.setProperty("com.sun.security.enableCRLDP", "true");
-	                if (ocspEnabled) {
+	                if (ocspEnabled.isTrue()) {
 	                    Security.setProperty("ocsp.enable", "true");
 	                }
 	            } else {

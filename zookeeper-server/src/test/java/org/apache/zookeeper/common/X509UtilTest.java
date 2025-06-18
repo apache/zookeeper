@@ -409,8 +409,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         X509TrustManager tm = X509Util.createTrustManager(
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(), KeyStoreFileType.PEM.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -430,8 +430,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
             null,
             KeyStoreFileType.PEM.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -449,8 +449,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -524,8 +524,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             KeyStoreFileType.JKS.getPropertyValue(),
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -545,8 +545,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
             null,
             KeyStoreFileType.JKS.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -563,8 +563,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -582,8 +582,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
                     "wrong password",
                     KeyStoreFileType.JKS.getPropertyValue(),
-                    true,
-                    true,
+                    TriState.True,
+                    TriState.True,
                     true,
                     true,
                     false);
@@ -657,8 +657,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         X509TrustManager tm = X509Util.createTrustManager(
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(), KeyStoreFileType.PKCS12.getPropertyValue(),
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -678,8 +678,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
             null,
             KeyStoreFileType.PKCS12.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -696,8 +696,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -715,8 +715,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
                     "wrong password",
                     KeyStoreFileType.PKCS12.getPropertyValue(),
-                    true,
-                    true,
+                    TriState.True,
+                    TriState.True,
                     true,
                     true,
                     false);
