@@ -3624,6 +3624,7 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
         break;
     case COMPLETION_STRING_STAT:
         c->c.string_stat_result = (string_stat_completion_t)dc;
+        break;
     case COMPLETION_ACLLIST:
         c->c.acl_result = (acl_completion_t)dc;
         break;
