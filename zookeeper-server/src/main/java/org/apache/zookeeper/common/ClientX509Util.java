@@ -139,6 +139,11 @@ public class ClientX509Util extends X509Util {
         if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
             sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         }
+        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+            sslContextBuilder.enableOcsp(true);
+        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+            sslContextBuilder.enableOcsp(false);
+        }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);

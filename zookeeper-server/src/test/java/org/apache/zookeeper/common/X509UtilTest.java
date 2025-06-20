@@ -242,6 +242,22 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
+    public void testCRLEnabledDisableLegacy(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.FALSE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "true");
+        System.setProperty(x509Util.getSslDisableLegacyRevocationLogicProperty(), "true");
+        x509Util.getDefaultSSLContext();
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
     public void testCRLDisabled(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
@@ -252,6 +268,21 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCRLDisabledDisableLegacy(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.TRUE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslDisableLegacyRevocationLogicProperty(), "true");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+    
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
@@ -283,6 +314,22 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testOCSPEnabledDisableLegacy(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.FALSE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslDisableLegacyRevocationLogicProperty(), "true");
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
+        x509Util.getDefaultSSLContext();
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+    
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
