@@ -255,11 +255,45 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
+    public void testCRLDisabledisNoop(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.TRUE.toString());
+        System.setProperty("com.sun.security.enableCRLDP", Boolean.TRUE.toString());
+        Security.setProperty("ocsp.enable", Boolean.TRUE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "false");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
     public void testOCSPEnabled(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testOcspDisabledisNoop(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.TRUE.toString());
+        System.setProperty("com.sun.security.enableCRLDP", Boolean.TRUE.toString());
+        Security.setProperty("ocsp.enable", Boolean.TRUE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "false");
         x509Util.getDefaultSSLContext();
         assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
         assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
@@ -375,6 +409,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStorePassword(), KeyStoreFileType.PEM.getPropertyValue(),
             false,
             false,
+            TriState.False,
+            false,
             true,
             true,
             false);
@@ -396,6 +432,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             KeyStoreFileType.PEM.getPropertyValue(),
             false,
             false,
+            TriState.False,
+            false,
             true,
             true,
             false);
@@ -414,6 +452,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
             false,
+            false,
+            TriState.False,
             false,
             true,
             true,
@@ -490,6 +530,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             KeyStoreFileType.JKS.getPropertyValue(),
             true,
             true,
+            TriState.Default,
+            false,
             true,
             true,
             false);
@@ -511,6 +553,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             KeyStoreFileType.JKS.getPropertyValue(),
             false,
             false,
+            TriState.False,
+            false,
             true,
             true,
             false);
@@ -529,6 +573,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             null,  // null StoreFileType means 'autodetect from file extension'
             true,
             true,
+            TriState.Default,
+            false,
             true,
             true,
             false);
@@ -548,6 +594,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     KeyStoreFileType.JKS.getPropertyValue(),
                     true,
                     true,
+                    TriState.Default,
+                    false,
                     true,
                     true,
                     false);
@@ -623,6 +671,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStorePassword(), KeyStoreFileType.PKCS12.getPropertyValue(),
             true,
             true,
+            TriState.Default,
+            false,
             true,
             true,
             false);
@@ -644,6 +694,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             KeyStoreFileType.PKCS12.getPropertyValue(),
             false,
             false,
+            TriState.False,
+            false,
             true,
             true,
             false);
@@ -662,6 +714,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             null,  // null StoreFileType means 'autodetect from file extension'
             true,
             true,
+            TriState.Default,
+            false,
             true,
             true,
             false);
@@ -681,6 +735,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     KeyStoreFileType.PKCS12.getPropertyValue(),
                     true,
                     true,
+                    TriState.Default,
+                    false,
                     true,
                     true,
                     false);

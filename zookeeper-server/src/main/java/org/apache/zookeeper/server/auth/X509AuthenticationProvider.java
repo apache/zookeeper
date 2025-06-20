@@ -32,6 +32,7 @@ import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.TriState;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
@@ -87,6 +88,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
             boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
+            TriState sslRevocationEnabled = config.getTristate(x509Util.getSslRevocationEnabledProperty());
+            boolean disableLegacyRevocationLogic = config.getBoolean(x509Util.getSslDisableLegacyRevocationLogicProperty());
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
             X509KeyManager km = null;
@@ -118,6 +121,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         trustStoreTypeProp,
                         crlEnabled,
                         ocspEnabled,
+                        sslRevocationEnabled,
+                        disableLegacyRevocationLogic,
                         hostnameVerificationEnabled,
                         false,
                         fipsMode);
