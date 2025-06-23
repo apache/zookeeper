@@ -1296,6 +1296,14 @@ static void log_env(zhandle_t *zh) {
 }
 
 /**
+ * Return string of "MAJOR.MINOR.PATCH"
+ */
+const char *zoo_version_str()
+{
+    return ZOO_VERSION;
+}
+
+/**
  * Create a zookeeper handle associated with the given host and port.
  */
 static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
