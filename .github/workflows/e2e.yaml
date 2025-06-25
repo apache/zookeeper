@@ -48,11 +48,20 @@ jobs:
         run: mvn -B -V -e -ntp "-Dstyle.color=always" package -DskipTests
         env:
           MAVEN_OPTS: -Djansi.force=true
-      - name: Download ZooKeeper ${{ matrix.zk }}
+      - name: Cache ZooKeeper ${{ matrix.zk }}
+        id: dist-cache
         if: matrix.zk != 'nightly'
+        uses: actions/cache@v4
+        with:
+          key: apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+          path: apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+      - name: Download ZooKeeper ${{ matrix.zk }}
+        if: matrix.zk != 'nightly' && steps.dist-cache.outputs.cache-hit != 'true'
         run: |
           curl -O https://archive.apache.org/dist/zookeeper/zookeeper-${{ matrix.zk }}/apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
-          tar -xzvf apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
+      - name: Extract ZooKeeper ${{ matrix.zk }}
+        if: matrix.zk != 'nightly'
+        run: tar -xzvf apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
       - name: Test ZooKeeper nightly server and ${{ matrix.zk }} client
         if: matrix.zk != 'nightly'
         run: tools/ci/test-connectivity.py --server . --client apache-zookeeper-${{ matrix.zk }}-bin
