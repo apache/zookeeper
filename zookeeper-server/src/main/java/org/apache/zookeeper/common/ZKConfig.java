@@ -234,6 +234,18 @@ public class ZKConfig {
     }
 
     /**
+     * Returns {@code Boolean.True} if and only if the property named by the argument
+     * exists and is case insensitive equal to the string {@code "true"}.
+     * Returns {@code nuln} if and only if the property named by the argument
+     * exists and is case insensitive equal to the string {@code "system"}.
+     * Returns {@code Boolean.False} otherwise.
+     */
+    public TriState getTriState(String key) {
+        String propertyValue = getProperty(key);
+        return TriState.parse(propertyValue);
+    }
+
+    /**
      * Returns {@code true} if and only if the property named by the argument
      * exists and is equal to the string {@code "true"}.
      */

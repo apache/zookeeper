@@ -392,8 +392,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String trustStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
         String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
 
-        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
-        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+        TriState sslCrlEnabled = config.getTriState(this.sslCrlEnabledProperty);
+        TriState sslOcspEnabled = config.getTriState(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
         boolean fipsMode = getFipsMode(config);
@@ -537,8 +537,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String trustStoreLocation,
         String trustStorePassword,
         String trustStoreTypeProp,
-        boolean crlEnabled,
-        boolean ocspEnabled,
+        TriState crlEnabled,
+        TriState ocspEnabled,
         final boolean serverHostnameVerificationEnabled,
         final boolean clientHostnameVerificationEnabled,
         final boolean fipsMode) throws TrustManagerException {
@@ -548,17 +548,19 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         try {
             KeyStore ts = loadTrustStore(trustStoreLocation, trustStorePassword, trustStoreTypeProp);
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
-            if (crlEnabled || ocspEnabled) {
-                pbParams.setRevocationEnabled(true);
-                System.setProperty("com.sun.net.ssl.checkRevocation", "true");
-                System.setProperty("com.sun.security.enableCRLDP", "true");
-                if (ocspEnabled) {
-                    Security.setProperty("ocsp.enable", "true");
-                }
-            } else {
-                pbParams.setRevocationEnabled(false);
+            // Leave CRL/OCSP JVM global properties alone both are set to "system" (represented as null)
+            if (!crlEnabled.isSystem() || !ocspEnabled.isSystem()) {
+	            if (crlEnabled.isTrue() || ocspEnabled.isTrue()) {
+	                pbParams.setRevocationEnabled(true);
+	                System.setProperty("com.sun.net.ssl.checkRevocation", "true");
+	                System.setProperty("com.sun.security.enableCRLDP", "true");
+	                if (ocspEnabled.isTrue()) {
+	                    Security.setProperty("ocsp.enable", "true");
+	                }
+	            } else {
+	                pbParams.setRevocationEnabled(false);
+	            }
             }
-
             // Revocation checking is only supported with the PKIX algorithm
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
             tmf.init(new CertPathTrustManagerParameters(pbParams));

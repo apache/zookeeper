@@ -269,6 +269,42 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
+    public void testOCSPCRLTransparentFalse(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.FALSE.toString());
+        System.setProperty("com.sun.security.enableCRLDP", Boolean.FALSE.toString());
+        Security.setProperty("ocsp.enable", Boolean.FALSE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "system");
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "system");
+        x509Util.getDefaultSSLContext();
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertFalse(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testOCSPCRLTransparentTrue(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        System.setProperty("com.sun.net.ssl.checkRevocation", Boolean.TRUE.toString());
+        System.setProperty("com.sun.security.enableCRLDP", Boolean.TRUE.toString());
+        Security.setProperty("ocsp.enable", Boolean.TRUE.toString());
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(x509Util.getSslOcspEnabledProperty(), "system");
+        System.setProperty(x509Util.getSslCrlEnabledProperty(), "system");
+        x509Util.getDefaultSSLContext();
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
+        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
+        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
     public void testCreateSSLSocket(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
@@ -373,8 +409,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         X509TrustManager tm = X509Util.createTrustManager(
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(), KeyStoreFileType.PEM.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -394,8 +430,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
             null,
             KeyStoreFileType.PEM.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -413,8 +449,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -488,8 +524,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             KeyStoreFileType.JKS.getPropertyValue(),
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -509,8 +545,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
             null,
             KeyStoreFileType.JKS.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -527,8 +563,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -546,8 +582,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
                     "wrong password",
                     KeyStoreFileType.JKS.getPropertyValue(),
-                    true,
-                    true,
+                    TriState.True,
+                    TriState.True,
                     true,
                     true,
                     false);
@@ -621,8 +657,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         X509TrustManager tm = X509Util.createTrustManager(
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(), KeyStoreFileType.PKCS12.getPropertyValue(),
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -642,8 +678,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
             null,
             KeyStoreFileType.PKCS12.getPropertyValue(),
-            false,
-            false,
+            TriState.False,
+            TriState.False,
             true,
             true,
             false);
@@ -660,8 +696,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
             x509TestContext.getTrustStorePassword(),
             null,  // null StoreFileType means 'autodetect from file extension'
-            true,
-            true,
+            TriState.True,
+            TriState.True,
             true,
             true,
             false);
@@ -679,8 +715,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
                     "wrong password",
                     KeyStoreFileType.PKCS12.getPropertyValue(),
-                    true,
-                    true,
+                    TriState.True,
+                    TriState.True,
                     true,
                     true,
                     false);
