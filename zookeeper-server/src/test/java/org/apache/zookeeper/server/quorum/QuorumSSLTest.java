@@ -64,6 +64,10 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.SecretUtilsTest;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.quorum.auth.MockSSLQuorumAuthLearner;
+import org.apache.zookeeper.server.quorum.auth.MockSslQuorumAuthServer;
+import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthServer;
+import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
 import org.apache.zookeeper.test.ClientBase;
 import org.bouncycastle.asn1.ocsp.OCSPResponse;
 import org.bouncycastle.asn1.ocsp.OCSPResponseStatus;
@@ -118,6 +122,7 @@ import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -338,6 +343,18 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         pemWriter.close();
     }
 
+
+    public X509Certificate buildEndEntityCert(
+            KeyPair keyPair,
+            X509Certificate caCert,
+            PrivateKey caPrivateKey,
+            String hostname,
+            String ipAddress,
+            String crlPath,
+            Integer ocspPort) throws Exception {
+        return buildEndEntityCert(keyPair, caCert, caPrivateKey, hostname, ipAddress, crlPath, ocspPort, "CN=Test End Entity Certificate");
+
+    }
     public X509Certificate buildEndEntityCert(
         KeyPair keyPair,
         X509Certificate caCert,
@@ -345,7 +362,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         String hostname,
         String ipAddress,
         String crlPath,
-        Integer ocspPort) throws Exception {
+        Integer ocspPort,
+        String CName) throws Exception {
         X509CertificateHolder holder = new JcaX509CertificateHolder(caCert);
         ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
 
@@ -366,7 +384,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             new BigInteger(128, new Random()),
             certStartTime,
             certEndTime,
-            new X500Name("CN=Test End Entity Certificate"),
+            new X500Name(CName),
             keyPair.getPublic());
         X509v3CertificateBuilder certificateBuilder = jcaX509v3CertificateBuilder
             .addExtension(Extension.authorityKeyIdentifier, false, extensionUtils.createAuthorityKeyIdentifier(holder))
@@ -993,6 +1011,118 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q3.start();
 
         assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+    }
+
+    @Test
+    @Timeout(60)
+    public void testQuorumSslWithCustomAuthProviders() throws Exception {
+        final String config = SSL_QUORUM_ENABLED
+                + QuorumAuth.QUORUM_SSL_AUTHPROVIDER + "=" + MockSslQuorumAuthServer.class.getName() + "\n"
+                + QuorumAuth.QUORUM_SSL_LEARNER_AUTHPROVIDER + "=" + MockSSLQuorumAuthLearner.class.getName() + "\n";
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, config);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, config);
+        q1.start();
+        q2.start();
+
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(
+                q1.getQuorumPeer().getQuorumAuthServer() instanceof MockSslQuorumAuthServer,
+                "Server should use MockSSLQuorumAuthServer");
+        assertTrue(
+                q2.getQuorumPeer().getQuorumAuthLearner() instanceof MockSSLQuorumAuthLearner,
+                "Learner should use MockSSLQuorumAuthLearner");
+        assertTrue(
+                ((MockSslQuorumAuthServer) q1.getQuorumPeer().getQuorumAuthServer()).isInitialized(),
+                "Custom server auth provider must be initialized");
+        assertTrue(
+                ((MockSSLQuorumAuthLearner) q2.getQuorumPeer().getQuorumAuthLearner()).isInitialized(),
+                "Custom learner auth provider must be initialized");    }
+
+    @Test
+    @Timeout(60)
+    public void testQuorumSslFailsWithInvalidAuthProviderClass() throws Exception {
+        final String config = SSL_QUORUM_ENABLED
+                + QuorumAuth.QUORUM_SSL_AUTHPROVIDER + "=com.example.NonExistentClass\n";
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, config);
+        q1.start();
+        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+    }
+
+    @Test
+    @Timeout(60)
+    public void testQuorumSslWithLearnerOnlyProvider() throws Exception {
+        final String config = SSL_QUORUM_ENABLED
+                + QuorumAuth.QUORUM_SSL_LEARNER_AUTHPROVIDER + "=" + MockSSLQuorumAuthLearner.class.getName() + "\n";
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, config);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, config);
+        q1.start();
+        q2.start();
+
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+        assertTrue(
+                q1.getQuorumPeer().getQuorumAuthServer() instanceof NullQuorumAuthServer,
+                "Server should fall back to NullQuorumAuthServer");
+        assertTrue(
+                ((MockSSLQuorumAuthLearner) q1.getQuorumPeer().getQuorumAuthLearner()).isInitialized(),
+                "Learner auth provider must be initialized");    }
+
+    @Test
+    @Timeout(120)
+    public void testQuorumCustomAuthRejection() throws Exception {
+        final String goodPrincipal = "CN=GoodPeer";
+        final String badPrincipal = "CN=BadPeer";
+
+        String goodCertPath = tmpDir + "/good_cert.jks";
+        String crlPath = tmpDir + "/crl.pem";
+        X509Certificate goodCert = buildEndEntityCert(
+                defaultKeyPair,
+                rootCertificate,
+                rootKeyPair.getPrivate(),
+                HOSTNAME,
+                null,
+                crlPath,
+                null,
+                goodPrincipal);
+        writeKeystore(goodCert, defaultKeyPair, goodCertPath);
+        buildCRL(goodCert, crlPath);
+        System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), goodCertPath);
+        System.setProperty("zookeeper.ssl.quorum.auth.subjectX509Principal", goodPrincipal);
+
+        final String config = SSL_QUORUM_ENABLED
+                + QuorumAuth.QUORUM_SSL_AUTHPROVIDER + "=" + MockSslQuorumAuthServer.class.getName() + "\n";
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, config);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, config);
+        q1.start();
+        q2.start();
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+
+        //bad cert
+        String badCertPath = tmpDir + "/good_bad.jks";
+        crlPath = tmpDir + "/crl.pem";
+        X509Certificate badCert = buildEndEntityCert(
+                defaultKeyPair,
+                rootCertificate,
+                rootKeyPair.getPrivate(),
+                HOSTNAME,
+                null,
+                crlPath,
+                null,
+                badPrincipal);
+        writeKeystore(badCert, defaultKeyPair, badCertPath);
+        buildCRL(badCert, crlPath);
+        System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), badCertPath);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration, config);
+        q3.start();
+
+        assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        System.clearProperty("zookeeper.ssl.quorum.auth.subjectX509Principal");
     }
 
 }
