@@ -919,7 +919,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * Shut down the server instance
      * @param fullyShutDown true when no other server will use the same database to replace this one
      */
-    public final synchronized void shutdown(boolean fullyShutDown) {
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (canShutdown()) {
             LOG.info("Shutting down");
 
