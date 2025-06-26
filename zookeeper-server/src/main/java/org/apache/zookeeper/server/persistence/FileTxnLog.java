@@ -683,9 +683,9 @@ public class FileTxnLog implements TxnLog, Closeable {
                 LOG_FILE_PREFIX,
                 false);
             for (File f : files) {
-                if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) >= zxid) {
+                if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) > zxid) {
                     storedFiles.add(f);
-                } else if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) < zxid) {
+                } else if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) <= zxid) {
                     // add the last logfile that is less than the zxid
                     storedFiles.add(f);
                     break;
