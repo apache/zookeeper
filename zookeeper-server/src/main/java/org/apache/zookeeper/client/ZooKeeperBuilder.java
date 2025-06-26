@@ -21,7 +21,9 @@ package org.apache.zookeeper.client;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Function;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
@@ -36,7 +38,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 @InterfaceStability.Evolving
 public class ZooKeeperBuilder {
     private final String connectString;
-    private final int sessionTimeout;
+    private final Duration sessionTimeout;
     private Function<Collection<InetSocketAddress>, HostProvider> hostProvider;
     private Watcher defaultWatcher;
     private boolean canBeReadOnly = false;
@@ -56,12 +58,12 @@ public class ZooKeeperBuilder {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
-     * @param sessionTimeoutMs
-     *            session timeout in milliseconds
+     * @param sessionTimeout
+     *            session timeout
      */
-    public ZooKeeperBuilder(String connectString, int sessionTimeoutMs) {
+    public ZooKeeperBuilder(String connectString, Duration sessionTimeout) {
         this.connectString = connectString;
-        this.sessionTimeout = sessionTimeoutMs;
+        this.sessionTimeout = Objects.requireNonNull(sessionTimeout, "session timeout must not be null");
     }
 
     /**

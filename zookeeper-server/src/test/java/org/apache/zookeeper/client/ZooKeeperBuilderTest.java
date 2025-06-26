@@ -20,6 +20,7 @@ package org.apache.zookeeper.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -69,7 +70,7 @@ public class ZooKeeperBuilderTest extends ClientBase {
     @Test
     public void testBuildClient() throws Exception {
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
-        ZooKeeper zk = new ZooKeeperBuilder(hostPort, 1000)
+        ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(1000))
             .withDefaultWatcher(events::offer)
             .build();
         testClient(events, zk);
@@ -78,7 +79,7 @@ public class ZooKeeperBuilderTest extends ClientBase {
     @Test
     public void testBuildAdminClient() throws Exception {
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
-        ZooKeeper zk = new ZooKeeperBuilder(hostPort, 1000)
+        ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(1000))
             .withDefaultWatcher(events::offer)
             .buildAdmin();
         testClient(events, zk);

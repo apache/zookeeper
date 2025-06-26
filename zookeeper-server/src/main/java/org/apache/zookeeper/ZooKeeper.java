@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -462,7 +463,7 @@ public class ZooKeeper implements AutoCloseable {
      *             if an invalid chroot path is specified
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .toOptions());
     }
@@ -517,7 +518,7 @@ public class ZooKeeper implements AutoCloseable {
         int sessionTimeout,
         Watcher watcher,
         ZKClientConfig conf) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withClientConfig(conf)
             .toOptions());
@@ -586,7 +587,7 @@ public class ZooKeeper implements AutoCloseable {
         Watcher watcher,
         boolean canBeReadOnly,
         HostProvider aHostProvider) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withCanBeReadOnly(canBeReadOnly)
             .withHostProvider(ignored -> aHostProvider)
@@ -660,7 +661,7 @@ public class ZooKeeper implements AutoCloseable {
         HostProvider hostProvider,
         ZKClientConfig clientConfig
     ) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withCanBeReadOnly(canBeReadOnly)
             .withHostProvider(ignored -> hostProvider)
@@ -746,7 +747,7 @@ public class ZooKeeper implements AutoCloseable {
         int sessionTimeout,
         Watcher watcher,
         boolean canBeReadOnly) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withCanBeReadOnly(canBeReadOnly)
             .toOptions());
@@ -812,7 +813,7 @@ public class ZooKeeper implements AutoCloseable {
         Watcher watcher,
         boolean canBeReadOnly,
         ZKClientConfig conf) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withCanBeReadOnly(canBeReadOnly)
             .withClientConfig(conf)
@@ -877,7 +878,7 @@ public class ZooKeeper implements AutoCloseable {
         Watcher watcher,
         long sessionId,
         byte[] sessionPasswd) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withSession(sessionId, sessionPasswd)
             .toOptions());
@@ -955,7 +956,7 @@ public class ZooKeeper implements AutoCloseable {
         byte[] sessionPasswd,
         boolean canBeReadOnly,
         HostProvider aHostProvider) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withSession(sessionId, sessionPasswd)
             .withCanBeReadOnly(canBeReadOnly)
@@ -1041,7 +1042,7 @@ public class ZooKeeper implements AutoCloseable {
         boolean canBeReadOnly,
         HostProvider hostProvider,
         ZKClientConfig clientConfig) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withSession(sessionId, sessionPasswd)
             .withDefaultWatcher(watcher)
             .withCanBeReadOnly(canBeReadOnly)
@@ -1072,7 +1073,7 @@ public class ZooKeeper implements AutoCloseable {
     @InterfaceAudience.Private
     public ZooKeeper(ZooKeeperOptions options) throws IOException {
         String connectString = options.getConnectString();
-        int sessionTimeout = options.getSessionTimeout();
+        int sessionTimeout = options.getSessionTimeoutMs();
         long sessionId = options.getSessionId();
         byte[] sessionPasswd = sessionId == 0 ? new byte[16] : options.getSessionPasswd();
         Watcher watcher = options.getDefaultWatcher();
@@ -1188,7 +1189,7 @@ public class ZooKeeper implements AutoCloseable {
         long sessionId,
         byte[] sessionPasswd,
         boolean canBeReadOnly) throws IOException {
-        this(new ZooKeeperBuilder(connectString, sessionTimeout)
+        this(new ZooKeeperBuilder(connectString, Duration.ofMillis(sessionTimeout))
             .withDefaultWatcher(watcher)
             .withSession(sessionId, sessionPasswd)
             .withCanBeReadOnly(canBeReadOnly)

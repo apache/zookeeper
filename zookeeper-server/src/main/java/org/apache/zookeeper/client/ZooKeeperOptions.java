@@ -20,6 +20,7 @@ package org.apache.zookeeper.client;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.function.Function;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -31,7 +32,7 @@ import org.apache.zookeeper.Watcher;
 @InterfaceAudience.Private
 public class ZooKeeperOptions {
     private final String connectString;
-    private final int sessionTimeout;
+    private final Duration sessionTimeout;
     private final Watcher defaultWatcher;
     private final Function<Collection<InetSocketAddress>, HostProvider> hostProvider;
     private final boolean canBeReadOnly;
@@ -40,7 +41,7 @@ public class ZooKeeperOptions {
     private final ZKClientConfig clientConfig;
 
     ZooKeeperOptions(String connectString,
-                     int sessionTimeout,
+                     Duration sessionTimeout,
                      Watcher defaultWatcher,
                      Function<Collection<InetSocketAddress>, HostProvider> hostProvider,
                      boolean canBeReadOnly,
@@ -61,8 +62,8 @@ public class ZooKeeperOptions {
         return connectString;
     }
 
-    public int getSessionTimeout() {
-        return sessionTimeout;
+    public int getSessionTimeoutMs() {
+        return (int) Long.min(Integer.MAX_VALUE, sessionTimeout.toMillis());
     }
 
     public Watcher getDefaultWatcher() {
