@@ -134,14 +134,17 @@ public class ControllerServerConfig extends QuorumPeerConfig {
         // We will use majority strategy with only this host in the quorum.
         // We need to provide 2 more ports: one for elections and one for quorum communications.
         // We will also mark this host as the leader.
-        ServerSocket randomSocket1 = new ServerSocket(0);
-        int quorumPort = randomSocket1.getLocalPort();
+        int quorumPort;
+        int electionPort;
 
-        ServerSocket randomSocket2 = new ServerSocket(0);
-        int electionPort = randomSocket2.getLocalPort();
+        // Use try-with-resources to find available ports and ensure sockets are closed
+        try (ServerSocket randomSocket1 = new ServerSocket(0);
+             ServerSocket randomSocket2 = new ServerSocket(0)) {
 
-        randomSocket1.close();
-        randomSocket2.close();
+            quorumPort = randomSocket1.getLocalPort();
+            electionPort = randomSocket2.getLocalPort();
+
+        }
 
         QuorumPeer.QuorumServer selfAsPeer = new QuorumPeer.QuorumServer(
                 0,
