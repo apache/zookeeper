@@ -1465,7 +1465,7 @@ zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn wat
     zcert.ca = strtok(zcert.certstr, ",");
     zcert.cert = strtok(NULL, ",");
     zcert.key = strtok(NULL, ",");
-    zcert.passwd = strtok(NULL, ",");       
+    zcert.passwd = strtok(NULL, "");
     return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL, &zcert, NULL);
 }
 #endif
