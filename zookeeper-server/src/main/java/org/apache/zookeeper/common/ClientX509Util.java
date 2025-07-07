@@ -115,7 +115,7 @@ public class ClientX509Util extends X509Util {
     }
 
     private void logTcnativeOcsp(boolean enable) {
-        if(enable && !OpenSsl.isOcspSupported()) {
+        if (enable && !OpenSsl.isOcspSupported()) {
             // SslContextBuilder.enableOcsp() doesn't do anything, unless the default BoringSSL
             // tcnative dependency is replaced with an OpenSsl one.
             LOG.warn("Trying to enable OCSP for tcnative OpenSSL provider, but it is not supported. The setting will be ignored");
