@@ -1776,6 +1776,16 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
     Default: false
 
+* *ssl.tcnative.ocsp* and *ssl.quorum.tcnative.ocsp* :
+    (Java system properties: **zookeeper.ssl.tcnative.ocsp** and **zookeeper.ssl.quorum.tcnative.ocsp**)
+    **New in 3.10.0:**
+    Specifies whether OCSP stapling is requested by the client.
+    This option has no effect unless the the OpenSSL tcnative SSL provider with the OpenSSL library is used.
+    Note that Zookeeper uses the the BoringSSL tcnative library by default, so even is the "OpenSSL" SSL provider is requested,
+    this won't do anything unless the default BoringSSL library is replaced with the OpenSSL one.
+    This options has no side effects on JVM global system properties.
+    Default: if the option is not set, or set to the value "default" then the library default is used.
+
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
     **Added in 3.5.5, but broken until 3.5.7:**

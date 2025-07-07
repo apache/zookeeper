@@ -164,6 +164,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private final String sslTcnativeOcspEnabledProperty = getConfigPrefix() + ".tcnative.ocsp";
     private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
     private final String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
@@ -246,6 +247,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslOcspEnabledProperty() {
         return sslOcspEnabledProperty;
+    }
+
+    public String getSslTcnativeOcspEnabledProperty() {
+        return sslTcnativeOcspEnabledProperty;
     }
 
     public String getSslClientAuthProperty() {

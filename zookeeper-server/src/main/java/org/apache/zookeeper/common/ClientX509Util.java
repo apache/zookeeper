@@ -19,6 +19,7 @@
 package org.apache.zookeeper.common;
 
 import io.netty.handler.ssl.DelegatingSslContext;
+import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -82,7 +83,17 @@ public class ClientX509Util extends X509Util {
         SslProvider sslProvider = getSslProvider(config);
         sslContextBuilder.sslProvider(sslProvider);
         if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
-            sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+            boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+            logTcnativeOcsp(ocspEnabled);
+            // Set it even in unsupported, tcnative will just ignore it
+            sslContextBuilder.enableOcsp(ocspEnabled);
+        }
+        // Explicit option takes precedence if set
+        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+            logTcnativeOcsp(true);
+            sslContextBuilder.enableOcsp(true);
+        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+            sslContextBuilder.enableOcsp(false);
         }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
@@ -99,6 +110,14 @@ public class ClientX509Util extends X509Util {
             return addHostnameVerification(sslContext1, "Server");
         } else {
             return sslContext1;
+        }
+    }
+
+    private void logTcnativeOcsp(boolean enable) {
+        if (enable && !OpenSsl.isOcspSupported()) {
+            // SslContextBuilder.enableOcsp() doesn't do anything, unless the default BoringSSL
+            // tcnative dependency is replaced with an OpenSsl one.
+            LOG.warn("Trying to enable OCSP for tcnative OpenSSL provider, but it is not supported. The setting will be ignored");
         }
     }
 
@@ -130,6 +149,11 @@ public class ClientX509Util extends X509Util {
         sslContextBuilder.sslProvider(sslProvider);
         if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
             sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        }
+        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+            sslContextBuilder.enableOcsp(true);
+        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+            sslContextBuilder.enableOcsp(false);
         }
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
