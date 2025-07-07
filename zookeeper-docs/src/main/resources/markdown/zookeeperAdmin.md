@@ -1687,7 +1687,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Specifies the file path to a Java keystore containing the local
     credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
-    
+
 * *ssl.keyStore.passwordPath* and *ssl.quorum.keyStore.passwordPath* :
     (Java system properties: **zookeeper.ssl.keyStore.passwordPath** and **zookeeper.ssl.quorum.keyStore.passwordPath**)
     **New in 3.8.0:**
@@ -1762,19 +1762,58 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     **New in 3.9.4:**
     Specifies whether the client's hostname verification is enabled in client and quorum TLS negotiation process.
     This option requires the corresponding *hostnameVerification* option to be `true`, or it will be ignored.
+    *ssl.clientHostnameVerification* has no effect, as the client does not receive TLS connections.
     Default: true for quorum, false for clients
 
 * *ssl.crl* and *ssl.quorum.crl* :
     (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
     **New in 3.5.5:**
     Specifies whether Certificate Revocation List is enabled in client and quorum TLS protocols.
+    This option requires that the *ssl.quorum.trustStore.location* is set, or it will be ignored.
+    Enabling this option will set the JVM global "com.sun.security.enableCRLDP" system property to true.
     Default: false
 
 * *ssl.ocsp* and *ssl.quorum.ocsp* :
     (Java system properties: **zookeeper.ssl.ocsp** and **zookeeper.ssl.quorum.ocsp**)
     **New in 3.5.5:**
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
+    This option requires that the *ssl.trustStore.location* is set, or it will be ignored for the client.
+    Enabling this option will set the JVM global "com.sun.security.enableCRLDP" system property to true.
+    Enabling this option will set JVM global "ocsp.enable" security property to true.
     Default: false
+
+* *ssl.revocationEnabled* and *ssl.quorum.revocationEnabled* :
+    (Java system properties: **zookeeper.ssl.revocationEnabled** and **zookeeper.ssl.quorum.revocationEnabled**)
+    **New in 3.10.0:**
+    Specifies whether Certificate Revocation checking is enabled in client and quorum TLS protocols.
+    This option requires that the *ssl.trustStore.location* is set, or it will be ignored for the client.
+    This options has no side effects on JVM global system properties.
+    Default: if the option is not set, or set to the value "default" then the JVM default settings
+    are used.
+
+* *ssl.disableLegacyRevocationLogic* and *ssl.quorum.disableLegacyRevocationLogic* :
+    (Java system properties: **zookeeper.ssl.disableLegacyRevocationLogic** and **zookeeper.ssl.quorum.disableLegacyRevocationLogic**)
+    **New in 3.10.0:**
+    Traditionally, ZK has always explicitly disabled or enabled certificate revocation in the trustmanager based on the values of the
+    *ssl.ocsp* and *ssl.crl* properties. This made it impossible to completely rely on System properties for configuring
+    revocation checking for ZooKeeper.
+    Setting this property disables the logic for implicitly setting the certificate revocation check status on the trustManager,
+    allowing the JVM default behavior to be used.
+    It is recommended to set *ssl.ocsp* and *ssl.crl* to false, and *ssl.disableLegacyRevocationLogic* to true.
+    With those settings, ZK will use the JVM default CRL/OCSP settings, and not change the defaults. *ssl.revocationEnabled*
+    can still be used to enable/disable revocation checking for the custom SSL truststore.
+    This option requires that the *ssl.trustStore.location* is set, or it will be ignored for the client.
+    Default: false.
+
+* *ssl.tcnative.ocsp* and *ssl.quorum.tcnative.ocsp* :
+    (Java system properties: **zookeeper.ssl.tcnative.ocsp** and **zookeeper.ssl.quorum.tcnative.ocsp**)
+    **New in 3.10.0:**
+    Specifies whether OCSP stapling is requested by the client.
+    This option has no effect unless the the OpenSSL tcnative SSL provider with the OpenSSL library is used.
+    Note that Zookeeper uses the the BoringSSL tcnative library by default, so even is the "OpenSSL" SSL provider is requested,
+    this won't do anything unless the default BoringSSL library is replaced with the OpenSSL one.
+    This options has no side effects on JVM global system properties.
+    Default: if the option is not set, or set to the value "default" then the library default is used.
 
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
@@ -1785,7 +1824,8 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
      * "want": server will "request" client authentication 
      * "need": server will "require" client authentication
 
-     Default: "need"
+    *ssl.clientHostnameVerification* has no effect.
+    Default: "need"
 
 * *ssl.handshakeDetectionTimeoutMillis* and *ssl.quorum.handshakeDetectionTimeoutMillis* :
     (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
