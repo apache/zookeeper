@@ -740,6 +740,20 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         assertEquals(SSLContext.getDefault(), sslContext);
     }
 
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateSSLContext_ocspWithJreProvider(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        ZKConfig zkConfig = new ZKConfig();
+        try (ClientX509Util clientX509Util = new ClientX509Util();) {
+            zkConfig.setProperty(clientX509Util.getSslOcspEnabledProperty(), "true");
+            // Must not throw IllegalArgumentException
+            clientX509Util.createSSLContext(zkConfig);
+        }
+    }
+
     private static void forceClose(Socket s) {
         if (s == null || s.isClosed()) {
             return;
