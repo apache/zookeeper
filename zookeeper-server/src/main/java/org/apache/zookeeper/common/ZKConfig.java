@@ -131,7 +131,7 @@ public class ZKConfig {
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslCrlEnabledProperty(), System.getProperty(x509Util.getSslCrlEnabledProperty()));
         properties.put(x509Util.getSslOcspEnabledProperty(), System.getProperty(x509Util.getSslOcspEnabledProperty()));
-        properties.put(x509Util.getSslTcnativeOcspEnabledProperty(), System.getProperty(x509Util.getSslTcnativeOcspEnabledProperty()));
+        properties.put(x509Util.getSslTcnativeOcspStaplingEnabledProperty(), System.getProperty(x509Util.getSslTcnativeOcspStaplingEnabledProperty()));
         properties.put(x509Util.getSslClientAuthProperty(), System.getProperty(x509Util.getSslClientAuthProperty()));
         properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
         properties.put(x509Util.getFipsModeProperty(), System.getProperty(x509Util.getFipsModeProperty()));

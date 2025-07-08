@@ -89,10 +89,10 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.enableOcsp(ocspEnabled);
         }
         // Explicit option takes precedence if set
-        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+        if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isTrue()) {
             logTcnativeOcsp(true);
             sslContextBuilder.enableOcsp(true);
-        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+        } else if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isFalse()) {
             sslContextBuilder.enableOcsp(false);
         }
         String[] enabledProtocols = getEnabledProtocols(config);
@@ -117,7 +117,7 @@ public class ClientX509Util extends X509Util {
         if (enable && !OpenSsl.isOcspSupported()) {
             // SslContextBuilder.enableOcsp() doesn't do anything, unless the default BoringSSL
             // tcnative dependency is replaced with an OpenSsl one.
-            LOG.warn("Trying to enable OCSP for tcnative OpenSSL provider, but it is not supported. The setting will be ignored");
+            LOG.warn("Trying to enable OCSP for tcnative OpenSSL provider, but it is not supported. The setting will be ignored", OpenSsl.versionString());
         }
     }
 
@@ -150,9 +150,9 @@ public class ClientX509Util extends X509Util {
         if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
             sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
         }
-        if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isTrue()) {
+        if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isTrue()) {
             sslContextBuilder.enableOcsp(true);
-        } else if (config.getTristate(getSslTcnativeOcspEnabledProperty()).isFalse()) {
+        } else if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isFalse()) {
             sslContextBuilder.enableOcsp(false);
         }
         String[] enabledProtocols = getEnabledProtocols(config);
