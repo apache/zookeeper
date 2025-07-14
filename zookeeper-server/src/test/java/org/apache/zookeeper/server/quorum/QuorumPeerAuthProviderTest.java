@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Properties;
+import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.server.quorum.auth.MockSSLQuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.MockSslQuorumAuthServer;
 import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthLearner;
@@ -29,6 +30,7 @@ import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthServer;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -36,6 +38,17 @@ import org.junit.jupiter.api.Test;
  */
 public class QuorumPeerAuthProviderTest {
 
+    private  QuorumX509Util quorumX509Util;
+
+    private static final String SSL_AUTH_PROVIDER_PROPERTY =
+            "zookeeper." + QuorumAuth.QUORUM_SSL_AUTHPROVIDER;
+    private static final String SSL_LEARNER_AUTH_PROVIDER_PROPERTY =
+            "zookeeper." + QuorumAuth.QUORUM_SSL_LEARNER_AUTHPROVIDER;
+
+    @BeforeEach
+    public void setup() {
+        quorumX509Util = new QuorumX509Util();
+    }
     /**
      * When sslAuthServerProvider is set to a custom provider, ensure it instantiates correctly.
      */
@@ -58,6 +71,23 @@ public class QuorumPeerAuthProviderTest {
                 "Expected MockSSLQuorumAuthServer when provider is configured");
     }
 
+    /**
+     * When sslAuthServerProvider is set via JVM system property
+     */
+    @Test
+    public void testSslAuthServerProviderSystemProperty() throws Exception {
+        System.setProperty(SSL_AUTH_PROVIDER_PROPERTY,
+                MockSslQuorumAuthServer.class.getName());
+        try {
+            QuorumPeer peer = new QuorumPeer();
+            peer.setSslAuthServerProvider("some.invalid.Class");
+            QuorumAuthServer authServer = invokeGetSslQuorumAuthServer(peer);
+            assertTrue(authServer instanceof MockSslQuorumAuthServer,
+                    "Expected system property for server auth provider");
+        } finally {
+            System.clearProperty(SSL_AUTH_PROVIDER_PROPERTY);
+        }
+    }
     /**
      * Without any provider configured, default should be NullQuorumAuthServer.
      */
@@ -89,6 +119,25 @@ public class QuorumPeerAuthProviderTest {
                 "Expected MockSSLQuorumAuthLearner when learner provider is configured");
     }
 
+    /**
+     * When sslAuthLearnerProvider is set via JVM system property
+     */
+    @Test
+    public void testSslAuthLearnerProviderSystemProperty() throws Exception {
+        System.setProperty(SSL_LEARNER_AUTH_PROVIDER_PROPERTY,
+                MockSSLQuorumAuthLearner.class.getName());
+        try {
+            QuorumPeer peer = new QuorumPeer();
+            QuorumAuthLearner authLearner = invokeGetSslQuorumAuthLearner(peer);
+            Properties props = System.getProperties();
+            props.forEach((key, value) -> System.out.println(key + " = " + value));
+
+            assertTrue(authLearner instanceof MockSSLQuorumAuthLearner,
+                    "Expected system property for learner auth provider");
+        } finally {
+            System.clearProperty(SSL_LEARNER_AUTH_PROVIDER_PROPERTY);
+        }
+    }
     /**
      * Without any learner provider configured, default should be NullQuorumAuthLearner.
      */

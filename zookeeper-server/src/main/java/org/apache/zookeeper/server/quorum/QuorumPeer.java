@@ -133,9 +133,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     // of updates; see the implementation comment at setLastSeenQuorumVerifier().
     private AtomicReference<QuorumCnxManager> qcmRef = new AtomicReference<>();
 
-    /** Class name to instantiate for SSL QuorumAuthServer */
     QuorumAuthServer authServer;
-    /** Class name to instantiate for SSL QuorumAuthLearner */
     QuorumAuthLearner authLearner;
 
     /**
@@ -697,7 +695,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private boolean sslQuorum;
 
+    /** Class name to instantiate for SSL AuthServerProvider */
     private String sslAuthServerProvider;
+
+    /** Class name to instantiate for SSL AuthLearnerProvider */
     private String sslAuthLearnerProvider;
 
     private boolean shouldUsePortUnification;
@@ -1198,80 +1199,78 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     /**
-     * Instantiates and returns the configured SSL QuorumAuthServer implementation.
-     * <p>
-     * Reads the class name from the {@code sslAuthServerProvider} property. If
-     * no provider is configured, falls back to {@link NullQuorumAuthServer}.
-     * </p>
+     * Instantiate the configured SSL QuorumAuthServer implementation.
      *
-     * @return an instance of {@link QuorumAuthServer}, or {@link NullQuorumAuthServer}
-     *         if no provider is defined
-     * @throws SaslException if the configured class cannot be found, instantiated,
-     *         or does not implement {@link QuorumAuthServer}
+     * <p>Checks for a JVM system property named by {@value QuorumAuth#QUORUM_SSL_AUTHPROVIDER}
+     * first; if unset, falls back to the value read from config.
+     * If still undefined or empty, returns {@link NullQuorumAuthServer}.</p>
+     *
+     * @return a {@link QuorumAuthServer} instance
+     * @throws SaslException if the class named cannot be loaded, instantiated,
+     *         or doesn’t implement {@link QuorumAuthServer}
      */
     private QuorumAuthServer getSslQuorumAuthServer() throws SaslException {
-        if (sslAuthServerProvider == null) {
-            LOG.info("sslAuthServerProvider not defined; using NullQuorumAuthServer");
+        String providerClass = System.getProperty(
+                "zookeeper." + QuorumAuth.QUORUM_SSL_AUTHPROVIDER,
+                sslAuthServerProvider
+        );
+
+        if (providerClass == null || providerClass.isEmpty()) {
+            LOG.debug("{} not defined; using NullQuorumAuthServer", QuorumAuth.QUORUM_SSL_AUTHPROVIDER);
             return new NullQuorumAuthServer();
         }
+
         try {
-            Class<?> cls = Class.forName(sslAuthServerProvider);
-            Object inst = cls.getDeclaredConstructor().newInstance();
-            if (!(inst instanceof QuorumAuthServer)) {
-                throw new SaslException(
-                        sslAuthServerProvider + " does not implement QuorumAuthServer");
-            }
-            return (QuorumAuthServer) inst;
+            Class<?> cls = Class.forName(providerClass);
+            return (QuorumAuthServer) cls.getDeclaredConstructor().newInstance();
 
         } catch (ClassNotFoundException e) {
-            throw new SaslException(
-                    "SSL auth server provider class not found: " + sslAuthServerProvider, e);
-        } catch (NoSuchMethodException | InstantiationException
-                 | IllegalAccessException | InvocationTargetException e) {
-            throw new SaslException(
-                    "Failed to instantiate SSL auth server provider: " + sslAuthServerProvider, e);
+            throw new SaslException("SSL auth server provider class not found: " + providerClass, e);
+        } catch (NoSuchMethodException
+                 | InstantiationException
+                 | IllegalAccessException
+                 | InvocationTargetException e) {
+            throw new SaslException("Failed to instantiate SSL auth server provider: " + providerClass, e);
         } catch (ClassCastException e) {
-            throw new SaslException(
-                    "Configured class is not a QuorumAuthServer: " + sslAuthServerProvider, e);
+            throw new SaslException("Configured class does not implement QuorumAuthServer: " + providerClass, e);
         }
     }
 
     /**
-     * Instantiates and returns the configured SSL QuorumAuthLearner implementation.
-     * <p>
-     * Reads the class name from the {@code sslAuthLearnerProvider} property. If
-     * no provider is configured, falls back to {@link NullQuorumAuthLearner}.
-     * </p>
+     * Instantiate the configured SSL QuorumAuthLearner implementation.
      *
-     * @return an instance of {@link QuorumAuthLearner}, or {@link NullQuorumAuthLearner}
-     *         if no provider is defined
-     * @throws SaslException if the configured class cannot be found, instantiated,
-     *         or does not implement {@link QuorumAuthLearner}
+     * <p>Checks for a JVM system property named by {@value QuorumAuth#QUORUM_SSL_LEARNER_AUTHPROVIDER}
+     * first; if unset, falls back to the value read from zoo.cfg.
+     * If still undefined or empty, returns {@link NullQuorumAuthLearner}.</p>
+     *
+     * @return a {@link QuorumAuthLearner} instance
+     * @throws SaslException if the class named cannot be loaded, instantiated,
+     *         or doesn’t implement {@link QuorumAuthLearner}
      */
     private QuorumAuthLearner getSslQuorumAuthLearner() throws SaslException {
-        if (sslAuthLearnerProvider == null) {
-            LOG.info("sslAuthLearnerProvider not defined; using NullQuorumAuthLearner");
+        String providerClass = System.getProperty(
+                "zookeeper." + QuorumAuth.QUORUM_SSL_LEARNER_AUTHPROVIDER,
+                sslAuthLearnerProvider
+        );
+
+        if (providerClass == null || providerClass.isEmpty()) {
+            LOG.debug("{} not defined; using NullQuorumAuthLearner", QuorumAuth.QUORUM_SSL_LEARNER_AUTHPROVIDER);
             return new NullQuorumAuthLearner();
         }
+
         try {
-            Class<?> cls = Class.forName(sslAuthLearnerProvider);
-            Object inst = cls.getDeclaredConstructor().newInstance();
-            if (!(inst instanceof QuorumAuthLearner)) {
-                throw new SaslException(
-                        sslAuthLearnerProvider + " does not implement QuorumAuthLearner");
-            }
-            return (QuorumAuthLearner) inst;
+            Class<?> cls = Class.forName(providerClass);
+            return (QuorumAuthLearner) cls.getDeclaredConstructor().newInstance();
 
         } catch (ClassNotFoundException e) {
-            throw new SaslException(
-                    "SSL auth learner provider class not found: " + sslAuthLearnerProvider, e);
-        } catch (NoSuchMethodException | InstantiationException
-                 | IllegalAccessException | InvocationTargetException e) {
-            throw new SaslException(
-                    "Failed to instantiate SSL auth learner provider: " + sslAuthLearnerProvider, e);
+            throw new SaslException("SSL auth learner provider class not found: " + providerClass, e);
+        } catch (NoSuchMethodException
+                 | InstantiationException
+                 | IllegalAccessException
+                 | InvocationTargetException e) {
+            throw new SaslException("Failed to instantiate SSL auth learner provider: " + providerClass, e);
         } catch (ClassCastException e) {
-            throw new SaslException(
-                    "Configured class is not a QuorumAuthLearner: " + sslAuthLearnerProvider, e);
+            throw new SaslException("Configured class does not implement QuorumAuthLearner: " + providerClass, e);
         }
     }
 
