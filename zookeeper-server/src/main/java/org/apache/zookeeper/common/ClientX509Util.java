@@ -80,7 +80,6 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(tm);
         }
 
-        sslContextBuilder.sslProvider(getSslProvider(config));
         handleTcnativeOcspStapling(sslContextBuilder, config);
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
@@ -90,11 +89,57 @@ public class ClientX509Util extends X509Util {
         if (enabledCiphers != null) {
             sslContextBuilder.ciphers(enabledCiphers);
         }
+        sslContextBuilder.sslProvider(getSslProvider(config));
 
         SslContext sslContext1 = sslContextBuilder.build();
 
         if (getFipsMode(config) && isServerHostnameVerificationEnabled(config)) {
             return addHostnameVerification(sslContext1, "Server");
+        } else {
+            return sslContext1;
+        }
+    }
+
+    public SslContext createNettySslContextForServer(ZKConfig config)
+        throws X509Exception.SSLContextException, X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+        String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
+        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
+            getSslKeystorePasswdPathProperty());
+        String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
+
+        if (keyStoreLocation.isEmpty()) {
+            throw new X509Exception.SSLContextException(
+                "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
+        }
+
+        KeyManager km = createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
+
+        return createNettySslContextForServer(config, km, getTrustManager(config));
+    }
+
+    public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
+        SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(keyManager);
+
+        if (trustManager != null) {
+            sslContextBuilder.trustManager(trustManager);
+        }
+
+        handleTcnativeOcspStapling(sslContextBuilder, config);
+        String[] enabledProtocols = getEnabledProtocols(config);
+        if (enabledProtocols != null) {
+            sslContextBuilder.protocols(enabledProtocols);
+        }
+        sslContextBuilder.clientAuth(getClientAuth(config).toNettyClientAuth());
+        Iterable<String> enabledCiphers = getCipherSuites(config);
+        if (enabledCiphers != null) {
+            sslContextBuilder.ciphers(enabledCiphers);
+        }
+        sslContextBuilder.sslProvider(getSslProvider(config));
+
+        SslContext sslContext1 = sslContextBuilder.build();
+
+        if (getFipsMode(config) && isClientHostnameVerificationEnabled(config)) {
+            return addHostnameVerification(sslContext1, "Client");
         } else {
             return sslContext1;
         }
@@ -123,50 +168,6 @@ public class ClientX509Util extends X509Util {
             builder.enableOcsp(false);
         }
         return builder;
-    }
-
-    public SslContext createNettySslContextForServer(ZKConfig config)
-        throws X509Exception.SSLContextException, X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
-        String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
-        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
-            getSslKeystorePasswdPathProperty());
-        String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
-
-        if (keyStoreLocation.isEmpty()) {
-            throw new X509Exception.SSLContextException(
-                "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
-        }
-
-        KeyManager km = createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
-
-        return createNettySslContextForServer(config, km, getTrustManager(config));
-    }
-
-    public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
-        SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(keyManager);
-
-        if (trustManager != null) {
-            sslContextBuilder.trustManager(trustManager);
-        }
-        sslContextBuilder.sslProvider(getSslProvider(config));
-        handleTcnativeOcspStapling(sslContextBuilder, config);
-        String[] enabledProtocols = getEnabledProtocols(config);
-        if (enabledProtocols != null) {
-            sslContextBuilder.protocols(enabledProtocols);
-        }
-        sslContextBuilder.clientAuth(getClientAuth(config).toNettyClientAuth());
-        Iterable<String> enabledCiphers = getCipherSuites(config);
-        if (enabledCiphers != null) {
-            sslContextBuilder.ciphers(enabledCiphers);
-        }
-
-        SslContext sslContext1 = sslContextBuilder.build();
-
-        if (getFipsMode(config) && isClientHostnameVerificationEnabled(config)) {
-            return addHostnameVerification(sslContext1, "Client");
-        } else {
-            return sslContext1;
-        }
     }
 
     private SslContext addHostnameVerification(SslContext sslContext, String clientOrServer) {
