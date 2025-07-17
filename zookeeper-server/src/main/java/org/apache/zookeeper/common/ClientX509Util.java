@@ -80,21 +80,8 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(tm);
         }
 
-        SslProvider sslProvider = getSslProvider(config);
-        sslContextBuilder.sslProvider(sslProvider);
-        if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
-            boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty());
-            logTcnativeOcsp(ocspEnabled);
-            // Set it even in unsupported, tcnative will just ignore it
-            sslContextBuilder.enableOcsp(ocspEnabled);
-        }
-        // Explicit option takes precedence if set
-        if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isTrue()) {
-            logTcnativeOcsp(true);
-            sslContextBuilder.enableOcsp(true);
-        } else if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isFalse()) {
-            sslContextBuilder.enableOcsp(false);
-        }
+        sslContextBuilder.sslProvider(getSslProvider(config));
+        handleTcnativeOcspStapling(sslContextBuilder, config);
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -113,12 +100,29 @@ public class ClientX509Util extends X509Util {
         }
     }
 
-    private void logTcnativeOcsp(boolean enable) {
-        if (enable && !OpenSsl.isOcspSupported()) {
-            // SslContextBuilder.enableOcsp() doesn't do anything, unless the default BoringSSL
-            // tcnative dependency is replaced with an OpenSsl one.
-            LOG.warn("Trying to enable OCSP for tcnative OpenSSL provider, but it is not supported. The setting will be ignored", OpenSsl.versionString());
+    private SslContextBuilder handleTcnativeOcspStapling(SslContextBuilder builder, ZKConfig config) {
+        SslProvider sslProvider = getSslProvider(config);
+        boolean tcnative = sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT;
+        boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+        TriState tcnativeOcspStapling = config.getTristate(getSslTcnativeOcspStaplingEnabledProperty());
+
+        if (tcnative && ocspEnabled && tcnativeOcspStapling.isDefault() && OpenSsl.isOcspSupported()) {
+            // Maintain old behaviour (mostly, we also check for OpenSsl.isOcspSupported())
+            builder.enableOcsp(ocspEnabled);
+        } else if (tcnativeOcspStapling.isTrue()) {
+            if (!tcnative) {
+                // Don't override the explicit setting, let it error out
+                LOG.error("Trying to enable OpenSSL OCSP stapling for non-OpenSSL TLS provider. "
+                        + "This is going to fail. Please fix the TLS configuration");
+            } else if (!OpenSsl.isOcspSupported()) {
+                LOG.warn("Trying to enable OpenSSL OCSP stapling for OpenSSL provider {} which does not support it. "
+                        + "This is either going to be ignored or fail.", OpenSsl.versionString());
+            }
+            builder.enableOcsp(true);
+        } else if (tcnativeOcspStapling.isFalse()) {
+            builder.enableOcsp(false);
         }
+        return builder;
     }
 
     public SslContext createNettySslContextForServer(ZKConfig config)
@@ -144,17 +148,8 @@ public class ClientX509Util extends X509Util {
         if (trustManager != null) {
             sslContextBuilder.trustManager(trustManager);
         }
-
-        SslProvider sslProvider = getSslProvider(config);
-        sslContextBuilder.sslProvider(sslProvider);
-        if (sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT) {
-            sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
-        }
-        if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isTrue()) {
-            sslContextBuilder.enableOcsp(true);
-        } else if (config.getTristate(getSslTcnativeOcspStaplingEnabledProperty()).isFalse()) {
-            sslContextBuilder.enableOcsp(false);
-        }
+        sslContextBuilder.sslProvider(getSslProvider(config));
+        handleTcnativeOcspStapling(sslContextBuilder, config);
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
