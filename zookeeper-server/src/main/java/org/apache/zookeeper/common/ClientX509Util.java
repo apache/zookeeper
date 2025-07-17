@@ -165,6 +165,8 @@ public class ClientX509Util extends X509Util {
             }
             builder.enableOcsp(true);
         } else if (tcnativeOcspStapling.isFalse()) {
+            // Disabling OCSP for the builder is always safe.
+            // This is the same as the builder default, effectively a noop.
             builder.enableOcsp(false);
         }
         return builder;
