@@ -149,25 +149,9 @@ public class ClientX509Util extends X509Util {
         SslProvider sslProvider = getSslProvider(config);
         boolean tcnative = sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT;
         boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty());
-        TriState tcnativeOcspStapling = config.getTristate(getSslTcnativeOcspStaplingEnabledProperty());
 
-        if (tcnative && ocspEnabled && tcnativeOcspStapling.isDefault() && OpenSsl.isOcspSupported()) {
-            // Maintain old behaviour (mostly, we also check for OpenSsl.isOcspSupported())
+        if (tcnative && ocspEnabled && OpenSsl.isOcspSupported()) {
             builder.enableOcsp(ocspEnabled);
-        } else if (tcnativeOcspStapling.isTrue()) {
-            if (!tcnative) {
-                // Don't override the explicit setting, let it error out
-                LOG.error("Trying to enable OpenSSL OCSP stapling for non-OpenSSL TLS provider. "
-                        + "This is going to fail. Please fix the TLS configuration");
-            } else if (!OpenSsl.isOcspSupported()) {
-                LOG.warn("Trying to enable OpenSSL OCSP stapling for OpenSSL provider {} which does not support it. "
-                        + "This is either going to be ignored or fail.", OpenSsl.versionString());
-            }
-            builder.enableOcsp(true);
-        } else if (tcnativeOcspStapling.isFalse()) {
-            // Disabling OCSP for the builder is always safe.
-            // This is the same as the builder default, effectively a noop.
-            builder.enableOcsp(false);
         }
         return builder;
     }

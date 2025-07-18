@@ -131,7 +131,6 @@ public class ZKConfig {
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslCrlEnabledProperty(), System.getProperty(x509Util.getSslCrlEnabledProperty()));
         properties.put(x509Util.getSslOcspEnabledProperty(), System.getProperty(x509Util.getSslOcspEnabledProperty()));
-        properties.put(x509Util.getSslTcnativeOcspStaplingEnabledProperty(), System.getProperty(x509Util.getSslTcnativeOcspStaplingEnabledProperty()));
         properties.put(x509Util.getSslClientAuthProperty(), System.getProperty(x509Util.getSslClientAuthProperty()));
         properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
         properties.put(x509Util.getFipsModeProperty(), System.getProperty(x509Util.getFipsModeProperty()));
@@ -285,15 +284,4 @@ public class ZKConfig {
         return defaultValue;
     }
 
-    /**
-     * Returns {@code TriState.True} if and only if the property named by the argument
-     * exists and is equal to the string {@code "true"}.
-     * Returns {@code TriState.Default} if and only if the property named by the argument
-     * does not exist or is equal to the string {@code "default"}.
-     * Returns {@code TriState.False} otherwise.
-     */
-    public TriState getTristate(String key) {
-        String propertyValue = getProperty(key);
-        return TriState.parse(propertyValue);
-    }
 }
