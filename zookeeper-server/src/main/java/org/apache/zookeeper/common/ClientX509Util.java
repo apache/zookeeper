@@ -19,6 +19,7 @@
 package org.apache.zookeeper.common;
 
 import io.netty.handler.ssl.DelegatingSslContext;
+import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -79,7 +80,7 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(tm);
         }
 
-        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        handleTcnativeOcspStapling(sslContextBuilder, config);
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -123,7 +124,7 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.trustManager(trustManager);
         }
 
-        sslContextBuilder.enableOcsp(config.getBoolean(getSslOcspEnabledProperty()));
+        handleTcnativeOcspStapling(sslContextBuilder, config);
         String[] enabledProtocols = getEnabledProtocols(config);
         if (enabledProtocols != null) {
             sslContextBuilder.protocols(enabledProtocols);
@@ -142,6 +143,17 @@ public class ClientX509Util extends X509Util {
         } else {
             return sslContext1;
         }
+    }
+
+    private SslContextBuilder handleTcnativeOcspStapling(SslContextBuilder builder, ZKConfig config) {
+        SslProvider sslProvider = getSslProvider(config);
+        boolean tcnative = sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT;
+        boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+
+        if (tcnative && ocspEnabled && OpenSsl.isOcspSupported()) {
+            builder.enableOcsp(ocspEnabled);
+        }
+        return builder;
     }
 
     private SslContext addHostnameVerification(SslContext sslContext, String clientOrServer) {
