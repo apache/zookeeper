@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +51,6 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
-import org.apache.zookeeper.server.RateLogger;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
@@ -102,7 +101,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * </p>
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
-    private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
     private String host = "0.0.0.0";
     private int httpPort = -1;
     private int httpsPort = -1;
@@ -677,7 +675,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 numWorkerThreads,
                 0L,
                 TimeUnit.MILLISECONDS,
-                queue, new PrometheusWorkerThreadFactory());
+                queue,
+                new PrometheusWorkerThreadFactory(),
+                new PrometheusRejectedExecutionHandler());
         LOG.info("Executor service was created with numWorkerThreads {} and maxQueueSize {}",
                 numWorkerThreads,
                 maxQueueSize);
@@ -714,14 +714,21 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
+    private static class PrometheusRejectedExecutionHandler implements RejectedExecutionHandler {
+        private static boolean maxQueueSizeExceeded = false;
+
+        @Override
+        public void rejectedExecution(final Runnable r, final ThreadPoolExecutor e) {
+            if (!maxQueueSizeExceeded) {
+                maxQueueSizeExceeded = true;
+                LOG.warn("Prometheus metrics queue size exceeded the max");
+            }
+        }
+    }
+
     private void reportMetrics(final Runnable task) {
         if (executorOptional.isPresent()) {
-            try {
-                executorOptional.get().submit(task);
-            } catch (final RejectedExecutionException e) {
-                rateLogger.rateLimitLog("Prometheus metrics reporting task queue size exceeded the max",
-                        String.valueOf(maxQueueSize));
-            }
+            executorOptional.get().submit(task);
         } else {
             task.run();
         }
