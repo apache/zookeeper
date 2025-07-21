@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -677,7 +677,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 numWorkerThreads,
                 0L,
                 TimeUnit.MILLISECONDS,
-                queue, new PrometheusWorkerThreadFactory());
+                queue,
+                new PrometheusWorkerThreadFactory(),
+                new PrometheusRejectedExecutionHandler());
         LOG.info("Executor service was created with numWorkerThreads {} and maxQueueSize {}",
                 numWorkerThreads,
                 maxQueueSize);
@@ -714,14 +716,18 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
+    private class PrometheusRejectedExecutionHandler implements RejectedExecutionHandler {
+        private final String queueExceededMessage = "Prometheus metrics queue size exceeded the max " + maxQueueSize;
+
+        @Override
+        public void rejectedExecution(final Runnable r, final ThreadPoolExecutor e) {
+            rateLogger.rateLimitLog(queueExceededMessage);
+        }
+    }
+
     private void reportMetrics(final Runnable task) {
         if (executorOptional.isPresent()) {
-            try {
-                executorOptional.get().submit(task);
-            } catch (final RejectedExecutionException e) {
-                rateLogger.rateLimitLog("Prometheus metrics reporting task queue size exceeded the max",
-                        String.valueOf(maxQueueSize));
-            }
+            executorOptional.get().submit(task);
         } else {
             task.run();
         }

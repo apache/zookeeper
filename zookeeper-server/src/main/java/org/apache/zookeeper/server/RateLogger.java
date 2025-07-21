@@ -46,15 +46,20 @@ public class RateLogger {
 
     public void flush() {
         if (msg != null && count > 0) {
-            String log = "";
+            // Optimized logging using parameterized messages to reduce string concatenation overhead
             if (count > 1) {
-                log = "[" + count + " times] ";
+                if (value != null) {
+                    LOG.warn("[{} times] Message: {} Last value:{}", count, msg, value);
+                } else {
+                    LOG.warn("[{} times] Message: {}", count, msg);
+                }
+            } else {
+                if (value != null) {
+                    LOG.warn("Message: {} Value:{}", msg, value);
+                } else {
+                    LOG.warn("Message: {}", msg);
+                }
             }
-            log += "Message: " + msg;
-            if (value != null) {
-                log += " Last value:" + value;
-            }
-            LOG.warn(log);
         }
         msg = null;
         value = null;
@@ -70,7 +75,8 @@ public class RateLogger {
      */
     public void rateLimitLog(String newMsg, String newValue) {
         long now = Time.currentElapsedTime();
-        if (Objects.equals(newMsg, msg)) {
+        // Optimized string comparison: use reference equality first for constant strings
+        if (newMsg == msg || Objects.equals(newMsg, msg)) {
             ++count;
             value = newValue;
             if (now - timestamp >= LOG_INTERVAL) {
