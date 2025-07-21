@@ -84,7 +84,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     /**
      * The max queue size for Prometheus summary metrics reporting task.
-     * Default value is 1000000.
+     * Default value is 10000.
      */
     static final String MAX_QUEUE_SIZE = "maxQueueSize";
 
@@ -111,7 +111,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private final MetricsServletImpl servlet = new MetricsServletImpl();
     private final Context rootContext = new Context();
     private int numWorkerThreads = 1;
-    private int maxQueueSize = 1000000;
+    private int maxQueueSize = 10000;
     private long workerShutdownTimeoutMs = 1000;
     private Optional<ExecutorService> executorOptional = Optional.empty();
 
@@ -161,7 +161,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         this.numWorkerThreads = Integer.parseInt(
                 configuration.getProperty(NUM_WORKER_THREADS, "1"));
         this.maxQueueSize = Integer.parseInt(
-                configuration.getProperty(MAX_QUEUE_SIZE, "1000000"));
+                configuration.getProperty(MAX_QUEUE_SIZE, "10000"));
         this.workerShutdownTimeoutMs = Long.parseLong(
                 configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
     }
