@@ -22,15 +22,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IPAuthenticationProvider implements AuthenticationProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(IPAuthenticationProvider.class);
     public static final String X_FORWARDED_FOR_HEADER_NAME = "X-Forwarded-For";
 
     public static final String USE_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.usexforwardedfor";
+    private static final int IPV6_BYTE_LENGTH = 16; // IPv6 address is 128 bits = 16 bytes
+    private static final int IPV6_SEGMENT_COUNT = 8; // IPv6 address has 8 segments
+    private static final int IPV6_SEGMENT_HEX_LENGTH = 4; // Each segment has up to 4 hex digits
+
+    private static final Pattern IPV6_PATTERN = Pattern.compile(":");
+    private static final Pattern IPV4_PATTERN = Pattern.compile("\\.");
 
     public String getScheme() {
         return "ip";
@@ -55,9 +65,14 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
     // This is a bit weird but we need to return the address and the number of
     // bytes (to distinguish between IPv4 and IPv6
     private byte[] addr2Bytes(String addr) {
-        byte[] b = v4addr2Bytes(addr);
-        // TODO Write the v6addr2Bytes
-        return b;
+        if (IPV6_PATTERN.matcher(addr).find()) {
+            return v6addr2Bytes(addr);
+        } else if (IPV4_PATTERN.matcher(addr).find()) {
+            return v4addr2Bytes(addr);
+        } else {
+            LOG.warn("Input string does not resemble an IPv4 or IPv6 address: {}", addr);
+            return null;
+        }
     }
 
     private byte[] v4addr2Bytes(String addr) {
@@ -81,6 +96,118 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         return b;
     }
 
+    /**
+     * Validates an IPv6 address string and converts it into a byte array.
+     *
+     * @param ipv6Addr The IPv6 address string to validate.
+     * @return A byte array representing the IPv6 address if valid, or null if the address
+     * is invalid or cannot be parsed.
+     */
+    public static byte[] v6addr2Bytes(String ipv6Addr) {
+        try {
+            return parseV6addr(ipv6Addr);
+        } catch (IllegalArgumentException e) {
+            LOG.warn("Fail to parse {} as IPv6 address: {}", ipv6Addr, e.getMessage());
+            return null;
+        }
+    }
+
+    private static byte[] parseV6addr(String ipv6Addr) {
+        // Split the address by "::" to handle zero compression, -1 to keep trailing empty strings
+        String[] parts = ipv6Addr.split("::", -1);
+
+        String[] segments1 = new String[0];
+        String[] segments2 = new String[0];
+
+        // Case 1: No "::" (full address)
+        if (parts.length == 1) {
+            segments1 = parts[0].split(":");
+            if (segments1.length != IPV6_SEGMENT_COUNT) {
+                String reason = "wrong number of segments.";
+                throw new IllegalArgumentException(reason);
+            }
+        } else if (parts.length == 2) {
+            // Case 2: "::" is present
+            // Handle cases like "::1" or "1::"
+            if (!parts[0].isEmpty()) {
+                segments1 = parts[0].split(":");
+            }
+            if (!parts[1].isEmpty()) {
+                segments2 = parts[1].split(":");
+            }
+
+            // Check if the total number of explicit segments exceeds 8
+            if (segments1.length + segments2.length >= IPV6_SEGMENT_COUNT) {
+                String reason = "Too many segments.";
+                throw new IllegalArgumentException(reason);
+            }
+        } else {
+            // Case 3: Invalid number of parts after splitting by "::" (should be 1 or 2)
+            String reason = "Too many '::' ";
+            throw new IllegalArgumentException(reason);
+        }
+
+        byte [] result = new byte[IPV6_BYTE_LENGTH];
+        int byteIndex = 0;
+
+        try {
+            // Process segments before "::"
+            for (String segment : segments1) {
+                if (isInvalidSegment(segment)) {
+                    String reason = "Invalid IPv6 segment: " +  segment + "in address: " + ipv6Addr;
+                    throw new IllegalArgumentException(reason);
+                }
+                int value = Integer.parseInt(segment, 16);
+                result[byteIndex++] = (byte) ((value >> 8) & 0xFF);
+                result[byteIndex++] = (byte) (value & 0xFF);
+            }
+
+            // Add zero segments for "::" compression
+            int missingSegments = IPV6_SEGMENT_COUNT - (segments1.length + segments2.length);
+            for (int i = 0; i < missingSegments; i++) {
+                result[byteIndex++] = (byte) 0x00;
+                result[byteIndex++] = (byte) 0x00;
+            }
+
+            // Process segments after "::"
+            for (String segment : segments2) {
+                if (isInvalidSegment(segment)) {
+                    String reason = "Invalid IPv6 segment: " +  segment + "in address after '::' " + ipv6Addr;
+                    throw new IllegalArgumentException(reason);
+                }
+                int value = Integer.parseInt(segment, 16);
+                result[byteIndex++] = (byte) ((value >> 8) & 0xFF);
+                result[byteIndex++] = (byte) (value & 0xFF);
+            }
+
+        } catch (NumberFormatException e) {
+            // 3. Catch NumberFormatException if String cannot be parsed
+            String reason = "Invalid hexadecimal character ";
+            throw new IllegalArgumentException(reason);
+        }
+        return result;
+    }
+
+    /**
+     * Checks if a single IPv6 segment is valid.
+     * A valid segment is a non-empty string of 1 to 4 hexadecimal characters.
+     *
+     * @param segment The segment string to validate.
+     * @return true if the segment is invalid, false otherwise.
+     */
+    private static boolean isInvalidSegment(String segment) {
+        if (segment == null || segment.isEmpty() || segment.length() > IPV6_SEGMENT_HEX_LENGTH) {
+            return true;
+        }
+        // Check if all characters are valid hexadecimal digits
+        for (char c : segment.toCharArray()) {
+            if (!Character.isDigit(c) && (c < 'a' || c > 'f') && (c < 'A' || c > 'F')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void mask(byte[] b, int bits) {
         int start = bits / 8;
         int startMask = (1 << (8 - (bits % 8))) - 1;
@@ -93,6 +220,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
     }
 
     public boolean matches(String id, String aclExpr) {
+        LOG.trace("id: '{}' aclExpr:  {}", id, aclExpr);
         String[] parts = aclExpr.split("/", 2);
         byte[] aclAddr = addr2Bytes(parts[0]);
         if (aclAddr == null) {
@@ -115,6 +243,10 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
             return false;
         }
         mask(remoteAddr, bits);
+        // Check if id and acl expression are of different formats (ipv6 or iv4) return false
+        if (remoteAddr.length != aclAddr.length) {
+            return false;
+        }
         for (int i = 0; i < remoteAddr.length; i++) {
             if (remoteAddr[i] != aclAddr[i]) {
                 return false;

@@ -70,6 +70,38 @@ public class ACLTest extends ZKTestCase implements Watcher {
     }
 
     @Test
+    public void testIPAuthenticationIsValidIpv6CIDR() throws Exception {
+        IPAuthenticationProvider prov = new IPAuthenticationProvider();
+        assertTrue(prov.isValid("2001:0db8:85a3:0000:0000:8a2e:0370:7334"), "full address no netmask");
+        assertTrue(prov.isValid("2001:db8:85a3::8a2e:370:7334"), "compressed zeros");
+        assertTrue(prov.isValid("::1"), "loopback with compression");
+        assertTrue(prov.isValid("1::"), "Start with compression");
+        assertTrue(prov.isValid("2001:db8::/4"), "end with compression");
+        assertTrue(prov.isValid("0:0:0:0:0:0:0::/8"), "all zeros");
+        assertTrue(prov.isValid("2001:db8:85a3:0:0:0:0::/32"), "Explicit zeros");
+        assertTrue(prov.isValid("1234:5678:9abc:def0:1234:5678:9abc:def0"), "max hex value");
+        assertFalse(prov.isValid("2001:db8:85a3:0000:0000:8a2e:0370:7334:extra"), "too many address segments");
+        assertFalse(prov.isValid("2001:db8:85a3:0000:0000:8a2e:0370"), "too few address segments");
+        assertFalse(prov.isValid("2001:db8:85a3::8a2e::0370:7334"), "multiple '::' not valid");
+        assertFalse(prov.isValid("2001:db8:85a3:G::8a2e:0370:7334"), "Invalid hex character");
+        assertFalse(prov.isValid(""), "empty string");
+        assertFalse(prov.isValid("2001:db8:85a3:0:0:0:0:1:2"), "too many segments post compression");
+        assertTrue(prov.isValid("2001:db8:85a3::8a2e:0370:7334:"), "trailing colon");
+        assertFalse(prov.isValid(":2001:db8:85a3::8a2e:0370:7334"), "Leading colon");
+        assertFalse(prov.isValid("::FFFF:192.168.1.1"), "IPv4-mapped");
+        assertTrue(prov.isValid("2001:db8:1234::/64"), "IPv6 address for multiple clients");
+    }
+
+    @Test
+    public void testIPAuthenticationIsValidIpv6Mask() throws Exception {
+        IPAuthenticationProvider prov = new IPAuthenticationProvider();
+        assertTrue(prov.matches("2001:db8:1234::", "2001:db8:1234::/64"));
+        assertTrue(prov.matches("2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:0db8:85a3:0000:0000:8a2e:0370::/2"));
+        assertFalse(prov.matches("22001:db8:85a3:0:0:0:0::0", "2001:db8:85a3:0:0:0:0::/32"));
+        assertFalse(prov.matches("2001:db8::/4", "2001:db8::/4"));
+    }
+
+    @Test
     public void testNettyIpAuthDefault(@TempDir File tmpDir) throws Exception {
         String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
