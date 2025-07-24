@@ -78,6 +78,19 @@ public class Request {
         this.authInfo = null;
     }
 
+    public Request(TxnHeader hdr, Record txn, TxnDigest digest) {
+        this.sessionId = hdr.getClientId();
+        this.cxid = hdr.getCxid();
+        this.type = hdr.getType();
+        this.hdr = hdr;
+        this.txn = txn;
+        this.zxid = hdr.getZxid();
+        this.request = null;
+        this.cnxn = null;
+        this.authInfo = null;
+        this.txnDigest = digest;
+    }
+
     public final long sessionId;
 
     public final int cxid;

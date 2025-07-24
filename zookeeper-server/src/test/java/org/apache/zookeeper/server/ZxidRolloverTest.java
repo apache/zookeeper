@@ -60,6 +60,7 @@ public class ZxidRolloverTest extends ZKTestCase {
     @BeforeEach
     public void setUp() throws Exception {
         System.setProperty("zookeeper.admin.enableServer", "false");
+        System.setProperty("zookeeper.test.allowDiscontinuousProposals", "true");
 
         // set the snap count to something low so that we force log rollover
         // and verify that is working as part of the epoch rollover.
@@ -215,6 +216,7 @@ public class ZxidRolloverTest extends ZKTestCase {
 
     @AfterEach
     public void tearDown() throws Exception {
+        System.clearProperty("zookeeper.test.allowDiscontinuousProposals");
         LOG.info("tearDown starting");
         for (int i = 0; i < zkClients.length; i++) {
             zkClients[i].close();
