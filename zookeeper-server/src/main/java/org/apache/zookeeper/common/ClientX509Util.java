@@ -93,7 +93,7 @@ public class ClientX509Util extends X509Util {
 
         SslContext sslContext1 = sslContextBuilder.build();
 
-        if (getFipsMode(config) && isServerHostnameVerificationEnabled(config)) {
+        if ((getFipsMode(config) || tm == null) && isServerHostnameVerificationEnabled(config)) {
             return addHostnameVerification(sslContext1, "Server");
         } else {
             return sslContext1;
@@ -138,7 +138,7 @@ public class ClientX509Util extends X509Util {
 
         SslContext sslContext1 = sslContextBuilder.build();
 
-        if (getFipsMode(config) && isClientHostnameVerificationEnabled(config)) {
+        if ((getFipsMode(config) || trustManager == null) && isClientHostnameVerificationEnabled(config)) {
             return addHostnameVerification(sslContext1, "Client");
         } else {
             return sslContext1;
