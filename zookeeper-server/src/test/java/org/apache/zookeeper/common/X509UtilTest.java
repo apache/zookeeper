@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.handler.ssl.SslContext;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -45,6 +47,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
@@ -57,6 +60,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+
 
 public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
@@ -751,6 +755,28 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             zkConfig.setProperty(clientX509Util.getSslOcspEnabledProperty(), "true");
             // Must not throw IllegalArgumentException
             clientX509Util.createSSLContext(zkConfig);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateSSLContext_hostnameVerificationNoCustomTrustStore(X509KeyType caKeyType,
+            X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        // No truststore
+        System.clearProperty(x509Util.getSslTruststoreLocationProperty());
+        // Verify client hostname too
+        System.setProperty(x509Util.getSslClientHostnameVerificationEnabledProperty(), "true");
+        ZKConfig zkConfig = new ZKConfig();
+        try (ClientX509Util clientX509Util = new ClientX509Util();) {
+            UnpooledByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false);
+            SslContext clientContext = clientX509Util.createNettySslContextForClient(zkConfig);
+            SSLEngine clientEngine = clientContext.newEngine(byteBufAllocator);
+            assertEquals(clientEngine.getSSLParameters().getEndpointIdentificationAlgorithm(), "HTTPS");
+
+            SslContext serverContext = clientX509Util.createNettySslContextForServer(zkConfig);
+            SSLEngine serverEngine = serverContext.newEngine(byteBufAllocator);
+            assertEquals(serverEngine.getSSLParameters().getEndpointIdentificationAlgorithm(), "HTTPS");
         }
     }
 
