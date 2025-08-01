@@ -801,7 +801,7 @@ public class ZooKeeperTest extends ClientBase {
         }
         long endTime = System.currentTimeMillis();
         assertTrue(endTime - startTime >= timeout,
-                "ZooKeeeperMain does not wait until the specified timeout");
+                "ZooKeeperMain does not wait until the specified timeout");
 
     }
 
