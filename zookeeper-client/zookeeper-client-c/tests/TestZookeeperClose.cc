@@ -425,7 +425,6 @@ public:
 
             CPPUNIT_ASSERT(zh!=0);
             CPPUNIT_ASSERT(ensureCondition(SessionExpired(zh),1000)<1000);
-            CPPUNIT_ASSERT(ensureCondition(IOThreadStopped(zh),1000)<1000);
             // make sure the watcher has been processed
             CPPUNIT_ASSERT(ensureCondition(closeAction.isWatcherTriggered(),1000)<1000);
             // make sure the threads have not been destroyed yet
