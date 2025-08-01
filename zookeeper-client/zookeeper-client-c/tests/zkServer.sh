@@ -24,6 +24,8 @@ ZOOPORT=${ZOOPORT:-"22181"}
 # Some tests are setting the maxClientConnections. When it is not set, we fallback to default 100
 ZKMAXCNXNS=${ZKMAXCNXNS:-"100"}
 
+CLIENT_AUTH=${CLIENT_AUTH:-"need"}
+
 EXTRA_JVM_ARGS=${EXTRA_JVM_ARGS:-""}
 
 if [[ -z $1 ]]; then
@@ -163,7 +165,7 @@ case $1 in
     )
 
     # ===== prepare the configs
-    sed "s#TMPDIR#$tmp_dir#g;s#CERTDIR#$certs_dir#g;s#MAXCLIENTCONNECTIONS#$ZKMAXCNXNS#g;s#CLIENTPORT#$ZOOPORT#g" "$tests_dir/zoo.cfg" >"$tmp_dir/zoo.cfg"
+    sed "s#TMPDIR#$tmp_dir#g;s#CERTDIR#$certs_dir#g;s#MAXCLIENTCONNECTIONS#$ZKMAXCNXNS#g;s#CLIENTPORT#$ZOOPORT#g;s#CLIENT_AUTH#$CLIENT_AUTH#g" "$tests_dir/zoo.cfg" >"$tmp_dir/zoo.cfg"
     if [[ -n $read_only ]]; then
       # we can put the new server to read-only mode by starting only a single instance of a three node server
       {
