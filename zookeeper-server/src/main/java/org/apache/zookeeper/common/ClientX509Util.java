@@ -29,6 +29,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManager;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.ZKConfig.SslRevocationEnabled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,7 @@ public class ClientX509Util extends X509Util {
     }
 
     public SslContext createNettySslContextForClient(ZKConfig config)
-        throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+        throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException, SSLContextException {
         String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
         String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
             getSslKeystorePasswdPathProperty());
@@ -195,7 +197,7 @@ public class ClientX509Util extends X509Util {
         return SslProvider.valueOf(config.getProperty(getSslProviderProperty(), "JDK"));
     }
 
-    private TrustManager getTrustManager(ZKConfig config) throws X509Exception.TrustManagerException {
+    private TrustManager getTrustManager(ZKConfig config) throws X509Exception.TrustManagerException, SSLContextException {
         String trustStoreLocation = config.getProperty(getSslTruststoreLocationProperty(), "");
         String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslTruststorePasswdProperty(),
             getSslTruststorePasswdPathProperty());
@@ -205,6 +207,7 @@ public class ClientX509Util extends X509Util {
         boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+        SslRevocationEnabled sslRevocationEnabled = config.getSslRevocationEnabled(getSslRevocationEnabledProperty(), SslRevocationEnabled.LEGACY);
 
         if (trustStoreLocation.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
@@ -212,7 +215,7 @@ public class ClientX509Util extends X509Util {
         } else {
             return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
                 sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, getFipsMode(config));
+                sslClientHostnameVerificationEnabled, getFipsMode(config), sslRevocationEnabled);
         }
     }
 }

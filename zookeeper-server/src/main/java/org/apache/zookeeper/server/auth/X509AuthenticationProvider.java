@@ -37,6 +37,7 @@ import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.common.ZKConfig.SslRevocationEnabled;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.slf4j.Logger;
@@ -87,6 +88,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
             boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
+            SslRevocationEnabled revocationEnabled = config.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), SslRevocationEnabled.LEGACY);
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
             X509KeyManager km = null;
@@ -120,7 +122,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         ocspEnabled,
                         hostnameVerificationEnabled,
                         false,
-                        fipsMode);
+                        fipsMode,
+                        revocationEnabled);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
                 }

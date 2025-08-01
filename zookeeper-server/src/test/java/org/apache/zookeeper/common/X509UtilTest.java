@@ -55,6 +55,7 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ZKConfig.SslRevocationEnabled;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Timeout;
@@ -87,6 +88,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         x509TestContext.clearSystemProperties(x509Util);
         System.clearProperty(x509Util.getSslOcspEnabledProperty());
         System.clearProperty(x509Util.getSslCrlEnabledProperty());
+        System.clearProperty(x509Util.getSslRevocationEnabledProperty());
         System.clearProperty(x509Util.getCipherSuitesProperty());
         System.clearProperty(x509Util.getSslProtocolProperty());
         System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
@@ -381,7 +383,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             false,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -402,7 +405,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             false,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
 
     }
 
@@ -421,7 +425,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             false,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -496,7 +501,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             true,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -517,7 +523,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             false,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -535,7 +542,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             true,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -554,7 +562,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     true,
                     true,
                     true,
-                    false);
+                    false,
+                    SslRevocationEnabled.LEGACY);
         });
     }
 
@@ -629,7 +638,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             true,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -650,7 +660,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             false,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -668,7 +679,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             true,
             true,
             true,
-            false);
+            false,
+            SslRevocationEnabled.LEGACY);
     }
 
     @ParameterizedTest
@@ -687,7 +699,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
                     true,
                     true,
                     true,
-                    false);
+                    false,
+                    SslRevocationEnabled.LEGACY);
         });
     }
 

@@ -19,6 +19,9 @@
 package org.apache.zookeeper.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.ZKConfig.SslRevocationEnabled;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -88,6 +91,42 @@ public class ZKConfigTest {
         System.setProperty(x509Util.getSslProtocolProperty(), " " + value + " ");
         ZKConfig conf = new ZKConfig();
         boolean result = conf.getBoolean(x509Util.getSslProtocolProperty(), defaultValue);
+        assertEquals(value, result);
+    }
+
+    @Test
+    @Timeout(value = 10)
+    public void testSslRevocationEnabledDefault() throws SSLContextException {
+        SslRevocationEnabled value = SslRevocationEnabled.LEGACY;
+        SslRevocationEnabled defaultValue = SslRevocationEnabled.LEGACY;
+        System.clearProperty(x509Util.getSslRevocationEnabledProperty());
+        ZKConfig conf = new ZKConfig();
+        SslRevocationEnabled result = conf.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), defaultValue);
+        assertEquals(value, result);
+    }
+
+    @Test
+    @Timeout(value = 10)
+    public void testSslRevocationEnabledInvalid() throws SSLContextException {
+        SslRevocationEnabled defaultValue = SslRevocationEnabled.LEGACY;
+        System.setProperty(x509Util.getSslRevocationEnabledProperty(), "invalid");
+        ZKConfig conf = new ZKConfig();
+        try {
+            conf.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), defaultValue);
+            assertTrue(false);
+        } catch (SSLContextException e) {
+            //Expected
+        }
+    }
+
+    @Test
+    @Timeout(value = 10)
+    public void testSslRevocationEnabledTrimAndCase() throws SSLContextException {
+        SslRevocationEnabled value = SslRevocationEnabled.TRUE;
+        SslRevocationEnabled defaultValue = SslRevocationEnabled.LEGACY;
+        System.setProperty(x509Util.getSslRevocationEnabledProperty(), " true ");
+        ZKConfig conf = new ZKConfig();
+        SslRevocationEnabled result = conf.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), defaultValue);
         assertEquals(value, result);
     }
 }

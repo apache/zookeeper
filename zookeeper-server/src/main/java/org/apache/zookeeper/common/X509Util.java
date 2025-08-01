@@ -52,6 +52,7 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
+import org.apache.zookeeper.common.ZKConfig.SslRevocationEnabled;
 import org.apache.zookeeper.server.NettyServerCnxnFactory;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.slf4j.Logger;
@@ -164,6 +165,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private final String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private final String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private final String sslRevocationEnabledProperty = getConfigPrefix() + "revocation.enabled";
     private final String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
     private final String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
@@ -246,6 +248,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslOcspEnabledProperty() {
         return sslOcspEnabledProperty;
+    }
+
+    public String getSslRevocationEnabledProperty() {
+        return sslRevocationEnabledProperty;
     }
 
     public String getSslClientAuthProperty() {
@@ -397,6 +403,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
         boolean fipsMode = getFipsMode(config);
+        SslRevocationEnabled sslRevocationEnabled = config.getSslRevocationEnabled(this.sslRevocationEnabledProperty, SslRevocationEnabled.LEGACY);
 
         if (trustStoreLocationProp.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
@@ -405,7 +412,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 trustManagers = new TrustManager[]{
                     createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled,
                         sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled,
-                        fipsMode)};
+                        fipsMode, sslRevocationEnabled)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
             } catch (IllegalArgumentException e) {
@@ -541,7 +548,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean ocspEnabled,
         final boolean serverHostnameVerificationEnabled,
         final boolean clientHostnameVerificationEnabled,
-        final boolean fipsMode) throws TrustManagerException {
+        final boolean fipsMode,
+        final SslRevocationEnabled revocationEnabled) throws TrustManagerException {
         if (trustStorePassword == null) {
             trustStorePassword = "";
         }
@@ -549,13 +557,23 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             KeyStore ts = loadTrustStore(trustStoreLocation, trustStorePassword, trustStoreTypeProp);
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             if (crlEnabled || ocspEnabled) {
-                pbParams.setRevocationEnabled(true);
+                if (revocationEnabled == SslRevocationEnabled.LEGACY) {
+                    pbParams.setRevocationEnabled(true);
+                }
                 System.setProperty("com.sun.net.ssl.checkRevocation", "true");
                 System.setProperty("com.sun.security.enableCRLDP", "true");
                 if (ocspEnabled) {
                     Security.setProperty("ocsp.enable", "true");
                 }
             } else {
+                if (revocationEnabled == SslRevocationEnabled.LEGACY) {
+                    pbParams.setRevocationEnabled(false);
+                }
+            }
+
+            if (revocationEnabled == SslRevocationEnabled.TRUE) {
+                pbParams.setRevocationEnabled(true);
+            } else if (revocationEnabled == SslRevocationEnabled.FALSE) {
                 pbParams.setRevocationEnabled(false);
             }
 
