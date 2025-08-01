@@ -1776,6 +1776,21 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
     Default: false
 
+* *ssl.revocationEnabled* and *ssl.quorum.revocationEnabled* :
+    (Java system properties: **zookeeper.ssl.revocationEnabled** and **zookeeper.ssl.quorum.revocationEnabled**)
+    **New in 3.10.0:**
+    Specifies whether Certificate Revocation checking is enabled in client and quorum TLS protocols.
+    This option requires that the *ssl.trustStore.location* is set, or it will be ignored for the client.
+    This options has no side effects on JVM global system properties.
+    Valid values are:
+
+     * "true": will call PKIXBuilderParameters#setRevocationEnabled(true)
+     * "false": will call PKIXBuilderParameters#setRevocationEnabled(false)
+     * "java_default": will not call PKIXBuilderParameters#setRevocationEnabled()
+     * "legacy" : will call PKIXBuilderParameters#setRevocationEnabled(true) if *ssl(.quorum).crl* or *ssl(.quorum).ocsp* is set, will call PKIXBuilderParameters#setRevocationEnabled(false) otherwise.
+
+    Default: "legacy"
+
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
     **Added in 3.5.5, but broken until 3.5.7:**

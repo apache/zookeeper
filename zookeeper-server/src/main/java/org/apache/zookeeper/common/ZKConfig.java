@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;
@@ -41,6 +42,13 @@ import org.slf4j.LoggerFactory;
 public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
+
+    public enum SslRevocationEnabled {
+        TRUE,
+        FALSE,
+        JAVA_DEFAULT,
+        LEGACY
+    };
 
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
 
@@ -131,6 +139,7 @@ public class ZKConfig {
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslCrlEnabledProperty(), System.getProperty(x509Util.getSslCrlEnabledProperty()));
         properties.put(x509Util.getSslOcspEnabledProperty(), System.getProperty(x509Util.getSslOcspEnabledProperty()));
+        properties.put(x509Util.getSslRevocationEnabledProperty(), System.getProperty(x509Util.getSslRevocationEnabledProperty()));
         properties.put(x509Util.getSslClientAuthProperty(), System.getProperty(x509Util.getSslClientAuthProperty()));
         properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
         properties.put(x509Util.getFipsModeProperty(), System.getProperty(x509Util.getFipsModeProperty()));
@@ -144,6 +153,21 @@ public class ZKConfig {
      */
     public String getProperty(String key) {
         return properties.get(key);
+    }
+
+    /**
+     * Get the property value and call String.trim() on it if not null
+     *
+     * @param key
+     * @return property value
+     */
+    public String getTrimmedProperty(String key) {
+        String property = getProperty(key);
+        if (property != null) {
+            return property.trim();
+        } else {
+            return property;
+        }
     }
 
     /**
@@ -284,4 +308,29 @@ public class ZKConfig {
         return defaultValue;
     }
 
+    /**
+     * Get the value of the <code>key</code> property as an
+     * <code>SslRevocationEnabled</code> enum. If property is not set
+     * <code>SslRevocationEnabled.LEGACY</code> is returned.
+     *
+     * @param key
+     * @return the SslRevocationEnabled enum
+     * @throws IllegalArgumentException if the value cannot be parsed
+     */
+    public SslRevocationEnabled getSslRevocationEnabled(String key) throws SSLContextException {
+        String value = getTrimmedProperty(key);
+        if (value == null || value.equalsIgnoreCase(SslRevocationEnabled.LEGACY.toString())) {
+            return SslRevocationEnabled.LEGACY;
+        } else if (value.equalsIgnoreCase(SslRevocationEnabled.JAVA_DEFAULT.toString())) {
+            return SslRevocationEnabled.JAVA_DEFAULT;
+        } else if (value.equalsIgnoreCase(SslRevocationEnabled.TRUE.toString())) {
+            return SslRevocationEnabled.TRUE;
+        } else if (value.equalsIgnoreCase(SslRevocationEnabled.FALSE.toString())) {
+            return SslRevocationEnabled.FALSE;
+        } else {
+            throw new SSLContextException("Bad value:" + value + ". Valid values are: "
+                    + SslRevocationEnabled.TRUE.toString() + "," + SslRevocationEnabled.FALSE.toString() + ","
+                    + SslRevocationEnabled.JAVA_DEFAULT.toString() + "," + SslRevocationEnabled.LEGACY.toString());
+        }
+    }
 }

@@ -489,6 +489,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.clearProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty());
         System.clearProperty(quorumX509Util.getSslOcspEnabledProperty());
         System.clearProperty(quorumX509Util.getSslCrlEnabledProperty());
+        System.clearProperty(quorumX509Util.getSslRevocationEnabledProperty());
         System.clearProperty(quorumX509Util.getCipherSuitesProperty());
         System.clearProperty(quorumX509Util.getSslProtocolProperty());
     }
