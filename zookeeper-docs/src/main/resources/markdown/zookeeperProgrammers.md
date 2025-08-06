@@ -837,7 +837,7 @@ on nodes that exist and the client must have READ permission otherwise
 
 #### Builtin ACL Schemes
 
-ZooKeeeper has the following built in schemes:
+ZooKeeper has the following built in schemes:
 
 * **world** has a
   single id, _anyone_, that represents
@@ -1106,7 +1106,7 @@ _digest_. Additional plugins can adding using system properties. At
 startup the ZooKeeper server will look for system properties that start with
 "zookeeper.authProvider." and interpret the value of those properties as the class name
 of an authentication plugin. These properties can be set using the
-_-Dzookeeeper.authProvider.X=com.f.MyAuth_ or adding entries such as
+_-Dzookeeper.authProvider.X=com.f.MyAuth_ or adding entries such as
 the following in the server configuration file:
 
 
@@ -1115,7 +1115,7 @@ the following in the server configuration file:
 
 
 Care should be taking to ensure that the suffix on the property is unique. If there are
-duplicates such as _-Dzookeeeper.authProvider.X=com.f.MyAuth -Dzookeeper.authProvider.X=com.f.MyAuth2_,
+duplicates such as _-Dzookeeper.authProvider.X=com.f.MyAuth -Dzookeeper.authProvider.X=com.f.MyAuth2_,
 only one will be used. Also all servers must have the same plugins defined, otherwise clients using
 the authentication schemes provided by the plugins will have problems connecting to some servers.
 

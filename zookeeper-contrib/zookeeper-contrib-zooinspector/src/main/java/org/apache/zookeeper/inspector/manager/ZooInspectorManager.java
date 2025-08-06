@@ -118,13 +118,13 @@ public interface ZooInspectorManager extends ZooInspectorNodeManager,
     /**
      * @param connectionProps
      *            - the connection properties last used to connect to the
-     *            zookeeeper instance
+     *            zookeeper instance
      */
     public void setLastConnectionProps(Properties connectionProps);
 
     /**
      * @return last connection Properties - the connection properties last used
-     *         to connect to the zookeeeper instance
+     *         to connect to the zookeeper instance
      */
     public Properties getLastConnectionProps();
 
