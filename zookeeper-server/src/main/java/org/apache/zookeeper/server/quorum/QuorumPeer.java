@@ -1531,6 +1531,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     ServerMetrics.getMetrics().LOOKING_COUNT.add(1);
 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
+                        if (!zkDb.isInitialized()) {
+                            try {
+                                LOG.info("ZKDatabase initialization is not completed. Cancel ReadOnlyZooKeeperServer startup and retry later.");
+                                // make retry attempt graceful
+                                sleep(1000);
+                            } catch (InterruptedException e) {
+                            }
+                            break;
+                        }
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
 
                         // Create read-only server but don't start it immediately
