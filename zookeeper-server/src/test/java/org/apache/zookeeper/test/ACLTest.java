@@ -23,11 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -39,6 +43,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -48,6 +53,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
+import org.apache.zookeeper.server.embedded.ZooKeeperServerEmbedded;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
@@ -131,6 +137,132 @@ public class ACLTest extends ZKTestCase implements Watcher {
             assertTrue(ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT), "waiting for server down");
             System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         }
+    }
+
+    @Test
+    public void testAuthWithIPV6Server(@TempDir File tmpDir) throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("clientPortAddress", "::1");
+        properties.setProperty("clientPort", "0");
+
+        ZooKeeperServerEmbedded server = ZooKeeperServerEmbedded.builder()
+            .baseDir(tmpDir.toPath())
+            .configuration(properties)
+            .build();
+        server.start();
+
+        String connectionString = server.getConnectionString();
+        String port = connectionString.substring(connectionString.lastIndexOf(':') + 1);
+
+        String hostport = String.format("[::1]:%s", port);
+        assertTrue(ClientBase.waitForServerUp(hostport, CONNECTION_TIMEOUT), "waiting for server being up");
+
+        // given: ipv6 client
+        ZooKeeper zk = ClientBase.createZKClient(hostport);
+
+        // when: invalid ipv6 network acl
+        // then: InvalidACL
+        assertThrows(KeeperException.InvalidACLException.class, () ->
+            zk.create("/invalid-ipv6-network-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "::1/256"))), CreateMode.PERSISTENT));
+
+        // given: ipv4 network acl
+        zk.create("/unmatched-ipv4-network-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "127.0.0.1/16"))), CreateMode.PERSISTENT);
+        // when: access with v6 ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/unmatched-ipv4-network-acl", null, -1));
+
+        // given: prefix matched ipv4 acl
+        zk.create("/prefix-matched-ipv4-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "0.0.0.1/16"))), CreateMode.PERSISTENT);
+        // when: access with v6 ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/prefix-matched-ipv4-acl", null, -1));
+
+        // given: ipv6 with network acl
+        zk.create("/ipv6-network-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "::1/64"))), CreateMode.PERSISTENT);
+        // when: access with valid ip
+        // then: ok
+        zk.setData("/ipv6-network-acl", null, -1);
+
+        // given: ipv6 acl
+        zk.create("/ipv6-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "::1"))), CreateMode.PERSISTENT);
+        // when: access with valid ip
+        // then: ok
+        zk.setData("/ipv6-acl", null, -1);
+
+        // given: mismatched ipv6 with network acl
+        zk.create("/mismatched-ipv6-network-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "0000:0001::/32"))), CreateMode.PERSISTENT);
+        // when: access with invalid ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/mismatched-ipv6-network-acl", null, -1));
+
+        // given: mismatched ipv6 acl
+        zk.create("/mismatched-ipv6-acl", null, Collections.singletonList(new ACL(Perms.ALL, new Id("ip", "::2"))), CreateMode.PERSISTENT);
+        // when: access with invalid ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/mismatched-ipv6-acl", null, -1));
+
+        server.close();
+    }
+
+    @Test
+    public void testAuthWithIPV4Server(@TempDir File tmpDir) throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("clientPortAddress", "127.0.0.1");
+        properties.setProperty("clientPort", "0");
+
+        ZooKeeperServerEmbedded server = ZooKeeperServerEmbedded.builder()
+            .baseDir(tmpDir.toPath())
+            .configuration(properties)
+            .build();
+        server.start();
+
+        assertTrue(ClientBase.waitForServerUp(server.getConnectionString(), CONNECTION_TIMEOUT), "waiting for server being up");
+
+        // given: ipv4 client
+        ZooKeeper zk = ClientBase.createZKClient(server.getConnectionString());
+
+        // when: invalid ipv4 network acl
+        // then: InvalidACL
+        assertThrows(KeeperException.InvalidACLException.class, () ->
+            zk.create("/invalid-ipv4-network-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "127.0.0.1/64"))), CreateMode.PERSISTENT));
+
+        // given: ipv6 acl
+        zk.create("/mismatched-ipv6-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "::1"))), CreateMode.PERSISTENT);
+        // when: access with v4 ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/mismatched-ipv6-acl", null, -1));
+
+        // given: prefix matched ipv6 network acl
+        zk.create("/prefix-matched-ipv6-network-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "7f::/16"))), CreateMode.PERSISTENT);
+        // when: access with v4 ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/prefix-matched-ipv6-network-acl", null, -1));
+
+        // given: ipv4 with network acl
+        zk.create("/matched-ipv4-network-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "127.0.0.1/16"))), CreateMode.PERSISTENT);
+        // when: access with valid ip
+        // then: ok
+        zk.setData("/matched-ipv4-network-acl", null, -1);
+
+        // given: matched ipv4 acl
+        zk.create("/matched-ipv4-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "127.0.0.1"))), CreateMode.PERSISTENT);
+        // when: access with valid ip
+        // then: ok
+        zk.setData("/matched-ipv4-acl", null, -1);
+
+        // given: mismatched ipv4 network acl
+        zk.create("/mismatched-ipv4-network-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "192.168.0.2/16"))), CreateMode.PERSISTENT);
+        // when: access with invalid ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/mismatched-ipv4-network-acl", null, -1));
+
+        // given: mismatched ipv4 acl
+        zk.create("/mismatched-ipv4-acl", new byte[]{}, Arrays.asList(new ACL(Perms.ALL, new Id("ip", "127.0.0.2"))), CreateMode.PERSISTENT);
+        // when: access with invalid ip
+        // then: NoAuth
+        assertThrows(KeeperException.NoAuthException.class, () -> zk.setData("/mismatched-ipv4-acl", null, -1));
+
+        server.close();
     }
 
     @Test
