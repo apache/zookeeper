@@ -207,7 +207,7 @@ public class ClientX509Util extends X509Util {
         boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
-        SslRevocationEnabled sslRevocationEnabled = config.getSslRevocationEnabled(getSslRevocationEnabledProperty(), SslRevocationEnabled.LEGACY);
+        SslRevocationEnabled sslRevocationEnabled = config.getSslRevocationEnabled(getSslRevocationEnabledProperty(), SslRevocationEnabled.JAVA_DEFAULT);
 
         if (trustStoreLocation.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());

@@ -1789,7 +1789,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
      * "java_default": will not call PKIXBuilderParameters#setRevocationEnabled()
      * "legacy" : will call PKIXBuilderParameters#setRevocationEnabled(true) if *ssl(.quorum).crl* or *ssl(.quorum).ocsp* is set, will call PKIXBuilderParameters#setRevocationEnabled(false) otherwise.
 
-    Default: "legacy"
+    Default: "java_default"
 
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)

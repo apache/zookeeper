@@ -108,7 +108,7 @@ public class ZKConfigTest {
     @Test
     @Timeout(value = 10)
     public void testSslRevocationEnabledInvalid() throws SSLContextException {
-        SslRevocationEnabled defaultValue = SslRevocationEnabled.LEGACY;
+        SslRevocationEnabled defaultValue = SslRevocationEnabled.JAVA_DEFAULT;
         System.setProperty(x509Util.getSslRevocationEnabledProperty(), "invalid");
         ZKConfig conf = new ZKConfig();
         try {
@@ -123,7 +123,7 @@ public class ZKConfigTest {
     @Timeout(value = 10)
     public void testSslRevocationEnabledTrimAndCase() throws SSLContextException {
         SslRevocationEnabled value = SslRevocationEnabled.TRUE;
-        SslRevocationEnabled defaultValue = SslRevocationEnabled.LEGACY;
+        SslRevocationEnabled defaultValue = SslRevocationEnabled.JAVA_DEFAULT;
         System.setProperty(x509Util.getSslRevocationEnabledProperty(), " true ");
         ZKConfig conf = new ZKConfig();
         SslRevocationEnabled result = conf.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), defaultValue);

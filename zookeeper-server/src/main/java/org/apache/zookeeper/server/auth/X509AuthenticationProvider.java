@@ -88,7 +88,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
             boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
-            SslRevocationEnabled revocationEnabled = config.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), SslRevocationEnabled.LEGACY);
+            SslRevocationEnabled revocationEnabled = config.getSslRevocationEnabled(x509Util.getSslRevocationEnabledProperty(), SslRevocationEnabled.JAVA_DEFAULT);
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
             X509KeyManager km = null;

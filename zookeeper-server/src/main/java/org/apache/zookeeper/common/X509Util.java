@@ -403,7 +403,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
         boolean fipsMode = getFipsMode(config);
-        SslRevocationEnabled sslRevocationEnabled = config.getSslRevocationEnabled(this.sslRevocationEnabledProperty, SslRevocationEnabled.LEGACY);
+        SslRevocationEnabled sslRevocationEnabled = config.getSslRevocationEnabled(this.sslRevocationEnabledProperty, SslRevocationEnabled.JAVA_DEFAULT);
 
         if (trustStoreLocationProp.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
