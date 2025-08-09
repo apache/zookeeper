@@ -32,7 +32,8 @@
   <description>ZooKeeper Prometheus.io Metrics Provider implementation</description>
 
   <properties>
-      <prometheus.version>0.9.0</prometheus.version>
+      <prometheus.version>1.3.10</prometheus.version>
+      <jetty.version>9.4.57.v20241219</jetty.version>
   </properties>
   <dependencies>
     <dependency>
@@ -46,28 +47,56 @@
     </dependency>    
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient</artifactId>
+      <artifactId>prometheus-metrics-core</artifactId>
       <version>${prometheus.version}</version>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_hotspot</artifactId>
+      <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
       <version>${prometheus.version}</version>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_servlet</artifactId>
+      <artifactId>prometheus-metrics-exporter-servlet-javax</artifactId>
       <version>${prometheus.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <scope>provided</scope>
+      <groupId>io.prometheus</groupId>
+      <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
+      <version>${prometheus.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-      <scope>provided</scope>
+        <groupId>io.prometheus</groupId>
+        <artifactId>prometheus-metrics-exposition-formats</artifactId>
+        <version>${prometheus.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>prometheus-metrics-config</artifactId>
+      <version>${prometheus.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${jetty.version}</version>
+    </dependency>
+    <!-- You likely don't need this, but if you do, here's the correct syntax -->
+    <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-util</artifactId>
+        <version>${jetty.version}</version>
+        <!-- You could add a scope here if needed, e.g., <scope>provided</scope> -->
+    </dependency>
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>3.1.0</version>
+        <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>

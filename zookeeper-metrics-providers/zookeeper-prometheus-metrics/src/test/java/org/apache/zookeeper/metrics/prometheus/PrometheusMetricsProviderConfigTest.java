@@ -88,15 +88,14 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
         provider.start();
     }
 
-
     @Test
     public void testInvalidSslConfig() throws MetricsProviderLifeCycleException {
         assertThrows(MetricsProviderLifeCycleException.class, () -> {
             PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
             Properties configuration = new Properties();
             String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-            configuration.setProperty("httpsPort", "0");
-            //keystore missing
+            configuration.setProperty("httpsPort", "50514");
+            // keystore missing
             configuration.setProperty("ssl.keyStore.password", "testpass");
             configuration.setProperty("ssl.trustStore.location", testDataPath + "/ssl/server_truststore.jks");
             configuration.setProperty("ssl.trustStore.password", "testpass");
