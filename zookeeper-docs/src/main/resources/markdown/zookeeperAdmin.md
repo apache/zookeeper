@@ -1768,13 +1768,17 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
     **New in 3.5.5:**
     Specifies whether Certificate Revocation List is enabled in client and quorum TLS protocols.
-    Default: false
+    Default: jvm property "com.sun.net.ssl.checkRevocation" since 3.10.0, false otherwise
 
 * *ssl.ocsp* and *ssl.quorum.ocsp* :
     (Java system properties: **zookeeper.ssl.ocsp** and **zookeeper.ssl.quorum.ocsp**)
     **New in 3.5.5:**
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
-    Default: false
+    **Changed in 3.10.0:**
+    Before 3.10.0, *ssl.ocsp* and *ssl.quorum.ocsp* implies *ssl.crl* and *ssl.quorum.crl* correspondingly.
+    After 3.10.0, one has to setup both *ssl.crl* and *ssl.ocsp* (or *ssl.quorum.crl* and *ssl.quorum.ocsp*)
+    to enable OCSP. This is consistent with jdk's method of [Setting up a Java Client to use Client-Driven OCSP](https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html#setting-up-a-java-client-to-use-client-driven-ocsp).
+    Default: jvm security property "ocsp.enable" since 3.10.0, false otherwise
 
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)

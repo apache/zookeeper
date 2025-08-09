@@ -80,7 +80,7 @@ public class X509TestContext {
      * @throws GeneralSecurityException
      * @throws OperatorCreationException
      */
-    private X509TestContext(File tempDir, KeyPair trustStoreKeyPair, long trustStoreCertExpirationMillis, String trustStorePassword, KeyPair keyStoreKeyPair, long keyStoreCertExpirationMillis, String keyStorePassword, Boolean hostnameVerification) throws IOException, GeneralSecurityException, OperatorCreationException {
+    private X509TestContext(File tempDir, KeyPair trustStoreKeyPair, long trustStoreCertExpirationMillis, String trustStorePassword, KeyPair keyStoreKeyPair, long keyStoreCertExpirationMillis, String keyStorePassword, Boolean hostnameVerification) throws Exception {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             throw new IllegalStateException("BC Security provider was not found");
         }
@@ -425,7 +425,7 @@ public class X509TestContext {
          * @throws GeneralSecurityException
          * @throws OperatorCreationException
          */
-        public X509TestContext build() throws IOException, GeneralSecurityException, OperatorCreationException {
+        public X509TestContext build() throws Exception {
             KeyPair trustStoreKeyPair = X509TestHelpers.generateKeyPair(trustStoreKeyType);
             KeyPair keyStoreKeyPair = X509TestHelpers.generateKeyPair(keyStoreKeyType);
             return new X509TestContext(tempDir, trustStoreKeyPair, trustStoreCertExpirationMillis, trustStorePassword, keyStoreKeyPair, keyStoreCertExpirationMillis, keyStorePassword, hostnameVerification);
