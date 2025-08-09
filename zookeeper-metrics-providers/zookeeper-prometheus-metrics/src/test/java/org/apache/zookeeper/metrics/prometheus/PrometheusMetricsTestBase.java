@@ -18,9 +18,7 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.hotspot.DefaultExports;
-import java.lang.reflect.Field;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -29,21 +27,8 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public abstract class PrometheusMetricsTestBase {
 
-    @BeforeEach
-    void setUp() throws Exception {
-        CollectorRegistry.defaultRegistry.clear();
-        resetDefaultExportsInitializedFlag();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        CollectorRegistry.defaultRegistry.clear();
-        resetDefaultExportsInitializedFlag();
-    }
-
-    protected void resetDefaultExportsInitializedFlag() throws Exception {
-        Field initializedField = DefaultExports.class.getDeclaredField("initialized");
-        initializedField.setAccessible(true);
-        initializedField.set(null, false);
-    }
+    // @BeforeEach
+    // void setUp() throws Exception {
+    //     this.registry = new PrometheusRegistry();
+    // }
 }

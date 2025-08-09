@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -42,6 +44,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.Counter;
@@ -72,7 +77,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
     public void setup() throws Exception {
         provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
-        configuration.setProperty("numWorkerThreads", "0"); // sync behavior for test
+        configuration.setProperty("numWorkerThreads", "1"); // sync behavior for test
         configuration.setProperty("httpHost", "127.0.0.1"); // local host for test
         configuration.setProperty("httpPort", "0"); // ephemeral port
         configuration.setProperty("exportJvmInfo", "false");
@@ -116,8 +121,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         assertSame(counter, provider.getRootContext().getCounter("cc"));
 
         String res = callServlet();
-        assertThat(res, CoreMatchers.containsString("# TYPE cc counter"));
-        assertThat(res, CoreMatchers.containsString("cc 10.0"));
+        assertThat(res, CoreMatchers.containsString("# TYPE cc_total counter"));
+        assertThat(res, CoreMatchers.containsString("cc_total 10.0"));
     }
 
     @Test
@@ -142,10 +147,10 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         validateWithDump(expectedMetricsMap);
 
         // validate with servlet call
-        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s count", name));
+        final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s_total counter", name));
         final List<String> expectedMetrics = new ArrayList<>();
         for (final String key : keys) {
-            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", name, key, count * 3.0));
+            expectedMetrics.add(String.format("%s_total{key=\"%s\"} %s", name, key, count * 3.0));
         }
         validateWithServletCall(expectedNames, expectedMetrics);
 
@@ -187,8 +192,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         final List<String> expectedNames = new ArrayList<>();
         final List<String> expectedMetrics = new ArrayList<>();
         for (int i = 0; i < length; i++) {
-            expectedNames.add(String.format("# TYPE %s count", names[i]));
-            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", names[i], keys[i], counts[i]  * 1.0));
+            expectedNames.add(String.format("# TYPE %s_total counter", names[i]));
+            expectedMetrics.add(String.format("%s_total{key=\"%s\"} %s", names[i], keys[i], counts[i] * 1.0));
         }
         validateWithServletCall(expectedNames, expectedMetrics);
     }
@@ -304,7 +309,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
             int value = ((Number) v).intValue();
 
             switch (k) {
-                case "cc{quantile=\"0.5\"}":
+                case "cc_avg":
                     assertEquals(10, value);
                     break;
                 case "cc_count":
@@ -337,8 +342,8 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         String res = callServlet();
         assertThat(res, containsString("# TYPE cc summary"));
         assertThat(res, CoreMatchers.containsString("cc_sum 20.0"));
-        assertThat(res, CoreMatchers.containsString("cc_count 2.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
+        assertThat(res, CoreMatchers.containsString("cc_count 2"));
+        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\"} 10.0"));
     }
 
     @Test
@@ -359,6 +364,9 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                 case "cc{quantile=\"0.9\"}":
                     assertEquals(10, value);
                     break;
+                case "cc{quantile=\"0.95\"}":
+                    assertEquals(10, value);
+                    break;
                 case "cc{quantile=\"0.99\"}":
                     assertEquals(10, value);
                     break;
@@ -368,13 +376,16 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                 case "cc_sum":
                     assertEquals(20, value);
                     break;
+                case "cc_avg":
+                    assertEquals(10, value);
+                    break;
                 default:
                     fail("unespected key " + k);
                     break;
             }
         }
         );
-        assertEquals(5, count[0]);
+        assertEquals(6, count[0]);
         count[0] = 0;
 
         // we always must get the same object
@@ -392,27 +403,35 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         String res = callServlet();
         assertThat(res, containsString("# TYPE cc summary"));
         assertThat(res, CoreMatchers.containsString("cc_sum 20.0"));
-        assertThat(res, CoreMatchers.containsString("cc_count 2.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\",} 10.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.9\",} 10.0"));
-        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.99\",} 10.0"));
+        assertThat(res, CoreMatchers.containsString("cc_count 2"));
+        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.5\"} 10.0"));
+        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.95\"} 10.0"));
+        assertThat(res, CoreMatchers.containsString("cc{quantile=\"0.99\"} 10.0"));
     }
 
     /**
-     * Using TRACE method to visit metrics provider, the response should be 403 forbidden.
+     * Using the TRACE method to visit the metrics provider, the response should be 405 Method Not Allowed.
+     * This unit test replaces the old test which was tightly coupled to the Jetty server implementation.
      */
     @Test
-    public void testTraceCall() throws IOException, IllegalAccessException, NoSuchFieldException {
-        Field privateServerField = provider.getClass().getDeclaredField("server");
-        privateServerField.setAccessible(true);
-        Server server = (Server) privateServerField.get(provider);
-        int port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+    public void testTraceCall() throws ServletException, IOException {
+        final HttpServlet servlet = provider.getServlet();
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
 
-        String metricsUrl = String.format(URL_FORMAT, port);
-        HttpURLConnection conn = (HttpURLConnection) new URL(metricsUrl).openConnection();
-        conn.setRequestMethod("TRACE");
-        conn.connect();
-        assertEquals(HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
+        // Configure the mock to return an empty enumeration for headers.
+        when(request.getHeaderNames()).thenReturn(Collections.enumeration(Collections.emptyList()));
+        when(request.getMethod()).thenReturn("TRACE"); 
+
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ServletOutputStream servletOutputStream = createMockServletOutputStream(outputStream);
+ 
+        when(response.getOutputStream()).thenReturn(servletOutputStream);
+        
+        servlet.service(request, response);
+
+        // Verify that the servlet set the response status to 405 Method Not Allowed.
+        verify(response).sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     @Test
@@ -460,7 +479,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         // validate with dump call
         final Map<String, Number> expectedMetricsMap = new HashMap<>();
         for (final String key : keys) {
-            expectedMetricsMap.put(String.format("%s{key=\"%s\",quantile=\"0.5\"}", name, key), 1.0);
+            expectedMetricsMap.put(String.format("%s_avg{key=\"%s\"}", name, key), 1.0);
             expectedMetricsMap.put(String.format("%s_count{key=\"%s\"}", name, key), count);
             expectedMetricsMap.put(String.format("%s_sum{key=\"%s\"}", name, key), count);
         }
@@ -470,9 +489,9 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s summary", name));
         final List<String> expectedMetrics = new ArrayList<>();
         for (final String key : keys) {
-            expectedMetrics.add(String.format("%s{key=\"%s\",quantile=\"0.5\",} %s", name, key, 1.0));
-            expectedMetrics.add(String.format("%s_count{key=\"%s\",} %s", name, key, count));
-            expectedMetrics.add(String.format("%s_sum{key=\"%s\",} %s", name, key, count));
+            expectedMetrics.add(String.format("%s{key=\"%s\",quantile=\"0.5\"} %s", name, key, 1.0));
+            expectedMetrics.add(String.format("%s_count{key=\"%s\"} %d", name, key, (int) count));
+            expectedMetrics.add(String.format("%s_sum{key=\"%s\"} %s", name, key, count));
         }
         validateWithServletCall(expectedNames, expectedMetrics);
 
@@ -490,16 +509,55 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         }
     }
 
+
+    /**
+     * Helper method to create a mock ServletOutputStream that writes to a
+     * provided ByteArrayOutputStream.
+     */
+    private ServletOutputStream createMockServletOutputStream(final ByteArrayOutputStream outputStream) {
+        return new ServletOutputStream() {
+            @Override
+            public boolean isReady() { return true; }
+            @Override
+            public void setWriteListener(WriteListener writeListener) {}
+            @Override
+            public void write(int b) throws IOException {
+                outputStream.write(b);
+            }
+        };
+    }
+
+    /**
+     * A utility method to simulate a GET request to the PrometheusMetricsServlet
+     * and return the response body as a String using Mockito mocks for the
+     * base servlet interfaces.
+     * <p>
+     * This method demonstrates how to test a servlet by mocking the
+     * request and response objects and capturing the output.
+     * </p>
+     *
+     * @return The content of the servlet's response body.
+     * @throws ServletException if a servlet-related error occurs.
+     * @throws IOException      if an I/O error occurs.
+     */
     private String callServlet() throws ServletException, IOException {
-        // we are not performing an HTTP request
-        // but we are calling directly the servlet
-        StringWriter writer = new StringWriter();
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        when(response.getWriter()).thenReturn(new PrintWriter(writer));
-        HttpServletRequest req = mock(HttpServletRequest.class);
-        provider.getServlet().doGet(req, response);
-        String res = writer.toString();
-        return res;
+        final HttpServlet servlet = provider.getServlet();
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final ServletOutputStream servletOutputStream = createMockServletOutputStream(outputStream);
+
+
+        // Configure the mock response to return our custom output stream.
+        when(response.getOutputStream()).thenReturn(servletOutputStream);
+        when(request.getMethod()).thenReturn("GET");
+        servlet.service(request, response);
+
+        // Verify that the servlet set the HTTP status code to OK.
+        verify(response).setStatus(HttpServletResponse.SC_OK);
+
+        return outputStream.toString();
     }
 
     @Test
@@ -528,7 +586,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         final List<String> expectedNames = Collections.singletonList(String.format("# TYPE %s gauge", name));
         final List<String> expectedMetrics = new ArrayList<>();
         for (int i = 0; i < values.length; i++) {
-            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", name, keys[i], values[i]));
+            expectedMetrics.add(String.format("%s{key=\"%s\"} %s", name, keys[i], values[i]));
         }
         validateWithServletCall(expectedNames, expectedMetrics);
         assertEquals(2, callCount.get());
@@ -581,7 +639,7 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         final List<String> expectedMetrics = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             expectedNames.add(String.format("# TYPE %s gauge", names[i]));
-            expectedMetrics.add(String.format("%s{key=\"%s\",} %s", names[i], keys[i], values[i]));
+            expectedMetrics.add(String.format("%s{key=\"%s\"} %s", names[i], keys[i], values[i]));
         }
         validateWithServletCall(expectedNames, expectedMetrics);
         for (int i = 0; i < count; i++) {
