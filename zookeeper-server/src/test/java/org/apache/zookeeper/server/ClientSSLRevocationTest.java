@@ -347,7 +347,7 @@ public class ClientSSLRevocationTest {
     }
 
     @Test
-    public void testCrlDisabled(@TempDir Path tmpDir) throws Exception {
+    public void testRevocationDisabled(@TempDir Path tmpDir) throws Exception {
         // given: crl not enabled
         try (Ca ca = Ca.create(tmpDir)) {
             PemFile caPem = ca.writePem();
@@ -377,7 +377,7 @@ public class ClientSSLRevocationTest {
     }
 
     @Test
-    public void testServerRevocationWithCrldp(@TempDir Path tmpDir) throws Exception {
+    public void testRevocationInClientUsingCrldp(@TempDir Path tmpDir) throws Exception {
         try (Ca ca = Ca.create(tmpDir)) {
             PemFile caPem = ca.writePem();
             // given: server cert with crldp
@@ -413,7 +413,7 @@ public class ClientSSLRevocationTest {
     }
 
     @Test
-    public void testServerRevocationWithOCSP(@TempDir Path tmpDir) throws Exception {
+    public void testRevocationInClientUsingOCSP(@TempDir Path tmpDir) throws Exception {
         try (Ca ca = Ca.create(tmpDir)) {
             PemFile caPem = ca.writePem();
             // given: server cert with crldp
@@ -450,7 +450,7 @@ public class ClientSSLRevocationTest {
     }
 
     @Test
-    public void testClientRevocationWithCrldp(@TempDir Path tmpDir) throws Exception {
+    public void testRevocationInServerUsingCrldp(@TempDir Path tmpDir) throws Exception {
         try (Ca ca = Ca.create(tmpDir)) {
             PemFile caPem = ca.writePem();
             Cert server_cert = ca.sign("server1");
@@ -470,6 +470,7 @@ public class ClientSSLRevocationTest {
                 // then: ssl authentication failed when crl is enabled
                 Cert client1Cert = ca.sign_with_crl("client1");
                 ZKClientConfig client1Config = getZKClientConfig(caPem, client1Cert);
+                // disable client side crl as the server side cert is not generated with crldp.
                 client1Config.setProperty("zookeeper.ssl.crl", "false");
                 assertTrue(ClientBase.waitForServerUp(server.getSecureConnectionString(), 6000, true, client1Config));
 
@@ -479,6 +480,7 @@ public class ClientSSLRevocationTest {
                 // when: revoked client cert with crldp
                 // then: ssl authentication failed when crl is enabled
                 ZKClientConfig client2Config = getZKClientConfig(caPem, client2Cert);
+                // disable client side crl as the server side cert is not generated with crldp.
                 client2Config.setProperty("zookeeper.ssl.crl", "false");
                 assertFalse(ClientBase.waitForServerUp(server.getSecureConnectionString(), 6000, true, client2Config));
             }
@@ -486,7 +488,7 @@ public class ClientSSLRevocationTest {
     }
 
     @Test
-    public void testClientRevocationWithOCSP(@TempDir Path tmpDir) throws Exception {
+    public void testRevocationInServerUsingOCSP(@TempDir Path tmpDir) throws Exception {
         try (Ca ca = Ca.create(tmpDir)) {
             PemFile caPem = ca.writePem();
             Cert server_cert = ca.sign("server1");
@@ -507,9 +509,11 @@ public class ClientSSLRevocationTest {
                 // then: ssl authentication failed when crl is enabled
                 Cert client1Cert = ca.sign_with_ocsp("client1");
                 ZKClientConfig client1Config = getZKClientConfig(caPem, client1Cert);
+                // disable client side crl as the server side cert is not generated with neither crldp nor ocsp.
                 client1Config.setProperty("zookeeper.ssl.crl", "false");
                 assertTrue(ClientBase.waitForServerUp(server.getSecureConnectionString(), 6000, true, client1Config));
 
+                // ocsp is realtime, so we can reuse this client.
                 ca.revoke_through_ocsp(client1Cert.cert);
                 assertFalse(ClientBase.waitForServerUp(server.getSecureConnectionString(), 6000, true, client1Config));
             }
