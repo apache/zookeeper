@@ -23,6 +23,7 @@ import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
+import java.security.Security;
 import java.util.Arrays;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;
@@ -148,7 +149,7 @@ public class ClientX509Util extends X509Util {
     private SslContextBuilder handleTcnativeOcspStapling(SslContextBuilder builder, ZKConfig config) {
         SslProvider sslProvider = getSslProvider(config);
         boolean tcnative = sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT;
-        boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+        boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
 
         if (tcnative && ocspEnabled && OpenSsl.isOcspSupported()) {
             builder.enableOcsp(ocspEnabled);
@@ -201,8 +202,8 @@ public class ClientX509Util extends X509Util {
             getSslTruststorePasswdPathProperty());
         String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
 
-        boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty());
-        boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
+        boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty(), Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
+        boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
 
