@@ -19,11 +19,46 @@
 package org.apache.zookeeper.test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 public class LoggerTestTool implements AutoCloseable {
     private final ByteArrayOutputStream os;
     private PrintStream oldErr;
+
+    private static final class DualPrintStream extends PrintStream {
+
+        private PrintStream out2 = null;
+
+        public DualPrintStream(OutputStream out1, PrintStream out2) {
+            super(out1);
+            this.out2 = out2;
+        }
+
+        @Override
+        public void write(byte[] buf, int off, int len) {
+            super.write(buf, off, len);
+            out2.write(buf, off, len);
+        }
+
+        @Override
+        public void write(int b) {
+            super.write(b);
+            out2.write(b);
+        }
+
+        @Override
+        public void flush() {
+            super.flush();
+            out2.flush();
+        }
+
+        @Override
+        public void close() {
+            super.close();
+        }
+    }
+
 
     public LoggerTestTool() {
         os = createLoggingStream();
@@ -35,7 +70,7 @@ public class LoggerTestTool implements AutoCloseable {
 
     private ByteArrayOutputStream createLoggingStream() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(baos);
+        PrintStream ps = new DualPrintStream(baos, System.err);
         this.oldErr = System.err;
         System.setErr(ps);
         return baos;
