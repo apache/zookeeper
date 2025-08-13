@@ -38,17 +38,19 @@ import org.junit.jupiter.api.Test;
 
 public class StandaloneServerAuditTest extends ClientBase {
     private static ByteArrayOutputStream os;
+    private static LoggerTestTool loggerTestTool;
 
     @BeforeAll
     public static void setup() {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
-        LoggerTestTool loggerTestTool = new LoggerTestTool();
+        loggerTestTool = new LoggerTestTool();
         os = loggerTestTool.getOutputStream();
     }
 
     @AfterAll
-    public static void teardown() {
+    public static void teardown() throws Exception {
         System.clearProperty(ZKAuditProvider.AUDIT_ENABLE);
+        loggerTestTool.close();
     }
 
     @Test
@@ -68,6 +70,9 @@ public class StandaloneServerAuditTest extends ClientBase {
                 new StringReader(os.toString()));
         String line;
         while ((line = r.readLine()) != null) {
+            if (line.trim().isEmpty() || !line.contains(Slf4jAuditLogger.class.getName())) {
+                continue;
+            }
             logs.add(line);
         }
         os.reset();
