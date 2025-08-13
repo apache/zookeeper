@@ -64,7 +64,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
     public static void setUpBeforeClass() throws Exception {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
         // setup the logger to capture all logs
-        LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
+        LoggerTestTool loggerTestTool = new LoggerTestTool();
         os = loggerTestTool.getOutputStream();
         mt = startQuorum();
         zk = ClientBase.createZKClient("127.0.0.1:" + mt[0].getQuorumPeer().getClientPort());
@@ -340,6 +340,9 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
                 new StringReader(os.toString()));
         String line;
         while ((line = r.readLine()) != null) {
+            if (line.trim().isEmpty() || !line.contains(Slf4jAuditLogger.class.getName())) {
+                continue;
+            }
             if (skipEphemralDeletion
                     && line.contains(AuditConstants.OP_DEL_EZNODE_EXP)) {
                 continue;

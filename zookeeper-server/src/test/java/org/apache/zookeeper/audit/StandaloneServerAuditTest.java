@@ -42,7 +42,7 @@ public class StandaloneServerAuditTest extends ClientBase {
     @BeforeAll
     public static void setup() {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
-        LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
+        LoggerTestTool loggerTestTool = new LoggerTestTool();
         os = loggerTestTool.getOutputStream();
     }
 

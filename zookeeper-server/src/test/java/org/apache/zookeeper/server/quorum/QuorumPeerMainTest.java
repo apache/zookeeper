@@ -344,7 +344,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean foundLooking = false;
         boolean foundFollowing = false;
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool(QuorumPeer.class)) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             // spin up a quorum, we use a small ticktime to make the test run faster
@@ -418,7 +418,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testBadPeerAddressInQuorum() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -462,7 +462,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // test the most likely situation only: server is stated as observer in
         // servers list, but there's no "peerType=observer" token in config
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -574,7 +574,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testQuorumDefaults() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -828,7 +828,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean foundLeading = false;
         boolean foundFollowing = false;
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool(QuorumPeerMainTest.class)) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
             Servers svrs = new Servers();
             svrs.clientPorts = new int[numServers];
@@ -1332,7 +1332,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
         BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -1388,7 +1388,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testInvalidMetricsProvider() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -1430,7 +1430,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testFaultyMetricsProviderOnStart() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -1473,7 +1473,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testFaultyMetricsProviderOnConfigure() throws Exception {
         ClientBase.setupTestEnv();
 
-        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper.server.quorum")) {
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool()) {
             ByteArrayOutputStream os = loggerTestTool.getOutputStream();
 
             final int CLIENT_PORT_QP1 = PortAssignment.unique();

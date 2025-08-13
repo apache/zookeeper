@@ -18,71 +18,29 @@
 
 package org.apache.zookeeper.test;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.Layout;
-import ch.qos.logback.core.OutputStreamAppender;
-import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import java.io.ByteArrayOutputStream;
-import org.slf4j.LoggerFactory;
+import java.io.PrintStream;
 
 public class LoggerTestTool implements AutoCloseable {
-  private final ByteArrayOutputStream os;
-  private Appender<ILoggingEvent> appender;
-  private Logger qlogger;
+    private final ByteArrayOutputStream os;
 
-  public LoggerTestTool(Class<?> cls) {
-    os = createLoggingStream(cls);
-  }
+    public LoggerTestTool() {
+        os = createLoggingStream();
+    }
 
-  public LoggerTestTool(String cls) {
-    os = createLoggingStream(cls);
-  }
+    public ByteArrayOutputStream getOutputStream() {
+        return os;
+    }
 
-  public ByteArrayOutputStream getOutputStream() {
-    return os;
-  }
+    private ByteArrayOutputStream createLoggingStream() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        System.setErr(ps);
+        return baos;
+    }
 
-  private ByteArrayOutputStream createLoggingStream(Class<?> cls) {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    appender = getConsoleAppender(os);
-    qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
-    qlogger.addAppender(appender);
-    qlogger.setLevel(Level.INFO);
-    appender.start();
-    return os;
-  }
-
-  private ByteArrayOutputStream createLoggingStream(String cls) {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    appender = getConsoleAppender(os);
-    qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
-    qlogger.addAppender(appender);
-    qlogger.setLevel(Level.INFO);
-    appender.start();
-    return os;
-  }
-
-  private OutputStreamAppender<ILoggingEvent> getConsoleAppender(ByteArrayOutputStream os) {
-    Logger rootLogger =
-        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-    Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
-        ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
-
-    OutputStreamAppender<ILoggingEvent> appender = new OutputStreamAppender<>();
-    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
-    appender.setOutputStream(os);
-    appender.setLayout(layout);
-
-    return appender;
-  }
-
-  @Override
-  public void close() throws Exception {
-    qlogger.detachAppender(appender);
-    os.close();
-  }
+    @Override
+    public void close() throws Exception {
+        os.close();
+    }
 }
