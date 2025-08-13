@@ -23,6 +23,7 @@ import java.io.PrintStream;
 
 public class LoggerTestTool implements AutoCloseable {
     private final ByteArrayOutputStream os;
+    private PrintStream oldErr;
 
     public LoggerTestTool() {
         os = createLoggingStream();
@@ -35,12 +36,14 @@ public class LoggerTestTool implements AutoCloseable {
     private ByteArrayOutputStream createLoggingStream() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(baos);
+        this.oldErr = System.err;
         System.setErr(ps);
         return baos;
     }
 
     @Override
     public void close() throws Exception {
+        System.setErr(oldErr);
         os.close();
     }
 }
