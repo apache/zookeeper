@@ -554,10 +554,24 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             KeyStore ts = loadTrustStore(trustStoreLocation, trustStorePassword, trustStoreTypeProp);
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             if (crlEnabled) {
-                // See [RevocationChecker][1] for details. Basically, we are mimicking legacy path as
-                // that is the path we are routing before(i.e. no explicit `PKIXRevocationChecker`).
+                // See [RevocationChecker][1] for details. Basically, we are mimicking the legacy path,
+                // which relies significantly on jvm wide properties[2], as that is the path we are routing
+                // before (i.e. no explicit `PKIXRevocationChecker`).
                 //
-                // [1]: https://github.com/openjdk/jdk/blob/jdk-11%2B28/src/java.base/share/classes/sun/security/provider/certpath/RevocationChecker.java#L98
+                // By reading but not writing these properties, we conform to but not interfere with what
+                // admin set while still keep backward compatibility.
+                // 1. Default "zookeeper.ssl.crl" to jvm property "com.sun.net.ssl.checkRevocation" if it is unset.
+                // 2. Default "zookeeper.ssl.ocsp" to jvm security property "ocsp.enable" if it is unset.
+                // 3. Set `Option.ONLY_END_ENTITY` for jvm security property "com.sun.security.onlyCheckRevocationOfEECert".
+                // 4. Don't set "com.sun.security.enableCRLDP" as it is always enabled in no legacy path.
+                //
+                // See also:
+                // * https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html
+                // * https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html
+                // * https://docs.oracle.com/javase/8/docs/technotes/guides/security/certpath/CertPathProgGuide.html#PKIXRevocationChecker
+                //
+                // [1]: https://github.com/openjdk/jdk/blob/jdk-11%2B28/src/java.base/share/classes/sun/security/provider/certpath/RevocationChecker.java#L124
+                // [2]: https://github.com/openjdk/jdk/blob/jdk-11%2B28/src/java.base/share/classes/sun/security/provider/certpath/RevocationChecker.java#L179
                 Set<PKIXRevocationChecker.Option> options = new HashSet<>();
                 if (!ocspEnabled) {
                     options.add(PKIXRevocationChecker.Option.NO_FALLBACK);
@@ -566,6 +580,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 if (Boolean.parseBoolean(Security.getProperty("com.sun.security.onlyCheckRevocationOfEECert")))  {
                     options.add(PKIXRevocationChecker.Option.ONLY_END_ENTITY);
                 }
+
                 PKIXRevocationChecker revocationChecker = (PKIXRevocationChecker) CertPathValidator.getInstance("PKIX").getRevocationChecker();
                 revocationChecker.setOptions(options);
                 pbParams.addCertPathChecker(revocationChecker);
