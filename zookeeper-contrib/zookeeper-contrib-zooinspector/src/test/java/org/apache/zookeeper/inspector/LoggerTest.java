@@ -31,12 +31,12 @@ public class LoggerTest {
     String testMessage = "a test message";
 
     @Test
-    public void testLogStdOutConfig() {
+    public void testLogStdErrConfig() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        PrintStream realStdOut = System.out;
-        System.setOut(new PrintStream(byteArrayOutputStream));
+        PrintStream realStdErr = System.err;
+        System.setErr(new PrintStream(byteArrayOutputStream));
         LOG.info(testMessage);
-        System.setOut(realStdOut);
+        System.setErr(realStdErr);
 
         //log to stdout for debug
         LOG.info(testMessage);
