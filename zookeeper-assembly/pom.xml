@@ -104,8 +104,14 @@
       <artifactId>jline</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.application.version}</version>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <version>${logback.application.version}</version>
     </dependency>
     <dependency>
        <groupId>io.dropwizard.metrics</groupId>

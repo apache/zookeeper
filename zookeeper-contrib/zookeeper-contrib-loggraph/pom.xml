@@ -54,13 +54,7 @@
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-core</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
+      <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
