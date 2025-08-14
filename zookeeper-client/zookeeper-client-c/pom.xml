@@ -32,12 +32,13 @@
   <description>ZooKeeper c client</description>
 
   <properties>
+    <filteredBuildComment>This file is GENERATED. Developers should edit the template in src/main/c-filtered/</filteredBuildComment>
     <c-test-coverage-arg> </c-test-coverage-arg>
   </properties>
 
   <build>
     <plugins>
-        <plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <executions>
@@ -69,7 +70,7 @@
               <executable>${project.basedir}/configure</executable>
               <environmentVariables>
                 <base_dir>${project.basedir}/../..</base_dir>
-                <CALLER>ANT</CALLER>
+                <CALLER>EXECMAVENPLUGIN</CALLER>
               </environmentVariables>
               <arguments>
                 <argument>--with-openssl=${c-client-openssl}</argument>
@@ -79,64 +80,63 @@
               </arguments>
             </configuration>
           </execution>
+          <execution>
+            <id>build-c-client</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}/c</workingDirectory>
+              <executable>make</executable>
+              <arguments>
+                <argument>clean</argument>
+                <argument>install</argument>
+              </arguments>
+              <environmentVariables>
+                <LD_LIBRARY_PATH>${env.LD_LIBRARY_PATH}${path.separator}/usr/lib</LD_LIBRARY_PATH>
+                <PATH>${env.PATH}${path.separator}${basedir}</PATH>
+                <CALLER>EXECMAVENPLUGIN</CALLER>
+                <CLOVER_HOME>${basedir}/../../zookeeper-server/target</CLOVER_HOME>
+                <base_dir>${basedir}/../..</base_dir>
+              </environmentVariables>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
+        <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
-            <id>generate-sources</id>
+            <id>mkdir-target-c</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/c</outputDirectory>
+              <resources />
+            </configuration>
+          </execution>
+          <execution>
+            <id>prepare-filtered-c-source</id>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
             <phase>generate-sources</phase>
             <configuration>
-              <target>
-                <mkdir dir="target/c" />
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>build-c-client</id>
-            <phase>compile</phase>
-            <configuration>
-              <target>
-                <exec dir="${basedir}/target/c" executable="make" failonerror="true">
-                  <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
-                  <env key="PATH" path="${env.PATH};${basedir};" />
-                  <env key="CALLER" value="ANT" />
-                  <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
-                  <env key="base_dir" value="${basedir}/../.." />
-                  <arg line="clean install" />
-                </exec>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>replace-cclient-files-during-release</id>
-            <phase>none</phase>
-            <goals>
-               <goal>run</goal>
-            </goals>
-            <configuration>
-               <target>
-                  <replaceregexp file="include/zookeeper_version.h" match="\#define ZOO_VERSION.*" replace="#define ZOO_VERSION &quot;${project.version}&quot;" byline="true" />
-                  <replace file="include/zookeeper_version.h" value="">
-                      <replaceToken>-SNAPSHOT</replaceToken>
-                  </replace>
-                  <replaceregexp file="CMakeLists.txt" match="project.*" replace="project(zookeeper VERSION ${project.version})" byline="true" />
-                  <replace file="CMakeLists.txt" value="">
-                      <replaceToken>-SNAPSHOT</replaceToken>
-                  </replace>
-                  <replaceregexp file="configure.ac" match="AC_INIT.*" replace="AC_INIT([zookeeper C client],${project.version},[user@zookeeper.apache.org],[zookeeper])" byline="true" />
-                  <replace file="configure.ac" value="">
-                      <replaceToken>-SNAPSHOT</replaceToken>
-                  </replace>
-               </target>
+              <outputDirectory>./</outputDirectory>
+              <useDefaultDelimiters>false</useDefaultDelimiters>
+              <delimiters>
+                <delimiter>@</delimiter>
+              </delimiters>
+              <resources>
+                <resource>
+                  <directory>src/main/c-filtered</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
             </configuration>
           </execution>
         </executions>
@@ -162,29 +162,31 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
             <executions>
               <execution>
                 <id>test-cppunit</id>
                 <phase>test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
                 <configuration>
+                  <workingDirectory>${project.build.directory}/c</workingDirectory>
+                  <executable>make</executable>
+                  <arguments>
+                    <argument>check</argument>
+                  </arguments>
                   <!-- do not run cpp tests if tests are globally skipped -->
                   <skip>${skipTests}</skip>
-                  <target>
-                    <exec dir="${basedir}/target/c" executable="make" failonerror="true">
-                      <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
-                      <env key="PATH" path="${env.PATH};${basedir};" />
-                      <env key="CALLER" value="ANT" />
-                      <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
-                      <env key="base_dir" value="${basedir}/../.." />
-                      <arg line="check" />
-                    </exec>
-                  </target>
+                  <environmentVariables>
+                    <LD_LIBRARY_PATH>${env.LD_LIBRARY_PATH}${path.separator}/usr/lib</LD_LIBRARY_PATH>
+                    <PATH>${env.PATH}${path.separator}${basedir}</PATH>
+                    <CALLER>EXECMAVENPLUGIN</CALLER>
+                    <CLOVER_HOME>${basedir}/../../zookeeper-server/target</CLOVER_HOME>
+                    <base_dir>${basedir}/../..</base_dir>
+                  </environmentVariables>
                 </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
               </execution>
             </executions>
           </plugin>
