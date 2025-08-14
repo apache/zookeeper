@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -80,55 +79,22 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     public X509AuthenticationProvider() throws X509Exception {
         ZKConfig config = new ZKConfig();
         try (X509Util x509Util = new ClientX509Util()) {
-            String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
-            String keyStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(config,
-                    x509Util.getSslKeystorePasswdProperty(),
-                    x509Util.getSslKeystorePasswdPathProperty());
-            String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
-
-            boolean crlEnabled = config.getBoolean(x509Util.getSslCrlEnabledProperty(), Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
-            boolean ocspEnabled = config.getBoolean(x509Util.getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
-            boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
-            boolean clientHostnameVerificationEnabled = x509Util.isClientHostnameVerificationEnabled(config);
-            boolean allowReverseDnsLookup = Boolean.parseBoolean(config.getProperty(x509Util.getSslAllowReverseDnsLookupProperty()));
-
             X509KeyManager km = null;
             X509TrustManager tm = null;
-            if (keyStoreLocation.isEmpty()) {
-                LOG.warn("keystore not specified for client connection");
-            } else {
-                try {
-                    km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword, keyStoreTypeProp);
-                } catch (KeyManagerException e) {
-                    LOG.error("Failed to create key manager", e);
-                }
+
+            try {
+                km = x509Util.buildKeyManager(config);
+            } catch (KeyManagerException e) {
+                LOG.error("Failed to create key manager", e);
             }
 
-            String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
-            String trustStorePassword = x509Util.getPasswordFromConfigPropertyOrFile(config,
-                    x509Util.getSslTruststorePasswdProperty(),
-                    x509Util.getSslTruststorePasswdPathProperty());
-            String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
-            boolean fipsMode = X509Util.getFipsMode(config);
-
-            if (trustStoreLocation.isEmpty()) {
-                LOG.warn("Truststore not specified for client connection");
-            } else {
-                try {
-                    tm = X509Util.createTrustManager(
-                        trustStoreLocation,
-                        trustStorePassword,
-                        trustStoreTypeProp,
-                        crlEnabled,
-                        ocspEnabled,
-                        hostnameVerificationEnabled,
-                        clientHostnameVerificationEnabled,
-                        allowReverseDnsLookup,
-                        fipsMode);
-                } catch (TrustManagerException e) {
-                    LOG.error("Failed to create trust manager", e);
-                }
+            try {
+                config.setProperty(x509Util.getSslClientHostnameVerificationEnabledProperty(), "false");
+                tm = x509Util.buildTrustManager(config);
+            } catch (TrustManagerException e) {
+                LOG.error("Failed to create trust manager", e);
             }
+
             this.keyManager = km;
             this.trustManager = tm;
         }

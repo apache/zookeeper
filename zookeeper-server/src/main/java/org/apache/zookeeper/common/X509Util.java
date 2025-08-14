@@ -378,57 +378,37 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public SSLContextAndOptions createSSLContextAndOptionsFromConfig(ZKConfig config) throws SSLContextException {
-        KeyManager[] keyManagers = null;
-        TrustManager[] trustManagers = null;
-
-        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
-        String keyStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslKeystorePasswdProperty, sslKeystorePasswdPathProperty);
-        String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
-
         // There are legal states in some use cases for null KeyManager or TrustManager.
         // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
         // specified by the user.
+        KeyManager[] keyManagers = null;
+        TrustManager[] trustManagers = null;
 
-        if (keyStoreLocationProp.isEmpty()) {
-            LOG.warn("{} not specified", getSslKeystoreLocationProperty());
-        } else {
-            try {
-                keyManagers = new KeyManager[]{createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
-            } catch (KeyManagerException keyManagerException) {
-                throw new SSLContextException("Failed to create KeyManager", keyManagerException);
-            } catch (IllegalArgumentException e) {
-                throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
+        try {
+            KeyManager km = buildKeyManager(config);
+            if (km != null) {
+                keyManagers = new KeyManager[]{km};
             }
+        } catch (KeyManagerException keyManagerException) {
+            throw new SSLContextException("Failed to create KeyManager", keyManagerException);
+        } catch (IllegalArgumentException e) {
+            String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
+            throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
         }
 
-        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
-        String trustStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
-        String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
-
-        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty, Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
-        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty, Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
-
-        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
-        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
-        boolean allowReverseDnsLookup = allowReverseDnsLookup(config);
-        boolean fipsMode = getFipsMode(config);
-
-        if (trustStoreLocationProp.isEmpty()) {
-            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
-        } else {
-            try {
-                trustManagers = new TrustManager[]{
-                    createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled,
-                        sslOcspEnabled, sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled,
-                        allowReverseDnsLookup, fipsMode)};
-            } catch (TrustManagerException trustManagerException) {
-                throw new SSLContextException("Failed to create TrustManager", trustManagerException);
-            } catch (IllegalArgumentException e) {
-                throw new SSLContextException("Bad value for "
-                                              + sslTruststoreTypeProperty
-                                              + ": "
-                                              + trustStoreTypeProp, e);
+        try {
+            TrustManager tm = buildTrustManager(config);
+            if (tm != null) {
+                trustManagers = new TrustManager[]{tm};
             }
+        } catch (TrustManagerException trustManagerException) {
+            throw new SSLContextException("Failed to create TrustManager", trustManagerException);
+        } catch (IllegalArgumentException e) {
+            String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
+            throw new SSLContextException("Bad value for "
+                    + sslTruststoreTypeProperty
+                    + ": "
+                    + trustStoreTypeProp, e);
         }
 
         String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
@@ -487,6 +467,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return value;
     }
 
+    public X509KeyManager buildKeyManager(ZKConfig config) throws KeyManagerException {
+        String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
+        if (keyStoreLocation.isEmpty()) {
+            LOG.warn("{} not specified for X509KeyManager", getSslKeystoreLocationProperty());
+            return null;
+        }
+        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
+                getSslKeystorePasswdPathProperty());
+        String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
+        return createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
+    }
+
     /**
      * Creates a key manager by loading the key store from the given file of
      * the given type, optionally decrypting it using the given password.
@@ -520,6 +512,59 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         } catch (IOException | GeneralSecurityException | IllegalArgumentException e) {
             throw new KeyManagerException(e);
         }
+    }
+
+    public X509TrustManager buildTrustManager(ZKConfig config) throws TrustManagerException {
+        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
+        if (trustStoreLocationProp.isEmpty()) {
+            LOG.warn("{} not specified for X509TrustManager", sslTruststoreLocationProperty);
+            return null;
+        }
+
+        String trustStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
+        String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
+
+        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty, Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
+        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty, Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
+
+        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
+        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+        boolean allowReverseDnsLookup = Boolean.parseBoolean(config.getProperty(getSslAllowReverseDnsLookupProperty()));
+        boolean fipsMode = getFipsMode(config);
+
+        return createTrustManagerInternal(
+                trustStoreLocationProp,
+                trustStorePasswordProp,
+                trustStoreTypeProp,
+                sslCrlEnabled,
+                sslOcspEnabled,
+                sslServerHostnameVerificationEnabled,
+                sslClientHostnameVerificationEnabled,
+                allowReverseDnsLookup,
+                fipsMode);
+    }
+
+    // @VisibleForTesting
+    protected X509TrustManager createTrustManagerInternal(
+            String trustStoreLocation,
+            String trustStorePassword,
+            String trustStoreTypeProp,
+            boolean crlEnabled,
+            boolean ocspEnabled,
+            final boolean serverHostnameVerificationEnabled,
+            final boolean clientHostnameVerificationEnabled,
+            boolean allowReverseDnsLookup,
+            final boolean fipsMode) throws TrustManagerException {
+        return createTrustManager(
+                trustStoreLocation,
+                trustStorePassword,
+                trustStoreTypeProp,
+                crlEnabled,
+                ocspEnabled,
+                serverHostnameVerificationEnabled,
+                clientHostnameVerificationEnabled,
+                allowReverseDnsLookup,
+                fipsMode);
     }
 
     /**
