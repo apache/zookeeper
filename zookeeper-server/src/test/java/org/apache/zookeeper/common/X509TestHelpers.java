@@ -36,11 +36,14 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.time.Duration;
 import java.util.Date;
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.X500NameBuilder;
+import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
@@ -53,6 +56,7 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -85,6 +89,27 @@ public class X509TestHelpers {
     // Per RFC 5280 section 4.1.2.2, X509 certificates can use up to 20 bytes == 160 bits for serial numbers.
     private static final int SERIAL_NUMBER_MAX_BITS = 20 * Byte.SIZE;
 
+    public static X509Certificate newSelfSignedCert(String name, KeyPair keyPair) throws IOException, OperatorCreationException, GeneralSecurityException {
+        X500NameBuilder caNameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
+        caNameBuilder.addRDN(BCStyle.CN, name);
+        return newSelfSignedCACert(caNameBuilder.build(), keyPair, Duration.ofDays(1).toMillis());
+    }
+
+    @FunctionalInterface
+    public interface CertificateCustomization {
+        void customize(X509v3CertificateBuilder builder) throws Exception;
+    }
+
+    public static X509Certificate newCert(X509Certificate caCert, KeyPair caKeyPair, String name, PublicKey certPublicKey, CertificateCustomization customization) throws Exception {
+        X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
+        nameBuilder.addRDN(BCStyle.CN, name);
+        return newCert(caCert, caKeyPair, nameBuilder.build(), certPublicKey, Duration.ofDays(1).toMillis(), customization);
+    }
+
+    public static X509Certificate newCert(X509Certificate caCert, KeyPair caKeyPair, String name, PublicKey certPublicKey) throws Exception {
+        return newCert(caCert, caKeyPair, name, certPublicKey, null);
+    }
+
     /**
      * Uses the private key of the given key pair to create a self-signed CA certificate with the public half of the
      * key pair and the given subject and expiration. The issuer of the new cert will be equal to the subject.
@@ -102,6 +127,11 @@ public class X509TestHelpers {
      */
     public static X509Certificate newSelfSignedCACert(
             X500Name subject, KeyPair keyPair, long expirationMillis) throws IOException, OperatorCreationException, GeneralSecurityException {
+        return newSelfSignedCACert(subject, keyPair, expirationMillis, null);
+    }
+
+    public static X509Certificate newSelfSignedCACert(
+            X500Name subject, KeyPair keyPair, long expirationMillis, CertificateCustomization customization) throws IOException, OperatorCreationException, GeneralSecurityException {
         Date now = new Date();
         X509v3CertificateBuilder builder = initCertBuilder(subject, // for self-signed certs, issuer == subject
                                                            now, new Date(now.getTime()
@@ -129,7 +159,12 @@ public class X509TestHelpers {
      * @throws GeneralSecurityException
      */
     public static X509Certificate newCert(
-            X509Certificate caCert, KeyPair caKeyPair, X500Name certSubject, PublicKey certPublicKey, long expirationMillis) throws IOException, OperatorCreationException, GeneralSecurityException {
+            X509Certificate caCert, KeyPair caKeyPair, X500Name certSubject, PublicKey certPublicKey, long expirationMillis) throws Exception {
+        return newCert(caCert, caKeyPair, certSubject, certPublicKey, expirationMillis, null);
+    }
+
+    public static X509Certificate newCert(
+            X509Certificate caCert, KeyPair caKeyPair, X500Name certSubject, PublicKey certPublicKey, long expirationMillis, CertificateCustomization customization) throws Exception {
         if (!caKeyPair.getPublic().equals(caCert.getPublicKey())) {
             throw new IllegalArgumentException("CA private key does not match the public key in the CA cert");
         }
@@ -143,6 +178,9 @@ public class X509TestHelpers {
         builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
 
         builder.addExtension(Extension.subjectAlternativeName, false, getLocalhostSubjectAltNames());
+        if (customization != null) {
+            customization.customize(builder);
+        }
         return buildAndSignCertificate(caKeyPair.getPrivate(), builder);
     }
 
@@ -172,7 +210,7 @@ public class X509TestHelpers {
      */
     private static X509v3CertificateBuilder initCertBuilder(
             X500Name issuer, Date notBefore, Date notAfter, X500Name subject, PublicKey subjectPublicKey) {
-        return new X509v3CertificateBuilder(issuer, new BigInteger(SERIAL_NUMBER_MAX_BITS, PRNG), notBefore, notAfter, subject, SubjectPublicKeyInfo.getInstance(subjectPublicKey.getEncoded()));
+        return new JcaX509v3CertificateBuilder(issuer, new BigInteger(SERIAL_NUMBER_MAX_BITS, PRNG), notBefore, notAfter, subject, SubjectPublicKeyInfo.getInstance(subjectPublicKey.getEncoded()));
     }
 
     /**
