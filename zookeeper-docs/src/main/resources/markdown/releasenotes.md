@@ -15,6 +15,53 @@ limitations under the License.
 //-->
 
 
+# Release Notes - ZooKeeper - Version 3.8.5
+                
+## Bug
+
+* [ZOOKEEPER-2623](https://issues.apache.org/jira/browse/ZOOKEEPER-2623) - CheckVersion outside of Multi causes NullPointerException
+* [ZOOKEEPER-4293](https://issues.apache.org/jira/browse/ZOOKEEPER-4293) - Lock Contention in ClientCnxnSocketNetty (possible deadlock)
+* [ZOOKEEPER-4604](https://issues.apache.org/jira/browse/ZOOKEEPER-4604) - Creating a COMPLETION_STRING_STAT would set acl_result completion
+* [ZOOKEEPER-4752](https://issues.apache.org/jira/browse/ZOOKEEPER-4752) - Remove version files  in zookeeper-server/src/main from .gitignore
+* [ZOOKEEPER-4787](https://issues.apache.org/jira/browse/ZOOKEEPER-4787) - Failed to establish connection between zookeeper
+* [ZOOKEEPER-4843](https://issues.apache.org/jira/browse/ZOOKEEPER-4843) - Encountering an &#39;Unreasonable Length&#39; error when configuring jute.maxbuffer to 1GB or more
+* [ZOOKEEPER-4846](https://issues.apache.org/jira/browse/ZOOKEEPER-4846) - Failure to reload database due to missing ACL
+* [ZOOKEEPER-4876](https://issues.apache.org/jira/browse/ZOOKEEPER-4876) - jetty-http-9.4.53.v20231009.jar: CVE-2024-6763(3.7)
+* [ZOOKEEPER-4886](https://issues.apache.org/jira/browse/ZOOKEEPER-4886) - observer with small myid can&#39;t join SASL quorum
+* [ZOOKEEPER-4889](https://issues.apache.org/jira/browse/ZOOKEEPER-4889) - Fallback to DIGEST-MD5 auth mech should be disabled in Fips mode
+* [ZOOKEEPER-4900](https://issues.apache.org/jira/browse/ZOOKEEPER-4900) - Bump patch release of jetty to include CVE fix for CVE-2024-6763
+* [ZOOKEEPER-4909](https://issues.apache.org/jira/browse/ZOOKEEPER-4909) - When a spurious wakeup occurs, the client’s waiting time may exceed requestTimeout.
+* [ZOOKEEPER-4919](https://issues.apache.org/jira/browse/ZOOKEEPER-4919) - ResponseCache supposed to be a LRU cache
+* [ZOOKEEPER-4928](https://issues.apache.org/jira/browse/ZOOKEEPER-4928) - Version in zookeeper_version.h is not updated
+* [ZOOKEEPER-4933](https://issues.apache.org/jira/browse/ZOOKEEPER-4933) - Connection throttle exception causing all connections to be rejected
+* [ZOOKEEPER-4953](https://issues.apache.org/jira/browse/ZOOKEEPER-4953) - Fixing Typo In ZooKeeper Programmer&#39;s Guide
+                
+## Improvement
+
+* [ZOOKEEPER-3731](https://issues.apache.org/jira/browse/ZOOKEEPER-3731) - Disable HTTP TRACE Method
+* [ZOOKEEPER-4546](https://issues.apache.org/jira/browse/ZOOKEEPER-4546) - Backport auto reloading client key/trust store to 3.8
+* [ZOOKEEPER-4850](https://issues.apache.org/jira/browse/ZOOKEEPER-4850) - Enhance zkCli Tool to Support Reading and Writing Binary Data
+* [ZOOKEEPER-4852](https://issues.apache.org/jira/browse/ZOOKEEPER-4852) - Fix the bad "*uuuuu" mark in the ASF license
+* [ZOOKEEPER-4891](https://issues.apache.org/jira/browse/ZOOKEEPER-4891) - Update logback to 1.3.15 to fix CVE-2024-12798.
+* [ZOOKEEPER-4902](https://issues.apache.org/jira/browse/ZOOKEEPER-4902) - Document that read-only mode also enables isro 4lw
+* [ZOOKEEPER-4906](https://issues.apache.org/jira/browse/ZOOKEEPER-4906) - Log full exception details for server JAAS config failure
+* [ZOOKEEPER-4944](https://issues.apache.org/jira/browse/ZOOKEEPER-4944) - Cache zookeeper dists for end to end compatibility tests
+    
+## Test
+
+* [ZOOKEEPER-4480](https://issues.apache.org/jira/browse/ZOOKEEPER-4480) - Introduce end to end compatibility tests
+* [ZOOKEEPER-4859](https://issues.apache.org/jira/browse/ZOOKEEPER-4859) - C client tests hang to be cancelled quite often
+        
+## Task
+
+* [ZOOKEEPER-4679](https://issues.apache.org/jira/browse/ZOOKEEPER-4679) - Fix CI failure and warning
+* [ZOOKEEPER-4868](https://issues.apache.org/jira/browse/ZOOKEEPER-4868) - Bump commons-io library to 2.14.0
+* [ZOOKEEPER-4897](https://issues.apache.org/jira/browse/ZOOKEEPER-4897) - Upgrade Netty to fix CVE-2025-24970 in ZooKeeper 3.9.3
+                                                                                                                                                        
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.8.4
 
 ## Sub-task
