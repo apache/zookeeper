@@ -242,7 +242,6 @@ public class ZooKeeperServerMain {
         return secureCnxnFactory;
     }
 
-    // VisibleForTesting
     public int getClientPort() {
         if (cnxnFactory != null) {
             return cnxnFactory.getLocalPort();
@@ -250,7 +249,6 @@ public class ZooKeeperServerMain {
         return 0;
     }
 
-    // VisibleForTesting
     public int getSecureClientPort() {
         if (secureCnxnFactory != null) {
             return secureCnxnFactory.getLocalPort();
