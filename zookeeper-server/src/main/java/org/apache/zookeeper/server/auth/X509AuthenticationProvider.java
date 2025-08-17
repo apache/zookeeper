@@ -89,6 +89,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             boolean crlEnabled = config.getBoolean(x509Util.getSslCrlEnabledProperty(), Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
             boolean ocspEnabled = config.getBoolean(x509Util.getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+            boolean clientHostnameVerificationEnabled = x509Util.isClientHostnameVerificationEnabled(config);
             boolean allowReverseDnsLookup = Boolean.parseBoolean(config.getProperty(x509Util.getSslAllowReverseDnsLookupProperty()));
 
             X509KeyManager km = null;
@@ -121,7 +122,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         crlEnabled,
                         ocspEnabled,
                         hostnameVerificationEnabled,
-                        false,
+                        clientHostnameVerificationEnabled,
                         allowReverseDnsLookup,
                         fipsMode);
                 } catch (TrustManagerException e) {
