@@ -47,22 +47,11 @@ public class ZooKeeperBuilder {
     private ZKClientConfig clientConfig;
 
     /**
-     * Creates a builder with given connect string and session timeout.
-     *
-     * @param connectString
-     *            comma separated host:port pairs, each corresponding to a zk
-     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
-     *            If the optional chroot suffix is used the example would look
-     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
-     *            where the client would be rooted at "/app/a" and all paths
-     *            would be relative to this root - ie getting/setting/etc...
-     *            "/foo/bar" would result in operations being run on
-     *            "/app/a/foo/bar" (from the server perspective).
-     * @param sessionTimeout
-     *            session timeout
+     * This is private and export for internal usage. Use {@link ZooKeeper#builder(String, Duration)} instead.
      */
+    @InterfaceAudience.Private
     public ZooKeeperBuilder(String connectString, Duration sessionTimeout) {
-        this.connectString = connectString;
+        this.connectString = Objects.requireNonNull(connectString, "connect string must not be null");
         this.sessionTimeout = Objects.requireNonNull(sessionTimeout, "session timeout must not be null");
     }
 
@@ -144,6 +133,8 @@ public class ZooKeeperBuilder {
 
     /**
      * Creates a {@link ZooKeeperOptions} with configured options.
+     *
+     * <p>This is private and export for internal usage.
      *
      * @apiNote helper to delegate existing constructors to {@link ZooKeeper#ZooKeeper(ZooKeeperOptions)}
      */
