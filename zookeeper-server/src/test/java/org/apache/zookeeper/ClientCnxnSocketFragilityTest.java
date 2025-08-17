@@ -18,20 +18,32 @@
 
 package org.apache.zookeeper;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.time.Duration;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.BusyServer;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase;
@@ -73,6 +85,40 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
             } catch (InterruptedException e) {
             }
         });
+    }
+
+    @Test
+    public void testSocketClosedAfterFailure() throws Exception {
+        Duration sessionTimeout = Duration.ofMillis(1000);
+        final AtomicReference<Selector> nioSelector = new AtomicReference<>();
+        try (
+                // given: busy server
+                BusyServer server = new BusyServer();
+                ZooKeeper zk = new ZooKeeper(server.getHostPort(), (int) sessionTimeout.toMillis(), null) {
+                @Override
+                ClientCnxn createConnection(HostProvider hostProvider, int sessionTimeout, ZKClientConfig clientConfig, Watcher defaultWatcher, ClientCnxnSocket clientCnxnSocket, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) throws IOException {
+                    ClientCnxnSocketNIO socket = spy((ClientCnxnSocketNIO) clientCnxnSocket);
+
+                    doAnswer(mock -> {
+                        SocketChannel spy = spy((SocketChannel) mock.callRealMethod());
+                        // when: connect get exception
+                        //
+                        // this could happen if system's network service is unavailable,
+                        // for examples, "ifdown eth0" or "service network stop" and so on.
+                        doThrow(new SocketException("Network is unreachable")).when(spy).connect(any());
+                        return spy;
+                    }).when(socket).createSock();
+
+                    nioSelector.set(socket.getSelector());
+                    return super.createConnection(hostProvider, sessionTimeout, clientConfig, defaultWatcher, socket, sessionId, sessionPasswd, canBeReadOnly);
+                }
+            }) {
+
+            Thread.sleep(sessionTimeout.toMillis() * 5);
+
+            // then: sockets of failed connections are closed, so at most one registered socket
+            assertThat(nioSelector.get().keys().size(), lessThanOrEqualTo(1));
+        }
     }
 
     @Test
