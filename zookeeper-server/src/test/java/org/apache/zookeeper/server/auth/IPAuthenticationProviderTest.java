@@ -175,7 +175,7 @@ public class IPAuthenticationProviderTest {
     );
   }
 
-  @ParameterizedTest(name = "address = {0}")
+  @ParameterizedTest(name = "address = \"{0}\"")
   @MethodSource("invalidIPv6Addresses")
   public void testParsingOfInvalidIPv6Address(String ipv6Address, String expectedMessage) {
     try {
