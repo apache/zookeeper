@@ -122,7 +122,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
 
         // Case 1: No "::" (full address)
         if (parts.length == 1) {
-            segments1 = parts[0].split(":");
+            segments1 = parts[0].split(":", -1);
             if (segments1.length != IPV6_SEGMENT_COUNT) {
                 String reason = "wrong number of segments";
                 throw new IllegalArgumentException(reason);
@@ -131,10 +131,10 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
             // Case 2: "::" is present
             // Handle cases like "::1" or "1::"
             if (!parts[0].isEmpty()) {
-                segments1 = parts[0].split(":");
+                segments1 = parts[0].split(":", -1);
             }
             if (!parts[1].isEmpty()) {
-                segments2 = parts[1].split(":");
+                segments2 = parts[1].split(":", -1);
             }
 
             // Check if the total number of explicit segments exceeds 8
@@ -159,8 +159,10 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
 
     private static void parseV6Segment(byte[] addr, int i, String[] segments) {
         for (String segment : segments) {
-            if (segment.length() > IPV6_SEGMENT_HEX_LENGTH) {
-                throw new IllegalArgumentException("too many characters in segment");
+            if (segment.isEmpty()) {
+                throw new IllegalArgumentException("empty segment");
+            } else if (segment.length() > IPV6_SEGMENT_HEX_LENGTH) {
+                throw new IllegalArgumentException("segment too long");
             }
             try {
                 int value = Integer.parseInt(segment, 16);

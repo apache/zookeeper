@@ -162,11 +162,16 @@ public class IPAuthenticationProviderTest {
     return Stream.of(
       Arguments.of("1", "wrong number of segments"),
       Arguments.of("1:2", "wrong number of segments"),
+      Arguments.of("1::2:", "empty segment"),
+      Arguments.of(":1::2:", "empty segment"),
+      Arguments.of("1:2:3:4:5:6:7:8:", "wrong number of segments"),
       Arguments.of("1:2:3:4:5:6:7:8:9", "wrong number of segments"),
       Arguments.of("1:2::3:4:5:6:7:8", "too many segments"),
       Arguments.of("1::2::", "too many '::'"),
-      Arguments.of("1:abcdf::", "too many characters in segment"),
-      Arguments.of("efgh::", "invalid hexadecimal characters in segment")
+      Arguments.of("1:abcdf::", "segment too long"),
+      Arguments.of("efgh::", "invalid hexadecimal characters in segment"),
+      Arguments.of("1:: ", "invalid hexadecimal characters in segment"),
+      Arguments.of(" 1::", "invalid hexadecimal characters in segment")
     );
   }
 
