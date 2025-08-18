@@ -3150,10 +3150,9 @@ error:
 }
 //#endif
 
-completion_list_t *dequeue_completion(completion_head_t *list)
-{
+completion_list_t *dequeue_completion_nolock(completion_head_t *list) {
+
     completion_list_t *cptr;
-    lock_completion_list(list);
     cptr = list->head;
     if (cptr) {
         list->head = cptr->next;
@@ -3162,6 +3161,14 @@ completion_list_t *dequeue_completion(completion_head_t *list)
             list->last = 0;
         }
     }
+    return cptr;
+}
+
+completion_list_t *dequeue_completion(completion_head_t *list)
+{
+    completion_list_t *cptr;
+    lock_completion_list(list);
+    cptr = dequeue_completion_nolock(list);
     unlock_completion_list(list);
     return cptr;
 }
@@ -3170,7 +3177,7 @@ completion_list_t *dequeue_completion(completion_head_t *list)
 static void cleanup_failed_multi(zhandle_t *zh, int xid, int rc, completion_list_t *cptr) {
     completion_list_t *entry;
     completion_head_t *clist = &cptr->c.clist;
-    while ((entry = dequeue_completion(clist)) != NULL) {
+    while ((entry = dequeue_completion_nolock(clist)) != NULL) {
         // Fake failed response for all sub-requests
         deserialize_response(zh, entry->c.type, xid, 1, rc, entry, NULL);
         destroy_completion_entry(entry);
@@ -3185,7 +3192,7 @@ static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, st
     assert(clist);
     deserialize_MultiHeader(ia, "multiheader", &mhdr);
     while (!mhdr.done) {
-        completion_list_t *entry = dequeue_completion(clist);
+        completion_list_t *entry = dequeue_completion_nolock(clist);
         assert(entry);
 
         if (mhdr.type == -1) {
@@ -4740,7 +4747,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 return ZUNIMPLEMENTED;
         }
 
-        queue_completion(&clist, entry, 0);
+        queue_completion_nolock(&clist, entry, 0);
     }
 
     rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
