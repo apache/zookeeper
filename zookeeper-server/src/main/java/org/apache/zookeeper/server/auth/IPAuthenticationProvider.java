@@ -37,6 +37,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
     public static final String USE_X_FORWARDED_FOR_KEY = "zookeeper.IPAuthenticationProvider.usexforwardedfor";
     private static final int IPV6_BYTE_LENGTH = 16; // IPv6 address is 128 bits = 16 bytes
     private static final int IPV6_SEGMENT_COUNT = 8; // IPv6 address has 8 segments
+    private static final int IPV6_SEGMENT_BYTE_LENGTH = 2; // Each segment has up to two bytes
     private static final int IPV6_SEGMENT_HEX_LENGTH = 4; // Each segment has up to 4 hex digits
 
     private static final Pattern IPV6_PATTERN = Pattern.compile(":");
@@ -103,7 +104,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
      * @return A byte array representing the IPv6 address if valid, or null if the address
      * is invalid or cannot be parsed.
      */
-    public static byte[] v6addr2Bytes(String ipv6Addr) {
+    static byte[] v6addr2Bytes(String ipv6Addr) {
         try {
             return parseV6addr(ipv6Addr);
         } catch (IllegalArgumentException e) {
@@ -112,7 +113,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         }
     }
 
-    private static byte[] parseV6addr(String ipv6Addr) {
+    static byte[] parseV6addr(String ipv6Addr) {
         // Split the address by "::" to handle zero compression, -1 to keep trailing empty strings
         String[] parts = ipv6Addr.split("::", -1);
 
@@ -123,7 +124,7 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         if (parts.length == 1) {
             segments1 = parts[0].split(":");
             if (segments1.length != IPV6_SEGMENT_COUNT) {
-                String reason = "wrong number of segments.";
+                String reason = "wrong number of segments";
                 throw new IllegalArgumentException(reason);
             }
         } else if (parts.length == 2) {
@@ -138,74 +139,37 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
 
             // Check if the total number of explicit segments exceeds 8
             if (segments1.length + segments2.length >= IPV6_SEGMENT_COUNT) {
-                String reason = "Too many segments.";
+                String reason = "too many segments";
                 throw new IllegalArgumentException(reason);
             }
         } else {
             // Case 3: Invalid number of parts after splitting by "::" (should be 1 or 2)
-            String reason = "Too many '::' ";
+            String reason = "too many '::'";
             throw new IllegalArgumentException(reason);
         }
 
-        byte [] result = new byte[IPV6_BYTE_LENGTH];
-        int byteIndex = 0;
+        byte[] result = new byte[IPV6_BYTE_LENGTH];
+        // Process segments before "::"
+        parseV6Segment(result, 0, segments1);
+        // Process segments after "::"
+        parseV6Segment(result, IPV6_BYTE_LENGTH - segments2.length * IPV6_SEGMENT_BYTE_LENGTH, segments2);
 
-        try {
-            // Process segments before "::"
-            for (String segment : segments1) {
-                if (isInvalidSegment(segment)) {
-                    String reason = "Invalid IPv6 segment: " +  segment + "in address: " + ipv6Addr;
-                    throw new IllegalArgumentException(reason);
-                }
-                int value = Integer.parseInt(segment, 16);
-                result[byteIndex++] = (byte) ((value >> 8) & 0xFF);
-                result[byteIndex++] = (byte) (value & 0xFF);
-            }
-
-            // Add zero segments for "::" compression
-            int missingSegments = IPV6_SEGMENT_COUNT - (segments1.length + segments2.length);
-            for (int i = 0; i < missingSegments; i++) {
-                result[byteIndex++] = (byte) 0x00;
-                result[byteIndex++] = (byte) 0x00;
-            }
-
-            // Process segments after "::"
-            for (String segment : segments2) {
-                if (isInvalidSegment(segment)) {
-                    String reason = "Invalid IPv6 segment: " +  segment + "in address after '::' " + ipv6Addr;
-                    throw new IllegalArgumentException(reason);
-                }
-                int value = Integer.parseInt(segment, 16);
-                result[byteIndex++] = (byte) ((value >> 8) & 0xFF);
-                result[byteIndex++] = (byte) (value & 0xFF);
-            }
-
-        } catch (NumberFormatException e) {
-            // 3. Catch NumberFormatException if String cannot be parsed
-            String reason = "Invalid hexadecimal character ";
-            throw new IllegalArgumentException(reason);
-        }
         return result;
     }
 
-    /**
-     * Checks if a single IPv6 segment is valid.
-     * A valid segment is a non-empty string of 1 to 4 hexadecimal characters.
-     *
-     * @param segment The segment string to validate.
-     * @return true if the segment is invalid, false otherwise.
-     */
-    private static boolean isInvalidSegment(String segment) {
-        if (segment == null || segment.isEmpty() || segment.length() > IPV6_SEGMENT_HEX_LENGTH) {
-            return true;
-        }
-        // Check if all characters are valid hexadecimal digits
-        for (char c : segment.toCharArray()) {
-            if (!Character.isDigit(c) && (c < 'a' || c > 'f') && (c < 'A' || c > 'F')) {
-                return true;
+    private static void parseV6Segment(byte[] addr, int i, String[] segments) {
+        for (String segment : segments) {
+            if (segment.length() > IPV6_SEGMENT_HEX_LENGTH) {
+                throw new IllegalArgumentException("too many characters in segment");
+            }
+            try {
+                int value = Integer.parseInt(segment, 16);
+                addr[i++] = (byte) ((value >> 8) & 0xFF);
+                addr[i++] = (byte) (value & 0xFF);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("invalid hexadecimal characters in segment: " + segment);
             }
         }
-        return false;
     }
 
     private void mask(byte[] b, int bits) {

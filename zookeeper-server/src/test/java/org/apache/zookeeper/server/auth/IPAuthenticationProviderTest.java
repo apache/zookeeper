@@ -19,15 +19,23 @@ package org.apache.zookeeper.server.auth;
 
 import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.USE_X_FORWARDED_FOR_KEY;
 import static org.apache.zookeeper.server.auth.IPAuthenticationProvider.X_FORWARDED_FOR_HEADER_NAME;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class IPAuthenticationProviderTest {
 
@@ -148,5 +156,29 @@ public class IPAuthenticationProviderTest {
     byte[] actualLoopback = IPAuthenticationProvider.v6addr2Bytes(ipv6Loopback);
     assertNotNull(actualLoopback, "Loopback IPv6 address should not return null");
     assertArrayEquals(expectedLoopback, actualLoopback, "Loopback IPv6 address conversion mismatch");
+  }
+
+  private static Stream<Arguments> invalidIPv6Addresses() {
+    return Stream.of(
+      Arguments.of("1", "wrong number of segments"),
+      Arguments.of("1:2", "wrong number of segments"),
+      Arguments.of("1:2:3:4:5:6:7:8:9", "wrong number of segments"),
+      Arguments.of("1:2::3:4:5:6:7:8", "too many segments"),
+      Arguments.of("1::2::", "too many '::'"),
+      Arguments.of("1:abcdf::", "too many characters in segment"),
+      Arguments.of("efgh::", "invalid hexadecimal characters in segment")
+    );
+  }
+
+  @ParameterizedTest(name = "address = {0}")
+  @MethodSource("invalidIPv6Addresses")
+  public void testParsingOfInvalidIPv6Address(String ipv6Address, String expectedMessage) {
+    try {
+      IPAuthenticationProvider.parseV6addr(ipv6Address);
+      fail("expect failure");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), containsString(expectedMessage));
+    }
+    assertNull(IPAuthenticationProvider.v6addr2Bytes(ipv6Address));
   }
 }
