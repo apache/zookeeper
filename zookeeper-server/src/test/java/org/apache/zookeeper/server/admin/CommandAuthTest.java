@@ -29,9 +29,11 @@ import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -185,6 +187,22 @@ public class CommandAuthTest extends ZKTestCase {
         assertEquals(HttpURLConnection.HTTP_OK, authTestConn.getResponseCode());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = AuthSchema.class, names = {"DIGEST"})
+    public void testAuthCheck_noPerms(final AuthSchema authSchema) throws Exception {
+        // The extra ACL entry gives Perms.READ perms to the "invalid"
+        // DIGEST authInfo---but that should not permit access, as
+        // AuthTestCommand requires Perms.ADMIN.
+        setupRootACL(authSchema, ZooDefs.Ids.READ_ACL_UNSAFE);
+        try {
+            final HttpURLConnection authTestConn = sendAuthTestCommandRequest(authSchema, false);
+            assertEquals(HttpURLConnection.HTTP_FORBIDDEN, authTestConn.getResponseCode());
+        } finally {
+            addAuthInfo(zk, authSchema);
+            resetRootACL(zk);
+        }
+    }
+
     @Test
     public void testAuthCheck_invalidServerRequiredConfig() {
         assertThrows("An active server is required for auth check",
@@ -300,19 +318,29 @@ public class CommandAuthTest extends ZKTestCase {
     }
 
     private void setupRootACL(final AuthSchema authSchema) throws Exception {
+        setupRootACL(authSchema, Collections.<ACL>emptyList());
+    }
+
+    private void setupRootACL(final AuthSchema authSchema, final List<ACL> extraEntries) throws Exception {
+        final List<ACL> aclEntries = new ArrayList<>();
+
         switch (authSchema) {
             case DIGEST:
-                setupRootACLForDigest(zk);
+                aclEntries.addAll(genACLForDigest());
                 break;
             case X509:
-                setupRootACLForX509(zk);
+                aclEntries.addAll(genACLForX509());
                 break;
             case IP:
-                setupRootACLForIP(zk);
+                aclEntries.addAll(genACLForIP());
                 break;
             default:
                 throw new IllegalArgumentException("Unknown auth schema");
         }
+
+        aclEntries.addAll(extraEntries);
+
+        zk.setACL(Commands.ROOT_PATH, aclEntries, -1);
     }
 
     private HttpURLConnection sendAuthTestCommandRequest(final AuthSchema authSchema, final boolean validAuthInfo) throws Exception  {
@@ -343,22 +371,22 @@ public class CommandAuthTest extends ZKTestCase {
         zk.setACL(Commands.ROOT_PATH, OPEN_ACL_UNSAFE, -1);
     }
 
-    public static void setupRootACLForDigest(final ZooKeeper zk) throws Exception  {
+    public static List<ACL> genACLForDigest() throws Exception  {
         final String idPassword = String.format("%s:%s", ROOT_USER, ROOT_PASSWORD);
         final String digest = DigestAuthenticationProvider.generateDigest(idPassword);
 
         final ACL acl = new ACL(ZooDefs.Perms.ALL, new Id(DIGEST_SCHEMA, digest));
-        zk.setACL(Commands.ROOT_PATH, Collections.singletonList(acl), -1);
+        return Collections.singletonList(acl);
     }
 
-    private static void setupRootACLForX509(final ZooKeeper zk) throws Exception  {
+    private static List<ACL> genACLForX509() throws Exception  {
         final ACL acl = new ACL(ZooDefs.Perms.ALL, new Id(X509_SCHEMA, X509_SUBJECT_PRINCIPAL));
-        zk.setACL(Commands.ROOT_PATH, Collections.singletonList(acl), -1);
+        return Collections.singletonList(acl);
     }
 
-    private static void setupRootACLForIP(final ZooKeeper zk) throws Exception  {
+    private static List<ACL> genACLForIP() throws Exception  {
         final ACL acl = new ACL(ZooDefs.Perms.ALL, new Id(IP_SCHEMA, "127.0.0.1"));
-        zk.setACL(Commands.ROOT_PATH, Collections.singletonList(acl), -1);
+        return Collections.singletonList(acl);
     }
 
     public static void addAuthInfoForDigest(final ZooKeeper zk) {
