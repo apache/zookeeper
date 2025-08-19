@@ -92,7 +92,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         assertFalse(prov.isValid("2001:db8:85a3:G::8a2e:0370:7334"), "Invalid hex character");
         assertFalse(prov.isValid(""), "empty string");
         assertFalse(prov.isValid("2001:db8:85a3:0:0:0:0:1:2"), "too many segments post compression");
-        assertTrue(prov.isValid("2001:db8:85a3::8a2e:0370:7334:"), "trailing colon");
+        assertFalse(prov.isValid("2001:db8:85a3::8a2e:0370:7334:"), "trailing colon");
         assertFalse(prov.isValid(":2001:db8:85a3::8a2e:0370:7334"), "Leading colon");
         assertFalse(prov.isValid("::FFFF:192.168.1.1"), "IPv4-mapped");
         assertTrue(prov.isValid("2001:db8:1234::/64"), "IPv6 address for multiple clients");
