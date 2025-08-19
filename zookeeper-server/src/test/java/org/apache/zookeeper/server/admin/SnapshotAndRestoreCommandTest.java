@@ -20,8 +20,8 @@ package org.apache.zookeeper.server.admin;
 
 import static org.apache.zookeeper.server.ZooKeeperServer.ZOOKEEPER_SERIALIZE_LAST_PROCESSED_ZXID_ENABLED;
 import static org.apache.zookeeper.server.admin.CommandAuthTest.addAuthInfoForDigest;
-import static org.apache.zookeeper.server.admin.CommandAuthTest.resetRootACL;
 import static org.apache.zookeeper.server.admin.CommandAuthTest.genACLForDigest;
+import static org.apache.zookeeper.server.admin.CommandAuthTest.resetRootACL;
 import static org.apache.zookeeper.server.admin.Commands.ADMIN_RATE_LIMITER_INTERVAL;
 import static org.apache.zookeeper.server.admin.Commands.RestoreCommand.ADMIN_RESTORE_ENABLED;
 import static org.apache.zookeeper.server.admin.Commands.SnapshotCommand.ADMIN_SNAPSHOT_ENABLED;
