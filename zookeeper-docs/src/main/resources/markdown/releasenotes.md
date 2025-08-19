@@ -16,6 +16,18 @@ limitations under the License.
 
 
 # Release Notes - ZooKeeper - Version 3.8.5
+
+## Breaking changes
+[ZOOKEEPER-4891](https://issues.apache.org/jira/browse/ZOOKEEPER-4891) updates `logback-classic` to `1.3.15` to solve cve issues and
+`slf4j-api` to `2.0.13` to meet compatibilty requirement of logback.
+
+This could cause slf4j to complain "No SLF4J providers were found" and output no further logs in certain conditions.
+1. For library or client usage, this could happen if you specify and inherit incompatible slf4j and logback versions, say, `slf4j-api:2.0.13` from
+   `org.apache.zookeeper:zookeeper` and `logback-classic:1.2.13` from customized project dependencies.
+2. For application or deployment usage, this could happen if you custom and inherit incompatible slf4j and logback versions in classpath, say,
+   `slf4j-api:2.0.13` from zookeeper distribution and `logback-classic:1.2.13` from customization.
+
+This could be solved by specifying compatiable slf4j and logback versions in classpath, say, `slf4j-api:2.0.13` and `logback-classic:1.3.15`.
                 
 ## Bug
 
