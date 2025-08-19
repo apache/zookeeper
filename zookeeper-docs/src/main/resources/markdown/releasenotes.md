@@ -18,7 +18,8 @@ limitations under the License.
 # Release Notes - ZooKeeper - Version 3.9.4
 
 ## Breaking changes
-[ZOOKEEPER-4891](https://issues.apache.org/jira/browse/ZOOKEEPER-4891) updates `logback-classic` to `1.3.15` to solve cve issues and
+
+* [ZOOKEEPER-4891](https://issues.apache.org/jira/browse/ZOOKEEPER-4891) updates `logback-classic` to `1.3.15` to solve cve issues and
 `slf4j-api` to `2.0.13` to meet compatibilty requirement of logback.
 
 This could cause slf4j to complain "No SLF4J providers were found" and output no further logs in certain conditions.
@@ -32,6 +33,7 @@ This could be solved by specifying compatiable slf4j and logback versions in cla
 ## Bug
 
 * [ZOOKEEPER-4020](https://issues.apache.org/jira/browse/ZOOKEEPER-4020) - Memory leak in  Zookeeper C Client
+* [ZOOKEEPER-4240](https://issues.apache.org/jira/browse/ZOOKEEPER-4240) - IPV6 support in ZooKeeper ACL
 * [ZOOKEEPER-4604](https://issues.apache.org/jira/browse/ZOOKEEPER-4604) - Creating a COMPLETION_STRING_STAT would set acl_result completion
 * [ZOOKEEPER-4699](https://issues.apache.org/jira/browse/ZOOKEEPER-4699) - zh-&gt;hostname heap-use-after-free in zookeeper_interest
 * [ZOOKEEPER-4725](https://issues.apache.org/jira/browse/ZOOKEEPER-4725) - TTL node creations do not appear in audit log
@@ -54,6 +56,7 @@ This could be solved by specifying compatiable slf4j and logback versions in cla
 * [ZOOKEEPER-4933](https://issues.apache.org/jira/browse/ZOOKEEPER-4933) - Connection throttle exception causing all connections to be rejected
 * [ZOOKEEPER-4940](https://issues.apache.org/jira/browse/ZOOKEEPER-4940) - Enabling zookeeper.ssl.ocsp with JRE TLS provider errors out
 * [ZOOKEEPER-4953](https://issues.apache.org/jira/browse/ZOOKEEPER-4953) - Fixing Typo In ZooKeeper Programmer&#39;s Guide
+* [ZOOKEEPER-4960](https://issues.apache.org/jira/browse/ZOOKEEPER-4960) - Upgrade OWASP plugin to 12.1.3 due to recent parsing errors
             
 ## New Feature
 
@@ -68,14 +71,15 @@ This could be solved by specifying compatiable slf4j and logback versions in cla
 * [ZOOKEEPER-4906](https://issues.apache.org/jira/browse/ZOOKEEPER-4906) - Log full exception details for server JAAS config failure
 * [ZOOKEEPER-4944](https://issues.apache.org/jira/browse/ZOOKEEPER-4944) - Cache zookeeper dists for end to end compatibility tests
 * [ZOOKEEPER-4954](https://issues.apache.org/jira/browse/ZOOKEEPER-4954) - Use FIPS style hostname verification when no custom truststore is specified
+* [ZOOKEEPER-4964](https://issues.apache.org/jira/browse/ZOOKEEPER-4964) - Check permissions individually during admin server auth
             
 ## Task
 
 * [ZOOKEEPER-4897](https://issues.apache.org/jira/browse/ZOOKEEPER-4897) - Upgrade Netty to fix CVE-2025-24970 in ZooKeeper 3.9.3
+* [ZOOKEEPER-4959](https://issues.apache.org/jira/browse/ZOOKEEPER-4959) - Fix license files after logback/slf4j upgrade
                                                                                                                                                         
 
 &nbsp;
-
 
 
 # Release Notes - ZooKeeper - Version 3.9.3
