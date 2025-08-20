@@ -54,19 +54,19 @@ public class ZooKeeperSaslClient {
      *             instead.
      */
     @Deprecated
-    public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
+    public static final String LOGIN_CONTEXT_NAME_KEY = ZKClientConfig.LOGIN_CONTEXT_NAME_KEY;
     /**
      * @deprecated Use {@link ZKClientConfig#ENABLE_CLIENT_SASL_KEY}
      *             instead.
      */
     @Deprecated
-    public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
+    public static final String ENABLE_CLIENT_SASL_KEY = ZKClientConfig.ENABLE_CLIENT_SASL_KEY;
     /**
      * @deprecated Use {@link ZKClientConfig#ENABLE_CLIENT_SASL_DEFAULT}
      *             instead.
      */
     @Deprecated
-    public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
+    public static final String ENABLE_CLIENT_SASL_DEFAULT = ZKClientConfig.ENABLE_CLIENT_SASL_DEFAULT;
 
     /**
      * Returns true if the SASL client is enabled. By default, the client
