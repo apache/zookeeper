@@ -21,12 +21,12 @@ package org.apache.zookeeper.common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,7 +210,17 @@ public class ZKConfig {
             parseProperties(cfg);
         } catch (IOException | IllegalArgumentException e) {
             LOG.error("Error while configuration from: {}", configFile.getAbsolutePath(), e);
-            throw new ConfigException("Error while processing " + configFile.getAbsolutePath(), e);
+            String msg = "Error while processing " + configFile.getAbsolutePath();
+            try {
+                Class<?> clazz = Class.forName("org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException");
+                Class<? extends ConfigException> exceptionClass = clazz.asSubclass(ConfigException.class);
+                Constructor<? extends ConfigException> constructor = exceptionClass.getDeclaredConstructor(String.class, Exception.class);
+                throw constructor.newInstance(msg, e);
+            } catch (ClassNotFoundException ignored) {
+            } catch (Exception ignored) {
+                LOG.warn("Fail to construct QuorumPeerConfig.ConfigException", e);
+            }
+            throw new ConfigException(msg, e);
         }
     }
 

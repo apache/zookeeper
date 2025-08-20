@@ -45,8 +45,8 @@ import org.apache.zookeeper.cli.CommandFactory;
 import org.apache.zookeeper.cli.CommandNotFoundException;
 import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.ExitCode;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -267,7 +267,7 @@ public class ZooKeeperMain {
         if (cl.getOption("client-configuration") != null) {
             try {
                 clientConfig = new ZKClientConfig(cl.getOption("client-configuration"));
-            } catch (QuorumPeerConfig.ConfigException e) {
+            } catch (ConfigException e) {
                 e.printStackTrace();
                 ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
             }
