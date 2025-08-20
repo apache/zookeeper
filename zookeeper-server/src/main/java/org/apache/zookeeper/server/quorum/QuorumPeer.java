@@ -1439,7 +1439,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return le;
     }
 
-    @SuppressWarnings("deprecation")
     protected Election makeLEStrategy() {
         LOG.debug("Initializing leader election protocol...");
         return electionAlg;
