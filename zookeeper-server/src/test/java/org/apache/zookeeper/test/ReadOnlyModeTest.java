@@ -285,7 +285,6 @@ public class ReadOnlyModeTest extends ZKTestCase {
      * Ensures that client seeks for r/w servers while it's connected to r/o
      * server.
      */
-    @SuppressWarnings("deprecation")
     @Test
     @Timeout(value = 90)
     public void testSeekForRwServer() throws Exception {

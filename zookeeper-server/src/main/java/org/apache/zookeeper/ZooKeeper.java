@@ -154,15 +154,14 @@ public class ZooKeeper implements AutoCloseable {
      *             instead.
      */
     @Deprecated
-    public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
-    // Setting this to "true" will enable encrypted client-server communication.
+    public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET;
 
     /**
      * @deprecated Use {@link ZKClientConfig#SECURE_CLIENT}
      *             instead.
      */
     @Deprecated
-    public static final String SECURE_CLIENT = "zookeeper.client.secure";
+    public static final String SECURE_CLIENT = ZKClientConfig.SECURE_CLIENT;
 
     protected final ClientCnxn cnxn;
     private static final Logger LOG;
