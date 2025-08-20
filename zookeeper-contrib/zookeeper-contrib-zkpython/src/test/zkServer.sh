@@ -69,7 +69,7 @@ case $1 in
 
     rm -rf "$WORK_DIR/ssl"
     mkdir -p "$WORK_DIR/ssl"
-    cp "$PROJECT_ROOT/zookeeper-client/zookeeper-client-c/ssl/gencerts.sh" "$WORK_DIR/ssl/"
+    cp "$PROJECT_ROOT/zookeeper-client-c/ssl/gencerts.sh" "$WORK_DIR/ssl/"
     (cd "$WORK_DIR/ssl/" && ./gencerts.sh)
 
     sed "s#WORKDIR#$WORK_DIR#g" "$TEST_DIR/zoo.cfg" >"$WORK_DIR/zoo.cfg"

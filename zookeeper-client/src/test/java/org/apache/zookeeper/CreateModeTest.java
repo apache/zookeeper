@@ -16,20 +16,17 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.util.EnumSet;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
 
-public class CreateModeTest extends ZKTestCase {
+public class CreateModeTest {
 
     @Test
     public void testBasicCreateMode() {
