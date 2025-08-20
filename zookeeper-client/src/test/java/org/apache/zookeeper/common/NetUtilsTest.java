@@ -23,10 +23,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.InetSocketAddress;
-import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
 
-public class NetUtilsTest extends ZKTestCase {
+public class NetUtilsTest {
 
     private Integer port = 1234;
     private String v4addr = "127.0.0.1";

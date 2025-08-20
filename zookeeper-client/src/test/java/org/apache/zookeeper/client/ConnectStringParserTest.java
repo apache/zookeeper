@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.client.ConnectStringParser;
 import org.junit.jupiter.api.Test;
 
-public class ConnectStringParserTest extends ZKTestCase {
+public class ConnectStringParserTest {
 
     private static final int DEFAULT_PORT = 2181;
 

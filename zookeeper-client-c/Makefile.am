@@ -130,7 +130,7 @@ else
 endif
 
 check_PROGRAMS = zktest-st
-TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
+TESTS_ENVIRONMENT = ZKROOT=${srcdir}/.. \
                     CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover*.jar
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS) $(OPENSSL_LIB_LDFLAGS) $(SASL_LIB_LDFLAGS) -ldl

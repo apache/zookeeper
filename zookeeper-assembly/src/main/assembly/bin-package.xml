@@ -36,7 +36,6 @@
       </includes>
       <excludes>
         <exclude>org.apache.zookeeper:zookeeper-recipes</exclude>
-        <exclude>org.apache.zookeeper:zookeeper-client</exclude>
         <exclude>org.apache.zookeeper:zookeeper-docs</exclude>
       </excludes>
       <useProjectArtifact>false</useProjectArtifact>
@@ -60,6 +59,13 @@
       <!-- ZooKeeper jute generated api document -->
       <directory>${project.basedir}/../zookeeper-jute/target/apidocs</directory>
       <outputDirectory>docs/apidocs/zookeeper-jute</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper client generated api document -->
+      <directory>${project.basedir}/../zookeeper-client/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-client</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>

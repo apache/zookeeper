@@ -136,7 +136,7 @@ if [[ -z $base_dir ]]; then
   tests_dir="tests"
 else
   tmp_dir="$base_dir/build/tmp"
-  tests_dir=$base_dir/zookeeper-client/zookeeper-client-c/tests
+  tests_dir=$base_dir/zookeeper-client-c/tests
 fi
 
 # =====

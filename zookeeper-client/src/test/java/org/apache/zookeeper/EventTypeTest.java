@@ -16,16 +16,15 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.util.EnumSet;
 import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
 
-public class EventTypeTest extends ZKTestCase {
+public class EventTypeTest {
 
     @Test
     public void testIntConversion() {
