@@ -385,10 +385,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
             GaugeWithCallback newGauge = GaugeWithCallback.builder().name(name).help(name).callback(callback -> {
                 Number value = gauge.get();
-                if (value == null) {
-                    throw new IllegalArgumentException("Gauge " + name + " cannot return a null value.");
+                if (value != null) {
+                    callback.call(value.doubleValue());
                 }
-                callback.call(value.doubleValue());
             }).register(registry);
             registeredGauges.put(name, newGauge);
         }
