@@ -1282,8 +1282,6 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * Add the specified scheme:auth information to this connection.
      *
-     * This method is NOT thread safe
-     *
      * @param scheme
      * @param auth
      */
