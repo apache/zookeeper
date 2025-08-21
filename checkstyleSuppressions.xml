@@ -24,14 +24,20 @@
     <suppress checks="LineLength" files=".+[\\/]jute[\\/].+\.java"/>
 
     <!-- TODO ZOOKEEPER-3508 -->
+    <suppress checks="LineLength" files=".+[\\/]zookeeper[\\/].+\.java"/>
+    <suppress checks="LineLength" files=".+[\\/]zookeeper-common[\\/].+\.java"/>
     <suppress checks="LineLength" files=".+[\\/]zookeeper-client[\\/].+\.java"/>
     <suppress checks="LineLength" files=".+[\\/]zookeeper-server[\\/].+\.java"/>
 
     <!-- TODO ZOOKEEPER-3507 -->
+    <suppress checks=".*Name.*" files=".+[\\/]zookeeper[\\/].+\.java"/>
+    <suppress checks=".*Name.*" files=".+[\\/]zookeeper-common[\\/].+\.java"/>
     <suppress checks=".*Name.*" files=".+[\\/]zookeeper-client[\\/].+\.java"/>
     <suppress checks=".*Name.*" files=".+[\\/]zookeeper-server[\\/].+\.java"/>
 
     <!-- TODO ZOOKEEPER-3469 -->
+    <suppress checks="Javadoc.+" files=".+[\\/]zookeeper[\\/].+\.java"/>
+    <suppress checks="Javadoc.+" files=".+[\\/]zookeeper-common[\\/].+\.java"/>
     <suppress checks="Javadoc.+" files=".+[\\/]zookeeper-client[\\/].+\.java"/>
     <suppress checks="Javadoc.+" files=".+[\\/]zookeeper-server[\\/].+\.java"/>
 </suppressions>

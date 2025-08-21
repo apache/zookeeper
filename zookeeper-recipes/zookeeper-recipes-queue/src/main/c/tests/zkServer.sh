@@ -47,8 +47,8 @@ for i in "$base_dir"/build/lib/*.jar; do
   CLASSPATH="$CLASSPATH:$i"
 done
 
-for i in "$base_dir"/zookeeper-server/src/main/resource/lib/*.jar; do
-  CLASSPATH="$CLASSPATH:$i"
+for d in "$base_dir"/zookeeper/target/lib/*.jar; do
+  CLASSPATH="$d:$CLASSPATH"
 done
 
 CLASSPATH="$CLASSPATH:$CLOVER_HOME/lib/clover.jar"

@@ -18,14 +18,11 @@
 
 package org.apache.zookeeper;
 
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
@@ -33,14 +30,12 @@ import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZKUtil {
+public class ZKUtil extends ZKCommonUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKUtil.class);
-    private static final Map<Integer, String> permCache = new ConcurrentHashMap<>();
     /**
      * Recursively delete the node with the given path.
      * <p>
@@ -167,24 +162,6 @@ public class ZKUtil {
     }
 
     /**
-     * @param filePath the file path to be validated
-     * @return Returns null if valid otherwise error message
-     */
-    public static String validateFileInput(String filePath) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            return "File '" + file.getAbsolutePath() + "' does not exist.";
-        }
-        if (!file.canRead()) {
-            return "Read permission is denied on the file '" + file.getAbsolutePath() + "'";
-        }
-        if (file.isDirectory()) {
-            return "'" + file.getAbsolutePath() + "' is a directory. it must be a file.";
-        }
-        return null;
-    }
-
-    /**
      * BFS Traversal of the system under pathRoot, with the entries in the list, in the
      * same order as that of the traversal.
      * <p>
@@ -265,46 +242,5 @@ public class ZKUtil {
             // but gets deleted before it can be queried
             return; // ignore
         }
-    }
-
-    /**
-     * @param perms
-     *            ACL permissions
-     * @return string representation of permissions
-     */
-    public static String getPermString(int perms) {
-        return permCache.computeIfAbsent(perms, k -> constructPermString(k));
-    }
-
-    private static String constructPermString(int perms) {
-        StringBuilder p = new StringBuilder();
-        if ((perms & ZooDefs.Perms.CREATE) != 0) {
-            p.append('c');
-        }
-        if ((perms & ZooDefs.Perms.DELETE) != 0) {
-            p.append('d');
-        }
-        if ((perms & ZooDefs.Perms.READ) != 0) {
-            p.append('r');
-        }
-        if ((perms & ZooDefs.Perms.WRITE) != 0) {
-            p.append('w');
-        }
-        if ((perms & ZooDefs.Perms.ADMIN) != 0) {
-            p.append('a');
-        }
-        return p.toString();
-    }
-
-    public static String aclToString(List<ACL> acls) {
-        StringBuilder sb = new StringBuilder();
-        for (ACL acl : acls) {
-            sb.append(acl.getId().getScheme());
-            sb.append(":");
-            sb.append(acl.getId().getId());
-            sb.append(":");
-            sb.append(getPermString(acl.getPerms()));
-        }
-        return sb.toString();
     }
 }

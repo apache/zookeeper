@@ -22,6 +22,7 @@ import java.io.File;
 import java.nio.file.Path;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.ConfigException;
+import org.apache.zookeeper.common.SaslLoginKeys;
 import org.apache.zookeeper.common.ZKConfig;
 
 /**
@@ -35,8 +36,8 @@ public class ZKClientConfig extends ZKConfig {
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";
     public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME = "zookeeper.sasl.client.canonicalize.hostname";
     public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT = "true";
-    public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
-    public static final String LOGIN_CONTEXT_NAME_KEY_DEFAULT = "Client";
+    public static final String LOGIN_CONTEXT_NAME_KEY = SaslLoginKeys.CLIENT_NAME_KEY;
+    public static final String LOGIN_CONTEXT_NAME_KEY_DEFAULT = SaslLoginKeys.CLIENT_NAME_KEY_DEFAULT;
     public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
     public static final String ZOOKEEPER_SERVER_REALM = "zookeeper.server.realm";
@@ -119,6 +120,11 @@ public class ZKClientConfig extends ZKConfig {
         setProperty(DISABLE_AUTO_WATCH_RESET, System.getProperty(DISABLE_AUTO_WATCH_RESET));
         setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, System.getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET));
         setProperty(SECURE_CLIENT, System.getProperty(SECURE_CLIENT));
+    }
+
+    @Override
+    public boolean isClient() {
+        return true;
     }
 
     /**

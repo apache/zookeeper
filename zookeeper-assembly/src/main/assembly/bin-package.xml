@@ -77,8 +77,15 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
+      <!-- ZooKeeper cli generated api document -->
+      <directory>${project.basedir}/../zookeeper/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
       <!-- License files for 3rd party libs -->
-      <directory>${project.basedir}/../zookeeper-server/src/main/resources/lib</directory>
+      <directory>${project.basedir}/../zookeeper/src/main/resources/lib</directory>
       <includes>
         <include>*.txt</include>
       </includes>

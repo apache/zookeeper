@@ -161,4 +161,16 @@ public class ZooDefs {
         int persistentRecursive = 1;  // matches AddWatchMode.PERSISTENT_RECURSIVE
     }
 
+    /* predefined xid's values recognized as special by the server */
+    public interface PredefinedXids {
+        // -1 means notification(WATCHER_EVENT)
+        int NOTIFICATION_XID = -1;
+        // -2 is the xid for pings
+        int PING_XID = -2;
+        // -4 is the xid for AuthPacket
+        int AUTHPACKET_XID = -4;
+        // -8 is the xid for setWatch
+        int SET_WATCHES_XID = -8;
+    }
+
 }

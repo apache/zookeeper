@@ -37,10 +37,9 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.SaslLoginKeys;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
-import org.apache.zookeeper.server.ZooKeeperSaslServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -334,16 +333,12 @@ public class Login {
     }
 
     private String getLoginContextMessage() {
-        if (zkConfig instanceof ZKClientConfig) {
-            return ZKClientConfig.LOGIN_CONTEXT_NAME_KEY
-                   + "(="
-                   + zkConfig.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT)
-                   + ")";
+        if (zkConfig.isClient()) {
+            String key = SaslLoginKeys.CLIENT_NAME_KEY;
+            return String.format("%s(=%s)", key, zkConfig.getProperty(key, SaslLoginKeys.CLIENT_NAME_KEY_DEFAULT));
         } else {
-            return ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY
-                   + "(="
-                   + System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME)
-                   + ")";
+            String key = SaslLoginKeys.SERVER_NAME_KEY;
+            return String.format("%s(=%s)", key, System.getProperty(key, SaslLoginKeys.SERVER_NAME_KEY_DEFAULT));
         }
     }
 

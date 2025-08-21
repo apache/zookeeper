@@ -48,5 +48,5 @@
 
 [files]
 extend-exclude = [
-    "zookeeper-client/src/test/java/org/apache/zookeeper/common/CertificatesToPlayWith.java",
+    "zookeeper-common/src/test/java/org/apache/zookeeper/common/CertificatesToPlayWith.java",
 ]

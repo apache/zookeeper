@@ -131,6 +131,10 @@ public class ZKConfig {
         });
     }
 
+    public boolean isClient() {
+        return false;
+    }
+
     /**
      * Get the property value
      *

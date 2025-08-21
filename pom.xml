@@ -57,10 +57,12 @@
   </licenses>
 
   <modules>
+    <module>zookeeper</module>
     <module>zookeeper-docs</module>
     <module>zookeeper-jute</module>
     <module>zookeeper-server</module>
     <module>zookeeper-metrics-providers</module>
+    <module>zookeeper-common</module>
     <module>zookeeper-client</module>
     <module>zookeeper-client-c</module>
     <module>zookeeper-recipes</module>

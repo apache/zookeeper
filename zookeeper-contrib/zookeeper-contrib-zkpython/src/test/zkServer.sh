@@ -48,16 +48,12 @@ if [[ $1 == "startClean" ]]; then
   rm -rf "$WORK_DIR"
 fi
 
-CLASSPATH="$CLASSPATH:$PROJECT_ROOT/zookeeper-server/target/classes"
 CLASSPATH="$CLASSPATH:$PROJECT_ROOT/conf"
 
-for i in "$PROJECT_ROOT"/zookeeper-server/target/lib/*.jar; do
+for i in "$PROJECT_ROOT"/zookeeper/target/lib/*.jar; do
   CLASSPATH="$CLASSPATH:$i"
 done
 
-for i in "$PROJECT_ROOT"/zookeeper-server/src/main/resource/lib/*.jar; do
-  CLASSPATH="$CLASSPATH:$i"
-done
 export CLASSPATH
 
 # Make sure nothing is left over from before

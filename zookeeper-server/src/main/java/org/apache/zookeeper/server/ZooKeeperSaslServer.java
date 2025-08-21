@@ -22,14 +22,15 @@ import javax.security.auth.Subject;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.common.SaslLoginKeys;
 import org.apache.zookeeper.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZooKeeperSaslServer {
 
-    public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.serverconfig";
-    public static final String DEFAULT_LOGIN_CONTEXT_NAME = "Server";
+    public static final String LOGIN_CONTEXT_NAME_KEY = SaslLoginKeys.SERVER_NAME_KEY;
+    public static final String DEFAULT_LOGIN_CONTEXT_NAME = SaslLoginKeys.SERVER_NAME_KEY_DEFAULT;
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslServer.class);
     private SaslServer saslServer;
