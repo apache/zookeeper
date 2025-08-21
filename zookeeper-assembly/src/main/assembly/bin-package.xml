@@ -78,8 +78,8 @@
     </fileSet>
     <fileSet>
       <!-- ZooKeeper cli generated api document -->
-      <directory>${project.basedir}/../zookeeper/target/apidocs</directory>
-      <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
+      <directory>${project.basedir}/../zookeeper-cli/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-cli</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>

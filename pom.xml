@@ -58,6 +58,7 @@
 
   <modules>
     <module>zookeeper</module>
+    <module>zookeeper-cli</module>
     <module>zookeeper-docs</module>
     <module>zookeeper-jute</module>
     <module>zookeeper-server</module>
