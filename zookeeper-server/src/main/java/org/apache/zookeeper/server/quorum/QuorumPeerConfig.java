@@ -158,7 +158,7 @@ public class QuorumPeerConfig {
     protected long jvmPauseSleepTimeMs = JvmPauseMonitor.SLEEP_TIME_MS_DEFAULT;
 
     @SuppressWarnings("serial")
-    public static class ConfigException extends Exception {
+    public static class ConfigException extends org.apache.zookeeper.common.ConfigException {
 
         public ConfigException(String msg) {
             super(msg);
