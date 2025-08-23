@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * See the "Pluggable ZooKeeper authentication" section of the
  * "Zookeeper Programmer's Guide" for general details of implementing an
  * authentication plugin. e.g.
- * http://zookeeper.apache.org/doc/trunk/zookeeperProgrammers.html#sc_ZooKeeperPluggableAuthentication
+ * http://zookeeper.apache.org/doc/current/zookeeperProgrammers.html#sc_ZooKeeperPluggableAuthentication
  *
  * This class looks for a numeric "key" under the /key node.
  * Authorization is granted if the user passes in as authorization a number
