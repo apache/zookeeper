@@ -491,6 +491,16 @@ public class JRecord extends JCompType {
                 JField jf = i.next();
                 jj.write(jf.genJavaGetSet(fIdx));
             }
+
+            jj.write("\n");
+            jj.write("  public void copyFrom(" + getName() + " from) {\n");
+            fIdx = 0;
+            for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
+                JField jf = i.next();
+                jj.write("    " + jf.getName() + " = from." + jf.getName() + ";\n");
+            }
+            jj.write("  }\n");
+
             jj.write("  public void serialize(OutputArchive a_, String tag) throws java.io.IOException {\n");
             jj.write("    a_.startRecord(this,tag);\n");
             fIdx = 0;

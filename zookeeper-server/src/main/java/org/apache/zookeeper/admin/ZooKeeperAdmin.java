@@ -34,7 +34,6 @@ import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.server.DataTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -252,7 +251,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
         }
         if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
+            stat.copyFrom(response.getStat());
         }
         return response.getData();
     }

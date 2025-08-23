@@ -86,7 +86,6 @@ import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.proto.WhoAmIResponse;
-import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1539,7 +1538,7 @@ public class ZooKeeper implements AutoCloseable {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
         }
         if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
+            stat.copyFrom(response.getStat());
         }
         return chroot.strip(response.getPath());
     }
@@ -2056,7 +2055,7 @@ public class ZooKeeper implements AutoCloseable {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
         }
         if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
+            stat.copyFrom(response.getStat());
         }
         return response.getData();
     }
@@ -2157,7 +2156,7 @@ public class ZooKeeper implements AutoCloseable {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), configZnode);
         }
         if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
+            stat.copyFrom(response.getStat());
         }
         return response.getData();
     }
@@ -2319,7 +2318,7 @@ public class ZooKeeper implements AutoCloseable {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
         }
         if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
+            stat.copyFrom(response.getStat());
         }
         return response.getAcl();
     }
@@ -2563,7 +2562,7 @@ public class ZooKeeper implements AutoCloseable {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);
         }
         if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
+            stat.copyFrom(response.getStat());
         }
         return response.getChildren();
     }
