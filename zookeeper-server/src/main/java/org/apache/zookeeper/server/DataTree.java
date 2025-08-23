@@ -342,32 +342,6 @@ public class DataTree {
                || configZookeeper.equals(path);
     }
 
-    public static void copyStatPersisted(StatPersisted from, StatPersisted to) {
-        to.setAversion(from.getAversion());
-        to.setCtime(from.getCtime());
-        to.setCversion(from.getCversion());
-        to.setCzxid(from.getCzxid());
-        to.setMtime(from.getMtime());
-        to.setMzxid(from.getMzxid());
-        to.setPzxid(from.getPzxid());
-        to.setVersion(from.getVersion());
-        to.setEphemeralOwner(from.getEphemeralOwner());
-    }
-
-    public static void copyStat(Stat from, Stat to) {
-        to.setAversion(from.getAversion());
-        to.setCtime(from.getCtime());
-        to.setCversion(from.getCversion());
-        to.setCzxid(from.getCzxid());
-        to.setMtime(from.getMtime());
-        to.setMzxid(from.getMzxid());
-        to.setPzxid(from.getPzxid());
-        to.setVersion(from.getVersion());
-        to.setEphemeralOwner(from.getEphemeralOwner());
-        to.setDataLength(from.getDataLength());
-        to.setNumChildren(from.getNumChildren());
-    }
-
     /**
      * update the count/bytes of this stat data node
      *
@@ -1307,7 +1281,7 @@ public class DataTree {
         DataNode nodeCopy;
         synchronized (node) {
             StatPersisted statCopy = new StatPersisted();
-            copyStatPersisted(node.stat, statCopy);
+            statCopy.copyFrom(node.stat);
             //we do not need to make a copy of node.data because the contents
             //are never changed
             nodeCopy = new DataNode(node.data, node.acl, statCopy);

@@ -1064,7 +1064,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ChangeRecord duplicate(long zxid) {
             StatPersisted stat = new StatPersisted();
             if (this.stat != null) {
-                DataTree.copyStatPersisted(this.stat, stat);
+                stat.copyFrom(this.stat);
             }
             ChangeRecord changeRecord = new ChangeRecord(zxid, path, stat, childCount,
                     acl == null ? new ArrayList<>() : new ArrayList<>(acl));
