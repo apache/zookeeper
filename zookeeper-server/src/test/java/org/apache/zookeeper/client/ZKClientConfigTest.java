@@ -33,11 +33,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.ZKConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
@@ -116,7 +117,7 @@ public class ZKClientConfigTest {
         }
 
         ZKClientConfig conf = new ZKClientConfig();
-        conf.addConfiguration(file.getAbsolutePath());
+        conf.addConfiguration(Paths.get(file.getAbsolutePath()));
         assertEquals(conf.getProperty(ENABLE_CLIENT_SASL_KEY), "true");
         assertEquals(conf.getProperty(ZK_SASL_CLIENT_USERNAME), "ZK");
         assertEquals(conf.getProperty(LOGIN_CONTEXT_NAME_KEY), "MyClient");

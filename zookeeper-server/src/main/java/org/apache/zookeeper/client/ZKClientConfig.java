@@ -19,9 +19,11 @@
 package org.apache.zookeeper.client;
 
 import java.io.File;
+import java.nio.file.Path;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.ZKConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
 /**
  * Handles client specific properties
@@ -64,11 +66,29 @@ public class ZKClientConfig extends ZKConfig {
         initFromJavaSystemProperties();
     }
 
-    public ZKClientConfig(File configFile) throws ConfigException {
+    /**
+     * <p><b>Use {@link ZKClientConfig#ZKClientConfig(Path configPath)} instead.</b>
+     *
+     * <p><b>The signature of this method will be changed to throw {@link ConfigException}
+     * instead of {@link QuorumPeerConfig.ConfigException} in future release.</b>
+     */
+    @Deprecated
+    public ZKClientConfig(File configFile) throws QuorumPeerConfig.ConfigException {
         super(configFile);
     }
 
-    public ZKClientConfig(String configPath) throws ConfigException {
+    /**
+     * <p><b>Use {@link ZKClientConfig#ZKClientConfig(Path configPath)} instead.</b>
+     *
+     * <p><b>The signature of this method will be changed to throw {@link ConfigException}
+     * instead of {@link QuorumPeerConfig.ConfigException} in future release.</b>
+     */
+    @Deprecated
+    public ZKClientConfig(String configPath) throws QuorumPeerConfig.ConfigException {
+        super(configPath);
+    }
+
+    public ZKClientConfig(Path configPath) throws ConfigException {
         super(configPath);
     }
 
