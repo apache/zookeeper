@@ -27,8 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +40,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.BusyServer;
 import org.apache.zookeeper.common.Time;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,30 +71,6 @@ public class SessionTimeoutTest extends ClientBase {
             if (event.getState() == Event.KeeperState.Expired) {
                 expired.complete(null);
             }
-        }
-    }
-
-    private static class BusyServer implements AutoCloseable {
-        private final ServerSocket server;
-        private final Socket client;
-
-        public BusyServer() throws IOException {
-            this.server = new ServerSocket(0, 1);
-            this.client = new Socket("127.0.0.1", server.getLocalPort());
-        }
-
-        public int getLocalPort() {
-            return server.getLocalPort();
-        }
-
-        public String getHostPort() {
-            return String.format("127.0.0.1:%d", getLocalPort());
-        }
-
-        @Override
-        public void close() throws Exception {
-            client.close();
-            server.close();
         }
     }
 
