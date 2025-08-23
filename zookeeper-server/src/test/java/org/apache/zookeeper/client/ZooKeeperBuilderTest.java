@@ -29,6 +29,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
@@ -70,7 +71,7 @@ public class ZooKeeperBuilderTest extends ClientBase {
     @Test
     public void testBuildClient() throws Exception {
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
-        ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(1000))
+        ZooKeeper zk = ZooKeeper.builder(hostPort, Duration.ofMillis(1000))
             .withDefaultWatcher(events::offer)
             .build();
         testClient(events, zk);
@@ -79,7 +80,7 @@ public class ZooKeeperBuilderTest extends ClientBase {
     @Test
     public void testBuildAdminClient() throws Exception {
         BlockingQueue<WatchedEvent> events = new LinkedBlockingQueue<>();
-        ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(1000))
+        ZooKeeperAdmin zk = ZooKeeper.builder(hostPort, Duration.ofMillis(1000))
             .withDefaultWatcher(events::offer)
             .buildAdmin();
         testClient(events, zk);
