@@ -134,6 +134,10 @@ public class NullMetricsProvider implements MetricsProvider {
         @Override
         public void add(final String key, final long delta) {
         }
+
+        @Override
+        public void remove(String key) {
+        }
     }
 
     private static final class NullSummary implements Summary {
@@ -152,6 +156,10 @@ public class NullMetricsProvider implements MetricsProvider {
 
         @Override
         public void add(String key, long value) {
+        }
+
+        @Override
+        public void remove(String key) {
         }
 
     }
