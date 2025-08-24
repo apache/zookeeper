@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.client;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -44,9 +44,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.client.HostProvider;
-import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.Time;
 import org.burningwave.tools.net.DefaultHostResolver;
 import org.burningwave.tools.net.HostResolutionRequestInterceptor;
@@ -55,7 +52,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class StaticHostProviderTest extends ZKTestCase {
+public class StaticHostProviderTest {
 
     @BeforeAll
     public static void setupDNSMocks() {

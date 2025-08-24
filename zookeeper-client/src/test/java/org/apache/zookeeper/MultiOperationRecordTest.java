@@ -27,7 +27,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.junit.jupiter.api.Test;
 
-public class MultiOperationRecordTest extends ZKTestCase {
+public class MultiOperationRecordTest {
 
     @Test
     public void testRoundTrip() throws IOException {

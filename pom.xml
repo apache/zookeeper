@@ -62,6 +62,7 @@
     <module>zookeeper-server</module>
     <module>zookeeper-metrics-providers</module>
     <module>zookeeper-client</module>
+    <module>zookeeper-client-c</module>
     <module>zookeeper-recipes</module>
     <module>zookeeper-assembly</module>
     <module>zookeeper-compatibility-tests</module>
@@ -292,6 +293,7 @@
         <module>zookeeper-contrib</module>
         <!-- zookeeper-it needed by fatjar contrib -->
         <module>zookeeper-it</module>
+        <module>zookeeper-client-c</module>
       </modules>
     </profile>
     <profile>

@@ -21,12 +21,12 @@ package org.apache.zookeeper.common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,40 +100,13 @@ public class ZKConfig {
      */
     protected void handleBackwardCompatibility() {
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
-        properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
 
-        try (ClientX509Util clientX509Util = new ClientX509Util()) {
-            putSSLProperties(clientX509Util);
-            properties.put(clientX509Util.getSslAuthProviderProperty(), System.getProperty(clientX509Util.getSslAuthProviderProperty()));
-            properties.put(clientX509Util.getSslProviderProperty(), System.getProperty(clientX509Util.getSslProviderProperty()));
-        }
-
-        try (X509Util x509Util = new QuorumX509Util()) {
-            putSSLProperties(x509Util);
-        }
-    }
-
-    private void putSSLProperties(X509Util x509Util) {
-        properties.put(x509Util.getSslProtocolProperty(), System.getProperty(x509Util.getSslProtocolProperty()));
-        properties.put(x509Util.getSslEnabledProtocolsProperty(), System.getProperty(x509Util.getSslEnabledProtocolsProperty()));
-        properties.put(x509Util.getSslCipherSuitesProperty(), System.getProperty(x509Util.getSslCipherSuitesProperty()));
-        properties.put(x509Util.getSslKeystoreLocationProperty(), System.getProperty(x509Util.getSslKeystoreLocationProperty()));
-        properties.put(x509Util.getSslKeystorePasswdProperty(), System.getProperty(x509Util.getSslKeystorePasswdProperty()));
-        properties.put(x509Util.getSslKeystorePasswdPathProperty(), System.getProperty(x509Util.getSslKeystorePasswdPathProperty()));
-        properties.put(x509Util.getSslKeystoreTypeProperty(), System.getProperty(x509Util.getSslKeystoreTypeProperty()));
-        properties.put(x509Util.getSslTruststoreLocationProperty(), System.getProperty(x509Util.getSslTruststoreLocationProperty()));
-        properties.put(x509Util.getSslTruststorePasswdProperty(), System.getProperty(x509Util.getSslTruststorePasswdProperty()));
-        properties.put(x509Util.getSslTruststorePasswdPathProperty(), System.getProperty(x509Util.getSslTruststorePasswdPathProperty()));
-        properties.put(x509Util.getSslTruststoreTypeProperty(), System.getProperty(x509Util.getSslTruststoreTypeProperty()));
-        properties.put(x509Util.getSslContextSupplierClassProperty(), System.getProperty(x509Util.getSslContextSupplierClassProperty()));
-        properties.put(x509Util.getSslClientHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslClientHostnameVerificationEnabledProperty()));
-        properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
-        properties.put(x509Util.getSslCrlEnabledProperty(), System.getProperty(x509Util.getSslCrlEnabledProperty()));
-        properties.put(x509Util.getSslOcspEnabledProperty(), System.getProperty(x509Util.getSslOcspEnabledProperty()));
-        properties.put(x509Util.getSslClientAuthProperty(), System.getProperty(x509Util.getSslClientAuthProperty()));
-        properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
-        properties.put(x509Util.getFipsModeProperty(), System.getProperty(x509Util.getFipsModeProperty()));
+        System.getProperties().forEach((key, value) -> {
+            if (((String) key).startsWith("zookeeper.")) {
+                properties.put((String) key, (String) value);
+            }
+        });
     }
 
     /**
@@ -210,7 +183,17 @@ public class ZKConfig {
             parseProperties(cfg);
         } catch (IOException | IllegalArgumentException e) {
             LOG.error("Error while configuration from: {}", configFile.getAbsolutePath(), e);
-            throw new ConfigException("Error while processing " + configFile.getAbsolutePath(), e);
+            String msg = "Error while processing " + configFile.getAbsolutePath();
+            try {
+                Class<?> clazz = Class.forName("org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException");
+                Class<? extends ConfigException> exceptionClass = clazz.asSubclass(ConfigException.class);
+                Constructor<? extends ConfigException> constructor = exceptionClass.getDeclaredConstructor(String.class, Exception.class);
+                throw constructor.newInstance(msg, e);
+            } catch (ClassNotFoundException ignored) {
+            } catch (Exception ignored) {
+                LOG.warn("Fail to construct QuorumPeerConfig.ConfigException", e);
+            }
+            throw new ConfigException(msg, e);
         }
     }
 

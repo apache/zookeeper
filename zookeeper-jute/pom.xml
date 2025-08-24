@@ -110,7 +110,7 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <workingDirectory>${project.basedir}/../zookeeper-client/zookeeper-client-c/generated/</workingDirectory>
+              <workingDirectory>${project.basedir}/../zookeeper-client-c/generated/</workingDirectory>
               <executable>java</executable>
               <arguments>
                 <argument>-classpath</argument>

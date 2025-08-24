@@ -22,7 +22,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.zookeeper</groupId>
-    <artifactId>zookeeper-client</artifactId>
+    <artifactId>parent</artifactId>
     <version>3.10.0-SNAPSHOT</version>
   </parent>
 
@@ -37,6 +37,13 @@
 
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <!-- this module isn't to be deployed to Maven Central -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
         <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -68,7 +75,7 @@
               <workingDirectory>${project.build.directory}/c</workingDirectory>
               <executable>${project.basedir}/configure</executable>
               <environmentVariables>
-                <base_dir>${project.basedir}/../..</base_dir>
+                <base_dir>${project.basedir}/..</base_dir>
                 <CALLER>ANT</CALLER>
               </environmentVariables>
               <arguments>
@@ -106,8 +113,8 @@
                   <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
                   <env key="PATH" path="${env.PATH};${basedir};" />
                   <env key="CALLER" value="ANT" />
-                  <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
-                  <env key="base_dir" value="${basedir}/../.." />
+                  <env key="CLOVER_HOME" value="${basedir}/../zookeeper-server/target" />
+                  <env key="base_dir" value="${basedir}/.." />
                   <arg line="clean install" />
                 </exec>
               </target>
@@ -176,8 +183,8 @@
                       <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
                       <env key="PATH" path="${env.PATH};${basedir};" />
                       <env key="CALLER" value="ANT" />
-                      <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
-                      <env key="base_dir" value="${basedir}/../.." />
+                      <env key="CLOVER_HOME" value="${basedir}/../zookeeper-server/target" />
+                      <env key="base_dir" value="${basedir}/.." />
                       <arg line="check" />
                     </exec>
                   </target>

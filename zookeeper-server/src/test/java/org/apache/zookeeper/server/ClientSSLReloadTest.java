@@ -156,7 +156,7 @@ public class ClientSSLReloadTest extends ZKTestCase {
                 try (ZooKeeper zk = new ZooKeeper(zkServer.getSecureConnectionString(), 60000, (WatchedEvent event) -> {
                     switch (event.getState()) {
                         case SyncConnected:
-                            l.countDown();
+                            l2.countDown();
                             break;
                     }
                 }, zKClientConfig)) {

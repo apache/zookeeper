@@ -18,18 +18,11 @@
 
 package org.apache.zookeeper.common;
 
-/**
- * X509 utilities specific for server-server (quorum) communication framework.
- */
-public class QuorumX509Util extends X509Util {
-
-    @Override
-    protected String getConfigPrefix() {
-        return "zookeeper.ssl.quorum.";
+public class ConfigException extends Exception {
+    public ConfigException(String msg) {
+        super(msg);
     }
-
-    @Override
-    protected boolean shouldVerifyClientHostname() {
-        return true;
+    public ConfigException(String msg, Exception e) {
+        super(msg, e);
     }
 }

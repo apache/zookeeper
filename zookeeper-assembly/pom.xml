@@ -68,7 +68,6 @@
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-client</artifactId>
       <version>${project.version}</version>
-      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
