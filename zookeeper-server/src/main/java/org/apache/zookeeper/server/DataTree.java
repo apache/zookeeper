@@ -343,6 +343,26 @@ public class DataTree {
     }
 
     /**
+     * Use {@link StatPersisted#copyFrom(StatPersisted)} instead.
+     *
+     * <p>Apache Curator uses it, let's keep it for now to let them and their clients to react.
+     */
+    @Deprecated
+    public static void copyStatPersisted(StatPersisted from, StatPersisted to) {
+        to.copyFrom(from);
+    }
+
+    /**
+     * Use {@link Stat#copyFrom(Stat)} instead.
+     *
+     * <p> Apache Curator uses it, let's keep it for now to let them and their clients to react.
+     */
+    @Deprecated
+    public static void copyStat(Stat from, Stat to) {
+        to.copyFrom(from);
+    }
+
+    /**
      * update the count/bytes of this stat data node
      *
      * @param lastPrefix
