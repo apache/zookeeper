@@ -34,13 +34,13 @@ from [the official Apache Archives](https://archive.apache.org/dist/zookeeper/).
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.9.3 is our current release, and 3.8.4 our latest stable release.
+Apache ZooKeeper 3.9.4 is our current release, and 3.8.4 our latest stable release.
 
-### Apache ZooKeeper 3.9.3
+### Apache ZooKeeper 3.9.4
 
-[Apache ZooKeeper 3.9.3](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.9.4](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.9.3 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3.tar.gz.sha512))
+[Apache ZooKeeper 3.9.4 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.8.4 (latest stable release)
 
@@ -66,6 +66,11 @@ You can verify the integrity of a downloaded release using release-signing [KEYS
 
 <a name="news"></a>
 ## News
+
+### 29 Aug, 2025: release 3.9.4 available
+This is a bugfix release for 3.9 branch.
+
+See [ZooKeeper 3.9.4 Release Notes](https://zookeeper.apache.org/doc/r3.9.4/releasenotes.html) for details.
 
 ### 24 Oct, 2024: release 3.9.3 available
 This is a bugfix release for 3.9 branch.
