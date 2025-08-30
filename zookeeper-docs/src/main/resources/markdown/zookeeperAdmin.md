@@ -2279,7 +2279,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
 * *metricsProvider.maxQueueSize* :
    **New in 3.7.1:**
    The max queue size for Prometheus summary metrics reporting task.
-   Default value is 1000000.
+   Default value is 10000.
    
 * *metricsProvider.workerShutdownTimeoutMs* :
    **New in 3.7.1:**
