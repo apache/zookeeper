@@ -21,12 +21,13 @@ package org.apache.zookeeper.common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,27 +63,48 @@ public class ZKConfig {
     }
 
     /**
+     * <p><b>Use {@link ZKConfig#ZKConfig(Path configPath)} instead.</b>
+     *
+     * <p><b>The signature of this method will be changed to throw {@link ConfigException}
+     * instead of {@link QuorumPeerConfig.ConfigException} in future release.</b>
+     *
      * @param configPath
      *            Configuration file path
      * @throws ConfigException
      *             if failed to load configuration properties
      */
-
-    public ZKConfig(String configPath) throws ConfigException {
+    @Deprecated
+    public ZKConfig(String configPath) throws QuorumPeerConfig.ConfigException {
         this(new File(configPath));
     }
 
     /**
+     * <p><b>Use {@link ZKConfig#ZKConfig(Path configPath)} instead.</b>
+     *
+     * <p><b>The signature of this method will be changed to throw {@link ConfigException}
+     * instead of {@link QuorumPeerConfig.ConfigException} in future release.</b>
      *
      * @param configFile
      *            Configuration file
      * @throws ConfigException
      *             if failed to load configuration properties
      */
-    public ZKConfig(File configFile) throws ConfigException {
+    @Deprecated
+    public ZKConfig(File configFile) throws QuorumPeerConfig.ConfigException {
         this();
         addConfiguration(configFile);
         LOG.info("ZK Config {}", this.properties);
+    }
+
+    /**
+     * Constructs a {@link ZKConfig} with properties from file.
+     *
+     * @param configPath path to configuration file
+     * @throws ConfigException
+     */
+    @SuppressWarnings("deprecation")
+    public ZKConfig(Path configPath) throws ConfigException {
+        this(configPath.toFile());
     }
 
     private void init() {
@@ -191,10 +213,27 @@ public class ZKConfig {
      * Add a configuration resource. The properties form this configuration will
      * overwrite corresponding already loaded property and system property
      *
+     * @param configPath path to Configuration file.
+     */
+    @SuppressWarnings("deprecation")
+    public void addConfiguration(Path configPath) throws ConfigException {
+        addConfiguration(configPath.toFile());
+    }
+
+    /**
+     * <p><b>Use {@link #addConfiguration(Path)} instead.</b></p>
+     *
+     * <p><b>The signature of this method will be changed to throw {@link ConfigException}
+     * instead of {@link QuorumPeerConfig.ConfigException} in future release.</b>
+     *
+     * <p>Add a configuration resource. The properties form this configuration will
+     * overwrite corresponding already loaded property and system property
+     *
      * @param configFile
      *            Configuration file.
      */
-    public void addConfiguration(File configFile) throws ConfigException {
+    @Deprecated
+    public void addConfiguration(File configFile) throws QuorumPeerConfig.ConfigException {
         LOG.info("Reading configuration from: {}", configFile.getAbsolutePath());
         try {
             configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath()
@@ -210,18 +249,24 @@ public class ZKConfig {
             parseProperties(cfg);
         } catch (IOException | IllegalArgumentException e) {
             LOG.error("Error while configuration from: {}", configFile.getAbsolutePath(), e);
-            throw new ConfigException("Error while processing " + configFile.getAbsolutePath(), e);
+            throw new QuorumPeerConfig.ConfigException("Error while processing " + configFile.getAbsolutePath(), e);
         }
     }
 
     /**
-     * Add a configuration resource. The properties form this configuration will
+     * <p><b>Use {@link #addConfiguration(Path)} instead.</b></p>
+     *
+     * <p><b>The signature of this method will be changed to throw {@link ConfigException}
+     * instead of {@link QuorumPeerConfig.ConfigException} in future release.</b>
+     *
+     * <p>Add a configuration resource. The properties form this configuration will
      * overwrite corresponding already loaded property and system property
      *
      * @param configPath
      *            Configuration file path.
      */
-    public void addConfiguration(String configPath) throws ConfigException {
+    @Deprecated
+    public void addConfiguration(String configPath) throws QuorumPeerConfig.ConfigException {
         addConfiguration(new File(configPath));
     }
 
