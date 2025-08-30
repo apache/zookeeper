@@ -48,7 +48,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
+      <artifactId>zookeeper-server</artifactId>
       <classifier>tests</classifier>
       <type>test-jar</type>
       <version>${project.version}</version>

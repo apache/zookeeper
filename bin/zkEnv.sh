@@ -104,7 +104,7 @@ for d in "$ZOOBINDIR"/../build/lib/*.jar; do
 done
 
 #make it work for developers
-for d in "$ZOOBINDIR"/../zookeeper-server/target/lib/*.jar; do
+for d in "$ZOOBINDIR"/../zookeeper/target/lib/*.jar; do
   CLASSPATH="$d:$CLASSPATH"
 done
 
@@ -117,6 +117,8 @@ done
 CLASSPATH="$ZOOBINDIR/../build/classes:$CLASSPATH"
 
 #make it work for developers
+CLASSPATH="$ZOOBINDIR/../zookeeper-client/target/classes:$CLASSPATH"
+CLASSPATH="$ZOOBINDIR/../zookeeper-common/target/classes:$CLASSPATH"
 CLASSPATH="$ZOOBINDIR/../zookeeper-server/target/classes:$CLASSPATH"
 
 #make it work for developers
