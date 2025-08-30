@@ -209,6 +209,11 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             } catch (IOException e) {
                 LOG.debug("Ignoring exception during channel close", e);
             }
+            try {
+                selector.selectNow();
+            } catch (IOException e) {
+                LOG.debug("Ignoring exception during closing of cancelled socket", e);
+            }
         }
         try {
             Thread.sleep(100);
