@@ -46,7 +46,7 @@ import org.apache.zookeeper.server.metric.SimpleCounterSet;
  * It is mostly useful to make the legacy 4 letter words interface work as
  * expected.
  */
-public class DefaultMetricsProvider implements MetricsProvider {
+public class DefaultMetricsProvider extends BaseMetricsProvider implements MetricsProvider {
 
     private final DefaultMetricsContext rootMetricsContext = new DefaultMetricsContext();
 
@@ -155,6 +155,9 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
         @Override
         public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
+            if (getSummarySetBlackList().contains(name)) {
+                return new NullMetricsProvider.NullSummarySet();
+            }
             if (detailLevel == DetailLevel.BASIC) {
                 return basicSummarySets.computeIfAbsent(name, (n) -> {
                     if (summarySets.containsKey(n)) {
