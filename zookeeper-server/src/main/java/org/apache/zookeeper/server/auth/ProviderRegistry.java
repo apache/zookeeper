@@ -44,6 +44,9 @@ public class ProviderRegistry {
 
     public static void initialize() {
         synchronized (ProviderRegistry.class) {
+            if (initialized) {
+                return;
+            }
             IPAuthenticationProvider ipp = new IPAuthenticationProvider();
             authenticationProviders.put(ipp.getScheme(), ipp);
 
