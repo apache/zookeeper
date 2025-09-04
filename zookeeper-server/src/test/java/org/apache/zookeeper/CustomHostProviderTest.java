@@ -27,7 +27,7 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 
-public class CustomHostProviderTest extends ZKTestCase {
+public class CustomHostProviderTest {
 
     private AtomicInteger counter = new AtomicInteger(3);
 

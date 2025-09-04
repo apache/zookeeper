@@ -36,7 +36,6 @@
       </includes>
       <excludes>
         <exclude>org.apache.zookeeper:zookeeper-recipes</exclude>
-        <exclude>org.apache.zookeeper:zookeeper-client</exclude>
         <exclude>org.apache.zookeeper:zookeeper-docs</exclude>
       </excludes>
       <useProjectArtifact>false</useProjectArtifact>
@@ -64,6 +63,13 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
+      <!-- ZooKeeper client generated api document -->
+      <directory>${project.basedir}/../zookeeper-client/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-client</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
       <!-- ZooKeeper server generated api document -->
       <directory>${project.basedir}/../zookeeper-server/target/apidocs</directory>
       <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
@@ -71,8 +77,15 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
+      <!-- ZooKeeper cli generated api document -->
+      <directory>${project.basedir}/../zookeeper-cli/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-cli</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
       <!-- License files for 3rd party libs -->
-      <directory>${project.basedir}/../zookeeper-server/src/main/resources/lib</directory>
+      <directory>${project.basedir}/../zookeeper/src/main/resources/lib</directory>
       <includes>
         <include>*.txt</include>
       </includes>

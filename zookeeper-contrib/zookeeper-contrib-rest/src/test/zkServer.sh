@@ -57,9 +57,10 @@ for i in "$zk_base"/build/lib/*.jar; do
   CLASSPATH="$CLASSPATH:$i"
 done
 
-for i in "$zk_base"/zookeeper-server/src/main/resource/lib/*.jar; do
+for i in "$zk_base"/zookeeper/target/lib/*.jar; do
   CLASSPATH="$CLASSPATH:$i"
 done
+
 export CLASSPATH
 
 case $1 in

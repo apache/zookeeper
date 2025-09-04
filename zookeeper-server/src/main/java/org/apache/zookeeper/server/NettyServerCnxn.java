@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
@@ -177,7 +176,7 @@ public class NettyServerCnxn extends ServerCnxn {
             }
             return;
         }
-        ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
+        ReplyHeader h = new ReplyHeader(ZooDefs.PredefinedXids.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(
                 LOG,

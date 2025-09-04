@@ -48,16 +48,12 @@ if [[ $1 == "startClean" ]]; then
   rm -rf "$WORK_DIR"
 fi
 
-CLASSPATH="$CLASSPATH:$PROJECT_ROOT/zookeeper-server/target/classes"
 CLASSPATH="$CLASSPATH:$PROJECT_ROOT/conf"
 
-for i in "$PROJECT_ROOT"/zookeeper-server/target/lib/*.jar; do
+for i in "$PROJECT_ROOT"/zookeeper/target/lib/*.jar; do
   CLASSPATH="$CLASSPATH:$i"
 done
 
-for i in "$PROJECT_ROOT"/zookeeper-server/src/main/resource/lib/*.jar; do
-  CLASSPATH="$CLASSPATH:$i"
-done
 export CLASSPATH
 
 # Make sure nothing is left over from before
@@ -69,7 +65,7 @@ case $1 in
 
     rm -rf "$WORK_DIR/ssl"
     mkdir -p "$WORK_DIR/ssl"
-    cp "$PROJECT_ROOT/zookeeper-client/zookeeper-client-c/ssl/gencerts.sh" "$WORK_DIR/ssl/"
+    cp "$PROJECT_ROOT/zookeeper-client-c/ssl/gencerts.sh" "$WORK_DIR/ssl/"
     (cd "$WORK_DIR/ssl/" && ./gencerts.sh)
 
     sed "s#WORKDIR#$WORK_DIR#g" "$TEST_DIR/zoo.cfg" >"$WORK_DIR/zoo.cfg"
