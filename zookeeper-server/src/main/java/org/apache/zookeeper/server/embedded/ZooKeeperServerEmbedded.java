@@ -117,6 +117,16 @@ public interface ZooKeeperServerEmbedded extends AutoCloseable {
     void start(long startupTimeout) throws Exception;
 
     /**
+     * Get client port for no secure connection.
+     */
+    int getClientPort();
+
+    /**
+     * Get client port for secure connection.
+     */
+    int getSecureClientPort();
+
+    /**
      * Get a connection string useful for the client.
      * @return the connection string
      * @throws Exception in case the connection string is not available
