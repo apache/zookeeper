@@ -107,8 +107,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                         @Override
                         public void start() {
                             super.start();
-                            boundClientPort = getClientPort();
-                            boundSecureClientPort = getSecureClientPort();
+                            boundClientPort = super.getClientPort();
+                            boundSecureClientPort = super.getSecureClientPort();
                             LOG.info("ZK Server {} started", this);
                             started.complete(null);
                         }
@@ -148,8 +148,8 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
                 @Override
                 public void serverStarted() {
                     LOG.info("ZK Server started");
-                    boundClientPort = getClientPort();
-                    boundSecureClientPort = getSecureClientPort();
+                    boundClientPort = super.getClientPort();
+                    boundSecureClientPort = super.getSecureClientPort();
                     started.complete(null);
                 }
             };
@@ -188,6 +188,16 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             close();
             throw err;
         }
+    }
+
+    @Override
+    public int getClientPort() {
+        return boundClientPort;
+    }
+
+    @Override
+    public int getSecureClientPort() {
+        return boundSecureClientPort;
     }
 
     @Override

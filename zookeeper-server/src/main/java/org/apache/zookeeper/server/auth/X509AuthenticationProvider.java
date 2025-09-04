@@ -89,6 +89,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             boolean crlEnabled = config.getBoolean(x509Util.getSslCrlEnabledProperty(), Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
             boolean ocspEnabled = config.getBoolean(x509Util.getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+            boolean clientHostnameVerificationEnabled = x509Util.isClientHostnameVerificationEnabled(config);
 
             X509KeyManager km = null;
             X509TrustManager tm = null;
@@ -120,7 +121,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         crlEnabled,
                         ocspEnabled,
                         hostnameVerificationEnabled,
-                        false,
+                        clientHostnameVerificationEnabled,
                         fipsMode);
                 } catch (TrustManagerException e) {
                     LOG.error("Failed to create trust manager", e);
