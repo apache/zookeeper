@@ -95,8 +95,9 @@ public class CreateTTLTest extends ClientBase {
         containerManager.checkContainers();
         assertNull(zk.exists("/foo", false), "Ttl node should have been deleted");
 
-        // validate deleted TTL nodes count
+        // validate created and deleted TTL nodes count
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
+        assertTrue((long) metrics.get("ttl_node_created_count") >= 1);
         assertTrue((long) metrics.get("ttl_node_deleted_count") >= 1);
     }
 
