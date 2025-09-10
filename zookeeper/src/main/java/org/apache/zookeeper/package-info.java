@@ -16,10 +16,16 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.osgi;
-
 /**
- * <b>DON'T USE THIS.</b>
+ * Module to bundle `zookeeper-client`, `zookeeper-server` and others together.
+ *
+ * <p>This module exists for two purposes:
+ * <ol>
+ *     <li>keep compatibility with old zookeeper artifact</li>
+ *     <li>build osgi bundle jar</li>
+ * </ol>
+ *
+ * <p><b>DON'T DELETE THIS FILE.</b>
  *
  * <p>`maven-bundle-plugin` does not include classes if there is no source code. I have no idea why.
  *
@@ -30,8 +36,6 @@ package org.apache.zookeeper.osgi;
  * <p>We have to include above classes to this bundle without bring other classes from `zookeeper-jute`.
  * `Embed-Dependency` can't handle this as we can not embed `zookeeper-jute` while jar of `zookeeper-server`
  * does not contain those classes. So we have to resort to exclude/include from `Export-Package` as before.
- * But, it does not work if there is no source code, so we have this file for OSGI bundle, and it has to be
- * public otherwise `maven-javadoc-plugin` complains.
+ * But, it does not work if there is no source code, so we have this file for OSGI bundle.
  */
-public class Osgi {
-}
+package org.apache.zookeeper;
