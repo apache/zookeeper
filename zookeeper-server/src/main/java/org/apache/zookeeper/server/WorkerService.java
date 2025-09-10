@@ -167,7 +167,6 @@ public class WorkerService {
      */
     private static class DaemonThreadFactory implements ThreadFactory {
 
-        final ThreadGroup group;
         final AtomicInteger threadNumber = new AtomicInteger(1);
         final String namePrefix;
 
@@ -177,22 +176,15 @@ public class WorkerService {
 
         DaemonThreadFactory(String name, int firstThreadNum) {
             threadNumber.set(firstThreadNum);
-            SecurityManager s = System.getSecurityManager();
-            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
             namePrefix = name + "-";
         }
 
+        @Override
         public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
-            if (!t.isDaemon()) {
-                t.setDaemon(true);
-            }
-            if (t.getPriority() != Thread.NORM_PRIORITY) {
-                t.setPriority(Thread.NORM_PRIORITY);
-            }
+            Thread t = new Thread(r, namePrefix + threadNumber.getAndIncrement());
+            t.setDaemon(true);
             return t;
         }
-
     }
 
     public void start() {
