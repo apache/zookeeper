@@ -169,7 +169,7 @@ public class X509TestHelpers {
             throw new IllegalArgumentException("CA private key does not match the public key in the CA cert");
         }
         Date now = new Date();
-        X509v3CertificateBuilder builder = initCertBuilder(new X500Name(caCert.getIssuerDN().getName()), now, new Date(
+        X509v3CertificateBuilder builder = initCertBuilder(new X500Name(caCert.getIssuerX500Principal().getName()), now, new Date(
                 now.getTime()
                         + expirationMillis), certSubject, certPublicKey);
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false)); // not a CA
@@ -384,7 +384,7 @@ public class X509TestHelpers {
     private static byte[] certToTrustStoreBytes(X509Certificate cert, String keyPassword, KeyStore trustStore) throws IOException, GeneralSecurityException {
         char[] keyPasswordChars = keyPassword == null ? new char[0] : keyPassword.toCharArray();
         trustStore.load(null, keyPasswordChars);
-        trustStore.setCertificateEntry(cert.getSubjectDN().toString(), cert);
+        trustStore.setCertificateEntry(cert.getSubjectX500Principal().toString(), cert);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         trustStore.store(outputStream, keyPasswordChars);
         outputStream.flush();
