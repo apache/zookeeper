@@ -200,7 +200,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         // Write the truststore
         KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
         trustStore.load(null, PASSWORD);
-        trustStore.setCertificateEntry(rootCertificate.getSubjectDN().toString(), rootCertificate);
+        trustStore.setCertificateEntry(rootCertificate.getSubjectX500Principal().toString(), rootCertificate);
         FileOutputStream outputStream = new FileOutputStream(truststorePath);
         trustStore.store(outputStream, PASSWORD);
         outputStream.flush();
