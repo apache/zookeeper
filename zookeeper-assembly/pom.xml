@@ -61,6 +61,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-client</artifactId>
       <version>${project.version}</version>
     </dependency>
