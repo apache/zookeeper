@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <zookeeper.h>
 #include <assert.h>
@@ -1466,6 +1467,19 @@ PyObject *pyzoo_set_debug_level(PyObject *self, PyObject *args)
 }
 
 static PyObject *log_stream = NULL;
+#if PY_MAJOR_VERSION >= 3
+static PyObject *PyIOBase_TypeObj;
+static int init_file_emulator(void)
+{
+  PyObject *io = PyImport_ImportModule("_io");
+  if (io == NULL)
+    return -1;
+  PyIOBase_TypeObj = PyObject_GetAttrString(io, "_IOBase");
+  if (PyIOBase_TypeObj == NULL)
+    return -1;
+  return 0;
+}
+#endif
 
 /* Set the output file-like object for logging output. Returns Py_None */
 PyObject *pyzoo_set_log_stream(PyObject *self, PyObject *args)
@@ -1477,8 +1491,11 @@ PyObject *pyzoo_set_log_stream(PyObject *self, PyObject *args)
   }
   
 #if PY_MAJOR_VERSION >= 3
-  extern PyTypeObject PyIOBase_Type;
-  if (!PyObject_IsInstance(pystream, (PyObject *)&PyIOBase_Type)) {
+  if (init_file_emulator() < 0) {
+    return NULL;
+  }
+
+  if (!PyObject_IsInstance(pystream, PyIOBase_TypeObj)) {
 #else
   if(!PyFile_Check(pystream)) {
 #endif
