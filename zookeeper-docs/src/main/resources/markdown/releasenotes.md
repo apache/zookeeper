@@ -47,6 +47,7 @@ This could be solved by specifying compatiable slf4j and logback versions in cla
 * [ZOOKEEPER-4928](https://issues.apache.org/jira/browse/ZOOKEEPER-4928) - Version in zookeeper_version.h is not updated
 * [ZOOKEEPER-4933](https://issues.apache.org/jira/browse/ZOOKEEPER-4933) - Connection throttle exception causing all connections to be rejected
 * [ZOOKEEPER-4953](https://issues.apache.org/jira/browse/ZOOKEEPER-4953) - Fixing Typo In ZooKeeper Programmer&#39;s Guide
+* [ZOOKEEPER-4960](https://issues.apache.org/jira/browse/ZOOKEEPER-4960) - Upgrade OWASP plugin to 12.1.3 due to recent parsing errors
                 
 ## Improvement
 
@@ -69,7 +70,7 @@ This could be solved by specifying compatiable slf4j and logback versions in cla
 * [ZOOKEEPER-4679](https://issues.apache.org/jira/browse/ZOOKEEPER-4679) - Fix CI failure and warning
 * [ZOOKEEPER-4868](https://issues.apache.org/jira/browse/ZOOKEEPER-4868) - Bump commons-io library to 2.14.0
 * [ZOOKEEPER-4897](https://issues.apache.org/jira/browse/ZOOKEEPER-4897) - Upgrade Netty to fix CVE-2025-24970 in ZooKeeper 3.9.3
-                                                                                                                                                        
+* [ZOOKEEPER-4959](https://issues.apache.org/jira/browse/ZOOKEEPER-4959) - Fix license files after logback/slf4j upgrade
 
 &nbsp;
 
