@@ -24,7 +24,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
-import org.apache.zookeeper.ZKUtil;
+import org.apache.zookeeper.ZKCommonUtil;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.proto.CreateRequest;
@@ -101,7 +101,7 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.setACL:
                     op = AuditConstants.OP_SETACL;
                     SetACLRequest setACLRequest = request.readRequestRecord(SetACLRequest::new);
-                    acls = ZKUtil.aclToString(setACLRequest.getAcl());
+                    acls = ZKCommonUtil.aclToString(setACLRequest.getAcl());
                     if (failedTxn) {
                         path = setACLRequest.getPath();
                     }

@@ -29,7 +29,7 @@
   <fileSets>
     <fileSet>
       <!-- ZooKeeper C client lib and include files -->
-      <directory>${project.basedir}/../zookeeper-client/zookeeper-client-c/target/c</directory>
+      <directory>${project.basedir}/../zookeeper-client-c/target/c</directory>
       <outputDirectory>usr</outputDirectory>
       <includes>
         <include>include/**/*</include>
@@ -40,7 +40,7 @@
     </fileSet>
     <fileSet>
       <!-- ZooKeeper C client binaries-->
-      <directory>${project.basedir}/../zookeeper-client/zookeeper-client-c/target/c</directory>
+      <directory>${project.basedir}/../zookeeper-client-c/target/c</directory>
       <outputDirectory>usr</outputDirectory>
       <includes>
         <include>bin/*</include>
@@ -50,7 +50,7 @@
     </fileSet>
     <fileSet>
       <!-- ZooKeeper license -->
-      <directory>${project.basedir}/../zookeeper-client/zookeeper-client-c</directory>
+      <directory>${project.basedir}/../zookeeper-client-c</directory>
       <includes>
         <include>LICENSE</include>
       </includes>

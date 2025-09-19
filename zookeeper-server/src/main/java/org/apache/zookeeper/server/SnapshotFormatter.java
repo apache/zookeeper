@@ -31,7 +31,7 @@ import java.util.Set;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.ZKUtil;
+import org.apache.zookeeper.ZKCommonUtil;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.SnapStream;
@@ -77,7 +77,7 @@ public class SnapshotFormatter {
             return;
         }
 
-        String error = ZKUtil.validateFileInput(snapshotFile);
+        String error = ZKCommonUtil.validateFileInput(snapshotFile);
         if (null != error) {
             System.err.println(error);
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());

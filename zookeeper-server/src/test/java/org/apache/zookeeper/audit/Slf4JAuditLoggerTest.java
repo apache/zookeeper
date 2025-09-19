@@ -33,7 +33,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKUtil;
+import org.apache.zookeeper.ZKCommonUtil;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.audit.AuditEvent.Result;
@@ -188,11 +188,11 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         }
         verifyLog(
                 getAuditLog(AuditConstants.OP_SETACL, path, Result.FAILURE,
-                        ZKUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
+                        ZKCommonUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
         zk.setACL(path, openAclUnsafe, -1);
         verifyLog(
                 getAuditLog(AuditConstants.OP_SETACL, path, Result.SUCCESS,
-                        ZKUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
+                        ZKCommonUtil.aclToString(openAclUnsafe), null), readAuditLog(os));
     }
 
     @Test

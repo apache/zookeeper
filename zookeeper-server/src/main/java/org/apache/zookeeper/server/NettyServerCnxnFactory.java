@@ -510,7 +510,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     NettyServerCnxnFactory() {
-        x509Util = new ClientX509Util();
+        x509Util = new ClientX509Util() {
+            @Override
+            protected void onCertReloaded() {
+                if (Boolean.getBoolean(CLIENT_CERT_RELOAD_KEY)) {
+                    ProviderRegistry.addOrUpdateProvider(ProviderRegistry.AUTHPROVIDER_PROPERTY_PREFIX + "x509");
+                }
+            }
+        };
 
         boolean useClientReload = Boolean.getBoolean(CLIENT_CERT_RELOAD_KEY);
         LOG.info("{}={}", CLIENT_CERT_RELOAD_KEY, useClientReload);
