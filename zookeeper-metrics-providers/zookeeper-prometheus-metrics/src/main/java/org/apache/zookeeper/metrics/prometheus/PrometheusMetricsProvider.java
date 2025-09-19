@@ -23,7 +23,6 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.MetricsServlet;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Optional;
@@ -170,28 +169,32 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public void start() throws MetricsProviderLifeCycleException {
         this.executorOptional = createExecutor();
         try {
-            LOG.info("Starting /metrics {} endpoint at HTTP port: {}, HTTPS port: {}, exportJvmInfo: {}",
-                    httpPort > 0 ? httpPort : "disabled",
-                    httpsPort > 0 ? httpsPort : "disabled",
+            LOG.info("Starting /metrics endpoint at HTTP port: {}, HTTPS port: {}, exportJvmInfo: {}",
+                    httpPort >= 0 ? httpPort : "disabled",
+                    httpsPort >= 0 ? httpsPort : "disabled",
                     exportJvmInfo);
             if (exportJvmInfo) {
                 DefaultExports.initialize();
             }
-            if (httpPort == -1) {
-                server = new Server();
-            } else {
-                server = new Server(new InetSocketAddress(host, httpPort));
+            server = new Server();
+            ServerConnector httpConnector = null;
+            ServerConnector httpsConnector = null;
+            if (httpPort >= 0) {
+                httpConnector = new ServerConnector(server);
+                httpConnector.setHost(host);
+                httpConnector.setPort(httpPort);
+                server.addConnector(httpConnector);
             }
-            if (httpsPort != -1) {
+            if (httpsPort >= 0) {
                 SslContextFactory sslServerContextFactory = new SslContextFactory.Server();
                 configureSslContextFactory(sslServerContextFactory);
                 KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslServerContextFactory);
                 keystoreScanner.setScanInterval(SCAN_INTERVAL);
                 server.addBean(keystoreScanner);
-                ServerConnector connector = new ServerConnector(server, sslServerContextFactory);
-                connector.setPort(httpsPort);
-                connector.setHost(host);
-                server.addConnector(connector);
+                httpsConnector = new ServerConnector(server, sslServerContextFactory);
+                httpsConnector.setHost(host);
+                httpsConnector.setPort(httpsPort);
+                server.addConnector(httpsConnector);
             }
             ServletContextHandler context = new ServletContextHandler();
             context.setContextPath("/");
@@ -199,6 +202,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             server.setHandler(context);
             context.addServlet(new ServletHolder(servlet), "/metrics");
             server.start();
+            if (httpPort == 0) {
+                LOG.info("Bound /metrics endpoint to HTTP port: {}", httpConnector.getLocalPort());
+            }
+            if (httpsPort == 0) {
+                LOG.info("Bound /metrics endpoint to HTTPS port: {}", httpsConnector.getLocalPort());
+            }
         } catch (Exception err) {
             LOG.error("Cannot start /metrics server", err);
             if (server != null) {

@@ -64,7 +64,7 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
         Properties configuration = new Properties();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
         configuration.setProperty("httpHost", "127.0.0.1");
-        configuration.setProperty("httpsPort", "50511");
+        configuration.setProperty("httpsPort", "0");
         configuration.setProperty("ssl.keyStore.location", testDataPath + "/ssl/server_keystore.jks");
         configuration.setProperty("ssl.keyStore.password", "testpass");
         configuration.setProperty("ssl.trustStore.location", testDataPath + "/ssl/server_truststore.jks");
@@ -78,8 +78,8 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
         PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
         Properties configuration = new Properties();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-        configuration.setProperty("httpPort", "50512");
-        configuration.setProperty("httpsPort", "50513");
+        configuration.setProperty("httpPort", "0");
+        configuration.setProperty("httpsPort", "0");
         configuration.setProperty("ssl.keyStore.location", testDataPath + "/ssl/server_keystore.jks");
         configuration.setProperty("ssl.keyStore.password", "testpass");
         configuration.setProperty("ssl.trustStore.location", testDataPath + "/ssl/server_truststore.jks");
@@ -95,7 +95,7 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
             PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
             Properties configuration = new Properties();
             String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
-            configuration.setProperty("httpsPort", "50514");
+            configuration.setProperty("httpsPort", "0");
             //keystore missing
             configuration.setProperty("ssl.keyStore.password", "testpass");
             configuration.setProperty("ssl.trustStore.location", testDataPath + "/ssl/server_truststore.jks");
