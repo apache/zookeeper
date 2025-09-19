@@ -34,7 +34,7 @@ from [the official Apache Archives](https://archive.apache.org/dist/zookeeper/).
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.9.4 is our current release, and 3.8.4 our latest stable release.
+Apache ZooKeeper 3.9.4 is our current release, and 3.8.5 our latest stable release.
 
 ### Apache ZooKeeper 3.9.4
 
@@ -42,11 +42,11 @@ Apache ZooKeeper 3.9.4 is our current release, and 3.8.4 our latest stable relea
 
 [Apache ZooKeeper 3.9.4 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz.sha512))
 
-### Apache ZooKeeper 3.8.4 (latest stable release)
+### Apache ZooKeeper 3.8.5 (latest stable release)
 
-[Apache ZooKeeper 3.8.4](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.8.5](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.5/apache-zookeeper-3.8.5-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.5/apache-zookeeper-3.8.5-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.5/apache-zookeeper-3.8.5-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.8.4 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4.tar.gz.sha512))
+[Apache ZooKeeper 3.8.5 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.5/apache-zookeeper-3.8.5.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.5/apache-zookeeper-3.8.5.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.5/apache-zookeeper-3.8.5.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.7.2 (3.7 is EoL since 2nd of February, 2024)
 
@@ -66,6 +66,11 @@ You can verify the integrity of a downloaded release using release-signing [KEYS
 
 <a name="news"></a>
 ## News
+
+### 18 Sep, 2025: release 3.8.5 available
+This is a bugfix release for 3.8 branch.
+
+See [ZooKeeper 3.8.5 Release Notes](https://zookeeper.apache.org/doc/r3.8.5/releasenotes.html) for details.
 
 ### 29 Aug, 2025: release 3.9.4 available
 This is a bugfix release for 3.9 branch.
