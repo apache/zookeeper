@@ -206,6 +206,7 @@ public class ClientX509Util extends X509Util {
         boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+        boolean allowReverseDnsLookup = allowReverseDnsLookup(config);
 
         if (trustStoreLocation.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
@@ -213,7 +214,8 @@ public class ClientX509Util extends X509Util {
         } else {
             return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
                 sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, getFipsMode(config));
+                sslClientHostnameVerificationEnabled, allowReverseDnsLookup,
+                getFipsMode(config));
         }
     }
 }
