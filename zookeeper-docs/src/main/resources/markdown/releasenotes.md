@@ -34,9 +34,9 @@ These release notes include new developer and user facing incompatibilities, fea
 ## Migration Instructions when Upgrading to 3.0.0
 <div class="section">
 
-*You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otw skip down to [changes](#changes)*
+*You should only have to read this section if you are upgrading from a previous version of ZooKeeper to version 3.0.0, otherwise, skip down to [changes](#changes)*
 
-A small number of changes in this release have resulted in non-backward compatible Zookeeper client user code and server instance data. The following instructions provide details on how to migrate code and date from version 2.2.1 to version 3.0.0.
+A small number of changes in this release have resulted in non-backward compatible Zookeeper client user code and server instance data. The following instructions provide details on how to migrate code and data from version 2.2.1 to version 3.0.0.
 
 Note: ZooKeeper increments the major version number (major.minor.fix) when backward incompatible changes are made to the source base. As part of the migration from SourceForge we changed the package structure (com.yahoo.zookeeper.* to org.apache.zookeeper.*) and felt it was a good time to incorporate some changes that we had been withholding. As a result the following will be required when migrating from 2.2.1 to 3.0.0 version of ZooKeeper.
 
@@ -64,7 +64,7 @@ For example, an old application may register a watch for /foo and /goo, lose the
 As long as the application is able to receive a notification for /foo, (probably ignoring it) it does not need to be changed.
 One caveat to the watch management: it is possible to miss an event for the creation and deletion of a znode if watching for creation and both the create and delete happens while the client is disconnected from ZooKeeper.
 
-This release also allows clients to specify call specific watch functions.
+This release also allows clients to specify call-specific watch functions.
 This gives the developer the ability to modularize logic in different watch functions rather than cramming everything in the watch function attached to the ZooKeeper handle.
 Call specific watch functions receive all session events for as long as they are active, but will only receive the watch callbacks for which they are registered.
 
@@ -113,7 +113,7 @@ The following issues resulted in changes to the on-disk data format (the snapsho
 
 If you have any failure during the upgrade procedure keep reading to sanitize your database. 
 
-This is how upgrade works in ZooKeeper. This will help you troubleshoot in case you have problems while upgrading
+This is how the upgrade works in ZooKeeper. This will help you troubleshoot in case you have problems while upgrading
 
 1. Upgrade moves files from `<dataLogDir>` and `<dataDir>` to `<dataLogDir>/version-1/` and `<dataDir>/version-1` respectively (version-1 sub-directory is created by the upgrade utility).
 1. Upgrade creates a new version sub-directory `<dataDir>/version-2` and `<dataLogDir>/version-2`
