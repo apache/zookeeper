@@ -206,9 +206,9 @@ This distribution bundles javacc, which is available under the
 3-clause BSD License. For details, see a copy of the license in
 lib/javacc.LICENSE.txt
 
-This distribution bundles jline 2.14.6, which is available under the
-2-clause BSD License. For details, see a copy of the license in
-lib/jline-2.14.6.LICENSE.txt
+This distribution bundles jline 3.25.1, which is available under the
+3-clause BSD License. For details, see a copy of the license in
+lib/jline-3.25.1.LICENSE.txt
 
 This distribution bundles SLF4J 2.0.13, which is available under the MIT
 License. For details, see a copy of the license in
