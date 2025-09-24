@@ -311,20 +311,18 @@ public class ZooKeeperMain {
             boolean jlinemissing = false;
             // only use jline if it's in the classpath
             try {
-                Class<?> consoleC = Class.forName("jline.console.ConsoleReader");
+                Class<?> readerC = Class.forName("org.jline.reader.LineReader");
                 Class<?> completerC = Class.forName("org.apache.zookeeper.JLineZNodeCompleter");
 
                 System.out.println("JLine support is enabled");
 
-                Object console = consoleC.getConstructor().newInstance();
-
                 Object completer = completerC.getConstructor(ZooKeeper.class).newInstance(zk);
-                Method addCompleter = consoleC.getMethod("addCompleter", Class.forName("jline.console.completer.Completer"));
-                addCompleter.invoke(console, completer);
+                Object terminal = createTerminal();
+                Object reader = createLineReader(terminal, completer);
 
                 String line;
-                Method readLine = consoleC.getMethod("readLine", String.class);
-                while ((line = (String) readLine.invoke(console, getPrompt())) != null) {
+                Method readLine = readerC.getMethod("readLine", String.class);
+                while ((line = (String) readLine.invoke(reader, getPrompt())) != null) {
                     executeLine(line);
                 }
             } catch (ClassNotFoundException
@@ -351,6 +349,26 @@ public class ZooKeeperMain {
             processCmd(cl);
         }
         ServiceUtils.requestSystemExit(exitCode);
+    }
+
+    private static Object createTerminal() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Class<?> terminalBuilderC = Class.forName("org.jline.terminal.TerminalBuilder");
+        Method terminalBuilderMethod = terminalBuilderC.getMethod("builder");
+        Object terminalBuilder = terminalBuilderMethod.invoke(null);
+        Method terminalBuildMethod = terminalBuilderC.getMethod("build");
+        return terminalBuildMethod.invoke(terminalBuilder);
+    }
+
+    private static Object createLineReader(Object terminal, Object completer) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Class<?> readerBuilderC = Class.forName("org.jline.reader.LineReaderBuilder");
+        Method readerBuilderMethod = readerBuilderC.getMethod("builder");
+        Object readerBuilder = readerBuilderMethod.invoke(null);
+        Method setTerminalMethod = readerBuilderC.getMethod("terminal", Class.forName("org.jline.terminal.Terminal"));
+        setTerminalMethod.invoke(readerBuilder, terminal);
+        Method setCompleterMethod = readerBuilderC.getMethod("completer", Class.forName("org.jline.reader.Completer"));
+        setCompleterMethod.invoke(readerBuilder, completer);
+        Method readerBuildMethod = readerBuilderC.getMethod("build");
+        return readerBuildMethod.invoke(readerBuilder);
     }
 
     public void executeLine(String line) throws InterruptedException, IOException {
