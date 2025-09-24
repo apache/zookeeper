@@ -30,6 +30,7 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 
 ## Vulnerability reports
 
+* [CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands](#CVE-2025-58457)
 * [CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server](#CVE-2024-51504)
 * [CVE-2024-23944: Information disclosure in persistent watcher handling](#CVE-2024-23944)
 * [CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication](#CVE-2023-44981)
@@ -37,6 +38,35 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 * [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+<a name="CVE-2025-58457"></a>
+### CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands
+
+Severity: moderate
+
+Affected versions:
+
+- Apache ZooKeeper (`org.apache.zookeeper:zookeeper`) 3.9.0 before 3.9.4
+
+Description:
+
+Improper permission check in ZooKeeper AdminServer lets authorized clients to run `snapshot` and `restore` command with insufficient permissions.
+
+This issue affects Apache ZooKeeper: from 3.9.0 before 3.9.4.
+
+Users are recommended to upgrade to version 3.9.4, which fixes the issue.
+
+The issue can be mitigated by disabling both commands (via `admin.snapshot.enabled` and `admin.restore.enabled`), disabling the whole AdminServer interface (via `admin.enableServer`), or ensuring that the root ACL does not provide open permissions. (Note that ZooKeeper ACLs are not recursive, so this does not impact operations on child nodes besides notifications from recursive watches.)
+
+Credit:
+
+Damien Diederen <ddiederen@apache.org> (reporter)
+
+References:
+
+[https://zookeeper.apache.org/](https://zookeeper.apache.org/)
+[https://www.cve.org/CVERecord?id=CVE-2025-58457](https://www.cve.org/CVERecord?id=CVE-2025-58457)
 
 
 <a name="CVE-2024-51504"></a>
