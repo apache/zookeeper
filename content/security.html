@@ -95,6 +95,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="https://www.apache.org/security/">Web page</a> for more information.</p>
 <h2>Vulnerability reports</h2>
 <ul>
+<li><a href="#CVE-2025-58457">CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands</a></li>
 <li><a href="#CVE-2024-51504">CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server</a></li>
 <li><a href="#CVE-2024-23944">CVE-2024-23944: Information disclosure in persistent watcher handling</a></li>
 <li><a href="#CVE-2023-44981">CVE-2023-44981: Authorization bypass in SASL Quorum Peer Authentication</a></li>
@@ -103,6 +104,22 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <li><a href="#CVE-2017-5637">CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)</a></li>
 <li><a href="#CVE-2016-5017">CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell</a></li>
 </ul>
+<p><a name="CVE-2025-58457"></a></p>
+<h3>CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands</h3>
+<p>Severity: moderate</p>
+<p>Affected versions:</p>
+<ul>
+<li>Apache ZooKeeper (<code>org.apache.zookeeper:zookeeper</code>) 3.9.0 before 3.9.4</li>
+</ul>
+<p>Description:</p>
+<p>Improper permission check in ZooKeeper AdminServer lets authorized clients to run <code>snapshot</code> and <code>restore</code> command with insufficient permissions.</p>
+<p>This issue affects Apache ZooKeeper: from 3.9.0 before 3.9.4.</p>
+<p>Users are recommended to upgrade to version 3.9.4, which fixes the issue.</p>
+<p>The issue can be mitigated by disabling both commands (via <code>admin.snapshot.enabled</code> and <code>admin.restore.enabled</code>), disabling the whole AdminServer interface (via <code>admin.enableServer</code>), or ensuring that the root ACL does not provide open permissions. (Note that ZooKeeper ACLs are not recursive, so this does not impact operations on child nodes besides notifications from recursive watches.)</p>
+<p>Credit:</p>
+<p>Damien Diederen <a href="&#109;a&#105;&#x6c;&#x74;&#x6f;&#x3a;&#100;&#x64;&#x69;e&#100;&#x65;&#114;e&#110;&#64;&#97;p&#97;c&#x68;&#101;&#x2e;&#x6f;&#114;&#103;">d&#x64;&#x69;e&#100;&#x65;&#x72;&#101;&#110;&#64;&#97;&#112;&#x61;&#x63;&#104;&#101;&#46;&#111;&#x72;&#103;</a> (reporter)</p>
+<p>References:</p>
+<p><a href="https://zookeeper.apache.org/">https://zookeeper.apache.org/</a> <a href="https://www.cve.org/CVERecord?id=CVE-2025-58457">https://www.cve.org/CVERecord?id=CVE-2025-58457</a></p>
 <p><a name="CVE-2024-51504"></a></p>
 <h3>CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server</h3>
 <p>Severity: important</p>
