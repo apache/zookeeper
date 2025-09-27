@@ -56,6 +56,7 @@ public class ZKClientConfig extends ZKConfig {
     public static final int CLIENT_MAX_PACKET_LENGTH_DEFAULT = 0xfffff; /* 1 MB */
     public static final String ZOOKEEPER_REQUEST_TIMEOUT = "zookeeper.request.timeout";
     public static final String ZOOKEEPER_SERVER_PRINCIPAL = "zookeeper.server.principal";
+
     /**
      * Feature is disabled by default.
      */
@@ -69,6 +70,14 @@ public class ZKClientConfig extends ZKConfig {
      */
     public static final String ZOOKEEPER_SHUFFLE_DNS_RESPONSE = "zookeeper.shuffleDnsResponse";
     public static final boolean ZOOKEEPER_SHUFFLE_DNS_RESPONSE_DEFAULT = false;
+
+    /**
+     * DNS SRV refresh interval in milliseconds for DnsSrvHostProvider.
+     * Controls how frequently DNS SRV records are queried to update the server list.
+     * A value of 0 disables periodic refresh.
+     */
+    public static final String DNS_SRV_REFRESH_INTERVAL_MS = "zookeeper.hostProvider.dnsSrvRefreshIntervalMs";
+    public static final long DNS_SRV_REFRESH_INTERVAL_MS_DEFAULT = 60000;
 
     public ZKClientConfig() {
         super();
@@ -130,6 +139,7 @@ public class ZKClientConfig extends ZKConfig {
         setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, System.getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET));
         setProperty(SECURE_CLIENT, System.getProperty(SECURE_CLIENT));
         setProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS, System.getProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS));
+        setProperty(DNS_SRV_REFRESH_INTERVAL_MS, System.getProperty(DNS_SRV_REFRESH_INTERVAL_MS));
     }
 
     /**

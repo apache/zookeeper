@@ -1315,6 +1315,14 @@ of servers -- that is, when deploying clusters of servers.
     leader election. If you want to test multiple servers on a single machine, then
     different ports can be used for each server.
 
+* *hostProvider.dnsSrvRefreshIntervalMs* :
+    (Java system property: **zookeeper.hostProvider.dnsSrvRefreshIntervalMs**)
+    **New in 3.10.0:**
+    The refresh interval in milliseconds for DNS SRV record lookups when using DnsSrvHostProvider.
+    This property controls how frequently the DNS SRV records are queried to update the server list.
+    A value of 0 disables periodic refresh. 
+   
+    The default value is 60000 (60 seconds).
 
     <a name="id_multi_address"></a>
     Since ZooKeeper 3.6.0 it is possible to specify **multiple addresses** for each
