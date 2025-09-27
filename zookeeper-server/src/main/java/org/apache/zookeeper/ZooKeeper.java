@@ -46,6 +46,7 @@ import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.Chroot;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.HostProviderFactory;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperBuilder;
@@ -1140,10 +1141,9 @@ public class ZooKeeper implements AutoCloseable {
         if (options.getHostProvider() != null) {
             hostProvider = options.getHostProvider().apply(connectStringParser.getServerAddresses());
         } else {
-            hostProvider = new StaticHostProvider(connectStringParser.getServerAddresses(), clientConfig);
+            hostProvider = HostProviderFactory.create(connectStringParser, clientConfig);
         }
         this.hostProvider = hostProvider;
-
         chroot = Chroot.ofNullable(connectStringParser.getChrootPath());
         cnxn = createConnection(
             hostProvider,
@@ -1327,6 +1327,10 @@ public class ZooKeeper implements AutoCloseable {
             cnxn.close();
         } catch (IOException e) {
             LOG.debug("Ignoring unexpected exception during close", e);
+        }
+
+        if (hostProvider != null) {
+            hostProvider.close();
         }
 
         LOG.info("Session: 0x{} closed", Long.toHexString(getSessionId()));

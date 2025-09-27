@@ -70,6 +70,13 @@ public class ZKClientConfig extends ZKConfig {
     public static final String ZOOKEEPER_SHUFFLE_DNS_RESPONSE = "zookeeper.shuffleDnsResponse";
     public static final boolean ZOOKEEPER_SHUFFLE_DNS_RESPONSE_DEFAULT = false;
 
+    /**
+     * DNS SRV refresh interval in seconds for DnsSrvHostProvider.
+     * A value of 0 disables periodic refresh.
+     */
+    public static final String DNS_SRV_REFRESH_INTERVAL_SECONDS = "zookeeper.hostProvider.dnsSrvRefreshIntervalSeconds";
+    public static final long DNS_SRV_REFRESH_INTERVAL_SECONDS_DEFAULT = 60;
+
     public ZKClientConfig() {
         super();
         initFromJavaSystemProperties();
@@ -130,6 +137,7 @@ public class ZKClientConfig extends ZKConfig {
         setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, System.getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET));
         setProperty(SECURE_CLIENT, System.getProperty(SECURE_CLIENT));
         setProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS, System.getProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS));
+        setProperty(DNS_SRV_REFRESH_INTERVAL_SECONDS, System.getProperty(DNS_SRV_REFRESH_INTERVAL_SECONDS));
     }
 
     /**
