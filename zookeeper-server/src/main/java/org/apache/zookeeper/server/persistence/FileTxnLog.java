@@ -147,6 +147,7 @@ public class FileTxnLog implements TxnLog, Closeable {
     }
 
     long lastZxidSeen;
+    long lastZxidFlushed;
     volatile BufferedOutputStream logStream = null;
     volatile OutputArchive oa;
     volatile FileOutputStream fos = null;
@@ -366,7 +367,13 @@ public class FileTxnLog implements TxnLog, Closeable {
      * get the last zxid that was logged in the transaction logs
      * @return the last zxid logged in the transaction logs
      */
-    public long getLastLoggedZxid() {
+    @Override
+    public long getLastLoggedZxid() throws IOException {
+        long lastFlushedZxid = getLastFlushedZxid();
+        if (lastFlushedZxid > 0) {
+            return lastFlushedZxid;
+        }
+
         File[] files = getLogFiles(logDir.listFiles(), 0);
         long maxLog = files.length > 0 ? Util.getZxidFromName(files[files.length - 1].getName(), LOG_FILE_PREFIX) : -1;
 
@@ -381,8 +388,6 @@ public class FileTxnLog implements TxnLog, Closeable {
                 TxnHeader hdr = itr.getHeader();
                 zxid = hdr.getZxid();
             }
-        } catch (IOException e) {
-            LOG.warn("Unexpected exception", e);
         }
         return zxid;
     }
@@ -427,6 +432,7 @@ public class FileTxnLog implements TxnLog, Closeable {
                 ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);
             }
         }
+        lastZxidFlushed = lastZxidSeen;
         while (streamsToFlush.size() > 1) {
             streamsToFlush.poll().close();
         }
@@ -440,6 +446,10 @@ public class FileTxnLog implements TxnLog, Closeable {
                 rollLog();
             }
         }
+    }
+
+    private synchronized long getLastFlushedZxid() {
+        return lastZxidFlushed;
     }
 
     /**
@@ -494,7 +504,12 @@ public class FileTxnLog implements TxnLog, Closeable {
             while (itr.goToNextLog()) {
                 if (!itr.logFile.delete()) {
                     LOG.warn("Unable to truncate {}", itr.logFile);
+                    throw new IOException("Unable to truncate " + itr.logFile);
                 }
+            }
+            synchronized (this) {
+                lastZxidSeen = zxid;
+                lastZxidFlushed = zxid;
             }
         }
         return true;
