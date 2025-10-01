@@ -113,6 +113,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private int maxQueueSize = 10000;
     private long workerShutdownTimeoutMs = 1000;
     private Optional<ExecutorService> executorOptional = Optional.empty();
+    private String namespace;
 
     // Constants for SSL configuration
     public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
@@ -163,6 +164,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 configuration.getProperty(MAX_QUEUE_SIZE, "10000"));
         this.workerShutdownTimeoutMs = Long.parseLong(
                 configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
+        this.namespace = configuration.getProperty("namespace", "");
     }
 
     @Override
@@ -481,6 +483,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.name = name;
             this.inner = io.prometheus.client.Counter
                     .build(name, name)
+                    .namespace(namespace)
                     .register(collectorRegistry);
         }
 
@@ -513,6 +516,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.inner = io.prometheus.client.Counter
                     .build(name, name)
                     .labelNames(LABELS)
+                    .namespace(namespace)
                     .register(collectorRegistry);
         }
 
@@ -538,6 +542,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.inner = prev != null ? prev
                     : io.prometheus.client.Gauge
                     .build(name, name)
+                    .namespace(namespace)
                     .register(collectorRegistry);
         }
 
@@ -570,6 +575,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.inner = prev != null ? prev :
                     io.prometheus.client.Gauge
                             .build(name, name)
+                            .namespace(namespace)
                             .labelNames(LABELS)
                             .register(collectorRegistry);
         }
@@ -598,6 +604,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             if (level == MetricsContext.DetailLevel.ADVANCED) {
                 this.inner = io.prometheus.client.Summary
                         .build(name, name)
+                        .namespace(namespace)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
                         .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
@@ -605,6 +612,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             } else {
                 this.inner = io.prometheus.client.Summary
                         .build(name, name)
+                        .namespace(namespace)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .register(collectorRegistry);
             }
@@ -635,6 +643,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 this.inner = io.prometheus.client.Summary
                         .build(name, name)
                         .labelNames(LABELS)
+                        .namespace(namespace)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
                         .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
@@ -643,6 +652,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 this.inner = io.prometheus.client.Summary
                         .build(name, name)
                         .labelNames(LABELS)
+                        .namespace(namespace)
                         .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
                         .register(collectorRegistry);
             }
