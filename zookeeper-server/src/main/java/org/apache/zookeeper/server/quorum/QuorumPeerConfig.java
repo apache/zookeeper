@@ -77,6 +77,9 @@ public class QuorumPeerConfig {
     protected boolean shouldUsePortUnification = false;
     protected int observerMasterPort;
     protected boolean sslQuorumReloadCertFiles = false;
+    private String sslAuthServerProvider;
+    private String sslAuthLearnerProvider;
+
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -390,6 +393,10 @@ public class QuorumPeerConfig {
                 multiAddressReachabilityCheckEnabled = parseBoolean(key, value);
             } else if (key.equals("oraclePath")) {
                 oraclePath = value;
+            } else if (key.equals(QuorumAuth.QUORUM_SSL_AUTHPROVIDER)) {
+                sslAuthServerProvider = value;
+            } else if (key.equals(QuorumAuth.QUORUM_SSL_LEARNER_AUTHPROVIDER)) {
+                sslAuthLearnerProvider = value;
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -875,7 +882,12 @@ public class QuorumPeerConfig {
     public boolean isSslQuorum() {
         return sslQuorum;
     }
-
+    public String getSslAuthServerProvider() {
+        return sslAuthServerProvider;
+    }
+    public String getSslAuthLearnerProvider() {
+        return sslAuthLearnerProvider;
+    }
     public boolean shouldUsePortUnification() {
         return shouldUsePortUnification;
     }
