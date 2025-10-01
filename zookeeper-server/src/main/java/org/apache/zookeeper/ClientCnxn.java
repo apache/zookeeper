@@ -1289,6 +1289,17 @@ public class ClientCnxn {
                 "SendThread exited loop for session: 0x" + Long.toHexString(getSessionId()));
         }
 
+        private void abortConnection() {
+            try {
+                clientCnxnSocket.testableCloseSocket();
+            } catch (IOException e) {
+                LOG.debug("Fail to close ongoing socket", e);
+            }
+        }
+
+        /**
+         * This is not thread-safe and should only be called inside {@link SendThread}.
+         */
         private void cleanAndNotifyState() {
             cleanup();
             if (state.isAlive()) {
@@ -1531,7 +1542,7 @@ public class ClientCnxn {
             }
         }
         if (r.getErr() == Code.REQUESTTIMEOUT.intValue()) {
-            sendThread.cleanAndNotifyState();
+            sendThread.abortConnection();
         }
         return r;
     }
