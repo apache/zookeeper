@@ -45,7 +45,9 @@ import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.Chroot;
 import org.apache.zookeeper.client.ConnectStringParser;
+import org.apache.zookeeper.client.ConnectionType;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.HostProviderFactory;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperBuilder;
@@ -1139,8 +1141,11 @@ public class ZooKeeper implements AutoCloseable {
         HostProvider hostProvider;
         if (options.getHostProvider() != null) {
             hostProvider = options.getHostProvider().apply(connectStringParser.getServerAddresses());
+            // Validate compatibility when HostProvider is provided
+            validateHostProviderCompatibility(connectString, hostProvider);
         } else {
-            hostProvider = new StaticHostProvider(connectStringParser.getServerAddresses());
+            // Use HostProviderFactory to auto-detect and create a HostProvider based on connect string
+            hostProvider = HostProviderFactory.createHostProvider(connectString);
         }
         this.hostProvider = hostProvider;
 
@@ -1327,6 +1332,11 @@ public class ZooKeeper implements AutoCloseable {
             cnxn.close();
         } catch (IOException e) {
             LOG.debug("Ignoring unexpected exception during close", e);
+        }
+
+        // Close the host provider to release any resources
+        if (hostProvider != null) {
+            hostProvider.close();
         }
 
         LOG.info("Session: 0x{} closed", Long.toHexString(getSessionId()));
@@ -3199,4 +3209,24 @@ public class ZooKeeper implements AutoCloseable {
         return response.getClientInfo();
     }
 
+    /**
+     * Validates compatibility between connectString and hostProvider.
+     *
+     * @param connectString the connection string provided by user
+     * @param hostProvider the host provider provided by user
+     * @throws IllegalArgumentException if incompatible combination is detected
+     */
+    private static void validateHostProviderCompatibility(final String connectString, final HostProvider hostProvider) {
+        final ConnectionType connectStringType = ConnectStringParser.getConnectionType(connectString);
+        final ConnectionType supportedConnectStringType = hostProvider.getSupportedConnectionType();
+
+        if (connectStringType != supportedConnectStringType) {
+            final String hostProviderName = hostProvider.getClass().getSimpleName();
+            LOG.error("Connection string type {} is incompatible with host provider type {}: connectString={}, hostProvider={}",
+                    connectStringType.getName(), supportedConnectStringType.getName(), connectString, hostProviderName);
+            throw new IllegalArgumentException(
+                    String.format("Connection string type %s is incompatible with host provider type %s",
+                            connectStringType.getName(), hostProviderName));
+        }
+    }
 }
