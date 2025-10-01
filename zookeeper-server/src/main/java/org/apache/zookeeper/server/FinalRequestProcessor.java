@@ -208,8 +208,6 @@ public class FinalRequestProcessor implements RequestProcessor {
               throw KeeperException.create(Code.THROTTLEDOP);
             }
 
-            AuditHelper.addAuditLog(request, rc);
-
             switch (request.type) {
             case OpCode.ping: {
                 lastOp = "PING";
@@ -585,6 +583,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             err = Code.MARSHALLINGERROR;
         }
 
+        rc.err = err.intValue();
+        AuditHelper.addAuditLog(request, rc);
         ReplyHeader hdr = new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
         updateStats(request, lastOp, lastZxid);
