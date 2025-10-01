@@ -57,6 +57,14 @@ public class ZKClientConfig extends ZKConfig {
     public static final String ZOOKEEPER_REQUEST_TIMEOUT = "zookeeper.request.timeout";
     public static final String ZOOKEEPER_SERVER_PRINCIPAL = "zookeeper.server.principal";
     /**
+     * DNS SRV refresh interval in milliseconds for DnsSrvHostProvider.
+     * Controls how frequently DNS SRV records are queried to update the server list.
+     * A value of 0 disables periodic refresh.
+     */
+    public static final String DNS_SRV_REFRESH_INTERVAL_MS = "zookeeper.hostProvider.dnsSrvRefreshIntervalMs";
+    public static final long DNS_SRV_REFRESH_INTERVAL_MS_DEFAULT = 60000;
+
+    /**
      * Feature is disabled by default.
      */
     public static final long ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT = 0;
@@ -99,6 +107,7 @@ public class ZKClientConfig extends ZKConfig {
     private void initFromJavaSystemProperties() {
         setProperty(ZOOKEEPER_REQUEST_TIMEOUT, System.getProperty(ZOOKEEPER_REQUEST_TIMEOUT));
         setProperty(ZOOKEEPER_SERVER_PRINCIPAL, System.getProperty(ZOOKEEPER_SERVER_PRINCIPAL));
+        setProperty(DNS_SRV_REFRESH_INTERVAL_MS, System.getProperty(DNS_SRV_REFRESH_INTERVAL_MS));
     }
 
     @Override
@@ -120,6 +129,7 @@ public class ZKClientConfig extends ZKConfig {
         setProperty(DISABLE_AUTO_WATCH_RESET, System.getProperty(DISABLE_AUTO_WATCH_RESET));
         setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, System.getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET));
         setProperty(SECURE_CLIENT, System.getProperty(SECURE_CLIENT));
+        setProperty(DNS_SRV_REFRESH_INTERVAL_MS, System.getProperty(DNS_SRV_REFRESH_INTERVAL_MS));
     }
 
     /**
