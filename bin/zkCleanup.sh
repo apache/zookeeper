@@ -43,7 +43,7 @@ ZOODATADIR=""
 ZOODATALOGDIR=""
 
 # Only try to read config if ZOOCFG exists
-if [[ -f "$ZOOCFG" ]]; then
+if [[ -f $ZOOCFG ]]; then
   ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" 2>/dev/null | sed -e 's/.*=//')"
   ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" 2>/dev/null | sed -e 's/.*=//')"
 fi
