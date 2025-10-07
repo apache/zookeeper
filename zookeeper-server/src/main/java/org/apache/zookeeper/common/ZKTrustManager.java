@@ -42,6 +42,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     private final X509ExtendedTrustManager x509ExtendedTrustManager;
     private final boolean serverHostnameVerificationEnabled;
     private final boolean clientHostnameVerificationEnabled;
+    private final boolean allowReverseDnsLookup;
 
     private final ZKHostnameVerifier hostnameVerifier;
 
@@ -57,22 +58,26 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     ZKTrustManager(
         X509ExtendedTrustManager x509ExtendedTrustManager,
         boolean serverHostnameVerificationEnabled,
-        boolean clientHostnameVerificationEnabled) {
+        boolean clientHostnameVerificationEnabled,
+        boolean allowReverseDnsLookup) {
         this(x509ExtendedTrustManager,
                 serverHostnameVerificationEnabled,
                 clientHostnameVerificationEnabled,
-                new ZKHostnameVerifier());
+                new ZKHostnameVerifier(),
+                allowReverseDnsLookup);
     }
 
     ZKTrustManager(
             X509ExtendedTrustManager x509ExtendedTrustManager,
             boolean serverHostnameVerificationEnabled,
             boolean clientHostnameVerificationEnabled,
-            ZKHostnameVerifier hostnameVerifier) {
+            ZKHostnameVerifier hostnameVerifier,
+            boolean allowReverseDnsLookup) {
         this.x509ExtendedTrustManager = x509ExtendedTrustManager;
         this.serverHostnameVerificationEnabled = serverHostnameVerificationEnabled;
         this.clientHostnameVerificationEnabled = clientHostnameVerificationEnabled;
         this.hostnameVerifier = hostnameVerifier;
+        this.allowReverseDnsLookup = allowReverseDnsLookup;
     }
 
     @Override
@@ -166,31 +171,46 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      * @param certificate Peer's certificate
      * @throws CertificateException Thrown if the provided certificate doesn't match the peer hostname.
      */
-    private void performHostVerification(
-        InetAddress inetAddress,
-        X509Certificate certificate
-    ) throws CertificateException {
+    private void performHostVerification(InetAddress inetAddress, X509Certificate certificate)
+        throws CertificateException {
         String hostAddress = "";
         String hostName = "";
         try {
             hostAddress = inetAddress.getHostAddress();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Trying to verify host address first: {}", hostAddress);
-            }
             hostnameVerifier.verify(hostAddress, certificate);
         } catch (SSLException addressVerificationException) {
+            // If we fail with hostAddress, we should try the hostname.
+            // The inetAddress may have been created with a hostname, in which case getHostName() will
+            // return quickly below. If not, a reverse lookup will happen, which can be expensive.
+            // We provide the option to skip the reverse lookup if preferring to fail fast.
+
+            // Handle logging here to aid debugging. The easiest way to check for an existing
+            // hostname is through toString, see javadoc.
+            String inetAddressString = inetAddress.toString();
+            if (!inetAddressString.startsWith("/")) {
+                LOG.debug(
+                    "Failed to verify host address: {}, but inetAddress {} has a hostname, trying that",
+                    hostAddress, inetAddressString, addressVerificationException);
+            } else if (allowReverseDnsLookup) {
+                LOG.debug(
+                    "Failed to verify host address: {}, attempting to verify host name with reverse dns",
+                    hostAddress, addressVerificationException);
+            } else {
+                LOG.debug("Failed to verify host address: {}, but reverse dns lookup is disabled",
+                    hostAddress, addressVerificationException);
+                throw new CertificateException(
+                    "Failed to verify host address, and reverse lookup is disabled",
+                    addressVerificationException);
+            }
+
             try {
                 hostName = inetAddress.getHostName();
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(
-                        "Failed to verify host address: {}, trying to verify host name: {}",
-                        hostAddress, hostName);
-                }
                 hostnameVerifier.verify(hostName, certificate);
             } catch (SSLException hostnameVerificationException) {
                 LOG.error("Failed to verify host address: {}", hostAddress, addressVerificationException);
                 LOG.error("Failed to verify hostname: {}", hostName, hostnameVerificationException);
-                throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
+                throw new CertificateException("Failed to verify both host address and host name",
+                    hostnameVerificationException);
             }
         }
     }
