@@ -21,8 +21,9 @@ package org.apache.zookeeper.server.quorum;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
-
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -50,9 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LearnerHandlerTest extends ZKTestCase {
-
     protected static final Logger LOG = LoggerFactory.getLogger(LearnerHandlerTest.class);
-    
+
     // Test constants for shutdown and packet queuing behavior
     private static final int CONCURRENT_PACKET_COUNT = 2000;
     private static final int PACKET_SEND_DELAY_MS = 10;
@@ -160,9 +160,8 @@ public class LearnerHandlerTest extends ZKTestCase {
             }
         });
         when(leader.getZKDatabase()).thenReturn(db);
-
         learnerHandler = new MockLearnerHandler(sock, leader);
-        
+
         // Use reflection to access and mock the private SyncLimitCheck class
         Class<?> syncLimitCheckClass = null;
         for (Class<?> innerClass : LearnerHandler.class.getDeclaredClasses()) {
@@ -171,9 +170,9 @@ public class LearnerHandlerTest extends ZKTestCase {
                 break;
             }
         }
-        
+
         // Create a mock of the private inner class using Mockito with Answer
-        Object mockSyncLimitCheck = Mockito.mock(syncLimitCheckClass, invocation -> {
+        Object mockSyncLimitCheck = mock(syncLimitCheckClass, invocation -> {
             // Stub the check method to return false
             if ("check".equals(invocation.getMethod().getName())) {
                 return false;
@@ -616,21 +615,19 @@ public class LearnerHandlerTest extends ZKTestCase {
 
     /**
      * Tests that the packet queue can grow during a slow/blocked shutdown process.
-     * 
      * This test verifies a specific race condition scenario:
      * 1. A background thread continuously adds packets to the learner's queue
      * 2. Shutdown is initiated, which clears the queue and adds proposalOfDeath
      * 3. Shutdown then blocks on socket.close() (mocked to take 5 seconds)
      * 4. During the socket close wait, the background thread continues adding packets
      * 5. The queue grows even though shutdown has been initiated
-     * 
+     * <p>
      * This simulates real-world scenarios where:
      * - Network I/O is slow during shutdown
      * - The leader continues sending packets while learner is shutting down
      * - The queue can unexpectedly grow during the shutdown process
-     * 
-     * The test ensures this behavior is understood and can be monitored.
-     * 
+     *</p>
+     *
      * @throws InterruptedException if thread operations are interrupted
      */
     @Test
@@ -659,13 +656,13 @@ public class LearnerHandlerTest extends ZKTestCase {
         Thread.sleep(INITIAL_PACKET_ACCUMULATION_TIME_MS); // Allow some packets to be added
         LOG.debug("Current queue size: {}", learnerHandler.getQueuedPackets().size());
         learnerHandler.startSendingPackets();
-        
+
         // Verify that packets are being added
         int initialQueueSize = learnerHandler.getQueuedPackets().size();
-        assertTrue(initialQueueSize > 0, 
+        assertTrue(initialQueueSize > 0,
                 "Queue should have some packets before shutdown (actual: " + initialQueueSize + ")");
         LOG.debug("Initial queue size before shutdown: {}", initialQueueSize);
-        
+
         // Start shutdown in a separate thread
         // Shutdown will: clear queue, add proposalOfDeath, then block on socket.close() for 5 seconds
         Thread shutdownThread = new Thread(() -> {
@@ -676,31 +673,31 @@ public class LearnerHandlerTest extends ZKTestCase {
             }
         });
         shutdownThread.start();
-        
         // Give shutdown time to clear the queue and start blocking on socket close
         Thread.sleep(500);
-        
+
         // At this point:
         // - Shutdown has cleared the queue and added proposalOfDeath (queue size = 1)
         // - Shutdown is now blocked in socket.close() for 5 seconds
         // - Packet sender is still running and adding packets
         int queueSizeAfterShutdownStart = learnerHandler.getQueuedPackets().size();
         LOG.debug("Queue size after shutdown started (should be ~1): {}", queueSizeAfterShutdownStart);
-        
+
         // Wait for packets to accumulate during the socket close wait
         Thread.sleep(2000);
-        
+
         // Check that queue has grown during the shutdown process
         int queueSizeDuringShutdown = learnerHandler.getQueuedPackets().size();
         LOG.debug("Queue size during shutdown (socket close wait): {}", queueSizeDuringShutdown);
-        
+
         // The queue should have grown because:
         // - Shutdown cleared it to 1 (proposalOfDeath)
         // - But packet sender kept adding while shutdown waits on socket.close()
         assertTrue(queueSizeDuringShutdown > queueSizeAfterShutdownStart,
-                "Queue should grow during shutdown when socket close is delayed (after shutdown start: " + 
-                queueSizeAfterShutdownStart + ", during shutdown: " + queueSizeDuringShutdown + ")");
-        
+                "Queue should grow during shutdown when socket close is delayed (after shutdown start: "
+                    + queueSizeAfterShutdownStart + ", during shutdown: "
+                    + queueSizeDuringShutdown + ")");
+
         // Wait for shutdown to complete
         shutdownThread.join(10000);
         if (shutdownThread.isAlive()) {
@@ -708,7 +705,7 @@ public class LearnerHandlerTest extends ZKTestCase {
             shutdownThread.interrupt();
             shutdownThread.join(2000);
         }
-        
+
         // Wait for packet sender to complete
         packetSender.join(5000);
         if (packetSender.isAlive()) {
@@ -716,10 +713,10 @@ public class LearnerHandlerTest extends ZKTestCase {
             packetSender.interrupt();
             packetSender.join(1000);
         }
-        
+
         int finalQueueSize = learnerHandler.getQueuedPackets().size();
         LOG.debug("Final queue size after shutdown complete: {}", finalQueueSize);
-        
+
         // Verify learner was removed from leader
         assertEquals(0, leader.getLearners().size(),
                 "Leader should have no learners after shutdown completes");
