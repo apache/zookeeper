@@ -113,7 +113,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>jline</groupId>
+      <groupId>org.jline</groupId>
       <artifactId>jline</artifactId>
       <scope>provided</scope>
     </dependency>

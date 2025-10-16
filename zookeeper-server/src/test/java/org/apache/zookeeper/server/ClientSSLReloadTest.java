@@ -25,7 +25,6 @@ import java.security.Security;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import jline.internal.Log;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -150,7 +149,7 @@ public class ClientSSLReloadTest extends ZKTestCase {
                 assertTrue(l.await(10, TimeUnit.SECONDS));
             }
 
-            Log.info("Updating keyStore & trustStore files !!!!");
+            LOG.info("Updating keyStore & trustStore files !!!!");
             // Update the keyStoreFile1 and trustStoreFile1 files in the filesystem with keyStoreFile2 & trustStoreFile2
             FileUtils.writeStringToFile(keyStoreFile1, FileUtils.readFileToString(keyStoreFile2, StandardCharsets.US_ASCII), StandardCharsets.US_ASCII, false);
             FileUtils.writeStringToFile(trustStoreFile1, FileUtils.readFileToString(trustStoreFile2, StandardCharsets.US_ASCII), StandardCharsets.US_ASCII, false);
