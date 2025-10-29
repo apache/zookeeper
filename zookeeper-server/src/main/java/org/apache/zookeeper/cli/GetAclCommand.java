@@ -69,8 +69,7 @@ public class GetAclCommand extends CliCommand {
         boolean recursive = cl.hasOption("R");
         try {
             if (recursive) {
-                ZKUtil.visitSubTreeDFS(zk, path, false, (rc, path1, ctx, name) ->
-                {
+                ZKUtil.visitSubTreeDFS(zk, path, false, (rc, path1, ctx, name) -> {
                     try {
                         out.println(path1);
                         printAcl(zk.getACL(path1, stat), stat);
