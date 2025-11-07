@@ -92,9 +92,10 @@ public final class PemReader {
         keyStore.load(null, null);
 
         List<X509Certificate> certificateChain = readCertificateChain(certificateChainFile);
+        int i = 1;
         for (X509Certificate certificate : certificateChain) {
             X500Principal principal = certificate.getSubjectX500Principal();
-            keyStore.setCertificateEntry(principal.getName("RFC2253"), certificate);
+            keyStore.setCertificateEntry(principal.getName("RFC2253") + "-" + i++, certificate);
         }
         return keyStore;
     }
