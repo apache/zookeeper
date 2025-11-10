@@ -1697,6 +1697,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         if (h.getType() == OpCode.auth) {
             LOG.info("got auth packet {}", cnxn.getRemoteSocketAddress());
+            ServerMetrics.getMetrics().AUTH_OP_COUNT.add(1);
             AuthPacket authPacket = request.readRecord(AuthPacket::new);
             String scheme = authPacket.getScheme();
             ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(scheme);
@@ -1737,6 +1738,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             return;
         } else if (h.getType() == OpCode.sasl) {
+            ServerMetrics.getMetrics().SASL_OP_COUNT.add(1);
             processSasl(request, cnxn, h);
         } else {
             if (!authHelper.enforceAuthentication(cnxn, h.getXid())) {
