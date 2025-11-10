@@ -43,6 +43,38 @@ public class AvgMinMaxCounterSetTest extends ZKTestCase {
     }
 
     @Test
+    public void testRemove() {
+        addDataPoints();
+
+        Map<String, Object> values = testCounterSet.values();
+
+        assertEquals(10, values.size(), "There should be 10 values in the set");
+        assertEquals(0.5D, values.get("avg_key1_test"), "avg_key1_test should =0.5");
+        assertEquals(0L, values.get("min_key1_test"), "min_key1_test should =0");
+        assertEquals(1L, values.get("max_key1_test"), "max_key1_test should =1");
+        assertEquals(2L, values.get("cnt_key1_test"), "cnt_key1_test should =2");
+        assertEquals(1L, values.get("sum_key1_test"), "sum_key1_test should =1");
+
+        assertEquals(3.5, values.get("avg_key2_test"), "avg_key2_test should =3.5");
+        assertEquals(2L, values.get("min_key2_test"), "min_key2_test should =2");
+        assertEquals(5L, values.get("max_key2_test"), "max_key2_test should =5");
+        assertEquals(4L, values.get("cnt_key2_test"), "cnt_key2_test should =4");
+        assertEquals(14L, values.get("sum_key2_test"), "sum_key2_test should =14");
+
+        testCounterSet.remove("key1");
+        testCounterSet.remove("key2");
+        Map<String, Object> valuesAfterRemove = testCounterSet.values();
+        assertEquals(0, valuesAfterRemove.size(), "testCounterSet should be 0 values in the set");
+
+        // test remove no exists key
+        testCounterSet.remove("key1");
+        testCounterSet.remove("key2");
+        // test remove null
+        testCounterSet.remove(null);
+        assertEquals(0, valuesAfterRemove.size(), "testCounterSet should be 0 values in the set");
+    }
+
+    @Test
     public void testReset() {
         addDataPoints();
         testCounterSet.reset();

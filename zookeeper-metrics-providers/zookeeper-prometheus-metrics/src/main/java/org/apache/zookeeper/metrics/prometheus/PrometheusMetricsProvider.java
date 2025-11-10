@@ -524,6 +524,11 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 LOG.error("invalid delta {} for metric {} with key {}", delta, name, key, e);
             }
         }
+
+        @Override
+        public void remove(String key) {
+            inner.remove(key);
+        }
     }
 
     private class PrometheusGaugeWrapper {
@@ -651,6 +656,11 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public void add(String key, long value) {
             reportMetrics(() -> observe(key, value));
+        }
+
+        @Override
+        public void remove(String key) {
+            inner.remove(key);
         }
 
         private void observe(final String key, final long value) {
