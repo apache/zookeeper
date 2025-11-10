@@ -108,7 +108,7 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLoadTrustStore(
+    public void testLoadTrustStoreFromPemBundle(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
@@ -118,7 +118,7 @@ public class PEMFileLoaderTest extends BaseX509ParameterizedTestCase {
             .setTrustStorePassword(x509TestContext.getTrustStorePassword())
             .build()
             .loadTrustStore();
-        assertEquals(1, ts.size());
+        assertEquals(2, ts.size());
     }
 
     @ParameterizedTest

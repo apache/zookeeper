@@ -29,6 +29,7 @@ import java.security.KeyPair;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -48,7 +49,7 @@ public class X509TestContext {
     private final X509KeyType trustStoreKeyType;
     private final KeyPair trustStoreKeyPair;
     private final long trustStoreCertExpirationMillis;
-    private final X509Certificate trustStoreCertificate;
+    private final List<X509Certificate> trustStoreCertificates;
     private final String trustStorePassword;
     private File trustStoreJksFile;
     private File trustStorePemFile;
@@ -99,11 +100,18 @@ public class X509TestContext {
 
         X500NameBuilder caNameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
         caNameBuilder.addRDN(BCStyle.CN, MethodHandles.lookup().lookupClass().getCanonicalName() + " Root CA");
-        trustStoreCertificate = X509TestHelpers.newSelfSignedCACert(caNameBuilder.build(), trustStoreKeyPair, trustStoreCertExpirationMillis);
+        // Create two CA certs to test multiple certs in PEM bundles.
+        // Use same subject name to simulate multiple CA certs from the same CA and to test reg
+        trustStoreCertificates = Arrays.asList(
+                X509TestHelpers.newSelfSignedCACert(caNameBuilder.build(), trustStoreKeyPair,
+                        trustStoreCertExpirationMillis),
+                X509TestHelpers.newSelfSignedCACert(caNameBuilder.build(), trustStoreKeyPair,
+                        trustStoreCertExpirationMillis)
+        );
 
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
         nameBuilder.addRDN(BCStyle.CN, MethodHandles.lookup().lookupClass().getCanonicalName() + " Zookeeper Test");
-        keyStoreCertificate = X509TestHelpers.newCert(trustStoreCertificate, trustStoreKeyPair, nameBuilder.build(), keyStoreKeyPair.getPublic(), keyStoreCertExpirationMillis);
+        keyStoreCertificate = X509TestHelpers.newCert(trustStoreCertificates.get(0), trustStoreKeyPair, nameBuilder.build(), keyStoreKeyPair.getPublic(), keyStoreCertExpirationMillis);
         trustStorePkcs12File = trustStorePemFile = trustStoreJksFile = null;
         keyStorePkcs12File = keyStorePemFile = keyStoreJksFile = null;
 
@@ -139,8 +147,8 @@ public class X509TestContext {
         return trustStoreCertExpirationMillis;
     }
 
-    public X509Certificate getTrustStoreCertificate() {
-        return trustStoreCertificate;
+    public X509Certificate getTrustStoreCertificates() {
+        return trustStoreCertificates.get(0);
     }
 
     public String getTrustStorePassword() {
@@ -159,7 +167,7 @@ public class X509TestContext {
         case JKS:
             return getTrustStoreJksFile();
         case PEM:
-            return getTrustStorePemFile();
+            return getTrustStorePemBundleFile();
         case PKCS12:
             return getTrustStorePkcs12File();
         case BCFKS:
@@ -177,7 +185,7 @@ public class X509TestContext {
             File trustStoreJksFile = File.createTempFile(TRUST_STORE_PREFIX, KeyStoreFileType.JKS.getDefaultFileExtension(), tempDir);
             trustStoreJksFile.deleteOnExit();
             try (final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStoreJksFile)) {
-                byte[] bytes = X509TestHelpers.certToJavaTrustStoreBytes(trustStoreCertificate, trustStorePassword);
+                byte[] bytes = X509TestHelpers.certToJavaTrustStoreBytes(trustStoreCertificates.get(0), trustStorePassword);
                 trustStoreOutputStream.write(bytes);
                 trustStoreOutputStream.flush();
             } catch (GeneralSecurityException e) {
@@ -188,11 +196,13 @@ public class X509TestContext {
         return trustStoreJksFile;
     }
 
-    private File getTrustStorePemFile() throws IOException {
+    private File getTrustStorePemBundleFile() throws IOException {
         if (trustStorePemFile == null) {
             File trustStorePemFile = File.createTempFile(TRUST_STORE_PREFIX, KeyStoreFileType.PEM.getDefaultFileExtension(), tempDir);
             trustStorePemFile.deleteOnExit();
-            FileUtils.writeStringToFile(trustStorePemFile, X509TestHelpers.pemEncodeX509Certificate(trustStoreCertificate), StandardCharsets.US_ASCII, false);
+            for (X509Certificate cert : trustStoreCertificates) {
+                FileUtils.writeStringToFile(trustStorePemFile, X509TestHelpers.pemEncodeX509Certificate(cert), StandardCharsets.US_ASCII, true);
+            }
             this.trustStorePemFile = trustStorePemFile;
         }
         return trustStorePemFile;
@@ -203,7 +213,7 @@ public class X509TestContext {
             File trustStorePkcs12File = File.createTempFile(TRUST_STORE_PREFIX, KeyStoreFileType.PKCS12.getDefaultFileExtension(), tempDir);
             trustStorePkcs12File.deleteOnExit();
             try (final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStorePkcs12File)) {
-                byte[] bytes = X509TestHelpers.certToPKCS12TrustStoreBytes(trustStoreCertificate, trustStorePassword);
+                byte[] bytes = X509TestHelpers.certToPKCS12TrustStoreBytes(trustStoreCertificates.get(0), trustStorePassword);
                 trustStoreOutputStream.write(bytes);
                 trustStoreOutputStream.flush();
             } catch (GeneralSecurityException e) {
@@ -220,7 +230,7 @@ public class X509TestContext {
                 TRUST_STORE_PREFIX, KeyStoreFileType.BCFKS.getDefaultFileExtension(), tempDir);
             trustStoreBcfksFile.deleteOnExit();
             try (final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStoreBcfksFile)) {
-                byte[] bytes = X509TestHelpers.certToBCFKSTrustStoreBytes(trustStoreCertificate, trustStorePassword);
+                byte[] bytes = X509TestHelpers.certToBCFKSTrustStoreBytes(trustStoreCertificates.get(0), trustStorePassword);
                 trustStoreOutputStream.write(bytes);
                 trustStoreOutputStream.flush();
             } catch (GeneralSecurityException e) {
