@@ -5113,7 +5113,11 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 
 static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
+#if defined(_MSC_VER)
+    static __declspec(thread) char buf[134] = { 0 };
+#else
     static __thread char buf[134] = { 0 };
+#endif
     char addrstr[INET6_ADDRSTRLEN] = { 0 };
     const char *fmtstring;
     void *inaddr;
