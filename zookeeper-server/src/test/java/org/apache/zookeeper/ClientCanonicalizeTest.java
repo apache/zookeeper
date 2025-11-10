@@ -19,6 +19,8 @@
 package org.apache.zookeeper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.IOException;
@@ -85,4 +87,39 @@ public class ClientCanonicalizeTest extends ZKTestCase {
         assertEquals(configuredPrincipal, serverPrincipal);
     }
 
+    @Test
+    public void testAllowReverseDnsLookupDisabled() {
+        // Arrange
+        ZKClientConfig config = new ZKClientConfig();
+        config.setProperty(ZKClientConfig.ZK_SASL_CLIENT_ALLOW_REVERSE_DNS, "false");
+        InetSocketAddress addr = mock(InetSocketAddress.class);
+        SaslServerPrincipal.WrapperInetSocketAddress ia = new SaslServerPrincipal.WrapperInetSocketAddress(addr, config);
+        doReturn("this-is-the-right-hostname").when(addr).getHostString();
+        doThrow(new UnsupportedOperationException("getHostName() should not be called when reverse DNS is disabled"))
+            .when(addr).getHostName();
+
+        // Act
+        String hostname = ia.getHostName();
+
+        // Assert
+        assertEquals("this-is-the-right-hostname", hostname);
+    }
+
+    @Test
+    public void testAllowReverseDnsLookupEnabled() {
+        // Arrange
+        ZKClientConfig config = new ZKClientConfig();
+        config.setProperty(ZKClientConfig.ZK_SASL_CLIENT_ALLOW_REVERSE_DNS, "true");
+        InetSocketAddress addr = mock(InetSocketAddress.class);
+        SaslServerPrincipal.WrapperInetSocketAddress ia = new SaslServerPrincipal.WrapperInetSocketAddress(addr, config);
+        doReturn("this-is-the-right-hostname").when(addr).getHostName();
+        doThrow(new UnsupportedOperationException("getHostString() should not be called when reverse DNS is enabled"))
+            .when(addr).getHostString();
+
+        // Act
+        String hostname = ia.getHostName();
+
+        // Assert
+        assertEquals("this-is-the-right-hostname", hostname);
+    }
 }

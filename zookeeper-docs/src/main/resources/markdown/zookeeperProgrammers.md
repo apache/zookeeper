@@ -1315,6 +1315,11 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     the fully qualified domain name belonging to the address. You can disable this 'canonicalization'
     by setting: zookeeper.sasl.client.canonicalize.hostname=false
 
+* *zookeeper.sasl.client.allowReverseDnsLookup* :
+    **New in 3.9.5:**
+    Controls whether reverse DNS lookup is enabled when constructing the server principal for the SASL client.
+    Default: false
+
 * *zookeeper.server.realm* :
     Realm part of the server principal. By default it is the client principal realm.
 

@@ -60,6 +60,8 @@ public class ZKClientConfig extends ZKConfig {
      * Feature is disabled by default.
      */
     public static final long ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT = 0;
+    public static final String ZK_SASL_CLIENT_ALLOW_REVERSE_DNS = "zookeeper.sasl.client.allowReverseDnsLookup";
+    public static final boolean ZK_SASL_CLIENT_ALLOW_REVERSE_DNS_DEFAULT = false;
 
     public ZKClientConfig() {
         super();
@@ -120,6 +122,7 @@ public class ZKClientConfig extends ZKConfig {
         setProperty(DISABLE_AUTO_WATCH_RESET, System.getProperty(DISABLE_AUTO_WATCH_RESET));
         setProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET, System.getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET));
         setProperty(SECURE_CLIENT, System.getProperty(SECURE_CLIENT));
+        setProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS, System.getProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS));
     }
 
     /**
