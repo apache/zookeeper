@@ -271,6 +271,7 @@ public final class ServerMetrics {
         QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
 
         TTL_NODE_DELETED_COUNT = metricsContext.getCounter("ttl_node_deleted_count");
+        TTL_NODE_CREATED_COUNT = metricsContext.getCounter("ttl_node_created_count");
     }
 
     /**
@@ -550,9 +551,10 @@ public final class ServerMetrics {
     public final CounterSet QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
 
     /**
-     * Count of deleted TTL nodes
+     * Count of created and deleted TTL nodes
      */
     public final Counter TTL_NODE_DELETED_COUNT;
+    public final Counter TTL_NODE_CREATED_COUNT;
 
     private final MetricsProvider metricsProvider;
 
