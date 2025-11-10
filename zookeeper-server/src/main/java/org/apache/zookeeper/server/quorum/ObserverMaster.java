@@ -233,6 +233,10 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
     }
 
     @Override
+    public void processPing(long sid, long zxid, byte[] payload) throws IOException {
+    }
+
+    @Override
     public void touch(long sess, int to) {
         zks.getSessionTracker().touchSession(sess, to);
     }
