@@ -52,6 +52,11 @@ public class ClientX509Util extends X509Util {
         return false;
     }
 
+    @Override
+    protected boolean shouldAllowReverseDnsLookup() {
+        return false;
+    }
+
     public String getSslAuthProviderProperty() {
         return sslAuthProviderProperty;
     }
@@ -202,6 +207,7 @@ public class ClientX509Util extends X509Util {
         boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty());
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
+        boolean allowReverseDnsLookup = allowReverseDnsLookup(config);
 
         if (trustStoreLocation.isEmpty()) {
             LOG.warn("{} not specified", getSslTruststoreLocationProperty());
@@ -209,7 +215,8 @@ public class ClientX509Util extends X509Util {
         } else {
             return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
                 sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, getFipsMode(config));
+                sslClientHostnameVerificationEnabled, allowReverseDnsLookup,
+                getFipsMode(config));
         }
     }
 }
