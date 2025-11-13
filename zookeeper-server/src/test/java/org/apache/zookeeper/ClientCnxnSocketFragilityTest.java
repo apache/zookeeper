@@ -96,7 +96,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                 BusyServer server = new BusyServer();
                 ZooKeeper zk = new ZooKeeper(server.getHostPort(), (int) sessionTimeout.toMillis(), null) {
                 @Override
-                ClientCnxn createConnection(HostProvider hostProvider, int sessionTimeout, ZKClientConfig clientConfig, Watcher defaultWatcher, ClientCnxnSocket clientCnxnSocket, long sessionId, byte[] sessionPasswd, boolean canBeReadOnly) throws IOException {
+                ClientCnxn createConnection(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZKClientConfig clientConfig, Watcher defaultWatcher, ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly) throws IOException {
                     ClientCnxnSocketNIO socket = spy((ClientCnxnSocketNIO) clientCnxnSocket);
 
                     doAnswer(mock -> {
@@ -110,7 +110,7 @@ public class ClientCnxnSocketFragilityTest extends QuorumPeerTestBase {
                     }).when(socket).createSock();
 
                     nioSelector.set(socket.getSelector());
-                    return super.createConnection(hostProvider, sessionTimeout, clientConfig, defaultWatcher, socket, sessionId, sessionPasswd, canBeReadOnly);
+                    return super.createConnection(chrootPath, hostProvider, sessionTimeout, clientConfig, defaultWatcher, socket, canBeReadOnly);
                 }
             }) {
 
