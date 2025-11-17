@@ -30,9 +30,13 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -114,6 +118,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         long stop = Time.currentElapsedTime();
         assertTrue(5 > stop - start);
     }
+
 
     @Test
     public void testEmptyServerAddressesList() {
@@ -886,6 +891,42 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertTrue(hostProvider.size() == sizeBefore,
                 "Different number of addresses in the list: "
                         + hostProvider.size() + " (after), " + sizeBefore + " (before)");
+    }
+
+    @Test
+    public void testResolverKeepsResolutionOrderPreferV6() {
+        // Arrange
+        Collection<InetSocketAddress> servers = new ArrayList<>();
+        servers.add(InetSocketAddress.createUnresolved("test-server-name", 1111));
+        InetAddress[] resolvedAddresses = new InetAddress[] {
+            mock(Inet6Address.class),
+            mock(Inet4Address.class)
+        };
+        StaticHostProvider staticHostProvider = new StaticHostProvider(servers, name -> resolvedAddresses);
+
+        // Act & Assert
+        for (int i = 0; i < 100; i++) {
+           InetSocketAddress next = staticHostProvider.next(0);
+           assertSame(next.getAddress(), resolvedAddresses[0], "Default resolver should always return the first address");
+        }
+    }
+
+    @Test
+    public void testResolverKeepsResolutionOrderPreferV4() {
+        // Arrange
+        Collection<InetSocketAddress> servers = new ArrayList<>();
+        servers.add(InetSocketAddress.createUnresolved("test-server-name", 1111));
+        InetAddress[] resolvedAddresses = new InetAddress[] {
+            mock(Inet4Address.class),
+            mock(Inet6Address.class)
+        };
+        StaticHostProvider staticHostProvider = new StaticHostProvider(servers, name -> resolvedAddresses);
+
+        // Act & Assert
+        for (int i = 0; i < 100; i++) {
+            InetSocketAddress next = staticHostProvider.next(0);
+            assertSame(next.getAddress(), resolvedAddresses[0], "Default resolver should always return the first address");
+        }
     }
 
     private StaticHostProvider getHostProviderUnresolved(byte size) {
