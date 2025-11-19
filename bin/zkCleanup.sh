@@ -31,7 +31,7 @@
 # use POSIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"
 ZOOBIN="$(dirname "$ZOOBIN")"
-ZOOBINDIR="$(cd "$ZOOBIN" || exit && pwd)"
+ZOOBINDIR="$(cd "$ZOOBIN" && pwd)" || exit
 
 if [[ -e "$ZOOBIN/../libexec/zkEnv.sh" ]]; then
   . "$ZOOBINDIR"/../libexec/zkEnv.sh "$@"
