@@ -1381,6 +1381,22 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *zookeeper.kinit* :
     Specifies path to kinit binary. Default is "/usr/bin/kinit".
 
+* *zookeeper.shuffleDnsResponse* :
+  **New in 3.10.0:**
+  Specifies whether ZooKeeper client should randomly pick an IP address from the DNS lookup query result when resolving 
+  server addresses or not. This is a feature flag in order to keep the old behavior of the default DNS resolver in 
+  `StaticHostProvider`, because we disabled it by default. The reason behind that is shuffling the response of DNS queries 
+  shadows JVM network property `java.net.preferIPv6Addresses` (default: false). This property controls whether JVM's built-in 
+  resolver should prioritize v4 (false value) or v6 (true value) addresses when putting together the list of IP addresses 
+  in the result. In other words the above Java system property was completely ineffective in the case of ZooKeeper server host 
+  resolution protocol and this must have been fixed. In a dual stack environment one might want to prefer one stack over 
+  the other which, in case of Java processes, should be controlled by JVM network properties and ZooKeeper must honor 
+  these settings. Since the old behavior has been with us since day zero, we introduced this feature flag in case you 
+  need it. Such case could be when you have a buggy DNS server which responds IP addresses always in the same order and 
+  you want to randomize that.
+  Default: false
+
+
 <a name="C+Binding"></a>
 
 ### C Binding
