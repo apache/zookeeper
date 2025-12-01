@@ -33,4 +33,8 @@ public class QuorumX509Util extends X509Util {
         return true;
     }
 
+    @Override
+    protected boolean shouldAllowReverseDnsLookup() {
+        return true;
+    }
 }
