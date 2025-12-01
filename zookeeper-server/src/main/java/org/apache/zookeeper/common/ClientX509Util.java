@@ -32,6 +32,11 @@ public class ClientX509Util extends X509Util {
         return false;
     }
 
+    @Override
+    protected boolean shouldAllowReverseDnsLookup() {
+        return false;
+    }
+
     public String getSslAuthProviderProperty() {
         return sslAuthProviderProperty;
     }

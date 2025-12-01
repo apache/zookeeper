@@ -1714,6 +1714,16 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Disabling it only recommended for testing purposes.
     Default: true
 
+* *ssl.allowReverseDnsLookup* and *ssl.quorum.allowReverseDnsLookup* :
+    (Java system properties: **zookeeper.ssl.allowReverseDnsLookup** and **zookeeper.ssl.quorum.allowReverseDnsLookup**)
+    **New in 3.8.6:**
+    Allow reverse DNS lookup in both server- and client hostname verifications if the hostname verification is enabled in
+    `ZKTrustManager`. Supported in both quorum and client TLS protocols. Not supported in FIPS mode. Reverse DNS lookups are
+    expensive and unnecessary in most cases. Make sure that certificates are created with all required Subject Alternative
+    Names (SAN) for successful identity verification. It's recommended to add SAN:IP entries for identity verification
+    of client certificates.
+    Default: false (for Client connections), true (for Quorum connections)
+
 * *ssl.crl* and *ssl.quorum.crl* :
     (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
     **New in 3.5.5:**
