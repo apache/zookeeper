@@ -20,44 +20,41 @@ package org.apache.zookeeper;
 
 import java.util.Collections;
 import java.util.List;
-import jline.console.completer.Completer;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
+import org.jline.utils.AttributedString;
 
 class JLineZNodeCompleter implements Completer {
 
-    private ZooKeeper zk;
+    private final ZooKeeper zk;
 
     public JLineZNodeCompleter(ZooKeeper zk) {
         this.zk = zk;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public int complete(String buffer, int cursor, List candidates) {
+    @Override
+    public void complete(LineReader lineReader, ParsedLine commandLine, List<Candidate> candidates) {
         // Guarantee that the final token is the one we're expanding
-        buffer = buffer.substring(0, cursor);
-        String token = "";
-        if (!buffer.endsWith(" ")) {
-            String[] tokens = buffer.split(" ");
-            if (tokens.length != 0) {
-                token = tokens[tokens.length - 1];
-            }
-        }
+        String token = commandLine.words().get(commandLine.words().size() - 1);
 
         if (token.startsWith("/")) {
-            return completeZNode(buffer, token, candidates);
+            completeZNode(token, candidates);
+        } else {
+            completeCommand(token, candidates);
         }
-        return completeCommand(buffer, token, candidates);
     }
 
-    private int completeCommand(String buffer, String token, List<String> candidates) {
+    private void completeCommand(String token, List<Candidate> candidates) {
         for (String cmd : ZooKeeperMain.getCommands()) {
             if (cmd.startsWith(token)) {
-                candidates.add(cmd);
+                candidates.add(createCandidate(cmd));
             }
         }
-        return buffer.lastIndexOf(" ") + 1;
     }
 
-    private int completeZNode(String buffer, String token, List<String> candidates) {
+    private void completeZNode(String token, List<Candidate> candidates) {
         String path = token;
         int idx = path.lastIndexOf("/") + 1;
         String prefix = path.substring(idx);
@@ -67,16 +64,17 @@ class JLineZNodeCompleter implements Completer {
             List<String> children = zk.getChildren(dir, false);
             for (String child : children) {
                 if (child.startsWith(prefix)) {
-                    candidates.add(child);
+                    String zNode = dir + (idx == 1 ? "" : "/") + child;
+                    candidates.add(createCandidate(zNode));
                 }
             }
-        } catch (InterruptedException e) {
-            return 0;
-        } catch (KeeperException e) {
-            return 0;
+        } catch (InterruptedException | KeeperException e) {
+            return;
         }
         Collections.sort(candidates);
-        return candidates.size() == 0 ? buffer.length() : buffer.lastIndexOf("/") + 1;
     }
 
+    private static Candidate createCandidate(String cmd) {
+        return new Candidate(AttributedString.stripAnsi(cmd), cmd, null, null, null, null, true);
+    }
 }
