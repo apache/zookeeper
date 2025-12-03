@@ -21,6 +21,7 @@ package org.apache.zookeeper.metrics.prometheus;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -93,31 +94,51 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
         counter.add(10);
         int[] count = {0};
         provider.dump((k, v) -> {
-            assertEquals("cc", k);
-            assertEquals(10, ((Number) v).intValue());
             count[0]++;
+            int value = ((Number) v).intValue();
+            switch (k) {
+                case "cc_total":
+                    assertEquals(10, ((Number) v).intValue());
+                    break;
+                case "cc_created":
+                    assertNotNull(value);
+                    break;
+                default:
+                    fail("unexpected key " + k);
+                    break;
+            }
         }
         );
-        assertEquals(1, count[0]);
+        assertEquals(2, count[0]);
         count[0] = 0;
 
         // this is not allowed but it must not throw errors
         counter.add(-1);
 
         provider.dump((k, v) -> {
-            assertEquals("cc", k);
-            assertEquals(10, ((Number) v).intValue());
             count[0]++;
+            int value = ((Number) v).intValue();
+            switch (k) {
+                case "cc_total":
+                    assertEquals(10, ((Number) v).intValue());
+                    break;
+                case "cc_created":
+                    assertNotNull(value);
+                    break;
+                default:
+                    fail("unexpected key " + k);
+                    break;
+            }
         }
         );
-        assertEquals(1, count[0]);
+        assertEquals(2, count[0]);
 
         // we always must get the same object
         assertSame(counter, provider.getRootContext().getCounter("cc"));
 
         String res = callServlet();
-        assertThat(res, CoreMatchers.containsString("# TYPE cc counter"));
-        assertThat(res, CoreMatchers.containsString("cc 10.0"));
+        assertThat(res, CoreMatchers.containsString("# TYPE cc_total counter"));
+        assertThat(res, CoreMatchers.containsString("cc_total 10.0"));
     }
 
     @Test
@@ -313,13 +334,16 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                 case "cc_sum":
                     assertEquals(20, value);
                     break;
+                case "cc_created":
+                    assertNotNull(value);
+                    break;
                 default:
                     fail("unespected key " + k);
                     break;
             }
         }
         );
-        assertEquals(3, count[0]);
+        assertEquals(4, count[0]);
         count[0] = 0;
 
         // we always must get the same object
@@ -368,13 +392,16 @@ public class PrometheusMetricsProviderTest extends PrometheusMetricsTestBase {
                 case "cc_sum":
                     assertEquals(20, value);
                     break;
+                case "cc_created":
+                    assertNotNull(value);
+                    break;
                 default:
                     fail("unespected key " + k);
                     break;
             }
         }
         );
-        assertEquals(5, count[0]);
+        assertEquals(6, count[0]);
         count[0] = 0;
 
         // we always must get the same object
