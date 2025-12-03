@@ -62,6 +62,13 @@ public class ZKClientConfig extends ZKConfig {
     public static final long ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT = 0;
     public static final String ZK_SASL_CLIENT_ALLOW_REVERSE_DNS = "zookeeper.sasl.client.allowReverseDnsLookup";
     public static final boolean ZK_SASL_CLIENT_ALLOW_REVERSE_DNS_DEFAULT = false;
+    /**
+     * True value preserves the old behavior is to shuffle the addresses in DNS response regardless of address type.
+     * This could help with buggy DNS servers which always return addresses in the same order, but at the same time
+     * ignores the JVM option java.net.preferIPv6Addresses.
+     */
+    public static final String ZOOKEEPER_SHUFFLE_DNS_RESPONSE = "zookeeper.shuffleDnsResponse";
+    public static final boolean ZOOKEEPER_SHUFFLE_DNS_RESPONSE_DEFAULT = false;
 
     public ZKClientConfig() {
         super();
@@ -135,6 +142,14 @@ public class ZKClientConfig extends ZKConfig {
      */
     public boolean isSaslClientEnabled() {
         return Boolean.valueOf(getProperty(ENABLE_CLIENT_SASL_KEY, ENABLE_CLIENT_SASL_DEFAULT));
+    }
+
+    /**
+     * Return true if we need to use the old behavior of default DNS resolver and always shuffle the IP addresses
+     * in the DNS lookup response in order to pick a completely random IP address.
+     */
+    public boolean isShuffleDnsResponseEnabled() {
+        return getBoolean(ZOOKEEPER_SHUFFLE_DNS_RESPONSE, ZOOKEEPER_SHUFFLE_DNS_RESPONSE_DEFAULT);
     }
 
     /**

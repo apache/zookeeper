@@ -50,6 +50,8 @@ public final class StaticHostProvider implements HostProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProvider.class);
 
+    private ZKClientConfig clientConfig = null;
+
     private List<InetSocketAddress> serverAddresses = new ArrayList<>(5);
 
     private Random sourceOfRandomness;
@@ -91,6 +93,26 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     /**
+     * Constructs a SimpleHostSet with ZKClientConfig.
+     *
+     * Introduced this new overload in 3.10.0 in order to take advantage of some newly introduced feature flags. Like
+     * the shuffle (old) / not to shuffle (new) behavior of DNS resolution.
+     *
+     * @param serverAddresses
+     *            possibly unresolved ZooKeeper server addresses
+     * @param clientConfig
+     *            ZooKeeper client configuration
+     */
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses, ZKClientConfig clientConfig) {
+        init(serverAddresses, System.currentTimeMillis() ^ this.hashCode(), new Resolver() {
+            @Override
+            public InetAddress[] getAllByName(String name) throws UnknownHostException {
+                return InetAddress.getAllByName(name);
+            }
+        }, clientConfig);
+    }
+
+    /**
      * Constructs a SimpleHostSet.
      *
      * Introduced for testing purposes. getAllByName() is a static method of InetAddress, therefore cannot be easily mocked.
@@ -125,6 +147,12 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     private void init(Collection<InetSocketAddress> serverAddresses, long randomnessSeed, Resolver resolver) {
+        init(serverAddresses, randomnessSeed, resolver, null);
+    }
+
+    private void init(Collection<InetSocketAddress> serverAddresses, long randomnessSeed, Resolver resolver,
+                      ZKClientConfig clientConfig) {
+        this.clientConfig = clientConfig == null ? new ZKClientConfig() : clientConfig;
         this.sourceOfRandomness = new Random(randomnessSeed);
         this.resolver = resolver;
         if (serverAddresses.isEmpty()) {
@@ -142,7 +170,9 @@ public final class StaticHostProvider implements HostProvider {
             if (resolvedAddresses.isEmpty()) {
                 return address;
             }
-            Collections.shuffle(resolvedAddresses);
+            if (clientConfig.isShuffleDnsResponseEnabled()) {
+                Collections.shuffle(resolvedAddresses);
+            }
             return new InetSocketAddress(resolvedAddresses.get(0), address.getPort());
         } catch (UnknownHostException e) {
             LOG.error("Unable to resolve address: {}", address.toString(), e);
