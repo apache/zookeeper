@@ -25,9 +25,11 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import org.slf4j.Logger;
@@ -104,7 +106,11 @@ public class ZKConfig {
     public ZKConfig(Path configPath) throws ConfigException {
         this();
         addConfiguration(configPath);
-        LOG.info("ZK Config {}", this.properties);
+        Map<String, String> p = new HashMap<>();
+        for (Entry<String, String> entry : properties.entrySet()) {
+            p.put(entry.getKey(), logRedactor(entry.getKey(), entry.getValue()));
+        }
+        LOG.info("ZK Config {}", p);
     }
 
     private void init() {
@@ -206,7 +212,7 @@ public class ZKConfig {
         }
         String oldValue = properties.put(key, value);
         if (null != oldValue && !oldValue.equals(value)) {
-            LOG.debug("key {}'s value {} is replaced with new value {}", key, oldValue, value);
+            LOG.debug("key {}'s value {} is replaced with new value {}", key, logRedactor(key, oldValue), logRedactor(key, value));
         }
     }
 
@@ -337,4 +343,13 @@ public class ZKConfig {
         return defaultValue;
     }
 
+    private String logRedactor(String key, String value) {
+        if (key == null) {
+            return value;
+        }
+        if (key.toLowerCase(Locale.ROOT).endsWith("password")) {
+            return "***";
+        }
+        return value;
+    }
 }
