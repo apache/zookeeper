@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -82,7 +83,11 @@ public class ZKConfig {
     public ZKConfig(File configFile) throws ConfigException {
         this();
         addConfiguration(configFile);
-        LOG.info("ZK Config {}", this.properties);
+        Map<String, String> p = new HashMap<>();
+        for (Entry<String, String> entry : properties.entrySet()) {
+            p.put(entry.getKey(), logRedactor(entry.getKey(), entry.getValue()));
+        }
+        LOG.info("ZK Config {}", p);
     }
 
     private void init() {
@@ -182,7 +187,7 @@ public class ZKConfig {
         }
         String oldValue = properties.put(key, value);
         if (null != oldValue && !oldValue.equals(value)) {
-            LOG.debug("key {}'s value {} is replaced with new value {}", key, oldValue, value);
+            LOG.debug("key {}'s value {} is replaced with new value {}", key, logRedactor(key, oldValue), logRedactor(key, value));
         }
     }
 
@@ -283,4 +288,13 @@ public class ZKConfig {
         return defaultValue;
     }
 
+    private String logRedactor(String key, String value) {
+        if (key == null) {
+            return value;
+        }
+        if (key.toLowerCase(Locale.ROOT).endsWith("password")) {
+            return "***";
+        }
+        return value;
+    }
 }
