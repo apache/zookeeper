@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,8 +38,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests about Prometheus Metrics Provider. Please note that we are not testing
- * Prometheus but only our integration.
+ * Tests about Prometheus Metrics Provider. Please note that we are not testing Prometheus but only our integration.
  */
 public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBase {
 
@@ -75,7 +75,14 @@ public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBas
         configuration.setProperty("httpPort", String.valueOf(httpPort));
         initializeProviderWithCustomConfig(configuration);
         simulateMetricIncrement();
-        validateMetricResponse(callHttpServlet("http://" + httpHost + ":" + httpPort + "/metrics"));
+        String metricsUrl = String.format("http://%s:%d/metrics", httpHost, httpPort);
+
+        HttpURLConnection conn = callAndGetResponse(metricsUrl, "GET");
+        validateMetricResponse(readResponse(conn));
+
+        conn = callAndGetResponse(metricsUrl, "TRACE");
+        assertEquals(HttpURLConnection.HTTP_BAD_METHOD, conn.getResponseCode());
+        conn.disconnect();
     }
 
     @Test
@@ -84,7 +91,14 @@ public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBas
         configuration.setProperty("httpsPort", String.valueOf(httpsPort));
         initializeProviderWithCustomConfig(configuration);
         simulateMetricIncrement();
-        validateMetricResponse(callHttpsServlet("https://" + httpHost + ":" + httpsPort + "/metrics"));
+        String metricsUrl = String.format("https://%s:%d/metrics", httpHost, httpsPort);
+
+        HttpURLConnection conn = callAndGetResponse(metricsUrl, "GET");
+        validateMetricResponse(readResponse(conn));
+
+        conn = callAndGetResponse(metricsUrl, "TRACE");
+        assertEquals(HttpURLConnection.HTTP_BAD_METHOD, conn.getResponseCode());
+        conn.disconnect();
     }
 
     @Test
@@ -94,44 +108,48 @@ public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBas
         configuration.setProperty("httpPort", String.valueOf(httpPort));
         initializeProviderWithCustomConfig(configuration);
         simulateMetricIncrement();
-        validateMetricResponse(callHttpServlet("http://" + httpHost + ":" + httpPort + "/metrics"));
-        validateMetricResponse(callHttpsServlet("https://" + httpHost + ":" + httpsPort + "/metrics"));
+
+        HttpURLConnection conn = callAndGetResponse(String.format("https://%s:%d/metrics", httpHost, httpsPort), "GET");
+        validateMetricResponse(readResponse(conn));
     }
 
-    private String callHttpsServlet(String urlString) throws Exception {
-        // Load and configure the SSL context from the keystore and truststore
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        try (FileInputStream keystoreStream = new FileInputStream(testDataPath + "/ssl/client_keystore.jks")) {
-            keyStore.load(keystoreStream, "testpass".toCharArray());
+    private HttpURLConnection callAndGetResponse(String urlString, String method) throws Exception {
+        URL url = new URL(urlString);
+        HttpURLConnection conn;
+
+        if (url.getProtocol().equalsIgnoreCase("https")) {
+            // Re-use the existing SSL setup logic.
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            try (FileInputStream keystoreStream = new FileInputStream(testDataPath + "/ssl/client_keystore.jks")) {
+                keyStore.load(keystoreStream, "testpass".toCharArray());
+            }
+
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            try (FileInputStream trustStoreStream = new FileInputStream(testDataPath + "/ssl/client_truststore.jks")) {
+                trustStore.load(trustStoreStream, "testpass".toCharArray());
+            }
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory
+                    .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, "testpass".toCharArray());
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory
+                    .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(),
+                    new java.security.SecureRandom());
+
+            HttpsURLConnection httpsConn = (HttpsURLConnection) url.openConnection();
+            httpsConn.setSSLSocketFactory(sslContext.getSocketFactory());
+            httpsConn.setHostnameVerifier((hostname, session) -> true);
+            conn = httpsConn;
+        } else {
+            conn = (HttpURLConnection) url.openConnection();
         }
 
-        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        try (FileInputStream trustStoreStream = new FileInputStream(testDataPath + "/ssl/client_truststore.jks")) {
-            trustStore.load(trustStoreStream, "testpass".toCharArray());
-        }
-
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, "testpass".toCharArray());
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory
-                .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(trustStore);
-        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(),
-                new java.security.SecureRandom());
-
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-        URL url = new URL(urlString);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        return readResponse(connection);
-    }
-
-    private String callHttpServlet(String urlString) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        return readResponse(connection);
+        conn.setRequestMethod(method);
+        conn.connect();
+        return conn;
     }
 
     private String readResponse(HttpURLConnection connection) throws IOException {
@@ -155,7 +173,7 @@ public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBas
     }
 
     private void validateMetricResponse(String response) throws IOException {
-        assertThat(response, containsString("# TYPE cc counter"));
-        assertThat(response, containsString("cc 10.0"));
+        assertThat(response, containsString("# TYPE cc_total counter"));
+        assertThat(response, containsString("cc_total 10.0"));
     }
 }
