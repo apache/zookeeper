@@ -88,6 +88,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
             boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
             boolean hostnameVerificationEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+            boolean clientHostnameVerificationEnabled = x509Util.isClientHostnameVerificationEnabled(config);
             boolean allowReverseDnsLookup = Boolean.parseBoolean(config.getProperty(x509Util.getSslAllowReverseDnsLookupProperty()));
 
             X509KeyManager km = null;
@@ -120,7 +121,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                         crlEnabled,
                         ocspEnabled,
                         hostnameVerificationEnabled,
-                        false,
+                        clientHostnameVerificationEnabled,
                         allowReverseDnsLookup,
                         fipsMode);
                 } catch (TrustManagerException e) {
