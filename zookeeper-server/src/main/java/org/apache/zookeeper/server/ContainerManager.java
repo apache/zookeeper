@@ -169,6 +169,18 @@ public class ContainerManager {
         return TimeUnit.MINUTES.toMillis(1) / maxPerMinute;
     }
 
+    int getMaxPerMinute() {
+        return maxPerMinute;
+    }
+
+    int getCheckIntervalMs() {
+        return checkIntervalMs;
+    }
+
+    long getMaxNeverUsedIntervalMs() {
+        return maxNeverUsedIntervalMs;
+    }
+
     // VisibleForTesting
     protected Collection<String> getCandidates() {
         Set<String> candidates = new HashSet<>();

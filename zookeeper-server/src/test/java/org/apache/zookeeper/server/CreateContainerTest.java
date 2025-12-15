@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,8 +78,28 @@ public class CreateContainerTest extends ClientBase {
     @AfterEach
     @Override
     public void tearDown() throws Exception {
+        System.clearProperty("znode.container.checkIntervalMs");
+        System.clearProperty("znode.container.maxPerMinute");
+        System.clearProperty("znode.container.maxNeverUsedInterval");
+
         super.tearDown();
         zk.close();
+    }
+
+    @Test
+    public void testContainerManagerDefaults() {
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor);
+        assertEquals((int) Duration.ofMinutes(1).toMillis(), containerManager.getCheckIntervalMs());
+        assertEquals(10000, containerManager.getMaxPerMinute());
+        assertEquals((int) Duration.ofMinutes(5).toMillis(), containerManager.getMaxNeverUsedIntervalMs());
+
+        System.setProperty("znode.container.checkIntervalMs", "1000");
+        System.setProperty("znode.container.maxPerMinute", "1000");
+        System.setProperty("znode.container.maxNeverUsedIntervalMs", "10000");
+        containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor);
+        assertEquals(1000, containerManager.getCheckIntervalMs());
+        assertEquals(1000, containerManager.getMaxPerMinute());
+        assertEquals(10000, containerManager.getMaxNeverUsedIntervalMs());
     }
 
     @Test
