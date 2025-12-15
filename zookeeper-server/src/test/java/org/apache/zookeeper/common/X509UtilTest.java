@@ -20,7 +20,6 @@ package org.apache.zookeeper.common;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.netty.buffer.UnpooledByteBufAllocator;
@@ -32,7 +31,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -90,10 +88,6 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         System.clearProperty(x509Util.getCipherSuitesProperty());
         System.clearProperty(x509Util.getSslProtocolProperty());
         System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
-        System.clearProperty("com.sun.net.ssl.checkRevocation");
-        System.clearProperty("com.sun.security.enableCRLDP");
-        Security.setProperty("ocsp.enable", Boolean.FALSE.toString());
-        Security.setProperty("com.sun.security.enableCRLDP", Boolean.FALSE.toString());
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         x509Util.close();
@@ -225,49 +219,6 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         setCustomCipherSuites();
         SSLSocket sslSocket = x509Util.createSSLSocket();
         assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
-    }
-
-    // It would be great to test the value of PKIXBuilderParameters#setRevocationEnabled but it does not appear to be
-    // possible
-    @ParameterizedTest
-    @MethodSource("data")
-    @Timeout(value = 5)
-    public void testCRLEnabled(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-        System.setProperty(x509Util.getSslCrlEnabledProperty(), "true");
-        x509Util.getDefaultSSLContext();
-        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
-        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
-        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
-    }
-
-    @ParameterizedTest
-    @MethodSource("data")
-    @Timeout(value = 5)
-    public void testCRLDisabled(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-        x509Util.getDefaultSSLContext();
-        assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
-        assertFalse(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
-        assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
-    }
-
-    @ParameterizedTest
-    @MethodSource("data")
-    @Timeout(value = 5)
-    public void testOCSPEnabled(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-        System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
-        x509Util.getDefaultSSLContext();
-        assertTrue(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
-        assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
-        assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
     @ParameterizedTest

@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.net.ssl.SSLContext;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -49,8 +50,11 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -262,12 +266,23 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     public static boolean waitForServerUp(String hp, long timeout, boolean secure) {
+        return waitForServerUp(hp, timeout, secure, null);
+    }
+
+    public static boolean waitForServerUp(String hp, long timeout, boolean secure, ZKConfig zkConfig) {
         long start = Time.currentElapsedTime();
         while (true) {
             try {
                 // if there are multiple hostports, just take the first one
                 HostPort hpobj = parseHostPortList(hp).get(0);
-                String result = send4LetterWord(hpobj.host, hpobj.port, "stat", secure);
+                SSLContext sslContext = null;
+                String result;
+                if (zkConfig != null) {
+                    try (X509Util x509Util = new ClientX509Util()) {
+                        sslContext = x509Util.createSSLContext(zkConfig);
+                    }
+                }
+                result = send4LetterWord(hpobj.host, hpobj.port, "stat", secure, 5000, sslContext);
                 if (result.startsWith("Zookeeper version:") && !result.contains("READ-ONLY")) {
                     return true;
                 }

@@ -905,6 +905,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
 
             setSSLSystemProperties();
+            System.setProperty(quorumX509Util.getSslCrlEnabledProperty(), "true");
             System.setProperty(quorumX509Util.getSslOcspEnabledProperty(), "true");
 
             X509Certificate validCertificate = buildEndEntityCert(

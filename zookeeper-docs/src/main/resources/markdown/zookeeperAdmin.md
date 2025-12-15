@@ -1779,6 +1779,10 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     (Java system properties: **zookeeper.ssl.ocsp** and **zookeeper.ssl.quorum.ocsp**)
     **New in 3.5.5:**
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
+    **Changed in next feature version:**
+    Currently, *ssl.ocsp* and *ssl.quorum.ocsp* implies *ssl.crl* and *ssl.quorum.crl* correspondingly.
+    In next feature release, one has to setup both *ssl.crl* and *ssl.ocsp* (or *ssl.quorum.crl* and *ssl.quorum.ocsp*)
+    to enable OCSP. This is consistent with jdk's method of [Setting up a Java Client to use Client-Driven OCSP](https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html#setting-up-a-java-client-to-use-client-driven-ocsp).
     Default: false
 
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
