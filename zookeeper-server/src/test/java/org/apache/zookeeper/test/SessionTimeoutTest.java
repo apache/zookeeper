@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +42,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.client.ZooKeeperBuilder;
 import org.apache.zookeeper.common.BusyServer;
 import org.apache.zookeeper.common.Time;
 import org.junit.jupiter.api.BeforeEach;
@@ -175,6 +178,49 @@ public class SessionTimeoutTest extends ClientBase {
             // then: never Expired
             assertThrows(TimeoutException.class, () -> watcher.expired.get(3 * sessionTimeout, TimeUnit.MILLISECONDS));
             assertThrows(KeeperException.ConnectionLossException.class, () -> zk.exists("/", null));
+        }
+
+        // when: try to establish a brand-new session using builder with default newSessionTimeout
+        watcher.reset();
+        try (ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(sessionTimeout))
+                .withDefaultWatcher(watcher)
+                .build()) {
+            // then: never Expired
+            assertThrows(TimeoutException.class, () -> watcher.expired.get(3 * sessionTimeout, TimeUnit.MILLISECONDS));
+            assertThrows(KeeperException.ConnectionLossException.class, () -> zk.exists("/", null));
+        }
+
+        // when: try to establish a brand-new session using builder with Duration.ZERO newSessionTimeout
+        watcher.reset();
+        long start = Time.currentElapsedTime();
+        try (ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(sessionTimeout))
+                .withDefaultWatcher(watcher)
+                .withNewSessionTimeout(Duration.ZERO)
+                .build()) {
+            // then: get Expired after some delay
+            watcher.expired.join();
+            long elapsed = Time.currentElapsedTime() - start;
+            assertThat(elapsed, greaterThan((long) sessionTimeout));
+            assertThat(elapsed, lessThan(sessionTimeout * 10L));
+            // then: future request will get SessionExpiredException
+            assertThrows(KeeperException.SessionExpiredException.class, () -> zk.exists("/", null));
+        }
+
+        // when: try to establish a brand-new session using builder with custom newSessionTimeout
+        watcher.reset();
+        start = Time.currentElapsedTime();
+        Duration newSessionTimeout = Duration.ofMillis(300);
+        try (ZooKeeper zk = new ZooKeeperBuilder(hostPort, Duration.ofMillis(30000))
+                .withDefaultWatcher(watcher)
+                .withNewSessionTimeout(newSessionTimeout)
+                .build()) {
+            // then: get Expired after newSessionTimeout
+            watcher.expired.join();
+            long elapsed = Time.currentElapsedTime() - start;
+            assertThat(elapsed, greaterThanOrEqualTo(newSessionTimeout.toMillis()));
+            assertThat(elapsed, lessThan(newSessionTimeout.toMillis() * 10));
+            // then: future request will get SessionExpiredException
+            assertThrows(KeeperException.SessionExpiredException.class, () -> zk.exists("/", null));
         }
     }
 

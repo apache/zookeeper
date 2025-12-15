@@ -697,6 +697,7 @@ public class ZooKeeper implements AutoCloseable {
     ClientCnxn createConnection(
         HostProvider hostProvider,
         int sessionTimeout,
+        long newSessionTimeout,
         ZKClientConfig clientConfig,
         Watcher defaultWatcher,
         ClientCnxnSocket clientCnxnSocket,
@@ -707,6 +708,7 @@ public class ZooKeeper implements AutoCloseable {
         return new ClientCnxn(
             hostProvider,
             sessionTimeout,
+            newSessionTimeout,
             clientConfig,
             defaultWatcher,
             clientCnxnSocket,
@@ -1148,6 +1150,7 @@ public class ZooKeeper implements AutoCloseable {
         cnxn = createConnection(
             hostProvider,
             sessionTimeout,
+            options.getNewSessionTimeoutMs(),
             this.clientConfig,
             watcher,
             getClientCnxnSocket(),
