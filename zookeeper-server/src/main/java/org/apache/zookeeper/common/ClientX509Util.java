@@ -63,20 +63,14 @@ public class ClientX509Util extends X509Util {
 
     public SslContext createNettySslContextForClient(ZKConfig config)
         throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
-        String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
-        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
-            getSslKeystorePasswdPathProperty());
-        String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
-
         SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
 
-        if (keyStoreLocation.isEmpty()) {
-            LOG.warn("{} not specified", getSslKeystoreLocationProperty());
-        } else {
-            sslContextBuilder.keyManager(createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType));
+        KeyManager km = buildKeyManager(config);
+        if (km != null) {
+            sslContextBuilder.keyManager(km);
         }
 
-        TrustManager tm = getTrustManager(config);
+        TrustManager tm = buildTrustManager(config);
         if (tm != null) {
             sslContextBuilder.trustManager(tm);
         }
@@ -103,19 +97,12 @@ public class ClientX509Util extends X509Util {
 
     public SslContext createNettySslContextForServer(ZKConfig config)
         throws X509Exception.SSLContextException, X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
-        String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
-        String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
-            getSslKeystorePasswdPathProperty());
-        String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
-
-        if (keyStoreLocation.isEmpty()) {
+        KeyManager km = buildKeyManager(config);
+        if (km == null) {
             throw new X509Exception.SSLContextException(
                 "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
         }
-
-        KeyManager km = createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
-
-        return createNettySslContextForServer(config, km, getTrustManager(config));
+        return createNettySslContextForServer(config, km, buildTrustManager(config));
     }
 
     public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
@@ -194,28 +181,5 @@ public class ClientX509Util extends X509Util {
 
     public SslProvider getSslProvider(ZKConfig config) {
         return SslProvider.valueOf(config.getProperty(getSslProviderProperty(), "JDK"));
-    }
-
-    private TrustManager getTrustManager(ZKConfig config) throws X509Exception.TrustManagerException {
-        String trustStoreLocation = config.getProperty(getSslTruststoreLocationProperty(), "");
-        String trustStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslTruststorePasswdProperty(),
-            getSslTruststorePasswdPathProperty());
-        String trustStoreType = config.getProperty(getSslTruststoreTypeProperty());
-
-        boolean sslCrlEnabled = config.getBoolean(getSslCrlEnabledProperty(), Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
-        boolean sslOcspEnabled = config.getBoolean(getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
-        boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
-        boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
-        boolean allowReverseDnsLookup = allowReverseDnsLookup(config);
-
-        if (trustStoreLocation.isEmpty()) {
-            LOG.warn("{} not specified", getSslTruststoreLocationProperty());
-            return null;
-        } else {
-            return createTrustManager(trustStoreLocation, trustStorePassword, trustStoreType,
-                sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled,
-                sslClientHostnameVerificationEnabled, allowReverseDnsLookup,
-                getFipsMode(config));
-        }
     }
 }
