@@ -89,7 +89,6 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             }
 
             try {
-                config.setProperty(x509Util.getSslClientHostnameVerificationEnabledProperty(), "false");
                 tm = x509Util.buildTrustManager(config);
             } catch (TrustManagerException e) {
                 LOG.error("Failed to create trust manager", e);
