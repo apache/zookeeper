@@ -529,7 +529,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
         boolean sslServerHostnameVerificationEnabled = isServerHostnameVerificationEnabled(config);
         boolean sslClientHostnameVerificationEnabled = isClientHostnameVerificationEnabled(config);
-        boolean allowReverseDnsLookup = Boolean.parseBoolean(config.getProperty(getSslAllowReverseDnsLookupProperty()));
+        boolean allowReverseDnsLookup = allowReverseDnsLookup(config);
         boolean fipsMode = getFipsMode(config);
 
         return createTrustManagerInternal(
@@ -553,7 +553,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             boolean ocspEnabled,
             final boolean serverHostnameVerificationEnabled,
             final boolean clientHostnameVerificationEnabled,
-            boolean allowReverseDnsLookup,
+            final boolean allowReverseDnsLookup,
             final boolean fipsMode) throws TrustManagerException {
         return createTrustManager(
                 trustStoreLocation,
