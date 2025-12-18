@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
