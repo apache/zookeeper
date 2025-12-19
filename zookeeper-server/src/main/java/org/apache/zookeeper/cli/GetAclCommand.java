@@ -38,10 +38,11 @@ public class GetAclCommand extends CliCommand {
 
     static {
         options.addOption("s", false, "stats");
+        options.addOption("R", false, "recursive");
     }
 
     public GetAclCommand() {
-        super("getAcl", "[-s] path");
+        super("getAcl", "[-s] [-R] path");
     }
 
     @Override
@@ -65,14 +66,31 @@ public class GetAclCommand extends CliCommand {
         String path = args[1];
         Stat stat = new Stat();
         List<ACL> acl;
+        boolean recursive = cl.hasOption("R");
         try {
-            acl = zk.getACL(path, stat);
+            if (recursive) {
+                ZKUtil.visitSubTreeDFS(zk, path, false, (rc, path1, ctx, name) -> {
+                    try {
+                        out.println(path1);
+                        printAcl(zk.getACL(path1, stat), stat);
+                    } catch (KeeperException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            } else {
+                acl = zk.getACL(path, stat);
+                printAcl(acl, stat);
+            }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
 
+        return false;
+    }
+
+    private void printAcl(List<ACL> acl, Stat stat) {
         for (ACL a : acl) {
             out.println(a.getId() + ": " + ZKUtil.getPermString(a.getPerms()));
         }
@@ -80,6 +98,5 @@ public class GetAclCommand extends CliCommand {
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);
         }
-        return false;
     }
 }
