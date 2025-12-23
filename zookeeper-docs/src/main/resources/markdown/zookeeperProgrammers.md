@@ -1396,6 +1396,11 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
   you want to randomize that.
   Default: false
 
+* *zookeeper.hostProvider.dnsSrvRefreshIntervalSeconds* :
+  **New in 3.10.0:**
+  Specifies the refresh interval in seconds for DNS SRV record lookups when using DnsSrvHostProvider.
+  A value of 0 disables periodic refresh.
+  Default: 60 seconds
 
 <a name="C+Binding"></a>
 

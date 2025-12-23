@@ -573,6 +573,7 @@
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.17.0</commons-io.version>
     <burningwave.mockdns.version>0.25.4</burningwave.mockdns.version>
+    <dnsjava.version>3.5.1</dnsjava.version>
     <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
     <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
 
@@ -773,6 +774,11 @@
         <groupId>org.burningwave</groupId>
         <artifactId>tools</artifactId>
         <version>${burningwave.mockdns.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dnsjava</groupId>
+        <artifactId>dnsjava</artifactId>
+        <version>${dnsjava.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.zookeeper.common.NetUtils;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringUtils;
 
 /**
  * A parser for ZooKeeper Client connect strings.
@@ -38,38 +39,88 @@ import org.apache.zookeeper.common.PathUtils;
 public final class ConnectStringParser {
 
     private static final int DEFAULT_PORT = 2181;
+    private static final String DNS_SRV_PREFIX = "dns-srv://";
 
-    private final String chrootPath;
+    public enum ConnectionType {
+        DNS_SRV,
+        HOST_PORT
+    }
 
+    private String chrootPath;
     private final ArrayList<InetSocketAddress> serverAddresses = new ArrayList<>();
+    private final ConnectionType connectionType;
+    private final String connectString;
 
     /**
-     * Parse host and port by splitting client connectString
-     * with support for IPv6 literals
-     * @throws IllegalArgumentException
-     *             for an invalid chroot path.
+     * Constructs a ConnectStringParser with given connect string.
+     *
+     * <p>Supports two connection string formats:</p>
+     * <ul>
+     * <li><strong>Host:Port format:</strong> "host1:2181,host2:2181/chroot"</li>
+     * <li><strong>DNS SRV format:</strong> "dns-srv://service.domain.com/chroot"</li>
+     * </ul>
+     *
+     * @param connectString the connect string to parse
+     * @throws IllegalArgumentException if connectString is null/empty or contains invalid chroot path
      */
-    public ConnectStringParser(String connectString) {
-        // parse out chroot, if any
-        int off = connectString.indexOf('/');
-        if (off >= 0) {
-            String chrootPath = connectString.substring(off);
-            // ignore "/" chroot spec, same as null
-            if (chrootPath.length() == 1) {
-                this.chrootPath = null;
-            } else {
-                PathUtils.validatePath(chrootPath);
-                this.chrootPath = chrootPath;
-            }
-            connectString = connectString.substring(0, off);
-        } else {
-            this.chrootPath = null;
+    public ConnectStringParser(final String connectString) {
+        if (StringUtils.isBlank(connectString)) {
+            throw new IllegalArgumentException("Connect string cannot be null or empty");
         }
 
-        List<String> hostsList = split(connectString, ",");
+        if (connectString.startsWith(DNS_SRV_PREFIX)) {
+            connectionType = ConnectionType.DNS_SRV;
+            parseDnsSrvFormat(connectString);
+        } else {
+            connectionType = ConnectionType.HOST_PORT;
+            parseHostPortFormat(connectString);
+        }
+        this.connectString = connectString;
+    }
+
+    public String getChrootPath() {
+        return chrootPath;
+    }
+
+    public ArrayList<InetSocketAddress> getServerAddresses() {
+        return serverAddresses;
+    }
+
+    public ConnectionType getConnectionType() {
+        return connectionType;
+    }
+
+    public String getConnectString() {
+        return connectString;
+    }
+
+    private String[] parseConnectString(final String connectString) {
+        String serverPart = connectString;
+        String chrootPath = null;
+
+        // parse out chroot, if any
+        final int off = connectString.indexOf('/');
+        if (off >= 0) {
+            chrootPath = connectString.substring(off);
+            // ignore "/" chroot spec, same as null
+            if (chrootPath.length() == 1) {
+                chrootPath = null;
+            } else {
+                PathUtils.validatePath(chrootPath);
+            }
+            serverPart = connectString.substring(0, off);
+        }
+        return new String[]{serverPart, chrootPath};
+    }
+
+    private void parseHostPortFormat(final String connectString) {
+        final String[] parts = parseConnectString(connectString);
+        chrootPath = parts[1];
+
+        final List<String> hostsList = split(parts[0], ",");
         for (String host : hostsList) {
             int port = DEFAULT_PORT;
-            String[] hostAndPort = NetUtils.getIPV6HostAndPort(host);
+            final String[] hostAndPort = NetUtils.getIPV6HostAndPort(host);
             if (hostAndPort.length != 0) {
                 host = hostAndPort[0];
                 if (hostAndPort.length == 2) {
@@ -89,12 +140,11 @@ public final class ConnectStringParser {
         }
     }
 
-    public String getChrootPath() {
-        return chrootPath;
+    private void parseDnsSrvFormat(final String connectString) {
+        final String[] parts = parseConnectString(connectString.substring(DNS_SRV_PREFIX.length()));
+        chrootPath = parts[1];
+        // The DNS service name is stored as a placeholder address
+        // The actual resolution will be handled by DnsSrvHostProvider
+        serverAddresses.add(InetSocketAddress.createUnresolved(parts[0], DEFAULT_PORT));
     }
-
-    public ArrayList<InetSocketAddress> getServerAddresses() {
-        return serverAddresses;
-    }
-
 }
