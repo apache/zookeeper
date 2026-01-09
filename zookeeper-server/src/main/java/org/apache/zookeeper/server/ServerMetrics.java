@@ -273,33 +273,31 @@ public final class ServerMetrics {
         TTL_NODE_DELETED_COUNT = metricsContext.getCounter("ttl_node_deleted_count");
         TTL_NODE_CREATED_COUNT = metricsContext.getCounter("ttl_node_created_count");
 
-        /**
-         * Operation count metrics
-         */
-        TOTAL_OP_COUNT = metricsContext.getCounter("total_op_count");
-        ADD_WATCH_OP_COUNT = metricsContext.getCounter("add_watch_op_count");
-        CHECK_OP_COUNT = metricsContext.getCounter("check_op_count");
-        CHECK_WATCHES_OP_COUNT = metricsContext.getCounter("check_watches_op_count");
-        CLOSE_SESSION_OP_COUNT = metricsContext.getCounter("close_session_op_count");
-        CREATE_OP_COUNT = metricsContext.getCounter("create_op_count");
-        CREATE_SESSION_OP_COUNT = metricsContext.getCounter("create_session_op_count");
-        DELETE_OP_COUNT = metricsContext.getCounter("delete_op_count");
-        EXISTS_OP_COUNT = metricsContext.getCounter("exists_op_count");
-        GET_ACL_OP_COUNT = metricsContext.getCounter("get_acl_op_count");
-        GET_ALL_CHILDREN_NUMBER_OP_COUNT = metricsContext.getCounter("get_all_children_number_op_count");
-        GET_CHILDREN_OP_COUNT = metricsContext.getCounter("get_children_op_count");
-        GET_DATA_OP_COUNT = metricsContext.getCounter("get_data_op_count");
-        GET_EPHEMERALS_OP_COUNT = metricsContext.getCounter("get_ephemerals_op_count");
-        MULTI_OP_COUNT = metricsContext.getCounter("multi_op_count");
-        MULTI_READ_OP_COUNT = metricsContext.getCounter("multi_read_op_count");
-        PING_OP_COUNT = metricsContext.getCounter("ping_op_count");
-        RECONFIG_OP_COUNT = metricsContext.getCounter("reconfig_op_count");
-        REMOVE_WATCHES_OP_COUNT = metricsContext.getCounter("remove_watches_op_count");
-        SET_ACL_OP_COUNT = metricsContext.getCounter("set_acl_op_count");
-        SET_DATA_OP_COUNT = metricsContext.getCounter("set_data_op_count");
-        SET_WATCHES_OP_COUNT = metricsContext.getCounter("set_watches_op_count");
-        SYNC_OP_COUNT = metricsContext.getCounter("sync_op_count");
-        WHO_AM_I_OP_COUNT = metricsContext.getCounter("who_am_i_op_count");
+        // Operation count metrics
+        OP_COUNT_TOTAL = metricsContext.getCounter("op_count_total");
+        OP_COUNT_ADD_WATCH = metricsContext.getCounter("op_count_add_watch");
+        OP_COUNT_CHECK = metricsContext.getCounter("op_count_check");
+        OP_COUNT_CHECK_WATCHES = metricsContext.getCounter("op_count_check_watches");
+        OP_COUNT_CLOSE_SESSION = metricsContext.getCounter("op_count_close_session");
+        OP_COUNT_CREATE = metricsContext.getCounter("op_count_create");
+        OP_COUNT_CREATE_SESSION = metricsContext.getCounter("op_count_create_session");
+        OP_COUNT_DELETE = metricsContext.getCounter("op_count_delete");
+        OP_COUNT_EXISTS = metricsContext.getCounter("op_count_exists");
+        OP_COUNT_GET_ACL = metricsContext.getCounter("op_count_get_acl");
+        OP_COUNT_GET_ALL_CHILDREN_NUMBER = metricsContext.getCounter("op_count_get_all_children_number");
+        OP_COUNT_GET_CHILDREN = metricsContext.getCounter("op_count_get_children");
+        OP_COUNT_GET_DATA = metricsContext.getCounter("op_count_get_data");
+        OP_COUNT_GET_EPHEMERALS = metricsContext.getCounter("op_count_get_ephemerals");
+        OP_COUNT_MULTI = metricsContext.getCounter("op_count_multi");
+        OP_COUNT_MULTI_READ = metricsContext.getCounter("op_count_multi_read");
+        OP_COUNT_PING = metricsContext.getCounter("op_count_ping");
+        OP_COUNT_RECONFIG = metricsContext.getCounter("op_count_reconfig");
+        OP_COUNT_REMOVE_WATCHES = metricsContext.getCounter("op_count_remove_watches");
+        OP_COUNT_SET_ACL = metricsContext.getCounter("op_count_set_acl");
+        OP_COUNT_SET_DATA = metricsContext.getCounter("op_count_set_data");
+        OP_COUNT_SET_WATCHES = metricsContext.getCounter("op_count_set_watches");
+        OP_COUNT_SYNC = metricsContext.getCounter("op_count_sync");
+        OP_COUNT_WHO_AM_I = metricsContext.getCounter("op_count_who_am_i");
     }
 
     /**
@@ -584,33 +582,31 @@ public final class ServerMetrics {
     public final Counter TTL_NODE_DELETED_COUNT;
     public final Counter TTL_NODE_CREATED_COUNT;
 
-    /**
-     * Operation count metrics
-     */
-    public final Counter TOTAL_OP_COUNT;
-    public final Counter ADD_WATCH_OP_COUNT;
-    public final Counter CHECK_OP_COUNT;
-    public final Counter CHECK_WATCHES_OP_COUNT;
-    public final Counter CLOSE_SESSION_OP_COUNT;
-    public final Counter CREATE_OP_COUNT;
-    public final Counter CREATE_SESSION_OP_COUNT;
-    public final Counter DELETE_OP_COUNT;
-    public final Counter EXISTS_OP_COUNT;
-    public final Counter GET_ACL_OP_COUNT;
-    public final Counter GET_ALL_CHILDREN_NUMBER_OP_COUNT;
-    public final Counter GET_CHILDREN_OP_COUNT;
-    public final Counter GET_DATA_OP_COUNT;
-    public final Counter GET_EPHEMERALS_OP_COUNT;
-    public final Counter MULTI_OP_COUNT;
-    public final Counter MULTI_READ_OP_COUNT;
-    public final Counter PING_OP_COUNT;
-    public final Counter RECONFIG_OP_COUNT;
-    public final Counter REMOVE_WATCHES_OP_COUNT;
-    public final Counter SET_ACL_OP_COUNT;
-    public final Counter SET_DATA_OP_COUNT;
-    public final Counter SET_WATCHES_OP_COUNT;
-    public final Counter SYNC_OP_COUNT;
-    public final Counter WHO_AM_I_OP_COUNT;
+    // Operation count metrics
+    public final Counter OP_COUNT_TOTAL;
+    public final Counter OP_COUNT_ADD_WATCH;
+    public final Counter OP_COUNT_CHECK;
+    public final Counter OP_COUNT_CHECK_WATCHES;
+    public final Counter OP_COUNT_CLOSE_SESSION;
+    public final Counter OP_COUNT_CREATE;
+    public final Counter OP_COUNT_CREATE_SESSION;
+    public final Counter OP_COUNT_DELETE;
+    public final Counter OP_COUNT_EXISTS;
+    public final Counter OP_COUNT_GET_ACL;
+    public final Counter OP_COUNT_GET_ALL_CHILDREN_NUMBER;
+    public final Counter OP_COUNT_GET_CHILDREN;
+    public final Counter OP_COUNT_GET_DATA;
+    public final Counter OP_COUNT_GET_EPHEMERALS;
+    public final Counter OP_COUNT_MULTI;
+    public final Counter OP_COUNT_MULTI_READ;
+    public final Counter OP_COUNT_PING;
+    public final Counter OP_COUNT_RECONFIG;
+    public final Counter OP_COUNT_REMOVE_WATCHES;
+    public final Counter OP_COUNT_SET_ACL;
+    public final Counter OP_COUNT_SET_DATA;
+    public final Counter OP_COUNT_SET_WATCHES;
+    public final Counter OP_COUNT_SYNC;
+    public final Counter OP_COUNT_WHO_AM_I;
 
 
     private final MetricsProvider metricsProvider;

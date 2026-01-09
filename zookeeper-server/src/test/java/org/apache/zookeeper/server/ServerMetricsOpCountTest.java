@@ -32,22 +32,41 @@ import org.junit.jupiter.api.Test;
 
 public class ServerMetricsOpCountTest extends ClientBase {
 
+    // Metric name constants
+    private static final String OP_COUNT_TOTAL_METRIC_NAME = "op_count_total";
+    private static final String OP_COUNT_CREATE_METRIC_NAME = "op_count_create";
+    private static final String OP_COUNT_EXISTS_METRIC_NAME = "op_count_exists";
+    private static final String OP_COUNT_GET_DATA_METRIC_NAME = "op_count_get_data";
+    private static final String OP_COUNT_SET_DATA_METRIC_NAME = "op_count_set_data";
+    private static final String OP_COUNT_GET_ACL_METRIC_NAME = "op_count_get_acl";
+    private static final String OP_COUNT_SET_ACL_METRIC_NAME = "op_count_set_acl";
+    private static final String OP_COUNT_GET_CHILDREN_METRIC_NAME = "op_count_get_children";
+    private static final String OP_COUNT_GET_ALL_CHILDREN_NUMBER_METRIC_NAME = "op_count_get_all_children_number";
+    private static final String OP_COUNT_ADD_WATCH_METRIC_NAME = "op_count_add_watch";
+    private static final String OP_COUNT_DELETE_METRIC_NAME = "op_count_delete";
+    private static final String OP_COUNT_MULTI_METRIC_NAME = "op_count_multi";
+    private static final String OP_COUNT_MULTI_READ_METRIC_NAME = "op_count_multi_read";
+    private static final String OP_COUNT_GET_EPHEMERALS_METRIC_NAME = "op_count_get_ephemerals";
+    private static final String OP_COUNT_WHO_AM_I_METRIC_NAME = "op_count_who_am_i";
+    private static final String OP_COUNT_CREATE_SESSION_METRIC_NAME = "op_count_create_session";
+    private static final String OP_COUNT_CLOSE_SESSION_METRIC_NAME = "op_count_close_session";
+
     @Test
     public void testBasicOpCounts() throws Exception {
         final Map<String, Object> initialMetrics = MetricsUtils.currentServerMetrics();
-        final long initialTotalCount = (Long) initialMetrics.getOrDefault("total_op_count", 0L);
+        final long initialTotalCount = (Long) initialMetrics.getOrDefault(OP_COUNT_TOTAL_METRIC_NAME, 0L);
 
         final Map<String, Long> initialCounts = new HashMap<>();
-        initialCounts.put("create_op_count", (Long) initialMetrics.getOrDefault("create_op_count", 0L));
-        initialCounts.put("exists_op_count", (Long) initialMetrics.getOrDefault("exists_op_count", 0L));
-        initialCounts.put("get_data_op_count", (Long) initialMetrics.getOrDefault("get_data_op_count", 0L));
-        initialCounts.put("set_data_op_count", (Long) initialMetrics.getOrDefault("set_data_op_count", 0L));
-        initialCounts.put("get_acl_op_count", (Long) initialMetrics.getOrDefault("get_acl_op_count", 0L));
-        initialCounts.put("set_acl_op_count", (Long) initialMetrics.getOrDefault("set_acl_op_count", 0L));
-        initialCounts.put("get_children_op_count", (Long) initialMetrics.getOrDefault("get_children_op_count", 0L));
-        initialCounts.put("get_all_children_number_op_count", (Long) initialMetrics.getOrDefault("get_all_children_number_op_count", 0L));
-        initialCounts.put("add_watch_op_count", (Long) initialMetrics.getOrDefault("add_watch_op_count", 0L));
-        initialCounts.put("delete_op_count", (Long) initialMetrics.getOrDefault("delete_op_count", 0L));
+        initialCounts.put(OP_COUNT_CREATE_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_CREATE_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_EXISTS_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_EXISTS_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_GET_DATA_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_GET_DATA_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_SET_DATA_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_SET_DATA_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_GET_ACL_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_GET_ACL_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_SET_ACL_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_SET_ACL_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_GET_CHILDREN_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_GET_CHILDREN_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_GET_ALL_CHILDREN_NUMBER_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_GET_ALL_CHILDREN_NUMBER_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_ADD_WATCH_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_ADD_WATCH_METRIC_NAME, 0L));
+        initialCounts.put(OP_COUNT_DELETE_METRIC_NAME, (Long) initialMetrics.getOrDefault(OP_COUNT_DELETE_METRIC_NAME, 0L));
 
         try (final ZooKeeper zk = createClient()) {
             final String path = generateUniquePath("testBasicOps");
@@ -73,7 +92,7 @@ public class ServerMetricsOpCountTest extends ClientBase {
 
             // Verify all metrics increased
             final Map<String, Object> finalMetrics = MetricsUtils.currentServerMetrics();
-            final long finalTotalCount = (Long) finalMetrics.getOrDefault("total_op_count", 0L);
+            final long finalTotalCount = (Long) finalMetrics.getOrDefault(OP_COUNT_TOTAL_METRIC_NAME, 0L);
 
             // Total count should have increased by at least 10 operations
             assertTrue(finalTotalCount >= initialTotalCount + 10,
@@ -95,7 +114,7 @@ public class ServerMetricsOpCountTest extends ClientBase {
 
     @Test
     public void testMultiOpCount() throws Exception {
-        testSingleOpCount("multi_op_count", (zk, basePath) -> {
+        testSingleOpCount(OP_COUNT_MULTI_METRIC_NAME, (zk, basePath) -> {
             final String path1 = basePath + "_1";
             final String path2 = basePath + "_2";
             final List<org.apache.zookeeper.Op> ops = Arrays.asList(
@@ -110,7 +129,7 @@ public class ServerMetricsOpCountTest extends ClientBase {
 
     @Test
     public void testMultiReadOpCount() throws Exception {
-        testSingleOpCount("multi_read_op_count", (zk, basePath) -> {
+        testSingleOpCount(OP_COUNT_MULTI_READ_METRIC_NAME, (zk, basePath) -> {
             final String path1 = basePath + "_1";
             final String path2 = basePath + "_2";
 
@@ -132,7 +151,7 @@ public class ServerMetricsOpCountTest extends ClientBase {
 
     @Test
     public void testGetEphemeralsOpCount() throws Exception {
-        testSingleOpCount("get_ephemerals_op_count", (zk, path) -> {
+        testSingleOpCount(OP_COUNT_GET_EPHEMERALS_METRIC_NAME, (zk, path) -> {
             zk.create(path, "test".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             zk.getEphemerals("/");
         });
@@ -140,22 +159,22 @@ public class ServerMetricsOpCountTest extends ClientBase {
 
     @Test
     public void testWhoAmIOpCount() throws Exception {
-        testSingleOpCount("who_am_i_op_count", (zk, path) -> zk.whoAmI());
+        testSingleOpCount(OP_COUNT_WHO_AM_I_METRIC_NAME, (zk, path) -> zk.whoAmI());
     }
 
     @Test
     public void testSessionOperationCounts() throws Exception {
         final Map<String, Object> initialMetrics = MetricsUtils.currentServerMetrics();
-        final long initialCreateCount = (Long) initialMetrics.getOrDefault("create_session_op_count", 0L);
-        final long initialCloseCount = (Long) initialMetrics.getOrDefault("close_session_op_count", 0L);
+        final long initialCreateCount = (Long) initialMetrics.getOrDefault(OP_COUNT_CREATE_SESSION_METRIC_NAME, 0L);
+        final long initialCloseCount = (Long) initialMetrics.getOrDefault(OP_COUNT_CLOSE_SESSION_METRIC_NAME, 0L);
 
         // Create and close a new client to trigger session operations
         final ZooKeeper zk = createClient();
         zk.close();
 
         final Map<String, Object> finalMetrics = MetricsUtils.currentServerMetrics();
-        final long finalCreateCount = (Long) finalMetrics.getOrDefault("create_session_op_count", 0L);
-        final long finalCloseCount = (Long) finalMetrics.getOrDefault("close_session_op_count", 0L);
+        final long finalCreateCount = (Long) finalMetrics.getOrDefault(OP_COUNT_CREATE_SESSION_METRIC_NAME, 0L);
+        final long finalCloseCount = (Long) finalMetrics.getOrDefault(OP_COUNT_CLOSE_SESSION_METRIC_NAME, 0L);
 
         assertTrue(finalCreateCount > initialCreateCount, "Create session count should not decrease");
         assertTrue(finalCloseCount > initialCloseCount, "Close session count should not decrease");
@@ -164,7 +183,7 @@ public class ServerMetricsOpCountTest extends ClientBase {
     private void testSingleOpCount(final String metricName, final OperationExecutor executor) throws Exception {
         final Map<String, Object> initialMetrics = MetricsUtils.currentServerMetrics();
         final long initialOpCount = (Long) initialMetrics.getOrDefault(metricName, 0L);
-        final long initialTotalCount = (Long) initialMetrics.getOrDefault("total_op_count", 0L);
+        final long initialTotalCount = (Long) initialMetrics.getOrDefault(OP_COUNT_TOTAL_METRIC_NAME, 0L);
 
         try (final ZooKeeper zk = createClient()) {
             final String path = generateUniquePath("test" + metricName.replace("_op_count", ""));
@@ -175,11 +194,11 @@ public class ServerMetricsOpCountTest extends ClientBase {
             // Verify metrics increased
             final Map<String, Object> finalMetrics = MetricsUtils.currentServerMetrics();
             final long finalOpCount = (Long) finalMetrics.getOrDefault(metricName, 0L);
-            final long finalTotalCount = (Long) finalMetrics.getOrDefault("total_op_count", 0L);
+            final long finalTotalCount = (Long) finalMetrics.getOrDefault(OP_COUNT_TOTAL_METRIC_NAME, 0L);
 
             assertTrue(finalTotalCount > initialTotalCount,
                     "Total count should increase after " + metricName + " operations"
-                    + " initial: " + initialTotalCount + ", final: " + finalTotalCount);
+                            + " initial: " + initialTotalCount + ", final: " + finalTotalCount);
 
             assertTrue(finalOpCount > initialOpCount,
                     metricName + " should increase, initial: " + initialOpCount
@@ -195,5 +214,5 @@ public class ServerMetricsOpCountTest extends ClientBase {
     private String generateUniquePath(final String baseName) {
         return "/" + baseName + "_" + System.nanoTime();
     }
-
 }
+

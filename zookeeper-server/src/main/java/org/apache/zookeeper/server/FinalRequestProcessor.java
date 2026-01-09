@@ -214,7 +214,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             switch (request.type) {
             case OpCode.ping: {
                 lastOp = "PING";
-                incrementOpCount(ServerMetrics.getMetrics().PING_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_PING);
                 updateStats(request, lastOp, lastZxid);
 
                 responseSize = cnxn.sendResponse(new ReplyHeader(ClientCnxn.PING_XID, lastZxid, 0), null, "response");
@@ -222,7 +222,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.createSession: {
                 lastOp = "SESS";
-                incrementOpCount(ServerMetrics.getMetrics().CREATE_SESSION_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_CREATE_SESSION);
                 updateStats(request, lastOp, lastZxid);
 
                 zks.finishSessionInit(request.cnxn, true);
@@ -230,7 +230,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.multi: {
                 lastOp = "MULT";
-                incrementOpCount(ServerMetrics.getMetrics().MULTI_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_MULTI);
                 rsp = new MultiResponse();
 
                 for (ProcessTxnResult subTxnResult : rc.multiResult) {
@@ -273,7 +273,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.multiRead: {
                 lastOp = "MLTR";
-                incrementOpCount(ServerMetrics.getMetrics().MULTI_READ_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_MULTI_READ);
                 MultiOperationRecord multiReadRecord = request.readRequestRecord(MultiOperationRecord::new);
                 rsp = new MultiResponse();
                 OpResult subResult;
@@ -302,7 +302,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.create: {
                 lastOp = "CREA";
-                incrementOpCount(ServerMetrics.getMetrics().CREATE_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_CREATE);
                 rsp = new CreateResponse(rc.path);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
@@ -312,7 +312,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.createTTL:
             case OpCode.createContainer: {
                 lastOp = "CREA";
-                incrementOpCount(ServerMetrics.getMetrics().CREATE_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_CREATE);
                 rsp = new Create2Response(rc.path, rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
@@ -321,14 +321,14 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.delete:
             case OpCode.deleteContainer: {
                 lastOp = "DELE";
-                incrementOpCount(ServerMetrics.getMetrics().DELETE_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_DELETE);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.setData: {
                 lastOp = "SETD";
-                incrementOpCount(ServerMetrics.getMetrics().SET_DATA_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_SET_DATA);
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
@@ -336,16 +336,16 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.reconfig: {
                 lastOp = "RECO";
-                incrementOpCount(ServerMetrics.getMetrics().RECONFIG_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_RECONFIG);
                 rsp = new GetDataResponse(
-                    ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(UTF_8),
-                    rc.stat);
+                        ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(UTF_8),
+                        rc.stat);
                 err = Code.get(rc.err);
                 break;
             }
             case OpCode.setACL: {
                 lastOp = "SETA";
-                incrementOpCount(ServerMetrics.getMetrics().SET_ACL_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_SET_ACL);
                 rsp = new SetACLResponse(rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
@@ -353,13 +353,13 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.closeSession: {
                 lastOp = "CLOS";
-                incrementOpCount(ServerMetrics.getMetrics().CLOSE_SESSION_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_CLOSE_SESSION);
                 err = Code.get(rc.err);
                 break;
             }
             case OpCode.sync: {
                 lastOp = "SYNC";
-                incrementOpCount(ServerMetrics.getMetrics().SYNC_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_SYNC);
                 SyncRequest syncRequest = request.readRequestRecord(SyncRequest::new);
                 rsp = new SyncResponse(syncRequest.getPath());
                 requestPathMetricsCollector.registerRequest(request.type, syncRequest.getPath());
@@ -367,14 +367,14 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.check: {
                 lastOp = "CHEC";
-                incrementOpCount(ServerMetrics.getMetrics().CHECK_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_CHECK);
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
                 break;
             }
             case OpCode.exists: {
                 lastOp = "EXIS";
-                incrementOpCount(ServerMetrics.getMetrics().EXISTS_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_EXISTS);
                 ExistsRequest existsRequest = request.readRequestRecord(ExistsRequest::new);
                 path = existsRequest.getPath();
                 if (path.indexOf('\0') != -1) {
@@ -397,7 +397,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getData: {
                 lastOp = "GETD";
-                incrementOpCount(ServerMetrics.getMetrics().GET_DATA_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_GET_DATA);
                 GetDataRequest getDataRequest = request.readRequestRecord(GetDataRequest::new);
                 path = getDataRequest.getPath();
                 rsp = handleGetDataRequest(getDataRequest, cnxn, request.authInfo);
@@ -406,7 +406,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.setWatches: {
                 lastOp = "SETW";
-                incrementOpCount(ServerMetrics.getMetrics().SET_WATCHES_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_SET_WATCHES);
                 SetWatches setWatches = request.readRequestRecord(SetWatches::new);
                 long relativeZxid = setWatches.getRelativeZxid();
                 zks.getZKDatabase()
@@ -422,7 +422,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.setWatches2: {
                 lastOp = "STW2";
-                incrementOpCount(ServerMetrics.getMetrics().SET_WATCHES_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_SET_WATCHES);
                 SetWatches2 setWatches = request.readRequestRecord(SetWatches2::new);
                 long relativeZxid = setWatches.getRelativeZxid();
                 zks.getZKDatabase().setWatches(relativeZxid,
@@ -436,7 +436,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.addWatch: {
                 lastOp = "ADDW";
-                incrementOpCount(ServerMetrics.getMetrics().ADD_WATCH_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_ADD_WATCH);
                 AddWatchRequest addWatcherRequest = request.readRequestRecord(AddWatchRequest::new);
                 zks.getZKDatabase().addWatch(addWatcherRequest.getPath(), cnxn, addWatcherRequest.getMode());
                 rsp = new ErrorResponse(0);
@@ -444,7 +444,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getACL: {
                 lastOp = "GETA";
-                incrementOpCount(ServerMetrics.getMetrics().GET_ACL_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_GET_ACL);
                 GetACLRequest getACLRequest = request.readRequestRecord(GetACLRequest::new);
                 path = getACLRequest.getPath();
                 DataNode n = zks.getZKDatabase().getNode(path);
@@ -487,7 +487,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getChildren: {
                 lastOp = "GETC";
-                incrementOpCount(ServerMetrics.getMetrics().GET_CHILDREN_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_GET_CHILDREN);
                 GetChildrenRequest getChildrenRequest = request.readRequestRecord(GetChildrenRequest::new);
                 path = getChildrenRequest.getPath();
                 rsp = handleGetChildrenRequest(getChildrenRequest, cnxn, request.authInfo);
@@ -496,7 +496,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getAllChildrenNumber: {
                 lastOp = "GETACN";
-                incrementOpCount(ServerMetrics.getMetrics().GET_ALL_CHILDREN_NUMBER_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_GET_ALL_CHILDREN_NUMBER);
                 GetAllChildrenNumberRequest getAllChildrenNumberRequest = request.readRequestRecord(GetAllChildrenNumberRequest::new);
                 path = getAllChildrenNumberRequest.getPath();
                 DataNode n = zks.getZKDatabase().getNode(path);
@@ -516,7 +516,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.getChildren2: {
                 lastOp = "GETC";
-                incrementOpCount(ServerMetrics.getMetrics().GET_CHILDREN_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_GET_CHILDREN);
                 GetChildren2Request getChildren2Request = request.readRequestRecord(GetChildren2Request::new);
                 Stat stat = new Stat();
                 path = getChildren2Request.getPath();
@@ -538,7 +538,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.checkWatches: {
                 lastOp = "CHKW";
-                incrementOpCount(ServerMetrics.getMetrics().CHECK_WATCHES_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_CHECK_WATCHES);
                 CheckWatchesRequest checkWatches = request.readRequestRecord(CheckWatchesRequest::new);
                 WatcherType type = WatcherType.fromInt(checkWatches.getType());
                 path = checkWatches.getPath();
@@ -552,7 +552,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.removeWatches: {
                 lastOp = "REMW";
-                incrementOpCount(ServerMetrics.getMetrics().REMOVE_WATCHES_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_REMOVE_WATCHES);
                 RemoveWatchesRequest removeWatches = request.readRequestRecord(RemoveWatchesRequest::new);
                 WatcherType type = WatcherType.fromInt(removeWatches.getType());
                 path = removeWatches.getPath();
@@ -566,13 +566,13 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.whoAmI: {
                 lastOp = "HOMI";
-                incrementOpCount(ServerMetrics.getMetrics().WHO_AM_I_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_WHO_AM_I);
                 rsp = new WhoAmIResponse(AuthUtil.getClientInfos(request.authInfo));
                 break;
              }
             case OpCode.getEphemerals: {
                 lastOp = "GETE";
-                incrementOpCount(ServerMetrics.getMetrics().GET_EPHEMERALS_OP_COUNT);
+                incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_GET_EPHEMERALS);
                 GetEphemeralsRequest getEphemerals = request.readRequestRecord(GetEphemeralsRequest::new);
                 String prefixPath = getEphemerals.getPrefixPath();
                 Set<String> allEphems = zks.getZKDatabase().getDataTree().getEphemerals(request.sessionId);
@@ -707,6 +707,6 @@ public class FinalRequestProcessor implements RequestProcessor {
     private void incrementOpCount(final Counter specificCounter) {
         final ServerMetrics metrics = ServerMetrics.getMetrics();
         specificCounter.add(1);
-        metrics.TOTAL_OP_COUNT.add(1);
+        metrics.OP_COUNT_TOTAL.add(1);
     }
 }
