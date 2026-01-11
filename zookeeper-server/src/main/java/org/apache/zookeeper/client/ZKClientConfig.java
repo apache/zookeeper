@@ -68,6 +68,13 @@ public class ZKClientConfig extends ZKConfig {
      */
     public static final String ZOOKEEPER_SHUFFLE_DNS_RESPONSE = "zookeeper.shuffleDnsResponse";
     public static final boolean ZOOKEEPER_SHUFFLE_DNS_RESPONSE_DEFAULT = false;
+    /**
+     * When enabled, the client will cache the last successfully resolved IP address
+     * and use it as a fallback when DNS resolution fails.
+     * This is useful in environments where DNS servers may have temporary failures.
+     */
+    public static final String ZOOKEEPER_DNS_FALLBACK_ENABLED = "zookeeper.client.dnsFallback.enabled";
+    public static final boolean ZOOKEEPER_DNS_FALLBACK_ENABLED_DEFAULT = false;
 
     public ZKClientConfig() {
         super();
@@ -149,6 +156,14 @@ public class ZKClientConfig extends ZKConfig {
      */
     public boolean isShuffleDnsResponseEnabled() {
         return getBoolean(ZOOKEEPER_SHUFFLE_DNS_RESPONSE, ZOOKEEPER_SHUFFLE_DNS_RESPONSE_DEFAULT);
+    }
+
+    /**
+     * Return true if DNS fallback is enabled.
+     * When enabled, the client will use cached IP addresses as fallback when DNS resolution fails.
+     */
+    public boolean isDnsFallbackEnabled() {
+        return getBoolean(ZOOKEEPER_DNS_FALLBACK_ENABLED, ZOOKEEPER_DNS_FALLBACK_ENABLED_DEFAULT);
     }
 
     /**

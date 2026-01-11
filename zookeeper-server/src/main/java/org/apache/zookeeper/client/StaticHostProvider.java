@@ -26,7 +26,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +76,12 @@ public final class StaticHostProvider implements HostProvider {
     private float pOld, pNew;
 
     private Resolver resolver;
+
+    /**
+     * Cache for storing last successfully resolved addresses.
+     * Used as fallback when DNS resolution fails.
+     */
+    private final Map<String, InetAddress> resolvedAddressCache = new ConcurrentHashMap<>();
 
     /**
      * Constructs a SimpleHostSet.
@@ -164,8 +172,8 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     private InetSocketAddress resolve(InetSocketAddress address) {
+        String curHostString = address.getHostString();
         try {
-            String curHostString = address.getHostString();
             List<InetAddress> resolvedAddresses = new ArrayList<>(Arrays.asList(this.resolver.getAllByName(curHostString)));
             if (resolvedAddresses.isEmpty()) {
                 return address;
@@ -173,8 +181,20 @@ public final class StaticHostProvider implements HostProvider {
             if (clientConfig.isShuffleDnsResponseEnabled()) {
                 Collections.shuffle(resolvedAddresses);
             }
-            return new InetSocketAddress(resolvedAddresses.get(0), address.getPort());
+            InetAddress resolvedAddress = resolvedAddresses.get(0);
+            // Cache the successfully resolved address
+            resolvedAddressCache.put(curHostString, resolvedAddress);
+            return new InetSocketAddress(resolvedAddress, address.getPort());
         } catch (UnknownHostException e) {
+            // Fallback to cached address if enabled
+            if (clientConfig.isDnsFallbackEnabled()) {
+                InetAddress cachedAddress = resolvedAddressCache.get(curHostString);
+                if (cachedAddress != null) {
+                    LOG.warn("DNS resolution failed for {}, using cached address {} as fallback",
+                            curHostString, cachedAddress, e);
+                    return new InetSocketAddress(cachedAddress, address.getPort());
+                }
+            }
             LOG.error("Unable to resolve address: {}", address.toString(), e);
             return address;
         }
