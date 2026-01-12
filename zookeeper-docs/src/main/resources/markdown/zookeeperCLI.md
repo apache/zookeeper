@@ -29,6 +29,21 @@ bin/zkCli.sh -waitforconnection -timeout 3000 -server remoteIP:2181
 # connect with a custom client configuration properties file
 bin/zkCli.sh -client-configuration /path/to/client.properties
 ```
+
+When connecting to a TLS-only server, provide a client configuration file with
+the SSL settings. The `zookeeper.ssl.*` keys are preferred; `ssl.*` keys from a
+server `zoo.cfg` are also accepted.
+
+```bash
+# client.properties (TLS example)
+zookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+zookeeper.client.secure=true
+zookeeper.ssl.trustStore.location=/path/to/client-truststore.jks
+zookeeper.ssl.trustStore.password=changeit
+zookeeper.ssl.keyStore.location=/path/to/client-keystore.jks
+zookeeper.ssl.keyStore.password=changeit
+```
+
 ## help
 Showing helps about ZooKeeper commands
 
