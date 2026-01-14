@@ -81,6 +81,12 @@ public class QuorumPeerTest {
     }
 
     @Test
+    public void testShutdownWithoutZkDbDoesNotThrow() throws Exception {
+        QuorumPeer peer = new QuorumPeer();
+        peer.shutdown();
+    }
+
+    @Test
     public void testProcessReconfigWillRecreateSocketAddresses() throws IOException {
         QuorumPeerConfig.setReconfigEnabled(true);
         QuorumPeer peer = new QuorumPeer();
