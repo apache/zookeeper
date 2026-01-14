@@ -24,6 +24,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -50,6 +52,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
@@ -311,6 +314,39 @@ public class LearnerTest extends ZKTestCase {
         sl.zk.shutdown();
         sl = new SimpleLearner(ftsl);
         assertEquals(startZxid, sl.zk.getLastProcessedZxid());
+    }
+
+    @Test
+    public void testPurgeOrphanedEphemerals() throws Exception {
+        File tmpFile = File.createTempFile("test", ".dir", testData);
+        tmpFile.delete();
+        SimpleLearner sl = null;
+        try {
+            FileTxnSnapLog ftsl = new FileTxnSnapLog(tmpFile, tmpFile);
+            sl = new SimpleLearner(ftsl);
+
+            long sessionId = 0x1234L;
+            TxnHeader hdr = new TxnHeader(sessionId, 1, 1L, 1L, ZooDefs.OpCode.create);
+            CreateTxn txn = new CreateTxn(
+                "/eph",
+                new byte[0],
+                new ArrayList<ACL>(),
+                true,
+                sl.zk.getZKDatabase().getNode("/").stat.getCversion());
+            sl.zk.getZKDatabase().processTxn(hdr, txn, null);
+
+            assertNotNull(sl.zk.getZKDatabase().getNode("/eph"), "Ephemeral node should exist before cleanup");
+
+            sl.zk.startupWithoutServing();
+            sl.purgeOrphanedEphemerals();
+
+            assertNull(sl.zk.getZKDatabase().getNode("/eph"), "Ephemeral node should be removed for unknown session");
+        } finally {
+            if (sl != null) {
+                sl.zk.shutdown();
+            }
+            TestUtils.deleteFileRecursively(tmpFile);
+        }
     }
 
     @Test
