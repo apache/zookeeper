@@ -30,7 +30,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
-
 import org.slf4j.LoggerFactory;
 
 public class LoggerTestTool implements AutoCloseable {
