@@ -337,7 +337,7 @@ public class LearnerTest extends ZKTestCase {
 
             assertNotNull(sl.zk.getZKDatabase().getNode("/eph"), "Ephemeral node should exist before cleanup");
 
-            sl.zk.startupWithoutServing();
+            sl.zk.createSessionTracker();
             sl.purgeOrphanedEphemerals();
 
             assertNull(sl.zk.getZKDatabase().getNode("/eph"), "Ephemeral node should be removed for unknown session");
