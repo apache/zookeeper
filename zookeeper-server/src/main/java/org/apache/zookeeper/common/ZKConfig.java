@@ -98,7 +98,7 @@ public class ZKConfig {
         for (Entry<String, String> entry : properties.entrySet()) {
             p.put(entry.getKey(), logRedactor(entry.getKey(), entry.getValue()));
         }
-        LOG.info("ZK Config {}", this.properties);
+        LOG.info("ZK Config {}", p);
     }
 
     /**
