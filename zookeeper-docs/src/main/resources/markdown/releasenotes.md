@@ -15,6 +15,26 @@ limitations under the License.
 //-->
 
 
+# Release Notes - ZooKeeper - Version 3.8.6
+
+## Bug
+
+* [ZOOKEEPER-4984](https://issues.apache.org/jira/browse/ZOOKEEPER-4984) - Upgrade OWASP plugin to 12.1.6 due to breaking changes in the API
+* [ZOOKEEPER-4986](https://issues.apache.org/jira/browse/ZOOKEEPER-4986) - Disable reverse DNS lookup in TLS client and server
+
+## Improvement
+
+* [ZOOKEEPER-3938](https://issues.apache.org/jira/browse/ZOOKEEPER-3938) - Upgrade jline to version 3.x.
+
+## Task
+
+* [ZOOKEEPER-4976](https://issues.apache.org/jira/browse/ZOOKEEPER-4976) - Update Netty to fix CVE-2025-58057
+* [ZOOKEEPER-5017](https://issues.apache.org/jira/browse/ZOOKEEPER-5017) - Upgrade Netty to 4.1.130.Final to address CVE-2025-67735
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.8.5
 
 ## Breaking changes
