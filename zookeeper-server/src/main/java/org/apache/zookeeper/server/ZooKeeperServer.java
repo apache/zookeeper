@@ -504,9 +504,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     *  Restore sessions and data
+     * Restore sessions and data, takes a snapshot by default
      */
     public void loadData() throws IOException, InterruptedException {
+        loadData(true);
+    }
+
+    /**
+     * Restore sessions and data
+     * @param needSnapshot if true, take a snapshot after loading data
+     */
+    public void loadData(boolean needSnapshot) throws IOException, InterruptedException {
         /*
          * When a new leader starts executing Leader#lead, it
          * invokes this method. The database, however, has been
@@ -537,7 +545,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                         .forEach(session -> killSession(session, zkDb.getDataTreeLastProcessedZxid()));
 
         // Make a clean snapshot
-        takeSnapshot();
+        if (needSnapshot) {
+            takeSnapshot();
+        }
     }
 
     public void takeSnapshot() {
