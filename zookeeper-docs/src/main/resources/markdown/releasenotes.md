@@ -30,6 +30,7 @@ limitations under the License.
 
 * [ZOOKEEPER-4976](https://issues.apache.org/jira/browse/ZOOKEEPER-4976) - Update Netty to fix CVE-2025-58057
 * [ZOOKEEPER-5017](https://issues.apache.org/jira/browse/ZOOKEEPER-5017) - Upgrade Netty to 4.1.130.Final to address CVE-2025-67735
+* [ZOOKEEPER-5018](https://issues.apache.org/jira/browse/ZOOKEEPER-5018) - Upgrade Jetty to 9.4.58.v20250814 in order to fix CVE-2025-5115
 
 
 &nbsp;
