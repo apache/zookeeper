@@ -31,27 +31,43 @@
 # use POSIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"
 ZOOBIN="$(dirname "$ZOOBIN")"
-ZOOBINDIR="$(cd "$ZOOBIN" && pwd)"
+ZOOBINDIR="$(cd "$ZOOBIN" && pwd)" || exit
 
 if [[ -e "$ZOOBIN/../libexec/zkEnv.sh" ]]; then
   # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh "$@"
 else
   # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/zkEnv.sh
+  . "$ZOOBINDIR"/zkEnv.sh "$@"
 fi
 
-ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//')"
-ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')"
+ZOODATADIR=""
+ZOODATALOGDIR=""
+
+# Only try to read config if ZOOCFG exists
+if [[ -f $ZOOCFG ]]; then
+  ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" 2>/dev/null | sed -e 's/.*=//')"
+  ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" 2>/dev/null | sed -e 's/.*=//')"
+fi
 
 ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
 
 # shellcheck disable=SC2206
 flags=($JVMFLAGS)
-if [[ -z $ZOODATALOGDIR ]]; then
-  "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" "${flags[@]}" \
-    org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" "$@"
+
+# If config provides directories, use them; otherwise pass all args to PurgeTxnLog
+if [[ -n $ZOODATADIR ]]; then
+  if [[ -z $ZOODATALOGDIR ]]; then
+    # Only dataDir specified
+    "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
+      "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" "$@"
+  else
+    # Both dataDir and dataLogDir specified
+    "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
+      "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" "$@"
+  fi
 else
-  "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" "${flags[@]}" \
-    org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" "$@"
+  # No config or config doesn't specify directories - pass all args to PurgeTxnLog
+  "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
+    "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "$@"
 fi
