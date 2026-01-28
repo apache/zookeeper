@@ -2771,6 +2771,11 @@ Available commands include:
     Server information.
     Returns multiple fields giving a brief overview of server state.
 
+* *shed_connections/shed* :
+  Attempts to shed approximately the specified percentage of connections.
+  Requires "percentage": (int)
+  Returns "connections_shed" (int) and "percentage_requested" (int)
+
 * *snapshot/snap* :
   Takes a snapshot of the current server in the datadir and stream out data.
   Optional query parameter:
