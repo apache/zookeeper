@@ -20,9 +20,12 @@ package org.apache.zookeeper.server.admin;
 
 import static org.apache.zookeeper.server.persistence.FileSnap.SNAPSHOT_FILE_PREFIX;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -292,6 +295,7 @@ public class Commands {
         registerCommand(new RestoreCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
+        registerCommand(new ShedConnectionsCommand());
         registerCommand(new SnapshotCommand());
         registerCommand(new SrvrCommand());
         registerCommand(new StatCommand());
@@ -861,6 +865,105 @@ public class Commands {
             return response;
         }
 
+    }
+
+    /**
+     * Attempts to shed approximately the specified percentage of connections.
+     * <p>
+     * Request: JSON input stream via HTTP POST
+     * Required JSON fields:
+     * - "percentage": Integer [0-100] - percentage of connections to attempt shedding
+     * <p>
+     * Response: JSON output stream containing:
+     * - "connections_shed": Integer - actual number of connections successfully closed
+     * (may vary due to randomness)
+     * - "percentage_requested": Integer - the percentage that was requested
+     */
+    public static class ShedConnectionsCommand extends PostCommand {
+        private static final String PARAM_PERCENTAGE = "percentage";
+
+        public ShedConnectionsCommand() {
+            super(Arrays.asList("shed_connections", "shed"), true, new AuthRequest(ZooDefs.Perms.ALL, ROOT_PATH));
+        }
+
+        @Override
+        public CommandResponse runPost(final ZooKeeperServer zkServer, final InputStream inputStream) {
+            final CommandResponse response = initializeResponse();
+
+            if (inputStream == null) {
+                response.setStatusCode(HttpServletResponse.SC_BAD_REQUEST);
+                response.put("error", "Request body is required");
+                return response;
+            }
+
+            try {
+                final ObjectMapper mapper = new ObjectMapper();
+                final JsonNode jsonNode = mapper.readTree(inputStream);
+
+                if (!jsonNode.has(PARAM_PERCENTAGE)) {
+                    response.setStatusCode(HttpServletResponse.SC_BAD_REQUEST);
+                    response.put("error", "Missing required parameter: " + PARAM_PERCENTAGE);
+                    return response;
+                }
+
+                final int percentage = jsonNode.get(PARAM_PERCENTAGE).asInt();
+                if (percentage < 0 || percentage > 100) {
+                    response.setStatusCode(HttpServletResponse.SC_BAD_REQUEST);
+                    response.put("error", "Percentage must be between 0 and 100");
+                    return response;
+                }
+
+                // perform connection shedding
+                final int connectionsShed = shedConnections(zkServer, percentage);
+
+                // populate response
+                response.put("connections_shed", connectionsShed);
+                response.put("percentage_requested", percentage);
+
+                LOG.info("Shed {} connections ({}%)", connectionsShed, percentage);
+            } catch (final IOException e) {
+                response.setStatusCode(HttpServletResponse.SC_BAD_REQUEST);
+                response.put("error", "Invalid JSON or failed to read request body: " + e.getMessage());
+            } catch (final Exception e) {
+                response.setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.put("error", "Exception occurred during connection shedding: " + e.getMessage());
+                LOG.error("Exception occurred during connection shedding", e);
+            }
+            return response;
+        }
+
+        private int shedConnections(final ZooKeeperServer zkServer, final int percentage) {
+            final ServerCnxnFactory factory = zkServer.getServerCnxnFactory();
+            final ServerCnxnFactory secureFactory = zkServer.getSecureServerCnxnFactory();
+
+            if (factory == null && secureFactory == null) {
+                LOG.warn("No connection factories available for shedding connections");
+                return 0;
+            }
+
+            // If percentage is 0, don't call shedConnections on factories
+            if (percentage == 0) {
+                return 0;
+            }
+
+            int connectionsShed = 0;
+            if (factory != null) {
+                try {
+                    connectionsShed += factory.shedConnections(percentage);
+                } catch (final Exception e) {
+                    LOG.warn("Failed to shed connections from regular factory", e);
+                }
+            }
+
+            if (secureFactory != null) {
+                try {
+                    connectionsShed += secureFactory.shedConnections(percentage);
+                } catch (final Exception e) {
+                    LOG.warn("Failed to shed connections from secure factory", e);
+                }
+            }
+            return connectionsShed;
+        }
     }
 
     /**
