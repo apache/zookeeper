@@ -1705,10 +1705,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.interrupt();
             getElectionAlg().shutdown();
         }
-        try {
-            zkDb.close();
-        } catch (IOException ie) {
-            LOG.warn("Error closing logs ", ie);
+        if (zkDb != null) {
+            try {
+                zkDb.close();
+            } catch (IOException ie) {
+                LOG.warn("Error closing logs ", ie);
+            }
         }
     }
 
