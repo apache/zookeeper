@@ -15,6 +15,44 @@ limitations under the License.
 //-->
 
 
+# Release Notes - ZooKeeper - Version 3.9.5
+
+## Sub-task
+
+* [ZOOKEEPER-842](https://issues.apache.org/jira/browse/ZOOKEEPER-842) - stat calls static method on org.apache.zookeeper.server.DataTree
+
+## Bug
+
+* [ZOOKEEPER-4736](https://issues.apache.org/jira/browse/ZOOKEEPER-4736) - socket fd leak
+* [ZOOKEEPER-4871](https://issues.apache.org/jira/browse/ZOOKEEPER-4871) - ZooKeeper python module (zkpython) is incompatible with Python 3.12
+* [ZOOKEEPER-4958](https://issues.apache.org/jira/browse/ZOOKEEPER-4958) - &quot;ssl.clientHostnameVerification&quot; is ignored if &quot;ssl.authProvider&quot; is configured to &quot;x509&quot;
+* [ZOOKEEPER-4974](https://issues.apache.org/jira/browse/ZOOKEEPER-4974) - Remove enforced JDK 17 compilation warnings
+* [ZOOKEEPER-4984](https://issues.apache.org/jira/browse/ZOOKEEPER-4984) - Upgrade OWASP plugin to 12.1.6 due to breaking changes in the API
+* [ZOOKEEPER-4986](https://issues.apache.org/jira/browse/ZOOKEEPER-4986) - Disable reverse DNS lookup in TLS client and server
+* [ZOOKEEPER-4989](https://issues.apache.org/jira/browse/ZOOKEEPER-4989) - Compilation of client on Windows with MSVC is broken
+
+## Improvement
+
+* [ZOOKEEPER-3938](https://issues.apache.org/jira/browse/ZOOKEEPER-3938) - Upgrade jline to version 3.x.
+* [ZOOKEEPER-4955](https://issues.apache.org/jira/browse/ZOOKEEPER-4955) - Fix intererence with jvm ssl properties for ssl.crl and ssl.ocsp
+* [ZOOKEEPER-4962](https://issues.apache.org/jira/browse/ZOOKEEPER-4962) - Add getPort and getSecurePort for ZooKeeperServerEmbedded
+* [ZOOKEEPER-4965](https://issues.apache.org/jira/browse/ZOOKEEPER-4965) - Drop unnecessary {{@SuppressWarnings(&quot;deprecation&quot;)}}
+* [ZOOKEEPER-4970](https://issues.apache.org/jira/browse/ZOOKEEPER-4970) - Deprecate methods of ZKConfig which throw QuorumPeerConfig.ConfigException
+
+## Test
+
+* [ZOOKEEPER-4780](https://issues.apache.org/jira/browse/ZOOKEEPER-4780) - Avoid creating temporary files in source directory.
+
+## Task
+
+* [ZOOKEEPER-4976](https://issues.apache.org/jira/browse/ZOOKEEPER-4976) - Update Netty to fix CVE-2025-58057
+* [ZOOKEEPER-5017](https://issues.apache.org/jira/browse/ZOOKEEPER-5017) - Upgrade Netty to 4.1.130.Final to address CVE-2025-67735
+* [ZOOKEEPER-5018](https://issues.apache.org/jira/browse/ZOOKEEPER-5018) - Upgrade Jetty to 9.4.58.v20250814 in order to fix CVE-2025-5115
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.9.4
 
 ## Breaking changes
