@@ -21,6 +21,7 @@ Setup instructions, programming guides, and other documentation are available fo
 * [ZooKeeper 3.9.2](doc/r3.9.2/index.html)
 * [ZooKeeper 3.9.1](doc/r3.9.1/index.html)
 * [ZooKeeper 3.9.0](doc/r3.9.0/index.html)
+* [ZooKeeper 3.8.6](doc/r3.8.6/index.html)
 * [ZooKeeper 3.8.5](doc/r3.8.5/index.html)
 * [ZooKeeper 3.8.4](doc/r3.8.4/index.html)
 * [ZooKeeper 3.8.3](doc/r3.8.3/index.html)
