@@ -83,7 +83,7 @@ public class QuorumPeerTest {
     @Test
     public void testShutdownWithoutZkDbDoesNotThrow() throws Exception {
         QuorumPeer peer = new QuorumPeer();
-        peer.shutdown();
+        assertDoesNotThrow(peer::shutdown);
     }
 
     @Test
