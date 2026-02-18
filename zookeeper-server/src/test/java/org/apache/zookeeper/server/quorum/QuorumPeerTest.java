@@ -21,7 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -82,13 +82,9 @@ public class QuorumPeerTest {
     }
 
     @Test
-    public void testShutdownWithoutZkDbDoesNotThrow() {
-        try {
-            QuorumPeer peer = new QuorumPeer();
-            peer.shutdown();
-        } catch (Exception e) {
-            fail("shutdown should not throw, but got: " + e);
-        }
+    public void testShutdownWithoutZkDbDoesNotThrow() throws Exception {
+        QuorumPeer peer = new QuorumPeer();
+        assertDoesNotThrow(peer::shutdown);
     }
 
     @Test
