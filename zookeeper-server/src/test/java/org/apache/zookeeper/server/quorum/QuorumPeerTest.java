@@ -83,8 +83,8 @@ public class QuorumPeerTest {
 
     @Test
     public void testShutdownWithoutZkDbDoesNotThrow() {
-        QuorumPeer peer = new QuorumPeer();
         try {
+            QuorumPeer peer = new QuorumPeer();
             peer.shutdown();
         } catch (Exception e) {
             fail("shutdown should not throw, but got: " + e);
