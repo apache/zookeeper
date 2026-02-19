@@ -46,18 +46,28 @@ import org.slf4j.LoggerFactory;
  * NIO non-blocking socket calls. Communication between threads is handled via
  * queues.
  *
- *   - 1   accept thread, which accepts new connections and assigns to a
+ * <ul>
+ * <li>
+ *   1   accept thread, which accepts new connections and assigns to a
  *         selector thread
- *   - 1-N selector threads, each of which selects on 1/N of the connections.
+ * </li>
+ * <li>
+ *   1-N selector threads, each of which selects on 1/N of the connections.
  *         The reason the factory supports more than one selector thread is that
  *         with large numbers of connections, select() itself can become a
  *         performance bottleneck.
- *   - 0-M socket I/O worker threads, which perform basic socket reads and
+ * </li>
+ * <li>
+ *   0-M socket I/O worker threads, which perform basic socket reads and
  *         writes. If configured with 0 worker threads, the selector threads
  *         do the socket I/O directly.
- *   - 1   connection expiration thread, which closes idle connections; this is
+ * </li>
+ * <li>
+ *   1   connection expiration thread, which closes idle connections; this is
  *         necessary to expire connections on which no session is established.
- *
+ * </li>
+ * </ul>
+ * <p>
  * Typical (default) thread counts are: on a 32 core machine, 1 accept thread,
  * 1 connection expiration thread, 4 selector threads, and 64 worker threads.
  */
