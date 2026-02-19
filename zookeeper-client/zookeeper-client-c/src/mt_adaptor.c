@@ -44,6 +44,8 @@
 #include <sys/time.h>
 #endif
 
+extern void free_completions(zhandle_t *zh,int callCompletion,int reason);
+
 int zoo_lock_auth(zhandle_t *zh)
 {
     return pthread_mutex_lock(&zh->auth_h.lock);
@@ -377,27 +379,38 @@ void *do_io(void *v)
         int timeout;
         int maxfd=1;
 
-        zh->io_count++;
+        // check the current state of the zhandle and terminate 
+        // if it is_unrecoverable()
+        if(is_unrecoverable(zh)) {
+            /* Signal any syncronous completions  */
+            enter_critical(zh);
+            free_completions(zh,1,ZSESSIONEXPIRED);
+            leave_critical(zh);
+            // don't exhaust cpu
+            usleep(1000);
+        } else {
 
-        zookeeper_interest(zh, &fd, &interest, &tv);
-        if (fd != -1) {
-            fds[1].fd=fd;
-            fds[1].events=(interest&ZOOKEEPER_READ)?POLLIN:0;
-            fds[1].events|=(interest&ZOOKEEPER_WRITE)?POLLOUT:0;
-            maxfd=2;
-        }
-        timeout=tv.tv_sec * 1000 + (tv.tv_usec/1000);
-        
-        poll(fds,maxfd,timeout);
-        if (fd != -1) {
-            interest=(fds[1].revents&POLLIN)?ZOOKEEPER_READ:0;
-            interest|=((fds[1].revents&POLLOUT)||(fds[1].revents&POLLHUP))?ZOOKEEPER_WRITE:0;
-        }
-        if(fds[0].revents&POLLIN){
-            // flush the pipe
-            char b[128];
-            while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
-        }        
+            zh->io_count++;
+
+            zookeeper_interest(zh, &fd, &interest, &tv);
+            if (fd != -1) {
+                fds[1].fd=fd;
+                fds[1].events=(interest&ZOOKEEPER_READ)?POLLIN:0;
+                fds[1].events|=(interest&ZOOKEEPER_WRITE)?POLLOUT:0;
+                maxfd=2;
+            }
+            timeout=tv.tv_sec * 1000 + (tv.tv_usec/1000);
+            
+            poll(fds,maxfd,timeout);
+            if (fd != -1) {
+                interest=(fds[1].revents&POLLIN)?ZOOKEEPER_READ:0;
+                interest|=((fds[1].revents&POLLOUT)||(fds[1].revents&POLLHUP))?ZOOKEEPER_WRITE:0;
+            }
+            if(fds[0].revents&POLLIN){
+                // flush the pipe
+                char b[128];
+                while(read(adaptor_threads->self_pipe[0],b,sizeof(b))==sizeof(b)){}
+            }        
 #else
     fd_set rfds, wfds;
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
@@ -411,51 +424,59 @@ void *do_io(void *v)
         int interest;
         int rc;
 
-        zookeeper_interest(zh, &fd, &interest, &tv);
+        // check the current state of the zhandle and terminate
+        // if it is_unrecoverable()
+        if(is_unrecoverable(zh)) {
+            /* Signal any syncronous completions  */
+            enter_critical(zh);
+            free_completions(zh,1,ZSESSIONEXPIRED);
+            leave_critical(zh);
+            // dont' exhaust cpu
+            usleep(1000);
+        } else {
 
-        // FD_ZERO is cheap on Win32, it just sets count of elements to zero.
-        // It needs to be done to ensure no stale entries.
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
+            zookeeper_interest(zh, &fd, &interest, &tv);
 
-        if (fd != -1) {
-            if (interest&ZOOKEEPER_READ) {
-                FD_SET(fd, &rfds);
+            // FD_ZERO is cheap on Win32, it just sets count of elements to zero.
+            // It needs to be done to ensure no stale entries.
+            FD_ZERO(&rfds);
+            FD_ZERO(&wfds);
+
+            if (fd != -1) {
+                if (interest&ZOOKEEPER_READ) {
+                    FD_SET(fd, &rfds);
+                }
+
+                if (interest&ZOOKEEPER_WRITE) {
+                    FD_SET(fd, &wfds);
+                }
             }
 
-            if (interest&ZOOKEEPER_WRITE) {
-                FD_SET(fd, &wfds);
+            // Always interested in self_pipe.
+            FD_SET(adaptor_threads->self_pipe[0], &rfds);
+
+            rc = select(/* unused */0, &rfds, &wfds, NULL, &tv);
+            if (rc > 0) {
+                interest=(FD_ISSET(fd, &rfds))? ZOOKEEPER_READ: 0;
+                interest|=(FD_ISSET(fd, &wfds))? ZOOKEEPER_WRITE: 0;
+
+                if (FD_ISSET(adaptor_threads->self_pipe[0], &rfds)){
+                    // flush the pipe/socket
+                    char b[128];
+                    while(recv(adaptor_threads->self_pipe[0],b,sizeof(b), 0)==sizeof(b)){}
+                }
             }
-        }
+            else if (rc < 0) {
+                LOG_ERROR(LOGCALLBACK(zh), ("select() failed %d [%d].", rc, WSAGetLastError()));
 
-        // Always interested in self_pipe.
-        FD_SET(adaptor_threads->self_pipe[0], &rfds);
-
-        rc = select(/* unused */0, &rfds, &wfds, NULL, &tv);
-        if (rc > 0) {
-            interest=(FD_ISSET(fd, &rfds))? ZOOKEEPER_READ: 0;
-            interest|=(FD_ISSET(fd, &wfds))? ZOOKEEPER_WRITE: 0;
-
-            if (FD_ISSET(adaptor_threads->self_pipe[0], &rfds)){
-                // flush the pipe/socket
-                char b[128];
-                while(recv(adaptor_threads->self_pipe[0],b,sizeof(b), 0)==sizeof(b)){}
+                // Clear interest events for zookeeper_process if select() fails.
+                interest = 0;
             }
-        }
-        else if (rc < 0) {
-            LOG_ERROR(LOGCALLBACK(zh), ("select() failed %d [%d].", rc, WSAGetLastError()));
-
-            // Clear interest events for zookeeper_process if select() fails.
-            interest = 0;
-        }
 
 #endif
-        // dispatch zookeeper events
-        zookeeper_process(zh, interest);
-        // check the current state of the zhandle and terminate 
-        // if it is_unrecoverable()
-        if(is_unrecoverable(zh))
-            break;
+            // dispatch zookeeper events
+            zookeeper_process(zh, interest);
+        }
     }
     log_fn = LOGCALLBACK(zh);
     api_epilog(zh, 0);
