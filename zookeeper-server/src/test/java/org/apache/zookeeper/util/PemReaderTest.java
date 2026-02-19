@@ -135,8 +135,8 @@ public class PemReaderTest extends BaseX509ParameterizedTestCase {
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         List<X509Certificate> certs = PemReader.readCertificateChain(x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM));
-        assertEquals(1, certs.size());
-        assertEquals(x509TestContext.getTrustStoreCertificate(), certs.get(0));
+        assertEquals(2, certs.size());
+        assertEquals(x509TestContext.getTrustStoreCertificates(), certs.get(0));
     }
 
 }
