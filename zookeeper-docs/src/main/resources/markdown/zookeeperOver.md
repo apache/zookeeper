@@ -111,7 +111,7 @@ path.
 
 ### Nodes and ephemeral nodes
 
-Unlike standard file systems, each node in a ZooKeeper
+Unlike in standard file systems, each node in a ZooKeeper
 namespace can have data associated with it as well as children. It is
 like having a file-system that allows a file to also be a directory.
 (ZooKeeper was designed to store coordination data: status information,
