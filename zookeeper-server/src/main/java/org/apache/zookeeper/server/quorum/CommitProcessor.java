@@ -149,17 +149,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
      */
     private static volatile int maxCommitBatchSize;
 
-    /**
-     * This flag indicates whether we need to wait for a response to come back from the
-     * leader or we just let the sync operation flow through like a read. The flag will
-     * be false if the CommitProcessor is in a Leader pipeline.
-     */
-    boolean matchSyncs;
-
-    public CommitProcessor(RequestProcessor nextProcessor, String id, boolean matchSyncs, ZooKeeperServerListener listener) {
+    public CommitProcessor(RequestProcessor nextProcessor, String id, ZooKeeperServerListener listener) {
         super("CommitProcessor:" + id, listener);
         this.nextProcessor = nextProcessor;
-        this.matchSyncs = matchSyncs;
     }
 
     private boolean isProcessingRequest() {
@@ -182,9 +174,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         case OpCode.multi:
         case OpCode.setACL:
         case OpCode.check:
-            return true;
         case OpCode.sync:
-            return matchSyncs;
+            return true;
         case OpCode.createSession:
         case OpCode.closeSession:
             return !request.isLocalSession();

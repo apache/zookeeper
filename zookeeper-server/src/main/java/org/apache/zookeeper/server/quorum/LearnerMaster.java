@@ -188,6 +188,8 @@ public abstract class LearnerMaster {
      */
     abstract void processAck(long sid, long zxid, SocketAddress localSocketAddress);
 
+    abstract void processPing(long sid, long zxid, byte[] payload) throws IOException;
+
     /**
      * mark session as alive
      * @param sess session id
