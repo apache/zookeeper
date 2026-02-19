@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DeleteContainerRequest;
@@ -680,6 +681,15 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
         int newCversion = parentRecord.stat.getCversion() + 1;
         zks.checkQuota(path, null, data, OpCode.create);
+        long ephemeralOwner = 0;
+        if (createMode.isContainer()) {
+            ephemeralOwner = EphemeralType.CONTAINER_EPHEMERAL_OWNER;
+        } else if (createMode.isTTL()) {
+            ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
+        } else if (createMode.isEphemeral()) {
+            checkCloseSessionTxnSize(path, request.sessionId);
+            ephemeralOwner = request.sessionId;
+        }
         if (type == OpCode.createContainer) {
             request.setTxn(new CreateContainerTxn(path, data, listACL, newCversion));
         } else if (type == OpCode.createTTL) {
@@ -689,14 +699,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         }
 
         TxnHeader hdr = request.getHdr();
-        long ephemeralOwner = 0;
-        if (createMode.isContainer()) {
-            ephemeralOwner = EphemeralType.CONTAINER_EPHEMERAL_OWNER;
-        } else if (createMode.isTTL()) {
-            ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
-        } else if (createMode.isEphemeral()) {
-            ephemeralOwner = request.sessionId;
-        }
         StatPersisted s = DataTree.createStat(hdr.getZxid(), hdr.getTime(), ephemeralOwner);
         parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
         parentRecord.childCount++;
@@ -746,6 +748,33 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             return 0;
         } else {
             return nextVersion;
+        }
+    }
+
+    private void checkCloseSessionTxnSize(String path, long sessionId) throws KeeperException.TooManyEphemeralsException {
+        int size = PathUtils.serializedSize(path);
+
+        List<String> outstandingPaths = new ArrayList<>();
+        DataTree dataTree = zks.getZKDatabase().getDataTree();
+        synchronized (zks.outstandingChanges) {
+            size = Math.addExact(size, dataTree.getEphemeralsSerializedSize(sessionId));
+            for (ChangeRecord c : zks.outstandingChanges) {
+                // Ignoring deleted nodes and existing ephemerals means that we might be
+                // overcounting.
+                if (c.stat != null && c.stat.getEphemeralOwner() == sessionId) {
+                    outstandingPaths.add(c.path);
+                }
+            }
+        }
+
+        for (String outstandingPath : outstandingPaths) {
+            size = Math.addExact(size, PathUtils.serializedSize(outstandingPath));
+        }
+
+        if (size > BinaryInputArchive.maxBuffer) {
+            LOG.info("Rejecting ephemeral path {} as it would overflow session 0x{}",
+                path, Long.toHexString(sessionId));
+            throw new KeeperException.TooManyEphemeralsException(path);
         }
     }
 
