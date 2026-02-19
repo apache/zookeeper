@@ -434,7 +434,7 @@ the expired session's watcher:
 Another parameter to the ZooKeeper session establishment
 call is the default watcher. Watchers are notified when any state
 change occurs in the client. For example if the client loses
-connectivity to the server the client will be notified, or if the
+connectivity to the server the watcher will be notified, or if the
 client's session expires, etc... This watcher should consider the
 initial state to be disconnected (i.e. before any state changes
 events are sent to the watcher by the client lib). In the case of
