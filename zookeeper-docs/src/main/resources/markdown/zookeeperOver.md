@@ -36,15 +36,15 @@ limitations under the License.
 ZooKeeper is a distributed, open-source coordination service for
 distributed applications. It exposes a simple set of primitives that
 distributed applications can build upon to implement higher level services
-for synchronization, configuration maintenance, and groups and naming. It
-is designed to be easy to program to, and uses a data model styled after
-the familiar directory tree structure of file systems. It runs in Java and
+for synchronization, configuration maintenance, groups, and naming. It
+is designed to be easy to program to, and uses a data model inspired by the 
+familiar directory tree structure of file systems. It runs on Java and
 has bindings for both Java and C.
 
-Coordination services are notoriously hard to get right. They are
-especially prone to errors such as race conditions and deadlock. The
-motivation behind ZooKeeper is to relieve distributed applications the
-responsibility of implementing coordination services from scratch.
+Coordination services are notoriously hard to get right, and are
+especially prone to bugs such as race conditions and deadlock. The
+motivation behind ZooKeeper is to relieve distributed applications from 
+the responsibility of implementing coordination services from scratch.
 
 <a name="sc_designGoals"></a>
 
@@ -52,23 +52,23 @@ responsibility of implementing coordination services from scratch.
 
 **ZooKeeper is simple.** ZooKeeper
 allows distributed processes to coordinate with each other through a
-shared hierarchical namespace which is organized similarly to a standard
+shared hierarchical namespace, which is organized similarly to a standard
 file system. The namespace consists of data registers - called znodes,
 in ZooKeeper parlance - and these are similar to files and directories.
 Unlike a typical file system, which is designed for storage, ZooKeeper
 data is kept in-memory, which means ZooKeeper can achieve high
 throughput and low latency numbers.
 
-The ZooKeeper implementation puts a premium on high performance,
-highly available, strictly ordered access. The performance aspects of
-ZooKeeper means it can be used in large, distributed systems. The
-reliability aspects keep it from being a single point of failure. The
+ZooKeeper's implementation is designed with high performance,
+high availability, and strictly ordered access in mind, which enables 
+ZooKeeper to be used in large distributed systems. The
+reliability aspects keep it from being a single point of failure, and
 strict ordering means that sophisticated synchronization primitives can
 be implemented at the client.
 
 **ZooKeeper is replicated.** Like the
 distributed processes it coordinates, ZooKeeper itself is intended to be
-replicated over a set of hosts called an ensemble.
+replicated over a set of hosts- called an "ensemble".
 
 ![ZooKeeper Service](images/zkservice.jpg)
 
@@ -80,8 +80,8 @@ available.
 
 Clients connect to a single ZooKeeper server. The client maintains
 a TCP connection through which it sends requests, gets responses, gets
-watch events, and sends heart beats. If the TCP connection to the server
-breaks, the client will connect to a different server.
+watch events, and sends heartbeats. If the TCP connection to the server
+breaks, the client may connect to a different server.
 
 **ZooKeeper is ordered.** ZooKeeper
 stamps each update with a number that reflects the order of all
@@ -91,8 +91,8 @@ primitives.
 
 **ZooKeeper is fast.** It is
 especially fast in "read-dominant" workloads. ZooKeeper applications run
-on thousands of machines, and it performs best where reads are more
-common than writes, at ratios of around 10:1.
+on thousands of machines, and it performs best when reads are more
+common than writes (at ratios of around 10:1).
 
 <a name="sc_dataModelNameSpace"></a>
 
@@ -112,7 +112,7 @@ path.
 ### Nodes and ephemeral nodes
 
 Unlike standard file systems, each node in a ZooKeeper
-namespace can have data associated with it as well as children. It is
+namespace can have data associated with it, as well as children. It is
 like having a file-system that allows a file to also be a directory.
 (ZooKeeper was designed to store coordination data: status information,
 configuration, location information, etc., so the data stored at each
@@ -123,7 +123,7 @@ ZooKeeper data nodes.
 Znodes maintain a stat structure that includes version numbers for
 data changes, ACL changes, and timestamps, to allow cache validations
 and coordinated updates. Each time a znode's data changes, the version
-number increases. For instance, whenever a client retrieves data it also
+number increases. For instance, whenever a client retrieves data, it also
 receives the version of the data.
 
 The data stored at each znode in a namespace is read and written
@@ -132,8 +132,8 @@ write replaces all the data. Each node has an Access Control List (ACL)
 that restricts who can do what.
 
 ZooKeeper also has the notion of ephemeral nodes. These znodes
-exists as long as the session that created the znode is active. When the
-session ends the znode is deleted.
+exist as long as the session that created the znode is active. When the
+session ends, the znode is automatically deleted.
 
 <a name="Conditional+updates+and+watches"></a>
 
@@ -142,22 +142,22 @@ session ends the znode is deleted.
 ZooKeeper supports the concept of _watches_.
 Clients can set a watch on a znode. A watch will be triggered and
 removed when the znode changes. When a watch is triggered, the client
-receives a packet saying that the znode has changed. If the
+receives a notification packet of a change in the znode. If the
 connection between the client and one of the ZooKeeper servers is
 broken, the client will receive a local notification.
 
 **New in 3.6.0:** Clients can also set
-permanent, recursive watches on a znode that are not removed when triggered
-and that trigger for changes on the registered znode as well as any children
+permanent, recursive watches on a znode that are not removed when 
+triggered, and also trigger for changes on the registered znode's children
 znodes recursively.
        
 <a name="Guarantees"></a>
 
 ### Guarantees
 
-ZooKeeper is very fast and very simple. Since its goal, though, is
+ZooKeeper is very fast and very simple. It's goal however is
 to be a basis for the construction of more complicated services, such as
-synchronization, it provides a set of guarantees. These are:
+synchronization, and hence the following are also guaranteed:
 
 * Sequential Consistency - Updates from a client will be applied
   in the order that they were sent.
@@ -222,9 +222,8 @@ database.
 
 Every ZooKeeper server services clients. Clients connect to
 exactly one server to submit requests. Read requests are serviced from
-the local replica of each server database. Requests that change the
-state of the service, write requests, are processed by an agreement
-protocol.
+the local replica of each server database. Write requests- which change the
+state of the service- are processed by an agreement protocol.
 
 As part of the agreement protocol all write requests from clients
 are forwarded to a single server, called the
@@ -253,12 +252,12 @@ synchronizations primitives, group membership, ownership, etc.
 
 ### Performance
 
-ZooKeeper is designed to be highly performance. But is it? The
+ZooKeeper is designed to be highly performant; but is it? The
 results of the ZooKeeper's development team at Yahoo! Research indicate
-that it is. (See [ZooKeeper Throughput as the Read-Write Ratio Varies](#zkPerfRW).) It is especially high
-performance in applications where reads outnumber writes, since writes
-involve synchronizing the state of all servers. (Reads outnumbering
-writes is typically the case for a coordination service.)
+that it is. (See [ZooKeeper Throughput as the Read-Write Ratio Varies](#zkPerfRW).) It is especially 
+performant in read-heavy applications, since writes
+involve synchronizing the state of all servers. (This is advantageous, since 
+coordination services are typically read-heavy).
 
 <a name="zkPerfRW"></a>
 
@@ -268,9 +267,9 @@ The [ZooKeeper Throughput as the Read-Write Ratio Varies](#zkPerfRW) is a throug
 graph of ZooKeeper release 3.2 running on servers with dual 2Ghz
 Xeon and two SATA 15K RPM drives.  One drive was used as a
 dedicated ZooKeeper log device. The snapshots were written to
-the OS drive. Write requests were 1K writes and the reads were
-1K reads.  "Servers" indicate the size of the ZooKeeper
-ensemble, the number of servers that make up the
+the OS drive. Write requests were 1000 writes, and the read requests were
+1000 reads.  "Servers" indicate the size of the ZooKeeper
+ensemble- the number of servers that make up the
 service. Approximately 30 other servers were used to simulate
 the clients. The ZooKeeper ensemble was configured such that
 leaders do not allow connections from clients.

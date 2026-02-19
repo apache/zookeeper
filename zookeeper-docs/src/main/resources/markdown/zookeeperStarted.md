@@ -75,7 +75,7 @@ create it in **conf/zoo.cfg**:
 
 
 This file can be called anything, but for the sake of this
-discussion call
+guide, call
 it **conf/zoo.cfg**. Change the
 value of **dataDir** to specify an
 existing (empty to start with) directory.  Here are the meanings
@@ -305,20 +305,20 @@ mode, but with a few differences. Here is an example:
     server.2=zoo2:2888:3888
     server.3=zoo3:2888:3888
 
-The new entry, **initLimit** is
-timeouts ZooKeeper uses to limit the length of time the ZooKeeper
-servers in quorum have to connect to a leader. The entry **syncLimit** limits how far out of date a server can
+The new entry, **initLimit** is a
+timeout ZooKeeper uses to limit the length of time the ZooKeeper
+servers in the quorum have to connect to a leader. The entry **syncLimit** limits how far out of date a server can
 be from a leader.
 
 With both of these timeouts, you specify the unit of time using
 **tickTime**. In this example, the timeout
-for initLimit is 5 ticks at 2000 milliseconds a tick, or 10
+for **initLimit** is 5 ticks at 2000 milliseconds a tick, or 10
 seconds.
 
 The entries of the form _server.X_ list the
 servers that make up the ZooKeeper service. When the server starts up,
 it knows which server it is by looking for the file
-_myid_ in the data directory. That file has the
+_myid_ in the data directory. That file
 contains the server number, in ASCII.
 
 Finally, note the two port numbers after each server
@@ -337,7 +337,7 @@ second port in the server entry.
 machine, specify the servername
 as _localhost_ with unique quorum &
 leader election ports (i.e. 2888:3888, 2889:3889, 2890:3890 in
-the example above) for each server.X in that server's config
+the example above) for each _server.X_ in that server's config
 file. Of course separate _dataDir_s and
 distinct _clientPort_s are also necessary
 (in the above replicated example, running on a
@@ -345,9 +345,8 @@ single _localhost_, you would still have
 three config files).
 
 >Please be aware that setting up multiple servers on a single
-machine will not create any redundancy. If something were to
-happen which caused the machine to die, all of the zookeeper
-servers would be offline. Full redundancy requires that each
+machine will not create any redundancy. If a machine were to go down, 
+all of the zookeeper servers would be offline. Full redundancy requires that each
 server have its own machine. It must be a completely separate
 physical server. Multiple virtual machines on the same physical
 host are still vulnerable to the complete failure of that host.
