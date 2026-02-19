@@ -326,9 +326,8 @@ int zoo_sasl_client_start(zhandle_t *zh)
      *
      * so we need to keep track of that.
      */
-    if (strcmp(chosenmech, "GSSAPI") == 0) {
-        sc->is_gssapi = 1;
-    }
+    sc->is_gssapi = strcmp(chosenmech, "GSSAPI") == 0;
+    sc->is_last_packet = 0;
 
     if (sr == SASL_CONTINUE || client_data_len > 0) {
         rc = queue_sasl_request(zh, client_data, client_data_len);
