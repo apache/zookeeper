@@ -21,14 +21,11 @@ package org.apache.zookeeper.server.quorum;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This RequestProcessor simply forwards requests to an AckRequestProcessor and
- * SyncRequestProcessor.
+ * This RequestProcessor simply forwards requests to {@link Leader#propose(Request)}.
  */
 public class ProposalRequestProcessor implements RequestProcessor {
 
@@ -37,8 +34,6 @@ public class ProposalRequestProcessor implements RequestProcessor {
     LeaderZooKeeperServer zks;
 
     RequestProcessor nextProcessor;
-
-    SyncRequestProcessor syncProcessor;
 
     // If this property is set, requests from Learners won't be forwarded
     // to the CommitProcessor in order to save resources
@@ -49,20 +44,11 @@ public class ProposalRequestProcessor implements RequestProcessor {
     public ProposalRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
         this.zks = zks;
         this.nextProcessor = nextProcessor;
-        AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
-        syncProcessor = new SyncRequestProcessor(zks, ackProcessor);
 
         forwardLearnerRequestsToCommitProcessorDisabled = Boolean.getBoolean(
                 FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED);
         LOG.info("{} = {}", FORWARD_LEARNER_REQUESTS_TO_COMMIT_PROCESSOR_DISABLED,
                 forwardLearnerRequestsToCommitProcessorDisabled);
-    }
-
-    /**
-     * initialize this processor
-     */
-    public void initialize() {
-        syncProcessor.start();
     }
 
     public void processRequest(Request request) throws RequestProcessorException {
@@ -81,12 +67,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
             }
             if (request.getHdr() != null) {
                 // We need to sync and get consensus on any transactions
-                try {
-                    zks.getLeader().propose(request);
-                } catch (XidRolloverException e) {
-                    throw new RequestProcessorException(e.getMessage(), e);
-                }
-                syncProcessor.processRequest(request);
+                zks.getLeader().propose(request);
             }
         }
     }
@@ -94,7 +75,6 @@ public class ProposalRequestProcessor implements RequestProcessor {
     public void shutdown() {
         LOG.info("Shutting down");
         nextProcessor.shutdown();
-        syncProcessor.shutdown();
     }
 
     private boolean shouldForwardToNextProcessor(Request request) {

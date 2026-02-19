@@ -47,6 +47,10 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(FollowerZooKeeperServer.class);
 
+    // This should be final as it is constructed with no external variables. It is not to allow mockito spy which
+    // intercepts `this`.
+    private ParticipantRequestSyncer requestSyncer;
+
     /*
      * Pending sync requests
      */ ConcurrentLinkedQueue<Request> pendingSyncs;
@@ -54,7 +58,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     /**
      * @throws IOException
      */
-    FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
+    // VisibleForTesting
+    public FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
         super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
         this.pendingSyncs = new ConcurrentLinkedQueue<>();
     }
@@ -72,14 +77,17 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         ((FollowerRequestProcessor) firstProcessor).start();
         syncProcessor = new SyncRequestProcessor(this, new SendAckRequestProcessor(getFollower()));
         syncProcessor.start();
+        requestSyncer = new ParticipantRequestSyncer(this, LOG, this::syncRequest);
     }
 
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<>();
 
     public void logRequest(Request request) {
-        if ((request.zxid & 0xffffffffL) != 0) {
-            pendingTxns.add(request);
-        }
+        requestSyncer.syncRequest(request);
+    }
+
+    private void syncRequest(Request request) {
+        pendingTxns.add(request);
         syncProcessor.processRequest(request);
     }
 
@@ -110,6 +118,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         Request request = pendingTxns.remove();
         request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
         commitProcessor.commit(request);
+        requestSyncer.finishCommit(request.zxid);
     }
 
     public synchronized void sync() {
