@@ -25,7 +25,7 @@ class ExistsTest(zktestbase.TestBase):
         try:
             zookeeper.create(self.handle, "/zk-python-existstest","existstest", [ZOO_OPEN_ACL_UNSAFE],zookeeper.EPHEMERAL)
             zookeeper.create(self.handle, "/zk-python-aexiststest","existstest",[ZOO_OPEN_ACL_UNSAFE],zookeeper.EPHEMERAL)
-        except:
+        except Exception:
             pass
 
     def test_sync_exists(self):
