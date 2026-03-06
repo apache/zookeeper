@@ -34,13 +34,13 @@ from [the official Apache Archives](https://archive.apache.org/dist/zookeeper/).
 <a name="download"></a>
 ## Download
 
-Apache ZooKeeper 3.9.4 is our current release, and 3.8.6 our latest stable release.
+Apache ZooKeeper 3.9.5 is our current release, and 3.8.6 our latest stable release.
 
-### Apache ZooKeeper 3.9.4
+### Apache ZooKeeper 3.9.5
 
-[Apache ZooKeeper 3.9.4](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz.sha512))
+[Apache ZooKeeper 3.9.5](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5-bin.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5-bin.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5-bin.tar.gz.sha512))
 
-[Apache ZooKeeper 3.9.4 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4.tar.gz.sha512))
+[Apache ZooKeeper 3.9.5 Source Release](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5.tar.gz)([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5.tar.gz.asc), [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.8.6 (latest stable release)
 
@@ -66,6 +66,11 @@ You can verify the integrity of a downloaded release using release-signing [KEYS
 
 <a name="news"></a>
 ## News
+
+### 6 Mar, 2026: release 3.9.5 available
+This is a bugfix release for 3.9 branch.
+
+See [ZooKeeper 3.9.5 Release Notes](https://zookeeper.apache.org/doc/r3.9.5/releasenotes.html) for details.
 
 ### 12 Feb, 2026: release 3.8.6 available
 This is a bugfix release for 3.8 branch.

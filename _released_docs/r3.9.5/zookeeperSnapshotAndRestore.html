@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>ZooKeeper: Because Coordinating Distributed Systems is a Zoo</title>
+    <link type="text/css" href="skin/basic.css" rel="stylesheet">
+    <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+    <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+    <link type="text/css" href="skin/profile.css" rel="stylesheet">
+    <script src="skin/getBlank.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/getMenu.js" language="javascript" type="text/javascript"></script>
+    <script src="skin/init.js" language="javascript" type="text/javascript"></script>
+    <link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init();">
+<div id="top">
+    <div class="breadtrail">
+        <a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a>
+    </div>
+    <div class="header">
+        <div class="projectlogo">
+            <a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+        </div>
+        <div class="searchbox">
+            <form action="http://www.google.com/search" method="get">
+                <input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp;
+                <input name="Search" value="Search" type="submit">
+            </form>
+        </div>
+        <ul id="tabs">
+            <li>
+                <a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+            </li>
+            <li>
+                <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+            </li>
+            <li class="current">
+                <a class="selected" href="index.html">ZooKeeper 3.9 Documentation</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="main">
+    <div id="publishedStrip">
+        <div id="level2tabs"></div>
+        <script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+    </div>
+    <div class="breadtrail">
+        &nbsp;
+    </div>
+    <div id="menu">
+        <div onclick="SwitchMenu('menu_1', 'skin/')" id="menu_1Title" class="menutitle">Overview</div>
+        <div id="menu_1" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="index.html">Welcome</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOver.html">Overview</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperStarted.html">Getting Started</a>
+            </div>
+            <div class="menuitem">
+                <a href="releasenotes.html">Release Notes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_2', 'skin/')" id="menu_2Title" class="menutitle">Developer</div>
+        <div id="menu_2" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="apidocs/zookeeper-server/index.html">API Docs</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperProgrammers.html">Programmer's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperUseCases.html">Use Cases</a>
+            </div>
+            <div class="menuitem">
+                <a href="javaExample.html">Java Example</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+            </div>
+            <div class="menuitem">
+                <a href="recipes.html">Recipes</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_3', 'skin/')" id="menu_3Title" class="menutitle">Admin &amp; Ops</div>
+        <div id="menu_3" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperAdmin.html">Administrator's Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperQuotas.html">Quota Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperSnapshotAndRestore.html">Snapshot and Restore Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperJMX.html">JMX</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperHierarchicalQuorums.html">Hierarchical Quorums</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperOracleQuorums.html">Oracle Quorum</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperObservers.html">Observers Guide</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperReconfig.html">Dynamic Reconfiguration</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperCLI.html">ZooKeeper CLI</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperTools.html">ZooKeeper Tools</a>
+            </div>
+            <div class="menuitem">
+                <a href="zookeeperMonitor.html">ZooKeeper Monitor</a>
+            </div>
+			<div class="menuitem">
+                <a href="zookeeperAuditLogs.html">Audit Logs</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_4', 'skin/')" id="menu_4Title" class="menutitle">Contributor</div>
+        <div id="menu_4" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="zookeeperInternals.html">ZooKeeper Internals</a>
+            </div>
+        </div>
+        <div onclick="SwitchMenu('menu_5', 'skin/')" id="menu_5Title" class="menutitle">Miscellaneous</div>
+        <div id="menu_5" class="menuitemgroup">
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+            </div>
+            <div class="menuitem">
+                <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+            </div>
+            <div class="menuitem">
+                <a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+            </div>
+        </div>
+    </div>
+    <div id="content">
+<!--
+Copyright 2002-2004 The Apache Software Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>ZooKeeper Snapshot and Restore Guide</h1>
+<p>Zookeeper is designed to withstand machine failures. A Zookeeper cluster can automatically recover from temporary failures such as machine reboot. It can also tolerate up to (N-1)/2 permanent failures for a cluster of N members due to hardware failures or disk corruption, etc. When a member permanently fails, it loses access to the cluster. If the cluster permanently loses more than (N-1)/2 members, it disastrously fails and loses quorum. Once the quorum is lost, the cluster cannot reach consensus and therefore cannot continue to accept updates.</p>
+<p>To recover from such disastrous failures, Zookeeper provides snapshot and restore functionalities to restore a cluster from a snapshot.</p>
+<ol>
+<li>Snapshot and restore operate on the connected server via Admin Server APIs</li>
+<li>Snapshot and restore are rate limited to protect the server from being overloaded</li>
+<li>Snapshot and restore require authentication and authorization on the root path with ALL permission. The supported auth schemas are digest, x509 and IP.</li>
+</ol>
+<ul>
+<li><a href="#zookeeper_snapshot">Snapshot</a></li>
+<li><a href="#zookeeper_restore">Restore</a></li>
+</ul>
+<p><a name="zookeeper_snapshot"></a></p>
+<h2>Snapshot</h2>
+<p>Recovering a cluster needs a snapshot from a ZooKeeper cluster. Users can periodically take snapshots from a live server which has the highest zxid and stream out data to a local or external storage/file system (e.g., S3).</p>
+<pre><code class="language-bash"># The snapshot command takes snapshot from the server it connects to and rate limited to once every 5 mins by default
+curl -H 'Authorization: digest root:root_passwd' http://hostname:adminPort/commands/snapshot?streaming=true --output snapshotFileName
+</code></pre>
+<p><a name="zookeeper_restore"></a></p>
+<h2>Restore</h2>
+<p>Restoring a cluster needs a single snapshot as input stream. Restore can be used for recovering a cluster for quorum lost or building a brand-new cluster with seed data.</p>
+<p>All members should restore using the same snapshot. The following are the recommended steps:</p>
+<ul>
+<li>Blocking traffic on the client port or client secure port before restore starts</li>
+<li>Take a snapshot of the latest database state using the snapshot admin server command if applicable</li>
+<li>For each server</li>
+<li>Moving the files in dataDir and dataLogDir to different location to prevent the restored database from being overwritten when server restarts after restore</li>
+<li>Restore the server using restore admin server command</li>
+<li>Unblocking traffic on the client port or client secure port after restore completes</li>
+</ul>
+<pre><code class="language-bash"># The restore command takes a snapshot as input stream and restore the db of the server it connects. It is rate limited to once every 5 mins by default
+curl -H 'Content-Type:application/octet-stream' -H 'Authorization: digest root:root_passwd' -POST http://hostname:adminPort/commands/restore --data-binary &quot;@snapshotFileName&quot; 
+</code></pre>
+</div>
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+    <div class="lastmodified">
+        <script type="text/javascript">
+        <!--
+            document.write("Last Published: " + document.lastModified);
+        //  -->
+        </script>
+    </div>
+    <div class="copyright">
+        Copyright &copy; <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+    </div>
+    <div id="logos"></div>
+</div>
+</body>
+</html>
