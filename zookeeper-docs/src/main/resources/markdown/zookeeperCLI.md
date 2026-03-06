@@ -45,6 +45,7 @@ ZooKeeper -server host:port cmd args
 	delete [-v version] path
 	deleteall path
 	delquota [-n|-b|-N|-B] path
+	exit
 	get [-s] [-w] path
 	getAcl [-s] path
 	getAllChildrenNumber path
@@ -350,6 +351,13 @@ Quit the CLI windows.
 
 ```bash
 [zkshell: 1] quit
+```
+
+## exit
+Quit the CLI windows.
+
+```bash
+[zkshell: 1] exit
 ```
 
 ## reconfig
