@@ -310,9 +310,13 @@ public class ZooKeeperMain {
 
             boolean jlinemissing = false;
             // only use jline if it's in the classpath
+            Class<?> endOfFileExceptionC = null;
+            Class<?> userInterruptExceptionC = null;
             try {
                 Class<?> readerC = Class.forName("org.jline.reader.LineReader");
                 Class<?> completerC = Class.forName("org.apache.zookeeper.JLineZNodeCompleter");
+                endOfFileExceptionC = Class.forName("org.jline.reader.EndOfFileException");
+                userInterruptExceptionC = Class.forName("org.jline.reader.UserInterruptException");
 
                 System.out.println("JLine support is enabled");
 
@@ -331,8 +335,15 @@ public class ZooKeeperMain {
                 | IllegalAccessException
                 | InstantiationException e
             ) {
-                LOG.debug("Unable to start jline", e);
-                jlinemissing = true;
+                // Only fall back to terminal without JLine when user not interrupted (Ctrl-C)
+                // or does not want to exit (Ctrl-D / EOF).
+                Throwable cause = e.getCause();
+                boolean isEof = cause != null && cause.getClass().equals(endOfFileExceptionC);
+                boolean isUserInterrupted = cause != null && cause.getClass().equals(userInterruptExceptionC);
+                if (!(isEof || isUserInterrupted)) {
+                    LOG.debug("Unable to start jline", e);
+                    jlinemissing = true;
+                }
             }
 
             if (jlinemissing) {
