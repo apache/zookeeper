@@ -95,6 +95,8 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="https://www.apache.org/security/">Web page</a> for more information.</p>
 <h2>Vulnerability reports</h2>
 <ul>
+<li><a href="#CVE-2026-24308">CVE-2026-24308: Sensitive information disclosure in client configuration handling</a></li>
+<li><a href="#CVE-2026-24281">CVE-2026-24281: Reverse-DNS fallback enables hostname verification bypass in ZooKeeper ZKTrustManager</a></li>
 <li><a href="#CVE-2025-58457">CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands</a></li>
 <li><a href="#CVE-2024-51504">CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server</a></li>
 <li><a href="#CVE-2024-23944">CVE-2024-23944: Information disclosure in persistent watcher handling</a></li>
@@ -104,6 +106,35 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <li><a href="#CVE-2017-5637">CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)</a></li>
 <li><a href="#CVE-2016-5017">CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell</a></li>
 </ul>
+<p><a name="CVE-2026-24308"></a></p>
+<h3>CVE-2026-24308: Sensitive information disclosure in client configuration handling</h3>
+<p>Severity: important</p>
+<p>Affected versions:</p>
+<ul>
+<li>Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.4</li>
+<li>Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.5</li>
+</ul>
+<p>Description:</p>
+<p>Improper handling of configuration values in ZKConfig in Apache ZooKeeper 3.8.5 and 3.9.4 on all platforms allows an attacker to expose sensitive information stored in client configuration in the client's logfile. Configuration values are exposed at INFO level logging rendering potential production systems affected by the issue. Users are recommended to upgrade to version 3.8.6 or 3.9.5 which fixes this issue.</p>
+<p>Credit:</p>
+<p>Youlong Chen <a href="&#109;a&#105;&#x6c;&#x74;&#x6f;&#x3a;&#99;&#x68;&#x65;n&#121;&#x6f;&#117;l&#111;&#110;&#103;2&#48;g&#x40;&#105;&#x63;&#x74;&#46;&#97;c&#x2e;&#x63;n">&#99;&#x68;&#x65;&#110;&#121;&#111;&#117;&#108;&#x6f;&#x6e;&#103;&#50;&#48;&#103;&#x40;&#105;&#99;&#116;&#x2e;&#97;&#99;&#x2e;&#99;&#x6e;</a> (reporter)</p>
+<p>References:</p>
+<p>https://zookeeper.apache.org/ https://www.cve.org/CVERecord?id=CVE-2026-24308</p>
+<p><a name="CVE-2026-24281"></a></p>
+<h3>CVE-2026-24281: Reverse-DNS fallback enables hostname verification bypass in ZooKeeper ZKTrustManager</h3>
+<p>Severity: important</p>
+<p>Affected versions:</p>
+<ul>
+<li>Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.4</li>
+<li>Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.5</li>
+</ul>
+<p>Description:</p>
+<p>Hostname verification in Apache ZooKeeper ZKTrustManager falls back to reverse DNS (PTR) when IP SAN validation fails, allowing attackers who control or spoof PTR records to impersonate ZooKeeper servers or clients with a valid certificate for the PTR name. It's important to note that attacker must present a certificate which is trusted by ZKTrustManager which makes the attack vector harder to exploit. Users are recommended to upgrade to version 3.8.6 or 3.9.5, which fixes this issue by introducing a new configuration option to disable reverse DNS lookup in client and quorum protocols.</p>
+<p>This issue is being tracked as ZOOKEEPER-4986</p>
+<p>Credit:</p>
+<p>Nikita Markevich <a href="&#x6d;&#x61;&#x69;&#108;&#x74;&#111;&#58;m&#97;&#x72;&#x6b;e&#x76;&#105;&#99;&#104;&#x2e;&#110;i&#x6b;&#105;&#116;&#x61;&#49;&#x40;&#103;&#109;&#97;&#x69;&#x6c;&#x2e;&#99;&#111;&#109;">&#x6d;&#x61;&#114;&#107;e&#x76;i&#99;&#104;.&#x6e;&#x69;&#x6b;&#105;&#116;a&#49;&#64;&#x67;m&#97;&#105;&#108;&#x2e;&#99;o&#109;</a> (reporter)</p>
+<p>References:</p>
+<p>https://zookeeper.apache.org/ https://www.cve.org/CVERecord?id=CVE-2026-24281 https://issues.apache.org/jira/browse/ZOOKEEPER-4986</p>
 <p><a name="CVE-2025-58457"></a></p>
 <h3>CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands</h3>
 <p>Severity: moderate</p>
@@ -117,7 +148,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Users are recommended to upgrade to version 3.9.4, which fixes the issue.</p>
 <p>The issue can be mitigated by disabling both commands (via <code>admin.snapshot.enabled</code> and <code>admin.restore.enabled</code>), disabling the whole AdminServer interface (via <code>admin.enableServer</code>), or ensuring that the root ACL does not provide open permissions. (Note that ZooKeeper ACLs are not recursive, so this does not impact operations on child nodes besides notifications from recursive watches.)</p>
 <p>Credit:</p>
-<p>Damien Diederen <a href="&#109;a&#105;&#x6c;&#x74;&#x6f;&#x3a;&#100;&#x64;&#x69;e&#100;&#x65;&#114;e&#110;&#64;&#97;p&#97;c&#x68;&#101;&#x2e;&#x6f;&#114;&#103;">d&#x64;&#x69;e&#100;&#x65;&#x72;&#101;&#110;&#64;&#97;&#112;&#x61;&#x63;&#104;&#101;&#46;&#111;&#x72;&#103;</a> (reporter)</p>
+<p>Damien Diederen <a href="mai&#108;&#x74;&#x6f;&#x3a;d&#x64;ie&#100;&#101;&#114;&#101;n&#64;&#97;&#112;&#x61;&#x63;&#x68;&#x65;&#46;&#111;r&#x67;">&#100;d&#x69;&#x65;d&#101;&#114;&#101;n&#64;&#x61;p&#x61;&#x63;he.&#x6f;&#x72;&#103;</a> (reporter)</p>
 <p>References:</p>
 <p><a href="https://zookeeper.apache.org/">https://zookeeper.apache.org/</a> <a href="https://www.cve.org/CVERecord?id=CVE-2025-58457">https://www.cve.org/CVERecord?id=CVE-2025-58457</a></p>
 <p><a name="CVE-2024-51504"></a></p>
@@ -146,7 +177,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Information disclosure in persistent watchers handling in Apache ZooKeeper due to missing ACL check. It allows an attacker to monitor child znodes by attaching a persistent watcher (addWatch command) to a parent which the attacker has already access to. ZooKeeper server doesn't do ACL check when the persistent watcher is triggered and as a consequence, the full path of znodes that a watch event gets triggered upon is exposed to the owner of the watcher. It's important to note that only the path is exposed by this vulnerability, not the data of znode, but since znode path can contain sensitive information like user name or login ID, this issue is potentially critical.</p>
 <p>Users are recommended to upgrade to version 3.9.2, 3.8.4 which fixes the issue.</p>
 <p>Credit:</p>
-<p>周吉安(寒泉) <a href="&#109;&#97;&#x69;&#108;&#116;&#x6f;&#58;&#x7a;&#x68;&#x6f;&#x75;&#106;&#x69;&#97;&#110;.&#122;&#x6a;&#x61;@&#x61;&#108;&#105;&#98;&#x61;&#98;a&#x2d;&#105;&#110;&#x63;&#46;&#x63;&#111;&#109;">&#122;&#x68;&#x6f;&#x75;&#106;&#105;&#97;&#x6e;&#x2e;&#122;&#106;a&#x40;a&#108;&#105;b&#x61;&#x62;&#x61;&#45;&#105;n&#99;&#46;&#x63;o&#109;</a> (reporter)</p>
+<p>周吉安(寒泉) <a href="m&#97;&#x69;&#108;&#116;&#x6f;:&#122;&#104;&#x6f;&#x75;j&#105;&#x61;&#110;&#x2e;z&#106;a@&#97;&#x6c;&#x69;b&#x61;&#x62;&#97;&#x2d;i&#110;c&#x2e;&#99;om">&#122;h&#x6f;&#117;j&#x69;&#97;&#x6e;&#46;zja@&#x61;&#108;&#105;b&#97;b&#97;&#45;&#x69;&#110;&#99;&#x2e;&#x63;&#x6f;&#109;</a> (reporter)</p>
 <p>References:</p>
 <p><a href="https://zookeeper.apache.org/">https://zookeeper.apache.org/</a> <a href="https://www.cve.org/CVERecord?id=CVE-2024-23944">https://www.cve.org/CVERecord?id=CVE-2024-23944</a></p>
 <p><a name="CVE-2023-44981"></a></p>
@@ -165,7 +196,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Alternately ensure the ensemble election/quorum communication is protected by a firewall as this will mitigate the issue.</p>
 <p>See the documentation for more details on correct cluster administration.</p>
 <p>Credit:</p>
-<p>Damien Diederen <a href="&#109;&#97;&#x69;&#108;t&#111;:dd&#105;&#x65;&#x64;&#x65;r&#x65;n@&#97;&#112;&#97;&#99;h&#101;&#46;&#111;&#x72;&#x67;">&#x64;&#x64;&#105;&#101;d&#x65;&#114;e&#x6e;&#x40;a&#112;&#97;&#99;h&#101;&#x2e;o&#x72;&#x67;</a> (reporter)</p>
+<p>Damien Diederen <a href="&#109;&#97;&#105;&#x6c;&#116;&#111;&#x3a;d&#x64;&#105;e&#x64;&#x65;&#114;&#x65;&#x6e;&#64;&#97;&#x70;a&#99;&#104;&#x65;&#x2e;&#x6f;&#x72;&#103;">&#x64;&#100;i&#x65;&#x64;&#x65;&#114;en&#x40;a&#112;&#97;ch&#101;&#x2e;&#x6f;&#x72;&#x67;</a> (reporter)</p>
 <p>References:</p>
 <p><a href="https://zookeeper.apache.org/">https://zookeeper.apache.org/</a></p>
 <p><a href="https://www.cve.org/CVERecord?id=CVE-2023-44981">https://www.cve.org/CVERecord?id=CVE-2023-44981</a></p>
@@ -176,7 +207,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>Versions Affected: ZooKeeper prior to 3.4.14 ZooKeeper 3.5.0-alpha through 3.5.4-beta. The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected.</p>
 <p>Description: ZooKeeper’s getACL() command doesn’t check any permission when retrieves the ACLs of the requested node and returns all information contained in the ACL Id field as plaintext string. DigestAuthenticationProvider overloads the Id field with the hash value that is used for user authentication. As a consequence, if Digest Authentication is in use, the unsalted hash value will be disclosed by getACL() request for unauthenticated or unprivileged users.</p>
 <p>Mitigation: Use an authentication method other than Digest (e.g. Kerberos) or upgrade to 3.4.14 or later (3.5.5 or later if on the 3.5 branch).</p>
-<p>Credit: This issue was identified by Harrison Neal <a href="mai&#x6c;&#x74;&#111;:&#104;&#x61;&#114;&#114;&#x69;s&#111;&#110;&#x40;&#x70;a&#116;&#x63;&#104;&#x61;d&#118;is&#111;&#x72;&#x2e;c&#x6f;&#x6d;">&#104;&#x61;r&#114;i&#x73;&#111;n@&#112;a&#x74;&#99;h&#x61;&#100;&#x76;&#105;sor.&#x63;&#111;&#109;</a> PatchAdvisor, Inc.</p>
+<p>Credit: This issue was identified by Harrison Neal <a href="&#109;&#97;&#x69;&#x6c;&#x74;&#x6f;&#x3a;h&#97;&#x72;&#x72;&#105;&#115;&#x6f;&#110;@p&#97;&#x74;c&#104;&#x61;&#100;&#x76;&#x69;&#x73;&#111;r&#46;&#x63;&#x6f;&#109;">&#x68;ar&#114;i&#x73;&#111;&#x6e;&#x40;&#x70;a&#116;c&#x68;&#x61;&#100;&#x76;&#105;&#x73;&#x6f;&#x72;&#46;c&#111;&#x6d;</a> PatchAdvisor, Inc.</p>
 <p>References: https://issues.apache.org/jira/browse/ZOOKEEPER-1392</p>
 <p><a name="CVE-2018-8012"></a></p>
 <h3>CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication</h3>
