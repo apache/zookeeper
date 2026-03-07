@@ -30,6 +30,8 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 
 ## Vulnerability reports
 
+* [CVE-2026-24308: Sensitive information disclosure in client configuration handling](#CVE-2026-24308)
+* [CVE-2026-24281: Reverse-DNS fallback enables hostname verification bypass in ZooKeeper ZKTrustManager](#CVE-2026-24281)
 * [CVE-2025-58457: Insufficient Permission Check in AdminServer Snapshot/Restore Commands](#CVE-2025-58457)
 * [CVE-2024-51504: Authentication bypass with IP-based authentication in Admin Server](#CVE-2024-51504)
 * [CVE-2024-23944: Information disclosure in persistent watcher handling](#CVE-2024-23944)
@@ -38,6 +40,57 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 * [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+<a name="CVE-2026-24308"></a>
+### CVE-2026-24308: Sensitive information disclosure in client configuration handling
+
+Severity: important
+
+Affected versions:
+
+- Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.4
+- Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.5
+
+Description:
+
+Improper handling of configuration values in ZKConfig in Apache ZooKeeper 3.8.5 and 3.9.4 on all platforms allows an attacker to expose sensitive information stored in client configuration in the client's logfile. Configuration values are exposed at INFO level logging rendering potential production systems affected by the issue. Users are recommended to upgrade to version 3.8.6 or 3.9.5 which fixes this issue.
+
+Credit:
+
+Youlong Chen <chenyoulong20g@ict.ac.cn> (reporter)
+
+References:
+
+https://zookeeper.apache.org/
+https://www.cve.org/CVERecord?id=CVE-2026-24308
+
+
+<a name="CVE-2026-24281"></a>
+### CVE-2026-24281: Reverse-DNS fallback enables hostname verification bypass in ZooKeeper ZKTrustManager
+
+Severity: important
+
+Affected versions:
+
+- Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.4
+- Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.5
+
+Description:
+
+Hostname verification in Apache ZooKeeper ZKTrustManager falls back to reverse DNS (PTR) when IP SAN validation fails, allowing attackers who control or spoof PTR records to impersonate ZooKeeper servers or clients with a valid certificate for the PTR name. It's important to note that attacker must present a certificate which is trusted by ZKTrustManager which makes the attack vector harder to exploit. Users are recommended to upgrade to version 3.8.6 or 3.9.5, which fixes this issue by introducing a new configuration option to disable reverse DNS lookup in client and quorum protocols.
+
+This issue is being tracked as ZOOKEEPER-4986
+
+Credit:
+
+Nikita Markevich <markevich.nikita1@gmail.com> (reporter)
+
+References:
+
+https://zookeeper.apache.org/
+https://www.cve.org/CVERecord?id=CVE-2026-24281
+https://issues.apache.org/jira/browse/ZOOKEEPER-4986
 
 
 <a name="CVE-2025-58457"></a>
