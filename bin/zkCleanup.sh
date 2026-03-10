@@ -53,21 +53,9 @@ fi
 ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
 
 # shellcheck disable=SC2206
-flags=($JVMFLAGS)
+flags=("-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" $JVMFLAGS)
 
-# If config provides directories, use them; otherwise pass all args to PurgeTxnLog
-if [[ -n $ZOODATADIR ]]; then
-  if [[ -z $ZOODATALOGDIR ]]; then
-    # Only dataDir specified
-    "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
-      "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" "$@"
-  else
-    # Both dataDir and dataLogDir specified
-    "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
-      "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" "$@"
-  fi
-else
-  # No config or config doesn't specify directories - pass all args to PurgeTxnLog
-  "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
-    "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "$@"
-fi
+directories=()
+[[ -n $ZOODATADIR ]] && directories=("$ZOODATADIR")
+[[ -n $ZOODATALOGDIR ]] && directories=("$ZOODATALOGDIR" "${directories[@]}")
+"$JAVA" "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "${directories[@]}" "$@"
