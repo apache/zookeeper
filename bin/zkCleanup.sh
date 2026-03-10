@@ -46,8 +46,11 @@ ZOODATALOGDIR=""
 
 # Only try to read config if ZOOCFG exists
 if [[ -f $ZOOCFG ]]; then
-  ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" 2>/dev/null | sed -e 's/.*=//')"
-  ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" 2>/dev/null | sed -e 's/.*=//')"
+  re='^[^=]*=[[:space:]]*(.*)[[:space:]]*$'
+  ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" 2>/dev/null)"
+  [[ $ZOODATADIR =~ $re ]] && ZOODATADIR="${BASH_REMATCH[1]}"
+  ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" 2>/dev/null)"
+  [[ $ZOODATALOGDIR =~ $re ]] && ZOODATALOGDIR="${BASH_REMATCH[1]}"
 fi
 
 ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
