@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,25 +18,16 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
-import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.MetricsServlet;
-import io.prometheus.client.hotspot.DefaultExports;
+import io.prometheus.metrics.core.metrics.GaugeWithCallback;
+import io.prometheus.metrics.exporter.servlet.javax.PrometheusMetricsServlet;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.IOException;
-import java.util.Enumeration;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -46,224 +37,247 @@ import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
-import org.apache.zookeeper.server.RateLogger;
-import org.eclipse.jetty.security.ConstraintMapping;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.KeyStoreScanner;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * A Metrics Provider implementation based on https://prometheus.io.
- *
+ * This implementation uses prometheus-metrics-core interfaces and exposes metrics via an embedded Jetty server
  * @since 3.6.0
  */
 public class PrometheusMetricsProvider implements MetricsProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrometheusMetricsProvider.class);
     private static final String LABEL = "key";
-    private static final String[] LABELS = {LABEL};
 
-    /**
-     * Number of worker threads for reporting Prometheus summary metrics.
-     * Default value is 1.
-     * If the number is less than 1, the main thread will be used.
-     */
-    static final String NUM_WORKER_THREADS = "numWorkerThreads";
-
-    /**
-     * The max queue size for Prometheus summary metrics reporting task.
-     * Default value is 10000.
-     */
-    static final String MAX_QUEUE_SIZE = "maxQueueSize";
-
-    /**
-     * The timeout in ms for Prometheus worker threads shutdown.
-     * Default value is 1000ms.
-     */
-    static final String WORKER_SHUTDOWN_TIMEOUT_MS = "workerShutdownTimeoutMs";
-
-    /**
-     * We are using the 'defaultRegistry'.
-     * <p>
-     * When you are running ZooKeeper (server or client) together with other
-     * libraries every metrics will be expected as a single view.
-     * </p>
-     */
-    private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
-    private final RateLogger rateLogger = new RateLogger(LOG, 60 * 1000);
-    private String host = "0.0.0.0";
+    private final PrometheusRegistry registry = PrometheusRegistry.defaultRegistry;
     private int httpPort = -1;
     private int httpsPort = -1;
     private boolean exportJvmInfo = true;
-    private Server server;
-    private final MetricsServletImpl servlet = new MetricsServletImpl();
     private final Context rootContext = new Context();
-    private int numWorkerThreads = 1;
-    private int maxQueueSize = 10000;
-    private long workerShutdownTimeoutMs = 1000;
-    private Optional<ExecutorService> executorOptional = Optional.empty();
+    private PrometheusRegistryDumper dumper;
+    private CustomPrometheusMetricsServlet servlet;
 
-    // Constants for SSL configuration
-    public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
-    public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
-    public static final String SSL_KEYSTORE_PASSWORD = "ssl.keyStore.password";
-    public static final String SSL_KEYSTORE_TYPE = "ssl.keyStore.type";
-    public static final String SSL_TRUSTSTORE_LOCATION = "ssl.trustStore.location";
-    public static final String SSL_TRUSTSTORE_PASSWORD = "ssl.trustStore.password";
-    public static final String SSL_TRUSTSTORE_TYPE = "ssl.trustStore.type";
-    public static final String SSL_X509_CN = "ssl.x509.cn";
-    public static final String SSL_X509_REGEX_CN = "ssl.x509.cn.regex";
-    public static final String SSL_NEED_CLIENT_AUTH = "ssl.need.client.auth";
-    public static final String SSL_WANT_CLIENT_AUTH = "ssl.want.client.auth";
+    private Server server;
+    private int numWorkerThreads;
+    private String host;
 
+    // SSL Configuration fields
     private String keyStorePath;
     private String keyStorePassword;
     private String keyStoreType;
     private String trustStorePath;
     private String trustStorePassword;
     private String trustStoreType;
-    private boolean needClientAuth = true;
-    private boolean wantClientAuth = true;
+    private boolean needClientAuth = true; // Secure default
+    private boolean wantClientAuth = true; // Secure default
+
+    // Constants for configuration
+    public static final String NUM_WORKER_THREADS = "numWorkerThreads";
+    public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
+    public static final String SSL_KEYSTORE_PASSWORD = "ssl.keyStore.password";
+    public static final String SSL_KEYSTORE_TYPE = "ssl.keyStore.type";
+    public static final String SSL_TRUSTSTORE_LOCATION = "ssl.trustStore.location";
+    public static final String SSL_TRUSTSTORE_PASSWORD = "ssl.trustStore.password";
+    public static final String SSL_TRUSTSTORE_TYPE = "ssl.trustStore.type";
+    public static final String SSL_NEED_CLIENT_AUTH = "ssl.need.client.auth";
+    public static final String SSL_WANT_CLIENT_AUTH = "ssl.want.client.auth";
+    public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
+
+    /**
+     * Custom servlet to disable the TRACE method for security reasons.
+     */
+    private static class CustomPrometheusMetricsServlet extends PrometheusMetricsServlet {
+        public CustomPrometheusMetricsServlet(PrometheusRegistry registry) {
+            super(registry);
+        }
+
+        @Override
+        protected void doTrace(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        }
+    }
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
-        LOG.info("Initializing metrics, configuration: {}", configuration);
+        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", configuration);
+
         this.host = configuration.getProperty("httpHost", "0.0.0.0");
-        if (configuration.containsKey("httpsPort")) {
-            this.httpsPort = Integer.parseInt(configuration.getProperty("httpsPort"));
+        this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "-1"));
+        this.httpsPort = Integer.parseInt(configuration.getProperty("httpsPort", "-1"));
+        this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
+        this.numWorkerThreads = Integer.parseInt(configuration.getProperty(NUM_WORKER_THREADS, "10"));
+
+        // If httpsPort is specified, parse all SSL properties
+        if (this.httpsPort != -1) {
             this.keyStorePath = configuration.getProperty(SSL_KEYSTORE_LOCATION);
             this.keyStorePassword = configuration.getProperty(SSL_KEYSTORE_PASSWORD);
-            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE);
+            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE, "PKCS12");
             this.trustStorePath = configuration.getProperty(SSL_TRUSTSTORE_LOCATION);
             this.trustStorePassword = configuration.getProperty(SSL_TRUSTSTORE_PASSWORD);
-            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE);
+            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE, "PKCS12");
             this.needClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_NEED_CLIENT_AUTH, "true"));
             this.wantClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_WANT_CLIENT_AUTH, "true"));
-            //check if httpPort is also configured
-            this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "-1"));
-        } else {
-            // Use the default HTTP port (7000) or the configured port if HTTPS is not set.
-            this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
         }
-        this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
-        this.numWorkerThreads = Integer.parseInt(
-                configuration.getProperty(NUM_WORKER_THREADS, "1"));
-        this.maxQueueSize = Integer.parseInt(
-                configuration.getProperty(MAX_QUEUE_SIZE, "10000"));
-        this.workerShutdownTimeoutMs = Long.parseLong(
-                configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
+
+        // Validate that at least one port is configured.
+        if (httpPort == -1 && httpsPort == -1) {
+            throw new MetricsProviderLifeCycleException(
+                    "Either httpPort or httpsPort must be configured for Prometheus exporter.");
+        }
+
+        this.dumper = new PrometheusRegistryDumper(this.registry);
+        this.servlet = new CustomPrometheusMetricsServlet(this.registry);
     }
 
     @Override
     public void start() throws MetricsProviderLifeCycleException {
-        this.executorOptional = createExecutor();
+        // Register JVM metrics if enabled
+        if (exportJvmInfo) {
+            JvmMetrics.builder().register(this.registry);
+        }
         try {
-            LOG.info("Starting /metrics endpoint at HTTP port: {}, HTTPS port: {}, exportJvmInfo: {}",
-                    httpPort >= 0 ? httpPort : "disabled",
-                    httpsPort >= 0 ? httpsPort : "disabled",
-                    exportJvmInfo);
-            if (exportJvmInfo) {
-                DefaultExports.initialize();
-            }
-            server = new Server();
-            ServerConnector httpConnector = null;
-            ServerConnector httpsConnector = null;
-            if (httpPort >= 0) {
-                httpConnector = new ServerConnector(server);
-                httpConnector.setHost(host);
-                httpConnector.setPort(httpPort);
+            LOG.info("Starting Prometheus Jetty server...");
+
+            // QueuedThreadPool needs a minimum of 4 threads for stable operation
+            QueuedThreadPool threadPool = new QueuedThreadPool(Math.max(this.numWorkerThreads + 3, 4));
+            threadPool.setReservedThreads(0);
+            threadPool.setName("prometheus-jetty-server");
+
+            this.server = new Server(threadPool);
+
+            // Define number of acceptors and selectors for connectors
+            int acceptors = 1;
+            int selectors = 1;
+
+            // Configure HTTP connector if enabled
+            if (this.httpPort != -1) {
+                ServerConnector httpConnector = new ServerConnector(server, acceptors, selectors);
+                httpConnector.setPort(this.httpPort);
+                httpConnector.setHost(this.host);
                 server.addConnector(httpConnector);
             }
-            if (httpsPort >= 0) {
-                SslContextFactory sslServerContextFactory = new SslContextFactory.Server();
-                configureSslContextFactory(sslServerContextFactory);
-                KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslServerContextFactory);
+
+            // Configure HTTPS connector if enabled
+            if (this.httpsPort != -1) {
+                SslContextFactory.Server sslContextFactory = createSslContextFactory();
+                KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslContextFactory);
                 keystoreScanner.setScanInterval(SCAN_INTERVAL);
                 server.addBean(keystoreScanner);
-                httpsConnector = new ServerConnector(server, sslServerContextFactory);
-                httpsConnector.setHost(host);
-                httpsConnector.setPort(httpsPort);
-                server.addConnector(httpsConnector);
+                server.addConnector(createSslConnector(server, acceptors, selectors, sslContextFactory));
             }
+
+            // Set up the servlet context handler
             ServletContextHandler context = new ServletContextHandler();
             context.setContextPath("/");
-            constrainTraceMethod(context);
             server.setHandler(context);
             context.addServlet(new ServletHolder(servlet), "/metrics");
+
             server.start();
-            if (httpPort == 0) {
-                LOG.info("Bound /metrics endpoint to HTTP port: {}", httpConnector.getLocalPort());
-            }
-            if (httpsPort == 0) {
-                LOG.info("Bound /metrics endpoint to HTTPS port: {}", httpsConnector.getLocalPort());
-            }
-        } catch (Exception err) {
-            LOG.error("Cannot start /metrics server", err);
-            if (server != null) {
-                try {
-                    server.stop();
-                } catch (Exception suppressed) {
-                    err.addSuppressed(suppressed);
-                } finally {
-                    server = null;
-                }
-            }
-            throw new MetricsProviderLifeCycleException(err);
+
+            LOG.info("Prometheus metrics provider with Jetty started. HTTP port: {}, HTTPS port: {}",
+                    httpPort != -1 ? httpPort : "disabled", httpsPort != -1 ? httpsPort : "disabled");
+
+        } catch (Exception e) {
+            LOG.error("Failed to start Prometheus Jetty server", e);
+            // Ensure server is stopped on startup failure
+            stop();
+            throw new MetricsProviderLifeCycleException("Failed to start Prometheus Jetty server", e);
         }
     }
 
-    @SuppressWarnings("deprecation")
-    private void configureSslContextFactory(SslContextFactory sslServerContextFactory) {
-        if (keyStorePath != null) {
-            sslServerContextFactory.setKeyStorePath(keyStorePath);
-        } else {
-            LOG.error("KeyStore configuration is incomplete keyStorePath: {}", keyStorePath);
-            throw new IllegalStateException("KeyStore configuration is incomplete keyStorePath: " + keyStorePath);
+    /**
+     * Creates and configures the SslContextFactory for the server.
+     *
+     * @return A configured SslContextFactory.Server instance.
+     */
+    private SslContextFactory.Server createSslContextFactory() {
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+
+        // Validate and set KeyStore properties
+        if (this.keyStorePath == null || this.keyStorePath.isEmpty()) {
+            throw new IllegalArgumentException("SSL/TLS is enabled, but '" + SSL_KEYSTORE_LOCATION + "' is not set.");
         }
-        if (keyStorePassword != null) {
-            sslServerContextFactory.setKeyStorePassword(keyStorePassword);
-        } else {
-            LOG.error("keyStorePassword configuration is incomplete ");
-            throw new IllegalStateException("keyStorePassword configuration is incomplete ");
+        sslContextFactory.setKeyStorePath(this.keyStorePath);
+        sslContextFactory.setKeyStorePassword(this.keyStorePassword);
+        if (this.keyStoreType != null) {
+            sslContextFactory.setKeyStoreType(this.keyStoreType);
         }
-        if (keyStoreType != null) {
-            sslServerContextFactory.setKeyStoreType(keyStoreType);
+
+        // Validate and set TrustStore properties (often needed for client auth)
+        if (this.needClientAuth && (this.trustStorePath == null || this.trustStorePath.isEmpty())) {
+            throw new IllegalArgumentException(
+                    "'" + SSL_NEED_CLIENT_AUTH + "' is true, but '" + SSL_TRUSTSTORE_LOCATION + "' is not set.");
         }
-        if (trustStorePath != null) {
-            sslServerContextFactory.setTrustStorePath(trustStorePath);
-        } else {
-            LOG.error("TrustStore configuration is incomplete trustStorePath: {}", trustStorePath);
-            throw new IllegalStateException("TrustStore configuration is incomplete trustStorePath: " + trustStorePath);
+        if (this.trustStorePath != null) {
+            sslContextFactory.setTrustStorePath(this.trustStorePath);
+            sslContextFactory.setTrustStorePassword(this.trustStorePassword);
+            if (this.trustStoreType != null) {
+                sslContextFactory.setTrustStoreType(this.trustStoreType);
+            }
         }
-        if (trustStorePassword != null) {
-            sslServerContextFactory.setTrustStorePassword(trustStorePassword);
-        } else {
-            LOG.error("trustStorePassword configuration is incomplete");
-            throw new IllegalStateException("trustStorePassword configuration is incomplete");
-        }
-        if (trustStoreType != null) {
-            sslServerContextFactory.setTrustStoreType(trustStoreType);
-        }
-        sslServerContextFactory
-                .setNeedClientAuth(needClientAuth);
-        sslServerContextFactory
-                .setWantClientAuth(wantClientAuth);
+
+        sslContextFactory.setNeedClientAuth(this.needClientAuth);
+        sslContextFactory.setWantClientAuth(this.wantClientAuth);
+
+        return sslContextFactory;
     }
 
-    // for tests
-    MetricsServletImpl getServlet() {
-        return servlet;
+    /**
+     * Creates and configures an SSL/TLS connector for the Jetty server.
+     *
+     * @param server
+     *            The server instance.
+     * @param acceptors
+     *            The number of acceptor threads.
+     * @param selectors
+     *            The number of selector threads.
+     * @param sslContextFactory
+     *            The pre-configured SslContextFactory.
+     *
+     * @return A configured ServerConnector for HTTPS.
+     */
+    private ServerConnector createSslConnector(Server server, int acceptors, int selectors,
+            SslContextFactory.Server sslContextFactory) {
+        ServerConnector sslConnector = new ServerConnector(server, acceptors, selectors, sslContextFactory);
+        sslConnector.setPort(this.httpsPort);
+        sslConnector.setHost(this.host);
+        return sslConnector;
+    }
+
+    @Override
+    public void stop() {
+        if (server != null) {
+            try {
+                LOG.info("Stopping Prometheus Jetty server.");
+                server.stop();
+            } catch (Exception err) {
+                LOG.error("Cannot safely stop Prometheus Jetty server", err);
+            } finally {
+                server = null;
+            }
+        }
+        registry.clear();
+    }
+
+    /**
+     * Returns a Prometheus servlet for integration with existing web applications. This is primarily used for testing
+     * purposes.
+     */
+    public PrometheusMetricsServlet getServlet() {
+        return this.servlet;
     }
 
     @Override
@@ -272,145 +286,62 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     }
 
     @Override
-    public void stop() {
-        shutdownExecutor();
-        if (server != null) {
-            try {
-                server.stop();
-            } catch (Exception err) {
-                LOG.error("Cannot safely stop Jetty server", err);
-            } finally {
-                server = null;
-            }
-        }
-    }
-
-    /**
-     * Dump all values to the 4lw interface and to the Admin server.
-     * <p>
-     * This method is not expected to be used to serve metrics to Prometheus. We
-     * are using the MetricsServlet provided by Prometheus for that, leaving the
-     * real representation to the Prometheus Java client.
-     * </p>
-     *
-     * @param sink the receiver of data (4lw interface, Admin server or tests)
-     */
-    @Override
     public void dump(BiConsumer<String, Object> sink) {
-        sampleGauges();
-        Enumeration<Collector.MetricFamilySamples> samplesFamilies = collectorRegistry.metricFamilySamples();
-        while (samplesFamilies.hasMoreElements()) {
-            Collector.MetricFamilySamples samples = samplesFamilies.nextElement();
-            samples.samples.forEach(sample -> {
-                String key = buildKeyForDump(sample);
-                sink.accept(key, sample.value);
-            });
-        }
-    }
-
-    private static String buildKeyForDump(Collector.MetricFamilySamples.Sample sample) {
-        StringBuilder keyBuilder = new StringBuilder();
-        keyBuilder.append(sample.name);
-        if (sample.labelNames.size() > 0) {
-            keyBuilder.append('{');
-            for (int i = 0; i < sample.labelNames.size(); ++i) {
-                if (i > 0) {
-                    keyBuilder.append(',');
-                }
-                keyBuilder.append(sample.labelNames.get(i));
-                keyBuilder.append("=\"");
-                keyBuilder.append(sample.labelValues.get(i));
-                keyBuilder.append('"');
-            }
-            keyBuilder.append('}');
-        }
-        return keyBuilder.toString();
-    }
-
-    /**
-     * Update Gauges. In ZooKeeper Metrics API Gauges are callbacks served by
-     * internal components and the value is not held by Prometheus structures.
-     */
-    private void sampleGauges() {
-        rootContext.gauges.values()
-                .forEach(PrometheusGaugeWrapper::sample);
-
-        rootContext.gaugeSets.values()
-                .forEach(PrometheusLabelledGaugeWrapper::sample);
+        dumper.dump().forEach(sink);
     }
 
     @Override
     public void resetAllValues() {
-        // not supported on Prometheus
+        // The new prometheus client does not support resetting metric values.
+        LOG.debug("resetAllValues is a no-op for PrometheusMetricsProvider");
     }
 
     /**
-     * Add constraint to a given context to disallow TRACE method.
-     * @param ctxHandler the context to modify
+     * Inner class implementing the MetricsContext interface. It handles the creation and registration of different
+     * metric types.
      */
-    private void constrainTraceMethod(ServletContextHandler ctxHandler) {
-        Constraint c = new Constraint();
-        c.setAuthenticate(true);
-
-        ConstraintMapping cmt = new ConstraintMapping();
-        cmt.setConstraint(c);
-        cmt.setMethod("TRACE");
-        cmt.setPathSpec("/*");
-
-        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
-        securityHandler.setConstraintMappings(new ConstraintMapping[] {cmt});
-
-        ctxHandler.setSecurityHandler(securityHandler);
-    }
-
     private class Context implements MetricsContext {
 
-        private final ConcurrentMap<String, PrometheusGaugeWrapper> gauges = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusLabelledGaugeWrapper> gaugeSets = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusCounter> counters = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusLabelledCounter> counterSets = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusSummary> basicSummaries = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusSummary> summaries = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusLabelledSummary> basicSummarySets = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, PrometheusLabelledSummary> summarySets = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusCounterWrapper> counters =
+            new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledCounterWrapper> counterSets =
+            new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, GaugeWithCallback> registeredGauges =
+            new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusSummaryWrapper> basicSummaries =
+            new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusSummaryWrapper> advancedSummaries =
+            new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledSummaryWrapper> basicSummarySets =
+            new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledSummaryWrapper> advancedSummarySets =
+            new ConcurrentHashMap<>();
 
         @Override
         public MetricsContext getContext(String name) {
-            // no hierarchy yet
+            // This provider uses a flat namespace, so sub-contexts are not needed.
             return this;
         }
 
         @Override
         public Counter getCounter(String name) {
-            return counters.computeIfAbsent(name, PrometheusCounter::new);
+            return counters.computeIfAbsent(name, key -> {
+                io.prometheus.metrics.core.metrics.Counter prometheusCounter =
+                        io.prometheus.metrics.core.metrics.Counter
+                        .builder().name(key).help(key + " counter").register(registry);
+                return new PrometheusCounterWrapper(prometheusCounter);
+            });
         }
 
         @Override
-        public CounterSet getCounterSet(final String name) {
-            Objects.requireNonNull(name, "Cannot register a CounterSet with null name");
-            return counterSets.computeIfAbsent(name, PrometheusLabelledCounter::new);
-        }
-
-        /**
-         * Gauges may go up and down, in ZooKeeper they are a way to export
-         * internal values with a callback.
-         *
-         * @param name  the name of the gauge
-         * @param gauge the callback
-         */
-        @Override
-        public void registerGauge(String name, Gauge gauge) {
-            Objects.requireNonNull(name);
-            gauges.compute(name, (id, prev) ->
-                    new PrometheusGaugeWrapper(id, gauge, prev != null ? prev.inner : null));
-        }
-
-        @Override
-        public void unregisterGauge(String name) {
-            PrometheusGaugeWrapper existing = gauges.remove(name);
-            if (existing != null) {
-                existing.unregister();
-            }
+        public CounterSet getCounterSet(String name) {
+            return counterSets.computeIfAbsent(name, key -> {
+                Objects.requireNonNull(name, "Cannot register a CounterSet with null name");
+                io.prometheus.metrics.core.metrics.Counter prometheusCounter =
+                        io.prometheus.metrics.core.metrics.Counter
+                        .builder().name(key).help(key + " counter set").labelNames(LABEL).register(registry);
+                return new PrometheusLabelledCounterWrapper(prometheusCounter);
+            });
         }
 
         @Override
@@ -418,327 +349,182 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             Objects.requireNonNull(name, "Cannot register a GaugeSet with null name");
             Objects.requireNonNull(gaugeSet, "Cannot register a null GaugeSet for " + name);
 
-            gaugeSets.compute(name, (id, prev) ->
-                new PrometheusLabelledGaugeWrapper(name, gaugeSet, prev != null ? prev.inner : null));
+            GaugeWithCallback oldGauge = registeredGauges.get(name);
+            if (oldGauge != null) {
+                registry.unregister(oldGauge);
+            }
+
+            GaugeWithCallback newGauge = GaugeWithCallback.builder().name(name).help(name).labelNames(LABEL)
+                    .callback(callback -> {
+                        Map<String, Number> values = gaugeSet.values();
+                        if (values != null) {
+                            for (Map.Entry<String, Number> value : values.entrySet()) {
+                                if (value.getKey() == null) {
+                                    throw new IllegalArgumentException("GaugeSet key cannot be null.");
+                                }
+                                callback.call(value.getValue().doubleValue(), value.getKey());
+                            }
+                        }
+                    }).register(registry);
+            registeredGauges.put(name, newGauge);
+        }
+
+        @Override
+        public void registerGauge(String name, Gauge gauge) {
+            if (name == null) {
+                throw new IllegalArgumentException("Gauge name cannot be null.");
+            }
+            if (gauge == null) {
+                throw new IllegalArgumentException("Cannot register a null Gauge for " + name);
+            }
+
+            GaugeWithCallback oldGauge = registeredGauges.get(name);
+            if (oldGauge != null) {
+                registry.unregister(oldGauge);
+            }
+
+            GaugeWithCallback newGauge = GaugeWithCallback.builder().name(name).help(name).callback(callback -> {
+                Number value = gauge.get();
+                if (value != null) {
+                    callback.call(value.doubleValue());
+                }
+            }).register(registry);
+            registeredGauges.put(name, newGauge);
+        }
+
+        @Override
+        public void unregisterGauge(String name) {
+            GaugeWithCallback gauge = registeredGauges.remove(name);
+            if (gauge != null) {
+                registry.unregister(gauge);
+            }
         }
 
         @Override
         public void unregisterGaugeSet(final String name) {
             Objects.requireNonNull(name, "Cannot unregister GaugeSet with null name");
+            unregisterGauge(name);
+        }
 
-            final PrometheusLabelledGaugeWrapper existing = gaugeSets.remove(name);
-            if (existing != null) {
-                existing.unregister();
+        private io.prometheus.metrics.core.metrics.Summary createPrometheusSummary(String name, DetailLevel detailLevel,
+                String... labelNames) {
+            io.prometheus.metrics.core.metrics.Summary.Builder builder = io.prometheus.metrics.core.metrics.Summary
+                    .builder().name(name).help(name + " summary").quantile(0.5, 0.05); // Median
+
+            if (detailLevel == DetailLevel.ADVANCED) {
+                builder.quantile(0.95, 0.05)   // 95th percentile
+                        .quantile(0.99, 0.05); // 99th percentile
             }
+
+            if (labelNames.length > 0) {
+                builder.labelNames(labelNames);
+            }
+            return builder.register(registry);
         }
 
         @Override
         public Summary getSummary(String name, DetailLevel detailLevel) {
-            if (detailLevel == DetailLevel.BASIC) {
-                return basicSummaries.computeIfAbsent(name, (n) -> {
-                    if (summaries.containsKey(n)) {
-                        throw new IllegalArgumentException("Already registered a non basic summary as " + n);
-                    }
-                    return new PrometheusSummary(name, detailLevel);
-                });
-            } else {
-                return summaries.computeIfAbsent(name, (n) -> {
-                    if (basicSummaries.containsKey(n)) {
-                        throw new IllegalArgumentException("Already registered a basic summary as " + n);
-                    }
-                    return new PrometheusSummary(name, detailLevel);
-                });
-            }
+            ConcurrentMap<String, PrometheusSummaryWrapper> map = detailLevel == DetailLevel.BASIC ? basicSummaries
+                    : advancedSummaries;
+            return map.computeIfAbsent(name, key -> {
+                if ((detailLevel == DetailLevel.BASIC && advancedSummaries.containsKey(key))
+                        || (detailLevel == DetailLevel.ADVANCED && basicSummaries.containsKey(key))) {
+                    throw new IllegalArgumentException(
+                            "Already registered a summary as " + key + " with a different detail level");
+                }
+                io.prometheus.metrics.core.metrics.Summary prometheusSummary = createPrometheusSummary(key,
+                        detailLevel);
+                return new PrometheusSummaryWrapper(prometheusSummary);
+            });
         }
 
         @Override
         public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
-            if (detailLevel == DetailLevel.BASIC) {
-                return basicSummarySets.computeIfAbsent(name, (n) -> {
-                    if (summarySets.containsKey(n)) {
-                        throw new IllegalArgumentException("Already registered a non basic summary set as " + n);
-                    }
-                    return new PrometheusLabelledSummary(name, detailLevel);
-                });
-            } else {
-                return summarySets.computeIfAbsent(name, (n) -> {
-                    if (basicSummarySets.containsKey(n)) {
-                        throw new IllegalArgumentException("Already registered a basic summary set as " + n);
-                    }
-                    return new PrometheusLabelledSummary(name, detailLevel);
-                });
-            }
+            ConcurrentMap<String, PrometheusLabelledSummaryWrapper> map = detailLevel == DetailLevel.BASIC
+                    ? basicSummarySets : advancedSummarySets;
+            return map.computeIfAbsent(name, key -> {
+                if ((detailLevel == DetailLevel.BASIC && advancedSummarySets.containsKey(key))
+                        || (detailLevel == DetailLevel.ADVANCED && basicSummarySets.containsKey(key))) {
+                    throw new IllegalArgumentException(
+                            "Already registered a summary set as " + key + " with a different detail level");
+                }
+                io.prometheus.metrics.core.metrics.Summary prometheusSummary = createPrometheusSummary(key, detailLevel,
+                        LABEL);
+                return new PrometheusLabelledSummaryWrapper(prometheusSummary);
+            });
         }
-
     }
 
-    private class PrometheusCounter implements Counter {
+    // --- Wrapper classes to adapt Prometheus metrics to ZooKeeper's metric interfaces ---
 
-        private final io.prometheus.client.Counter inner;
-        private final String name;
+    private static class PrometheusCounterWrapper implements Counter {
+        private final io.prometheus.metrics.core.metrics.Counter prometheusCounter;
 
-        public PrometheusCounter(String name) {
-            this.name = name;
-            this.inner = io.prometheus.client.Counter
-                    .build(name, name)
-                    .register(collectorRegistry);
+        public PrometheusCounterWrapper(io.prometheus.metrics.core.metrics.Counter prometheusCounter) {
+            this.prometheusCounter = prometheusCounter;
         }
 
         @Override
         public void add(long delta) {
             try {
-                inner.inc(delta);
-            } catch (IllegalArgumentException err) {
-                LOG.error("invalid delta {} for metric {}", delta, name, err);
+                this.prometheusCounter.inc(delta);
+            } catch (final IllegalArgumentException e) {
+                LOG.error("invalid delta {} for metric {}", delta, prometheusCounter.getPrometheusName(), e);
             }
         }
 
         @Override
         public long get() {
-            // this method is used only for tests
-            // Prometheus returns a "double"
-            // it is safe to fine to a long
-            // we are never setting non-integer values
-            return (long) inner.get();
+            return (long) this.prometheusCounter.get();
         }
-
     }
 
-    private class PrometheusLabelledCounter implements CounterSet {
-        private final String name;
-        private final io.prometheus.client.Counter inner;
+    private static class PrometheusLabelledCounterWrapper implements CounterSet {
+        private final io.prometheus.metrics.core.metrics.Counter prometheusCounter;
 
-        public PrometheusLabelledCounter(final String name) {
-            this.name = name;
-            this.inner = io.prometheus.client.Counter
-                    .build(name, name)
-                    .labelNames(LABELS)
-                    .register(collectorRegistry);
+        public PrometheusLabelledCounterWrapper(io.prometheus.metrics.core.metrics.Counter prometheusCounter) {
+            this.prometheusCounter = prometheusCounter;
         }
 
         @Override
-        public void add(final String key, final long delta) {
+        public void add(String key, long delta) {
             try {
-                inner.labels(key).inc(delta);
+                this.prometheusCounter.labelValues(key).inc(delta);
             } catch (final IllegalArgumentException e) {
-                LOG.error("invalid delta {} for metric {} with key {}", delta, name, key, e);
-            }
-        }
-    }
-
-    private class PrometheusGaugeWrapper {
-
-        private final io.prometheus.client.Gauge inner;
-        private final Gauge gauge;
-        private final String name;
-
-        public PrometheusGaugeWrapper(String name, Gauge gauge, io.prometheus.client.Gauge prev) {
-            this.name = name;
-            this.gauge = gauge;
-            this.inner = prev != null ? prev
-                    : io.prometheus.client.Gauge
-                    .build(name, name)
-                    .register(collectorRegistry);
-        }
-
-        /**
-         * Call the callback and update Prometheus Gauge. This method is called
-         * when the server is polling for a value.
-         */
-        private void sample() {
-            Number value = gauge.get();
-            this.inner.set(value != null ? value.doubleValue() : 0);
-        }
-
-        private void unregister() {
-            collectorRegistry.unregister(inner);
-        }
-    }
-
-    /**
-     * Prometheus implementation of GaugeSet interface. It wraps the GaugeSet object and
-     * uses the callback API to update the Prometheus Gauge.
-     */
-    private class PrometheusLabelledGaugeWrapper {
-        private final GaugeSet gaugeSet;
-        private final io.prometheus.client.Gauge inner;
-
-        private PrometheusLabelledGaugeWrapper(final String name,
-                                               final GaugeSet gaugeSet,
-                                               final io.prometheus.client.Gauge prev) {
-            this.gaugeSet = gaugeSet;
-            this.inner = prev != null ? prev :
-                    io.prometheus.client.Gauge
-                            .build(name, name)
-                            .labelNames(LABELS)
-                            .register(collectorRegistry);
-        }
-
-        /**
-         * Call the callback provided by the GaugeSet and update Prometheus Gauge.
-         * This method is called when the server is polling for a value.
-         */
-        private void sample() {
-            gaugeSet.values().forEach((key, value) ->
-                this.inner.labels(key).set(value != null ? value.doubleValue() : 0));
-        }
-
-        private void unregister() {
-            collectorRegistry.unregister(inner);
-        }
-    }
-
-    private class PrometheusSummary implements Summary {
-
-        private final io.prometheus.client.Summary inner;
-        private final String name;
-
-        public PrometheusSummary(String name, MetricsContext.DetailLevel level) {
-            this.name = name;
-            if (level == MetricsContext.DetailLevel.ADVANCED) {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
-                        .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
-                        .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
-                        .register(collectorRegistry);
-            } else {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
-                        .register(collectorRegistry);
+                LOG.error("invalid delta {} for metric {} with key {}", delta, prometheusCounter.getPrometheusName(),
+                        key, e);
             }
         }
 
         @Override
-        public void add(long delta) {
-            reportMetrics(() -> observe(delta));
-        }
-
-        private void observe(final long delta) {
-            try {
-                inner.observe(delta);
-            } catch (final IllegalArgumentException err) {
-                LOG.error("invalid delta {} for metric {}", delta, name, err);
-            }
+        public void inc(String key) {
+            add(key, 1);
         }
     }
 
-    private class PrometheusLabelledSummary implements SummarySet {
+    private static class PrometheusSummaryWrapper implements Summary {
+        private final io.prometheus.metrics.core.metrics.Summary prometheusSummary;
 
-        private final io.prometheus.client.Summary inner;
-        private final String name;
+        public PrometheusSummaryWrapper(io.prometheus.metrics.core.metrics.Summary prometheusSummary) {
+            this.prometheusSummary = prometheusSummary;
+        }
 
-        public PrometheusLabelledSummary(String name, MetricsContext.DetailLevel level) {
-            this.name = name;
-            if (level == MetricsContext.DetailLevel.ADVANCED) {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
-                        .labelNames(LABELS)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
-                        .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
-                        .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
-                        .register(collectorRegistry);
-            } else {
-                this.inner = io.prometheus.client.Summary
-                        .build(name, name)
-                        .labelNames(LABELS)
-                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
-                        .register(collectorRegistry);
-            }
+        @Override
+        public void add(long value) {
+            this.prometheusSummary.observe(value);
+        }
+    }
+
+    private static class PrometheusLabelledSummaryWrapper implements SummarySet {
+        private final io.prometheus.metrics.core.metrics.Summary prometheusSummary;
+
+        public PrometheusLabelledSummaryWrapper(io.prometheus.metrics.core.metrics.Summary prometheusSummary) {
+            this.prometheusSummary = prometheusSummary;
         }
 
         @Override
         public void add(String key, long value) {
-            reportMetrics(() -> observe(key, value));
-        }
-
-        private void observe(final String key, final long value) {
-            try {
-                inner.labels(key).observe(value);
-            } catch (final IllegalArgumentException err) {
-                LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
-            }
-        }
-
-    }
-
-    class MetricsServletImpl extends MetricsServlet {
-
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            // little trick: update the Gauges before serving data
-            // from Prometheus CollectorRegistry
-            sampleGauges();
-            // serve data using Prometheus built in client.
-            super.doGet(req, resp);
-        }
-    }
-
-    private Optional<ExecutorService> createExecutor() {
-        if (numWorkerThreads < 1) {
-            LOG.info("Executor service was not created as numWorkerThreads {} is less than 1", numWorkerThreads);
-            return Optional.empty();
-        }
-
-        final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(maxQueueSize);
-        final ThreadPoolExecutor executor = new ThreadPoolExecutor(numWorkerThreads,
-                numWorkerThreads,
-                0L,
-                TimeUnit.MILLISECONDS,
-                queue,
-                new PrometheusWorkerThreadFactory(),
-                new PrometheusRejectedExecutionHandler());
-        LOG.info("Executor service was created with numWorkerThreads {} and maxQueueSize {}",
-                numWorkerThreads,
-                maxQueueSize);
-        return Optional.of(executor);
-    }
-
-    private void shutdownExecutor() {
-        if (executorOptional.isPresent()) {
-            LOG.info("Shutdown executor service with timeout {}", workerShutdownTimeoutMs);
-            final ExecutorService executor = executorOptional.get();
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
-                    LOG.error("Not all the Prometheus worker threads terminated properly after {} timeout",
-                            workerShutdownTimeoutMs);
-                    executor.shutdownNow();
-                }
-            } catch (final Exception e) {
-                LOG.error("Error occurred while terminating Prometheus worker threads", e);
-                executor.shutdownNow();
-            }
-        }
-    }
-
-    private static class PrometheusWorkerThreadFactory implements ThreadFactory {
-        private static final AtomicInteger workerCounter = new AtomicInteger(1);
-
-        @Override
-        public Thread newThread(final Runnable runnable) {
-            final String threadName = "PrometheusMetricsProviderWorker-" + workerCounter.getAndIncrement();
-            final Thread thread = new Thread(runnable, threadName);
-            thread.setDaemon(true);
-            return thread;
-        }
-    }
-
-    private class PrometheusRejectedExecutionHandler implements RejectedExecutionHandler {
-        private final String queueExceededMessage = "Prometheus metrics queue size exceeded the max " + maxQueueSize;
-
-        @Override
-        public void rejectedExecution(final Runnable r, final ThreadPoolExecutor e) {
-            rateLogger.rateLimitLog(queueExceededMessage);
-        }
-    }
-
-    private void reportMetrics(final Runnable task) {
-        if (executorOptional.isPresent()) {
-            executorOptional.get().submit(task);
-        } else {
-            task.run();
+            this.prometheusSummary.labelValues(key).observe(value);
         }
     }
 }

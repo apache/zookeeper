@@ -46,6 +46,7 @@ import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.client.Chroot;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.HostProviderFactory;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperBuilder;
@@ -697,6 +698,7 @@ public class ZooKeeper implements AutoCloseable {
     ClientCnxn createConnection(
         HostProvider hostProvider,
         int sessionTimeout,
+        long newSessionTimeout,
         ZKClientConfig clientConfig,
         Watcher defaultWatcher,
         ClientCnxnSocket clientCnxnSocket,
@@ -707,6 +709,7 @@ public class ZooKeeper implements AutoCloseable {
         return new ClientCnxn(
             hostProvider,
             sessionTimeout,
+            newSessionTimeout,
             clientConfig,
             defaultWatcher,
             clientCnxnSocket,
@@ -1140,14 +1143,14 @@ public class ZooKeeper implements AutoCloseable {
         if (options.getHostProvider() != null) {
             hostProvider = options.getHostProvider().apply(connectStringParser.getServerAddresses());
         } else {
-            hostProvider = new StaticHostProvider(connectStringParser.getServerAddresses());
+            hostProvider = HostProviderFactory.create(connectStringParser, clientConfig);
         }
         this.hostProvider = hostProvider;
-
         chroot = Chroot.ofNullable(connectStringParser.getChrootPath());
         cnxn = createConnection(
             hostProvider,
             sessionTimeout,
+            options.getNewSessionTimeoutMs(),
             this.clientConfig,
             watcher,
             getClientCnxnSocket(),
@@ -1327,6 +1330,10 @@ public class ZooKeeper implements AutoCloseable {
             cnxn.close();
         } catch (IOException e) {
             LOG.debug("Ignoring unexpected exception during close", e);
+        }
+
+        if (hostProvider != null) {
+            hostProvider.close();
         }
 
         LOG.info("Session: 0x{} closed", Long.toHexString(getSessionId()));

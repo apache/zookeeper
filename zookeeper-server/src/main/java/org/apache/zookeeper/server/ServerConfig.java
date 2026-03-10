@@ -23,9 +23,9 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Properties;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 /**
  * Server configuration storage.

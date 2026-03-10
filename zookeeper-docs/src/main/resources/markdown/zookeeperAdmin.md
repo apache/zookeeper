@@ -1764,6 +1764,16 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     This option requires the corresponding *hostnameVerification* option to be `true`, or it will be ignored.
     Default: true for quorum, false for clients
 
+* *ssl.allowReverseDnsLookup* and *ssl.quorum.allowReverseDnsLookup* :
+    (Java system properties: **zookeeper.ssl.allowReverseDnsLookup** and **zookeeper.ssl.quorum.allowReverseDnsLookup**)
+    **New in 3.9.5:**
+    Allow reverse DNS lookup in both server- and client hostname verifications if the hostname verification is enabled in
+    `ZKTrustManager`. Supported in both quorum and client TLS protocols. Not supported in FIPS mode. Reverse DNS lookups are
+    expensive and unnecessary in most cases. Make sure that certificates are created with all required Subject Alternative
+    Names (SAN) for successful identity verification. It's recommended to add SAN:IP entries for identity verification
+    of client certificates.
+    Default: false
+
 * *ssl.crl* and *ssl.quorum.crl* :
     (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
     **New in 3.5.5:**
@@ -2150,8 +2160,9 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     maximum interval in milliseconds that a container that has never had
     any children is retained. Should be long enough for your client to
     create the container, do any needed work and then create children.
-    Default is "0" which is used to indicate that containers
-    that have never had any children are never deleted.
+    Default is "300000"(a.k.a. 5 minutes) since 3.10.0, for earlier versions,
+    it is "0" which is used to indicate that containers that have never had
+    any children are never deleted.
 
 <a name="sc_debug_observability_config"></a>
 

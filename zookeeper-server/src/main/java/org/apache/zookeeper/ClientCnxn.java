@@ -168,6 +168,8 @@ public class ClientCnxn {
 
     private final int sessionTimeout;
 
+    private final long newSessionTimeout;
+
     private final ZKWatchManager watchManager;
 
     private long sessionId;
@@ -399,6 +401,36 @@ public class ClientCnxn {
         byte[] sessionPasswd,
         boolean canBeReadOnly
     ) throws IOException {
+        this(hostProvider, sessionTimeout, Long.MAX_VALUE, clientConfig, defaultWatcher, clientCnxnSocket, sessionId, sessionPasswd, canBeReadOnly);
+    }
+
+    /**
+     * Creates a connection object. The actual network connect doesn't get
+     * established until needed. The start() instance method must be called
+     * after construction.
+     *
+     * @param hostProvider the list of ZooKeeper servers to connect to
+     * @param sessionTimeout the timeout for connections.
+     * @param newSessionTimeout the timeout before giving up brand-new session establishment.
+     * @param clientConfig the client configuration.
+     * @param defaultWatcher default watcher for this connection
+     * @param clientCnxnSocket the socket implementation used (e.g. NIO/Netty)
+     * @param sessionId session id if re-establishing session
+     * @param sessionPasswd session passwd if re-establishing session
+     * @param canBeReadOnly whether the connection is allowed to go to read-only mode in case of partitioning
+     * @throws IOException in cases of broken network
+     */
+    public ClientCnxn(
+            HostProvider hostProvider,
+            int sessionTimeout,
+            long newSessionTimeout,
+            ZKClientConfig clientConfig,
+            Watcher defaultWatcher,
+            ClientCnxnSocket clientCnxnSocket,
+            long sessionId,
+            byte[] sessionPasswd,
+            boolean canBeReadOnly
+    ) throws IOException {
         this.hostProvider = hostProvider;
         this.sessionTimeout = sessionTimeout;
         this.clientConfig = clientConfig;
@@ -413,6 +445,7 @@ public class ClientCnxn {
         this.connectTimeout = sessionTimeout / hostProvider.size();
         this.readTimeout = sessionTimeout * 2 / 3;
         this.expirationTimeout = sessionTimeout * 4 / 3;
+        this.newSessionTimeout = newSessionTimeout == 0 ? expirationTimeout : newSessionTimeout;
 
         this.sendThread = new SendThread(clientCnxnSocket);
         this.eventThread = new EventThread();
@@ -1192,7 +1225,12 @@ public class ClientCnxn {
                         to = connectTimeout - clientCnxnSocket.getIdleSend();
                     }
 
-                    int expiration = sessionId == 0 ? Integer.MAX_VALUE : expirationTimeout - clientCnxnSocket.getIdleRecv();
+                    long expiration;
+                    if (sessionId == 0) {
+                        expiration = newSessionTimeout - clientCnxnSocket.getIdleRecv();
+                    } else {
+                        expiration = expirationTimeout - clientCnxnSocket.getIdleRecv();
+                    }
                     if (expiration <= 0) {
                         String warnInfo = String.format(
                             "Client session timed out, have not heard from server in %dms for session id 0x%s",
@@ -1289,6 +1327,17 @@ public class ClientCnxn {
                 "SendThread exited loop for session: 0x" + Long.toHexString(getSessionId()));
         }
 
+        private void abortConnection() {
+            try {
+                clientCnxnSocket.testableCloseSocket();
+            } catch (IOException e) {
+                LOG.debug("Fail to close ongoing socket", e);
+            }
+        }
+
+        /**
+         * This is not thread-safe and should only be called inside {@link SendThread}.
+         */
         private void cleanAndNotifyState() {
             cleanup();
             if (state.isAlive()) {
@@ -1531,7 +1580,7 @@ public class ClientCnxn {
             }
         }
         if (r.getErr() == Code.REQUESTTIMEOUT.intValue()) {
-            sendThread.cleanAndNotifyState();
+            sendThread.abortConnection();
         }
         return r;
     }

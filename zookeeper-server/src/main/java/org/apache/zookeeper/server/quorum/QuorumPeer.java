@@ -57,6 +57,7 @@ import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
@@ -72,7 +73,6 @@ import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.admin.AdminServerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthServer;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
@@ -1705,10 +1705,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.interrupt();
             getElectionAlg().shutdown();
         }
-        try {
-            zkDb.close();
-        } catch (IOException ie) {
-            LOG.warn("Error closing logs ", ie);
+        if (zkDb != null) {
+            try {
+                zkDb.close();
+            } catch (IOException ie) {
+                LOG.warn("Error closing logs ", ie);
+            }
         }
     }
 

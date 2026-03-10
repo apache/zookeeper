@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map.Entry;
 import java.util.Properties;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 public class ConfigUtils {
 
