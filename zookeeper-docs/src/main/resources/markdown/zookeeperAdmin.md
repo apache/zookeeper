@@ -2188,6 +2188,18 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 
 #### AdminServer configuration
 
+**New in 3.10.0:** [AdminServer](#sc_adminserver) will use the following existing properties:
+
+* *ssl.quorum.ciphersuites* :
+  (Java system property: **zookeeper.ssl.quorum.ciphersuites**)
+  The enabled cipher suites to be used in TLS negotiation for AdminServer.
+  Default: Jetty default.
+
+* *ssl.quorum.enabledProtocols* :
+  (Java system property: **zookeeper.ssl.quorum.enabledProtocols**)
+  The enabled protocols to be used in TLS negotiation for AdminServer.
+  Default: Jetty default.
+
 **New in 3.9.0:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
 
