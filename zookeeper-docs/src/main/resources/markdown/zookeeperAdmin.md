@@ -2296,7 +2296,17 @@ options are used to configure the [AdminServer](#sc_adminserver).
    **New in 3.7.1:**
    The timeout in ms for Prometheus worker threads shutdown.
    Default value is 1000ms.
-   
+
+* *metricsProvider.ssl.ciphersuites* :
+   **New in 3.10.0:**
+   The enabled cipher suites to be used in TLS negotiation for PrometheusMetricsProvider.
+   Default value is Jetty default.
+
+* *metricsProvider.ssl.enabledProtocols* :
+   **New in 3.10.0:**
+   The enabled protocols to be used in TLS negotiation for PrometheusMetricsProvider.
+   Default value is Jetty default.
+
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework
