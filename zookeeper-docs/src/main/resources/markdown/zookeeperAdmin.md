@@ -2686,6 +2686,27 @@ ssl.quorum.trustStore.password=password
 2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
 ```
 
+###### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
+
+From 3.10.0 AdminServer uses the following properties:
+
+* **ssl.quorum.enabledProtocols** to specify the enabled protocols,
+* **ssl.quorum.ciphersuites** to specify the enabled cipher suites.
+
+Add the following configuration settings to the `zoo.cfg` config file:
+
+```
+ssl.quorum.enabledProtocols=TLSv1.2,TLSv1.3
+ssl.quorum.ciphersuites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+```
+
+Verify that the following entries in the logs can be seen:
+
+```
+2026-03-11 11:38:01,102 [myid:] - INFO  [main:o.a.z.s.a.JettyAdminServer@159] - Setting enabled protocols: 'TLSv1.2,TLSv1.3'
+2026-03-11 11:38:01,102 [myid:] - INFO  [main:o.a.z.s.a.JettyAdminServer@166] - Setting enabled cipherSuites: 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
+```
+
 Available commands include:
 
 * *connection_stat_reset/crst*:
