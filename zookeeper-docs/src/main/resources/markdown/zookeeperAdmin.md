@@ -2277,7 +2277,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
     Prometheus.io exporter will start a Jetty server and bind to this port.
     Prometheus end point will be `http://hostname:httpPort/metrics`.
     If omitted no HTTP port will be opened.
-  * Note: Either HTTP or HTTPS port has to be specified or both.
+    * Note: Either HTTP or HTTPS port has to be specified or both.
 
 * *metricsProvider.httpsPort* :
    Prometheus.io exporter will start a Jetty server and bind to this port.
