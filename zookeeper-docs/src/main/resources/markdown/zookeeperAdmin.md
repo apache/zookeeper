@@ -2323,6 +2323,16 @@ options are used to configure the [AdminServer](#sc_adminserver).
    Specifies the file format of the PrometheusMetricsProvider truststore. Values: JKS, PEM, PKCS12 or null (detect by filename).
    Default: null.
 
+* *metricsProvider.ssl.need.client.auth*:
+   Specifies options to authenticate SSL connections from clients.
+   When set to true, PrometheusMetricsProvider will "require" client authentication.
+   Default: true
+
+* *metricsProvider.ssl.want.client.auth*:
+   Specifies options to authenticate SSL connections from clients.
+   When set to true, PrometheusMetricsProvider will "request" client authentication.
+   Default: true
+
 * *metricsProvider.ssl.ciphersuites* :
    **New in 3.10.0:**
    The enabled cipher suites to be used in TLS negotiation for PrometheusMetricsProvider.
