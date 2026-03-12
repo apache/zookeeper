@@ -242,13 +242,13 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         sslContextFactory.setWantClientAuth(this.wantClientAuth);
 
         if (enabledProtocols != null) {
-            LOG.info("Setting enabled protocols: '{}'", enabledProtocols);
+            LOG.debug("Setting enabled protocols: '{}'", enabledProtocols);
             String[] enabledProtocolsArray = enabledProtocols.split(",");
             sslContextFactory.setIncludeProtocols(enabledProtocolsArray);
         }
 
         if (cipherSuites != null) {
-            LOG.info("Setting enabled cipherSuites: '{}'", cipherSuites);
+            LOG.debug("Setting enabled cipherSuites: '{}'", cipherSuites);
             String[] cipherSuitesArray = cipherSuites.split(",");
             sslContextFactory.setIncludeCipherSuites(cipherSuitesArray);
         }
