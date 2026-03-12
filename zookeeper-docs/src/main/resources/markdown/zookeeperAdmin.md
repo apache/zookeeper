@@ -2688,7 +2688,7 @@ ssl.quorum.trustStore.password=password
 
 ###### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
 
-From 3.10.0 AdminServer uses the following properties:
+From 3.10.0 AdminServer uses the following already existing properties:
 
 * **ssl.quorum.enabledProtocols** to specify the enabled protocols,
 * **ssl.quorum.ciphersuites** to specify the enabled cipher suites.
@@ -2700,11 +2700,11 @@ ssl.quorum.enabledProtocols=TLSv1.2,TLSv1.3
 ssl.quorum.ciphersuites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 ```
 
-Verify that the following entries in the logs can be seen:
+To verify raise the log level of JettyAdminServer to DEBUG and check that the following entries can be seen in the logs:
 
 ```
-2026-03-11 11:38:01,102 [myid:] - INFO  [main:o.a.z.s.a.JettyAdminServer@159] - Setting enabled protocols: 'TLSv1.2,TLSv1.3'
-2026-03-11 11:38:01,102 [myid:] - INFO  [main:o.a.z.s.a.JettyAdminServer@166] - Setting enabled cipherSuites: 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
+2026-03-11 11:38:01,102 [myid:] - DEBUG  [main:o.a.z.s.a.JettyAdminServer@159] - Setting enabled protocols: 'TLSv1.2,TLSv1.3'
+2026-03-11 11:38:01,102 [myid:] - DEBUG  [main:o.a.z.s.a.JettyAdminServer@166] - Setting enabled cipherSuites: 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
 ```
 
 Available commands include:

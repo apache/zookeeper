@@ -156,14 +156,14 @@ public class JettyAdminServer implements AdminServer {
 
                 String enabledProtocols = System.getProperty(x509Util.getSslEnabledProtocolsProperty());
                 if (enabledProtocols != null) {
-                    LOG.info("Setting enabled protocols: '{}'", enabledProtocols);
+                    LOG.debug("Setting enabled protocols: '{}'", enabledProtocols);
                     String[] enabledProtocolsArray = enabledProtocols.split(",");
                     sslContextFactory.setIncludeProtocols(enabledProtocolsArray);
                 }
 
                 String sslCipherSuites = System.getProperty(x509Util.getSslCipherSuitesProperty());
                 if (sslCipherSuites != null) {
-                    LOG.info("Setting enabled cipherSuites: '{}'", sslCipherSuites);
+                    LOG.debug("Setting enabled cipherSuites: '{}'", sslCipherSuites);
                     String[] cipherSuitesArray = sslCipherSuites.split(",");
                     sslContextFactory.setIncludeCipherSuites(cipherSuitesArray);
                 }
