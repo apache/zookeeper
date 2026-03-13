@@ -2264,7 +2264,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.zkDb = database;
     }
 
-    protected ZKDatabase getZkDb() {
+    // @VisibleForTesting
+    public ZKDatabase getZkDb() {
         return zkDb;
     }
 
