@@ -92,9 +92,13 @@ public final class PemReader {
         keyStore.load(null, null);
 
         List<X509Certificate> certificateChain = readCertificateChain(certificateChainFile);
+        int i = 2;
         for (X509Certificate certificate : certificateChain) {
             X500Principal principal = certificate.getSubjectX500Principal();
-            keyStore.setCertificateEntry(principal.getName("RFC2253"), certificate);
+            // Append a suffix if the same alias (subject) already exists.
+            String subject = principal.getName("RFC2253");
+            String alias = subject + (keyStore.containsAlias(subject) ? "-" + i++ : "");
+            keyStore.setCertificateEntry(alias, certificate);
         }
         return keyStore;
     }
