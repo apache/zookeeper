@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import javax.management.JMException;
 import javax.security.auth.callback.CallbackHandler;
@@ -159,6 +160,56 @@ public abstract class ServerCnxnFactory {
     }
 
     public abstract void closeAll(ServerCnxn.DisconnectReason reason);
+
+    /**
+     * Attempts to shed approximately the specified percentage of connections.
+     *
+     * @param percentage [0-100] percentage of connections to shed
+     * @return actual number of connections successfully closed (may vary due to randomness)
+     * @throws IllegalArgumentException if percentage not in [0, 100]
+     */
+    public int shedConnections(final int percentage) {
+        if (percentage < 0 || percentage > 100) {
+            throw new IllegalArgumentException("percentage must be between 0 and 100, got: " + percentage);
+        }
+
+        final int totalConnections = cnxns.size();
+        if (percentage == 0 || totalConnections == 0) {
+            return 0;
+        }
+
+        int actualShedCount = 0;
+        // For 100%, close all connections deterministically
+        if (percentage == 100) {
+            for (final ServerCnxn cnxn : cnxns) {
+                try {
+                    cnxn.close(ServerCnxn.DisconnectReason.SHED_CONNECTIONS_COMMAND);
+                    actualShedCount++;
+                } catch (final Exception e) {
+                    LOG.warn("Failed to close connection for session 0x{}: {}",
+                            Long.toHexString(cnxn.getSessionId()), e.getMessage());
+                }
+            }
+        } else {
+            // For other percentages, use probabilistic approach
+            final ThreadLocalRandom random = ThreadLocalRandom.current();
+            final double probability = percentage / 100.0;
+
+            for (final ServerCnxn cnxn : cnxns) {
+                if (random.nextDouble() < probability) {
+                    try {
+                        cnxn.close(ServerCnxn.DisconnectReason.SHED_CONNECTIONS_COMMAND);
+                        actualShedCount++;
+                    } catch (final Exception e) {
+                        LOG.warn("Failed to close connection for session 0x{}: {}",
+                                Long.toHexString(cnxn.getSessionId()), e.getMessage());
+                    }
+                }
+            }
+        }
+        LOG.info("Shed {} out of {} connections ({}%)", actualShedCount, totalConnections, percentage);
+        return actualShedCount;
+    }
 
     public static ServerCnxnFactory createFactory() throws IOException {
         String serverCnxnFactoryName = System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);

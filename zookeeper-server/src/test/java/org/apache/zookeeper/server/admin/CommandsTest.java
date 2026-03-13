@@ -359,6 +359,16 @@ public class CommandsTest extends ClientBase {
         assertThat(response.toMap().containsKey("secure_connections"), is(true));
     }
 
+    @Test
+    public void testShedConnections() throws IOException, InterruptedException {
+        final Map<String, String> kwargs = new HashMap<>();
+        final InputStream inputStream = new ByteArrayInputStream("{\"percentage\": 25}".getBytes());
+        final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+        testCommand("shed_connections", kwargs, inputStream, authInfo, new HashMap<>(), HttpServletResponse.SC_OK,
+                new Field("percentage_requested", Integer.class),
+                new Field("connections_shed", Integer.class));
+    }
+
     private void testSnapshot(final boolean streaming) throws IOException, InterruptedException {
         System.setProperty(ADMIN_SNAPSHOT_ENABLED, "true");
         System.setProperty(ADMIN_RATE_LIMITER_INTERVAL, "0");
