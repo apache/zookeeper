@@ -188,11 +188,22 @@ RvClear(i) == receiveVotes'  = [receiveVotes  EXCEPT ![i] = [v \in Server |-> [v
 RvPut(i, id, mvote, mround, mstate) == receiveVotes' = CASE receiveVotes[i][id].round < mround -> [receiveVotes EXCEPT ![i][id].vote    = mvote,
                                                                                                                        ![i][id].round   = mround,
                                                                                                                        ![i][id].state   = mstate,
-                                                                                                                       ![i][id].version = 1]
+                                                                                                                       ![i][id].version = 1,
+                                                                                                                       ![i][i].vote    = currentVote'[i],
+                                                                                                                       ![i][i].round   = mround,
+                                                                                                                       ![i][i].state   = LOOKING,
+                                                                                                                       ![i][i].version = @ + 1]
                                                        []   receiveVotes[i][id].round = mround -> [receiveVotes EXCEPT ![i][id].vote    = mvote,
                                                                                                                        ![i][id].state   = mstate,
-                                                                                                                       ![i][id].version = @ + 1]
-                                                       []   receiveVotes[i][id].round > mround -> receiveVotes
+                                                                                                                       ![i][id].version = @ + 1,
+                                                                                                                       ![i][i].vote    = currentVote'[i],
+                                                                                                                       ![i][i].round   = mround,
+                                                                                                                       ![i][i].state   = LOOKING,
+                                                                                                                       ![i][i].version = @ + 1]
+                                                       []   receiveVotes[i][id].round > mround -> [receiveVotes EXCEPT ![i][i].vote    = currentVote'[i],
+                                                                                                                       ![i][i].round   = mround,
+                                                                                                                       ![i][i].state   = LOOKING,
+                                                                                                                       ![i][i].version = @ + 1]
 
 Put(i, id, rcvset, mvote, mround, mstate) == CASE rcvset[id].round < mround -> [rcvset EXCEPT ![id].vote    = mvote,
                                                                                               ![id].round   = mround,
@@ -203,11 +214,16 @@ Put(i, id, rcvset, mvote, mround, mstate) == CASE rcvset[id].round < mround -> [
                                                                                               ![id].version = @ + 1]
                                              []   rcvset[id].round > mround -> rcvset
 
-RvClearAndPut(i, id, vote, round) == receiveVotes' = LET oneVote == [vote    |-> vote, 
-                                                                     round   |-> round, 
-                                                                     state   |-> LOOKING,
-                                                                     version |-> 1]
-                                                     IN [receiveVotes EXCEPT ![i] = [v \in Server |-> IF v = id THEN oneVote
+RvClearAndPut(i, id, vote, round) == receiveVotes' = LET oneVote  == [vote    |-> vote,
+                                                                       round   |-> round,
+                                                                       state   |-> LOOKING,
+                                                                       version |-> 1]
+                                                          selfVote == [vote    |-> currentVote'[i],
+                                                                       round   |-> round,
+                                                                       state   |-> LOOKING,
+                                                                       version |-> 1]
+                                                     IN [receiveVotes EXCEPT ![i] = [v \in Server |-> IF v = i THEN selfVote
+                                                                                                                ELSE IF v = id THEN oneVote
                                                                                                                 ELSE [vote    |-> InitialVote,
                                                                                                                       round   |-> 0,
                                                                                                                       state   |-> LOOKING,
