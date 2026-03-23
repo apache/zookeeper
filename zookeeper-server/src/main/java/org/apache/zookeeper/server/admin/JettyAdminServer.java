@@ -154,6 +154,20 @@ public class JettyAdminServer implements AdminServer {
                 sslContextFactory.setTrustStorePassword(certAuthPassword);
                 sslContextFactory.setNeedClientAuth(needClientAuth);
 
+                String enabledProtocols = System.getProperty(x509Util.getSslEnabledProtocolsProperty());
+                if (enabledProtocols != null) {
+                    LOG.debug("Setting enabled protocols: '{}'", enabledProtocols);
+                    String[] enabledProtocolsArray = enabledProtocols.split(",");
+                    sslContextFactory.setIncludeProtocols(enabledProtocolsArray);
+                }
+
+                String sslCipherSuites = System.getProperty(x509Util.getSslCipherSuitesProperty());
+                if (sslCipherSuites != null) {
+                    LOG.debug("Setting enabled cipherSuites: '{}'", sslCipherSuites);
+                    String[] cipherSuitesArray = sslCipherSuites.split(",");
+                    sslContextFactory.setIncludeCipherSuites(cipherSuitesArray);
+                }
+
                 if (forceHttps) {
                     connector = new ServerConnector(server,
                             new SslConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
