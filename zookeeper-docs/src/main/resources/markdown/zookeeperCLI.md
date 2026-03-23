@@ -346,18 +346,11 @@ A switch to turn on/off whether printing watches or not.
 	printwatches is on
 ```
 
-## quit
-Quit the CLI windows.
+## quit (or exit)
+The `quit` or `exit` command can be used to quit the CLI windows.
 
 ```bash
 [zkshell: 1] quit
-```
-
-## exit
-Quit the CLI windows.
-
-```bash
-[zkshell: 1] exit
 ```
 
 ## reconfig
