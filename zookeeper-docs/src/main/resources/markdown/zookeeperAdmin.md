@@ -2167,7 +2167,7 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 
 #### AdminServer configuration
 
-**New in 3.10.0:** [AdminServer](#sc_adminserver) will use the following existing properties:
+**New in 3.9.6:** [AdminServer](#sc_adminserver) will use the following existing properties:
 
 * *ssl.quorum.ciphersuites* :
   (Java system property: **zookeeper.ssl.quorum.ciphersuites**)
@@ -2667,7 +2667,7 @@ ssl.quorum.trustStore.password=password
 
 ###### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
 
-From 3.10.0 AdminServer uses the following already existing properties:
+From 3.9.6 AdminServer uses the following already existing properties:
 
 * **ssl.quorum.enabledProtocols** to specify the enabled protocols,
 * **ssl.quorum.ciphersuites** to specify the enabled cipher suites.
