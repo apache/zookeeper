@@ -18,9 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.zookeeper.StatsTrack;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StatsTrackTest {
 
@@ -110,12 +111,12 @@ public class StatsTrackTest {
         quota.setCountHardLimit(4);
         quota.setBytes(9L);
         quota.setByteHardLimit(15L);
-        Assert.assertEquals("count=4,bytes=9=;byteHardLimit=15;countHardLimit=4", quota.toString());
+        assertEquals("count=4,bytes=9=;byteHardLimit=15;countHardLimit=4", quota.toString());
 
         OldStatsTrack ost = new OldStatsTrack(quota.toString());
-        Assert.assertTrue("bytes are set", ost.getBytes() == 9L);
-        Assert.assertTrue("num count is set", ost.getCount() == 4);
-        Assert.assertEquals("count=4,bytes=9", ost.toString());
+        assertTrue(ost.getBytes() == 9L, "bytes are set");
+        assertTrue(ost.getCount() == 4, "num count is set");
+        assertEquals("count=4,bytes=9", ost.toString());
     }
 
     @Test
@@ -123,13 +124,22 @@ public class StatsTrackTest {
         OldStatsTrack ost = new OldStatsTrack(null);
         ost.setCount(2);
         ost.setBytes(5);
-        Assert.assertEquals("count=2,bytes=5", ost.toString());
+        assertEquals("count=2,bytes=5", ost.toString());
 
         StatsTrack st = new StatsTrack(ost.toString());
-        Assert.assertEquals("count=2,bytes=5", st.toString());
-        Assert.assertEquals(5, st.getBytes());
-        Assert.assertEquals(2, st.getCount());
-        Assert.assertEquals(-1, st.getByteHardLimit());
-        Assert.assertEquals(-1, st.getCountHardLimit());
+        assertEquals("count=2,bytes=5", st.toString());
+        assertEquals(5, st.getBytes());
+        assertEquals(2, st.getCount());
+        assertEquals(-1, st.getByteHardLimit());
+        assertEquals(-1, st.getCountHardLimit());
+    }
+
+    @Test
+    public void testConstructorWithNullByteArray() {
+        StatsTrack st = new StatsTrack((byte[]) null);
+        assertEquals(-1, st.getCount());
+        assertEquals(-1L, st.getBytes());
+        assertEquals(-1, st.getCountHardLimit());
+        assertEquals(-1L, st.getByteHardLimit());
     }
 }
