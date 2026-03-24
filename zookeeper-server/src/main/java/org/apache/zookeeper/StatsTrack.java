@@ -54,7 +54,7 @@ public class StatsTrack {
      * @param stat the byte[] stat to be initialized with
      */
     public StatsTrack(byte[] stat) {
-        this(stat == null ? null: new String(stat, StandardCharsets.UTF_8));
+        this(stat == null ? null : new String(stat, StandardCharsets.UTF_8));
     }
 
     /**
