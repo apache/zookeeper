@@ -18,10 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
-import org.junit.jupiter.api.Test;
+import org.apache.zookeeper.server.DataTree;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class StatsTrackTest {
 
@@ -111,12 +112,12 @@ public class StatsTrackTest {
         quota.setCountHardLimit(4);
         quota.setBytes(9L);
         quota.setByteHardLimit(15L);
-        assertEquals("count=4,bytes=9=;byteHardLimit=15;countHardLimit=4", quota.toString());
+        Assert.assertEquals("count=4,bytes=9=;byteHardLimit=15;countHardLimit=4", quota.toString());
 
         OldStatsTrack ost = new OldStatsTrack(quota.toString());
-        assertTrue(ost.getBytes() == 9L, "bytes are set");
-        assertTrue(ost.getCount() == 4, "num count is set");
-        assertEquals("count=4,bytes=9", ost.toString());
+        Assert.assertTrue("bytes are set", ost.getBytes() == 9L);
+        Assert.assertTrue("num count is set", ost.getCount() == 4);
+        Assert.assertEquals("count=4,bytes=9", ost.toString());
     }
 
     @Test
@@ -124,22 +125,38 @@ public class StatsTrackTest {
         OldStatsTrack ost = new OldStatsTrack(null);
         ost.setCount(2);
         ost.setBytes(5);
-        assertEquals("count=2,bytes=5", ost.toString());
+        Assert.assertEquals("count=2,bytes=5", ost.toString());
 
         StatsTrack st = new StatsTrack(ost.toString());
-        assertEquals("count=2,bytes=5", st.toString());
-        assertEquals(5, st.getBytes());
-        assertEquals(2, st.getCount());
-        assertEquals(-1, st.getByteHardLimit());
-        assertEquals(-1, st.getCountHardLimit());
+        Assert.assertEquals("count=2,bytes=5", st.toString());
+        Assert.assertEquals(5, st.getBytes());
+        Assert.assertEquals(2, st.getCount());
+        Assert.assertEquals(-1, st.getByteHardLimit());
+        Assert.assertEquals(-1, st.getCountHardLimit());
     }
 
-    @Test
-    public void testConstructorWithNullByteArray() {
-        StatsTrack st = new StatsTrack((byte[]) null);
-        assertEquals(-1, st.getCount());
-        assertEquals(-1L, st.getBytes());
-        assertEquals(-1, st.getCountHardLimit());
-        assertEquals(-1L, st.getByteHardLimit());
+    @org.junit.jupiter.api.Test
+    public void testCreateNodeWhenQuotaStatDataIsNull() throws Exception {
+        final DataTree tree = new DataTree();
+        final String path = "/bug";
+        final String childPath = path + "/child";
+        final String quotaPath = Quotas.quotaPath(path);
+        final String limitPath = Quotas.limitPath(path);
+        final String statPath = Quotas.statPath(path);
+
+        tree.createNode(path, new byte[0], null, -1, tree.getNode("/").stat.getCversion() + 1, 1, 1);
+        tree.createNode(quotaPath, null, null, -1, 1, 1, 1);
+
+        StatsTrack limit = new StatsTrack();
+        limit.setCountHardLimit(10);
+        tree.createNode(limitPath, limit.getStatsBytes(), null, -1, 1, 1, 1);
+
+        tree.createNode(statPath, new StatsTrack().getStatsBytes(), null, -1, 1, 1, 1);
+        tree.setData(statPath, null, -1, 2, 2);
+
+        tree.createNode(childPath, new byte[] { 1 }, null, -1, tree.getNode(path).stat.getCversion() + 1, 3, 3);
+
+        Assert.assertNotNull(tree.getNode(childPath));
+        Assert.assertNotNull(tree.getNode(statPath).getData());
     }
 }
