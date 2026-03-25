@@ -2280,6 +2280,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
     * Note: Either HTTP or HTTPS port has to be specified or both.
 
 * *metricsProvider.httpsPort* :
+   **New in 3.10.0:**
    Prometheus.io exporter will start a Jetty server and bind to this port.
    Prometheus end point will be `https://hostname:httpsPort/metrics`.
    If omitted no HTTPS port will be opened.
@@ -2306,29 +2307,35 @@ options are used to configure the [AdminServer](#sc_adminserver).
    Default value is 1000ms.
 
 * *metricsProvider.ssl.keyStore.location* and *metricsProvider.ssl.keyStore.password*:
+   **New in 3.10.0:**
    Specifies the file path to a Java keystore containing the local
    credentials to be used for PrometheusMetricsProvider TLS connections and the
    password to unlock the file.
 
 *  *metricsProvider.ssl.keyStore.type*:
+   **New in 3.10.0:**
    Specifies the file format of the PrometheusMetricsProvider keystore. Values: JKS, PEM, PKCS12 or null (detect by filename).
    Default: null.
 
 * *metricsProvider.ssl.trustStore.location* and *metricsProvider.ssl.trustStore.password*:
+   **New in 3.10.0:**
    Specifies the file path to a Java truststore containing the remote
    credentials to be used for PrometheusMetricsProvider TLS connections and the
    password to unlock the file.
 
 * *metricsProvider.ssl.trustStore.type*:
+   **New in 3.10.0:**
    Specifies the file format of the PrometheusMetricsProvider truststore. Values: JKS, PEM, PKCS12 or null (detect by filename).
    Default: null.
 
 * *metricsProvider.ssl.need.client.auth*:
+   **New in 3.10.0:**
    Specifies options to authenticate SSL connections from clients.
    When set to true, PrometheusMetricsProvider will "require" client authentication.
    Default: true
 
 * *metricsProvider.ssl.want.client.auth*:
+   **New in 3.10.0:**
    Specifies options to authenticate SSL connections from clients.
    When set to true, PrometheusMetricsProvider will "request" client authentication.
    Default: true
