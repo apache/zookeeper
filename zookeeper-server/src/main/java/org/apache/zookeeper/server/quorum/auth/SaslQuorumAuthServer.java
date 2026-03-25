@@ -123,6 +123,16 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             } catch (IOException ioe) {
                 LOG.warn("Exception while sending failed status", ioe);
             }
+            // Try to re-login so that the next authentication attempt
+            // will use fresh credentials. This handles the case where the
+            // Kerberos TGT has expired and the Login refresh thread has
+            // exited, or credentials have otherwise become stale.
+            try {
+                serverLogin.forceReLogin();
+                LOG.info("Successfully re-logged in after server SASL authentication failure");
+            } catch (LoginException le) {
+                LOG.error("Failed to re-login after server SASL authentication failure", le);
+            }
             // If sasl is not required, when a server initializes a
             // connection it will try to log in, but it will also
             // accept connections that do not start with a sasl
