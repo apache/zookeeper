@@ -308,12 +308,13 @@ public class ZooKeeperMain {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
-            boolean jlinemissing = false;
+            boolean jlinemissing = true;
             // only use jline if it's in the classpath
             try {
                 Class<?> readerC = Class.forName("org.jline.reader.LineReader");
                 Class<?> completerC = Class.forName("org.apache.zookeeper.JLineZNodeCompleter");
 
+                jlinemissing = false;
                 System.out.println("JLine support is enabled");
 
                 Object completer = completerC.getConstructor(ZooKeeper.class).newInstance(zk);
@@ -332,7 +333,6 @@ public class ZooKeeperMain {
                 | InstantiationException e
             ) {
                 LOG.debug("Unable to start jline", e);
-                jlinemissing = true;
             }
 
             if (jlinemissing) {
