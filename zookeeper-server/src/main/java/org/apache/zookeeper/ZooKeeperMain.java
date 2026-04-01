@@ -332,7 +332,9 @@ public class ZooKeeperMain {
                 | IllegalAccessException
                 | InstantiationException e
             ) {
-                LOG.debug("Unable to start jline", e);
+                if (jlinemissing) {
+                    LOG.debug("Unable to start jline", e);
+                }
             }
 
             if (jlinemissing) {
