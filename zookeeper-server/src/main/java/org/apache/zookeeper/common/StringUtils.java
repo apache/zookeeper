@@ -92,4 +92,21 @@ public class StringUtils {
         return str == null || str.length() == 0;
     }
 
+    /**
+     * Sanitizes a string for safe inclusion in log messages by replacing
+     * newline ({@code \n}), carriage return ({@code \r}), and tab ({@code \t})
+     * characters with their printable escape sequences. This prevents
+     * log-injection attacks (CWE-117) where attacker-controlled input
+     * containing newlines could forge fake log entries.
+     *
+     * @param str the string to sanitize, may be null
+     * @return the sanitized string, or {@code null} if input is {@code null}
+     */
+    public static String sanitizeForLog(String str) {
+        if (str == null) {
+            return null;
+        }
+        return str.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
+    }
+
 }

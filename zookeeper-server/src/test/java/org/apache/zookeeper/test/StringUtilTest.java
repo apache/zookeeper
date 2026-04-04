@@ -69,4 +69,19 @@ public class StringUtilTest extends ZKTestCase {
             StringUtils.joinStrings(Arrays.asList("a", "B", null, "d"), ","));
     }
 
+    @Test
+    public void testSanitizeForLog() {
+        assertNull(StringUtils.sanitizeForLog(null));
+        assertEquals("normal-string", StringUtils.sanitizeForLog("normal-string"));
+        assertEquals("line1\\nline2", StringUtils.sanitizeForLog("line1\nline2"));
+        assertEquals("line1\\rline2", StringUtils.sanitizeForLog("line1\rline2"));
+        assertEquals("col1\\tcol2", StringUtils.sanitizeForLog("col1\tcol2"));
+        assertEquals("a\\r\\nb", StringUtils.sanitizeForLog("a\r\nb"));
+        // Verify a typical log-injection payload is neutralized
+        assertEquals(
+            "fake-cluster\\n2024-01-01 00:00:00 ERROR forged log line",
+            StringUtils.sanitizeForLog("fake-cluster\n2024-01-01 00:00:00 ERROR forged log line")
+        );
+    }
+
 }
