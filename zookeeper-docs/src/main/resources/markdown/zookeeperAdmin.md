@@ -2286,8 +2286,17 @@ options are used to configure the [AdminServer](#sc_adminserver).
     **New in 3.8.0:** Prometheus.io exporter will start a Jetty server and listen this address, default is "0.0.0.0"
   
 * *metricsProvider.httpPort* :
-    Prometheus.io exporter will start a Jetty server and bind to this port, it defaults to 7000.
-    Prometheus end point will be http://hostname:httPort/metrics.
+    Prometheus.io exporter will start a Jetty server and bind to this port.
+    Prometheus end point will be `http://hostname:httpPort/metrics`.
+    If omitted no HTTP port will be opened.
+    * Note: Either HTTP or HTTPS port has to be specified or both.
+
+* *metricsProvider.httpsPort* :
+   **New in 3.10.0:**
+   Prometheus.io exporter will start a Jetty server and bind to this port.
+   Prometheus end point will be `https://hostname:httpsPort/metrics`.
+   If omitted no HTTPS port will be opened.
+    * Note: Either HTTP or HTTPS port has to be specified or both.
 
 * *metricsProvider.exportJvmInfo* :
     If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
@@ -2308,7 +2317,51 @@ options are used to configure the [AdminServer](#sc_adminserver).
    **New in 3.7.1:**
    The timeout in ms for Prometheus worker threads shutdown.
    Default value is 1000ms.
-   
+
+* *metricsProvider.ssl.keyStore.location* and *metricsProvider.ssl.keyStore.password*:
+   **New in 3.10.0:**
+   Specifies the file path to a Java keystore containing the local
+   credentials to be used for PrometheusMetricsProvider TLS connections and the
+   password to unlock the file.
+
+*  *metricsProvider.ssl.keyStore.type*:
+   **New in 3.10.0:**
+   Specifies the file format of the PrometheusMetricsProvider keystore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+   Default: null.
+
+* *metricsProvider.ssl.trustStore.location* and *metricsProvider.ssl.trustStore.password*:
+   **New in 3.10.0:**
+   Specifies the file path to a Java truststore containing the remote
+   credentials to be used for PrometheusMetricsProvider TLS connections and the
+   password to unlock the file.
+
+* *metricsProvider.ssl.trustStore.type*:
+   **New in 3.10.0:**
+   Specifies the file format of the PrometheusMetricsProvider truststore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+   Default: null.
+
+* *metricsProvider.ssl.need.client.auth*:
+   **New in 3.10.0:**
+   Specifies options to authenticate SSL connections from clients.
+   When set to true, PrometheusMetricsProvider will "require" client authentication.
+   Default: true
+
+* *metricsProvider.ssl.want.client.auth*:
+   **New in 3.10.0:**
+   Specifies options to authenticate SSL connections from clients.
+   When set to true, PrometheusMetricsProvider will "request" client authentication.
+   Default: true
+
+* *metricsProvider.ssl.ciphersuites* :
+   **New in 3.10.0:**
+   The enabled cipher suites to be used in TLS negotiation for PrometheusMetricsProvider.
+   Default value is Jetty default.
+
+* *metricsProvider.ssl.enabledProtocols* :
+   **New in 3.10.0:**
+   The enabled protocols to be used in TLS negotiation for PrometheusMetricsProvider.
+   Default value is Jetty default.
+
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework

@@ -37,7 +37,6 @@ import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.GaugeSet;
 import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
@@ -83,8 +82,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private String trustStoreType;
     private boolean needClientAuth = true; // Secure default
     private boolean wantClientAuth = true; // Secure default
+    private String enabledProtocols;
+    private String cipherSuites;
 
     // Constants for configuration
+    public static final String HTTP_HOST = "httpHost";
+    public static final String HTTP_PORT = "httpPort";
+    public static final String EXPORT_JVM_INFO = "exportJvmInfo";
+    public static final String HTTPS_PORT = "httpsPort";
     public static final String NUM_WORKER_THREADS = "numWorkerThreads";
     public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
     public static final String SSL_KEYSTORE_PASSWORD = "ssl.keyStore.password";
@@ -94,6 +99,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public static final String SSL_TRUSTSTORE_TYPE = "ssl.trustStore.type";
     public static final String SSL_NEED_CLIENT_AUTH = "ssl.need.client.auth";
     public static final String SSL_WANT_CLIENT_AUTH = "ssl.want.client.auth";
+    public static final String SSL_ENABLED_PROTOCOLS = "ssl.enabledProtocols";
+    public static final String SSL_ENABLED_CIPHERS = "ssl.ciphersuites";
     public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
 
     /**
@@ -114,10 +121,10 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
         LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", configuration);
 
-        this.host = configuration.getProperty("httpHost", "0.0.0.0");
-        this.httpPort = Integer.parseInt(configuration.getProperty("httpPort", "-1"));
-        this.httpsPort = Integer.parseInt(configuration.getProperty("httpsPort", "-1"));
-        this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty("exportJvmInfo", "true"));
+        this.host = configuration.getProperty(HTTP_HOST, "0.0.0.0");
+        this.httpPort = Integer.parseInt(configuration.getProperty(HTTP_PORT, "-1"));
+        this.httpsPort = Integer.parseInt(configuration.getProperty(HTTPS_PORT, "-1"));
+        this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty(EXPORT_JVM_INFO, "true"));
         this.numWorkerThreads = Integer.parseInt(configuration.getProperty(NUM_WORKER_THREADS, "10"));
 
         // If httpsPort is specified, parse all SSL properties
@@ -130,6 +137,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE, "PKCS12");
             this.needClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_NEED_CLIENT_AUTH, "true"));
             this.wantClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_WANT_CLIENT_AUTH, "true"));
+            this.enabledProtocols = configuration.getProperty(SSL_ENABLED_PROTOCOLS);
+            this.cipherSuites = configuration.getProperty(SSL_ENABLED_CIPHERS);
         }
 
         // Validate that at least one port is configured.
@@ -231,6 +240,18 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         sslContextFactory.setNeedClientAuth(this.needClientAuth);
         sslContextFactory.setWantClientAuth(this.wantClientAuth);
+
+        if (enabledProtocols != null) {
+            LOG.debug("Setting enabled protocols: '{}'", enabledProtocols);
+            String[] enabledProtocolsArray = enabledProtocols.split(",");
+            sslContextFactory.setIncludeProtocols(enabledProtocolsArray);
+        }
+
+        if (cipherSuites != null) {
+            LOG.debug("Setting enabled cipherSuites: '{}'", cipherSuites);
+            String[] cipherSuitesArray = cipherSuites.split(",");
+            sslContextFactory.setIncludeCipherSuites(cipherSuitesArray);
+        }
 
         return sslContextFactory;
     }

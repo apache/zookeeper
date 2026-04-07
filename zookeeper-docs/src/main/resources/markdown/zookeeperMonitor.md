@@ -81,6 +81,24 @@ ZooKeeper also supports SSL for Prometheus metrics, which provides secure data t
   metricsProvider.httpPort=7000
   metricsProvider.httpsPort=4443
   ```
+
+#### Configure TLS protocols and cipher suites for SSL/TLS negotiation in Prometheus Metrics:
+
+It is also possible to restrict TLS versions and cipher suites for PrometheusMetricsProvider.
+Add the following configuration settings to the `zoo.cfg` config file:
+
+```
+metricsProvider.ssl.enabledProtocols=TLSv1.2,TLSv1.3
+metricsProvider.ssl.ciphersuites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+```
+
+To verify raise the log level of PrometheusMetricsProvider to DEBUG and check that the following entries can be seen in the logs:
+
+```
+2026-03-11 15:46:36,997 [myid:] - INFO  [main:o.a.z.m.p.PrometheusMetricsProvider@245] - Setting enabled protocols: 'TLSv1.2,TLSv1.3'
+2026-03-11 15:46:36,997 [myid:] - INFO  [main:o.a.z.m.p.PrometheusMetricsProvider@251] - Setting enabled cipherSuites: 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
+```
+
 ### Prometheus
 - Running a [Prometheus](https://prometheus.io/) monitoring service is the easiest way to ingest and record ZooKeeper's metrics.
 
