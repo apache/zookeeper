@@ -194,6 +194,12 @@
       <groupId>dnsjava</groupId>
       <artifactId>dnsjava</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.evosuite</groupId>
+      <artifactId>evosuite-standalone-runtime</artifactId>
+      <version>1.0.6</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -275,6 +281,59 @@
           </execution>
         </executions>
       </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.pitest</groupId>-->
+<!--        <artifactId>pitest-maven</artifactId>-->
+<!--        <version>1.19.4</version>-->
+
+<!--        <configuration>-->
+<!--          <targetClasses>-->
+<!--            <param>org.apache.zookeeper.server.*</param>-->
+<!--          </targetClasses>-->
+
+<!--          <targetTests>-->
+<!--            <param>org.apache.zookeeper.server.*Test</param>-->
+<!--          </targetTests>-->
+
+<!--          <outputFormats>-->
+<!--            <param>HTML</param>-->
+<!--          </outputFormats>-->
+
+<!--          <threads>2</threads>-->
+
+<!--          <mutators>-->
+<!--            <mutator>DEFAULTS</mutator>-->
+<!--          </mutators>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
+
+
+
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.19.4</version>
+
+        <dependencies>
+          <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-junit5-plugin</artifactId>
+            <version>1.2.1</version>
+          </dependency>
+        </dependencies>
+
+        <configuration>
+          <targetClasses>
+            <param>org.apache.zookeeper.server.*</param>
+          </targetClasses>
+
+          <!-- PROVA SENZA targetTests -->
+
+          <outputFormats>
+            <param>HTML</param>
+          </outputFormats>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -349,6 +408,16 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.evosuite.plugins</groupId>
+        <artifactId>evosuite-maven-plugin</artifactId>
+        <version>1.0.6</version>
+        <configuration>
+          <memoryInMB>2500</memoryInMB>
+          <numberOfCores>4</numberOfCores>
+          <timeInMinutesPerClass>2</timeInMinutesPerClass>
+        </configuration>
       </plugin>
      </plugins>
   </build>
