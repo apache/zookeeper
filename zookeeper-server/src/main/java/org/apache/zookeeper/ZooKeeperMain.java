@@ -77,12 +77,21 @@ public class ZooKeeperMain {
         return printWatches;
     }
 
+    private static final String CMD_CONNECT = "connect";
+    private static final String CMD_HISTORY = "history";
+    private static final String CMD_REDO = "redo";
+    private static final String CMD_QUIT = "quit";
+    private static final String CMD_EXIT = "exit";
+    private static final String CMD_PRINT_WATCHES = "printwatches";
+
+
     static {
-        commandMap.put("connect", "host:port");
-        commandMap.put("history", "");
-        commandMap.put("redo", "cmdno");
-        commandMap.put("printwatches", "on|off");
-        commandMap.put("quit", "");
+        commandMap.put(CMD_CONNECT, "host:port");
+        commandMap.put(CMD_HISTORY, "");
+        commandMap.put(CMD_REDO, "cmdno");
+        commandMap.put(CMD_PRINT_WATCHES, "on|off");
+        commandMap.put(CMD_QUIT, "");
+        commandMap.put(CMD_EXIT, "");
         Stream.of(CommandFactory.Command.values())
             .map(command -> CommandFactory.getInstance(command))
             // add all commands to commandMapCli and commandMap
@@ -411,34 +420,34 @@ public class ZooKeeperMain {
 
         LOG.debug("Processing {}", cmd);
 
-        if (cmd.equals("quit")) {
+        if (cmd.equals(CMD_QUIT) || cmd.equals(CMD_EXIT)) {
             zk.close();
             ServiceUtils.requestSystemExit(exitCode);
-        } else if (cmd.equals("redo") && args.length >= 2) {
+        } else if (cmd.equals(CMD_REDO) && args.length >= 2) {
             Integer i = Integer.decode(args[1]);
             if (commandCount <= i || i < 0) { // don't allow redoing this redo
                 throw new MalformedCommandException("Command index out of range");
             }
             cl.parseCommand(history.get(i));
-            if (cl.getCommand().equals("redo")) {
+            if (cl.getCommand().equals(CMD_REDO)) {
                 throw new MalformedCommandException("No redoing redos");
             }
             history.put(commandCount, history.get(i));
             processCmd(cl);
-        } else if (cmd.equals("history")) {
+        } else if (cmd.equals(CMD_HISTORY)) {
             for (int i = commandCount - 10; i <= commandCount; ++i) {
                 if (i < 0) {
                     continue;
                 }
                 System.out.println(i + " - " + history.get(i));
             }
-        } else if (cmd.equals("printwatches")) {
+        } else if (cmd.equals(CMD_PRINT_WATCHES)) {
             if (args.length == 1) {
                 System.out.println("printwatches is " + (printWatches ? "on" : "off"));
             } else {
                 printWatches = args[1].equals("on");
             }
-        } else if (cmd.equals("connect")) {
+        } else if (cmd.equals(CMD_CONNECT)) {
             if (args.length >= 2) {
                 connectToZK(args[1]);
             } else {

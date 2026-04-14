@@ -45,6 +45,7 @@ ZooKeeper -server host:port cmd args
 	delete [-v version] path
 	deleteall path
 	delquota [-n|-b|-N|-B] path
+	exit
 	get [-s] [-w] path
 	getAcl [-s] path
 	getAllChildrenNumber path
@@ -345,8 +346,8 @@ A switch to turn on/off whether printing watches or not.
 	printwatches is on
 ```
 
-## quit
-Quit the CLI windows.
+## quit (or exit)
+The `quit` or `exit` command can be used to quit the CLI windows.
 
 ```bash
 [zkshell: 1] quit
