@@ -1,0 +1,1148 @@
+body, p, td, table, tr, .bodytext, .stepfield {
+	font-family: Verdana, arial, sans-serif;
+	font-size: 14px;
+	line-height: 16px;
+	color: #000000;
+	font-weight: normal;
+}
+
+body {
+	margin: 5px;
+	padding: 8px;
+	text-align: left;
+    background-color: #ffffff;
+}
+
+.monospaceInput {
+    font:12px monospace
+}
+
+.wiki-content p, .commentblock p {
+    margin: 16px 0px 16px 0px;
+    padding: 0px;
+}
+
+.wiki-content-preview {
+    padding: 5px;
+    border-left: 1px solid #3c78b5;
+    border-right: 1px solid #3c78b5;
+}
+
+ul, ol {
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+pre {
+    padding: 0px;
+    margin-top: 5px;
+    margin-left: 15px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    text-align: left;
+}
+
+.helpheading {
+    font-weight: bold;
+    background-color: #D0D9BD;
+        border-bottom: 1px solid #3c78b5;
+        padding: 4px 4px 4px 4px;
+        margin: 0px;
+        margin-top: 10px;
+}
+.helpcontent {
+        padding: 4px 4px 20px 4px;
+    background-color: #f5f7f1;
+}
+
+.code {
+    border: 1px dashed #3c78b5;
+    padding: 5px;
+    font-size: 12px;
+    font-family: Courier;
+    margin: 10px;
+    line-height: 13px;
+}
+
+.focusedComment {
+    background: #ffffce;
+}
+
+.commentBox, .focusedComment {
+    padding: 10px;
+    margin: 5px 0 5px 0;
+    border: 1px #bbb solid;
+}
+
+.codeHeader {
+    background-color: #f0f0f0;
+    border-bottom: 1px dashed #3c78b5;
+    padding: 3px;
+    text-align: center;
+}
+
+.codeContent {
+    text-align: left;
+    background-color: #f0f0f0;
+    padding: 3px;
+}
+
+.preformatted {
+ 	border: 1px dashed #3c78b5;
+    font-size: 11px;
+	font-family: Courier;
+    margin: 10px;
+	line-height: 13px;
+}
+
+.preformattedHeader {
+    background-color: #f0f0f0;
+ 	border-bottom: 1px dashed #3c78b5;
+    padding: 3px;
+	text-align: center;
+}
+
+.preformattedContent {
+    background-color: #f0f0f0;
+    padding: 3px;
+}
+
+.panel {
+ 	border: 1px dashed #3c78b5;
+    margin: 10px;
+    margin-top: 0px;
+}
+
+.panelHeader {
+    background-color: #f0f0f0;
+ 	border-bottom: 1px dashed #3c78b5;
+    padding: 3px;
+	text-align: center;
+}
+
+.panelContent {
+    background-color: #f0f0f0;
+    padding: 5px;
+}
+
+.anonymousAlert {
+    background-color: #f0f0f0;
+ 	border: 1px dashed red;
+    font-size: 11px;
+    padding: 10px 5px 10px 5px;
+    margin: 4px;
+	line-height: 13px;
+}
+
+.lockAlert {
+    background-color: #f0f0f0;
+    width: 50%;
+ 	border: 1px dashed red;
+    font-size: 11px;
+    padding: 10px 5px 10px 5px;
+    margin: 4px;
+	line-height: 13px;
+}
+
+
+.code-keyword {
+  color: #000091;
+  background-color: inherit;
+}
+
+.code-object {
+  color: #910091;
+  background-color: inherit;
+}
+
+.code-quote {
+  color: #009100;
+  background-color: inherit;
+}
+
+.code-comment {
+  color: #808080;
+  background-color: inherit;
+}
+
+
+.code-xml .code-keyword {
+  color: inherit;
+  font-weight: bold;
+}
+
+.code-tag {
+  color: #000091;
+  background-color: inherit;
+}
+
+.breadcrumbs {
+    background-color: #f0f0f0;
+ 	border-color: #3c78b5;
+	border-width: 1px 0px 1px 0px;
+	border-style: solid;
+    font-size: 11px;
+    padding: 3px 0px 3px 0px;
+}
+
+.navmenu {
+    border: 1px solid #ccc;
+}
+
+.menuheading {
+    font-weight: bold;
+    background-color: #f0f0f0;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 4px 4px 2px 4px;
+}
+
+.menuitems {
+	padding: 4px 4px 20px 4px;
+}
+
+.rightpanel {
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+#helpheading {
+    text-align: left;
+    font-weight: bold;
+    background-color: #D0D9BD;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 4px 4px 4px 4px;
+	margin: 0px;
+}
+#helpcontent {
+	padding: 4px 4px 20px 4px;
+    background-color: #f5f7f1;
+}
+.helptab-unselected {
+    font-weight: bold;
+	padding: 5px;
+    background-color: #f5f7f1;
+}
+.helptab-selected {
+    font-weight: bold;
+    background-color: #D0D9BD;
+	padding: 5px;
+}
+.helptabs {
+    margin: 0px;
+    background-color: #f5f7f1;
+	padding: 5px;
+}
+.infopanel-heading {
+    font-weight: bold;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 4px 0px 2px 0px;
+}
+
+#Content {
+	text-align: left;
+	background-color: #fff;
+	padding: 0px;
+	margin: 0px;
+}
+
+.pagebody {
+}
+
+.pageheader {
+	padding: 5px 5px 5px 0px;
+ 	border-bottom: 1px solid #3c78b5;
+}
+
+.pagetitle {
+	font-size: 22px;
+	font-weight: bold;
+	font-family: Arial, sans-serif;
+	color: #003366;
+}
+
+.steptitle {
+	font-size: 18px;
+	font-weight: bold;
+	font-family: Arial, sans-serif;
+	color: #003366;
+	margin-bottom: 7px;
+}
+
+.formtitle {
+	font-size: 12px;
+	font-weight: bold;
+	font-family: Arial, sans-serif;
+	color: #003366;
+}
+
+.stepdesc {
+    font-family: Verdana, arial, sans-serif;
+	font-size: 11px;
+	line-height: 16px;
+	font-weight: normal;
+    color: #666666;
+    margin-top: 7px;
+    margin-bottom: 7px;
+}
+
+.steplabel {
+    font-weight: bold;
+    margin-right: 4px;
+    color: black;
+    float: left;
+    width: 15%;
+    text-align: right;
+}
+
+.stepfield {
+    background: #f0f0f0;
+    padding: 5px;
+}
+
+.tabletitle {
+	font-size: 14px;
+	font-weight: bold;
+	font-family: Arial, sans-serif;
+    padding: 3px 0px 2px 0px;
+    margin: 8px 4px 2px 0px;
+	color: #003366;
+	border-bottom: 2px solid #3c78b5;
+}
+.pagesubheading {
+    color: #666666;
+    font-size: 10px;
+    padding: 0px 0px 5px 0px;
+}
+
+HR {
+	color: 3c78b5;
+	height: 1;
+}
+
+A:link, A:visited, A:active, A:hover {
+	color: #003366;
+}
+
+h1 A:link, h1 A:visited, h1 A:active {
+	text-decoration: none;
+}
+
+h1 A:hover {
+    border-bottom: 1px dotted #003366;
+}
+
+.wiki-content > :first-child, .commentblock > :first-child {
+    margin-top: 3px;
+}
+
+.logocell {
+    padding: 10px;
+}
+
+input {
+	font-family: verdana, geneva, arial, sans-serif;
+	font-size: 11px;
+	color: #000000;
+}
+
+textarea, textarea.editor {
+	font-family: verdana, geneva, arial, sans-serif;
+	font-size: 11px;
+	color: #333333;
+}
+
+.spacenametitle {
+	font: 21px/31px Impact, Arial, Helvetica;
+    font-weight: 100;
+    color: #999999;
+	margin: 0px;
+}
+.spacenametitle img {
+  margin: 0 0 -4px 0;
+}
+.spacenametitle a {
+    text-decoration: none;
+    color: #999999;
+}
+.spacenametitle a:visited {
+    text-decoration: none;
+    color: #999999;
+}
+.spacenametitle-printable {
+	font: 20px/25px Impact, Arial, Helvetica;
+    font-weight: 100;
+    color: #999999;
+	margin: 0px;
+}
+.spacenametitle-printable a {
+    text-decoration: none;
+    color: #999999;
+}
+.spacenametitle-printable a:visited {
+    text-decoration: none;
+    color: #999999;
+}
+
+.blogHeading {
+    font-size: 20px;
+	line-height: normal;
+	font-weight: bold;
+	padding: 10px 0px 0px 0px;
+	margin: 10px 0px 0px 0px;
+}
+
+h1 {
+	font-size: 20px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #ffffff;
+	color: #003366;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 2px;
+	margin: 5px 0px 4px 0px;
+}
+
+h2 {
+	font-size: 18px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #ffffff;
+ 	border-bottom: 1px solid #3c78b5;
+	padding: 2px;
+	margin: 27px 0px 4px 0px;
+}
+
+h3 {
+	font-size: 14px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #ffffff;
+	padding: 2px;
+	margin: 21px 0px 4px 0px;
+}
+
+h4 {
+	font-size: 12px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #ffffff;
+	padding: 2px;
+	margin: 18px 0px 4px 0px;
+}
+
+h4.search {
+	font-size: 12px;
+	line-height: normal;
+	font-weight: normal;
+	background-color: #ffffff;
+	padding: 4px;
+	margin: 18px 0px 4px 0px;
+}
+
+h5 {
+	font-size: 10px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #ffffff;
+	padding: 2px;
+	margin: 14px 0px 4px 0px;
+}
+
+h6 {
+	font-size: 8px;
+	line-height: normal;
+	font-weight: bold;
+	background-color: #ffffff;
+	padding: 2px;
+	margin: 14px 0px 4px 0px;
+}
+
+.smallfont {
+    font-size: 10px;
+}
+.descfont {
+    font-size: 10px;
+    color: #666666;
+}
+.smallerfont {
+    font-size: 9px;
+}
+.smalltext {
+    color: #666666;
+    font-size: 10px;
+}
+.smalltext a {
+    color: #666666;
+}
+.smalltext-blue {
+    color: #3c78b5;
+    font-size: 10px;
+}
+.surtitle {
+    margin-left: 1px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #666666;
+}
+
+/* css hack found here:  http://www.fo3nix.pwp.blueyonder.co.uk/tutorials/css/hacks/ */
+.navItemOver { font-size: 10px; font-weight: bold; color: #ffffff; background-color: #003366; cursor: hand; voice-family: '\'}\''; voice-family:inherit; cursor: pointer;}
+.navItemOver a { color: #ffffff; background-color:#003366; text-decoration: none; }
+.navItemOver a:visited { color: #ffffff; background-color:#003366; text-decoration: none; }
+.navItemOver a:hover { color: #ffffff; background-color:#003366; text-decoration: none; }
+.navItem { font-size: 10px; font-weight: bold; color: #ffffff; background-color: #3c78b5; }
+.navItem a { color: #ffffff; text-decoration: none; }
+.navItem a:hover { color: #ffffff; text-decoration: none; }
+.navItem a:visited { color: #ffffff; text-decoration: none; }
+
+div.padded { padding: 4px; }
+h3.macrolibrariestitle {
+    margin: 0px 0px 0px 0px; 
+}
+
+div.centered { text-align: center; margin: 10px; }
+div.centered table {margin: 0px auto; text-align: left; }
+
+.tableview table {
+    margin: 0;
+}
+
+.tableview th {
+    text-align: left;
+    color: #003366;
+    font-size: 12px;
+    padding: 5px 0px 0px 5px;
+    border-bottom: 2px solid #3c78b5;
+}
+.tableview td {
+    text-align: left;
+    border-color: #ccc;
+    border-width: 0px 0px 1px 0px;
+    border-style: solid;
+    margin: 0;
+    padding: 4px 10px 4px 5px;
+}
+
+.grid {
+    margin: 2px 0px 5px 0px;
+    border-collapse: collapse;
+}
+.grid th  {
+    border: 1px solid #ccc;
+    padding: 2px 4px 2px 4px;
+    background: #ffffff;
+    text-align: center;
+}
+.grid td  {
+    border: 1px solid #ccc;
+    padding: 3px 4px 3px 4px;
+}
+.gridHover {
+	background-color: #f9f9f9;
+}
+
+td.infocell {
+    background-color: #ffffff;
+}
+.label {
+	font-weight: bold;
+	color: #003366;
+}
+.error {
+	background-color: #fcc;
+}
+.errorBox {
+	background-color: #fcc;
+    border: 1px solid #c00;
+    padding: 5px;
+    margin: 5px;
+}
+.errorMessage {
+	color: #c00;
+}
+
+blockquote {
+	padding-left: 10px;
+	padding-right: 10px;
+	margin-left: 5px;
+	margin-right: 0px;
+	border-left: 1px solid #3c78b5;
+}
+
+table.confluenceTable
+{
+    margin: 5px;
+    border-collapse: collapse;
+}
+
+td.confluenceTd
+{
+    border: 1px solid #ccc;
+    padding: 3px 4px 3px 4px;
+}
+
+th.confluenceTh
+{
+    border: 1px solid #ccc;
+    padding: 3px 4px 3px 4px;
+    background: #ffffff;
+    text-align: center;
+}
+
+DIV.small {
+	font-size: 9px;
+}
+
+H1.pagename {
+	margin-top: 0px;
+}
+
+IMG.inline  {}
+
+.loginform {
+    margin: 5px;
+    border: 1px solid #ccc;
+}
+
+/* The text how the "This is a preview" comment should be shown. */
+.previewnote { text-align: center;
+                font-size: 11px;
+                    color: red; }
+
+/* How the preview content should be shown */
+.previewcontent { background: #E0E0E0; }
+
+/* How the system messages should be shown (DisplayMessage.jsp) */
+.messagecontent { background: #E0E0E0; }
+
+/* How the "This page has been modified..." -comment should be shown. */
+.conflictnote { }
+
+.createlink {
+    color: maroon;
+}
+a.createlink {
+    color: maroon;
+}
+.templateparameter {
+    font-size: 9px;
+    color: darkblue;
+}
+
+.diffadded {
+    background: #ddffdd;
+    padding: 1px 1px 1px 4px;
+	border-left: 4px solid darkgreen;
+}
+.diffdeleted {
+    color: #999;
+    background: #ffdddd;
+    padding: 1px 1px 1px 4px;
+	border-left: 4px solid darkred;
+}
+.diffnochange {
+    padding: 1px 1px 1px 4px;
+	border-left: 4px solid lightgrey;
+}
+.differror {
+    background: brown;
+}
+.diff {
+    font-family: lucida console, courier new, fixed-width;
+	font-size: 12px;
+	line-height: 14px;
+}
+.diffaddedchars {
+    background-color:#99ff99;
+    font-weight:bolder;
+}
+.diffremovedchars {
+    background-color:#ff9999;
+    text-decoration: line-through;
+    font-weight:bolder;
+}
+
+.greybackground {
+    background: #ffffff
+}
+
+.greybox {
+ 	border: 1px solid #ddd;
+	padding: 3px;
+	margin: 1px 1px 10px 1px;
+}
+
+.greyboxfilled {
+ 	border: 1px solid #ddd;
+	padding: 5px;
+	margin: 10px 1px 10px 1px;
+	background: #ffffff;
+}
+
+.previewBoxTop {
+	background-color: #ffffff;
+    border-width: 1px 1px 0px 1px;
+    border-style: solid;
+    border-color: #3c78b5;
+    padding: 5px;
+    margin: 5px 0px 0px 0px;
+    text-align: center;
+}
+.previewContent {
+    background-color: #fff;
+ 	border-color: #3c78b5;
+	border-width: 0px 1px 0px 1px;
+	border-style: solid;
+	padding: 10px;
+	margin: 0px;
+}
+.previewBoxBottom {
+	background-color: #ffffff;
+    border-width: 0px 1px 1px 1px;
+    border-style: solid;
+    border-color: #3c78b5;
+    padding: 5px;
+    margin: 0px 0px 5px 0px;
+    text-align: center;
+}
+
+.functionbox {
+    background-color: #ffffff;
+ 	border: 1px solid #3c78b5;
+	padding: 3px;
+	margin: 1px 1px 10px 1px;
+}
+
+.functionbox-greyborder {
+    background-color: #ffffff;
+ 	border: 1px solid #ddd;
+	padding: 3px;
+	margin: 1px 1px 10px 1px;
+}
+
+.search-highlight {
+    background-color: #ffffcc;
+}
+
+/* normal (white) background */
+.rowNormal {
+    background-color: #ffffff;
+ }
+
+/* alternate (pale yellow) background */
+.rowAlternate {
+    background-color: #f7f7f7;
+}
+
+/* used in the list attachments table */
+.rowAlternateNoBottomColor {
+    background-color: #f7f7f7;
+}
+
+.rowAlternateNoBottomNoColor {
+}
+
+.rowAlternateNoBottomColor td {
+    border-bottom: 0px;
+}
+
+.rowAlternateNoBottomNoColor td {
+    border-bottom: 0px;
+}
+
+/* row highlight (grey) background */
+.rowHighlight {
+    background-color: #ffffff;
+
+}
+
+TD.greenbar {FONT-SIZE: 2px; BACKGROUND: #00df00; BORDER: 1px solid #9c9c9c; PADDING: 0px; }
+TD.redbar {FONT-SIZE: 2px; BACKGROUND: #df0000; BORDER: 1px solid #9c9c9c; PADDING: 0px; }
+TD.darkredbar {FONT-SIZE: 2px; BACKGROUND: #af0000; BORDER: 1px solid #9c9c9c; PADDING: 0px; }
+
+TR.testpassed {FONT-SIZE: 2px; BACKGROUND: #ddffdd; PADDING: 0px; }
+TR.testfailed {FONT-SIZE: 2px; BACKGROUND: #ffdddd; PADDING: 0px; }
+
+.toolbar  {
+    margin: 0px;
+    border-collapse: collapse;
+}
+
+.toolbar td  {
+    border: 1px solid #ccc;
+    padding: 2px 2px 2px 2px;
+    color: #ccc;
+}
+
+td.noformatting {
+    border-width: 0px;
+    border-style: none;
+    text-align: center;
+	padding: 0px;
+}
+
+.commentblock {
+    margin: 12px 0 12px 0;
+}
+
+/*
+ * Divs displaying the license information, if necessary.
+ */
+.license-eval, .license-none, .license-nonprofit {
+    border-top: 1px solid #bbbbbb;
+    text-align: center;
+    font-size: 10px;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+.license-eval, .license-none {
+    background-color: #ffcccc;
+}
+
+.license-eval b, .license-none b {
+    color: #990000
+}
+
+.license-nonprofit {
+    background-color: #ffffff;
+}
+
+/*
+ * The shadow at the bottom of the page between the main content and the
+ * "powered by" section.
+ */
+/*
+.bottomshadow {
+    height: 12px;
+    background-image: url("/wiki/images/border/border_bottom.gif");
+    background-repeat: repeat-x;
+}
+*/
+
+/*
+ * Styling of the operations box
+ */
+.navmenu .operations li, .navmenu .operations ul {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.navmenu .operations ul {
+    margin-bottom: 9px;
+}
+
+.navmenu .label {
+    font-weight: inherit;
+}
+
+/*
+ * Styling of ops as a toolbar
+ */
+.toolbar div {
+    display: none;
+}
+
+.toolbar .label {
+    display: none;
+}
+
+.toolbar .operations {
+    display: block;
+}
+
+.toolbar .operations ul {
+    display: inline;
+    list-style: none;
+    margin-left: 10px;
+    padding-left: 0;
+}
+
+.toolbar .operations li {
+    list-style: none;
+    display: inline;
+}
+
+/* space ops navigational tabs */
+#spaceops_tab {
+padding: 3px 0px 3px 8px;
+margin-left: 0;
+border-bottom: 1px solid #3c78b5;
+font: bold 11px Verdana, sans-serif;
+}
+
+#spaceops_tab li {
+list-style: none;
+margin: 0;
+display: inline;
+}
+
+#spaceops_tab li a {
+padding: 3px 0.5em;
+margin-left: 3px;
+border: 1px solid #3c78b5;
+border-bottom: none;
+background: #3c78b5;
+text-decoration: none;
+}
+
+#spaceops_tab li a:link { color: white; }
+#spaceops_tab li a:visited { color: white; }
+
+#spaceops_tab li a:hover {
+color: #ffffff;
+background: #003366;
+border-color: #003366;
+}
+
+#spaceops_tab li a#current {
+background: #ffffff;
+border-bottom: 1px solid #ffffff;
+color: black;
+}
+
+/* list page navigational tabs */
+#foldertab {
+padding: 3px 0px 3px 8px;
+margin-left: 0;
+border-bottom: 1px solid #3c78b5;
+font: bold 11px Verdana, sans-serif;
+}
+
+#foldertab li {
+list-style: none;
+margin: 0;
+display: inline;
+}
+
+#foldertab li a {
+padding: 3px 0.5em;
+margin-left: 3px;
+border: 1px solid #3c78b5;
+border-bottom: none;
+background: #3c78b5;
+text-decoration: none;
+}
+
+#foldertab li a:link { color: white; }
+#foldertab li a:visited { color: white; }
+
+#foldertab li a:hover {
+color: #ffffff;
+background: #003366;
+border-color: #003366;
+}
+
+#foldertab li a#current {
+background: white;
+border-bottom: 1px solid white;
+color: black;
+}
+
+/* alphabet list */
+ul#squaretab {
+margin-left: 0;
+padding-left: 0;
+white-space: nowrap;
+font: bold 8px Verdana, sans-serif;
+}
+
+#squaretab li {
+display: inline;
+list-style-type: none;
+}
+
+#squaretab a {
+padding: 2px 6px;
+border: 1px solid #3c78b5;
+}
+
+#squaretab a:link, #squaretab a:visited {
+color: #fff;
+background-color: #3c78b5;
+text-decoration: none;
+}
+
+#squaretab a:hover {
+color: #ffffff;
+background-color: #003366;
+border-color: #003366;
+text-decoration: none;
+}
+
+#squaretab li a#current {
+background: white;
+color: black;
+}
+
+.blogcalendar * {
+    font-family:verdana, arial, sans-serif;
+    font-size:x-small;
+    font-weight:normal;
+    line-height:140%;
+    padding:2px;
+}
+
+
+table.blogcalendar {
+    border: 1px solid #3c78b5;
+}
+
+.blogcalendar th.calendarhead, a.calendarhead {
+    font-size:x-small;
+    font-weight:bold;
+    padding:2px;
+    text-transform:uppercase;
+    background-color: #3c78b5;
+    color: #ffffff;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+}
+
+.blogcalendar th {
+    font-size:x-small;
+    font-weight:bold;
+    padding:2px;
+    background-color:#ffffff;
+}
+
+.blogcalendar td {
+    font-size:x-small;
+    font-weight:normal;
+}
+
+.searchGroup { padding: 0 0 10px 0; background: #ffffff; }
+.searchGroupHeading { font-size: 10px; font-weight: bold; color: #ffffff; background-color: #3c78b5; padding: 2px 4px 1px 4px; }
+.searchItem { padding: 1px 4px 1px 4px; }
+.searchItemSelected { padding: 1px 4px 1px 4px; font-weight: bold; background: #ddd; }
+
+/* permissions page styles */
+.permissionHeading {
+    border-bottom: #bbb; border-width: 0 0 1px 0; border-style: solid; font-size: 16px; text-align: left;
+}
+.permissionTab {
+    border-width: 0 0 0 1px; border-style: solid; background: #3c78b5; color: #ffffff; font-size: 10px;
+}
+.permissionSuperTab {
+    border-width: 0 0 0 1px; border-style: solid; background: #003366; color: #ffffff;
+}
+.permissionCell {
+    border-left: #bbb; border-width: 0 0 0 1px; border-style: solid;
+}
+
+/* warning panel */
+.warningPanel { background: #FFFFCE; border:#F0C000 1px solid; padding: 8px; margin: 10px; }
+/* alert panel */
+.alertPanel { background: #FFCCCC; border:#C00 1px solid; padding: 8px; margin: 10px; }
+
+/* side menu highlighting (e.g. space content screen) */
+.optionPadded { padding: 2px; }
+.optionSelected { background-color: #ffffcc; padding: 2px; border: 1px solid #ddd; margin: -1px; }
+.optionSelected a { font-weight: bold; text-decoration: none; color: black; }
+
+/* information macros */
+.noteMacro { border-style: solid; border-width: 1px; border-color: #F0C000; background-color: #FFFFCE; }
+.warningMacro { border-style: solid; border-width: 1px; border-color: #c00; background-color: #fcc; }
+.infoMacro { border-style: solid; border-width: 1px; border-color: #3c78b5; background-color: #D8E4F1; }
+.tipMacro { border-style: solid; border-width: 1px; border-color: #090; background-color: #dfd; }
+.informationMacroPadding { padding: 5px 0 0 5px; }
+
+table.infoMacro td, table.warningMacro td, table.tipMacro td, table.noteMacro td, table.sectionMacro td {
+    border: none;
+}
+
+.pagecontent
+{
+    padding: 10px;
+}
+
+/* styles for links in the top bar */
+.topBarDiv a:link {color: white;}
+.topBarDiv a:visited {color: white;}
+.topBarDiv a:active {color: white;}
+.topBarDiv a:hover {color: white;}
+.topBarDiv {color: white;}
+
+.topBar td {
+    background-color: #003366;
+}
+
+
+/* styles for extended operations */
+.greyLinks a:link {color: #666666;}
+.greyLinks a:visited {color: #666666;}
+.greyLinks a:active {color: #666666;}
+.greyLinks a:hover {color: #666666;}
+.greyLinks {color: #666666; display:block; padding: 10px}
+
+.logoSpaceLink a:link {color: #666666; text-decoration: none}
+.logoSpaceLink a:visited {color: #666666; text-decoration: none}
+.logoSpaceLink a:active {color: #666666; text-decoration: none}
+.logoSpaceLink a:hover {color: #003366; text-decoration: none}
+.logoSpaceLink {text-decoration: none}
+
+/* basic panel (basicpanel.vmd) style */
+.basicPanelContainer {border: 1px solid #3c78b5; margin-top: 2px; margin-bottom: 8px; width: 100%}
+.basicPanelTitle {padding: 5px; margin: 0px; background-color: #ffffff; color: black; font-weight: bold;}
+.basicPanelBody {padding: 5px; margin: 0px}
+
+.separatorLinks a:link {color: white}
+.separatorLinks a:visited {color: white}
+.separatorLinks a:active {color: white}
+
+.greynavbar {background-color: #ffffff; border-top: 1px solid #3c78b5; margin-top: 2px}
+
+div.headerField {
+    float: left;
+    width: auto;
+    height: 100%;
+}
+
+.headerFloat {
+    margin-left: auto;
+    width: 50%;
+}
+
+.headerFloatLeft {
+    float: left;
+    margin-right: 20px;
+    margin-bottom: 10px;
+}
+
+#headerRow {
+    padding: 10px;
+}
+
+div.license-personal {
+   background-color: #003366;
+   color: #ffffff;
+}
+
+div.license-personal a {
+   color: #ffffff;
+}
+
+.greyFormBox {
+    border: 1px solid #cccccc;
+    padding: 5px;
+}
+
+/* IE automatically adds a margin before and after form tags. Use this style to remove that */
+.marginlessForm {
+    margin: 0px;
+}
+
+.openPageHighlight {
+    background-color: #ffffcc;
+    padding: 2px;
+    border: 1px solid #ddd;
+}
+
+.editPageInsertLinks, .editPageInsertLinks a
+{
+    color: #666666;
+    font-weight: bold;
+    font-size: 10px;
+}
