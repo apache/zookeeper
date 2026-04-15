@@ -1,0 +1,25 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: maven
+
+      - name: Build and test with Maven
+        run: mvn -B -V -ntp clean test

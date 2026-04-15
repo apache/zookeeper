@@ -584,7 +584,7 @@
     <netty.version>4.1.130.Final</netty.version>
     <jetty.version>9.4.58.v20250814</jetty.version>
     <jackson.version>2.18.1</jackson.version>
-    <jline.version>3.25.1</jline.version>
+    <jline.version>3.20.0</jline.version>
     <snappy.version>1.1.10.5</snappy.version>
     <kerby.version>2.0.0</kerby.version>
     <bouncycastle.version>1.78</bouncycastle.version>
@@ -817,7 +817,6 @@
       <plugins>
 
 
-
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -975,6 +974,23 @@
     </pluginManagement>
 
     <plugins>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.19.4</version>
+        <configuration>
+          <targetClasses>
+            <param>org.apache.zookeeper.server.*</param>
+          </targetClasses>
+          <targetTests>
+            <param>org.apache.zookeeper.server.*Test</param>
+          </targetTests>
+          <outputFormats>
+            <param>HTML</param>
+          </outputFormats>
+          <threads>2</threads>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
