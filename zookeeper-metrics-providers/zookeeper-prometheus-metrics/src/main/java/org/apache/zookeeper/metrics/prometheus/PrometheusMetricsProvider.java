@@ -110,7 +110,11 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public static final String HTTP_VERSION = "httpVersion";
     public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
     public static final int DEFAULT_HTTP_VERSION = 11;  // based on HttpVersion.java in jetty
-    public static final int DEFAULT_STS_MAX_AGE = 1 * 24 * 60 * 60;  // seconds in a day
+    /**
+     * The time, in seconds, that the browser should remember that a host is only to be accessed using HTTPS.
+     * Seconds in a day.
+     */
+    public static final int DEFAULT_STS_MAX_AGE = 1 * 24 * 60 * 60;
 
     /**
      * Custom servlet to disable the TRACE method for security reasons.
@@ -184,8 +188,10 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             ServerConnector connector = null;
 
             if (this.httpPort != -1 && this.httpsPort != -1 && this.httpPort == this.httpsPort) {
+                // Set Strict-Transport-Security HTTP response header.
                 SecureRequestCustomizer customizer = new SecureRequestCustomizer();
                 customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
+                // Strict-Transport-Security HTTP header should apply to all subdomains of the host's domain as well.
                 customizer.setStsIncludeSubDomains(true);
 
                 HttpConfiguration config = new HttpConfiguration();
