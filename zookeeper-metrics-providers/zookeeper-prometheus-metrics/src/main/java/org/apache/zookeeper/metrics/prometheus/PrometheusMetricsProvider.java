@@ -201,14 +201,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                         new HttpConnectionFactory(config));
                 connector.setPort(this.httpPort);
                 connector.setHost(this.host);
-                LOG.debug("Created unified ServerConnector for host: {}, httpPort: {}", host, httpPort);
+                LOG.info("Created unified ServerConnector for host: {}, httpPort: {}", host, httpPort);
             } else {
                 // Configure HTTP connector if enabled
                 if (this.httpPort != -1) {
                     connector = new ServerConnector(server, acceptors, selectors);
                     connector.setPort(this.httpPort);
                     connector.setHost(this.host);
-                    LOG.debug("Created ServerConnector for host: {}, httpPort: {}", host, httpPort);
+                    LOG.info("Created HTTP ServerConnector for host: {}, httpPort: {}", host, httpPort);
                 }
 
                 // Configure HTTPS connector if enabled
@@ -216,7 +216,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     SslContextFactory.Server sslContextFactory = createSslContextFactory();
                     setKeyStoreScanner(sslContextFactory);
                     connector = createSslConnector(server, acceptors, selectors, sslContextFactory);
-                    LOG.debug("Created HTTPS ServerConnector for host: {}, httpsPort: {}", host, httpsPort);
+                    LOG.info("Created HTTPS ServerConnector for host: {}, httpsPort: {}", host, httpsPort);
                 }
             }
 
