@@ -1,4 +1,4 @@
-package org.apache.zookeeper.randoop;
+package org.apache.zookeeper.randoop.generated2;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -509,21 +509,6 @@ public class RegressionTest0 {
             System.out.format("%n%s%n", "RegressionTest0.test040");
         java.io.File[] fileArray0 = new java.io.File[] {};
         java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
-        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) 1);
-        org.junit.Assert.assertNotNull(fileArray0);
-        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
-        org.junit.Assert.assertNotNull(fileArray2);
-        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
-        org.junit.Assert.assertNotNull(fileArray4);
-        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
-    }
-
-    @Test
-    public void test041() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test041");
-        java.io.File[] fileArray0 = new java.io.File[] {};
-        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
         java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, (long) 0);
         Class<?> wildcardClass5 = fileArray2.getClass();
         org.junit.Assert.assertNotNull(fileArray0);
@@ -536,9 +521,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test042() throws Throwable {
+    public void test041() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test042");
+            System.out.format("%n%s%n", "RegressionTest0.test041");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -557,9 +542,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test043() throws Throwable {
+    public void test042() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test043");
+            System.out.format("%n%s%n", "RegressionTest0.test042");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -574,16 +559,16 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test044() throws Throwable {
+    public void test043() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test044");
+            System.out.format("%n%s%n", "RegressionTest0.test043");
         org.apache.zookeeper.server.persistence.FileTxnLog.setPreallocSize((long) (short) -1);
     }
 
     @Test
-    public void test045() throws Throwable {
+    public void test044() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test045");
+            System.out.format("%n%s%n", "RegressionTest0.test044");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
@@ -593,9 +578,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test046() throws Throwable {
+    public void test045() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test046");
+            System.out.format("%n%s%n", "RegressionTest0.test045");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -611,9 +596,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test047() throws Throwable {
+    public void test046() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test047");
+            System.out.format("%n%s%n", "RegressionTest0.test046");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -629,9 +614,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test048() throws Throwable {
+    public void test047() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test048");
+            System.out.format("%n%s%n", "RegressionTest0.test047");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -649,9 +634,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test049() throws Throwable {
+    public void test048() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test049");
+            System.out.format("%n%s%n", "RegressionTest0.test048");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -663,21 +648,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test050() throws Throwable {
+    public void test049() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test050");
-        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
-        pathTrie0.deletePath("hi!");
-        pathTrie0.clear();
-        pathTrie0.clear();
-        String str6 = pathTrie0.findMaxPrefix("/");
-        org.junit.Assert.assertEquals("'" + str6 + "' != '" + "/" + "'", str6, "/");
-    }
-
-    @Test
-    public void test051() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test051");
+            System.out.format("%n%s%n", "RegressionTest0.test049");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -693,9 +666,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test052() throws Throwable {
+    public void test050() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test052");
+            System.out.format("%n%s%n", "RegressionTest0.test050");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -712,9 +685,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test053() throws Throwable {
+    public void test051() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test053");
+            System.out.format("%n%s%n", "RegressionTest0.test051");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -726,9 +699,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test054() throws Throwable {
+    public void test052() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test054");
+            System.out.format("%n%s%n", "RegressionTest0.test052");
         java.io.File[] fileArray0 = new java.io.File[] {};
         java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
         Class<?> wildcardClass3 = fileArray0.getClass();
@@ -740,9 +713,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test055() throws Throwable {
+    public void test053() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test055");
+            System.out.format("%n%s%n", "RegressionTest0.test053");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -758,9 +731,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test056() throws Throwable {
+    public void test054() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test056");
+            System.out.format("%n%s%n", "RegressionTest0.test054");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.close();
@@ -776,16 +749,16 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test057() throws Throwable {
+    public void test055() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test057");
+            System.out.format("%n%s%n", "RegressionTest0.test055");
         org.apache.zookeeper.server.persistence.FileTxnLog.setPreallocSize((long) (short) 10);
     }
 
     @Test
-    public void test058() throws Throwable {
+    public void test056() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test058");
+            System.out.format("%n%s%n", "RegressionTest0.test056");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -798,9 +771,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test059() throws Throwable {
+    public void test057() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test059");
+            System.out.format("%n%s%n", "RegressionTest0.test057");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         // The following exception was thrown during execution in test generation
@@ -813,9 +786,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test060() throws Throwable {
+    public void test058() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test060");
+            System.out.format("%n%s%n", "RegressionTest0.test058");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -827,9 +800,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test061() throws Throwable {
+    public void test059() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test061");
+            System.out.format("%n%s%n", "RegressionTest0.test059");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -841,37 +814,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test062() throws Throwable {
+    public void test060() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test062");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        fileTxnLog1.rollLog();
-        org.apache.zookeeper.server.ServerStats serverStats7 = null;
-        fileTxnLog1.setServerStats(serverStats7);
-        boolean boolean9 = fileTxnLog1.isForceSync();
-        long long10 = fileTxnLog1.getTotalLogSize();
-        org.junit.Assert.assertTrue("'" + boolean9 + "' != '" + true + "'", boolean9 == true);
-        org.junit.Assert.assertTrue("'" + long10 + "' != '" + 97L + "'", long10 == 97L);
-    }
-
-    @Test
-    public void test063() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test063");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        fileTxnLog1.rollLog();
-        fileTxnLog1.setTotalLogSize((long) (short) 100);
-    }
-
-    @Test
-    public void test064() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test064");
+            System.out.format("%n%s%n", "RegressionTest0.test060");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         // The following exception was thrown during execution in test generation
@@ -884,9 +829,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test065() throws Throwable {
+    public void test061() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test065");
+            System.out.format("%n%s%n", "RegressionTest0.test061");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.close();
@@ -902,9 +847,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test066() throws Throwable {
+    public void test062() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test066");
+            System.out.format("%n%s%n", "RegressionTest0.test062");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -916,9 +861,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test067() throws Throwable {
+    public void test063() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test067");
+            System.out.format("%n%s%n", "RegressionTest0.test063");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -932,9 +877,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test068() throws Throwable {
+    public void test064() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test068");
+            System.out.format("%n%s%n", "RegressionTest0.test064");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -946,30 +891,16 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test069() throws Throwable {
+    public void test065() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test069");
-        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
-        pathTrie0.deletePath("hi!");
-        pathTrie0.clear();
-        boolean boolean5 = pathTrie0.existsNode("hi!");
-        String str7 = pathTrie0.findMaxPrefix("log");
-        pathTrie0.clear();
-        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
-        org.junit.Assert.assertEquals("'" + str7 + "' != '" + "/" + "'", str7, "/");
-    }
-
-    @Test
-    public void test070() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test070");
+            System.out.format("%n%s%n", "RegressionTest0.test065");
         org.apache.zookeeper.server.persistence.FileTxnLog.setTxnLogSizeLimit((long) (byte) 10);
     }
 
     @Test
-    public void test071() throws Throwable {
+    public void test066() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test071");
+            System.out.format("%n%s%n", "RegressionTest0.test066");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -987,24 +918,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test072() throws Throwable {
+    public void test067() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test072");
-        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
-        pathTrie0.deletePath("hi!");
-        pathTrie0.clear();
-        boolean boolean5 = pathTrie0.existsNode("hi!");
-        String str7 = pathTrie0.findMaxPrefix("log");
-        String str9 = pathTrie0.findMaxPrefix("");
-        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
-        org.junit.Assert.assertEquals("'" + str7 + "' != '" + "/" + "'", str7, "/");
-        org.junit.Assert.assertEquals("'" + str9 + "' != '" + "/" + "'", str9, "/");
-    }
-
-    @Test
-    public void test073() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test073");
+            System.out.format("%n%s%n", "RegressionTest0.test067");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1023,9 +939,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test074() throws Throwable {
+    public void test068() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test074");
+            System.out.format("%n%s%n", "RegressionTest0.test068");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1041,9 +957,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test075() throws Throwable {
+    public void test069() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test075");
+            System.out.format("%n%s%n", "RegressionTest0.test069");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1063,50 +979,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test076() throws Throwable {
+    public void test070() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test076");
-        java.io.File[] fileArray0 = new java.io.File[] {};
-        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
-        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, (long) 0);
-        java.io.File[] fileArray6 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, 0L);
-        org.junit.Assert.assertNotNull(fileArray0);
-        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
-        org.junit.Assert.assertNotNull(fileArray2);
-        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
-        org.junit.Assert.assertNotNull(fileArray4);
-        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
-        org.junit.Assert.assertNotNull(fileArray6);
-        org.junit.Assert.assertArrayEquals(fileArray6, new java.io.File[] {});
-    }
-
-    @Test
-    public void test077() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test077");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.close();
-        org.apache.zookeeper.server.ServerStats serverStats3 = null;
-        fileTxnLog1.setServerStats(serverStats3);
-        org.apache.zookeeper.server.ServerStats serverStats5 = null;
-        fileTxnLog1.setServerStats(serverStats5);
-    }
-
-    @Test
-    public void test078() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test078");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 10);
-        fileTxnLog1.rollLog();
-    }
-
-    @Test
-    public void test079() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test079");
+            System.out.format("%n%s%n", "RegressionTest0.test070");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1121,9 +996,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test080() throws Throwable {
+    public void test071() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test080");
+            System.out.format("%n%s%n", "RegressionTest0.test071");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) (byte) 1);
@@ -1138,9 +1013,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test081() throws Throwable {
+    public void test072() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test081");
+            System.out.format("%n%s%n", "RegressionTest0.test072");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) (byte) 1);
@@ -1155,9 +1030,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test082() throws Throwable {
+    public void test073() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test082");
+            System.out.format("%n%s%n", "RegressionTest0.test073");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1170,9 +1045,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test083() throws Throwable {
+    public void test074() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test083");
+            System.out.format("%n%s%n", "RegressionTest0.test074");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1187,26 +1062,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test084() throws Throwable {
+    public void test075() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test084");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        fileTxnLog1.commit();
-        fileTxnLog1.rollLog();
-        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        org.apache.zookeeper.server.ServerStats serverStats8 = null;
-        fileTxnLog1.setServerStats(serverStats8);
-        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
-        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
-    }
-
-    @Test
-    public void test085() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test085");
+            System.out.format("%n%s%n", "RegressionTest0.test075");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1221,9 +1079,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test086() throws Throwable {
+    public void test076() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test086");
+            System.out.format("%n%s%n", "RegressionTest0.test076");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1235,36 +1093,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test087() throws Throwable {
+    public void test077() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test087");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) (byte) 1);
-        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
-    }
-
-    @Test
-    public void test088() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test088");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        fileTxnLog1.close();
-        fileTxnLog1.setTotalLogSize((long) 1);
-        fileTxnLog1.commit();
-        org.apache.zookeeper.server.ServerStats serverStats9 = null;
-        fileTxnLog1.setServerStats(serverStats9);
-        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
-    }
-
-    @Test
-    public void test089() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test089");
+            System.out.format("%n%s%n", "RegressionTest0.test077");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1273,24 +1104,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test090() throws Throwable {
+    public void test078() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test090");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.close();
-        org.apache.zookeeper.server.ServerStats serverStats3 = null;
-        fileTxnLog1.setServerStats(serverStats3);
-        long long5 = fileTxnLog1.getCurrentLogSize();
-        long long6 = fileTxnLog1.getCurrentLogSize();
-        org.junit.Assert.assertTrue("'" + long5 + "' != '" + 0L + "'", long5 == 0L);
-        org.junit.Assert.assertTrue("'" + long6 + "' != '" + 0L + "'", long6 == 0L);
-    }
-
-    @Test
-    public void test091() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test091");
+            System.out.format("%n%s%n", "RegressionTest0.test078");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1305,9 +1121,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test092() throws Throwable {
+    public void test079() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test092");
+            System.out.format("%n%s%n", "RegressionTest0.test079");
         java.io.File[] fileArray0 = new java.io.File[] {};
         java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
         java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) 'a');
@@ -1323,9 +1139,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test093() throws Throwable {
+    public void test080() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test093");
+            System.out.format("%n%s%n", "RegressionTest0.test080");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
@@ -1338,9 +1154,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test094() throws Throwable {
+    public void test081() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test094");
+            System.out.format("%n%s%n", "RegressionTest0.test081");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
@@ -1357,31 +1173,16 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test095() throws Throwable {
+    public void test082() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test095");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        long long5 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        long long6 = fileTxnLog1.getTotalLogSize();
-        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
-        org.junit.Assert.assertTrue("'" + long5 + "' != '" + (-1L) + "'", long5 == (-1L));
-        org.junit.Assert.assertTrue("'" + long6 + "' != '" + 97L + "'", long6 == 97L);
-    }
-
-    @Test
-    public void test096() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test096");
+            System.out.format("%n%s%n", "RegressionTest0.test082");
         org.apache.zookeeper.server.persistence.FileTxnLog.setPreallocSize((long) (byte) 10);
     }
 
     @Test
-    public void test097() throws Throwable {
+    public void test083() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test097");
+            System.out.format("%n%s%n", "RegressionTest0.test083");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
@@ -1396,9 +1197,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test098() throws Throwable {
+    public void test084() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test098");
+            System.out.format("%n%s%n", "RegressionTest0.test084");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -1410,30 +1211,16 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test099() throws Throwable {
+    public void test085() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test099");
+            System.out.format("%n%s%n", "RegressionTest0.test085");
         org.apache.zookeeper.server.persistence.FileTxnLog.setTxnLogSizeLimit(10L);
     }
 
     @Test
-    public void test100() throws Throwable {
+    public void test086() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test100");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        fileTxnLog1.rollLog();
-        long long6 = fileTxnLog1.getCurrentLogSize();
-        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
-        org.junit.Assert.assertTrue("'" + long6 + "' != '" + 0L + "'", long6 == 0L);
-    }
-
-    @Test
-    public void test101() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test101");
+            System.out.format("%n%s%n", "RegressionTest0.test086");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.commit();
@@ -1448,20 +1235,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test102() throws Throwable {
+    public void test087() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test102");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        org.apache.zookeeper.server.ServerStats serverStats4 = null;
-        fileTxnLog1.setServerStats(serverStats4);
-    }
-
-    @Test
-    public void test103() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test103");
+            System.out.format("%n%s%n", "RegressionTest0.test087");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1479,9 +1255,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test104() throws Throwable {
+    public void test088() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test104");
+            System.out.format("%n%s%n", "RegressionTest0.test088");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1499,9 +1275,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test105() throws Throwable {
+    public void test089() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test105");
+            System.out.format("%n%s%n", "RegressionTest0.test089");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1523,9 +1299,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test106() throws Throwable {
+    public void test090() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test106");
+            System.out.format("%n%s%n", "RegressionTest0.test090");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1534,9 +1310,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test107() throws Throwable {
+    public void test091() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test107");
+            System.out.format("%n%s%n", "RegressionTest0.test091");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1556,9 +1332,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test108() throws Throwable {
+    public void test092() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test108");
+            System.out.format("%n%s%n", "RegressionTest0.test092");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1577,20 +1353,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test109() throws Throwable {
+    public void test093() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test109");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.setTotalLogSize((long) (byte) 1);
-        fileTxnLog1.rollLog();
-        fileTxnLog1.close();
-    }
-
-    @Test
-    public void test110() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test110");
+            System.out.format("%n%s%n", "RegressionTest0.test093");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
@@ -1600,9 +1365,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test111() throws Throwable {
+    public void test094() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test111");
+            System.out.format("%n%s%n", "RegressionTest0.test094");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
@@ -1616,9 +1381,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test112() throws Throwable {
+    public void test095() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test112");
+            System.out.format("%n%s%n", "RegressionTest0.test095");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.close();
@@ -1635,9 +1400,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test113() throws Throwable {
+    public void test096() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test113");
+            System.out.format("%n%s%n", "RegressionTest0.test096");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1658,9 +1423,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test114() throws Throwable {
+    public void test097() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test114");
+            System.out.format("%n%s%n", "RegressionTest0.test097");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1676,9 +1441,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test115() throws Throwable {
+    public void test098() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test115");
+            System.out.format("%n%s%n", "RegressionTest0.test098");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.close();
@@ -1688,9 +1453,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test116() throws Throwable {
+    public void test099() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test116");
+            System.out.format("%n%s%n", "RegressionTest0.test099");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1705,9 +1470,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test117() throws Throwable {
+    public void test100() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test117");
+            System.out.format("%n%s%n", "RegressionTest0.test100");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 10);
@@ -1722,9 +1487,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test118() throws Throwable {
+    public void test101() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test118");
+            System.out.format("%n%s%n", "RegressionTest0.test101");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 10);
@@ -1739,9 +1504,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test119() throws Throwable {
+    public void test102() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test119");
+            System.out.format("%n%s%n", "RegressionTest0.test102");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -1753,9 +1518,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test120() throws Throwable {
+    public void test103() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test120");
+            System.out.format("%n%s%n", "RegressionTest0.test103");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1772,33 +1537,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test121() throws Throwable {
+    public void test104() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test121");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.close();
-        boolean boolean3 = fileTxnLog1.isForceSync();
-        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
-        fileTxnLog1.commit();
-        org.junit.Assert.assertTrue("'" + boolean3 + "' != '" + true + "'", boolean3 == true);
-        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
-    }
-
-    @Test
-    public void test122() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test122");
-        java.io.File file0 = null;
-        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
-        fileTxnLog1.close();
-        fileTxnLog1.close();
-    }
-
-    @Test
-    public void test123() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test123");
+            System.out.format("%n%s%n", "RegressionTest0.test104");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1810,9 +1551,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test124() throws Throwable {
+    public void test105() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test124");
+            System.out.format("%n%s%n", "RegressionTest0.test105");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1825,9 +1566,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test125() throws Throwable {
+    public void test106() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test125");
+            System.out.format("%n%s%n", "RegressionTest0.test106");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -1839,28 +1580,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test126() throws Throwable {
+    public void test107() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test126");
-        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
-        pathTrie0.deletePath("hi!");
-        pathTrie0.clear();
-        boolean boolean5 = pathTrie0.existsNode("hi!");
-        pathTrie0.deletePath("hi!");
-        pathTrie0.clear();
-        pathTrie0.deletePath("log");
-        pathTrie0.clear();
-        boolean boolean13 = pathTrie0.existsNode("log");
-        String str15 = pathTrie0.findMaxPrefix("hi!");
-        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
-        org.junit.Assert.assertTrue("'" + boolean13 + "' != '" + false + "'", boolean13 == false);
-        org.junit.Assert.assertEquals("'" + str15 + "' != '" + "/" + "'", str15, "/");
-    }
-
-    @Test
-    public void test127() throws Throwable {
-        if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test127");
+            System.out.format("%n%s%n", "RegressionTest0.test107");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
@@ -1873,9 +1595,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test128() throws Throwable {
+    public void test108() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test128");
+            System.out.format("%n%s%n", "RegressionTest0.test108");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) (byte) 1);
@@ -1890,9 +1612,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test129() throws Throwable {
+    public void test109() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test129");
+            System.out.format("%n%s%n", "RegressionTest0.test109");
         java.io.File file0 = null;
         // The following exception was thrown during execution in test generation
         try {
@@ -1904,9 +1626,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test130() throws Throwable {
+    public void test110() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test130");
+            System.out.format("%n%s%n", "RegressionTest0.test110");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 10);
@@ -1915,9 +1637,9 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test131() throws Throwable {
+    public void test111() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test131");
+            System.out.format("%n%s%n", "RegressionTest0.test111");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         String str2 = pathTrie0.findMaxPrefix("hi!");
         pathTrie0.addPath("/");
@@ -1925,17 +1647,316 @@ public class RegressionTest0 {
     }
 
     @Test
-    public void test132() throws Throwable {
+    public void test112() throws Throwable {
         if (debug)
-            System.out.format("%n%s%n", "RegressionTest0.test132");
+            System.out.format("%n%s%n", "RegressionTest0.test112");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 10);
+        fileTxnLog1.commit();
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean6 = fileTxnLog1.truncate((long) '#');
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test113() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test113");
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
         long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
         fileTxnLog1.commit();
-        long long6 = fileTxnLog1.getCurrentLogSize();
+        fileTxnLog1.rollLog();
+        fileTxnLog1.setTotalLogSize((long) (short) 1);
         org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test114() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test114");
+        java.io.File file0 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator fileTxnIterator3 = new org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator(file0, (long) (byte) 1, true);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test115() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test115");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        fileTxnLog1.rollLog();
+        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.close();
+        fileTxnLog1.commit();
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean11 = fileTxnLog1.truncate((long) 10);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
+    }
+
+    @Test
+    public void test116() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test116");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        org.apache.zookeeper.server.ServerStats serverStats3 = null;
+        fileTxnLog1.setServerStats(serverStats3);
+        long long5 = fileTxnLog1.getCurrentLogSize();
+        long long6 = fileTxnLog1.getCurrentLogSize();
+        fileTxnLog1.rollLog();
+        org.junit.Assert.assertTrue("'" + long5 + "' != '" + 0L + "'", long5 == 0L);
         org.junit.Assert.assertTrue("'" + long6 + "' != '" + 0L + "'", long6 == 0L);
+    }
+
+    @Test
+    public void test117() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test117");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) (byte) 1);
+        long long4 = fileTxnLog1.getTotalLogSize();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + 1L + "'", long4 == 1L);
+    }
+
+    @Test
+    public void test118() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test118");
+        java.io.File[] fileArray0 = new java.io.File[] {};
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
+        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) 1);
+        java.io.File[] fileArray6 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
+        org.junit.Assert.assertNotNull(fileArray0);
+        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray4);
+        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray6);
+        org.junit.Assert.assertArrayEquals(fileArray6, new java.io.File[] {});
+    }
+
+    @Test
+    public void test119() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test119");
+        java.io.File file0 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator fileTxnIterator3 = new org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator(file0, (long) 1514884167, true);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test120() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test120");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        org.apache.zookeeper.server.ServerStats serverStats3 = null;
+        fileTxnLog1.setServerStats(serverStats3);
+        org.apache.zookeeper.server.ServerStats serverStats5 = null;
+        fileTxnLog1.setServerStats(serverStats5);
+        fileTxnLog1.close();
+    }
+
+    @Test
+    public void test121() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test121");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        String str7 = pathTrie0.findMaxPrefix("log");
+        pathTrie0.addPath("/");
+        String str11 = pathTrie0.findMaxPrefix("/");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str7 + "' != '" + "/" + "'", str7, "/");
+        org.junit.Assert.assertEquals("'" + str11 + "' != '" + "/" + "'", str11, "/");
+    }
+
+    @Test
+    public void test122() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test122");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        pathTrie0.deletePath("hi!");
+        pathTrie0.deletePath("log");
+        String str11 = pathTrie0.findMaxPrefix("");
+        boolean boolean13 = pathTrie0.existsNode("log");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str11 + "' != '" + "/" + "'", str11, "/");
+        org.junit.Assert.assertTrue("'" + boolean13 + "' != '" + false + "'", boolean13 == false);
+    }
+
+    @Test
+    public void test123() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test123");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) (byte) 1);
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.apache.zookeeper.server.Request request5 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean6 = fileTxnLog1.append(request5);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"org.apache.zookeeper.server.Request.getHdr()\" because \"request\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test124() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test124");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.deletePath("hi!");
+        boolean boolean7 = pathTrie0.existsNode("log");
+        org.junit.Assert.assertTrue("'" + boolean7 + "' != '" + false + "'", boolean7 == false);
+    }
+
+    @Test
+    public void test125() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test125");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        String str7 = pathTrie0.findMaxPrefix("log");
+        pathTrie0.clear();
+        String str10 = pathTrie0.findMaxPrefix("log");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str7 + "' != '" + "/" + "'", str7, "/");
+        org.junit.Assert.assertEquals("'" + str10 + "' != '" + "/" + "'", str10, "/");
+    }
+
+    @Test
+    public void test126() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test126");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        org.apache.zookeeper.server.ServerStats serverStats4 = null;
+        fileTxnLog1.setServerStats(serverStats4);
+        Class<?> wildcardClass6 = fileTxnLog1.getClass();
+        org.junit.Assert.assertNotNull(wildcardClass6);
+    }
+
+    @Test
+    public void test127() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test127");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long5 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long6 = fileTxnLog1.getTotalLogSize();
+        org.apache.zookeeper.server.ServerStats serverStats7 = null;
+        fileTxnLog1.setServerStats(serverStats7);
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long5 + "' != '" + (-1L) + "'", long5 == (-1L));
+        org.junit.Assert.assertTrue("'" + long6 + "' != '" + 97L + "'", long6 == 97L);
+    }
+
+    @Test
+    public void test128() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test128");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) (byte) 1);
+        fileTxnLog1.rollLog();
+        fileTxnLog1.close();
+        fileTxnLog1.rollLog();
+    }
+
+    @Test
+    public void test129() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test129");
+        java.io.File[] fileArray0 = null;
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, 0L);
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+    }
+
+    @Test
+    public void test130() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test130");
+        java.io.File[] fileArray0 = new java.io.File[] {};
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
+        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, (long) 0);
+        java.io.File[] fileArray6 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, 0L);
+        java.io.File[] fileArray8 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray6, (long) (short) -1);
+        org.junit.Assert.assertNotNull(fileArray0);
+        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray4);
+        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray6);
+        org.junit.Assert.assertArrayEquals(fileArray6, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray8);
+        org.junit.Assert.assertArrayEquals(fileArray8, new java.io.File[] {});
+    }
+
+    @Test
+    public void test131() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test131");
+        org.apache.zookeeper.server.persistence.FileTxnLog.setTxnLogSizeLimit((long) (short) -1);
+    }
+
+    @Test
+    public void test132() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test132");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.deletePath("log");
     }
 
     @Test
@@ -1945,19 +1966,416 @@ public class RegressionTest0 {
         java.io.File file0 = null;
         org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
         fileTxnLog1.setTotalLogSize((long) 'a');
-        fileTxnLog1.setTotalLogSize((long) 'a');
-        fileTxnLog1.rollLog();
-        org.apache.zookeeper.server.ServerStats serverStats7 = null;
-        fileTxnLog1.setServerStats(serverStats7);
-        long long9 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
         fileTxnLog1.commit();
-        org.junit.Assert.assertTrue("'" + long9 + "' != '" + (-1L) + "'", long9 == (-1L));
+        fileTxnLog1.rollLog();
+        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.apache.zookeeper.server.ServerStats serverStats8 = null;
+        fileTxnLog1.setServerStats(serverStats8);
+        long long10 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
+        org.junit.Assert.assertTrue("'" + long10 + "' != '" + (-1L) + "'", long10 == (-1L));
     }
 
     @Test
     public void test134() throws Throwable {
         if (debug)
             System.out.format("%n%s%n", "RegressionTest0.test134");
+        java.io.File[] fileArray0 = new java.io.File[] {};
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
+        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, (long) 0);
+        java.io.File[] fileArray6 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray4, (long) (short) 100);
+        java.io.File[] fileArray8 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray6, (long) 0);
+        org.junit.Assert.assertNotNull(fileArray0);
+        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray4);
+        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray6);
+        org.junit.Assert.assertArrayEquals(fileArray6, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray8);
+        org.junit.Assert.assertArrayEquals(fileArray8, new java.io.File[] {});
+    }
+
+    @Test
+    public void test135() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test135");
+        java.io.File file0 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator fileTxnIterator3 = new org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator(file0, (long) 100, false);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test136() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test136");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        pathTrie0.deletePath("hi!");
+        pathTrie0.deletePath("log");
+        String str11 = pathTrie0.findMaxPrefix("log");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str11 + "' != '" + "/" + "'", str11, "/");
+    }
+
+    @Test
+    public void test137() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test137");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 10);
+        // The following exception was thrown during execution in test generation
+        try {
+            long long4 = fileTxnLog1.getDbId();
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test138() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test138");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        boolean boolean3 = fileTxnLog1.isForceSync();
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        fileTxnLog1.setTotalLogSize((long) (short) 10);
+        org.junit.Assert.assertTrue("'" + boolean3 + "' != '" + true + "'", boolean3 == true);
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test139() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test139");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.close();
+        // The following exception was thrown during execution in test generation
+        try {
+            long long7 = fileTxnLog1.getDbId();
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test140() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test140");
+        org.apache.zookeeper.server.persistence.FileTxnLog.setTxnLogSizeLimit((long) (-1));
+    }
+
+    @Test
+    public void test141() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test141");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.close();
+        fileTxnLog1.setTotalLogSize((long) 1);
+        fileTxnLog1.commit();
+        org.apache.zookeeper.server.ServerStats serverStats9 = null;
+        fileTxnLog1.setServerStats(serverStats9);
+        fileTxnLog1.rollLog();
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean13 = fileTxnLog1.truncate((long) 10);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test142() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test142");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.clear();
+    }
+
+    @Test
+    public void test143() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test143");
+        org.apache.zookeeper.server.persistence.FileTxnLog.setTxnLogSizeLimit((long) 10);
+    }
+
+    @Test
+    public void test144() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test144");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.close();
+        fileTxnLog1.setTotalLogSize((long) 1);
+        fileTxnLog1.commit();
+        org.apache.zookeeper.server.ServerStats serverStats9 = null;
+        fileTxnLog1.setServerStats(serverStats9);
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean12 = fileTxnLog1.truncate((long) (short) 0);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test145() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test145");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.close();
+        fileTxnLog1.setTotalLogSize((long) 1);
+        fileTxnLog1.commit();
+        boolean boolean9 = fileTxnLog1.isForceSync();
+        // The following exception was thrown during execution in test generation
+        try {
+            long long10 = fileTxnLog1.getLastLoggedZxid();
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + boolean9 + "' != '" + true + "'", boolean9 == true);
+    }
+
+    @Test
+    public void test146() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test146");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long5 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long5 + "' != '" + (-1L) + "'", long5 == (-1L));
+    }
+
+    @Test
+    public void test147() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test147");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long5 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.rollLog();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long5 + "' != '" + (-1L) + "'", long5 == (-1L));
+    }
+
+    @Test
+    public void test148() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test148");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.rollLog();
+        fileTxnLog1.setTotalLogSize((long) (short) 100);
+        boolean boolean7 = fileTxnLog1.isForceSync();
+        org.junit.Assert.assertTrue("'" + boolean7 + "' != '" + true + "'", boolean7 == true);
+    }
+
+    @Test
+    public void test149() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test149");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        // The following exception was thrown during execution in test generation
+        try {
+            org.apache.zookeeper.server.persistence.TxnLog.TxnIterator txnIterator4 = fileTxnLog1.read((long) (short) 0);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test150() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test150");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.rollLog();
+        long long6 = fileTxnLog1.getCurrentLogSize();
+        fileTxnLog1.setTotalLogSize((long) (short) 1);
+        long long9 = fileTxnLog1.getCurrentLogSize();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long6 + "' != '" + 0L + "'", long6 == 0L);
+        org.junit.Assert.assertTrue("'" + long9 + "' != '" + 0L + "'", long9 == 0L);
+    }
+
+    @Test
+    public void test151() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test151");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        // The following exception was thrown during execution in test generation
+        try {
+            pathTrie0.deletePath("");
+            org.junit.Assert.fail("Expected exception of type java.lang.IllegalArgumentException; message: Invalid path: ");
+        } catch (IllegalArgumentException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test152() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test152");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        String str7 = pathTrie0.findMaxPrefix("log");
+        String str9 = pathTrie0.findMaxPrefix("");
+        pathTrie0.addPath("log");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str7 + "' != '" + "/" + "'", str7, "/");
+        org.junit.Assert.assertEquals("'" + str9 + "' != '" + "/" + "'", str9, "/");
+    }
+
+    @Test
+    public void test153() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test153");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.deletePath("log");
+        pathTrie0.clear();
+        boolean boolean13 = pathTrie0.existsNode("log");
+        String str15 = pathTrie0.findMaxPrefix("hi!");
+        String str17 = pathTrie0.findMaxPrefix("");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertTrue("'" + boolean13 + "' != '" + false + "'", boolean13 == false);
+        org.junit.Assert.assertEquals("'" + str15 + "' != '" + "/" + "'", str15, "/");
+        org.junit.Assert.assertEquals("'" + str17 + "' != '" + "/" + "'", str17, "/");
+    }
+
+    @Test
+    public void test154() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test154");
+        java.io.File file0 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator fileTxnIterator3 = new org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator(file0, 10L, false);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test155() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test155");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) (byte) 1);
+        fileTxnLog1.rollLog();
+        fileTxnLog1.close();
+        boolean boolean6 = fileTxnLog1.isForceSync();
+        org.junit.Assert.assertTrue("'" + boolean6 + "' != '" + true + "'", boolean6 == true);
+    }
+
+    @Test
+    public void test156() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test156");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.close();
+        boolean boolean6 = fileTxnLog1.isForceSync();
+        boolean boolean7 = fileTxnLog1.isForceSync();
+        fileTxnLog1.commit();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + boolean6 + "' != '" + true + "'", boolean6 == true);
+        org.junit.Assert.assertTrue("'" + boolean7 + "' != '" + true + "'", boolean7 == true);
+    }
+
+    @Test
+    public void test157() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test157");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 10);
+        fileTxnLog1.commit();
+        fileTxnLog1.setTotalLogSize(97L);
+    }
+
+    @Test
+    public void test158() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test158");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        fileTxnLog1.rollLog();
+        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        // The following exception was thrown during execution in test generation
+        try {
+            org.apache.zookeeper.server.persistence.TxnLog.TxnIterator txnIterator9 = fileTxnLog1.read((long) (short) -1);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
+    }
+
+    @Test
+    public void test159() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test159");
         org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
         pathTrie0.deletePath("hi!");
         pathTrie0.clear();
@@ -1965,8 +2383,538 @@ public class RegressionTest0 {
         pathTrie0.deletePath("hi!");
         pathTrie0.deletePath("log");
         String str11 = pathTrie0.findMaxPrefix("");
+        // The following exception was thrown during execution in test generation
+        try {
+            pathTrie0.addPath("");
+            org.junit.Assert.fail("Expected exception of type java.lang.IllegalArgumentException; message: Invalid path: ");
+        } catch (IllegalArgumentException e) {
+            // Expected exception.
+        }
         org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
         org.junit.Assert.assertEquals("'" + str11 + "' != '" + "/" + "'", str11, "/");
+    }
+
+    @Test
+    public void test160() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test160");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long5 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        boolean boolean6 = fileTxnLog1.isForceSync();
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean8 = fileTxnLog1.truncate(0L);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long5 + "' != '" + (-1L) + "'", long5 == (-1L));
+        org.junit.Assert.assertTrue("'" + boolean6 + "' != '" + true + "'", boolean6 == true);
+    }
+
+    @Test
+    public void test161() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test161");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.rollLog();
+        fileTxnLog1.setTotalLogSize((long) (short) 100);
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean8 = fileTxnLog1.truncate((long) '4');
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test162() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test162");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.deletePath("log");
+        pathTrie0.addPath("/");
+        pathTrie0.clear();
+        String str9 = pathTrie0.findMaxPrefix("hi!");
+        org.junit.Assert.assertEquals("'" + str9 + "' != '" + "/" + "'", str9, "/");
+    }
+
+    @Test
+    public void test163() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test163");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.close();
+    }
+
+    @Test
+    public void test164() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test164");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        pathTrie0.deletePath("hi!");
+        pathTrie0.deletePath("log");
+        String str11 = pathTrie0.findMaxPrefix("");
+        pathTrie0.clear();
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str11 + "' != '" + "/" + "'", str11, "/");
+    }
+
+    @Test
+    public void test165() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test165");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        pathTrie0.clear();
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+    }
+
+    @Test
+    public void test166() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test166");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.rollLog();
+        org.apache.zookeeper.server.ServerStats serverStats7 = null;
+        fileTxnLog1.setServerStats(serverStats7);
+        long long9 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        long long10 = fileTxnLog1.getCurrentLogSize();
+        org.junit.Assert.assertTrue("'" + long9 + "' != '" + (-1L) + "'", long9 == (-1L));
+        org.junit.Assert.assertTrue("'" + long10 + "' != '" + 0L + "'", long10 == 0L);
+    }
+
+    @Test
+    public void test167() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test167");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.clear();
+        String str6 = pathTrie0.findMaxPrefix("/");
+        pathTrie0.deletePath("hi!");
+        pathTrie0.deletePath("hi!");
+        // The following exception was thrown during execution in test generation
+        try {
+            pathTrie0.addPath("");
+            org.junit.Assert.fail("Expected exception of type java.lang.IllegalArgumentException; message: Invalid path: ");
+        } catch (IllegalArgumentException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertEquals("'" + str6 + "' != '" + "/" + "'", str6, "/");
+    }
+
+    @Test
+    public void test168() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test168");
+        java.io.File[] fileArray0 = new java.io.File[] {};
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
+        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, (long) 0);
+        java.io.File[] fileArray6 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray4, (long) (short) 100);
+        java.io.File[] fileArray8 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray4, 0L);
+        org.junit.Assert.assertNotNull(fileArray0);
+        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray4);
+        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray6);
+        org.junit.Assert.assertArrayEquals(fileArray6, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray8);
+        org.junit.Assert.assertArrayEquals(fileArray8, new java.io.File[] {});
+    }
+
+    @Test
+    public void test169() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test169");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        String str2 = pathTrie0.findMaxPrefix("hi!");
+        pathTrie0.deletePath("log");
+        org.junit.Assert.assertEquals("'" + str2 + "' != '" + "/" + "'", str2, "/");
+    }
+
+    @Test
+    public void test170() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test170");
+        org.apache.zookeeper.server.persistence.FileTxnLog.setPreallocSize((long) (-1));
+    }
+
+    @Test
+    public void test171() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test171");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        String str7 = pathTrie0.findMaxPrefix("log");
+        pathTrie0.addPath("/");
+        String str11 = pathTrie0.findMaxPrefix("");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertEquals("'" + str7 + "' != '" + "/" + "'", str7, "/");
+        org.junit.Assert.assertEquals("'" + str11 + "' != '" + "/" + "'", str11, "/");
+    }
+
+    @Test
+    public void test172() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test172");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.clear();
+        String str6 = pathTrie0.findMaxPrefix("/");
+        pathTrie0.deletePath("hi!");
+        Class<?> wildcardClass9 = pathTrie0.getClass();
+        org.junit.Assert.assertEquals("'" + str6 + "' != '" + "/" + "'", str6, "/");
+        org.junit.Assert.assertNotNull(wildcardClass9);
+    }
+
+    @Test
+    public void test173() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test173");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.rollLog();
+        org.apache.zookeeper.server.ServerStats serverStats7 = null;
+        fileTxnLog1.setServerStats(serverStats7);
+        boolean boolean9 = fileTxnLog1.isForceSync();
+        long long10 = fileTxnLog1.getTotalLogSize();
+        fileTxnLog1.setTotalLogSize((long) (short) 0);
+        org.junit.Assert.assertTrue("'" + boolean9 + "' != '" + true + "'", boolean9 == true);
+        org.junit.Assert.assertTrue("'" + long10 + "' != '" + 97L + "'", long10 == 97L);
+    }
+
+    @Test
+    public void test174() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test174");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.rollLog();
+        org.apache.zookeeper.server.ServerStats serverStats7 = null;
+        fileTxnLog1.setServerStats(serverStats7);
+        long long9 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        boolean boolean11 = fileTxnLog1.isForceSync();
+        org.junit.Assert.assertTrue("'" + long9 + "' != '" + (-1L) + "'", long9 == (-1L));
+        org.junit.Assert.assertTrue("'" + boolean11 + "' != '" + true + "'", boolean11 == true);
+    }
+
+    @Test
+    public void test175() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test175");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.close();
+        fileTxnLog1.commit();
+        long long8 = fileTxnLog1.getTotalLogSize();
+        org.junit.Assert.assertTrue("'" + long8 + "' != '" + 97L + "'", long8 == 97L);
+    }
+
+    @Test
+    public void test176() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test176");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        fileTxnLog1.rollLog();
+        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.apache.zookeeper.server.ServerStats serverStats8 = null;
+        fileTxnLog1.setServerStats(serverStats8);
+        fileTxnLog1.commit();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
+    }
+
+    @Test
+    public void test177() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test177");
+        java.io.File[] fileArray0 = new java.io.File[] {};
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) (short) -1);
+        java.io.File[] fileArray4 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray2, (-1L));
+        java.io.File[] fileArray6 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray4, (long) (short) -1);
+        org.junit.Assert.assertNotNull(fileArray0);
+        org.junit.Assert.assertArrayEquals(fileArray0, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray4);
+        org.junit.Assert.assertArrayEquals(fileArray4, new java.io.File[] {});
+        org.junit.Assert.assertNotNull(fileArray6);
+        org.junit.Assert.assertArrayEquals(fileArray6, new java.io.File[] {});
+    }
+
+    @Test
+    public void test178() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test178");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        boolean boolean3 = fileTxnLog1.isForceSync();
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean7 = fileTxnLog1.truncate((long) 1514884167);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + boolean3 + "' != '" + true + "'", boolean3 == true);
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test179() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test179");
+        java.io.File[] fileArray0 = null;
+        java.io.File[] fileArray2 = org.apache.zookeeper.server.persistence.FileTxnLog.getLogFiles(fileArray0, (long) '#');
+        org.junit.Assert.assertNotNull(fileArray2);
+        org.junit.Assert.assertArrayEquals(fileArray2, new java.io.File[] {});
+    }
+
+    @Test
+    public void test180() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test180");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.commit();
+        boolean boolean3 = fileTxnLog1.isForceSync();
+        org.junit.Assert.assertTrue("'" + boolean3 + "' != '" + true + "'", boolean3 == true);
+    }
+
+    @Test
+    public void test181() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test181");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 10);
+        fileTxnLog1.rollLog();
+        org.apache.zookeeper.server.Request request5 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean6 = fileTxnLog1.append(request5);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"org.apache.zookeeper.server.Request.getHdr()\" because \"request\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test182() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test182");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        fileTxnLog1.close();
+        fileTxnLog1.close();
+        fileTxnLog1.commit();
+    }
+
+    @Test
+    public void test183() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test183");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        fileTxnLog1.rollLog();
+        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.close();
+        org.apache.zookeeper.server.ServerStats serverStats9 = null;
+        fileTxnLog1.setServerStats(serverStats9);
+        fileTxnLog1.rollLog();
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean13 = fileTxnLog1.truncate((long) '4');
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"java.io.File.listFiles()\" because \"this.logDir\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
+    }
+
+    @Test
+    public void test184() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test184");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        org.apache.zookeeper.server.ServerStats serverStats4 = null;
+        fileTxnLog1.setServerStats(serverStats4);
+        long long6 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.junit.Assert.assertTrue("'" + long6 + "' != '" + (-1L) + "'", long6 == (-1L));
+    }
+
+    @Test
+    public void test185() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test185");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        boolean boolean5 = pathTrie0.existsNode("hi!");
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.deletePath("log");
+        pathTrie0.clear();
+        boolean boolean13 = pathTrie0.existsNode("log");
+        String str15 = pathTrie0.findMaxPrefix("hi!");
+        pathTrie0.addPath("/");
+        org.junit.Assert.assertTrue("'" + boolean5 + "' != '" + false + "'", boolean5 == false);
+        org.junit.Assert.assertTrue("'" + boolean13 + "' != '" + false + "'", boolean13 == false);
+        org.junit.Assert.assertEquals("'" + str15 + "' != '" + "/" + "'", str15, "/");
+    }
+
+    @Test
+    public void test186() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test186");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.rollLog();
+        org.apache.zookeeper.server.ServerStats serverStats3 = null;
+        fileTxnLog1.setServerStats(serverStats3);
+    }
+
+    @Test
+    public void test187() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test187");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.close();
+        boolean boolean3 = fileTxnLog1.isForceSync();
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        org.apache.zookeeper.server.Request request6 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean7 = fileTxnLog1.append(request6);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"org.apache.zookeeper.server.Request.getHdr()\" because \"request\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+        org.junit.Assert.assertTrue("'" + boolean3 + "' != '" + true + "'", boolean3 == true);
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+    }
+
+    @Test
+    public void test188() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test188");
+        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
+        pathTrie0.deletePath("hi!");
+        pathTrie0.clear();
+        pathTrie0.addPath("hi!");
+        pathTrie0.deletePath("hi!");
+    }
+
+    @Test
+    public void test189() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test189");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) (byte) 1);
+        org.apache.zookeeper.server.Request request4 = null;
+        // The following exception was thrown during execution in test generation
+        try {
+            boolean boolean5 = fileTxnLog1.append(request4);
+            org.junit.Assert.fail("Expected exception of type java.lang.NullPointerException; message: Cannot invoke \"org.apache.zookeeper.server.Request.getHdr()\" because \"request\" is null");
+        } catch (NullPointerException e) {
+            // Expected exception.
+        }
+    }
+
+    @Test
+    public void test190() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test190");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long6 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.junit.Assert.assertTrue("'" + long6 + "' != '" + (-1L) + "'", long6 == (-1L));
+    }
+
+    @Test
+    public void test191() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test191");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        fileTxnLog1.rollLog();
+        long long7 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        org.apache.zookeeper.server.ServerStats serverStats8 = null;
+        fileTxnLog1.setServerStats(serverStats8);
+        fileTxnLog1.close();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long7 + "' != '" + (-1L) + "'", long7 == (-1L));
+    }
+
+    @Test
+    public void test192() throws Throwable {
+        if (debug)
+            System.out.format("%n%s%n", "RegressionTest0.test192");
+        java.io.File file0 = null;
+        org.apache.zookeeper.server.persistence.FileTxnLog fileTxnLog1 = new org.apache.zookeeper.server.persistence.FileTxnLog(file0);
+        fileTxnLog1.setTotalLogSize((long) 'a');
+        long long4 = fileTxnLog1.getTxnLogSyncElapsedTime();
+        fileTxnLog1.commit();
+        long long6 = fileTxnLog1.getCurrentLogSize();
+        fileTxnLog1.setTotalLogSize((long) 0);
+        boolean boolean9 = fileTxnLog1.isForceSync();
+        org.junit.Assert.assertTrue("'" + long4 + "' != '" + (-1L) + "'", long4 == (-1L));
+        org.junit.Assert.assertTrue("'" + long6 + "' != '" + 0L + "'", long6 == 0L);
+        org.junit.Assert.assertTrue("'" + boolean9 + "' != '" + true + "'", boolean9 == true);
     }
 }
 

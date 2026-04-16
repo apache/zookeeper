@@ -1,4 +1,4 @@
-package org.apache.zookeeper.randoop;
+package org.apache.zookeeper.randoop.generated2;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

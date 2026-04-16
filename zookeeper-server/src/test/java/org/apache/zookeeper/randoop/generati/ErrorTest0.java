@@ -1,4 +1,4 @@
-package org.apache.zookeeper.randoop;
+package org.apache.zookeeper.randoop.generati;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
