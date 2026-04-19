@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,7 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
@@ -49,32 +48,32 @@ import org.slf4j.LoggerFactory;
 
 /**
  * MetricsProvider implementation that sends ZooKeeper metrics to Timeline collectors.
- * 
+ *
  * <p>This provider periodically samples metrics from its internal {@link MetricsContext}
  * and sends them to an external Timeline metrics sink (such as Ambari Metrics Collector).
  * The sink implementation is loaded dynamically at runtime, allowing ZooKeeper to
  * remain independent of specific metrics collection systems.</p>
- * 
+ *
  * <p><b>Configuration:</b></p>
  * <p>This provider is configured via zoo.cfg with the following properties:</p>
  * <pre>
  * # Enable Timeline metrics provider
  * metricsProvider.className=org.apache.zookeeper.metrics.timeline.TimelineMetricsProvider
- * 
+ *
  * # Sink class (loaded from external JAR on classpath)
  * metricsProvider.timeline.sink.class=org.apache.hadoop.metrics2.sink.timeline.ZooKeeperTimelineMetricsSink
- * 
+ *
  * # Collection settings
  * metricsProvider.timeline.collection.period=60
  * metricsProvider.timeline.hostname=zk1.example.com
  * metricsProvider.timeline.appId=zookeeper
- * 
+ *
  * # All other metricsProvider.timeline.* properties are passed to the sink
  * metricsProvider.timeline.collector.hosts=collector1.example.com,collector2.example.com
  * metricsProvider.timeline.collector.protocol=http
  * metricsProvider.timeline.collector.port=6188
  * </pre>
- * 
+ *
  * <p><b>Lifecycle:</b></p>
  * <ol>
  *   <li>ZooKeeper instantiates this class via reflection</li>
@@ -83,26 +82,26 @@ import org.slf4j.LoggerFactory;
  *   <li>Metrics are collected every N seconds and sent to sink</li>
  *   <li>{@link #stop()} shuts down collection and closes sink</li>
  * </ol>
- * 
+ *
  * @see TimelineMetricsSink
  * @see MetricSnapshot
  */
 public class TimelineMetricsProvider implements MetricsProvider {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(TimelineMetricsProvider.class);
-    
+
     // Configuration property keys
     private static final String SINK_CLASS_PROPERTY = "timeline.sink.class";
     private static final String COLLECTION_PERIOD_PROPERTY = "timeline.collection.period";
     private static final String HOSTNAME_PROPERTY = "timeline.hostname";
     private static final String APP_ID_PROPERTY = "timeline.appId";
-    
+
     // Default values
-    private static final String DEFAULT_SINK_CLASS = 
+    private static final String DEFAULT_SINK_CLASS =
         "org.apache.hadoop.metrics2.sink.timeline.ZooKeeperTimelineMetricsSink";
     private static final int DEFAULT_COLLECTION_PERIOD_SECONDS = 60;
     private static final String DEFAULT_APP_ID = "zookeeper";
-    
+
     // Instance fields
     private final TimelineMetricsContext rootContext = new TimelineMetricsContext();
     private ScheduledExecutorService scheduler;
@@ -111,21 +110,21 @@ public class TimelineMetricsProvider implements MetricsProvider {
     private String hostname;
     private String appId;
     private volatile boolean started = false;
-    
+
     /**
      * Default constructor required by MetricsProvider contract.
      */
     public TimelineMetricsProvider() {
         // Empty constructor - initialization happens in configure()
     }
-    
+
     /**
      * Configure the provider with properties from zoo.cfg.
-     * 
+     *
      * <p>This method loads the sink class dynamically and configures it with
      * all properties that start with "metricsProvider.timeline.". The sink class must be
      * available on the classpath (typically from an external JAR).</p>
-     * 
+     *
      * @param configuration Properties from zoo.cfg
      * @throws MetricsProviderLifeCycleException if configuration fails
      */
@@ -134,19 +133,19 @@ public class TimelineMetricsProvider implements MetricsProvider {
         try {
             // Load basic configuration
             this.collectionPeriodSeconds = Integer.parseInt(
-                configuration.getProperty(COLLECTION_PERIOD_PROPERTY, 
+                configuration.getProperty(COLLECTION_PERIOD_PROPERTY,
                     String.valueOf(DEFAULT_COLLECTION_PERIOD_SECONDS)));
-            
+
             this.appId = configuration.getProperty(APP_ID_PROPERTY, DEFAULT_APP_ID);
-            
+
             this.hostname = configuration.getProperty(HOSTNAME_PROPERTY);
             if (hostname == null || hostname.trim().isEmpty()) {
                 this.hostname = getLocalHostname();
             }
-            
+
             LOG.info("Configuring TimelineMetricsProvider: hostname={}, appId={}, collectionPeriod={} seconds",
                 hostname, appId, collectionPeriodSeconds);
-            
+
             // Try to load and configure sink - but don't fail if it's not available
             String sinkClassName = configuration.getProperty(SINK_CLASS_PROPERTY, DEFAULT_SINK_CLASS);
             try {
@@ -163,20 +162,20 @@ public class TimelineMetricsProvider implements MetricsProvider {
                     + "ZooKeeper will continue to operate normally without Timeline metrics.", e.getMessage(), e);
                 this.sink = null;
             }
-            
+
         } catch (Exception e) {
             LOG.error("Failed to configure TimelineMetricsProvider", e);
             throw new MetricsProviderLifeCycleException("Configuration failed", e);
         }
     }
-    
+
     /**
      * Start the provider and begin periodic metric collection.
-     * 
+     *
      * <p>This method creates a scheduled executor that collects metrics
      * every N seconds (configured via metricsProvider.timeline.collection.period). The
      * collection runs on a daemon thread to avoid blocking ZooKeeper shutdown.</p>
-     * 
+     *
      * @throws MetricsProviderLifeCycleException if startup fails
      */
     @Override
@@ -185,14 +184,14 @@ public class TimelineMetricsProvider implements MetricsProvider {
             LOG.warn("TimelineMetricsProvider already started");
             return;
         }
-        
+
         // If sink is not available, don't start the scheduler
         if (sink == null) {
             LOG.warn("Timeline sink not configured. Metric collection will not start. "
                 + "ZooKeeper will continue to operate normally without Timeline metrics.");
             return;
         }
-        
+
         try {
             // Create scheduler with daemon thread
             this.scheduler = Executors.newScheduledThreadPool(1, r -> {
@@ -200,7 +199,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 t.setDaemon(true);
                 return t;
             });
-            
+
             // Schedule periodic collection
             scheduler.scheduleAtFixedRate(
                 this::collectAndSend,
@@ -208,20 +207,20 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 collectionPeriodSeconds,
                 TimeUnit.SECONDS
             );
-            
+
             started = true;
-            LOG.info("Started TimelineMetricsProvider - collecting metrics every {} seconds", 
+            LOG.info("Started TimelineMetricsProvider - collecting metrics every {} seconds",
                 collectionPeriodSeconds);
-            
+
         } catch (Exception e) {
             LOG.error("Failed to start TimelineMetricsProvider", e);
             throw new MetricsProviderLifeCycleException("Startup failed", e);
         }
     }
-    
+
     /**
      * Stop the provider and release all resources.
-     * 
+     *
      * <p>This method shuts down the scheduler, closes the sink, and releases
      * all resources. It can be called multiple times safely.</p>
      */
@@ -230,9 +229,9 @@ public class TimelineMetricsProvider implements MetricsProvider {
         if (!started) {
             return;
         }
-        
+
         LOG.info("Stopping TimelineMetricsProvider");
-        
+
         // Shutdown scheduler
         if (scheduler != null) {
             scheduler.shutdown();
@@ -245,7 +244,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 Thread.currentThread().interrupt();
             }
         }
-        
+
         // Close sink
         if (sink != null) {
             try {
@@ -254,44 +253,44 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 LOG.error("Error closing Timeline sink", e);
             }
         }
-        
+
         // Clear all metrics from context
         rootContext.clear();
-        
+
         started = false;
         LOG.info("Stopped TimelineMetricsProvider");
     }
-    
+
     /**
      * Returns the root metrics context.
-     * 
+     *
      * <p>This provider maintains its own {@link TimelineMetricsContext} that stores
      * all registered metrics. Components can register counters, gauges, summaries, etc.
      * which will be automatically collected and sent to Timeline.</p>
-     * 
+     *
      * @return the root metrics context
      */
     @Override
     public MetricsContext getRootContext() {
         return rootContext;
     }
-    
+
     /**
      * Dumps all current metric values.
-     * 
+     *
      * <p>This method is called by legacy monitoring commands. It iterates through
      * all metrics stored in the context and provides their current values.</p>
-     * 
+     *
      * @param sink the receiver of metric name-value pairs
      */
     @Override
     public void dump(BiConsumer<String, Object> sink) {
         rootContext.dump(sink);
     }
-    
+
     /**
      * Resets all metric values.
-     * 
+     *
      * <p>This resets all counters and summaries to their initial state.
      * Gauges are not reset as they represent current values.</p>
      */
@@ -299,13 +298,13 @@ public class TimelineMetricsProvider implements MetricsProvider {
     public void resetAllValues() {
         rootContext.reset();
     }
-    
+
     /**
      * Collects metrics from the context and sends to sink.
-     * 
+     *
      * <p>This method is called periodically by the scheduler. It creates a snapshot
      * of all current metric values and sends it to the configured sink.</p>
-     * 
+     *
      * <p>Exceptions are caught and logged to prevent them from stopping
      * the scheduled collection.</p>
      */
@@ -315,37 +314,37 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 LOG.debug("Timeline sink is null, skipping metric collection");
                 return;
             }
-            
+
             // Create snapshot
             MetricSnapshot snapshot = new MetricSnapshot(
                 System.currentTimeMillis(),
                 hostname,
                 appId
             );
-            
+
             // Dump all metrics from context to snapshot
             rootContext.dumpToSnapshot(snapshot);
-            
+
             // Send to Timeline
             sink.send(snapshot);
-            
+
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Sent {} metrics to Timeline", snapshot.getMetricCount());
                 LOG.debug("{}", snapshot.printAllMetrics());
             }
-            
+
         } catch (Exception e) {
             LOG.error("Failed to collect and send metrics", e);
         }
     }
-    
+
     /**
      * Loads the Timeline sink class dynamically via reflection.
-     * 
+     *
      * <p>The sink class must be available on the classpath (typically from
      * an external JAR). This allows ZooKeeper to remain independent of
      * specific metrics collection systems.</p>
-     * 
+     *
      * @param className the fully qualified class name of the sink
      * @return an instance of the sink
      * @throws ClassNotFoundException if the class cannot be found
@@ -353,18 +352,18 @@ public class TimelineMetricsProvider implements MetricsProvider {
      */
     private TimelineMetricsSink loadSink(String className) throws ClassNotFoundException, Exception {
         LOG.info("Loading Timeline sink class: {}", className);
-        
+
         try {
             Class<?> clazz = Class.forName(className);
             Object instance = clazz.getDeclaredConstructor().newInstance();
-            
+
             if (!(instance instanceof TimelineMetricsSink)) {
                 throw new IllegalArgumentException(
                     "Class " + className + " does not implement TimelineMetricsSink");
             }
-            
+
             return (TimelineMetricsSink) instance;
-            
+
         } catch (ClassNotFoundException e) {
             // Re-throw ClassNotFoundException so it can be caught separately in configure()
             throw e;
@@ -372,10 +371,10 @@ public class TimelineMetricsProvider implements MetricsProvider {
             throw new Exception("Failed to instantiate Timeline sink: " + className, e);
         }
     }
-    
+
     /**
      * Gets the local hostname.
-     * 
+     *
      * @return the hostname, or "unknown" if it cannot be determined
      */
     private String getLocalHostname() {
@@ -386,16 +385,16 @@ public class TimelineMetricsProvider implements MetricsProvider {
             return "unknown";
         }
     }
-    
+
     /**
      * Internal MetricsContext implementation that stores all metrics.
-     * 
+     *
      * <p>This context reuses existing metric implementations from zookeeper-server
      * (SimpleCounter, AvgMinMaxCounter, etc.) to ensure consistent behavior with
      * other metrics providers.</p>
      */
     private static class TimelineMetricsContext implements MetricsContext {
-        
+
         private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, SimpleCounterSet> counterSets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, Gauge> gauges = new ConcurrentHashMap<>();
@@ -404,48 +403,48 @@ public class TimelineMetricsProvider implements MetricsProvider {
         private final ConcurrentMap<String, AvgMinMaxPercentileCounter> summaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxCounterSet> basicSummarySets = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxPercentileCounterSet> summarySets = new ConcurrentHashMap<>();
-        
+
         @Override
         public MetricsContext getContext(String name) {
             // No hierarchy yet - return this
             return this;
         }
-        
+
         @Override
         public Counter getCounter(String name) {
             return counters.computeIfAbsent(name, SimpleCounter::new);
         }
-        
+
         @Override
         public CounterSet getCounterSet(String name) {
             Objects.requireNonNull(name, "Cannot register a CounterSet with null name");
             return counterSets.computeIfAbsent(name, SimpleCounterSet::new);
         }
-        
+
         @Override
         public void registerGauge(String name, Gauge gauge) {
             Objects.requireNonNull(gauge, "Cannot register a null Gauge for " + name);
             gauges.put(name, gauge);
         }
-        
+
         @Override
         public void unregisterGauge(String name) {
             gauges.remove(name);
         }
-        
+
         @Override
         public void registerGaugeSet(String name, GaugeSet gaugeSet) {
             Objects.requireNonNull(name, "Cannot register a GaugeSet with null name");
             Objects.requireNonNull(gaugeSet, "Cannot register a null GaugeSet for " + name);
             gaugeSets.put(name, gaugeSet);
         }
-        
+
         @Override
         public void unregisterGaugeSet(String name) {
             Objects.requireNonNull(name, "Cannot unregister GaugeSet with null name");
             gaugeSets.remove(name);
         }
-        
+
         @Override
         public Summary getSummary(String name, DetailLevel detailLevel) {
             if (detailLevel == DetailLevel.BASIC) {
@@ -464,7 +463,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 });
             }
         }
-        
+
         @Override
         public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
             if (detailLevel == DetailLevel.BASIC) {
@@ -483,7 +482,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 });
             }
         }
-        
+
         /**
          * Dumps all metrics to a MetricSnapshot for Timeline export.
          */
@@ -495,7 +494,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                     snapshot.addGauge(name, value.doubleValue());
                 }
             });
-            
+
             // Dump gauge sets
             gaugeSets.forEach((name, gaugeSet) ->
                 gaugeSet.values().forEach((key, value) -> {
@@ -504,42 +503,42 @@ public class TimelineMetricsProvider implements MetricsProvider {
                     }
                 })
             );
-            
+
             // Dump counters
             counters.values().forEach(counter -> {
                 counter.values().forEach((name, value) -> {
                     snapshot.addCounter(name, ((Number) value).longValue());
                 });
             });
-            
+
             // Dump counter sets
             counterSets.values().forEach(counterSet -> {
                 counterSet.values().forEach((name, value) -> {
                     snapshot.addCounter(name, ((Number) value).longValue());
                 });
             });
-            
+
             // Dump basic summaries (avg, min, max)
             basicSummaries.values().forEach(summary -> {
                 summary.values().forEach((name, value) -> {
                     snapshot.addSummary(name, ((Number) value).doubleValue());
                 });
             });
-            
+
             // Dump advanced summaries (avg, min, max, percentiles)
             summaries.values().forEach(summary -> {
                 summary.values().forEach((name, value) -> {
                     snapshot.addSummary(name, ((Number) value).doubleValue());
                 });
             });
-            
+
             // Dump basic summary sets
             basicSummarySets.values().forEach(summarySet -> {
                 summarySet.values().forEach((name, value) -> {
                     snapshot.addSummary(name, ((Number) value).doubleValue());
                 });
             });
-            
+
             // Dump advanced summary sets
             summarySets.values().forEach(summarySet -> {
                 summarySet.values().forEach((name, value) -> {
@@ -547,7 +546,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                 });
             });
         }
-        
+
         /**
          * Dumps all metrics for legacy monitoring commands.
          */
@@ -558,7 +557,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                     sink.accept(name, value);
                 }
             });
-            
+
             gaugeSets.forEach((name, gaugeSet) ->
                 gaugeSet.values().forEach((key, value) -> {
                     if (key != null) {
@@ -566,7 +565,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
                     }
                 })
             );
-            
+
             counters.values().forEach(counter -> counter.values().forEach(sink));
             counterSets.values().forEach(counterSet -> counterSet.values().forEach(sink));
             basicSummaries.values().forEach(summary -> summary.values().forEach(sink));
@@ -574,7 +573,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
             basicSummarySets.values().forEach(summarySet -> summarySet.values().forEach(sink));
             summarySets.values().forEach(summarySet -> summarySet.values().forEach(sink));
         }
-        
+
         /**
          * Resets all metrics to their initial state.
          */
@@ -587,7 +586,7 @@ public class TimelineMetricsProvider implements MetricsProvider {
             summarySets.values().forEach(AvgMinMaxPercentileCounterSet::reset);
             // No need to reset gauges - they're read-only
         }
-        
+
         /**
          * Clears all metrics from the context.
          */
