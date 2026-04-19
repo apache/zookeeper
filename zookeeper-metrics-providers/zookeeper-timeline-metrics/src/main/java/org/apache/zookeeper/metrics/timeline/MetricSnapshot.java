@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * Represents a point-in-time snapshot of ZooKeeper metrics.
- * 
+ *
  * <p>This class is a data transfer object that captures metric values at a specific
  * timestamp for export to Timeline/Ambari Metrics Collector. It contains three types
  * of metrics:</p>
@@ -31,27 +31,27 @@ import java.util.Map;
  *   <li><b>Gauges</b> - Current values that can go up or down (e.g., num_alive_connections)</li>
  *   <li><b>Summaries</b> - Computed statistics like avg, min, max, percentiles (e.g., latency_avg)</li>
  * </ul>
- * 
+ *
  * <p>Instances of this class are immutable after creation and are sent to the
  * Timeline sink for persistence and visualization.</p>
- * 
+ *
  * @see TimelineMetricsProvider
  * @see TimelineMetricsSink
  */
 public class MetricSnapshot {
-    
+
     private final long timestamp;
     private final String hostname;
     private final String appId;
-    
+
     // Separate collections for different metric types
     private final Map<String, Long> counters = new HashMap<>();
     private final Map<String, Double> gauges = new HashMap<>();
     private final Map<String, Double> summaries = new HashMap<>();
-    
+
     /**
      * Creates a new metric snapshot.
-     * 
+     *
      * @param timestamp the timestamp in milliseconds since epoch
      * @param hostname the hostname of the ZooKeeper server
      * @param appId the application ID (typically "zookeeper")
@@ -61,119 +61,119 @@ public class MetricSnapshot {
         this.hostname = hostname;
         this.appId = appId;
     }
-    
+
     /**
      * Adds a counter metric to the snapshot.
-     * 
+     *
      * <p>Counters represent monotonically increasing values such as total requests,
      * total bytes received, etc.</p>
-     * 
+     *
      * @param name the metric name
      * @param value the counter value
      */
     public void addCounter(String name, long value) {
         counters.put(name, value);
     }
-    
+
     /**
      * Adds a gauge metric to the snapshot.
-     * 
+     *
      * <p>Gauges represent current values that can increase or decrease, such as
      * number of active connections, queue size, etc.</p>
-     * 
+     *
      * @param name the metric name
      * @param value the gauge value
      */
     public void addGauge(String name, double value) {
         gauges.put(name, value);
     }
-    
+
     /**
      * Adds a summary metric to the snapshot.
-     * 
+     *
      * <p>Summaries represent computed statistics such as averages, minimums, maximums,
      * and percentiles. The existing {@link org.apache.zookeeper.server.metric.AvgMinMaxCounter}
      * and {@link org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter} classes
      * already compute these values and provide them as separate metrics (e.g., "latency_avg",
      * "latency_min", "latency_max", "latency_p99").</p>
-     * 
+     *
      * @param name the metric name (e.g., "request_latency_avg")
      * @param value the computed statistic value
      */
     public void addSummary(String name, double value) {
         summaries.put(name, value);
     }
-    
+
     /**
      * Returns the total number of metrics in this snapshot.
-     * 
+     *
      * @return the sum of counters, gauges, and summaries
      */
     public int getMetricCount() {
         return counters.size() + gauges.size() + summaries.size();
     }
-    
+
     /**
      * Returns the timestamp of this snapshot.
-     * 
+     *
      * @return timestamp in milliseconds since epoch
      */
     public long getTimestamp() {
         return timestamp;
     }
-    
+
     /**
      * Returns the hostname of the ZooKeeper server.
-     * 
+     *
      * @return the hostname
      */
     public String getHostname() {
         return hostname;
     }
-    
+
     /**
      * Returns the application ID.
-     * 
+     *
      * @return the application ID (typically "zookeeper")
      */
     public String getAppId() {
         return appId;
     }
-    
+
     /**
      * Returns all counter metrics in this snapshot.
-     * 
-     * @return an unmodifiable view of the counters map
+     *
+     * @return a view of the counters map
      */
     public Map<String, Long> getCounters() {
         return counters;
     }
-    
+
     /**
      * Returns all gauge metrics in this snapshot.
-     * 
-     * @return an unmodifiable view of the gauges map
+     *
+     * @return a view of the gauges map
      */
     public Map<String, Double> getGauges() {
         return gauges;
     }
-    
+
     /**
      * Returns all summary metrics in this snapshot.
-     * 
-     * @return an unmodifiable view of the summaries map
+     *
+     * @return a view of the summaries map
      */
     public Map<String, Double> getSummaries() {
         return summaries;
     }
-    
+
     @Override
     public String toString() {
-        return String.format("MetricSnapshot{timestamp=%d, hostname='%s', appId='%s', " +
-            "counters=%d, gauges=%d, summaries=%d}",
+        return String.format("MetricSnapshot{timestamp=%d, hostname='%s', appId='%s', "
+            + "counters=%d, gauges=%d, summaries=%d}",
             timestamp, hostname, appId, counters.size(), gauges.size(), summaries.size());
     }
-    
+
     /**
      * Helper method to repeat a character n times (Java 8 compatible).
      */
@@ -184,13 +184,13 @@ public class MetricSnapshot {
         }
         return sb.toString();
     }
-    
+
     /**
      * Prints all metrics in this snapshot to a formatted string.
-     * 
+     *
      * <p>This method is useful for debugging and logging. It prints all counters,
      * gauges, and summaries in a human-readable format.</p>
-     * 
+     *
      * @return a formatted string containing all metrics
      */
     public String printAllMetrics() {
