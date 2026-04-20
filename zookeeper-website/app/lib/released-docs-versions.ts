@@ -67,3 +67,26 @@ import { RAW_RELEASED_DOC_VERSIONS } from "virtual:released-docs-versions";
 export const RELEASED_DOC_VERSIONS: string[] = sortVersionsDesc(
   RAW_RELEASED_DOC_VERSIONS
 );
+
+export function getReleasedDocVersions(): string[] {
+  if (typeof window !== "undefined") {
+    const override = window.localStorage.getItem(
+      "__released_doc_versions_override__"
+    );
+    if (override) {
+      try {
+        const parsed = JSON.parse(override);
+        if (
+          Array.isArray(parsed) &&
+          parsed.every((value) => typeof value === "string")
+        ) {
+          return sortVersionsDesc(parsed);
+        }
+      } catch {
+        // Ignore invalid test overrides and fall back to build-time data.
+      }
+    }
+  }
+
+  return RELEASED_DOC_VERSIONS;
+}

@@ -26,18 +26,24 @@ import {
   CommandItem,
   CommandList
 } from "@/ui/command";
-import { RELEASED_DOC_VERSIONS } from "@/lib/released-docs-versions";
+import { getReleasedDocVersions } from "@/lib/released-docs-versions";
+
+interface OlderDocsVersionsProps {
+  versions?: string[];
+}
 
 /** Shared Command palette (search + list), used in both the
  *  sidebar popover and the navbar sub-menu. */
-export function OlderDocsVersionList() {
+export function OlderDocsVersionList({
+  versions = getReleasedDocVersions()
+}: OlderDocsVersionsProps) {
   return (
     <Command filter={(value, search) => (value.includes(search) ? 1 : 0)}>
       <CommandInput placeholder="Search version..." />
       <CommandList>
         <CommandEmpty>No versions found</CommandEmpty>
         <CommandGroup>
-          {RELEASED_DOC_VERSIONS.map((version) => (
+          {versions.map((version) => (
             <CommandItem key={version} value={version} asChild>
               <a href={`/released-docs/r${version}/index.html`}>{version}</a>
             </CommandItem>
@@ -49,7 +55,7 @@ export function OlderDocsVersionList() {
 }
 
 /** Sidebar variant — Popover that opens to the right of the trigger button. */
-export function OlderDocsPicker() {
+export function OlderDocsPicker({ versions }: OlderDocsVersionsProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -66,7 +72,7 @@ export function OlderDocsPicker() {
         className="w-56 p-0"
         aria-label="Older documentation versions"
       >
-        <OlderDocsVersionList />
+        <OlderDocsVersionList versions={versions} />
       </PopoverContent>
     </Popover>
   );

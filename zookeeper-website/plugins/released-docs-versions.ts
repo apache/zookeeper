@@ -16,12 +16,36 @@
 // limitations under the License.
 //
 
-import { readdirSync } from "fs";
+import { readdirSync, type Dirent } from "fs";
 import { resolve } from "path";
 import type { Plugin } from "vite";
 
 const VIRTUAL_ID = "virtual:released-docs-versions";
 const RESOLVED_ID = "\0" + VIRTUAL_ID;
+const RELEASED_DOCS_DIR = resolve(__dirname, "../public/released-docs");
+
+type ReleasedDocsDirEntry = Pick<Dirent, "name" | "isDirectory">;
+
+export function extractReleasedDocsVersions(
+  entries: ReleasedDocsDirEntry[]
+): string[] {
+  return entries
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith("r"))
+    .map((entry) => entry.name.slice(1));
+}
+
+export function getReleasedDocsVersions(dir = RELEASED_DOCS_DIR): string[] {
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    return extractReleasedDocsVersions(entries);
+  } catch (error) {
+    const maybeFsError = error as NodeJS.ErrnoException;
+    if (maybeFsError.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+}
 
 export function releasedDocsVersionsPlugin(): Plugin {
   return {
@@ -31,10 +55,7 @@ export function releasedDocsVersionsPlugin(): Plugin {
     },
     load(id) {
       if (id !== RESOLVED_ID) return;
-      const dir = resolve(__dirname, "../public/released-docs");
-      const folders = readdirSync(dir, { withFileTypes: true })
-        .filter((d) => d.isDirectory() && d.name.startsWith("r"))
-        .map((d) => d.name.slice(1)); // strip leading "r"
+      const folders = getReleasedDocsVersions();
       return `export const RAW_RELEASED_DOC_VERSIONS = ${JSON.stringify(folders)};`;
     }
   };

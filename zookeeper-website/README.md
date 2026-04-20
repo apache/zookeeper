@@ -386,7 +386,17 @@ Generated files are located under the `build/` directory.
 
 ### Maven Integration
 
-The website is integrated with the Apache ZooKeeper Maven build system using the `frontend-maven-plugin`. The website is configured to build **only during site generation** (`mvn site`) and will not build during regular Maven lifecycle phases like `mvn clean install`.
+The website is integrated into the Apache ZooKeeper Maven build through two POMs:
+
+- The repository root `pom.xml` includes `zookeeper-website` as a Maven module.
+- `zookeeper-website/pom.xml` owns the website-specific build and configures `frontend-maven-plugin`.
+
+The frontend plugin is intentionally bound only to the Maven `site` lifecycle:
+
+- `pre-site` installs Node.js/npm and runs `npm install`
+- `site` runs the website CI command
+
+Because of that, the website is built **only during site generation** (`mvn site`) and is skipped during regular Maven lifecycle phases such as `mvn clean install`.
 
 #### When the Website Builds
 
@@ -404,7 +414,7 @@ The website will **NOT** build during regular commands like:
 
 This keeps regular ZooKeeper builds fast while still allowing the website to be generated when needed.
 
-#### What Gets Executed During `mvn site`
+#### What the Website POM Does During `mvn site`
 
 When you run `mvn site`, the website module automatically:
 
@@ -452,7 +462,7 @@ mvn clean install
 **Build the Website:**
 
 ```bash
-# From ZooKeeper root or zookeeper-website directory
+# From ZooKeeper root directory
 mvn site
 ```
 
@@ -470,18 +480,21 @@ This runs `npm run ci-skip-tests` for the website module.
 **Build Website Only:**
 
 ```bash
-# From zookeeper-website directory
+# From ZooKeeper root directory
+mvn -pl zookeeper-website site
+
+# Or from the website module directory
 cd zookeeper-website
-mvn clean install
+mvn site
 ```
 
 **Skip Website Build:**
 
-If you want to build ZooKeeper but skip the website:
+If you are running the Maven `site` lifecycle but want to disable the website frontend build:
 
 ```bash
-# From ZooKeeper root directory
-mvn clean install -DskipSite
+# From ZooKeeper root or zookeeper-website directory
+mvn site -DskipSite
 ```
 
 ### Deployment

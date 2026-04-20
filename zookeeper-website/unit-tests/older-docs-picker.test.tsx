@@ -26,6 +26,8 @@ import {
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
 
+const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.0-beta"];
+
 describe("sortVersionsDesc", () => {
   it("sorts stable versions newest first", () => {
     const result = sortVersionsDesc(["3.7.0", "3.9.0", "3.8.0"]);
@@ -56,21 +58,11 @@ describe("sortVersionsDesc", () => {
 });
 
 describe("RELEASED_DOC_VERSIONS", () => {
-  it("is a non-empty array of strings", () => {
+  it("is an array of strings", () => {
     expect(Array.isArray(RELEASED_DOC_VERSIONS)).toBe(true);
-    expect(RELEASED_DOC_VERSIONS.length).toBeGreaterThan(0);
-  });
-
-  it("starts with the highest version", () => {
-    const sorted = sortVersionsDesc([...RELEASED_DOC_VERSIONS]);
-    expect(RELEASED_DOC_VERSIONS[0]).toBe(sorted[0]);
-  });
-
-  it("ends with the lowest version", () => {
-    const sorted = sortVersionsDesc([...RELEASED_DOC_VERSIONS]);
-    expect(RELEASED_DOC_VERSIONS[RELEASED_DOC_VERSIONS.length - 1]).toBe(
-      sorted[sorted.length - 1]
-    );
+    RELEASED_DOC_VERSIONS.forEach((version) => {
+      expect(typeof version).toBe("string");
+    });
   });
 
   it("is already sorted newest to oldest", () => {
@@ -81,20 +73,26 @@ describe("RELEASED_DOC_VERSIONS", () => {
 
 describe("OlderDocsPicker", () => {
   it("renders the trigger button", () => {
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
     expect(
       screen.getByRole("button", { name: /older docs/i })
     ).toBeInTheDocument();
   });
 
   it("does not show the version list before the button is clicked", () => {
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("opens the popover and shows a search combobox on trigger click", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
 
     await user.click(screen.getByRole("button", { name: /older docs/i }));
 
@@ -105,7 +103,9 @@ describe("OlderDocsPicker", () => {
 
   it("shows all versions when popover is open", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
 
     await user.click(screen.getByRole("button", { name: /older docs/i }));
 
@@ -114,12 +114,14 @@ describe("OlderDocsPicker", () => {
     });
 
     const items = screen.getAllByRole("option");
-    expect(items.length).toBe(RELEASED_DOC_VERSIONS.length);
+    expect(items.length).toBe(MOCK_RELEASED_DOC_VERSIONS.length);
   });
 
   it("filters versions by search query", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
 
     await user.click(screen.getByRole("button", { name: /older docs/i }));
 
@@ -137,7 +139,9 @@ describe("OlderDocsPicker", () => {
 
   it("shows 'No versions found' when search has no matches", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
 
     await user.click(screen.getByRole("button", { name: /older docs/i }));
 
@@ -151,7 +155,9 @@ describe("OlderDocsPicker", () => {
 
   it("each version links to the correct /released-docs/ path", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
 
     await user.click(screen.getByRole("button", { name: /older docs/i }));
 
@@ -167,9 +173,22 @@ describe("OlderDocsPicker", () => {
     });
   });
 
+  it("shows an empty state when no older docs are available", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<OlderDocsPicker versions={[]} />);
+
+    await user.click(screen.getByRole("button", { name: /older docs/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/no versions found/i)).toBeInTheDocument();
+    });
+  });
+
   it("clears search when popover is reopened", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<OlderDocsPicker />);
+    renderWithProviders(
+      <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />
+    );
 
     const trigger = screen.getByRole("button", { name: /older docs/i });
 

@@ -17,30 +17,93 @@
 //
 
 import { describe, it, expect } from "vitest";
-import { readdirSync } from "fs";
-import { resolve } from "path";
+import { mkdtempSync, rmSync } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
 import { RAW_RELEASED_DOC_VERSIONS } from "virtual:released-docs-versions";
 import {
   RELEASED_DOC_VERSIONS,
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
+import {
+  extractReleasedDocsVersions,
+  getReleasedDocsVersions
+} from "../plugins/released-docs-versions";
 
-// Read the real filesystem so we can cross-check the virtual module output.
-const RELEASED_DOCS_DIR = resolve(__dirname, "../public/released-docs");
-const ACTUAL_FOLDERS = readdirSync(RELEASED_DOCS_DIR, { withFileTypes: true })
-  .filter((d) => d.isDirectory() && d.name.startsWith("r"))
-  .map((d) => d.name.slice(1)); // strip leading "r"
+const MOCK_RELEASED_DOC_VERSIONS = ["3.9.4", "3.10.0", "3.9.0-beta", "3.8.12"];
 
-describe("virtual:released-docs-versions plugin", () => {
-  it("exposes a non-empty array", () => {
-    expect(Array.isArray(RAW_RELEASED_DOC_VERSIONS)).toBe(true);
-    expect(RAW_RELEASED_DOC_VERSIONS.length).toBeGreaterThan(0);
+function mockDirEntry(name: string, isDirectory: boolean) {
+  return {
+    name,
+    isDirectory: () => isDirectory
+  };
+}
+
+describe("extractReleasedDocsVersions", () => {
+  it("strips the leading 'r' prefix from mocked release directories", () => {
+    const versions = extractReleasedDocsVersions([
+      mockDirEntry("r3.9.4", true),
+      mockDirEntry("r3.10.0-beta", true)
+    ]);
+
+    expect(versions).toEqual(["3.9.4", "3.10.0-beta"]);
   });
 
-  it("matches exactly the directories present in public/released-docs/", () => {
-    expect(RAW_RELEASED_DOC_VERSIONS.slice().sort()).toEqual(
-      ACTUAL_FOLDERS.slice().sort()
-    );
+  it("ignores non-release folders and loose files from mocked entries", () => {
+    const versions = extractReleasedDocsVersions([
+      mockDirEntry("r3.9.4", true),
+      mockDirEntry("draft-docs", true),
+      mockDirEntry("r3.8.0", false),
+      mockDirEntry("README.md", false)
+    ]);
+
+    expect(versions).toEqual(["3.9.4"]);
+  });
+});
+
+describe("getReleasedDocsVersions", () => {
+  it("returns an empty array when the released-docs directory is missing", () => {
+    const missingDir = join(tmpdir(), `released-docs-missing-${Date.now()}`);
+
+    expect(getReleasedDocsVersions(missingDir)).toEqual([]);
+  });
+
+  it("returns an empty array for an empty released-docs directory", () => {
+    const emptyDir = mkdtempSync(join(tmpdir(), "released-docs-empty-"));
+
+    try {
+      expect(getReleasedDocsVersions(emptyDir)).toEqual([]);
+    } finally {
+      rmSync(emptyDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("sortVersionsDesc with mocked released-docs versions", () => {
+  it("places the numerically highest version first", () => {
+    const sorted = sortVersionsDesc(MOCK_RELEASED_DOC_VERSIONS);
+    expect(sorted[0]).toBe("3.10.0");
+  });
+
+  it("places the numerically lowest version last", () => {
+    const sorted = sortVersionsDesc(MOCK_RELEASED_DOC_VERSIONS);
+    expect(sorted.at(-1)).toBe("3.8.12");
+  });
+
+  it("keeps each consecutive pair in descending order", () => {
+    const sorted = sortVersionsDesc(MOCK_RELEASED_DOC_VERSIONS);
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const [a, b] = [sorted[i], sorted[i + 1]];
+      const [first] = sortVersionsDesc([a, b]);
+      expect(first).toBe(a);
+    }
+  });
+});
+
+describe("virtual:released-docs-versions plugin", () => {
+  it("exposes an array", () => {
+    expect(Array.isArray(RAW_RELEASED_DOC_VERSIONS)).toBe(true);
   });
 
   it("strips the leading 'r' prefix from every folder name", () => {
@@ -52,14 +115,6 @@ describe("virtual:released-docs-versions plugin", () => {
   it("contains no empty strings", () => {
     RAW_RELEASED_DOC_VERSIONS.forEach((v) => {
       expect(v.length).toBeGreaterThan(0);
-    });
-  });
-
-  it("only includes directory entries, not loose files", () => {
-    // Every raw entry must correspond to a directory named r{version}
-    const folderSet = new Set(ACTUAL_FOLDERS);
-    RAW_RELEASED_DOC_VERSIONS.forEach((v) => {
-      expect(folderSet.has(v)).toBe(true);
     });
   });
 
@@ -81,24 +136,5 @@ describe("RELEASED_DOC_VERSIONS (sorted output)", () => {
     expect(RELEASED_DOC_VERSIONS.slice().sort()).toEqual(
       RAW_RELEASED_DOC_VERSIONS.slice().sort()
     );
-  });
-
-  it("first entry is the numerically highest version", () => {
-    const [first, ...rest] = RELEASED_DOC_VERSIONS;
-    const refirst = sortVersionsDesc([first, ...rest])[0];
-    expect(first).toBe(refirst);
-  });
-
-  it("last entry is the numerically lowest version", () => {
-    const sorted = sortVersionsDesc([...RELEASED_DOC_VERSIONS]);
-    expect(RELEASED_DOC_VERSIONS.at(-1)).toBe(sorted.at(-1));
-  });
-
-  it("each consecutive pair is in descending order", () => {
-    for (let i = 0; i < RELEASED_DOC_VERSIONS.length - 1; i++) {
-      const [a, b] = [RELEASED_DOC_VERSIONS[i], RELEASED_DOC_VERSIONS[i + 1]];
-      const [first] = sortVersionsDesc([a, b]);
-      expect(first).toBe(a);
-    }
   });
 });

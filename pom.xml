@@ -57,7 +57,7 @@
   </licenses>
 
   <modules>
-    <module>zookeeper-docs</module>
+    <module>zookeeper-website</module>
     <module>zookeeper-jute</module>
     <module>zookeeper-server</module>
     <module>zookeeper-metrics-providers</module>
