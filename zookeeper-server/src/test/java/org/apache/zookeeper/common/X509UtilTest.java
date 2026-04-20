@@ -730,7 +730,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         // Verify client hostname too
         System.setProperty(x509Util.getSslClientHostnameVerificationEnabledProperty(), "true");
         ZKConfig zkConfig = new ZKConfig();
-        try (ClientX509Util clientX509Util = new ClientX509Util();) {
+        try (ClientNettyX509Util clientX509Util = new ClientNettyX509Util();) {
             UnpooledByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false);
             SslContext clientContext = clientX509Util.createNettySslContextForClient(zkConfig);
             SSLEngine clientEngine = clientContext.newEngine(byteBufAllocator);
