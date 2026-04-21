@@ -62,7 +62,6 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ClientNettyX509Util;
-import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.NettyUtils;
 import org.apache.zookeeper.common.X509Exception;
