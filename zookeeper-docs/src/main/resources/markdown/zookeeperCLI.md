@@ -46,11 +46,13 @@ ZooKeeper -server host:port cmd args
 	deleteall path
 	delquota [-n|-b|-N|-B] path
 	exit
+	export path filepath
 	get [-s] [-w] path
 	getAcl [-s] path
 	getAllChildrenNumber path
 	getEphemerals path
 	history
+	import path filepath
 	listquota path
 	ls [-s] [-w] [-R] path
 	printwatches on|off
@@ -194,8 +196,15 @@ Delete the quota under a path
 [zkshell: 4] delquota -N /c2
 [zkshell: 5] delquota -b /c3
 [zkshell: 6] delquota -B /c4
-
 ```
+
+## export
+Download the contents of a znode to an external file
+
+```bash
+[zkshell: 1] export /zookeeper/config path/to/config.txt
+```
+
 ## get
 Get the data of the specific path
 
@@ -283,6 +292,13 @@ Showing the history about the recent 11 commands that you have executed
 	5 - ls /
 	6 - ll
 	7 - history
+```
+
+## import
+Upload the contents of an external file to a znode, replacing the znode's previous contents
+
+```bash
+[zkshell: 1] import /zookeeper/config path/to/config.txt
 ```
 
 ## listquota
