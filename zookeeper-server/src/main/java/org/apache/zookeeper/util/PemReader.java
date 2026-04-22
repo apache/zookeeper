@@ -49,7 +49,6 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import javax.security.auth.x500.X500Principal;
 
 /**
  * Note: this class is copied from io.airlift.security.pem.PemReader (see
@@ -93,8 +92,13 @@ public final class PemReader {
 
         List<X509Certificate> certificateChain = readCertificateChain(certificateChainFile);
         for (X509Certificate certificate : certificateChain) {
-            X500Principal principal = certificate.getSubjectX500Principal();
-            keyStore.setCertificateEntry(principal.getName("RFC2253"), certificate);
+            String subject = certificate.getSubjectX500Principal().getName("RFC2253");
+            String alias = subject;
+            // Append a suffix alias-1, alias-2 ... if the same alias (subject) already exists.
+            for (int i = 1; keyStore.containsAlias(alias); i++) {
+                alias = subject + "-" + i;
+            }
+            keyStore.setCertificateEntry(alias, certificate);
         }
         return keyStore;
     }
