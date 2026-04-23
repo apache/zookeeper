@@ -305,8 +305,8 @@ This starts a local development server with:
 
 **Update the 404 page:**
 
-- Edit the content in `app/routes/404.tsx`.
-- Apache 404 handling lives in `public/.htaccess` (uses `ErrorDocument 404 /404`).
+- Edit the content in `app/routes/_landing/404.tsx`.
+- Apache 404 handling lives in `public/.htaccess` (uses `ErrorDocument 404 /404/index.html`).
 
 **Check code quality:**
 

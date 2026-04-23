@@ -46,7 +46,7 @@ All of the volunteers who are contributing time, code, documentation, or resourc
 
 The project's committers are responsible for the project's technical management. Committers have access to a specified set of subproject's repositories. Committers on subprojects may cast binding votes on any technical discussion regarding that subproject.
 
-Committer access is by invitation only and must be approved by lazy consensus of the active PMC members. A Committer is considered emeritus by his or her own declaration or by not reviewing patches or commiting patches to the project for over six months. An emeritus committer may request reinstatement of commit access from the PMC which must be approved by lazy consensus of the active PMC members.
+Committer access is by invitation only and must be approved by lazy consensus of the active PMC members. A Committer is considered emeritus by his or her own declaration or by not reviewing patches or committing patches to the project for over six months. An emeritus committer may request reinstatement of commit access from the PMC which must be approved by lazy consensus of the active PMC members.
 
 Commit access can be revoked by a unanimous vote of all the active PMC members (except the committer in question if he or she is also a PMC member).
 

@@ -90,14 +90,14 @@ const renderer = toClientRenderer(
     const route = useParams()["*"];
     const baseGithubPath = "zookeeper-docs/app/pages/_docs/docs/_mdx/";
 
-    const grouppedRoutes = [
+    const groupedRoutes = [
       "developer/programmers-guide",
       "admin-ops/administrators-guide"
     ];
     const trimmedRoute = route?.endsWith("/") ? route?.slice(0, -1) : route;
     const mdxFileRoute = `${trimmedRoute === "" ? "index" : trimmedRoute}.mdx`;
-    const isGrouppedRoute =
-      !!trimmedRoute && grouppedRoutes.includes(trimmedRoute);
+    const isGroupedRoute =
+      !!trimmedRoute && groupedRoutes.includes(trimmedRoute);
     const displayTitle = pageTitle ?? frontmatter.title;
     const displayDescription = pageDescription ?? frontmatter.description;
 
@@ -124,8 +124,8 @@ const renderer = toClientRenderer(
         <FumaDocsDescription>{displayDescription}</FumaDocsDescription>
         <FumaDocsBody>
           <Mdx components={mdxComponents} />
-          {route !== undefined && isGrouppedRoute && (
-            // table of content for groupped routes
+          {route !== undefined && isGroupedRoute && (
+            // table of content for grouped routes
             <div className="flex flex-col">
               <p>In this section:</p>
               <Cards>
