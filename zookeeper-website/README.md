@@ -307,6 +307,12 @@ This starts a local development server with:
 
 - Edit the content in `app/routes/_landing/404.tsx`.
 - Apache 404 handling lives in `public/.htaccess` (uses `ErrorDocument 404 /404/index.html`).
+- Keep `public/robots.txt` disallowing `/404/` so the error page is not indexed.
+
+**Update sitemap generation:**
+
+- Edit `scripts/generate-sitemap.ts` and its tests in `scripts/generate-sitemap.test.ts`.
+- `npm run build` generates `build/client/sitemap.xml`, and `public/robots.txt` should keep pointing at the production sitemap URL.
 
 **Check code quality:**
 

@@ -16,3 +16,11 @@
 # under the License.
 
 ErrorDocument 404 /404/index.html
+
+<IfModule mod_headers.c>
+  Header always set Cache-Control "no-cache, must-revalidate"
+
+  <FilesMatch "\.(?:css|js|mjs|gif|ico|jpe?g|png|svg|webp|avif|woff2?|ttf|otf|eot|pdf)$">
+    Header always set Cache-Control "public, max-age=2592000, immutable"
+  </FilesMatch>
+</IfModule>

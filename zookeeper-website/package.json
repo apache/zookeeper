@@ -6,7 +6,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "react-router build",
+    "build": "react-router build && npm run generate-sitemap",
     "dev": "react-router dev",
     "start": "serve -s build/client -l 5173",
     "typecheck": "react-router typegen && tsc",
@@ -22,6 +22,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "fumadocs-init": "fumadocs-mdx",
+    "generate-sitemap": "tsx scripts/generate-sitemap.ts",
     "ci": "npm run fumadocs-init && npm run lint && npm run typecheck && npm run test:unit:run && npm run build && npx playwright install && npm run test:e2e",
     "ci-skip-tests": "npm run fumadocs-init && npm run build"
   },
@@ -71,6 +72,7 @@
     "remark-heading-id": "^1.0.1",
     "remark-math": "^6.0.0",
     "scroll-into-view-if-needed": "^3.1.0",
+    "sitemap": "^9.0.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   },
