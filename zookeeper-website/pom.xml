@@ -44,6 +44,16 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <excludes combine.children="append">
+            <exclude>**/*.mdx</exclude>
+            <exclude>public/robots.txt</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
         <configuration>
@@ -63,7 +73,7 @@
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
         <version>1.15.1</version>
-        <configuration>
+      <configuration>
           <installDirectory>${project.build.directory}</installDirectory>
           <workingDirectory>${project.basedir}</workingDirectory>
         </configuration>

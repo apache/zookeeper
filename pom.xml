@@ -1073,7 +1073,6 @@
         <configuration>
           <excludes>
             <exclude>**/README.md</exclude>
-            <exclude>**/*.mdx</exclude>
             <exclude>**/findbugsExcludeFile.xml</exclude>
             <exclude>**/checkstyle-noframes-sorted.xsl</exclude>
             <exclude>**/configure.ac</exclude>
