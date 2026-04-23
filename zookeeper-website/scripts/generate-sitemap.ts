@@ -29,7 +29,7 @@ const SITE_URL = "https://zookeeper.apache.org";
 const EXCLUDED_HTML_PATHS = new Set([
   "404.html",
   "404/index.html",
-  "__spa-fallback.html",
+  "__spa-fallback.html"
 ]);
 
 const REDIRECT_PAGE_PATTERNS = [
