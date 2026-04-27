@@ -1579,7 +1579,6 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
         - 1. Regenerate `superDigest` when migrating to new algorithm.
         - 2. `SetAcl` for a znode which already had a digest auth of old algorithm.
 
-
 * *IPAuthenticationProvider.usexforwardedfor* :
     (Java system property: **zookeeper.IPAuthenticationProvider.usexforwardedfor**)
     **New in 3.9.3:**
@@ -1590,9 +1589,10 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     When `usexforwardedfor` is enabled, ZooKeeper will prefer the `X-Forwarded-For` 
     header over the `Host` header when determining the client IP address for authentication 
     purposes. 
+    
     Default value is **false**
 
-    <br/>**Security Warning**
+    **Security Warning**
 
     Enabling `usexforwardedfor` introduces significant security risks unless ZooKeeper 
     is deployed strictly behind trusted, controlled proxy infrastructure:
@@ -1605,7 +1605,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     - A malicious client may impersonate any IP address, potentially bypassing IP-based 
     authentication and ZooKeeper ACL restrictions entirely.
 
-    <br/>**Recommendation**
+    **Recommendation**
 
     Enable this setting **only** when:
     - ZooKeeper is accessible exclusively through trusted reverse proxies or load balancers
@@ -1614,7 +1614,6 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
     For most deployments, leaving this property disabled is strongly recommended to preserve 
     the integrity of IP-based access controls.
-
 
 * *X509AuthenticationProvider.superUser* :
     (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)
