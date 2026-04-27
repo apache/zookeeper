@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.auth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.zookeeper.KeeperException;
