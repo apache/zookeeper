@@ -39,8 +39,20 @@ jobs:
         java-version: 11
         distribution: temurin
         cache: 'maven'
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: zookeeper-website/package-lock.json
     - name: Show the first log message
       run: git log -n1
+    - name: Install website npm dependencies
+      working-directory: zookeeper-website
+      run: npm ci
+    - name: Install Playwright browsers and system dependencies
+      working-directory: zookeeper-website
+      run: npx playwright install --with-deps
     - name: Build website with Maven site
       run: mvn -B -V -e -ntp "-Dstyle.color=always" -pl zookeeper-website site
       env:
