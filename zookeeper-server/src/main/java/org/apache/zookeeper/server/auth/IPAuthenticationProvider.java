@@ -259,7 +259,8 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         if (xForwardedForHeader == null) {
             return request.getRemoteAddr();
         }
-        // the format of the field is: X-Forwarded-For: client, proxy1, proxy2 ...
-        return new StringTokenizer(xForwardedForHeader, ",").nextToken().trim();
+        // return the rightmost IP address in the X-Forwarded-For chain
+        String[] tokens = xForwardedForHeader.split(",");
+        return tokens[tokens.length - 1];
     }
 }
