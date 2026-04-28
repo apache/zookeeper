@@ -81,7 +81,7 @@ public final class ExportCommand extends CliCommand {
         try {
             Files.write(Paths.get(filepath), data);
         } catch (IOException ex) {
-            throw new CliWrapperException("Unable to write data to file \"" + filepath + "\"", ex);
+            throw new CliException("Unable to write data to file \"" + filepath + "\"", ex);
         }
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);

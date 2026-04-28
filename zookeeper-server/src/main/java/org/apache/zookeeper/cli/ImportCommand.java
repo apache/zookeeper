@@ -70,7 +70,7 @@ public final class ImportCommand extends CliCommand {
         try {
             data = Files.readAllBytes(Paths.get(filepath));
         } catch (IOException ex) {
-            throw new CliWrapperException("Unable to read data from file \"" + filepath + "\"", ex);
+            throw new CliException("Unable to read data from file \"" + filepath + "\"", ex);
         }
         int version;
         if (cl.hasOption("v")) {
