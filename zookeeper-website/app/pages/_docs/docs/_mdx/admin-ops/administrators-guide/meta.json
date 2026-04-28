@@ -1,0 +1,12 @@
+{
+  "title": "Administrator's Guide",
+  "pages": [
+    "deployment",
+    "administration",
+    "configuration-parameters",
+    "communication-using-the-netty-framework",
+    "commands",
+    "data-file-management",
+    "best-practices"
+  ]
+}

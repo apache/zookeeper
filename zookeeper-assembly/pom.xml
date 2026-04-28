@@ -50,7 +50,7 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper-docs</artifactId>
+      <artifactId>zookeeper-website</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
     </dependency>
