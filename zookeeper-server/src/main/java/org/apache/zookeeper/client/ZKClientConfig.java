@@ -21,6 +21,7 @@ package org.apache.zookeeper.client;
 import java.io.File;
 import java.nio.file.Path;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.ZKConfig;
 
@@ -59,6 +60,7 @@ public class ZKClientConfig extends ZKConfig {
      * Feature is disabled by default.
      */
     public static final long ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT = 0;
+    private static final String ZOOKEEPER_PREFIX = "zookeeper.";
     public static final String ZK_SASL_CLIENT_ALLOW_REVERSE_DNS = "zookeeper.sasl.client.allowReverseDnsLookup";
     public static final boolean ZK_SASL_CLIENT_ALLOW_REVERSE_DNS_DEFAULT = false;
     /**
@@ -107,6 +109,12 @@ public class ZKClientConfig extends ZKConfig {
         super(configPath);
     }
 
+    @Override
+    public void addConfiguration(Path configPath) throws ConfigException {
+        super.addConfiguration(configPath);
+        applyServerSslConfiguration();
+    }
+
     /**
      * Initialize all the ZooKeeper client properties which are configurable as
      * java system property
@@ -137,6 +145,43 @@ public class ZKClientConfig extends ZKConfig {
         setProperty(SECURE_CLIENT, System.getProperty(SECURE_CLIENT));
         setProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS, System.getProperty(ZK_SASL_CLIENT_ALLOW_REVERSE_DNS));
         setProperty(DNS_SRV_REFRESH_INTERVAL_SECONDS, System.getProperty(DNS_SRV_REFRESH_INTERVAL_SECONDS));
+    }
+
+    private void applyServerSslConfiguration() {
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            copyServerSslProperty(clientX509Util.getSslProtocolProperty());
+            copyServerSslProperty(clientX509Util.getSslEnabledProtocolsProperty());
+            copyServerSslProperty(clientX509Util.getSslCipherSuitesProperty());
+            copyServerSslProperty(clientX509Util.getSslKeystoreLocationProperty());
+            copyServerSslProperty(clientX509Util.getSslKeystorePasswdProperty());
+            copyServerSslProperty(clientX509Util.getSslKeystorePasswdPathProperty());
+            copyServerSslProperty(clientX509Util.getSslKeystoreTypeProperty());
+            copyServerSslProperty(clientX509Util.getSslTruststoreLocationProperty());
+            copyServerSslProperty(clientX509Util.getSslTruststorePasswdProperty());
+            copyServerSslProperty(clientX509Util.getSslTruststorePasswdPathProperty());
+            copyServerSslProperty(clientX509Util.getSslTruststoreTypeProperty());
+            copyServerSslProperty(clientX509Util.getSslContextSupplierClassProperty());
+            copyServerSslProperty(clientX509Util.getSslHostnameVerificationEnabledProperty());
+            copyServerSslProperty(clientX509Util.getSslCrlEnabledProperty());
+            copyServerSslProperty(clientX509Util.getSslOcspEnabledProperty());
+            copyServerSslProperty(clientX509Util.getSslClientAuthProperty());
+            copyServerSslProperty(clientX509Util.getSslHandshakeDetectionTimeoutMillisProperty());
+            copyServerSslProperty(clientX509Util.getSslAuthProviderProperty());
+        }
+    }
+
+    private void copyServerSslProperty(String clientProperty) {
+        if (clientProperty == null || getProperty(clientProperty) != null) {
+            return;
+        }
+        if (!clientProperty.startsWith(ZOOKEEPER_PREFIX)) {
+            return;
+        }
+        String serverProperty = clientProperty.substring(ZOOKEEPER_PREFIX.length());
+        String serverValue = getProperty(serverProperty);
+        if (serverValue != null) {
+            setProperty(clientProperty, serverValue);
+        }
     }
 
     /**
