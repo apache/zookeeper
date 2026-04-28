@@ -292,4 +292,20 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
                 }
         };
     }
+
+    @Test
+    public void testPortUnification() throws Exception {
+        int unifiedPort = 5400;
+        Properties configuration = new Properties();
+        configuration.setProperty("httpsPort", String.valueOf(unifiedPort));
+        configuration.setProperty("httpPort", String.valueOf(unifiedPort));
+        String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
+        configuration.setProperty("ssl.keyStore.location", testDataPath + "/ssl/server_keystore.jks");
+        configuration.setProperty("ssl.keyStore.password", "testpass");
+        configuration.setProperty("ssl.trustStore.location", testDataPath + "/ssl/server_truststore.jks");
+        configuration.setProperty("ssl.trustStore.password", "testpass");
+        PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
+        provider.configure(configuration);
+        provider.start();
+    }
 }

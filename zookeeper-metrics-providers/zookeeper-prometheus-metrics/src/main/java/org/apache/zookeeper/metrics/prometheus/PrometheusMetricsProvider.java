@@ -41,6 +41,11 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.admin.UnifiedConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -84,6 +89,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private boolean wantClientAuth = true; // Secure default
     private String enabledProtocols;
     private String cipherSuites;
+    private int httpVersion;
 
     // Constants for configuration
     public static final String HTTP_HOST = "httpHost";
@@ -101,7 +107,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public static final String SSL_WANT_CLIENT_AUTH = "ssl.want.client.auth";
     public static final String SSL_ENABLED_PROTOCOLS = "ssl.enabledProtocols";
     public static final String SSL_ENABLED_CIPHERS = "ssl.ciphersuites";
+    public static final String HTTP_VERSION = "httpVersion";
     public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
+    public static final int DEFAULT_HTTP_VERSION = 11;  // based on HttpVersion.java in jetty
+    /**
+     * The time, in seconds, that the browser should remember that a host is only to be accessed using HTTPS.
+     * Seconds in a day.
+     */
+    public static final int DEFAULT_STS_MAX_AGE = 1 * 24 * 60 * 60;
 
     /**
      * Custom servlet to disable the TRACE method for security reasons.
@@ -139,6 +152,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.wantClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_WANT_CLIENT_AUTH, "true"));
             this.enabledProtocols = configuration.getProperty(SSL_ENABLED_PROTOCOLS);
             this.cipherSuites = configuration.getProperty(SSL_ENABLED_CIPHERS);
+            this.httpVersion = Integer.getInteger(HTTP_VERSION, DEFAULT_HTTP_VERSION);
         }
 
         // Validate that at least one port is configured.
@@ -171,22 +185,48 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             int acceptors = 1;
             int selectors = 1;
 
-            // Configure HTTP connector if enabled
-            if (this.httpPort != -1) {
-                ServerConnector httpConnector = new ServerConnector(server, acceptors, selectors);
-                httpConnector.setPort(this.httpPort);
-                httpConnector.setHost(this.host);
-                server.addConnector(httpConnector);
+            ServerConnector connector = null;
+
+            if (this.httpPort != -1 && this.httpsPort != -1 && this.httpPort == this.httpsPort) {
+                // Set Strict-Transport-Security HTTP response header.
+                SecureRequestCustomizer customizer = new SecureRequestCustomizer();
+                customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
+                // Strict-Transport-Security HTTP header should apply to all subdomains of the host's domain as well.
+                customizer.setStsIncludeSubDomains(true);
+
+                HttpConfiguration config = new HttpConfiguration();
+                config.setSecureScheme("https");
+                config.addCustomizer(customizer);
+
+                SslContextFactory.Server sslContextFactory = createSslContextFactory();
+                setKeyStoreScanner(sslContextFactory);
+
+                String nextProtocol = HttpVersion.fromVersion(httpVersion).asString();
+                connector = new ServerConnector(server,
+                        new UnifiedConnectionFactory(sslContextFactory, nextProtocol),
+                        new HttpConnectionFactory(config));
+                connector.setPort(this.httpPort);
+                connector.setHost(this.host);
+                LOG.info("Created unified ServerConnector for host: {}, httpPort: {}", host, httpPort);
+            } else {
+                // Configure HTTP connector if enabled
+                if (this.httpPort != -1) {
+                    connector = new ServerConnector(server, acceptors, selectors);
+                    connector.setPort(this.httpPort);
+                    connector.setHost(this.host);
+                    LOG.info("Created HTTP ServerConnector for host: {}, httpPort: {}", host, httpPort);
+                }
+
+                // Configure HTTPS connector if enabled
+                if (this.httpsPort != -1) {
+                    SslContextFactory.Server sslContextFactory = createSslContextFactory();
+                    setKeyStoreScanner(sslContextFactory);
+                    connector = createSslConnector(server, acceptors, selectors, sslContextFactory);
+                    LOG.info("Created HTTPS ServerConnector for host: {}, httpsPort: {}", host, httpsPort);
+                }
             }
 
-            // Configure HTTPS connector if enabled
-            if (this.httpsPort != -1) {
-                SslContextFactory.Server sslContextFactory = createSslContextFactory();
-                KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslContextFactory);
-                keystoreScanner.setScanInterval(SCAN_INTERVAL);
-                server.addBean(keystoreScanner);
-                server.addConnector(createSslConnector(server, acceptors, selectors, sslContextFactory));
-            }
+            server.addConnector(connector);
 
             // Set up the servlet context handler
             ServletContextHandler context = new ServletContextHandler();
@@ -205,6 +245,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             stop();
             throw new MetricsProviderLifeCycleException("Failed to start Prometheus Jetty server", e);
         }
+    }
+
+    private void setKeyStoreScanner(SslContextFactory.Server sslContextFactory) {
+        KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslContextFactory);
+        keystoreScanner.setScanInterval(SCAN_INTERVAL);
+        server.addBean(keystoreScanner);
     }
 
     /**

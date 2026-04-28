@@ -43,10 +43,10 @@ import org.junit.jupiter.api.Test;
 public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBase {
 
     private PrometheusMetricsProvider provider;
-    private String httpHost = "127.0.0.1";
-    private int httpsPort = 4443;
-    private int httpPort = 4000;
-    private String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
+    private final String httpHost = "127.0.0.1";
+    private final int httpsPort = 4443;
+    private final int httpPort = 4000;
+    private final String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
 
     public void initializeProviderWithCustomConfig(Properties inputConfiguration) throws Exception {
         provider = new PrometheusMetricsProvider();
