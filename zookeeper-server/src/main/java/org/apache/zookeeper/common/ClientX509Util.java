@@ -18,27 +18,14 @@
 
 package org.apache.zookeeper.common;
 
-import io.netty.handler.ssl.DelegatingSslContext;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.SslProvider;
-import java.security.Security;
-import java.util.Arrays;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.TrustManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * X509 utilities specific for client-server communication framework.
+ *
+ * <p>This class is intentionally free of Netty dependencies so it can be loaded
+ * without Netty on the classpath. For Netty SSL context creation use
+ * {@link ClientNettyX509Util}.
  */
 public class ClientX509Util extends X509Util {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ClientX509Util.class);
 
     private final String sslAuthProviderProperty = getConfigPrefix() + "authProvider";
     private final String sslProviderProperty = getConfigPrefix() + "sslProvider";
@@ -59,127 +46,5 @@ public class ClientX509Util extends X509Util {
 
     public String getSslProviderProperty() {
         return sslProviderProperty;
-    }
-
-    public SslContext createNettySslContextForClient(ZKConfig config)
-        throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
-        SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
-
-        KeyManager km = buildKeyManager(config);
-        if (km != null) {
-            sslContextBuilder.keyManager(km);
-        }
-
-        TrustManager tm = buildTrustManager(config);
-        if (tm != null) {
-            sslContextBuilder.trustManager(tm);
-        }
-
-        handleTcnativeOcspStapling(sslContextBuilder, config);
-        String[] enabledProtocols = getEnabledProtocols(config);
-        if (enabledProtocols != null) {
-            sslContextBuilder.protocols(enabledProtocols);
-        }
-        Iterable<String> enabledCiphers = getCipherSuites(config);
-        if (enabledCiphers != null) {
-            sslContextBuilder.ciphers(enabledCiphers);
-        }
-        sslContextBuilder.sslProvider(getSslProvider(config));
-
-        SslContext sslContext1 = sslContextBuilder.build();
-
-        if ((getFipsMode(config) || tm == null) && isServerHostnameVerificationEnabled(config)) {
-            return addHostnameVerification(sslContext1, "Server");
-        } else {
-            return sslContext1;
-        }
-    }
-
-    public SslContext createNettySslContextForServer(ZKConfig config)
-        throws X509Exception.SSLContextException, X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
-        KeyManager km = buildKeyManager(config);
-        if (km == null) {
-            throw new X509Exception.SSLContextException(
-                "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
-        }
-        return createNettySslContextForServer(config, km, buildTrustManager(config));
-    }
-
-    public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
-        SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(keyManager);
-
-        if (trustManager != null) {
-            sslContextBuilder.trustManager(trustManager);
-        }
-
-        handleTcnativeOcspStapling(sslContextBuilder, config);
-        String[] enabledProtocols = getEnabledProtocols(config);
-        if (enabledProtocols != null) {
-            sslContextBuilder.protocols(enabledProtocols);
-        }
-        sslContextBuilder.clientAuth(getClientAuth(config).toNettyClientAuth());
-        Iterable<String> enabledCiphers = getCipherSuites(config);
-        if (enabledCiphers != null) {
-            sslContextBuilder.ciphers(enabledCiphers);
-        }
-        sslContextBuilder.sslProvider(getSslProvider(config));
-
-        SslContext sslContext1 = sslContextBuilder.build();
-
-        if ((getFipsMode(config) || trustManager == null) && isClientHostnameVerificationEnabled(config)) {
-            return addHostnameVerification(sslContext1, "Client");
-        } else {
-            return sslContext1;
-        }
-    }
-
-    private SslContextBuilder handleTcnativeOcspStapling(SslContextBuilder builder, ZKConfig config) {
-        SslProvider sslProvider = getSslProvider(config);
-        boolean tcnative = sslProvider == SslProvider.OPENSSL || sslProvider == SslProvider.OPENSSL_REFCNT;
-        boolean ocspEnabled = config.getBoolean(getSslOcspEnabledProperty(), Boolean.parseBoolean(Security.getProperty("ocsp.enable")));
-
-        if (tcnative && ocspEnabled && OpenSsl.isOcspSupported()) {
-            builder.enableOcsp(ocspEnabled);
-        }
-        return builder;
-    }
-
-    private SslContext addHostnameVerification(SslContext sslContext, String clientOrServer) {
-        return new DelegatingSslContext(sslContext) {
-            @Override
-            protected void initEngine(SSLEngine sslEngine) {
-                SSLParameters sslParameters = sslEngine.getSSLParameters();
-                sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
-                sslEngine.setSSLParameters(sslParameters);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("{} hostname verification: enabled HTTPS style endpoint identification algorithm", clientOrServer);
-                }
-            }
-        };
-    }
-
-    private String[] getEnabledProtocols(final ZKConfig config) {
-        String enabledProtocolsInput = config.getProperty(getSslEnabledProtocolsProperty());
-        if (enabledProtocolsInput == null) {
-            return null;
-        }
-        return enabledProtocolsInput.split(",");
-    }
-
-    private X509Util.ClientAuth getClientAuth(final ZKConfig config) {
-        return X509Util.ClientAuth.fromPropertyValue(config.getProperty(getSslClientAuthProperty()));
-    }
-
-    private Iterable<String> getCipherSuites(final ZKConfig config) {
-        String cipherSuitesInput = config.getProperty(getSslCipherSuitesProperty());
-        if (cipherSuitesInput == null) {
-            return null;
-        } else {
-            return Arrays.asList(cipherSuitesInput.split(","));
-        }
-    }
-
-    public SslProvider getSslProvider(ZKConfig config) {
-        return SslProvider.valueOf(config.getProperty(getSslProviderProperty(), "JDK"));
     }
 }

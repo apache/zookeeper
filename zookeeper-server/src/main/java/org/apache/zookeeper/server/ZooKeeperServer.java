@@ -2379,8 +2379,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public int getOutstandingHandshakeNum() {
-        if (serverCnxnFactory instanceof NettyServerCnxnFactory) {
-            return ((NettyServerCnxnFactory) serverCnxnFactory).getOutstandingHandshakeNum();
+        if (serverCnxnFactory != null) {
+            return serverCnxnFactory.getOutstandingHandshakeNum();
         } else {
             return 0;
         }
