@@ -29,6 +29,7 @@ limitations under the License.
 * [Benchmark](#Benchmark)
     * [YCSB](#YCSB)
     * [zk-smoketest](#zk-smoketest)
+    * [zkWatchBenchmark](#zkWatchBenchmark)
     
 * [Testing](#Testing)
     * [Fault Injection Framework](#fault-injection)
@@ -560,6 +561,43 @@ Run the workload test:
 **zk-smoketest** provides a simple smoketest client for a ZooKeeper ensemble. Useful for verifying new, updated,
 existing installations. More details are [here](https://github.com/phunt/zk-smoketest).
 
+<a name="zkWatchBenchmark"></a>
+
+### zkWatchBenchmark
+- A benchmark tool that benchmarks the watch throughput and latency, which supports multiple clients threads
+- See **ZOOKEEPER-3823** for the design document
+- Usages:
+
+```              
+# command help
+./zkWatchBenchmark.sh -help
+
+# a quick start
+./zkWatchBenchmark.sh -root_path /bench-watch -connect_string 127.0.0.1:2181
+
+# full parameters
+./zkWatchBenchmark.sh -root_path /bench-watch -threads 100 -znode_count 1000 -connect_string \n
+    192.168.10.43:2181,192.168.10.45:2181,192.168.10.47:2181 \n
+    -client_configuration /tmp/zk-conf.txt -timeout 300000
+
+Notification expected count: 200000, received count: 200000 (1.0000), loss count: 0 (0.0000)
+avg watch notify latency       = 67.6451 ms
+min watch notify latency       = 0 ms
+max watch notify latency       = 273 ms
+cnt watch notify latency       = 200000
+sum watch notify latency       = 13529023 ms
+p50 watch notify latency       = 38 ms
+p95 watch notify latency       = 179 ms
+p99 watch notify latency       = 208 ms
+p999 watch notify latency      = 267 ms
+Total time: 7587 ms, watch benchmark total time: 1389 ms, throughput: 143988.48 op/s
+```
+
+- Notes:
+```
+  `export JVMFLAGS="-Xms12g -Xmx12g"` to have more JVM heap size to avoid `GC overhead limit exceeded` when you have a large scale testing
+  `-v` to print a detailed logs when you find no benchmark output result for a long time
+```
 
 <a name="Testing"></a>
 
