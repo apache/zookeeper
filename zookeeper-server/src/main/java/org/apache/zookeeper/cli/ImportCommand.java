@@ -17,6 +17,9 @@
  */
 package org.apache.zookeeper.cli;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -25,14 +28,10 @@ import org.apache.commons.cli.ParseException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 /**
  * import command for cli
  */
-public class ImportCommand extends CliCommand {
+public final class ImportCommand extends CliCommand {
 
     private static Options options = new Options();
     private String[] args;
@@ -44,7 +43,7 @@ public class ImportCommand extends CliCommand {
     }
 
     public ImportCommand() {
-        super("import", "[-s] [-v version] path filepath");
+        super("import", "[-s] [-v version] path filepath", options);
     }
 
     @Override
@@ -71,7 +70,7 @@ public class ImportCommand extends CliCommand {
         try {
             data = Files.readAllBytes(Paths.get(filepath));
         } catch (IOException ex) {
-            throw new CliException("Unable to read data from file \"" + filepath + "\"", ex);
+            throw new CliWrapperException("Unable to read data from file \"" + filepath + "\"", ex);
         }
         int version;
         if (cl.hasOption("v")) {
@@ -87,7 +86,7 @@ public class ImportCommand extends CliCommand {
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
         return false;

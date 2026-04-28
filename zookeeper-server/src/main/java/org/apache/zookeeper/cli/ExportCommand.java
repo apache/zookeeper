@@ -17,6 +17,9 @@
  */
 package org.apache.zookeeper.cli;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -25,15 +28,10 @@ import org.apache.commons.cli.ParseException;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-
 /**
  * export command for cli
  */
-public class ExportCommand extends CliCommand {
+public final class ExportCommand extends CliCommand {
 
     private static Options options = new Options();
     private String args[];
@@ -45,7 +43,7 @@ public class ExportCommand extends CliCommand {
     }
 
     public ExportCommand() {
-        super("export", "[-s] [-w] path filepath");
+        super("export", "[-s] [-w] path filepath", options);
     }
 
     @Override
@@ -76,14 +74,14 @@ public class ExportCommand extends CliCommand {
             data = zk.getData(path, watch, stat);
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (KeeperException|InterruptedException ex) {
-            throw new CliException(ex);
+        } catch (KeeperException | InterruptedException ex) {
+            throw new CliWrapperException(ex);
         }
         data = (data == null) ? "null".getBytes() : data;
         try {
-            Files.write(Paths.get(filepath), data, StandardOpenOption.CREATE);
+            Files.write(Paths.get(filepath), data);
         } catch (IOException ex) {
-            throw new CliException("Unable to write data to file \"" + filepath + "\"", ex);
+            throw new CliWrapperException("Unable to write data to file \"" + filepath + "\"", ex);
         }
         if (cl.hasOption("s")) {
             new StatPrinter(out).print(stat);

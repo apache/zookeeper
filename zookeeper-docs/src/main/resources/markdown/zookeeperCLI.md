@@ -46,13 +46,13 @@ ZooKeeper -server host:port cmd args
 	deleteall path
 	delquota [-n|-b|-N|-B] path
 	exit
-	export path filepath
+	export [-s] [-w] path filepath
 	get [-s] [-w] path
 	getAcl [-s] path
 	getAllChildrenNumber path
 	getEphemerals path
 	history
-	import path filepath
+	import [-s] [-v version] path filepath
 	listquota path
 	ls [-s] [-w] [-R] path
 	printwatches on|off
@@ -203,6 +203,12 @@ Download the contents of a znode to an external file
 
 ```bash
 [zkshell: 1] export /zookeeper/config path/to/config.txt
+
+# -s to show the stat
+[zkshell: 2] export -s /zookeeper/config path/to/config.txt
+
+# -w to set a watch on the data change, Notice: turn on the printwatches
+[zkshell: 3] export -w /zookeeper/config path/to/config.txt
 ```
 
 ## get
@@ -299,6 +305,12 @@ Upload the contents of an external file to a znode, replacing the znode's previo
 
 ```bash
 [zkshell: 1] import /zookeeper/config path/to/config.txt
+
+# -s to show the stat
+[zkshell: 2] import -s /zookeeper/config path/to/config.txt
+
+# -v to set the version of the vnode
+[zkshell: 3] import -v 3 /zookeeper/config path/to/config.txt
 ```
 
 ## listquota
