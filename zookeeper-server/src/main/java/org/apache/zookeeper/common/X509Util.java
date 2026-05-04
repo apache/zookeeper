@@ -87,13 +87,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    public static final String DEFAULT_PROTOCOL = defaultTlsProtocol();
-
     /**
-     * Return TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
+     * Return TLSv1.2 when FIPS mode is enabled.
+     * Otherwise, returns TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
      * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
      */
-    private static String defaultTlsProtocol() {
+    public static String defaultTlsProtocol(ZKConfig config) {
+        if (getFipsMode(config)) {
+            LOG.info("FIPS mode is enabled. Fall back to TLSv1.2 as the default protocol.");
+            return TLS_1_2;
+        }
+
         String defaultProtocol = TLS_1_2;
         List<String> supported = new ArrayList<>();
         try {
@@ -410,8 +414,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                     + ": "
                     + trustStoreTypeProp, e);
         }
-
-        String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        String defaultTlsProtocol = defaultTlsProtocol(config);
+        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);

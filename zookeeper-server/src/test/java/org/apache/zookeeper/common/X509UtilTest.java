@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.common;
 
+import static org.apache.zookeeper.common.X509Util.FIPS_MODE_PROPERTY;
+import static org.apache.zookeeper.common.X509Util.TLS_1_2;
+import static org.apache.zookeeper.common.X509Util.TLS_1_3;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -90,6 +93,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        System.clearProperty(FIPS_MODE_PROPERTY);
         x509Util.close();
     }
 
@@ -100,22 +104,37 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(FIPS_MODE_PROPERTY, Boolean.FALSE.toString());
         SSLContext sslContext = x509Util.getDefaultSSLContext();
-        assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
+        String defaultTlsProtocol = X509Util.defaultTlsProtocol(new ZKConfig());
+        assertEquals(defaultTlsProtocol, sslContext.getProtocol());
 
         // Check that TLSv1.3 is selected in JDKs that support it (OpenJDK 8u272 and later).
         List<String> supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
-        if (supported.contains(X509Util.TLS_1_3)) {
+        if (supported.contains(TLS_1_3)) {
             // SSLContext protocol.
-            assertEquals(X509Util.TLS_1_3, sslContext.getProtocol());
+            assertEquals(TLS_1_3, sslContext.getProtocol());
             // Enabled protocols.
             List<String> protos = Arrays.asList(sslContext.getDefaultSSLParameters().getProtocols());
-            assertTrue(protos.contains(X509Util.TLS_1_2));
-            assertTrue(protos.contains(X509Util.TLS_1_3));
+            assertTrue(protos.contains(TLS_1_2));
+            assertTrue(protos.contains(TLS_1_3));
         } else {
-            assertEquals(X509Util.TLS_1_2, sslContext.getProtocol());
-            assertArrayEquals(new String[]{X509Util.TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
+            assertEquals(TLS_1_2, sslContext.getProtocol());
+            assertArrayEquals(new String[]{TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContextWithoutCustomProtocol_FIPSEnabled(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(FIPS_MODE_PROPERTY, Boolean.TRUE.toString());
+        SSLContext sslContext = x509Util.getDefaultSSLContext();
+        assertEquals(TLS_1_2, sslContext.getProtocol());
+        assertArrayEquals(new String[]{TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
     }
 
     @ParameterizedTest
