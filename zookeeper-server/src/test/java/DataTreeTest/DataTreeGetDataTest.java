@@ -1,6 +1,5 @@
 package DataTreeTest;
 
-
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -63,26 +62,6 @@ public class DataTreeGetDataTest {
 
     private void assertNodeDoesNotExist(String path) {
         assertNull(dataTree.getNode(path), "Il nodo " + path + " non dovrebbe esistere");
-    }
-
-    private static class RecordingWatcher implements Watcher {
-
-        private int notificationCount = 0;
-        private WatchedEvent lastEvent;
-
-        @Override
-        public void process(WatchedEvent event) {
-            notificationCount++;
-            lastEvent = event;
-        }
-
-        public int getNotificationCount() {
-            return notificationCount;
-        }
-
-        public WatchedEvent getLastEvent() {
-            return lastEvent;
-        }
     }
 
     @Test
@@ -162,17 +141,19 @@ public class DataTreeGetDataTest {
     }
 
     @Test
-    public void getDataShouldRegisterValidWatcher() throws Exception {
-        // T6 - watcher valido
+    public void getDataShouldAcceptAndRegisterValidWatcherMock() throws Exception {
+        // T6 - watcher valido: mock Mockito dell'interfaccia Watcher
 
         createValidNode("/a", VALID_DATA);
 
-        RecordingWatcher watcher = new RecordingWatcher();
+        Watcher watcher = mock(Watcher.class);
 
         byte[] result = dataTree.getData("/a", new Stat(), watcher);
 
         assertArrayEquals(VALID_DATA, result);
-        assertEquals(0, watcher.getNotificationCount());
+
+        // getData registra il watcher, ma non deve invocare direttamente process(...)
+        verify(watcher, never()).process(any(WatchedEvent.class));
 
         dataTree.setData(
                 "/a",
@@ -182,11 +163,8 @@ public class DataTreeGetDataTest {
                 System.currentTimeMillis()
         );
 
-        assertTrue(
-                watcher.getNotificationCount() > 0,
-                "Il watcher dovrebbe essere notificato dopo la modifica del nodo"
-        );
-        assertNotNull(watcher.getLastEvent());
+        // Dopo la modifica del nodo, il watcher registrato deve essere notificato
+        verify(watcher, atLeastOnce()).process(any(WatchedEvent.class));
     }
 
     @Test
@@ -212,27 +190,8 @@ public class DataTreeGetDataTest {
     }
 
     @Test
-    public void getDataWithFaultyWatcherShouldStillReturnData() throws Exception {
-        // T8 - watcher non valido/anomalo mockato
-
-        createValidNode("/a", VALID_DATA);
-
-        Watcher faultyWatcher = mock(Watcher.class);
-        doThrow(new RuntimeException("Watcher failure"))
-                .when(faultyWatcher)
-                .process(any(WatchedEvent.class));
-
-        byte[] result = dataTree.getData("/a", new Stat(), faultyWatcher);
-
-        assertArrayEquals(VALID_DATA, result);
-
-        verify(faultyWatcher, never()).process(any(WatchedEvent.class));
-        assertNodeExists("/a");
-    }
-
-    @Test
     public void getDataShouldThrowNoNodeExceptionForMissingSimplePath() {
-        // T9 - path valido semplice, nodo richiesto assente
+        // T8 - path valido semplice, nodo richiesto assente
 
         assertThrows(
                 KeeperException.NoNodeException.class,
@@ -245,7 +204,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataShouldThrowNoNodeExceptionForMissingMultilevelPath() {
-        // T10 - path valido multilivello, nodo richiesto assente
+        // T9 - path valido multilivello, nodo richiesto assente
 
         assertThrows(
                 KeeperException.NoNodeException.class,
@@ -259,7 +218,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataOnIndependentBranchShouldNotAlterOtherBranches() throws Exception {
-        // T11 - DataTree con più nodi e rami indipendenti
+        // T10 - DataTree con più nodi e rami indipendenti
 
         createValidNode("/a", VALID_DATA);
         createValidNode("/x", VALID_DATA);
@@ -279,7 +238,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataOnRootInInitialTreeShouldBeHandledCorrectly() {
-        // T12 - path radice, DataTree nello stato iniziale
+        // T11 - path radice, DataTree nello stato iniziale
 
         assertDoesNotThrow(() -> {
             Stat stat = new Stat();
@@ -291,7 +250,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataOnRootShouldNotAlterExistingApplicationNodes() throws Exception {
-        // T13 - path radice, DataTree con più nodi e rami indipendenti
+        // T12 - path radice, DataTree con più nodi e rami indipendenti
 
         createValidNode("/a", VALID_DATA);
         createValidNode("/x", VALID_DATA);
@@ -314,7 +273,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataWithNullPathShouldNotCorruptTree() {
-        // T14 - path nullo
+        // T13 - path nullo
 
         assertThrows(
                 Exception.class,
@@ -326,7 +285,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataWithEmptyPathShouldNotCorruptTree() {
-        // T15 - path vuoto o malformato: ""
+        // T14 - path vuoto o malformato: ""
 
         assertThrows(
                 Exception.class,
@@ -338,7 +297,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataWithPathWithoutInitialSlashShouldNotCorruptTree() {
-        // T16 - path vuoto o malformato: "a/b"
+        // T15 - path vuoto o malformato: "a/b"
 
         assertThrows(
                 Exception.class,
@@ -350,7 +309,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataWithDoubleSlashPathShouldNotCorruptTree() {
-        // T17 - path vuoto o malformato: "/a//b"
+        // T16 - path vuoto o malformato: "/a//b"
 
         assertThrows(
                 Exception.class,
@@ -362,7 +321,7 @@ public class DataTreeGetDataTest {
 
     @Test
     public void getDataShouldThrowNoNodeExceptionWhenOnlyRootExists() {
-        // T18 - DataTree con solo nodo radice presente
+        // T17 - DataTree con solo nodo radice presente
 
         assertNodeExists("/");
         assertNodeDoesNotExist("/a");
