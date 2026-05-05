@@ -34,15 +34,17 @@ public class ZooKeeperSaslServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslServer.class);
     private final SaslServer saslServer;
+    private final ZKConfig config;
 
     ZooKeeperSaslServer(final Login login) {
+        config = new ZKConfig();
         saslServer = createSaslServer(login);
     }
 
     private SaslServer createSaslServer(final Login login) {
         synchronized (login) {
             Subject subject = login.getSubject();
-            return SecurityUtils.createSaslServer(new ZKConfig(), subject, "zookeeper", "zk-sasl-md5", login.newCallbackHandler(), LOG);
+            return SecurityUtils.createSaslServer(config, subject, "zookeeper", "zk-sasl-md5", login.newCallbackHandler(), LOG);
         }
     }
 
