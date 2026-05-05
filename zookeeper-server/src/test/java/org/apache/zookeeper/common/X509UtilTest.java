@@ -127,7 +127,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testCreateSSLContextWithoutCustomProtocol_FIPSEnabled(
+    public void testCreateSSLContextFIPSModeEnabled(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
