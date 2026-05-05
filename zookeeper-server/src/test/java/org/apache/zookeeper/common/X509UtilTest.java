@@ -892,4 +892,25 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509Util.getDefaultSSLContext();
         });
     }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testDefaultTlsProtocolWithInvalidDefaultTrustStore(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty("javax.net.ssl.trustStore", "/nonexistent/truststore.jks");
+        System.setProperty("javax.net.ssl.trustStorePassword", "bogus");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+        try {
+            System.setProperty(FIPS_MODE_PROPERTY, Boolean.FALSE.toString());
+            String protocol = X509Util.defaultTlsProtocol(new ZKConfig());
+            assertTrue(TLS_1_2.equals(protocol) || TLS_1_3.equals(protocol));
+        } finally {
+            System.clearProperty("javax.net.ssl.trustStore");
+            System.clearProperty("javax.net.ssl.trustStorePassword");
+            System.clearProperty("javax.net.ssl.trustStoreType");
+        }
+    }
 }
