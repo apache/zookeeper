@@ -87,6 +87,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
+    private static volatile String bestAvailableProtocol;
+
     /**
      * Return TLSv1.2 when FIPS mode is enabled.
      * Otherwise, returns TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
@@ -94,24 +96,29 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     public static String defaultTlsProtocol(ZKConfig config) {
         if (getFipsMode(config)) {
-            LOG.info("FIPS mode is enabled. Fall back to TLSv1.2 as the default protocol.");
             return TLS_1_2;
         }
+        return getBestAvailableProtocol();
+    }
 
-        String defaultProtocol = TLS_1_2;
+    private static String getBestAvailableProtocol() {
+        if (bestAvailableProtocol != null) {
+            return bestAvailableProtocol;
+        }
+
+        String protocol = TLS_1_2;
         List<String> supported = new ArrayList<>();
         try {
             supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
-            // We cannot use the default protocols directly, because the SSLContext factory methods
-            // only accept a single protocol
             if (supported.contains(TLS_1_3)) {
-                defaultProtocol = TLS_1_3;
+                protocol = TLS_1_3;
             }
         } catch (NoSuchAlgorithmException e) {
             // Ignore.
         }
-        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", defaultProtocol, supported);
-        return defaultProtocol;
+        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", protocol, supported);
+        bestAvailableProtocol = protocol;
+        return protocol;
     }
 
     public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
