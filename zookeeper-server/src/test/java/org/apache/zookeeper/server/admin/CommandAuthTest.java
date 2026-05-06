@@ -48,7 +48,6 @@ import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -283,7 +282,7 @@ public class CommandAuthTest extends ZKTestCase {
         System.setProperty("zookeeper.admin.needClientAuth", "true");
 
         // create SSLContext
-        String defaultTlsProtocol = X509Util.defaultTlsProtocol(new ZKConfig());
+        String defaultTlsProtocol = quorumX509Util.defaultTlsProtocol(new ZKConfig());
         final SSLContext sslContext = SSLContext.getInstance(defaultTlsProtocol);
         final X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider("x509");
         if (authProvider == null) {

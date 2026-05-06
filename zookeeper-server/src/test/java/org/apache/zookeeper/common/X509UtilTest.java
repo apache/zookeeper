@@ -106,7 +106,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.setProperty(FIPS_MODE_PROPERTY, Boolean.FALSE.toString());
         SSLContext sslContext = x509Util.getDefaultSSLContext();
-        String defaultTlsProtocol = X509Util.defaultTlsProtocol(new ZKConfig());
+        String defaultTlsProtocol = x509Util.defaultTlsProtocol(new ZKConfig());
         assertEquals(defaultTlsProtocol, sslContext.getProtocol());
 
         // Check that TLSv1.3 is selected in JDKs that support it (OpenJDK 8u272 and later).
@@ -905,7 +905,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");
         try {
             System.setProperty(FIPS_MODE_PROPERTY, Boolean.FALSE.toString());
-            String protocol = X509Util.defaultTlsProtocol(new ZKConfig());
+            String protocol = x509Util.defaultTlsProtocol(new ZKConfig());
             assertTrue(TLS_1_2.equals(protocol) || TLS_1_3.equals(protocol));
         } finally {
             System.clearProperty("javax.net.ssl.trustStore");

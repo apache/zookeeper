@@ -35,7 +35,6 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.X509CertSelector;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -87,37 +86,36 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    private static volatile String bestAvailableProtocol;
+    private final AtomicReference<String> defaultProtocol = new AtomicReference<>();
 
     /**
      * Return TLSv1.2 when FIPS mode is enabled.
      * Otherwise, returns TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
      * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
      */
-    public static String defaultTlsProtocol(ZKConfig config) {
-        if (getFipsMode(config)) {
-            return TLS_1_2;
+    public String defaultTlsProtocol(ZKConfig config) {
+        String proto = defaultProtocol.get();
+        if (proto != null) {
+            return proto;
         }
-        return getBestAvailableProtocol();
-    }
-
-    private static String getBestAvailableProtocol() {
-        if (bestAvailableProtocol != null) {
-            return bestAvailableProtocol;
-        }
-
         String protocol = TLS_1_2;
-        List<String> supported = new ArrayList<>();
-        try {
-            supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
-            if (supported.contains(TLS_1_3)) {
-                protocol = TLS_1_3;
+        if (!getFipsMode(config)) {
+            try {
+                List<String> supported = Arrays.asList(SSLContext.getDefault()
+                        .getSupportedSSLParameters().getProtocols());
+                LOG.info("Supported TLS protocols are {}", supported);
+                if (supported.contains(TLS_1_3)) {
+                    protocol = TLS_1_3;
+                }
+            } catch (NoSuchAlgorithmException e) {
+                // Ignore.
             }
-        } catch (NoSuchAlgorithmException e) {
-            // Ignore.
         }
-        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", protocol, supported);
-        bestAvailableProtocol = protocol;
+        if (defaultProtocol.compareAndSet(null, protocol)) {
+            LOG.info("Default TLS protocol is {}", protocol);
+        } else {
+            protocol = defaultProtocol.get();
+        }
         return protocol;
     }
 
