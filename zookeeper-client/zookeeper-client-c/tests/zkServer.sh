@@ -67,7 +67,7 @@ rm -f "${base_dir}/build/tmp/zk.pid"
 fi
 
 # [ZOOKEEPER-820] If lsof command is present, look for a process listening
-# on ZOOPORT and kill it. 
+# on ZOOPORT and kill it.
 which lsof &> /dev/null
 if [ $? -eq 0  ]
 then
@@ -129,6 +129,7 @@ if [ "x$1" == "xstartRequireSASLAuth" ]
 then
     PROPERTIES="-Dzookeeper.sessionRequireClientSASLAuth=true $PROPERTIES"
     PROPERTIES="$PROPERTIES -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
+    PROPERTIES="$PROPERTIES -Dzookeeper.fips-mode=false"
     if [ "x$2" != "x" ]
     then
         PROPERTIES="$PROPERTIES -Djava.security.auth.login.config=$2"
