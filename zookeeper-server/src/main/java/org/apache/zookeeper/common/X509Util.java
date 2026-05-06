@@ -86,14 +86,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    private final AtomicReference<String> defaultProtocol = new AtomicReference<>();
+    private static final AtomicReference<String> defaultProtocol = new AtomicReference<>();
+
+    static void resetDefaultProtocol() {
+        defaultProtocol.set(null);
+    }
 
     /**
      * Return TLSv1.2 when FIPS mode is enabled.
      * Otherwise, returns TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
      * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
      */
-    public String defaultTlsProtocol(ZKConfig config) {
+    public static String defaultTlsProtocol(ZKConfig config) {
         String proto = defaultProtocol.get();
         if (proto != null) {
             return proto;

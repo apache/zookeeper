@@ -94,6 +94,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(FIPS_MODE_PROPERTY);
+        X509Util.resetDefaultProtocol();
         x509Util.close();
     }
 
@@ -106,7 +107,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         System.setProperty(FIPS_MODE_PROPERTY, Boolean.FALSE.toString());
         SSLContext sslContext = x509Util.getDefaultSSLContext();
-        String defaultTlsProtocol = x509Util.defaultTlsProtocol(new ZKConfig());
+        String defaultTlsProtocol = X509Util.defaultTlsProtocol(new ZKConfig());
         assertEquals(defaultTlsProtocol, sslContext.getProtocol());
 
         // Check that TLSv1.3 is selected in JDKs that support it (OpenJDK 8u272 and later).
