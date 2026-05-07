@@ -88,6 +88,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     private static final AtomicReference<String> defaultProtocol = new AtomicReference<>();
 
+    // For testing
     static void resetDefaultProtocol() {
         defaultProtocol.set(null);
     }
@@ -98,29 +99,30 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
      */
     public static String defaultTlsProtocol(ZKConfig config) {
+        if (getFipsMode(config)) {
+            return TLS_1_2;
+        }
+
         String proto = defaultProtocol.get();
         if (proto != null) {
             return proto;
         }
-        String protocol = TLS_1_2;
-        if (!getFipsMode(config)) {
-            try {
-                List<String> supported = Arrays.asList(SSLContext.getDefault()
-                        .getSupportedSSLParameters().getProtocols());
-                LOG.info("Supported TLS protocols are {}", supported);
-                if (supported.contains(TLS_1_3)) {
-                    protocol = TLS_1_3;
-                }
-            } catch (NoSuchAlgorithmException e) {
-                // Ignore.
+
+        proto = TLS_1_2;
+        try {
+            List<String> supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
+            if (supported.contains(TLS_1_3)) {
+                proto = TLS_1_3;
             }
+            if (defaultProtocol.compareAndSet(null, proto)) {
+                LOG.info("Supported TLS protocols are {}, default TLS protocol is {}", supported, proto);
+            } else {
+                proto = defaultProtocol.get();
+            }
+        } catch (NoSuchAlgorithmException e) {
+            // Ignore.
         }
-        if (defaultProtocol.compareAndSet(null, protocol)) {
-            LOG.info("Default TLS protocol is {}", protocol);
-        } else {
-            protocol = defaultProtocol.get();
-        }
-        return protocol;
+        return proto;
     }
 
     public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
