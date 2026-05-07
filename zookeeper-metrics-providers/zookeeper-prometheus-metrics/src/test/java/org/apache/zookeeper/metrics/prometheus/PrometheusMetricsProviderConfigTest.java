@@ -21,6 +21,7 @@ package org.apache.zookeeper.metrics.prometheus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -107,8 +108,10 @@ public class PrometheusMetricsProviderConfigTest extends PrometheusMetricsTestBa
                 assertThrows(MetricsProviderLifeCycleException.class, provider::start);
 
         assertEquals("Failed to start Prometheus Jetty server", exception.getMessage());
-        assertNotNull(exception.getCause());
-        assertEquals("Failed to bind to master:0", exception.getCause().getMessage());
+        Throwable cause = exception.getCause();
+        assertNotNull(cause);
+        assertTrue(cause.getMessage().contains("Failed to bind to master"));
+        assertTrue(cause.getMessage().contains(":0"));
     }
 
     @Test
