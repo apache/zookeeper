@@ -33,7 +33,7 @@ import org.apache.zookeeper.data.Stat;
  */
 public final class ImportCommand extends CliCommand {
 
-    private static Options options = new Options();
+    private static final Options options = new Options();
     private String[] args;
     private CommandLine cl;
 

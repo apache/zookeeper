@@ -33,7 +33,7 @@ import org.apache.zookeeper.data.Stat;
  */
 public final class ExportCommand extends CliCommand {
 
-    private static Options options = new Options();
+    private static final Options options = new Options();
     private String args[];
     private CommandLine cl;
 
@@ -77,7 +77,9 @@ public final class ExportCommand extends CliCommand {
         } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
-        data = (data == null) ? "null".getBytes() : data;
+        if (data == null) {
+            data = new byte[0];
+        }
         try {
             Files.write(Paths.get(filepath), data);
         } catch (IOException ex) {
