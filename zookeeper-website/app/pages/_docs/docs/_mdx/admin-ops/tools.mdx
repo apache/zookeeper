@@ -1,0 +1,642 @@
+---
+title: "Tools"
+description: "Reference for the scripts and tools bundled with ZooKeeper — including server management scripts, snapshot and transaction log utilities, benchmark tools, and testing frameworks."
+---
+
+## Scripts
+
+### zkServer.sh
+
+Manage the ZooKeeper server process.
+
+```bash
+# start the server
+./zkServer.sh start
+
+# start the server in the foreground (useful for debugging)
+./zkServer.sh start-foreground
+
+# stop the server
+./zkServer.sh stop
+
+# restart the server
+./zkServer.sh restart
+
+# show the status, mode, and role of the server
+./zkServer.sh status
+JMX enabled by default
+Using config: /data/software/zookeeper/conf/zoo.cfg
+Mode: standalone
+
+# print the startup parameters
+./zkServer.sh print-cmd
+
+# show the ZooKeeper server version
+./zkServer.sh version
+Apache ZooKeeper, version 3.6.0-SNAPSHOT 06/11/2019 05:39 GMT
+```
+
+The `status` command establishes a client connection to execute diagnostic commands.
+When the ZooKeeper cluster is started in TLS-only mode (by omitting `clientPort` from
+`zoo.cfg`), additional SSL configuration must be provided:
+
+```bash
+CLIENT_JVMFLAGS="-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty \
+  -Dzookeeper.ssl.trustStore.location=/tmp/clienttrust.jks \
+  -Dzookeeper.ssl.trustStore.password=password \
+  -Dzookeeper.ssl.keyStore.location=/tmp/client.jks \
+  -Dzookeeper.ssl.keyStore.password=password \
+  -Dzookeeper.client.secure=true" \
+  ./zkServer.sh status
+```
+
+### zkCli.sh
+
+See [ZooKeeper CLI](/docs/admin-ops/cli).
+
+### zkEnv.sh
+
+Sets environment variables for the ZooKeeper server. Key variables:
+
+- `ZOO_LOG_DIR` — the directory where logs are stored.
+
+### zkCleanup.sh
+
+Clean up old snapshots and transaction logs.
+
+```bash
+# Usage: ./zkCleanup.sh dataLogDir [snapDir] -n count
+#   dataLogDir -- path to the transaction log directory
+#   snapDir    -- path to the snapshot directory (optional)
+#   count      -- number of recent snaps/logs to keep (must be >= 3)
+
+# Keep the latest 5 logs and snapshots
+./zkCleanup.sh -n 5
+```
+
+### zkTxnLogToolkit.sh
+
+Dump and recover transaction log files with broken CRC entries.
+
+```bash
+$ bin/zkTxnLogToolkit.sh
+usage: TxnLogToolkit [-dhrv] txn_log_file_name
+-d,--dump      Dump mode. Dump all entries of the log file. (this is the default)
+-h,--help      Print help message
+-r,--recover   Recovery mode. Re-calculate CRC for broken entries.
+-v,--verbose   Be verbose in recovery mode: print all entries, not just fixed ones.
+-y,--yes       Non-interactive mode: repair all CRC errors without asking
+```
+
+The default behavior is safe — it dumps the entries of the given transaction log file
+to the screen (same as `-d,--dump`):
+
+```bash
+$ bin/zkTxnLogToolkit.sh log.100000001
+ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
+4/5/18 2:15:58 PM CEST session 0x16295bafcc40000 cxid 0x0 zxid 0x100000001 createSession 30000
+CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+4/5/18 2:16:12 PM CEST session 0x26295bafcc90000 cxid 0x0 zxid 0x100000003 createSession 30000
+4/5/18 2:17:34 PM CEST session 0x26295bafcc90000 cxid 0x0 zxid 0x200000001 closeSession null
+4/5/18 2:17:34 PM CEST session 0x16295bd23720000 cxid 0x0 zxid 0x200000002 createSession 30000
+4/5/18 2:17:34 PM CEST session 0x16295bd23720000 cxid 0x2 zxid 0x200000003 create '/andor,#626262,v{s{31,s{'world,'anyone}}},F,1
+EOF reached after 6 txns.
+```
+
+In **recovery mode** (`-r,--recover`), the original file is left untouched and all transactions
+are copied to a new file with a `.fixed` suffix. CRC values are recalculated; if the calculated
+value does not match the original, the new value is used. By default the tool is interactive,
+asking for confirmation on each CRC error:
+
+```bash
+$ bin/zkTxnLogToolkit.sh -r log.100000001
+ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
+CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+Would you like to fix it (Yes/No/Abort) ?
+```
+
+- **Yes** — write the recalculated CRC to the new file.
+- **No** — copy the original CRC value.
+- **Abort** — abort the operation. The `.fixed` file will not be deleted and may be in a half-complete state.
+
+```bash
+$ bin/zkTxnLogToolkit.sh -r log.100000001
+ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
+CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
+Would you like to fix it (Yes/No/Abort) ? y
+EOF reached after 6 txns.
+Recovery file log.100000001.fixed has been written with 1 fixed CRC error(s)
+```
+
+Use `-v,--verbose` to print all records (not just broken ones). Use `-y,--yes` to fix all
+CRC errors automatically without prompting.
+
+### zkSnapShotToolkit.sh
+
+Dump a snapshot file to stdout, showing detailed information for each znode.
+
+```bash
+# show usage
+./zkSnapShotToolkit.sh
+USAGE: SnapshotFormatter [-d|-json] snapshot_file
+       -d dump the data for each znode
+       -json dump znode info in json format
+
+# show each znode's metadata without data content
+./zkSnapShotToolkit.sh /data/zkdata/version-2/snapshot.fa01000186d
+/zk-latencies_4/session_946
+  cZxid = 0x00000f0003110b
+  ctime = Wed Sep 19 21:58:22 CST 2018
+  mZxid = 0x00000f0003110b
+  mtime = Wed Sep 19 21:58:22 CST 2018
+  pZxid = 0x00000f0003110b
+  cversion = 0
+  dataVersion = 0
+  aclVersion = 0
+  ephemeralOwner = 0x00000000000000
+  dataLength = 100
+
+# -d: include data content
+./zkSnapShotToolkit.sh -d /data/zkdata/version-2/snapshot.fa01000186d
+/zk-latencies2/session_26229
+  cZxid = 0x00000900007ba0
+  ctime = Wed Aug 15 20:13:52 CST 2018
+  mZxid = 0x00000900007ba0
+  mtime = Wed Aug 15 20:13:52 CST 2018
+  pZxid = 0x00000900007ba0
+  cversion = 0
+  dataVersion = 0
+  aclVersion = 0
+  ephemeralOwner = 0x00000000000000
+  data = eHh4eHh4eHh4eHh4eA==
+
+# -json: output in JSON format
+./zkSnapShotToolkit.sh -json /data/zkdata/version-2/snapshot.fa01000186d
+[[1,0,{"progname":"SnapshotFormatter.java","progver":"0.01","timestamp":1559788148637},[{"name":"\/","asize":0,"dsize":0,"dev":0,"ino":1001},[{"name":"zookeeper","asize":0,"dsize":0,"dev":0,"ino":1002},{"name":"config","asize":0,"dsize":0,"dev":0,"ino":1003},[{"name":"quota","asize":0,"dsize":0,"dev":0,"ino":1004},[{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1005},{"name":"zookeeper_limits","asize":52,"dsize":52,"dev":0,"ino":1006},{"name":"zookeeper_stats","asize":15,"dsize":15,"dev":0,"ino":1007}]]],{"name":"test","asize":0,"dsize":0,"dev":0,"ino":1008}]]
+```
+
+### zkSnapshotRecursiveSummaryToolkit.sh
+
+Recursively collect and display child count and data size for a selected node.
+
+```bash
+$ ./zkSnapshotRecursiveSummaryToolkit.sh
+USAGE:
+SnapshotRecursiveSummary  <snapshot_file>  <starting_node>  <max_depth>
+
+snapshot_file:  path to the ZooKeeper snapshot
+starting_node:  the path in the ZooKeeper tree where traversal begins
+max_depth:      depth limit for output (0 = no limit; 1 = starting node + direct children;
+                2 = one more level, etc.). Only affects display, NOT the calculation.
+```
+
+```bash
+# display stats for the root node and 2 levels of descendants
+./zkSnapshotRecursiveSummaryToolkit.sh /data/zkdata/version-2/snapshot.fa01000186d / 2
+
+/
+   children: 1250511
+   data: 1952186580
+-- /zookeeper
+--   children: 1
+--   data: 0
+-- /solr
+--   children: 1773
+--   data: 8419162
+---- /solr/configs
+----   children: 1640
+----   data: 8407643
+---- /solr/overseer
+----   children: 6
+----   data: 0
+---- /solr/live_nodes
+----   children: 3
+----   data: 0
+```
+
+### zkSnapshotComparer.sh
+
+Compare two snapshots with configurable thresholds and filters, outputting the delta —
+which znodes were added, updated, or deleted. Useful for offline consistency checks and
+data trend analysis. Only permanent nodes are reported; sessions and ephemeral nodes are ignored.
+
+Tuning parameters:
+
+- `--nodes` — threshold for number of descendant nodes added/removed.
+- `--bytes` — threshold for bytes added/removed.
+
+#### Locating Snapshots
+
+Snapshots are stored in the [ZooKeeper data directory](/docs/admin-ops/administrators-guide/data-file-management#the-data-directory)
+configured in `conf/zoo.cfg`.
+
+#### Supported Snapshot Formats
+
+Uncompressed snapshots and compressed formats (`snappy`, `gz`) are all supported.
+Snapshots in different formats can be compared directly without manual decompression.
+
+#### Running the Tool
+
+Running the tool with no arguments prints the help page:
+
+```
+usage: java -cp <classPath> org.apache.zookeeper.server.SnapshotComparer
+ -b,--bytes <BYTETHRESHOLD>   (Required) The node data delta size threshold, in bytes, for printing the node.
+ -d,--debug                   Use debug output.
+ -i,--interactive             Enter interactive mode.
+ -l,--left <LEFT>             (Required) The left snapshot file.
+ -n,--nodes <NODETHRESHOLD>   (Required) The descendant node delta size threshold, in nodes, for printing the node.
+ -r,--right <RIGHT>           (Required) The right snapshot file.
+```
+
+Example command:
+
+```
+./bin/zkSnapshotComparer.sh -l /zookeeper-data/backup/snapshot.d.snappy -r /zookeeper-data/backup/snapshot.44 -b 2 -n 1
+```
+
+Example output:
+
+```
+...
+Deserialized snapshot in snapshot.44 in 0.002741 seconds
+Processed data tree in 0.000361 seconds
+Node count: 10
+Total size: 0
+Max depth: 4
+Count of nodes at depth 0: 1
+Count of nodes at depth 1: 2
+Count of nodes at depth 2: 4
+Count of nodes at depth 3: 3
+
+Node count: 22
+Total size: 2903
+Max depth: 5
+Count of nodes at depth 0: 1
+Count of nodes at depth 1: 2
+Count of nodes at depth 2: 4
+Count of nodes at depth 3: 7
+Count of nodes at depth 4: 8
+
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 0
+Node  found in both trees. Delta: 2903 bytes, 12 descendants
+Analysis for depth 1
+Node /zk_test found in both trees. Delta: 2903 bytes, 12 descendants
+Analysis for depth 2
+Node /zk_test/gz found in both trees. Delta: 730 bytes, 3 descendants
+Node /zk_test/snappy found in both trees. Delta: 2173 bytes, 9 descendants
+Analysis for depth 3
+Node /zk_test/gz/12345 found in both trees. Delta: 9 bytes, 1 descendants
+Node /zk_test/gz/a found only in right tree. Descendant size: 721. Descendant count: 0
+Node /zk_test/snappy/anotherTest found in both trees. Delta: 1738 bytes, 2 descendants
+Node /zk_test/snappy/test_1 found only in right tree. Descendant size: 344. Descendant count: 3
+Node /zk_test/snappy/test_2 found only in right tree. Descendant size: 91. Descendant count: 2
+Analysis for depth 4
+Node /zk_test/gz/12345/abcdef found only in right tree. Descendant size: 9. Descendant count: 0
+Node /zk_test/snappy/anotherTest/abc found only in right tree. Descendant size: 1738. Descendant count: 0
+Node /zk_test/snappy/test_1/a found only in right tree. Descendant size: 93. Descendant count: 0
+Node /zk_test/snappy/test_1/b found only in right tree. Descendant size: 251. Descendant count: 0
+Node /zk_test/snappy/test_2/xyz found only in right tree. Descendant size: 33. Descendant count: 0
+Node /zk_test/snappy/test_2/y found only in right tree. Descendant size: 58. Descendant count: 0
+All layers compared.
+```
+
+#### Interactive Mode
+
+Add `-i` / `--interactive` to enter interactive mode:
+
+```
+./bin/zkSnapshotComparer.sh -l /zookeeper-data/backup/snapshot.d.snappy -r /zookeeper-data/backup/snapshot.44 -b 2 -n 1 -i
+```
+
+Three navigation options are available:
+
+- Press **Enter** to print the current depth layer.
+- Type a **number** to jump to and print all nodes at that depth.
+- Enter an **absolute path** (starting with `/`) to print the immediate subtree of that node.
+
+Note: only nodes passing the bytes and nodes thresholds are shown.
+
+Press Enter to move to the next depth layer:
+
+```
+Current depth is 0
+Press enter to move to print current depth layer;
+...
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 0
+Node  found in both trees. Delta: 2903 bytes, 12 descendants
+```
+
+Type a number to jump forward or backward to a specific depth:
+
+```
+Current depth is 1
+...
+Type a number to jump to and print all nodes at a given depth;
+...
+3
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 3
+Node /zk_test/gz/12345 found in both trees. Delta: 9 bytes, 1 descendants
+Node /zk_test/gz/a found only in right tree. Descendant size: 721. Descendant count: 0
+Filtered node /zk_test/gz/anotherOne of left size 0, right size 0
+Filtered right node /zk_test/gz/b of size 0
+Node /zk_test/snappy/anotherTest found in both trees. Delta: 1738 bytes, 2 descendants
+Node /zk_test/snappy/test_1 found only in right tree. Descendant size: 344. Descendant count: 3
+Node /zk_test/snappy/test_2 found only in right tree. Descendant size: 91. Descendant count: 2
+
+Current depth is 3
+...
+Type a number to jump to and print all nodes at a given depth;
+...
+0
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for depth 0
+Node  found in both trees. Delta: 2903 bytes, 12 descendants
+```
+
+Out-of-range depth is handled gracefully:
+
+```
+Current depth is 1
+...
+10
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Depth must be in range [0, 4]
+```
+
+Enter an absolute path to print the immediate subtree of a node:
+
+```
+Current depth is 3
+...
+Enter an ABSOLUTE path to print the immediate subtree of a node.
+/zk_test
+Printing analysis for nodes difference larger than 2 bytes or node count difference larger than 1.
+Analysis for node /zk_test
+Node /zk_test/gz found in both trees. Delta: 730 bytes, 3 descendants
+Node /zk_test/snappy found in both trees. Delta: 2173 bytes, 9 descendants
+```
+
+Invalid path and invalid input are handled:
+
+```
+Enter an ABSOLUTE path to print the immediate subtree of a node.
+/non-exist-path
+Analysis for node /non-exist-path
+Path /non-exist-path is neither found in left tree nor right tree.
+
+12223999999999999999999999999999999999999
+Input 12223999999999999999999999999999999999999 is not valid. Depth must be in range [0, 4]. Path must be an absolute path which starts with '/'.
+```
+
+The tool exits interactive mode automatically when all layers are compared, or press `^C` to exit at any time.
+
+## Benchmark
+
+### YCSB
+
+[YCSB](https://github.com/brianfrankcooper/YCSB) (Yahoo Cloud Serving Benchmark) can be used to benchmark ZooKeeper. Follow the steps below to get started.
+
+<Steps>
+<Step>
+**Start ZooKeeper Server(s)**
+
+Start your ZooKeeper ensemble before running any benchmark.
+
+</Step>
+
+<Step>
+**Install Java and Maven**
+
+Ensure a JDK and Maven are installed on the machine running the benchmark.
+
+</Step>
+
+<Step>
+**Set Up YCSB**
+
+Clone and build the ZooKeeper binding:
+
+```bash
+git clone http://github.com/brianfrankcooper/YCSB.git
+cd YCSB
+mvn -pl site.ycsb:zookeeper-binding -am clean package -DskipTests
+```
+
+See the [YCSB README](https://github.com/brianfrankcooper/YCSB#getting-started) for more details.
+
+</Step>
+
+<Step>
+**Configure ZooKeeper Connection Parameters**
+
+Set the following properties in your workload file or via the shell:
+
+- `zookeeper.connectString` — connection string (e.g. `127.0.0.1:2181/benchmark`)
+- `zookeeper.sessionTimeout` — session timeout in milliseconds
+- `zookeeper.watchFlag` — enable ZooKeeper watches (`true` or `false`, default `false`). This measures the effect of watch overhead on read/write performance, not watch notification latency.
+
+```bash
+./bin/ycsb run zookeeper -s -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark \
+  -p zookeeper.watchFlag=true
+```
+
+Or set properties directly on the command line (create the `/benchmark` namespace first using `create /benchmark` in the CLI):
+
+```bash
+./bin/ycsb run zookeeper -s -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark \
+  -p zookeeper.sessionTimeout=30000
+```
+
+</Step>
+
+<Step>
+**Load Data and Run Tests**
+
+Load data:
+
+```bash
+# -p recordcount: number of znodes to insert
+./bin/ycsb load zookeeper -s -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark \
+  -p recordcount=10000 > outputLoad.txt
+```
+
+Run the workload (`workloadb` is recommended as the most representative read-heavy workload):
+
+```bash
+# test the effect of value size on performance
+./bin/ycsb run zookeeper -s -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark -p fieldlength=1000
+
+# test with multiple fields
+./bin/ycsb run zookeeper -s -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark -p fieldcount=20
+
+# HDR histogram output
+./bin/ycsb run zookeeper -threads 1 -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark \
+  -p hdrhistogram.percentiles=10,25,50,75,90,95,99,99.9 \
+  -p histogram.buckets=500
+
+# multi-client test (increase maxClientCnxns in zoo.cfg as needed)
+./bin/ycsb run zookeeper -threads 10 -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark
+
+# timeseries output
+./bin/ycsb run zookeeper -threads 1 -P workloads/workloadb \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark \
+  -p measurementtype=timeseries -p timeseries.granularity=50
+
+# cluster test
+./bin/ycsb run zookeeper -P workloads/workloadb \
+  -p zookeeper.connectString=192.168.10.43:2181,192.168.10.45:2181,192.168.10.27:2181/benchmark
+
+# test leader performance only
+./bin/ycsb run zookeeper -P workloads/workloadb \
+  -p zookeeper.connectString=192.168.10.43:2181/benchmark
+
+# large znodes (default jute.maxbuffer = 1 MB; set the same value on all ZK servers)
+./bin/ycsb run zookeeper -jvm-args="-Djute.maxbuffer=4194304" -s -P workloads/workloadc \
+  -p zookeeper.connectString=127.0.0.1:2181/benchmark
+
+# clean up after benchmarking: CLI: deleteall /benchmark
+```
+
+</Step>
+</Steps>
+
+### zk-smoketest
+
+[zk-smoketest](https://github.com/phunt/zk-smoketest) provides a simple smoketest client
+for a ZooKeeper ensemble. Useful for verifying new, updated, or existing installations.
+
+## Testing
+
+### Fault Injection Framework
+
+#### Byteman
+
+[Byteman](https://byteman.jboss.org/) is a tool for tracing, monitoring, and testing Java
+application and JDK runtime code. It injects Java code into methods without requiring
+recompilation, repackaging, or redeployment — and injection can be performed at JVM startup
+or while the application is running. See the [Byteman tutorial](https://developer.jboss.org/wiki/ABytemanTutorial)
+for a quick introduction.
+
+```bash
+# Attach Byteman to 3 ZooKeeper servers at runtime
+# (55001/55002/55003 = Byteman ports; 714/740/758 = ZK server PIDs)
+./bminstall.sh -b -Dorg.jboss.byteman.transform.all -Dorg.jboss.byteman.verbose -p 55001 714
+./bminstall.sh -b -Dorg.jboss.byteman.transform.all -Dorg.jboss.byteman.verbose -p 55002 740
+./bminstall.sh -b -Dorg.jboss.byteman.transform.all -Dorg.jboss.byteman.verbose -p 55003 758
+
+# load a fault injection script
+./bmsubmit.sh -p 55002 -l my_zk_fault_injection.btm
+# unload a fault injection script
+./bmsubmit.sh -p 55002 -u my_zk_fault_injection.btm
+```
+
+**Example 1:** Force a leader re-election by rolling over the leader's zxid.
+
+```bash
+cat zk_leader_zxid_roll_over.btm
+
+RULE trace zk_leader_zxid_roll_over
+CLASS org.apache.zookeeper.server.quorum.Leader
+METHOD propose
+IF true
+DO
+  traceln("*** Leader zxid has rolled over, forcing re-election ***");
+  $1.zxid = 4294967295L
+ENDRULE
+```
+
+**Example 2:** Make the leader drop ping packets to a specific follower. The leader will close
+the `LearnerHandler` for that follower, and the follower will re-enter the quorum.
+
+```bash
+cat zk_leader_drop_ping_packet.btm
+
+RULE trace zk_leader_drop_ping_packet
+CLASS org.apache.zookeeper.server.quorum.LearnerHandler
+METHOD ping
+AT ENTRY
+IF $0.sid == 2
+DO
+  traceln("*** Leader drops ping packet to sid: 2 ***");
+  return;
+ENDRULE
+```
+
+**Example 3:** Make a follower drop ACK packets. This has limited effect during broadcast since
+the leader only needs a majority of ACKs to commit a proposal.
+
+```bash
+cat zk_follower_drop_ack_packet.btm
+
+RULE trace zk.follower_drop_ack_packet
+CLASS org.apache.zookeeper.server.quorum.SendAckRequestProcessor
+METHOD processRequest
+AT ENTRY
+IF true
+DO
+  traceln("*** Follower drops ACK packet ***");
+  return;
+ENDRULE
+```
+
+### Jepsen Test
+
+[Jepsen](https://github.com/jepsen-io/jepsen) is a framework for distributed systems
+verification with fault injection. It has been used to verify eventually-consistent databases,
+linearizable coordination systems, and distributed task schedulers.
+
+Running the [Dockerized Jepsen](https://github.com/jepsen-io/jepsen/blob/master/docker/README.md)
+is the simplest way to get started.
+
+Installation:
+
+```bash
+git clone git@github.com:jepsen-io/jepsen.git
+cd docker
+# initial setup may take a while
+./up.sh
+# verify one control node and five DB nodes are running
+docker ps
+     CONTAINER ID        IMAGE               COMMAND                 CREATED             STATUS              PORTS                     NAMES
+     8265f1d3f89c        docker_control      "/bin/sh -c /init.sh"   9 hours ago         Up 4 hours          0.0.0.0:32769->8080/tcp   jepsen-control
+     8a646102da44        docker_n5           "/run.sh"               9 hours ago         Up 3 hours          22/tcp                    jepsen-n5
+     385454d7e520        docker_n1           "/run.sh"               9 hours ago         Up 9 hours          22/tcp                    jepsen-n1
+     a62d6a9d5f8e        docker_n2           "/run.sh"               9 hours ago         Up 9 hours          22/tcp                    jepsen-n2
+     1485e89d0d9a        docker_n3           "/run.sh"               9 hours ago         Up 9 hours          22/tcp                    jepsen-n3
+     27ae01e1a0c5        docker_node         "/run.sh"               9 hours ago         Up 9 hours          22/tcp                    jepsen-node
+     53c444b00ebd        docker_n4           "/run.sh"               9 hours ago         Up 9 hours          22/tcp                    jepsen-n4
+```
+
+Running the test:
+
+```bash
+# enter the control container
+docker exec -it jepsen-control bash
+# run the ZooKeeper test
+cd zookeeper && lein run test --concurrency 10
+# passing output looks like:
+INFO [2019-04-01 11:25:23,719] jepsen worker 8 - jepsen.util 8	:ok	:read	2
+INFO [2019-04-01 11:25:23,722] jepsen worker 3 - jepsen.util 3	:invoke	:cas	[0 4]
+INFO [2019-04-01 11:25:23,760] jepsen worker 3 - jepsen.util 3	:fail	:cas	[0 4]
+INFO [2019-04-01 11:25:23,791] jepsen worker 1 - jepsen.util 1	:invoke	:read	nil
+INFO [2019-04-01 11:25:23,794] jepsen worker 1 - jepsen.util 1	:ok	:read	2
+INFO [2019-04-01 11:25:24,038] jepsen worker 0 - jepsen.util 0	:invoke	:write	4
+INFO [2019-04-01 11:25:24,073] jepsen worker 0 - jepsen.util 0	:ok	:write	4
+...............................................................................
+Everything looks good! ヽ('ー`)ノ
+```
+
+Read [this blog post](https://aphyr.com/posts/291-call-me-maybe-zookeeper) to learn more
+about the Jepsen analysis of ZooKeeper.

@@ -1,0 +1,170 @@
+---
+title: "Administration"
+description: "Operational guidance for running a ZooKeeper cluster, including provisioning, maintenance tasks, data directory cleanup, supervision, monitoring, logging, and troubleshooting."
+---
+
+## Maintenance
+
+Little long term maintenance is required for a ZooKeeper
+cluster however you must be aware of the following:
+
+### Ongoing Data Directory Cleanup
+
+The ZooKeeper [Data
+Directory](/docs/admin-ops/administrators-guide/data-file-management#the-data-directory) contains files which are a persistent copy
+of the znodes stored by a particular serving ensemble. These
+are the snapshot and transactional log files. As changes are
+made to the znodes these changes are appended to a
+transaction log. Occasionally, when a log grows large, a
+snapshot of the current state of all znodes will be written
+to the filesystem and a new transaction log file is created
+for future transactions. During snapshotting, ZooKeeper may
+continue appending incoming transactions to the old log file.
+Therefore, some transactions which are newer than a snapshot
+may be found in the last transaction log preceding the
+snapshot.
+
+A ZooKeeper server **will not remove
+old snapshots and log files** when using the default
+configuration (see autopurge below), this is the
+responsibility of the operator. Every serving environment is
+different and therefore the requirements of managing these
+files may differ from install to install (backup for example).
+
+The PurgeTxnLog utility implements a simple retention
+policy that administrators can use. The [API docs](/docs) contains details on
+calling conventions (arguments, etc...).
+
+In the following example the last count snapshots and
+their corresponding logs are retained and the others are
+deleted. The value of \<count> should typically be
+greater than 3 (although not required, this provides 3 backups
+in the unlikely event a recent log has become corrupted). This
+can be run as a cron job on the ZooKeeper server machines to
+clean up the logs daily.
+
+```bash
+$ java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar:lib/logback-core-1.2.10.jar:conf org.apache.zookeeper.server.PurgeTxnLog <dataDir> <snapDir> -n <count>
+```
+
+Automatic purging of the snapshots and corresponding
+transaction logs was introduced in version 3.4.0 and can be
+enabled via the following configuration parameters **autopurge.snapRetainCount** and **autopurge.purgeInterval**. For more on
+this, see [Advanced Configuration](/docs/admin-ops/administrators-guide/configuration-parameters#advanced-configuration).
+
+### Debug Log Cleanup (logback)
+
+See the section on [logging](#logging) in this document. It is
+expected that you will setup a rolling file appender using the
+in-built logback feature. The sample configuration file in the
+release tar's `conf/logback.xml` provides an example of
+this.
+
+## Supervision
+
+You will want to have a supervisory process that manages
+each of your ZooKeeper server processes (JVM). The ZK server is
+designed to be "fail fast" meaning that it will shut down
+(process exit) if an error occurs that it cannot recover
+from. As a ZooKeeper serving cluster is highly reliable, this
+means that while the server may go down the cluster as a whole
+is still active and serving requests. Additionally, as the
+cluster is "self healing" the failed server once restarted will
+automatically rejoin the ensemble w/o any manual
+interaction.
+
+Having a supervisory process such as [daemontools](http://cr.yp.to/daemontools.html) or
+[SMF](http://en.wikipedia.org/wiki/Service_Management_Facility)
+(other options for supervisory process are also available, it's
+up to you which one you would like to use, these are just two
+examples) managing your ZooKeeper server ensures that if the
+process does exit abnormally it will automatically be restarted
+and will quickly rejoin the cluster.
+
+It is also recommended to configure the ZooKeeper server process to
+terminate and dump its heap if an OutOfMemoryError\** occurs. This is achieved
+by launching the JVM with the following arguments on Linux and Windows
+respectively. The *zkServer.sh* and
+*zkServer.cmd\* scripts that ship with ZooKeeper set
+these options.
+
+```
+-XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p'
+
+"-XX:+HeapDumpOnOutOfMemoryError" "-XX:OnOutOfMemoryError=cmd /c taskkill /pid %%%%p /t /f"
+```
+
+## Monitoring
+
+The ZooKeeper service can be monitored in one of three primary ways:
+
+- the command port through the use of [4 letter words](/docs/admin-ops/administrators-guide/commands#the-four-letter-words)
+- with [JMX](/docs/admin-ops/jmx)
+- using the [`zkServer.sh status` command](/docs/admin-ops/tools#zkserversh)
+
+## Logging
+
+ZooKeeper uses **[SLF4J](http://www.slf4j.org)**
+version 1.7 as its logging infrastructure. By default ZooKeeper is shipped with
+**[LOGBack](http://logback.qos.ch/)** as the logging backend, but you can use
+any other supported logging framework of your choice.
+
+The ZooKeeper default _logback.xml_
+file resides in the _conf_ directory. Logback requires that
+_logback.xml_ either be in the working directory
+(the directory from which ZooKeeper is run) or be accessible from the classpath.
+
+For more information about SLF4J, see
+[its manual](http://www.slf4j.org/manual.html).
+
+For more information about Logback, see
+[Logback website](http://logback.qos.ch/).
+
+## Troubleshooting
+
+- _Server not coming up because of file corruption_ :
+  A server might not be able to read its database and fail to come up because of
+  some file corruption in the transaction logs of the ZooKeeper server. You will
+  see some IOException on loading ZooKeeper database. In such a case,
+  make sure all the other servers in your ensemble are up and working. Use "stat"
+  command on the command port to see if they are in good health. After you have verified that
+  all the other servers of the ensemble are up, you can go ahead and clean the database
+  of the corrupt server. Delete all the files in datadir/version-2 and datalogdir/version-2/.
+  Restart the server.
+
+## Metrics Providers
+
+**New in 3.6.0:** The following options are used to configure metrics.
+
+By default ZooKeeper server exposes useful metrics using the [AdminServer](/docs/admin-ops/administrators-guide/commands#the-adminserver)
+and [Four Letter Words](/docs/admin-ops/administrators-guide/commands#the-four-letter-words) interface.
+
+Since 3.6.0 you can configure a different Metrics Provider, that exports metrics
+to your favourite system.
+
+Since 3.6.0 ZooKeeper binary package bundles an integration with [Prometheus.io](https://prometheus.io)
+
+- _metricsProvider.className_ :
+  Set to "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider" to
+  enable Prometheus.io exporter.
+- _metricsProvider.httpHost_ :
+  **New in 3.8.0:** Prometheus.io exporter will start a Jetty server and listen this address, default is "0.0.0.0"
+- _metricsProvider.httpPort_ :
+  Prometheus.io exporter will start a Jetty server and bind to this port, it defaults to 7000.
+  Prometheus end point will be http://hostname:httPort/metrics.
+- _metricsProvider.exportJvmInfo_ :
+  If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
+  The default is true.
+- _metricsProvider.numWorkerThreads_ :
+  **New in 3.7.1:**
+  Number of worker threads for reporting Prometheus summary metrics.
+  Default value is 1.
+  If the number is less than 1, the main thread will be used.
+- _metricsProvider.maxQueueSize_ :
+  **New in 3.7.1:**
+  The max queue size for Prometheus summary metrics reporting task.
+  Default value is 10000.
+- _metricsProvider.workerShutdownTimeoutMs_ :
+  **New in 3.7.1:**
+  The timeout in ms for Prometheus worker threads shutdown.
+  Default value is 1000ms.

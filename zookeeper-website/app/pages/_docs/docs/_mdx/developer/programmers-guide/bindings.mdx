@@ -1,0 +1,260 @@
+---
+title: "Bindings"
+description: "Documents the Java and C client library bindings for ZooKeeper, including the ZooKeeper class, callbacks, POSIX-style C API, multithreaded and single-threaded libraries."
+---
+
+The ZooKeeper client libraries come in two languages: Java and C.
+The following sections describe these.
+
+## Java Binding
+
+There are two packages that make up the ZooKeeper Java binding:
+**org.apache.zookeeper** and **org.apache.zookeeper.data**. The rest of the
+packages that make up ZooKeeper are used internally or are part of the
+server implementation. The **org.apache.zookeeper.data** package is made up of
+generated classes that are used simply as containers.
+
+The main class used by a ZooKeeper Java client is the **ZooKeeper** class. Its two constructors differ only
+by an optional session id and password. ZooKeeper supports session
+recovery across instances of a process. A Java program may save its
+session id and password to stable storage, restart, and recover the
+session that was used by the earlier instance of the program.
+
+When a ZooKeeper object is created, two threads are created as
+well: an IO thread and an event thread. All IO happens on the IO thread
+(using Java NIO). All event callbacks happen on the event thread.
+Session maintenance such as reconnecting to ZooKeeper servers and
+maintaining heartbeat is done on the IO thread. Responses for
+synchronous methods are also processed in the IO thread. All responses
+to asynchronous methods and watch events are processed on the event
+thread. There are a few things to notice that result from this
+design:
+
+- All completions for asynchronous calls and watcher callbacks
+  will be made in order, one at a time. The caller can do any
+  processing they wish, but no other callbacks will be processed
+  during that time.
+- Callbacks do not block the processing of the IO thread or the
+  processing of the synchronous calls.
+- Synchronous calls may not return in the correct order. For
+  example, assume a client does the following processing: issues an
+  asynchronous read of node **/a** with
+  _watch_ set to true, and then in the completion
+  callback of the read it does a synchronous read of **/a**. (Maybe not good practice, but not illegal
+  either, and it makes for a simple example.)
+  Note that if there is a change to **/a** between the asynchronous read and the
+  synchronous read, the client library will receive the watch event
+  saying **/a** changed before the
+  response for the synchronous read, but because of the completion
+  callback blocking the event queue, the synchronous read will
+  return with the new value of **/a**
+  before the watch event is processed.
+
+Finally, the rules associated with shutdown are straightforward:
+once a ZooKeeper object is closed or receives a fatal event
+(SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
+On a close, the two threads shut down and any further access on zookeeper
+handle is undefined behavior and should be avoided.
+
+### Client Configuration Parameters
+
+The following list contains configuration properties for the Java client. You can set any
+of these properties using Java system properties. For server properties, please check the
+[Server configuration section of the Admin Guide](/docs/admin-ops/administrators-guide/configuration-parameters#advanced-configuration).
+The ZooKeeper Wiki also has useful pages about
+[ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide),
+and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
+
+- _zookeeper.sasl.client_ :
+  Set the value to **false** to disable
+  SASL authentication. Default is **true**.
+
+- _zookeeper.sasl.clientconfig_ :
+  Specifies the context key in the JAAS login file. Default is "Client".
+
+- _zookeeper.server.principal_ :
+  Specifies the server principal to be used by the client for authentication, while connecting to the zookeeper
+  server, when Kerberos authentication is enabled. If this configuration is provided, then
+  the ZooKeeper client will NOT USE any of the following parameters to determine the server principal:
+
+  ```properties
+  zookeeper.sasl.client.username, zookeeper.sasl.client.canonicalize.hostname, zookeeper.server.realm
+  Note: this config parameter is working only for ZooKeeper 3.5.7+, 3.6.0+
+  ```
+
+- _zookeeper.sasl.client.username_ :
+  Traditionally, a principal is divided into three parts: the primary, the instance, and the realm.
+  The format of a typical Kerberos V5 principal is primary/instance@REALM.
+  zookeeper.sasl.client.username specifies the primary part of the server principal. Default
+  is "zookeeper". Instance part is derived from the server IP. Finally server's principal is
+  username/IP@realm, where username is the value of zookeeper.sasl.client.username, IP is
+  the server IP, and realm is the value of zookeeper.server.realm.
+
+- _zookeeper.sasl.client.canonicalize.hostname_ :
+  Expecting the zookeeper.server.principal parameter is not provided, the ZooKeeper client will try to
+  determine the 'instance' (host) part of the ZooKeeper server principal. First it takes the hostname provided
+  as the ZooKeeper server connection string. Then it tries to 'canonicalize' the address by getting
+  the fully qualified domain name belonging to the address. You can disable this 'canonicalization'
+  by setting: zookeeper.sasl.client.canonicalize.hostname=false
+
+- _zookeeper.sasl.client.allowReverseDnsLookup_ :
+  **New in 3.9.5:**
+  Controls whether reverse DNS lookup is enabled when constructing the server principal for the SASL client.
+  Default: false
+
+- _zookeeper.server.realm_ :
+  Realm part of the server principal. By default it is the client principal realm.
+
+- _zookeeper.disableAutoWatchReset_ :
+  This switch controls whether automatic watch resetting is enabled. Clients automatically
+  reset watches during session reconnect by default, this option allows the client to turn off
+  this behavior by setting zookeeper.disableAutoWatchReset to **true**.
+
+- _zookeeper.client.secure_ :
+  **New in 3.5.5:**
+  If you want to connect to the server secure client port, you need to set this property to
+  **true**
+  on the client. This will connect to server using SSL with specified credentials. Note that
+  it requires the Netty client.
+
+- _zookeeper.clientCnxnSocket_ :
+  Specifies which ClientCnxnSocket to be used. Possible values are
+  **org.apache.zookeeper.ClientCnxnSocketNIO**
+  and
+  **org.apache.zookeeper.ClientCnxnSocketNetty**
+  . Default is
+  **org.apache.zookeeper.ClientCnxnSocketNIO**
+  . If you want to connect to server's secure client port, you need to set this property to
+  **org.apache.zookeeper.ClientCnxnSocketNetty**
+  on client.
+
+- _zookeeper.ssl.keyStore.location and zookeeper.ssl.keyStore.password_ :
+  **New in 3.5.5:**
+  Specifies the file path to a JKS containing the local credentials to be used for SSL connections,
+  and the password to unlock the file.
+- _zookeeper.ssl.keyStore.passwordPath_ :
+  **New in 3.8.0:**
+  Specifies the file path which contains the keystore password
+
+- _zookeeper.ssl.trustStore.location and zookeeper.ssl.trustStore.password_ :
+  **New in 3.5.5:**
+  Specifies the file path to a JKS containing the remote credentials to be used for SSL connections,
+  and the password to unlock the file.
+- _zookeeper.ssl.trustStore.passwordPath_ :
+  **New in 3.8.0:**
+  Specifies the file path which contains the truststore password
+
+- _zookeeper.ssl.keyStore.type_ and _zookeeper.ssl.trustStore.type_:
+  **New in 3.5.5:**
+  Specifies the file format of keys/trust store files used to establish TLS connection to the ZooKeeper server.
+  Values: JKS, PEM, PKCS12 or null (detect by filename). Default: null.
+  **New in 3.6.3, 3.7.0:**
+  The format BCFKS was added.
+
+- _jute.maxbuffer_ :
+  In the client side, it specifies the maximum size of the incoming data from the server. The default is 0xfffff(1048575) bytes,
+  or just under 1M. This is really a sanity check. The ZooKeeper server is designed to store and send
+  data on the order of kilobytes. If incoming data length is more than this value, an IOException
+  is raised. This value of client side should keep same with the server side(Setting **System.setProperty("jute.maxbuffer", "xxxx")** in the client side will work),
+  otherwise problems will arise.
+
+- _zookeeper.kinit_ :
+  Specifies path to kinit binary. Default is "/usr/bin/kinit".
+
+- _zookeeper.shuffleDnsResponse_ :
+  **New in 3.10.0:**
+  Specifies whether ZooKeeper client should randomly pick an IP address from the DNS lookup query result when resolving
+  server addresses or not. This is a feature flag in order to keep the old behavior of the default DNS resolver in
+  `StaticHostProvider`, because we disabled it by default. The reason behind that is shuffling the response of DNS queries
+  shadows JVM network property `java.net.preferIPv6Addresses` (default: false). This property controls whether JVM's built-in
+  resolver should prioritize v4 (false value) or v6 (true value) addresses when putting together the list of IP addresses
+  in the result. In other words the above Java system property was completely ineffective in the case of ZooKeeper server host
+  resolution protocol and this must have been fixed. In a dual stack environment one might want to prefer one stack over
+  the other which, in case of Java processes, should be controlled by JVM network properties and ZooKeeper must honor
+  these settings. Since the old behavior has been with us since day zero, we introduced this feature flag in case you
+  need it. Such case could be when you have a buggy DNS server which responds IP addresses always in the same order and
+  you want to randomize that.
+  Default: false
+
+- _zookeeper.hostProvider.dnsSrvRefreshIntervalSeconds_ :
+  **New in 3.10.0:**
+  Specifies the refresh interval in seconds for DNS SRV record lookups when using DnsSrvHostProvider.
+  A value of 0 disables periodic refresh.
+  Default: 60 seconds
+
+## C Binding
+
+The C binding has a single-threaded and multi-threaded library.
+The multi-threaded library is easiest to use and is most similar to the
+Java API. This library will create an IO thread and an event dispatch
+thread for handling connection maintenance and callbacks. The
+single-threaded library allows ZooKeeper to be used in event driven
+applications by exposing the event loop used in the multi-threaded
+library.
+
+The package includes two shared libraries: zookeeper*st and
+zookeeper_mt. The former only provides the asynchronous APIs and
+callbacks for integrating into the application's event loop. The only
+reason this library exists is to support the platforms were a
+\_pthread* library is not available or is unstable
+(i.e. FreeBSD 4.x). In all other cases, application developers should
+link with zookeeper_mt, as it includes support for both Sync and Async
+API.
+
+### Installation
+
+If you're building the client from a check-out from the Apache
+repository, follow the steps outlined below. If you're building from a
+project source package downloaded from apache, skip to step **3**.
+
+1. Run `mvn compile` in zookeeper-jute directory (_.../trunk/zookeeper-jute_).
+   This will create a directory named "generated" under
+   _.../trunk/zookeeper-client/zookeeper-client-c_.
+1. Change directory to the*.../trunk/zookeeper-client/zookeeper-client-c*
+   and run `autoreconf -if` to bootstrap **autoconf**, **automake** and **libtool**. Make sure you have **autoconf version 2.59** or greater installed.
+   Skip to step**4**.
+1. If you are building from a project source package,
+   unzip/untar the source tarball and cd to the*
+   zookeeper-x.x.x/zookeeper-client/zookeeper-client-c* directory.
+1. Run `./configure <your-options>` to
+   generate the makefile. Here are some of options the **configure** utility supports that can be
+   useful in this step:
+
+- `--enable-debug`
+  Enables optimization and enables debug info compiler
+  options. (Disabled by default.)
+- `--without-syncapi`
+  Disables Sync API support; zookeeper_mt library won't be
+  built. (Enabled by default.)
+- `--disable-static`
+  Do not build static libraries. (Enabled by
+  default.)
+- `--disable-shared`
+  Do not build shared libraries. (Enabled by
+  default.)
+  <Callout type="info">
+    See INSTALL for general information about running **configure**. 1. Run
+    `make` or `make install` to build the libraries and install them. 1. To
+    generate doxygen documentation for the ZooKeeper API, run `make
+    doxygen-doc`. All documentation will be placed in a new subfolder named
+    docs. By default, this command only generates HTML. For information on other
+    document formats, run `./configure --help`
+  </Callout>
+
+### Building Your Own C Client
+
+In order to be able to use the ZooKeeper C API in your application
+you have to remember to
+
+1. Include ZooKeeper header: `#include <zookeeper/zookeeper.h>`
+1. If you are building a multithreaded client, compile with
+   `-DTHREADED` compiler flag to enable the multi-threaded version of
+   the library, and then link against the
+   _zookeeper_mt_ library. If you are building a
+   single-threaded client, do not compile with `-DTHREADED`, and be
+   sure to link against the_zookeeper_st_library.
+
+<Callout type="info">
+  See *.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c* for an example
+  of a C client implementation
+</Callout>

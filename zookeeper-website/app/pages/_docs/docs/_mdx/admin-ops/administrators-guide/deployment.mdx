@@ -1,0 +1,280 @@
+---
+title: "Deployment"
+description: "Covers ZooKeeper deployment requirements and setup: supported platforms, system requirements, clustered multi-server ensemble configuration, and single-server developer setup."
+---
+
+This section contains information about deploying Zookeeper and
+covers these topics:
+
+- [System Requirements](#system-requirements)
+- [Clustered (Multi-Server) Setup](#clustered-multi-server-setup)
+- [Single Server and Developer Setup](#single-server-and-developer-setup)
+
+The first two sections assume you are interested in installing
+ZooKeeper in a production environment such as a datacenter. The final
+section covers situations in which you are setting up ZooKeeper on a
+limited basis - for evaluation, testing, or development - but not in a
+production environment.
+
+## System Requirements
+
+### Supported Platforms
+
+ZooKeeper consists of multiple components. Some components are
+supported broadly, and other components are supported only on a smaller
+set of platforms.
+
+- **Client** is the Java client
+  library, used by applications to connect to a ZooKeeper ensemble.
+- **Server** is the Java server
+  that runs on the ZooKeeper ensemble nodes.
+- **Native Client** is a client
+  implemented in C, similar to the Java client, used by applications
+  to connect to a ZooKeeper ensemble.
+- **Contrib** refers to multiple
+  optional add-on components.
+
+The following matrix describes the level of support committed for
+running each component on different operating system platforms.
+
+### Support Matrix
+
+| Operating System | Client                     | Server                     | Native Client              | Contrib                    |
+| ---------------- | -------------------------- | -------------------------- | -------------------------- | -------------------------- |
+| GNU/Linux        | Development and Production | Development and Production | Development and Production | Development and Production |
+| Solaris          | Development and Production | Development and Production | Not Supported              | Not Supported              |
+| FreeBSD          | Development and Production | Development and Production | Not Supported              | Not Supported              |
+| Windows          | Development and Production | Development and Production | Not Supported              | Not Supported              |
+| Mac OS X         | Development Only           | Development Only           | Not Supported              | Not Supported              |
+
+For any operating system not explicitly mentioned as supported in
+the matrix, components may or may not work. The ZooKeeper community
+will fix obvious bugs that are reported for other platforms, but there
+is no full support.
+
+### Required Software
+
+ZooKeeper runs in Java, release 1.8 or greater
+(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported).
+It runs as an _ensemble_ of ZooKeeper servers. Three
+ZooKeeper servers is the minimum recommended size for an
+ensemble, and we also recommend that they run on separate
+machines. At Yahoo!, ZooKeeper is usually deployed on
+dedicated RHEL boxes, with dual-core processors, 2GB of RAM,
+and 80GB IDE hard drives.
+
+## Clustered (Multi-Server) Setup
+
+For reliable ZooKeeper service, you should deploy ZooKeeper in a
+cluster known as an _ensemble_. As long as a majority
+of the ensemble are up, the service will be available. Because Zookeeper
+requires a majority, it is best to use an
+odd number of machines. For example, with four machines ZooKeeper can
+only handle the failure of a single machine; if two machines fail, the
+remaining two machines do not constitute a majority. However, with five
+machines ZooKeeper can handle the failure of two machines.
+
+<Callout type="info">
+  As mentioned in the [ZooKeeper Getting Started
+  Guide](/docs/overview/quick-start), a minimum of three servers are required
+  for a fault tolerant clustered setup, and it is strongly recommended that you
+  have an odd number of servers.
+
+Usually three servers is more than enough for a production
+install, but for maximum reliability during maintenance, you may
+wish to install five servers. With three servers, if you perform
+maintenance on one of them, you are vulnerable to a failure on one
+of the other two servers during that maintenance. If you have five
+of them running, you can take one down for maintenance, and know
+that you're still OK if one of the other four suddenly fails.
+
+Your redundancy considerations should include all aspects of
+your environment. If you have three ZooKeeper servers, but their
+network cables are all plugged into the same network switch, then
+the failure of that switch will take down your entire ensemble.
+
+</Callout>
+
+Here are the steps to set a server that will be part of an
+ensemble. These steps should be performed on every host in the
+ensemble:
+
+<Steps>
+  <Step>
+    Install the Java JDK. You can use the native packaging system for your system, or download
+    the JDK from: [http://java.sun.com/javase/downloads/index.jsp](http://java.sun.com/javase/downloads/index.jsp)
+  </Step>
+  <Step>
+    Set the Java heap size. This is very important to avoid swapping, which will seriously degrade
+    ZooKeeper performance. To determine the correct value, use load tests, and make sure you are
+    well below the usage limit that would cause you to swap. Be conservative — use a maximum heap
+    size of 3GB for a 4GB machine.
+  </Step>
+  <Step>
+    Install the ZooKeeper Server Package. It can be downloaded
+    from: [/releases](/releases)
+  </Step>
+  <Step>
+    Create a configuration file. This file can be called anything. Use the following settings as a
+    starting point:
+
+```
+tickTime=2000
+dataDir=/var/lib/zookeeper/
+clientPort=2181
+initLimit=5
+syncLimit=2
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888
+```
+
+    You can find the meanings of these and other configuration settings in the section
+    [Configuration Parameters](/docs/admin-ops/administrators-guide/configuration-parameters). Every machine that is part of the ZooKeeper
+    ensemble should know about every other machine in the ensemble. You accomplish this with the
+    series of lines of the form **server.id=host:port:port**. (The parameters **host** and **port**
+    are straightforward; for each server you need to specify first a Quorum port then a dedicated
+    port for ZooKeeper leader election). Since ZooKeeper 3.6.0 you can also
+    specify multiple addresses for each ZooKeeper server instance (this can
+    increase availability when multiple physical network interfaces can be used parallel in the
+    cluster). You attribute the server id to each machine by creating a file named _myid_, one for
+    each server, which resides in that server's data directory, as specified by the configuration
+    file parameter **dataDir**.
+
+  </Step>
+  <Step>
+    The _myid_ file consists of a single line containing only the text of that machine's id. So
+    _myid_ of server 1 would contain the text "1" and nothing else. The id must be unique within
+    the ensemble and should have a value between 1 and 255. **IMPORTANT:** if you enable extended
+    features such as TTL Nodes (see below) the id must be between 1 and 254 due to internal
+    limitations.
+  </Step>
+  <Step>
+    Create an initialization marker file _initialize_ in the same directory as _myid_. This file
+    indicates that an empty data directory is expected. When present, an empty database is created
+    and the marker file deleted. When not present, an empty data directory will mean this peer will
+    not have voting rights and it will not populate the data directory until it communicates with
+    an active leader. Intended use is to only create this file when bringing up a new ensemble.
+  </Step>
+  <Step>
+    If your configuration file is set up, you can start a ZooKeeper server:
+
+```
+$ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.conf
+```
+
+    QuorumPeerMain starts a ZooKeeper server; [JMX](http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/)
+    management beans are also registered which allows management through a JMX management console.
+    The [ZooKeeper JMX document](/docs/admin-ops/jmx) contains details on managing ZooKeeper with JMX.
+    See the script _bin/zkServer.sh_, which is included in the release, for an example of starting
+    server instances.
+
+  </Step>
+  <Step>
+    Test your deployment by connecting to the hosts. In Java, you can run the following command to
+    execute simple operations:
+
+```
+$ bin/zkCli.sh -server 127.0.0.1:2181
+```
+
+  </Step>
+</Steps>
+
+## Single Server and Developer Setup
+
+If you want to set up ZooKeeper for development purposes, you will
+probably want to set up a single server instance of ZooKeeper, and then
+install either the Java or C client-side libraries and bindings on your
+development machine.
+
+The steps to setting up a single server instance are the similar
+to the above, except the configuration file is simpler. You can find the
+complete instructions in the [Installing and
+Running ZooKeeper in Single Server Mode](/docs/overview/quick-start#standalone-operation) section of the [ZooKeeper Getting Started
+Guide](/docs/overview/quick-start).
+
+For information on installing the client side libraries, refer to
+the [Bindings](/docs/developer/programmers-guide/bindings)
+section of the [ZooKeeper
+Programmer's Guide](/docs/developer/programmers-guide).
+
+## Designing a ZooKeeper Deployment
+
+The reliability of ZooKeeper rests on two basic assumptions.
+
+1. Only a minority of servers in a deployment
+   will fail. _Failure_ in this context
+   means a machine crash, or some error in the network that
+   partitions a server off from the majority.
+1. Deployed machines operate correctly. To
+   operate correctly means to execute code correctly, to have
+   clocks that work properly, and to have storage and network
+   components that perform consistently.
+
+The sections below contain considerations for ZooKeeper
+administrators to maximize the probability for these assumptions
+to hold true. Some of these are cross-machines considerations,
+and others are things you should consider for each and every
+machine in your deployment.
+
+### Cross Machine Requirements
+
+For the ZooKeeper service to be active, there must be a
+majority of non-failing machines that can communicate with
+each other. For a ZooKeeper ensemble with N servers,
+if N is odd, the ensemble is able to tolerate up to N/2
+server failures without losing any znode data;
+if N is even, the ensemble is able to tolerate up to N/2-1
+server failures.
+
+For example, if we have a ZooKeeper ensemble with 3 servers,
+the ensemble is able to tolerate up to 1 (3/2) server failures.
+If we have a ZooKeeper ensemble with 5 servers,
+the ensemble is able to tolerate up to 2 (5/2) server failures.
+If the ZooKeeper ensemble with 6 servers, the ensemble
+is also able to tolerate up to 2 (6/2-1) server failures
+without losing data and prevent the "brain split" issue.
+
+ZooKeeper ensemble is usually has odd number of servers.
+This is because with the even number of servers,
+the capacity of failure tolerance is the same as
+the ensemble with one less server
+(2 failures for both 5-node ensemble and 6-node ensemble),
+but the ensemble has to maintain extra connections and
+data transfers for one more server.
+
+To achieve the highest probability of tolerating a failure
+you should try to make machine failures independent. For
+example, if most of the machines share the same switch,
+failure of that switch could cause a correlated failure and
+bring down the service. The same holds true of shared power
+circuits, cooling systems, etc.
+
+### Single Machine Requirements
+
+If ZooKeeper has to contend with other applications for
+access to resources like storage media, CPU, network, or
+memory, its performance will suffer markedly. ZooKeeper has
+strong durability guarantees, which means it uses storage
+media to log changes before the operation responsible for the
+change is allowed to complete. You should be aware of this
+dependency then, and take great care if you want to ensure
+that ZooKeeper operations aren’t held up by your media. Here
+are some things you can do to minimize that sort of
+degradation:
+
+- ZooKeeper's transaction log must be on a dedicated
+  device. (A dedicated partition is not enough.) ZooKeeper
+  writes the log sequentially, without seeking Sharing your
+  log device with other processes can cause seeks and
+  contention, which in turn can cause multi-second
+  delays.
+- Do not put ZooKeeper in a situation that can cause a
+  swap. In order for ZooKeeper to function with any sort of
+  timeliness, it simply cannot be allowed to swap.
+  Therefore, make certain that the maximum heap size given
+  to ZooKeeper is not bigger than the amount of real memory
+  available to ZooKeeper. For more on this, see
+  [Things to Avoid](/docs/admin-ops/administrators-guide/best-practices#things-to-avoid)
+  in the Best Practices guide.

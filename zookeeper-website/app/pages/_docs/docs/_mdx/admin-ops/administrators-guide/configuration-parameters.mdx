@@ -1,0 +1,1699 @@
+---
+title: "Configuration Parameters"
+description: "Complete reference for all ZooKeeper configuration parameters, including minimum and advanced settings, cluster options, encryption and authentication, performance tuning, and the AdminServer."
+---
+
+ZooKeeper's behavior is governed by the ZooKeeper configuration
+file. This file is designed so that the exact same file can be used by
+all the servers that make up a ZooKeeper server assuming the disk
+layouts are the same. If servers use different configuration files, care
+must be taken to ensure that the list of servers in all of the different
+configuration files match.
+
+<Callout type="info">
+  In 3.5.0 and later, some of these parameters should be placed in a dynamic
+  configuration file. If they are placed in the static configuration file,
+  ZooKeeper will automatically move them over to the dynamic configuration file.
+  See [Dynamic Reconfiguration](/docs/admin-ops/dynamic-reconfiguration) for
+  more information.
+</Callout>
+
+## Minimum Configuration
+
+Here are the minimum configuration keywords that must be defined
+in the configuration file:
+
+- _clientPort_ :
+  the port to listen for client connections; that is, the
+  port that clients attempt to connect to.
+
+- _secureClientPort_ :
+  the port to listen on for secure client connections using SSL.
+  **clientPort** specifies
+  the port for plaintext connections while **secureClientPort** specifies the port for SSL
+  connections. Specifying both enables mixed-mode while omitting
+  either will disable that mode.
+  Note that SSL feature will be enabled when user plugs-in
+  zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.
+
+- _observerMasterPort_ :
+  the port to listen for observer connections; that is, the
+  port that observers attempt to connect to.
+  if the property is set then the server will host observer connections
+  when in follower mode in addition to when in leader mode and correspondingly
+  attempt to connect to any voting peer when in observer mode.
+
+- _dataDir_ :
+  the location where ZooKeeper will store the in-memory
+  database snapshots and, unless specified otherwise, the
+  transaction log of updates to the database.
+
+  <Callout type="info">
+    Be careful where you put the transaction log. A dedicated transaction log
+    device is key to consistent good performance. Putting the log on a busy
+    device will adversely affect performance.
+  </Callout>
+
+- _tickTime_ :
+  the length of a single tick, which is the basic time unit
+  used by ZooKeeper, as measured in milliseconds. It is used to
+  regulate heartbeats, and timeouts. For example, the minimum
+  session timeout will be two ticks.
+
+## Advanced Configuration
+
+The configuration settings in the section are optional. You can
+use them to further fine tune the behaviour of your ZooKeeper servers.
+Some can also be set using Java system properties, generally of the
+form _zookeeper.keyword_. The exact system
+property, when available, is noted below.
+
+- _dataLogDir_ :
+  (No Java system property)
+  This option will direct the machine to write the
+  transaction log to the **dataLogDir** rather than the **dataDir**. This allows a dedicated log
+  device to be used, and helps avoid competition between logging
+  and snapshots.
+
+  <Callout type="info">
+    Having a dedicated log device has a large impact on throughput and stable
+    latencies. It is highly recommended dedicating a log device and set
+    **dataLogDir** to point to a directory on that device, and then make sure to
+    point **dataDir** to a directory _not_ residing on that device.
+  </Callout>
+
+- _globalOutstandingLimit_ :
+  (Java system property: **zookeeper.globalOutstandingLimit.**)
+  Clients can submit requests faster than ZooKeeper can
+  process them, especially if there are a lot of clients. To
+  prevent ZooKeeper from running out of memory due to queued
+  requests, ZooKeeper will throttle clients so that there are no
+  more than globalOutstandingLimit outstanding requests across
+  entire ensemble, equally divided. The default limit is 1,000
+  and, for example, with 3 members each of them will have
+  1000 / 2 = 500 individual limit.
+
+- _preAllocSize_ :
+  (Java system property: **zookeeper.preAllocSize**)
+  To avoid seeks ZooKeeper allocates space in the
+  transaction log file in blocks of preAllocSize kilobytes. The
+  default block size is 64M. One reason for changing the size of
+  the blocks is to reduce the block size if snapshots are taken
+  more often. (Also, see **snapCount** and **snapSizeLimitInKb**).
+
+- _snapCount_ :
+  (Java system property: **zookeeper.snapCount**)
+  ZooKeeper records its transactions using snapshots and
+  a transaction log (think write-ahead log). The number of
+  transactions recorded in the transaction log before a snapshot
+  can be taken (and the transaction log rolled) is determined
+  by snapCount. In order to prevent all of the machines in the quorum
+  from taking a snapshot at the same time, each ZooKeeper server
+  will take a snapshot when the number of transactions in the transaction log
+  reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
+  range. The default snapCount is 100,000.
+
+- _commitLogCount_ \* :
+  (Java system property: **zookeeper.commitLogCount**)
+  Zookeeper maintains an in-memory list of last committed requests for fast synchronization with
+  followers when the followers are not too behind. This improves sync performance in case when your
+  snapshots are large (>100,000). The default value is 500 which is the recommended minimum.
+
+- _snapSizeLimitInKb_ :
+  (Java system property: **zookeeper.snapSizeLimitInKb**)
+  ZooKeeper records its transactions using snapshots and
+  a transaction log (think write-ahead log). The total size in bytes allowed
+  in the set of transactions recorded in the transaction log before a snapshot
+  can be taken (and the transaction log rolled) is determined
+  by snapSize. In order to prevent all of the machines in the quorum
+  from taking a snapshot at the same time, each ZooKeeper server
+  will take a snapshot when the size in bytes of the set of transactions in the
+  transaction log reaches a runtime generated random value in the \[snapSize/2+1, snapSize]
+  range. Each file system has a minimum standard file size and in order
+  to for valid functioning of this feature, the number chosen must be larger
+  than that value. The default snapSizeLimitInKb is 4,194,304 (4GB).
+  A non-positive value will disable the feature.
+
+- _txnLogSizeLimitInKb_ :
+  (Java system property: **zookeeper.txnLogSizeLimitInKb**)
+  Zookeeper transaction log file can also be controlled more
+  directly using txnLogSizeLimitInKb. Larger txn logs can lead to
+  slower follower syncs when sync is done using transaction log.
+  This is because leader has to scan through the appropriate log
+  file on disk to find the transaction to start sync from.
+  This feature is turned off by default and snapCount and snapSizeLimitInKb are the
+  only values that limit transaction log size. When enabled
+  Zookeeper will roll the log when any of the limits is hit.
+  Please note that actual log size can exceed this value by the size
+  of the serialized transaction. On the other hand, if this value is
+  set too close to (or smaller than) **preAllocSize**,
+  it can cause Zookeeper to roll the log for every transaction. While
+  this is not a correctness issue, this may cause severely degraded
+  performance. To avoid this and to get most out of this feature, it is
+  recommended to set the value to N \* **preAllocSize**
+  where N >= 2.
+
+- _maxCnxns_ :
+  (Java system property: **zookeeper.maxCnxns**)
+  Limits the total number of concurrent connections that can be made to a
+  zookeeper server (per client Port of each server ). This is used to prevent certain
+  classes of DoS attacks. The default is 0 and setting it to 0 entirely removes
+  the limit on total number of concurrent connections. Accounting for the
+  number of connections for serverCnxnFactory and a secureServerCnxnFactory is done
+  separately, so a peer is allowed to host up to 2\*maxCnxns provided they are of appropriate types.
+
+- _maxClientCnxns_ :
+  (No Java system property)
+  Limits the number of concurrent connections (at the socket
+  level) that a single client, identified by IP address, may make
+  to a single member of the ZooKeeper ensemble. This is used to
+  prevent certain classes of DoS attacks, including file
+  descriptor exhaustion. The default is 60. Setting this to 0
+  entirely removes the limit on concurrent connections.
+
+- _clientPortAddress_ :
+  **New in 3.3.0:** the
+  address (ipv4, ipv6 or hostname) to listen for client
+  connections; that is, the address that clients attempt
+  to connect to. This is optional, by default we bind in
+  such a way that any connection to the **clientPort** for any
+  address/interface/nic on the server will be
+  accepted.
+
+- _minSessionTimeout_ :
+  (No Java system property)
+  **New in 3.3.0:** the
+  minimum session timeout in milliseconds that the server
+  will allow the client to negotiate. Defaults to 2 times
+  the **tickTime**.
+
+- _maxSessionTimeout_ :
+  (No Java system property)
+  **New in 3.3.0:** the
+  maximum session timeout in milliseconds that the server
+  will allow the client to negotiate. Defaults to 20 times
+  the **tickTime**.
+
+- _fsync.warningthresholdms_ :
+  (Java system property: **zookeeper.fsync.warningthresholdms**)
+  **New in 3.3.4:** A
+  warning message will be output to the log whenever an
+  fsync in the Transactional Log (WAL) takes longer than
+  this value. The values is specified in milliseconds and
+  defaults to 1000. This value can only be set as a
+  system property.
+
+- _maxResponseCacheSize_ :
+  (Java system property: **zookeeper.maxResponseCacheSize**)
+  When set to a positive integer, it determines the size
+  of the cache that stores the serialized form of recently
+  read records. Helps save the serialization cost on
+  popular znodes. The metrics **response_packet_cache_hits**
+  and **response_packet_cache_misses** can be used to tune
+  this value to a given workload. The feature is turned on
+  by default with a value of 400, set to 0 or a negative
+  integer to turn the feature off.
+
+- _maxGetChildrenResponseCacheSize_ :
+  (Java system property: **zookeeper.maxGetChildrenResponseCacheSize**)
+  **New in 3.6.0:**
+  Similar to **maxResponseCacheSize**, but applies to get children
+  requests. The metrics **response_packet_get_children_cache_hits**
+  and **response_packet_get_children_cache_misses** can be used to tune
+  this value to a given workload. The feature is turned on
+  by default with a value of 400, set to 0 or a negative
+  integer to turn the feature off.
+
+- _autopurge.snapRetainCount_ :
+  (No Java system property)
+  **New in 3.4.0:**
+  When enabled, ZooKeeper auto purge feature retains
+  the **autopurge.snapRetainCount** most
+  recent snapshots and the corresponding transaction logs in the
+  **dataDir** and **dataLogDir** respectively and deletes the rest.
+  Defaults to 3. Minimum value is 3.
+
+- _autopurge.purgeInterval_ :
+  (No Java system property)
+  **New in 3.4.0:** The
+  time interval in hours for which the purge task has to
+  be triggered. Set to a positive integer (1 and above)
+  to enable the auto purging. Defaults to 0.
+  **Suffix support added in 3.10.0:** The interval is specified as an integer with an optional suffix to indicate the time unit.
+  Supported suffixes are: `ms` for milliseconds, `s` for seconds, `m` for minutes, `h` for hours, and `d` for days.
+  For example, "10m" represents 10 minutes, and "5h" represents 5 hours.
+  If no suffix is provided, the default unit is hours.
+
+- _syncEnabled_ :
+  (Java system property: **zookeeper.observer.syncEnabled**)
+  **New in 3.4.6, 3.5.0:**
+  The observers now log transaction and write snapshot to disk
+  by default like the participants. This reduces the recovery time
+  of the observers on restart. Set to "false" to disable this
+  feature. Default is "true"
+
+- _extendedTypesEnabled_ :
+  (Java system property only: **zookeeper.extendedTypesEnabled**)
+  **New in 3.5.4, 3.6.0:** Define to `true` to enable
+  extended features such as the creation of [TTL Nodes](/docs/developer/programmers-guide/data-model#ttl-nodes).
+  They are disabled by default. IMPORTANT: when enabled server IDs must
+  be less than 255 due to internal limitations.
+
+- _emulate353TTLNodes_ :
+  (Java system property only:**zookeeper.emulate353TTLNodes**).
+  **New in 3.5.4, 3.6.0:** Due to [ZOOKEEPER-2901]
+  (https://issues.apache.org/jira/browse/ZOOKEEPER-2901) TTL nodes
+  created in version 3.5.3 are not supported in 3.5.4/3.6.0. However, a workaround is provided via the
+  zookeeper.emulate353TTLNodes system property. If you used TTL nodes in ZooKeeper 3.5.3 and need to maintain
+  compatibility set **zookeeper.emulate353TTLNodes** to `true` in addition to
+  **zookeeper.extendedTypesEnabled**. NOTE: due to the bug, server IDs
+  must be 127 or less. Additionally, the maximum support TTL value is `1099511627775` which is smaller
+  than what was allowed in 3.5.3 (`1152921504606846975`)
+
+- _watchManagerName_ :
+  (Java system property only: **zookeeper.watchManagerName**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  New watcher manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
+  config is used to define which watcher manager to be used. Currently, we only support WatchManager and
+  WatchManagerOptimized.
+
+- _watcherCleanThreadsNum_ :
+  (Java system property only: **zookeeper.watcherCleanThreadsNum**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, this config is used to decide how
+  many thread is used in the WatcherCleaner. More thread usually means larger clean up throughput. The
+  default value is 2, which is good enough even for heavy and continuous session closing/recreating cases.
+
+- _watcherCleanThreshold_ :
+  (Java system property only: **zookeeper.watcherCleanThreshold**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the cleanup process is relatively
+  heavy, batch processing will reduce the cost and improve the performance. This setting is used to decide
+  the batch size. The default one is 1000, we don't need to change it if there is no memory or clean up
+  speed issue.
+
+- _watcherCleanIntervalInSeconds_ :
+  (Java system property only:**zookeeper.watcherCleanIntervalInSeconds**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the cleanup process is relatively
+  heavy, batch processing will reduce the cost and improve the performance. Besides watcherCleanThreshold,
+  this setting is used to clean up the dead watchers after certain time even the dead watchers are not larger
+  than watcherCleanThreshold, so that we won't leave the dead watchers there for too long. The default setting
+  is 10 minutes, which usually don't need to be changed.
+
+- _maxInProcessingDeadWatchers_ :
+  (Java system property only: **zookeeper.maxInProcessingDeadWatchers**)
+  **New in 3.6.0:** Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  This is used to control how many backlog can we have in the WatcherCleaner, when it reaches this number, it will
+  slow down adding the dead watcher to WatcherCleaner, which will in turn slow down adding and closing
+  watchers, so that we can avoid OOM issue. By default there is no limit, you can set it to values like
+  watcherCleanThreshold \* 1000.
+
+- _bitHashCacheSize_ :
+  (Java system property only: **zookeeper.bitHashCacheSize**)
+  **New 3.6.0**: Added in [ZOOKEEPER-1179](https://issues.apache.org/jira/browse/ZOOKEEPER-1179)
+  This is the setting used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
+  need to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
+  keep the size small to make sure it doesn't cost too much in memory, there is a trade off between memory
+  and time complexity. The default value is 10, which seems a relatively reasonable cache size.
+
+- _fastleader.minNotificationInterval_ :
+  (Java system property: **zookeeper.fastleader.minNotificationInterval**)
+  Lower bound for length of time between two consecutive notification
+  checks on the leader election. This interval determines how long a
+  peer waits to check the set of election votes and effects how
+  quickly an election can resolve. The interval follows a backoff
+  strategy from the configured minimum (this) and the configured maximum
+  (fastleader.maxNotificationInterval) for long elections.
+
+- _fastleader.maxNotificationInterval_ :
+  (Java system property: **zookeeper.fastleader.maxNotificationInterval**)
+  Upper bound for length of time between two consecutive notification
+  checks on the leader election. This interval determines how long a
+  peer waits to check the set of election votes and effects how
+  quickly an election can resolve. The interval follows a backoff
+  strategy from the configured minimum (fastleader.minNotificationInterval)
+  and the configured maximum (this) for long elections.
+
+- _connectionMaxTokens_ :
+  (Java system property: **zookeeper.connection_throttle_tokens**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping.
+  This parameter defines the maximum number of tokens in the token-bucket.
+  When set to 0, throttling is disabled. Default is 0.
+
+- _connectionTokenFillTime_ :
+  (Java system property: **zookeeper.connection_throttle_fill_time**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping.
+  This parameter defines the interval in milliseconds when the token bucket is re-filled with
+  _connectionTokenFillCount_ tokens. Default is 1.
+
+- _connectionTokenFillCount_ :
+  (Java system property: **zookeeper.connection_throttle_fill_count**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping.
+  This parameter defines the number of tokens to add to the token bucket every
+  _connectionTokenFillTime_ milliseconds. Default is 1.
+
+- _connectionFreezeTime_ :
+  (Java system property: **zookeeper.connection_throttle_freeze_time**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping.
+  This parameter defines the interval in milliseconds when the dropping
+  probability is adjusted. When set to -1, probabilistic dropping is disabled.
+  Default is -1.
+
+- _connectionDropIncrease_ :
+  (Java system property: **zookeeper.connection_throttle_drop_increase**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping.
+  This parameter defines the dropping probability to increase. The throttler
+  checks every _connectionFreezeTime_ milliseconds and if the token bucket is
+  empty, the dropping probability will be increased by _connectionDropIncrease_.
+  The default is 0.02.
+
+- _connectionDropDecrease_ :
+  (Java system property: **zookeeper.connection_throttle_drop_decrease**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping.
+  This parameter defines the dropping probability to decrease. The throttler
+  checks every _connectionFreezeTime_ milliseconds and if the token bucket has
+  more tokens than a threshold, the dropping probability will be decreased by
+  _connectionDropDecrease_. The threshold is _connectionMaxTokens_ \*
+  _connectionDecreaseRatio_. The default is 0.002.
+
+- _connectionDecreaseRatio_ :
+  (Java system property: **zookeeper.connection_throttle_decrease_ratio**)
+  **New in 3.6.0:**
+  This is one of the parameters to tune the server-side connection throttler,
+  which is a token-based rate limiting mechanism with optional probabilistic
+  dropping. This parameter defines the threshold to decrease the dropping
+  probability. The default is 0.
+
+- _zookeeper.connection_throttle_weight_enabled_ :
+  (Java system property only)
+  **New in 3.6.0:**
+  Whether to consider connection weights when throttling. Only useful when connection throttle is enabled, that is, connectionMaxTokens is larger than 0. The default is false.
+
+- _zookeeper.connection_throttle_global_session_weight_ :
+  (Java system property only)
+  **New in 3.6.0:**
+  The weight of a global session. It is the number of tokens required for a global session request to get through the connection throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 3.
+
+- _zookeeper.connection_throttle_local_session_weight_ :
+  (Java system property only)
+  **New in 3.6.0:**
+  The weight of a local session. It is the number of tokens required for a local session request to get through the connection throttler. It has to be a positive integer no larger than the weight of a global session or a renew session. The default is 1.
+
+- _zookeeper.connection_throttle_renew_session_weight_ :
+  (Java system property only)
+  **New in 3.6.0:**
+  The weight of renewing a session. It is also the number of tokens required for a reconnect request to get through the throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 2.
+
+- _clientPortListenBacklog_ :
+  (No Java system property)
+  **New in 3.4.14, 3.5.5, 3.6.0:**
+  The socket backlog length for the ZooKeeper server socket. This controls
+  the number of requests that will be queued server-side to be processed
+  by the ZooKeeper server. Connections that exceed this length will receive
+  a network timeout (30s) which may cause ZooKeeper session expiry issues.
+  By default, this value is unset (`-1`) which, on Linux, uses a backlog of
+  `50`. This value must be a positive number.
+
+- _serverCnxnFactory_ :
+  (Java system property: **zookeeper.serverCnxnFactory**)
+  Specifies ServerCnxnFactory implementation.
+  This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
+  Default is `NIOServerCnxnFactory`.
+
+- _flushDelay_ :
+  (Java system property: **zookeeper.flushDelay**)
+  Time in milliseconds to delay the flush of the commit log.
+  Does not affect the limit defined by _maxBatchSize_.
+  Disabled by default (with value 0). Ensembles with high write rates
+  may see throughput improved with a value of 10-20 ms.
+
+- _maxWriteQueuePollTime_ :
+  (Java system property: **zookeeper.maxWriteQueuePollTime**)
+  If _flushDelay_ is enabled, this determines the amount of time in milliseconds
+  to wait before flushing when no new requests are being queued.
+  Set to _flushDelay_/3 by default (implicitly disabled by default).
+
+- _maxBatchSize_ :
+  (Java system property: **zookeeper.maxBatchSize**)
+  The number of transactions allowed in the server before a flush of the
+  commit log is triggered.
+  Does not affect the limit defined by _flushDelay_.
+  Default is 1000.
+
+- _enforceQuota_ :
+  (Java system property: **zookeeper.enforceQuota**)
+  **New in 3.7.0:**
+  Enforce the quota check. When enabled and the client exceeds the total bytes or children count hard quota under a znode, the server will reject the request and reply the client a `QuotaExceededException` by force.
+  The default value is: false. Exploring [quota feature](/docs/admin-ops/quota-guide) for more details.
+
+- _requestThrottleLimit_ :
+  (Java system property: **zookeeper.request_throttle_max_requests**)
+  **New in 3.6.0:**
+  The total number of outstanding requests allowed before the RequestThrottler starts stalling. When set to 0, throttling is disabled. The default is 0.
+
+- _requestThrottleStallTime_ :
+  (Java system property: **zookeeper.request_throttle_stall_time**)
+  **New in 3.6.0:**
+  The maximum time (in milliseconds) for which a thread may wait to be notified that it may proceed processing a request. The default is 100.
+
+- _requestThrottleDropStale_ :
+  (Java system property: **request_throttle_drop_stale**)
+  **New in 3.6.0:**
+  When enabled, the throttler will drop stale requests rather than issue them to the request pipeline. A stale request is a request sent by a connection that is now closed, and/or a request that will have a request latency higher than the sessionTimeout. The default is true.
+
+- _requestStaleLatencyCheck_ :
+  (Java system property: **zookeeper.request_stale_latency_check**)
+  **New in 3.6.0:**
+  When enabled, a request is considered stale if the request latency is higher than its associated session timeout. Disabled by default.
+
+- _requestStaleConnectionCheck_ :
+  (Java system property: **zookeeper.request_stale_connection_check**)
+  **New in 3.6.0:**
+  When enabled, a request is considered stale if the request's connection has closed. Enabled by default.
+
+- _zookeeper.request_throttler.shutdownTimeout_ :
+  (Java system property only)
+  **New in 3.6.0:**
+  The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.
+
+- _advancedFlowControlEnabled_ :
+  (Java system property: **zookeeper.netty.advancedFlowControl.enabled**)
+  Using accurate flow control in netty based on the status of ZooKeeper
+  pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
+  Netty.
+
+- _enableEagerACLCheck_ :
+  (Java system property only: **zookeeper.enableEagerACLCheck**)
+  When set to "true", enables eager ACL check on write requests on each local
+  server before sending the requests to quorum. Default is "false".
+
+- _maxConcurrentSnapSyncs_ :
+  (Java system property: **zookeeper.leader.maxConcurrentSnapSyncs**)
+  The maximum number of snap syncs a leader or a follower can serve at the same
+  time. The default is 10.
+
+- _maxConcurrentDiffSyncs_ :
+  (Java system property: **zookeeper.leader.maxConcurrentDiffSyncs**)
+  The maximum number of diff syncs a leader or a follower can serve at the same
+  time. The default is 100.
+
+- _digest.enabled_ :
+  (Java system property only: **zookeeper.digest.enabled**)
+  **New in 3.6.0:**
+  The digest feature is added to detect the data inconsistency inside
+  ZooKeeper when loading database from disk, catching up and following
+  leader, its doing incrementally hash check for the DataTree based on
+  the adHash paper mentioned in
+
+  https://cseweb.ucsd.edu/~daniele/papers/IncHash.pdf
+
+  The idea is simple, the hash value of DataTree will be updated incrementally
+  based on the changes to the set of data. When the leader is preparing the txn,
+  it will pre-calculate the hash of the tree based on the changes happened with
+  formula:
+
+  `current_hash = current_hash + hash(new node data) - hash(old node data)`
+
+  If it’s creating a new node, the hash(old node data) will be 0, and if it’s a
+  delete node op, the hash(new node data) will be 0.
+
+  This hash will be associated with each txn to represent the expected hash value
+  after applying the txn to the data tree, it will be sent to followers with
+  original proposals. Learner will compare the actual hash value with the one in
+  the txn after applying the txn to the data tree, and report mismatch if it’s not
+  the same.
+
+  These digest value will also be persisted with each txn and snapshot on the disk,
+  so when servers restarted and load data from disk, it will compare and see if
+  there is hash mismatch, which will help detect data loss issue on disk.
+
+  For the actual hash function, we’re using CRC internally, it’s not a collisionless
+  hash function, but it’s more efficient compared to collisionless hash, and the
+  collision possibility is really really rare and can already meet our needs here.
+
+  This feature is backward and forward compatible, so it can safely roll upgrade,
+  downgrade, enabled and later disabled without any compatible issue. Here are the
+  scenarios have been covered and tested:
+  1. When leader runs with new code while follower runs with old one, the digest will
+     be appended to the end of each txn, follower will only read header and txn data,
+     digest value in the txn will be ignored. It won't affect the follower reads and
+     processes the next txn.
+  2. When leader runs with old code while follower runs with new one, the digest won't
+     be sent with txn, when follower tries to read the digest, it will throw EOF which
+     is caught and handled gracefully with digest value set to null.
+  3. When loading old snapshot with new code, it will throw IOException when trying to
+     read the non-exist digest value, and the exception will be caught and digest will
+     be set to null, which means we won't compare digest when loading this snapshot,
+     which is expected to happen during rolling upgrade
+  4. When loading new snapshot with old code, it will finish successfully after deserializing
+     the data tree, the digest value at the end of snapshot file will be ignored
+  5. The scenarios of rolling restart with flags change are similar to the 1st and 2nd
+     scenarios discussed above, if the leader enabled but follower not, digest value will
+     be ignored, and follower won't compare the digest during runtime; if leader disabled
+     but follower enabled, follower will get EOF exception which is handled gracefully.
+
+  Note: the current digest calculation excluded nodes under /zookeeper
+  due to the potential inconsistency in the /zookeeper/quota stat node,
+  we can include that after that issue is fixed.
+
+  By default, this feature is enabled, set "false" to disable it.
+
+- _snapshot.compression.method_ :
+  (Java system property: **zookeeper.snapshot.compression.method**)
+  **New in 3.6.0:**
+  This property controls whether or not ZooKeeper should compress snapshots
+  before storing them on disk (see [ZOOKEEPER-3179](https://issues.apache.org/jira/browse/ZOOKEEPER-3179)).
+  Possible values are:
+  - "": Disabled (no snapshot compression). This is the default behavior.
+  - "gz": See [gzip compression](https://en.wikipedia.org/wiki/Gzip).
+  - "snappy": See [Snappy compression](<https://en.wikipedia.org/wiki/Snappy_(compression)>).
+
+- _snapshot.trust.empty_ :
+  (Java system property: **zookeeper.snapshot.trust.empty**)
+  **New in 3.5.6:**
+  This property controls whether or not ZooKeeper should treat missing
+  snapshot files as a fatal state that can't be recovered from.
+  Set to true to allow ZooKeeper servers recover without snapshot
+  files. This should only be set during upgrading from old versions of
+  ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
+  log files but without presence of snapshot files. If the value is set
+  during upgrade, we recommend setting the value back to false after upgrading
+  and restart ZooKeeper process so ZooKeeper can continue normal data
+  consistency check during recovery process.
+  Default value is false.
+
+- _audit.enable_ :
+  (Java system property: **zookeeper.audit.enable**)
+  **New in 3.6.0:**
+  By default audit logs are disabled. Set to "true" to enable it. Default value is "false".
+  See the [ZooKeeper audit logs](/docs/admin-ops/monitor-and-audit-logs) for more information.
+
+- _audit.impl.class_ :
+  (Java system property: **zookeeper.audit.impl.class**)
+  **New in 3.6.0:**
+  Class to implement the audit logger. By default logback based audit logger org.apache.zookeeper.audit
+  .Slf4jAuditLogger is used.
+  See the [ZooKeeper audit logs](/docs/admin-ops/monitor-and-audit-logs) for more information.
+
+- _largeRequestMaxBytes_ :
+  (Java system property: **zookeeper.largeRequestMaxBytes**)
+  **New in 3.6.0:**
+  The maximum number of bytes of all inflight large request. The connection will be closed if a coming large request causes the limit exceeded. The default is 100 \* 1024 \* 1024.
+
+- _largeRequestThreshold_ :
+  (Java system property: **zookeeper.largeRequestThreshold**)
+  **New in 3.6.0:**
+  The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.
+
+- _outstandingHandshake.limit_
+  (Java system property only: **zookeeper.netty.server.outstandingHandshake.limit**)
+  The maximum in-flight TLS handshake connections could have in ZooKeeper,
+  the connections exceed this limit will be rejected before starting handshake.
+  This setting doesn't limit the max TLS concurrency, but helps avoid herd
+  effect due to TLS handshake timeout when there are too many in-flight TLS
+  handshakes. Set it to something like 250 is good enough to avoid herd effect.
+
+- _netty.server.earlyDropSecureConnectionHandshakes_
+  (Java system property: **zookeeper.netty.server.earlyDropSecureConnectionHandshakes**)
+  If the ZooKeeper server is not fully started, drop TCP connections before performing the TLS handshake.
+  This is useful in order to prevent flooding the server with many concurrent TLS handshakes after a restart.
+  Please note that if you enable this flag the server won't answer to 'ruok' commands if it is not fully started.
+  The behaviour of dropping the connection has been introduced in ZooKeeper 3.7 and it was not possible to disable it.
+  Since 3.7.1 and 3.8.0 this feature is disabled by default.
+
+- _throttledOpWaitTime_
+  (Java system property: **zookeeper.throttled_op_wait_time**)
+  The time in the RequestThrottler queue longer than which a request will be marked as throttled.
+  A throttled requests will not be processed other than being fed down the pipeline of the server it belongs
+  to preserve the order of all requests.
+  The FinalProcessor will issue an error response (new error code: ZTHROTTLEDOP) for these undigested requests.
+  The intent is for the clients not to retry them immediately.
+  When set to 0, no requests will be throttled. The default is 0.
+
+- _learner.closeSocketAsync_
+  (Java system property: **zookeeper.learner.closeSocketAsync**)
+  (Java system property: **learner.closeSocketAsync**)(Added for backward compatibility)
+  **New in 3.7.0:**
+  When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailable. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed.
+  The default is false.
+
+- _leader.closeSocketAsync_
+  (Java system property: **zookeeper.leader.closeSocketAsync**)
+  (Java system property: **leader.closeSocketAsync**)(Added for backward compatibility)
+  **New in 3.7.0:**
+  When enabled, the leader will close a quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time. If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck then the long socket closing time will block the sending of pings to other followers. Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. Setting this flag to true ensures that pings will be sent regularly.
+  The default is false.
+
+- _learner.asyncSending_
+  (Java system property: **zookeeper.learner.asyncSending**)
+  (Java system property: **learner.asyncSending**)(Added for backward compatibility)
+  **New in 3.7.0:**
+  The sending and receiving packets in Learner were done synchronously in a critical section. An untimely network issue could cause the followers to hang (see [ZOOKEEPER-3575](https://issues.apache.org/jira/browse/ZOOKEEPER-3575) and [ZOOKEEPER-4074](https://issues.apache.org/jira/browse/ZOOKEEPER-4074)). The new design moves sending packets in Learner to a separate thread and sends the packets asynchronously. The new design is enabled with this parameter (learner.asyncSending).
+  The default is false.
+
+- _forward_learner_requests_to_commit_processor_disabled_
+  (Java system property: **zookeeper.forward_learner_requests_to_commit_processor_disabled**)
+  When this property is set, the requests from learners won't be enqueued to
+  CommitProcessor queue, which will help save the resources and GC time on
+  leader. The default value is false.
+
+- _serializeLastProcessedZxid.enabled_
+  (Java system property: **zookeeper.serializeLastProcessedZxid.enabled**)
+  **New in 3.9.0:**
+  If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
+  when restore. Defaults to true. Needs to be enabled for performing snapshot and restore
+  via admin server commands, as there is no snapshot file name to extract the lastProcessedZxid.
+
+  This feature is backward and forward compatible. Here are the different scenarios.
+  1. Snapshot triggered by server internally
+     - When loading old snapshot with new code, it will throw EOFException when trying to
+       read the non-exist lastProcessedZxid value, and the exception will be caught.
+       The lastProcessedZxid will be set using the snapshot file name.
+     - When loading new snapshot with old code, it will finish successfully after deserializing
+       the digest value, the lastProcessedZxid at the end of snapshot file will be ignored.
+       The lastProcessedZxid will be set using the snapshot file name.
+
+  2. Sync up between leader and follower: The lastProcessedZxid will not be serialized by
+     leader and deserialized by follower in both new and old code. It will be set to the
+     lastProcessedZxid sent from leader via QuorumPacket.
+
+  3. Snapshot triggered via admin server APIs: The feature flag need to be enabled for the
+     snapshot command to work.
+
+## Cluster Options
+
+The options in this section are designed for use with an ensemble
+of servers — that is, when deploying clusters of servers.
+
+- _electionAlg_ :
+  (No Java system property)
+  Election implementation to use. A value of "1" corresponds to the
+  non-authenticated UDP-based version of fast leader election, "2"
+  corresponds to the authenticated UDP-based version of fast
+  leader election, and "3" corresponds to TCP-based version of
+  fast leader election. Algorithm 3 was made default in 3.2.0 and
+  prior versions (3.0.0 and 3.1.0) were using algorithm 1 and 2 as well.
+
+  <Callout type="info">
+    The implementations of leader election 1, and 2 were **deprecated** in
+    3.4.0. Since 3.6.0 only FastLeaderElection is available, in case of upgrade
+    you have to shut down all of your servers and restart them with
+    electionAlg=3 (or by removing the line from the configuration file).
+  </Callout>
+
+- _maxTimeToWaitForEpoch_ :
+  (Java system property: **zookeeper.leader.maxTimeToWaitForEpoch**)
+  **New in 3.6.0:**
+  The maximum time to wait for epoch from voters when activating
+  leader. If leader received a LOOKING notification from one of
+  its voters, and it hasn't received epoch packets from majority
+  within maxTimeToWaitForEpoch, then it will goto LOOKING and
+  elect leader again.
+  This can be tuned to reduce the quorum or server unavailable
+  time, it can be set to be much smaller than initLimit \* tickTime.
+  In cross datacenter environment, it can be set to something
+  like 2s.
+
+- _initLimit_ :
+  (No Java system property)
+  Amount of time, in ticks (see [tickTime](#minimum-configuration)), to allow followers to
+  connect and sync to a leader. Increased this value as needed, if
+  the amount of data managed by ZooKeeper is large.
+
+- _connectToLearnerMasterLimit_ :
+  (Java system property: zookeeper.**connectToLearnerMasterLimit**)
+  Amount of time, in ticks (see [tickTime](#minimum-configuration)), to allow followers to
+  connect to the leader after leader election. Defaults to the value of initLimit.
+  Use when initLimit is high so connecting to learner master doesn't result in higher timeout.
+
+- _leaderServes_ :
+  (Java system property: zookeeper.**leaderServes**)
+  Leader accepts client connections. Default value is "yes".
+  The leader machine coordinates updates. For higher update
+  throughput at the slight expense of read throughput the leader
+  can be configured to not accept clients and focus on
+  coordination. The default to this option is yes, which means
+  that a leader will accept client connections.
+
+  <Callout type="info">
+    Turning on leader selection is highly recommended when you have more than
+    three ZooKeeper servers in an ensemble.
+  </Callout>
+
+- _server.x=[hostname]:nnnnn[:nnnnn] etc_ :
+  (No Java system property)
+  Servers making up the ZooKeeper ensemble. When the server
+  starts up, it determines which server it is by looking for the
+  file _myid_ in the data directory. That file contains the server number, in ASCII,
+  and it should match **x** in **server.x** in the left hand side of this setting.
+  The list of servers that make up ZooKeeper servers that is
+  used by the clients must match the list of ZooKeeper servers
+  that each ZooKeeper server has.
+  There are two port numbers **nnnnn**.
+  The first followers used to connect to the leader, and the second is for
+  leader election. If you want to test multiple servers on a single machine, then
+  different ports can be used for each server.
+
+  Since ZooKeeper 3.6.0 it is possible to specify **multiple addresses** for each
+  ZooKeeper server (see [ZOOKEEPER-3188](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188)).
+  To enable this feature, you must set the _multiAddress.enabled_ configuration property
+  to _true_. This helps to increase availability and adds network level
+  resiliency to ZooKeeper. When multiple physical network interfaces are used
+  for the servers, ZooKeeper is able to bind on all interfaces and runtime switching
+  to a working interface in case a network error. The different addresses can be specified
+  in the config using a pipe ('|') character. A valid configuration using multiple addresses looks like:
+
+  ```
+  server.1=zoo1-net1:2888:3888|zoo1-net2:2889:3889
+  server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889
+  server.3=zoo3-net1:2888:3888|zoo3-net2:2889:3889
+  ```
+
+  <Callout type="info">
+    By enabling this feature, the Quorum protocol (ZooKeeper Server-Server
+    protocol) will change. The users will not notice this and when anyone starts
+    a ZooKeeper cluster with the new config, everything will work normally.
+    However, it's not possible to enable this feature and specify multiple
+    addresses during a rolling upgrade if the old ZooKeeper cluster didn't
+    support the *multiAddress* feature (and the new Quorum protocol). In case if
+    you need this feature but you also need to perform a rolling upgrade from a
+    ZooKeeper cluster older than *3.6.0*, then you first need to do the rolling
+    upgrade without enabling the MultiAddress feature and later make a separate
+    rolling restart with the new configuration where **multiAddress.enabled** is
+    set to **true** and multiple addresses are provided.
+  </Callout>
+
+- _syncLimit_ :
+  (No Java system property)
+  Amount of time, in ticks (see [tickTime](#minimum-configuration)), to allow followers to sync
+  with ZooKeeper. If followers fall too far behind a leader, they
+  will be dropped.
+
+- _group.x=nnnnn[:nnnnn]_ :
+  (No Java system property)
+  Enables a hierarchical quorum construction."x" is a group identifier
+  and the numbers following the "=" sign correspond to server identifiers.
+  The left-hand side of the assignment is a colon-separated list of server
+  identifiers. Note that groups must be disjoint and the union of all groups
+  must be the ZooKeeper ensemble.
+  You will find an example [here](/docs/admin-ops/quorums)
+
+- _weight.x=nnnnn_ :
+  (No Java system property)
+  Used along with "group", it assigns a weight to a server when
+  forming quorums. Such a value corresponds to the weight of a server
+  when voting. There are a few parts of ZooKeeper that require voting
+  such as leader election and the atomic broadcast protocol. By default
+  the weight of server is 1. If the configuration defines groups, but not
+  weights, then a value of 1 will be assigned to all servers.
+  You will find an example [here](/docs/admin-ops/quorums)
+
+- _cnxTimeout_ :
+  (Java system property: zookeeper.**cnxTimeout**)
+  Sets the timeout value for opening connections for leader election notifications.
+  Only applicable if you are using electionAlg 3.
+
+  <Callout type="info">Default value is 5 seconds.</Callout>
+
+- _quorumCnxnTimeoutMs_ :
+  (Java system property: zookeeper.**quorumCnxnTimeoutMs**)
+  Sets the read timeout value for the connections for leader election notifications.
+  Only applicable if you are using electionAlg 3.
+
+  <Callout type="info">
+    Default value is -1, which will then use the syncLimit * tickTime as the
+    timeout.
+  </Callout>
+
+- _standaloneEnabled_ :
+  (No Java system property)
+  **New in 3.5.0:**
+  When set to false, a single server can be started in replicated
+  mode, a lone participant can run with observers, and a cluster
+  can reconfigure down to one node, and up from one node. The
+  default is true for backwards compatibility. It can be set
+  using QuorumPeerConfig's setStandaloneEnabled method or by
+  adding "standaloneEnabled=false" or "standaloneEnabled=true"
+  to a server's config file.
+
+- _reconfigEnabled_ :
+  (No Java system property)
+  **New in 3.5.3:**
+  This controls the enabling or disabling of
+  [Dynamic Reconfiguration](/docs/admin-ops/dynamic-reconfiguration) feature. When the feature
+  is enabled, users can perform reconfigure operations through
+  the ZooKeeper client API or through ZooKeeper command line tools
+  assuming users are authorized to perform such operations.
+  When the feature is disabled, no user, including the super user,
+  can perform a reconfiguration. Any attempt to reconfigure will return an error.
+  **"reconfigEnabled"** option can be set as
+  **"reconfigEnabled=false"** or
+  **"reconfigEnabled=true"**
+  to a server's config file, or using QuorumPeerConfig's
+  setReconfigEnabled method. The default value is false.
+  If present, the value should be consistent across every server in
+  the entire ensemble. Setting the value as true on some servers and false
+  on other servers will cause inconsistent behavior depending on which server
+  is elected as leader. If the leader has a setting of
+  **"reconfigEnabled=true"**, then the ensemble
+  will have reconfig feature enabled. If the leader has a setting of
+  **"reconfigEnabled=false"**, then the ensemble
+  will have reconfig feature disabled. It is thus recommended having a consistent
+  value for **"reconfigEnabled"** across servers
+  in the ensemble.
+
+- _4lw.commands.whitelist_ :
+  (Java system property: **zookeeper.4lw.commands.whitelist**)
+  **New in 3.5.3:**
+  A list of comma separated [Four Letter Words](/docs/admin-ops/administrators-guide/commands#the-four-letter-words)
+  commands that user wants to use. A valid Four Letter Words
+  command must be put in this list else ZooKeeper server will
+  not enable the command.
+  By default the whitelist only contains "srvr" command
+  which zkServer.sh uses. Additionally, if Read Only Mode is enabled by setting
+  Java system property **readonlymode.enabled**, then the "isro" command is
+  added to the whitelist. The rest of four-letter word commands are disabled
+  by default: attempting to use them will gain a response
+  ".... is not executed because it is not in the whitelist."
+  Here's an example of the configuration that enables stat, ruok, conf, and isro
+  command while disabling the rest of Four Letter Words command:
+
+  ```
+  4lw.commands.whitelist=stat, ruok, conf, isro
+  ```
+
+  If you really need enable all four-letter word commands by default, you can use
+  the asterisk option so you don't have to include every command one by one in the list.
+  As an example, this will enable all four-letter word commands:
+
+  ```
+  4lw.commands.whitelist=*
+  ```
+
+- _tcpKeepAlive_ :
+  (Java system property: **zookeeper.tcpKeepAlive**)
+  **New in 3.5.4:**
+  Setting this to true sets the TCP keepAlive flag on the
+  sockets used by quorum members to perform elections.
+  This will allow for connections between quorum members to
+  remain up when there is network infrastructure that may
+  otherwise break them. Some NATs and firewalls may terminate
+  or lose state for long-running or idle connections.
+  Enabling this option relies on OS level settings to work
+  properly, check your operating system's options regarding TCP
+  keepalive for more information. Defaults to
+  **false**.
+
+- _clientTcpKeepAlive_ :
+  (Java system property: **zookeeper.clientTcpKeepAlive**)
+  **New in 3.6.1:**
+  Setting this to true sets the TCP keepAlive flag on the
+  client sockets. Some broken network infrastructure may lose
+  the FIN packet that is sent from closing client. These never
+  closed client sockets cause OS resource leak. Enabling this
+  option terminates these zombie sockets by idle check.
+  Enabling this option relies on OS level settings to work
+  properly, check your operating system's options regarding TCP
+  keepalive for more information. Defaults to **false**. Please
+  note the distinction between it and **tcpKeepAlive**. It is
+  applied for the client sockets while **tcpKeepAlive** is for
+  the sockets used by quorum members. Currently this option is
+  only available when default `NIOServerCnxnFactory` is used.
+
+- _electionPortBindRetry_ :
+  (Java system property only: **zookeeper.electionPortBindRetry**)
+  Property set max retry count when Zookeeper server fails to bind
+  leader election port. Such errors can be temporary and recoverable,
+  such as DNS issue described in [ZOOKEEPER-3320](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3320),
+  or non-retryable, such as port already in use.
+  In case of transient errors, this property can improve availability
+  of Zookeeper server and help it to self recover.
+  Default value 3. In container environment, especially in Kubernetes,
+  this value should be increased or set to 0(infinite retry) to overcome issues
+  related to DNS name resolving.
+
+- _observer.reconnectDelayMs_ :
+  (Java system property: **zookeeper.observer.reconnectDelayMs**)
+  When observer loses its connection with the leader, it waits for the
+  specified value before trying to reconnect with the leader so that
+  the entire observer fleet won't try to run leader election and reconnect
+  to the leader at once.
+  Defaults to 0 ms.
+
+- _observer.election.DelayMs_ :
+  (Java system property: **zookeeper.observer.election.DelayMs**)
+  Delay the observer's participation in a leader election upon disconnect
+  so as to prevent unexpected additional load on the voting peers during
+  the process. Defaults to 200 ms.
+
+- _localSessionsEnabled_ and _localSessionsUpgradingEnabled_ :
+  **New in 3.5:**
+  Optional value is true or false. Their default values are false.
+  Turning on the local session feature by setting _localSessionsEnabled=true_. Turning on
+  _localSessionsUpgradingEnabled_ can upgrade a local session to a global session automatically as required (e.g. creating ephemeral nodes),
+  which only matters when _localSessionsEnabled_ is enabled.
+
+## Encryption, Authentication, Authorization Options
+
+The options in this section allow control over
+encryption/authentication/authorization performed by the service.
+
+Beside this page, you can also find useful information about client side configuration in the
+[Programmers Guide](/docs/developer/programmers-guide/bindings#client-configuration-parameters).
+The ZooKeeper Wiki also has useful pages about [ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide),
+and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
+
+- _DigestAuthenticationProvider.enabled_ :
+  (Java system property: **zookeeper.DigestAuthenticationProvider.enabled**)
+  **New in 3.7:**
+  Determines whether the `digest` authentication provider is
+  enabled. The default value is **true** for backwards
+  compatibility, but it may be a good idea to disable this provider
+  if not used, as it can result in misleading entries appearing in
+  audit logs
+  (see [ZOOKEEPER-3979](https://issues.apache.org/jira/browse/ZOOKEEPER-3979))
+
+- _DigestAuthenticationProvider.superDigest_ :
+  (Java system property: **zookeeper.DigestAuthenticationProvider.superDigest**)
+  By default this feature is **disabled**
+  **New in 3.2:**
+  Enables a ZooKeeper ensemble administrator to access the
+  znode hierarchy as a "super" user. In particular no ACL
+  checking occurs for a user authenticated as
+  super.
+  org.apache.zookeeper.server.auth.DigestAuthenticationProvider
+  can be used to generate the superDigest, call it with
+  one parameter of `"super:<password>"`. Provide the
+  generated `"super:<data>"` as the system property value
+  when starting each server of the ensemble.
+  When authenticating to a ZooKeeper server (from a
+  ZooKeeper client) pass a scheme of `"digest"` and authdata
+  of `"super:<password>"`. Note that digest auth passes
+  the authdata in plaintext to the server, it would be
+  prudent to use this authentication method only on
+  localhost (not over the network) or over an encrypted
+  connection.
+
+- _DigestAuthenticationProvider.digestAlg_ :
+  (Java system property: **zookeeper.DigestAuthenticationProvider.digestAlg**)
+  **New in 3.7.0:**
+  Set ACL digest algorithm. The default value is: `SHA1` which will be deprecated in the future for security issues.
+
+  Set this property the same value in all the servers.
+  - How to support other more algorithms?
+    - Modify the `java.security` configuration file under `$JAVA_HOME/jre/lib/security/java.security` by specifying
+      `security.provider.<n>=<provider class name>`.
+
+      For example:
+
+      ```
+      set zookeeper.DigestAuthenticationProvider.digestAlg=RipeMD160
+      security.provider.3=org.bouncycastle.jce.provider.BouncyCastleProvider
+      ```
+
+    - Copy the jar file to `$JAVA_HOME/jre/lib/ext/`.
+
+      For example:
+
+      ```
+      copy bcprov-jdk18on-1.60.jar to $JAVA_HOME/jre/lib/ext/
+      ```
+
+  - How to migrate from one digest algorithm to another?
+    - Regenerate `superDigest` when migrating to new algorithm.
+    - Run `SetAcl` for a znode which already had a digest auth of old algorithm.
+
+- _IPAuthenticationProvider.usexforwardedfor_ :
+  (Java system property: **zookeeper.IPAuthenticationProvider.usexforwardedfor**)
+  **New in 3.9.3:**
+  IPAuthenticationProvider uses the client IP address to authenticate the user. By
+  default it reads the **Host** HTTP header to detect client IP address. In some
+  proxy configurations the proxy server adds the **X-Forwarded-For** header to
+  the request in order to provide the IP address of the original client request.
+  By enabling **usexforwardedfor** ZooKeeper setting, **X-Forwarded-For** will be preferred
+  over the standard **Host** header.
+  Default value is **false**.
+
+- _X509AuthenticationProvider.superUser_ :
+  (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)
+  The SSL-backed way to enable a ZooKeeper ensemble
+  administrator to access the znode hierarchy as a "super" user.
+  When this parameter is set to an X500 principal name, only an
+  authenticated client with that principal will be able to bypass
+  ACL checking and have full privileges to all znodes.
+
+- _zookeeper.superUser_ :
+  (Java system property: **zookeeper.superUser**)
+  Similar to **zookeeper.X509AuthenticationProvider.superUser**
+  but is generic for SASL based logins. It stores the name of
+  a user that can access the znode hierarchy as a "super" user.
+  You can specify multiple SASL super users using the
+  **zookeeper.superUser.[suffix]** notation, e.g.:
+  `zookeeper.superUser.1=...`.
+
+- _ssl.authProvider_ :
+  (Java system property: **zookeeper.ssl.authProvider**)
+  Specifies a subclass of **org.apache.zookeeper.auth.X509AuthenticationProvider**
+  to use for secure client authentication. This is useful in
+  certificate key infrastructures that do not use JKS. It may be
+  necessary to extend **javax.net.ssl.X509KeyManager** and **javax.net.ssl.X509TrustManager**
+  to get the desired behavior from the SSL stack. To configure the
+  ZooKeeper server to use the custom provider for authentication,
+  choose a scheme name for the custom AuthenticationProvider and
+  set the property **zookeeper.authProvider.[scheme]** to the fully-qualified class name of the custom
+  implementation. This will load the provider into the ProviderRegistry.
+  Then set this property **zookeeper.ssl.authProvider=[scheme]** and that provider
+  will be used for secure authentication.
+
+- _zookeeper.ensembleAuthName_ :
+  (Java system property only: **zookeeper.ensembleAuthName**)
+  **New in 3.6.0:**
+  Specify a list of comma-separated valid names/aliases of an ensemble. A client
+  can provide the ensemble name it intends to connect as the credential for scheme "ensemble". The EnsembleAuthenticationProvider will check the credential against
+  the list of names/aliases of the ensemble that receives the connection request.
+  If the credential is not in the list, the connection request will be refused.
+  This prevents a client accidentally connecting to a wrong ensemble.
+
+- _sessionRequireClientSASLAuth_ :
+  (Java system property: **zookeeper.sessionRequireClientSASLAuth**)
+  **New in 3.6.0:**
+  When set to **true**, ZooKeeper server will only accept connections and requests from clients
+  that have authenticated with server via SASL. Clients that are not configured with SASL
+  authentication, or configured with SASL but failed authentication (i.e. with invalid credential)
+  will not be able to establish a session with server. A typed error code (-124) will be delivered
+  in such case, both Java and C client will close the session with server thereafter,
+  without further attempts on retrying to reconnect.
+
+This configuration is shorthand for **enforce.auth.enabled=true** and **enforce.auth.scheme=sasl**
+
+By default, this feature is disabled. Users who would like to opt-in can enable the feature
+by setting **sessionRequireClientSASLAuth** to **true**.
+
+This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
+configured to allow clients that fail SASL authentication to login, client will not be able to
+establish a session with server if this feature is enabled.
+
+- _enforce.auth.enabled_ :
+  (Java system property : **zookeeper.enforce.auth.enabled**)
+  **New in 3.7.0:**
+  When set to **true**, ZooKeeper server will only accept connections and requests from clients
+  that have authenticated with server via configured auth scheme. Authentication schemes
+  can be configured using property enforce.auth.schemes. Clients that are not
+  configured with the any of the auth scheme configured at server or configured but failed authentication (i.e. with invalid credential)
+  will not be able to establish a session with server. A typed error code (-124) will be delivered
+  in such case, both Java and C client will close the session with server thereafter,
+  without further attempts on retrying to reconnect.
+
+By default, this feature is disabled. Users who would like to opt-in can enable the feature
+by setting **enforce.auth.enabled** to **true**.
+
+When **enforce.auth.enabled=true** and **enforce.auth.schemes=sasl** then
+
+<emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> configuration
+is overruled. So even if server is configured to allow clients that fail SASL
+authentication to login, client will not be able to establish a session with
+server if this feature is enabled with sasl as authentication scheme.
+
+- _enforce.auth.schemes_ :
+  (Java system property : **zookeeper.enforce.auth.schemes**)
+  **New in 3.7.0:**
+  Comma separated list of authentication schemes. Clients must be authenticated with at least one
+  authentication scheme before doing any zookeeper operations.
+  This property is used only when **enforce.auth.enabled** is to **true**.
+
+- _sslQuorum_ :
+  (Java system property: **zookeeper.sslQuorum**)
+  **New in 3.5.5:**
+  Enables encrypted quorum communication. Default is `false`. When enabling this feature, please also consider enabling _leader.closeSocketAsync_
+  and _learner.closeSocketAsync_ to avoid issues associated with the potentially long socket closing time when shutting down an SSL connection.
+
+- _ssl.keyStore.location and ssl.keyStore.password_ and _ssl.quorum.keyStore.location_ and _ssl.quorum.keyStore.password_ :
+  (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
+  **New in 3.5.5:**
+  Specifies the file path to a Java keystore containing the local
+  credentials to be used for client and quorum TLS connections, and the
+  password to unlock the file.
+
+- _ssl.keyStore.passwordPath_ and _ssl.quorum.keyStore.passwordPath_ :
+  (Java system properties: **zookeeper.ssl.keyStore.passwordPath** and **zookeeper.ssl.quorum.keyStore.passwordPath**)
+  **New in 3.8.0:**
+  Specifies the file path that contains the keystore password. Reading the password from a file takes precedence over
+  the explicit password property.
+
+- _ssl.keyStore.type_ and _ssl.quorum.keyStore.type_ :
+  (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
+  **New in 3.5.5:**
+  Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+  Default: null.
+  **New in 3.5.10, 3.6.3, 3.7.0:**
+  The format BCFKS was added.
+
+- _ssl.trustStore.location_ and _ssl.trustStore.password_ and _ssl.quorum.trustStore.location_ and _ssl.quorum.trustStore.password_ :
+  (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password** and **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
+  **New in 3.5.5:**
+  Specifies the file path to a Java truststore containing the remote
+  credentials to be used for client and quorum TLS connections, and the
+  password to unlock the file.
+
+- _ssl.trustStore.passwordPath_ and _ssl.quorum.trustStore.passwordPath_ :
+  (Java system properties: **zookeeper.ssl.trustStore.passwordPath** and **zookeeper.ssl.quorum.trustStore.passwordPath**)
+  **New in 3.8.0:**
+  Specifies the file path that contains the truststore password. Reading the password from a file takes precedence over
+  the explicit password property.
+
+- _ssl.trustStore.type_ and _ssl.quorum.trustStore.type_ :
+  (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
+  **New in 3.5.5:**
+  Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+  Default: null.
+  **New in 3.5.10, 3.6.3, 3.7.0:**
+  The format BCFKS was added.
+
+- _ssl.protocol_ and _ssl.quorum.protocol_ :
+  (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)
+  **New in 3.5.5:**
+  Specifies to protocol to be used in client and quorum TLS negotiation.
+  Default: TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
+
+- _ssl.enabledProtocols_ and _ssl.quorum.enabledProtocols_ :
+  (Java system properties: **zookeeper.ssl.enabledProtocols** and **zookeeper.ssl.quorum.enabledProtocols**)
+  **New in 3.5.5:**
+  Specifies the enabled protocols in client and quorum TLS negotiation.
+  Default: TLSv1.3, TLSv1.2 if value of `protocol` property is TLSv1.3. TLSv1.2 if `protocol` is TLSv1.2.
+
+- _ssl.ciphersuites_ and _ssl.quorum.ciphersuites_ :
+  (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
+  **New in 3.5.5:**
+  Specifies the enabled cipher suites to be used in client and quorum TLS negotiation.
+  Default: JDK defaults since 3.10.0, and hard coded cipher suites for 3.9 and earlier versions. See [TLS Cipher Suites](#tls-cipher-suites).
+
+- _ssl.context.supplier.class_ and _ssl.quorum.context.supplier.class_ :
+  (Java system properties: **zookeeper.ssl.context.supplier.class** and **zookeeper.ssl.quorum.context.supplier.class**)
+  **New in 3.5.5:**
+  Specifies the class to be used for creating SSL context in client and quorum SSL communication.
+  This allows you to use custom SSL context and implement the following scenarios: 1. Use hardware keystore, loaded in using PKCS11 or something similar. 2. You don't have access to the software keystore, but can retrieve an already-constructed SSLContext from their container.
+  Default: null
+
+- _ssl.hostnameVerification_ and _ssl.quorum.hostnameVerification_ :
+  (Java system properties: **zookeeper.ssl.hostnameVerification** and **zookeeper.ssl.quorum.hostnameVerification**)
+  **New in 3.5.5:**
+  Specifies whether the hostname verification is enabled in client and quorum TLS negotiation process.
+  Disabling it only recommended for testing purposes.
+  Default: true
+
+- _ssl.clientHostnameVerification_ and _ssl.quorum.clientHostnameVerification_ :
+  (Java system properties: **zookeeper.ssl.clientHostnameVerification** and **zookeeper.ssl.quorum.clientHostnameVerification**)
+  **New in 3.9.4:**
+  Specifies whether the client's hostname verification is enabled in client and quorum TLS negotiation process.
+  This option requires the corresponding _hostnameVerification_ option to be `true`, or it will be ignored.
+  Default: true for quorum, false for clients
+
+- _ssl.allowReverseDnsLookup_ and _ssl.quorum.allowReverseDnsLookup_ :
+  (Java system properties: **zookeeper.ssl.allowReverseDnsLookup** and **zookeeper.ssl.quorum.allowReverseDnsLookup**)
+  **New in 3.9.5:**
+  Allow reverse DNS lookup in both server- and client hostname verifications if the hostname verification is enabled in
+  `ZKTrustManager`. Supported in both quorum and client TLS protocols. Not supported in FIPS mode. Reverse DNS lookups are
+  expensive and unnecessary in most cases. Make sure that certificates are created with all required Subject Alternative
+  Names (SAN) for successful identity verification. It's recommended to add SAN:IP entries for identity verification
+  of client certificates.
+  Default: false
+
+- _ssl.crl_ and _ssl.quorum.crl_ :
+  (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
+  **New in 3.5.5:**
+  Specifies whether Certificate Revocation List is enabled in client and quorum TLS protocols.
+  Default: jvm property "com.sun.net.ssl.checkRevocation" since 3.10.0, false otherwise
+
+- _ssl.ocsp_ and _ssl.quorum.ocsp_ :
+  (Java system properties: **zookeeper.ssl.ocsp** and **zookeeper.ssl.quorum.ocsp**)
+  **New in 3.5.5:**
+  Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
+  **Changed in 3.10.0:**
+  Before 3.10.0, _ssl.ocsp_ and _ssl.quorum.ocsp_ implies _ssl.crl_ and _ssl.quorum.crl_ correspondingly.
+  After 3.10.0, one has to setup both _ssl.crl_ and _ssl.ocsp_ (or _ssl.quorum.crl_ and _ssl.quorum.ocsp_)
+  to enable OCSP. This is consistent with jdk's method of [Setting up a Java Client to use Client-Driven OCSP](https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html#setting-up-a-java-client-to-use-client-driven-ocsp).
+  Default: jvm security property "ocsp.enable" since 3.10.0, false otherwise
+
+- _ssl.clientAuth_ and _ssl.quorum.clientAuth_ :
+  (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
+  **Added in 3.5.5, but broken until 3.5.7:**
+  Specifies options to authenticate ssl connections from clients. Valid values are
+
+        * "none": server will not request client authentication
+        * "want": server will "request" client authentication
+        * "need": server will "require" client authentication
+
+        Default: "need"
+
+- _ssl.handshakeDetectionTimeoutMillis_ and _ssl.quorum.handshakeDetectionTimeoutMillis_ :
+  (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
+  **New in 3.5.5:**
+  TBD
+
+- _ssl.sslProvider_ :
+  (Java system property: **zookeeper.ssl.sslProvider**)
+  **New in 3.9.0:**
+  Allows to select SSL provider in the client-server communication when TLS is enabled. Netty-tcnative native library
+  has been added to ZooKeeper in version 3.9.0 which allows us to use native SSL libraries like OpenSSL on supported
+  platforms. See the available options in Netty-tcnative documentation. Default value is "JDK".
+
+- _sslQuorumReloadCertFiles_ :
+  (No Java system property)
+  **New in 3.5.5, 3.6.0:**
+  Allows Quorum SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false
+
+- _client.certReload_ :
+  (Java system property: **zookeeper.client.certReload**)
+  **New in 3.7.2, 3.8.1, 3.9.0:**
+  Allows client SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false
+
+- _client.portUnification_:
+  (Java system property: **zookeeper.client.portUnification**)
+  Specifies that the client port should accept SSL connections
+  (using the same configuration as the secure client port).
+  Default: false
+
+- _authProvider_:
+  (Java system property: **zookeeper.authProvider**)
+  You can specify multiple authentication provider classes for ZooKeeper.
+  Usually you use this parameter to specify the SASL authentication provider
+  like: `authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider`
+
+- _kerberos.removeHostFromPrincipal_
+  (Java system property: **zookeeper.kerberos.removeHostFromPrincipal**)
+  You can instruct ZooKeeper to remove the host from the client principal name during authentication.
+  (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk@EXAMPLE.COM)
+  Default: false
+
+- _kerberos.removeRealmFromPrincipal_
+  (Java system property: **zookeeper.kerberos.removeRealmFromPrincipal**)
+  You can instruct ZooKeeper to remove the realm from the client principal name during authentication.
+  (e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
+  Default: false
+
+- _kerberos.canonicalizeHostNames_
+  (Java system property: **zookeeper.kerberos.canonicalizeHostNames**)
+  **New in 3.7.0:**
+  Instructs ZooKeeper to canonicalize server host names extracted from _server.x_ lines.
+  This allows using e.g. `CNAME` records to reference servers in configuration files, while still enabling SASL Kerberos authentication between quorum members.
+  It is essentially the quorum equivalent of the _zookeeper.sasl.client.canonicalize.hostname_ property for clients.
+  The default value is **false** for backwards compatibility.
+
+- _multiAddress.enabled_ :
+  (Java system property: **zookeeper.multiAddress.enabled**)
+  **New in 3.6.0:**
+  Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#cluster-options)
+  for each ZooKeeper server instance (this can increase availability when multiple physical
+  network interfaces can be used parallel in the cluster). Setting this parameter to
+  **true** will enable this feature. Please note, that you can not enable this feature
+  during a rolling upgrade if the version of the old ZooKeeper cluster is prior to 3.6.0.
+  The default value is **false**.
+
+- _multiAddress.reachabilityCheckTimeoutMs_ :
+  (Java system property: **zookeeper.multiAddress.reachabilityCheckTimeoutMs**)
+  **New in 3.6.0:**
+  Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#cluster-options)
+  for each ZooKeeper server instance (this can increase availability when multiple physical
+  network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+  or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find
+  the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+  In this property you can set the timeout in milliseconds for the reachability check. The check happens
+  in parallel for the different addresses, so the timeout you set here is the maximum time will be taken
+  by checking the reachability of all addresses.
+  The default value is **1000**.
+
+  This parameter has no effect, unless you enable the MultiAddress feature by setting _multiAddress.enabled=true_.
+
+- _fips-mode_ :
+  (Java system property: **zookeeper.fips-mode**)
+  **New in 3.8.2:**
+  Enable FIPS compatibility mode in ZooKeeper. If enabled, the following things will be changed in order to comply
+  with FIPS requirements:
+  - Custom trust manager (`ZKTrustManager`) that is used for hostname verification will be disabled. As a consequence,
+    hostname verification is not available in the Quorum protocol, but still can be set in client-server communication.
+  - DIGEST-MD5 Sasl auth mechanism will be disabled in Quorum and ZooKeeper Sasl clients. Only GSSAPI (Kerberos)
+    can be used.
+
+  Default: **true** (3.9.0+), **false** (3.8.x)
+
+## TLS Cipher Suites
+
+From 3.5.5 to 3.9 a hard coded default cipher list was used, with the ordering
+dependent on whether it is run Java 8 or a later version.
+
+The list on Java 8 includes TLSv1.2 CBC, GCM and TLSv1.3 ciphers in ordering: _TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256_
+
+The list on Java 9+ includes TLSv1.2 GCM, CBC and TLSv1.3 ciphers in ordering: _TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256_
+
+Since 3.10 there is no hardcoded list, and the JDK defaults are used.
+
+## Experimental Options/Features
+
+New features that are currently considered experimental.
+
+- _Read Only Mode Server_ :
+  (Java system property: **readonlymode.enabled**)
+  **New in 3.4.0:**
+  Setting this value to true enables Read Only Mode server
+  support (disabled by default).
+  _localSessionsEnabled_ has to be activated to serve clients.
+  A downgrade of an existing connections is currently not supported.
+  ROM allows clients sessions which requested ROM support to connect to the
+  server even when the server might be partitioned from
+  the quorum. In this mode ROM clients can still read
+  values from the ZK service, but will be unable to write
+  values and see changes from other clients. See
+  ZOOKEEPER-784 for more details.
+
+- _zookeeper.follower.skipLearnerRequestToNextProcessor_ :
+  (Java system property: **zookeeper.follower.skipLearnerRequestToNextProcessor**)
+  When our cluster has observers which are connected with ObserverMaster, then turning on this flag might help
+  you reduce some memory pressure on the Observer Master. If your cluster doesn't have any observers or
+  they are not connected with ObserverMaster or your Observer's don't make much writes, then using this flag
+  won't help you.
+  Currently the change here is guarded behind the flag to help us get more confidence around the memory gains.
+  In Long run, we might want to remove this flag and set its behavior as the default codepath.
+
+## Unsafe Options
+
+The following options can be useful, but be careful when you use
+them. The risk of each is explained along with the explanation of what
+the variable does.
+
+- _forceSync_ :
+  (Java system property: **zookeeper.forceSync**)
+  Requires updates to be synced to media of the transaction
+  log before finishing processing the update. If this option is
+  set to no, ZooKeeper will not require updates to be synced to
+  the media.
+
+- _jute.maxbuffer_ :
+  (Java system property:**jute.maxbuffer**).
+  - This option can only be set as a Java system property.
+    There is no zookeeper prefix on it. It specifies the maximum
+    size of the data that can be stored in a znode. The unit is: byte. The default is
+    0xfffff(1048575) bytes, or just under 1M.
+  - If this option is changed, the system property must be set on all servers and clients otherwise
+    problems will arise.
+  - When _jute.maxbuffer_ in the client side is greater than the server side, the client wants to write the data
+    exceeds _jute.maxbuffer_ in the server side, the server side will get **java.io.IOException: Len error**
+  - When _jute.maxbuffer_ in the client side is less than the server side, the client wants to read the data
+    exceeds _jute.maxbuffer_ in the client side, the client side will get **java.io.IOException: Unreasonable length**
+    or **Packet len is out of range!**
+  - This is really a sanity check. ZooKeeper is designed to store data on the order of kilobytes in size.
+    In the production environment, increasing this property to exceed the default value is not recommended for the following reasons:
+  - Large size znodes cause unwarranted latency spikes, worsen the throughput
+  - Large size znodes make the synchronization time between leader and followers unpredictable and non-convergent(sometimes timeout), cause the quorum unstable
+
+- _jute.maxbuffer.extrasize_:
+  (Java system property: **zookeeper.jute.maxbuffer.extrasize**)
+  **New in 3.5.7:**
+  While processing client requests ZooKeeper server adds some additional information into
+  the requests before persisting it as a transaction. Earlier this additional information size
+  was fixed to 1024 bytes. For many scenarios, specially scenarios where jute.maxbuffer value
+  is more than 1 MB and request type is multi, this fixed size was insufficient.
+  To handle all the scenarios additional information size is increased from 1024 byte
+  to same as jute.maxbuffer size and also it is made configurable through jute.maxbuffer.extrasize.
+  Generally this property is not required to be configured as default value is the most optimal value.
+
+- _skipACL_ :
+  (Java system property: **zookeeper.skipACL**)
+  Skips ACL checks. This results in a boost in throughput,
+  but opens up full access to the data tree to everyone.
+
+- _quorumListenOnAllIPs_ :
+  When set to true the ZooKeeper server will listen
+  for connections from its peers on all available IP addresses,
+  and not only the address configured in the server list of the
+  configuration file. It affects the connections handling the
+  ZAB protocol and the Fast Leader Election protocol. Default
+  value is **false**.
+
+- _multiAddress.reachabilityCheckEnabled_ :
+  (Java system property: **zookeeper.multiAddress.reachabilityCheckEnabled**)
+  **New in 3.6.0:**
+  Since ZooKeeper 3.6.0 you can also [specify multiple addresses](#cluster-options)
+  for each ZooKeeper server instance (this can increase availability when multiple physical
+  network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+  or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find
+  the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+  The reachable check can fail if you hit some ICMP rate-limitation, (e.g. on macOS) when you try to
+  start a large (e.g. 11+) ensemble members cluster on a single machine for testing.
+
+  Default value is **true**. By setting this parameter to 'false' you can disable the reachability checks.
+  Please note, disabling the reachability check will cause the cluster not to be able to reconfigure
+  itself properly during network problems, so the disabling is advised only during testing.
+
+  This parameter has no effect, unless you enable the MultiAddress feature by setting _multiAddress.enabled=true_.
+
+## Disabling data directory autocreation
+
+**New in 3.5:** The default
+behavior of a ZooKeeper server is to automatically create the
+data directory (specified in the configuration file) when
+started if that directory does not already exist. This can be
+inconvenient and even dangerous in some cases. Take the case
+where a configuration change is made to a running server,
+wherein the **dataDir** parameter
+is accidentally changed. When the ZooKeeper server is
+restarted it will create this non-existent directory and begin
+serving - with an empty znode namespace. This scenario can
+result in an effective "split brain" situation (i.e. data in
+both the new invalid directory and the original valid data
+store). As such is would be good to have an option to turn off
+this autocreate behavior. In general for production
+environments this should be done, unfortunately however the
+default legacy behavior cannot be changed at this point and
+therefore this must be done on a case by case basis. This is
+left to users and to packagers of ZooKeeper distributions.
+
+When running **zkServer.sh** autocreate can be disabled
+by setting the environment variable **ZOO_DATADIR_AUTOCREATE_DISABLE** to 1.
+When running ZooKeeper servers directly from class files this
+can be accomplished by setting **zookeeper.datadir.autocreate=false** on
+the java command line, i.e. **-Dzookeeper.datadir.autocreate=false**
+
+When this feature is disabled, and the ZooKeeper server
+determines that the required directories do not exist it will
+generate an error and refuse to start.
+
+A new script **zkServer-initialize.sh** is provided to
+support this new feature. If autocreate is disabled it is
+necessary for the user to first install ZooKeeper, then create
+the data directory (and potentially txnlog directory), and
+then start the server. Otherwise as mentioned in the previous
+paragraph the server will not start. Running **zkServer-initialize.sh** will create the
+required directories, and optionally set up the myid file
+(optional command line parameter). This script can be used
+even if the autocreate feature itself is not used, and will
+likely be of use to users as this (setup, including creation
+of the myid file) has been an issue for users in the past.
+Note that this script ensures the data directories exist only,
+it does not create a config file, but rather requires a config
+file to be available in order to execute.
+
+## Enabling db existence validation
+
+**New in 3.6.0:** The default
+behavior of a ZooKeeper server on startup when no data tree
+is found is to set zxid to zero and join the quorum as a
+voting member. This can be dangerous if some event (e.g. a
+rogue 'rm -rf') has removed the data directory while the
+server was down since this server may help elect a leader
+that is missing transactions. Enabling db existence validation
+will change the behavior on startup when no data tree is
+found: the server joins the ensemble as a non-voting participant
+until it is able to sync with the leader and acquire an up-to-date
+version of the ensemble data. To indicate an empty data tree is
+expected (ensemble creation), the user should place a file
+'initialize' in the same directory as 'myid'. This file will
+be detected and deleted by the server on startup.
+
+Initialization validation can be enabled when running
+ZooKeeper servers directly from class files by setting
+**zookeeper.db.autocreate=false**
+on the java command line, i.e.
+**-Dzookeeper.db.autocreate=false**.
+Running **zkServer-initialize.sh**
+will create the required initialization file.
+
+## Performance Tuning Options
+
+**New in 3.5.0:** Several subsystems have been reworked
+to improve read throughput. This includes multi-threading of the NIO communication subsystem and
+request processing pipeline (Commit Processor). NIO is the default client/server communication
+subsystem. Its threading model comprises 1 acceptor thread, 1-N selector threads and 0-M
+socket I/O worker threads. In the request processing pipeline the system can be configured
+to process multiple read request at once while maintaining the same consistency guarantee
+(same-session read-after-write). The Commit Processor threading model comprises 1 main
+thread and 0-N worker threads.
+
+The default values are aimed at maximizing read throughput on a dedicated ZooKeeper machine.
+Both subsystems need to have sufficient amount of threads to achieve peak read throughput.
+
+- _zookeeper.nio.numSelectorThreads_ :
+  (Java system property only: **zookeeper.nio.numSelectorThreads**)
+  **New in 3.5.0:**
+  Number of NIO selector threads. At least 1 selector thread required.
+  It is recommended to use more than one selector for large numbers
+  of client connections. The default value is sqrt( number of cpu cores / 2 ).
+
+- _zookeeper.nio.numWorkerThreads_ :
+  (Java system property only: **zookeeper.nio.numWorkerThreads**)
+  **New in 3.5.0:**
+  Number of NIO worker threads. If configured with 0 worker threads, the selector threads
+  do the socket I/O directly. The default value is 2 times the number of cpu cores.
+
+- _zookeeper.commitProcessor.numWorkerThreads_ :
+  (Java system property only: **zookeeper.commitProcessor.numWorkerThreads**)
+  **New in 3.5.0:**
+  Number of Commit Processor worker threads. If configured with 0 worker threads, the main thread
+  will process the request directly. The default value is the number of cpu cores.
+
+- _zookeeper.commitProcessor.maxReadBatchSize_ :
+  (Java system property only: **zookeeper.commitProcessor.maxReadBatchSize**)
+  Max number of reads to process from queuedRequests before switching to processing commits.
+  If the value < 0 (default), we switch whenever we have a local write, and pending commits.
+  A high read batch size will delay commit processing, causing stale data to be served.
+  If reads are known to arrive in fixed size batches then matching that batch size with
+  the value of this property can smooth queue performance. Since reads are handled in parallel,
+  one recommendation is to set this property to match _zookeeper.commitProcessor.numWorkerThread_
+  (default is the number of cpu cores) or lower.
+
+- _zookeeper.commitProcessor.maxCommitBatchSize_ :
+  (Java system property only: **zookeeper.commitProcessor.maxCommitBatchSize**)
+  Max number of commits to process before processing reads. We will try to process as many
+  remote/local commits as we can till we reach this count. A high commit batch size will delay
+  reads while processing more commits. A low commit batch size will favor reads.
+  It is recommended to only set this property when an ensemble is serving a workload with a high
+  commit rate. If writes are known to arrive in a set number of batches then matching that
+  batch size with the value of this property can smooth queue performance. A generic
+  approach would be to set this value to equal the ensemble size so that with the processing
+  of each batch the current server will probabilistically handle a write related to one of
+  its direct clients.
+  Default is "1". Negative and zero values are not supported.
+
+- _znode.container.checkIntervalMs_ :
+  (Java system property only)
+  **New in 3.6.0:** The
+  time interval in milliseconds for each check of candidate container
+  and ttl nodes. Default is "60000".
+
+- _znode.container.maxPerMinute_ :
+  (Java system property only)
+  **New in 3.6.0:** The
+  maximum number of container and ttl nodes that can be deleted per
+  minute. This prevents herding during container deletion.
+  Default is "10000".
+
+- _znode.container.maxNeverUsedIntervalMs_ :
+  (Java system property only)
+  **New in 3.6.0:** The
+  maximum interval in milliseconds that a container that has never had
+  any children is retained. Should be long enough for your client to
+  create the container, do any needed work and then create children.
+  Default is "300000"(a.k.a. 5 minutes) since 3.10.0, for earlier versions,
+  it is "0" which is used to indicate that containers that have never had
+  any children are never deleted.
+
+## Debug Observability Configurations
+
+**New in 3.6.0:** The following options are introduced to make zookeeper easier to debug.
+
+- _zookeeper.messageTracker.BufferSize_ :
+  (Java system property only)
+  Controls the maximum number of messages stored in **MessageTracker**. Value should be positive
+  integers. The default value is 10. **MessageTracker** is introduced in **3.6.0** to record the
+  last set of messages between a server (follower or observer) and a leader, when a server
+  disconnects with leader. These set of messages will then be dumped to zookeeper's log file,
+  and will help reconstruct the state of the servers at the time of the disconnection and
+  will be useful for debugging purpose.
+
+- _zookeeper.messageTracker.Enabled_ :
+  (Java system property only)
+  When set to "true", will enable **MessageTracker** to track and record messages. Default value
+  is "false".
+
+## AdminServer configuration
+
+**New in 3.9.0:** The following
+options are used to configure the [AdminServer](#adminserver-configuration).
+
+- _admin.rateLimiterIntervalInMS_ :
+  (Java system property: **zookeeper.admin.rateLimiterIntervalInMS**)
+  The time interval for rate limiting admin command to protect the server.
+  Defaults to 5 mins.
+
+- _admin.snapshot.enabled_ :
+  (Java system property: **zookeeper.admin.snapshot.enabled**)
+  The flag for enabling the snapshot command. Defaults to true.
+- _admin.restore.enabled_ :
+  (Java system property: **zookeeper.admin.restore.enabled**)
+  The flag for enabling the restore command. Defaults to true.
+
+- _admin.needClientAuth_ :
+  (Java system property: **zookeeper.admin.needClientAuth**)
+  The flag to control whether client auth is needed. Using x509 auth requires true.
+  Defaults to false.
+
+  **New in 3.7.1:** The following
+  options are used to configure the [AdminServer](#adminserver-configuration).
+
+- _admin.forceHttps_ :
+  (Java system property: **zookeeper.admin.forceHttps**)
+  Force AdminServer to use SSL, thus allowing only HTTPS traffic.
+  Defaults to disabled.
+  Overwrites **admin.portUnification** settings.
+
+  **New in 3.6.0:** The following
+  options are used to configure the [AdminServer](#adminserver-configuration).
+
+- _admin.portUnification_ :
+  (Java system property: **zookeeper.admin.portUnification**)
+  Enable the admin port to accept both HTTP and HTTPS traffic.
+  Defaults to disabled.
+
+  **New in 3.5.0:** The following
+  options are used to configure the [AdminServer](#adminserver-configuration).
+
+- _admin.enableServer_ :
+  (Java system property: **zookeeper.admin.enableServer**)
+  Set to "false" to disable the AdminServer. By default the
+  AdminServer is enabled.
+
+- _admin.serverAddress_ :
+  (Java system property: **zookeeper.admin.serverAddress**)
+  The address the embedded Jetty server listens on. Defaults to 0.0.0.0.
+
+- _admin.serverPort_ :
+  (Java system property: **zookeeper.admin.serverPort**)
+  The port the embedded Jetty server listens on. Defaults to 8080.
+
+- _admin.idleTimeout_ :
+  (Java system property: **zookeeper.admin.idleTimeout**)
+  Set the maximum idle time in milliseconds that a connection can wait
+  before sending or receiving data. Defaults to 30000 ms.
+
+- _admin.commandURL_ :
+  (Java system property: **zookeeper.admin.commandURL**)
+  The URL for listing and issuing commands relative to the
+  root URL. Defaults to "/commands".

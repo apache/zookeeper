@@ -1,0 +1,94 @@
+---
+title: "Data File Management"
+description: "Describes how ZooKeeper manages its data and transaction log directories, snapshot and log file lifecycle, file cleanup, and recovery using the TxnLogToolkit."
+---
+
+ZooKeeper stores its data in a data directory and its transaction
+log in a transaction log directory. By default these two directories are
+the same. The server can (and should) be configured to store the
+transaction log files in a separate directory than the data files.
+Throughput increases and latency decreases when transaction logs reside
+on a dedicated log devices.
+
+## The Data Directory
+
+This directory has two or three files in it:
+
+- _myid_ - contains a single integer in
+  human readable ASCII text that represents the server id.
+- _initialize_ - presence indicates lack of
+  data tree is expected. Cleaned up once data tree is created.
+- _snapshot.\<zxid>_ - holds the fuzzy
+  snapshot of a data tree.
+
+Each ZooKeeper server has a unique id. This id is used in two
+places: the _myid_ file and the configuration file.
+The _myid_ file identifies the server that
+corresponds to the given data directory. The configuration file lists
+the contact information for each server identified by its server id.
+When a ZooKeeper server instance starts, it reads its id from the
+_myid_ file and then, using that id, reads from the
+configuration file, looking up the port on which it should
+listen.
+
+The _snapshot_ files stored in the data
+directory are fuzzy snapshots in the sense that during the time the
+ZooKeeper server is taking the snapshot, updates are occurring to the
+data tree. The suffix of the _snapshot_ file names
+is the _zxid_, the ZooKeeper transaction id, of the
+last committed transaction at the start of the snapshot. Thus, the
+snapshot includes a subset of the updates to the data tree that
+occurred while the snapshot was in process. The snapshot, then, may
+not correspond to any data tree that actually existed, and for this
+reason we refer to it as a fuzzy snapshot. Still, ZooKeeper can
+recover using this snapshot because it takes advantage of the
+idempotent nature of its updates. By replaying the transaction log
+against fuzzy snapshots ZooKeeper gets the state of the system at the
+end of the log.
+
+## The Log Directory
+
+The Log Directory contains the ZooKeeper transaction logs.
+Before any update takes place, ZooKeeper ensures that the transaction
+that represents the update is written to non-volatile storage. A new
+log file is started when the number of transactions written to the
+current log file reaches a (variable) threshold. The threshold is
+computed using the same parameter which influences the frequency of
+snapshotting (see snapCount and snapSizeLimitInKb above). The log file's
+suffix is the first zxid written to that log.
+
+## File Management
+
+The format of snapshot and log files does not change between
+standalone ZooKeeper servers and different configurations of
+replicated ZooKeeper servers. Therefore, you can pull these files from
+a running replicated ZooKeeper server to a development machine with a
+stand-alone ZooKeeper server for troubleshooting.
+
+Using older log and snapshot files, you can look at the previous
+state of ZooKeeper servers and even restore that state.
+
+The ZooKeeper server creates snapshot and log files, but
+never deletes them. The retention policy of the data and log
+files is implemented outside of the ZooKeeper server. The
+server itself only needs the latest complete fuzzy snapshot, all log
+files following it, and the last log file preceding it. The latter
+requirement is necessary to include updates which happened after this
+snapshot was started but went into the existing log file at that time.
+This is possible because snapshotting and rolling over of logs
+proceed somewhat independently in ZooKeeper. See the
+[maintenance](/docs/admin-ops/administrators-guide/administration#maintenance) section
+for more details on setting a retention policy
+and maintenance of ZooKeeper storage.
+
+<Callout type="info">
+  The data stored in these files is not encrypted. In the case of storing
+  sensitive data in ZooKeeper, necessary measures need to be taken to prevent
+  unauthorized access. Such measures are external to ZooKeeper (e.g., control
+  access to the files) and depend on the individual settings in which it is
+  being deployed.
+</Callout>
+
+## Recovery - TxnLogToolkit
+
+More details can be found in [this](/docs/admin-ops/tools#zktxnlogtoolkitsh)

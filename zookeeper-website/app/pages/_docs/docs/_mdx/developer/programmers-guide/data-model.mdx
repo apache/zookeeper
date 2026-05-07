@@ -1,0 +1,208 @@
+---
+title: "Data Model"
+description: "Explains ZooKeeper's hierarchical namespace of znodes, including data access rules, ephemeral and sequence nodes, container nodes, TTL nodes, and the stat structure."
+---
+
+ZooKeeper has a hierarchal namespace, much like a distributed file
+system. The only difference is that each node in the namespace can have
+data associated with it as well as children. It is like having a file
+system that allows a file to also be a directory. Paths to nodes are
+always expressed as canonical, absolute, slash-separated paths; there are
+no relative reference. Any unicode character can be used in a path subject
+to the following constraints:
+
+- The null character (\\u0000) cannot be part of a path name. (This
+  causes problems with the C binding.)
+- The following characters can't be used because they don't
+  display well, or render in confusing ways: \\u0001 - \\u001F and \\u007F
+- \\u009F.
+- The following characters are not allowed: \\ud800 - uF8FF,
+  \\uFFF0 - uFFFF.
+- The "." character can be used as part of another name, but "."
+  and ".." cannot alone be used to indicate a node along a path,
+  because ZooKeeper doesn't use relative paths. The following would be
+  invalid: "/a/b/./c" or "/a/b/../c".
+- The token "zookeeper" is reserved.
+
+## ZNodes
+
+Every node in a ZooKeeper tree is referred to as a
+_znode_. Znodes maintain a stat structure that
+includes version numbers for data changes, acl changes. The stat
+structure also has timestamps. The version number, together with the
+timestamp, allows ZooKeeper to validate the cache and to coordinate
+updates. Each time a znode's data changes, the version number increases.
+For instance, whenever a client retrieves data, it also receives the
+version of the data. And when a client performs an update or a delete,
+it must supply the version of the data of the znode it is changing. If
+the version it supplies doesn't match the actual version of the data,
+the update will fail. (This behavior can be overridden.)
+
+<Callout type="info">
+  In distributed application engineering, the words _node_ can refer to a
+  generic host machine, a server, a member of an ensemble, a client process,
+  etc. In the ZooKeeper documentation, _znodes_ refer to the data nodes.
+  _Servers_ refers to machines that make up the ZooKeeper service; _quorum
+  peers_ refer to the servers that make up an ensemble; client refers to any
+  host or process which uses a ZooKeeper service.
+</Callout>
+
+Znodes are the main entity that a programmer access. They have
+several characteristics that are worth mentioning here.
+
+### Watches
+
+Clients can set watches on znodes. Changes to that znode trigger
+the watch and then clear the watch. When a watch triggers, ZooKeeper
+sends the client a notification. More information about watches can be
+found in the section
+[ZooKeeper Watches](/docs/developer/programmers-guide/watches).
+
+### Data Access
+
+The data stored at each znode in a namespace is read and written
+atomically. Reads get all the data bytes associated with a znode and a
+write replaces all the data. Each node has an Access Control List
+(ACL) that restricts who can do what.
+
+ZooKeeper was not designed to be a general database or large
+object store. Instead, it manages coordination data. This data can
+come in the form of configuration, status information, rendezvous, etc.
+A common property of the various forms of coordination data is that
+they are relatively small: measured in kilobytes.
+The ZooKeeper client and the server implementations have sanity checks
+to ensure that znodes have less than 1M of data, but the data should
+be much less than that on average. Operating on relatively large data
+sizes will cause some operations to take much more time than others and
+will affect the latencies of some operations because of the extra time
+needed to move more data over the network and onto storage media. If
+large data storage is needed, the usual pattern of dealing with such
+data is to store it on a bulk storage system, such as NFS or HDFS, and
+store pointers to the storage locations in ZooKeeper.
+
+### Ephemeral Nodes
+
+ZooKeeper also has the notion of ephemeral nodes. These znodes
+exists as long as the session that created the znode is active. When
+the session ends the znode is deleted. Because of this behavior
+ephemeral znodes are not allowed to have children. The list of ephemerals
+for the session can be retrieved using **getEphemerals()** api.
+
+#### getEphemerals()
+
+Retrieves the list of ephemeral nodes created by the session for the
+given path. If the path is empty, it will list all the ephemeral nodes
+for the session.
+**Use Case** - A sample use case might be, if the list of ephemeral
+nodes for the session needs to be collected for duplicate data entry check
+and the nodes are created in a sequential manner so you do not know the name
+for duplicate check. In that case, getEphemerals() api could be used to
+get the list of nodes for the session. This might be a typical use case
+for service discovery.
+
+### Sequence Nodes — Unique Naming
+
+When creating a znode you can also request that
+ZooKeeper append a monotonically increasing counter to the end
+of path. This counter is unique to the parent znode. The
+counter has a format of %010d — that is 10 digits with 0
+(zero) padding (the counter is formatted in this way to
+simplify sorting), i.e. "`<path>0000000001`". See
+[Queue
+Recipe](/docs/developer/recipes#queues) for an example use of this feature. Note: the
+counter used to store the next sequence number is a signed int
+(4bytes) maintained by the parent node, the counter will
+overflow when incremented beyond 2147483647 (resulting in a
+name "`<path>-2147483648`").
+
+### Container Nodes
+
+#### Added in 3.5.3
+
+ZooKeeper has the notion of container znodes. Container znodes are
+special purpose znodes useful for recipes such as leader, lock, etc.
+When the last child of a container is deleted, the container becomes
+a candidate to be deleted by the server at some point in the future.
+
+Given this property, you should be prepared to get
+KeeperException.NoNodeException when creating children inside of
+container znodes. i.e. when creating child znodes inside of container znodes
+always check for KeeperException.NoNodeException and recreate the container
+znode when it occurs.
+
+### TTL Nodes
+
+#### Added in 3.5.3
+
+When creating PERSISTENT or PERSISTENT_SEQUENTIAL znodes,
+you can optionally set a TTL in milliseconds for the znode. If the znode
+is not modified within the TTL and has no children it will become a candidate
+to be deleted by the server at some point in the future.
+
+Note: TTL Nodes must be enabled via System property as they
+are disabled by default. See the [Administrator's Guide](/docs/admin-ops/administrators-guide/configuration-parameters#advanced-configuration) for
+details. If you attempt to create TTL Nodes without the
+proper System property set the server will throw
+KeeperException.UnimplementedException.
+
+## Time in ZooKeeper
+
+ZooKeeper tracks time multiple ways:
+
+- **Zxid**
+  Every change to the ZooKeeper state receives a stamp in the
+  form of a _zxid_ (ZooKeeper Transaction Id).
+  This exposes the total ordering of all changes to ZooKeeper. Each
+  change will have a unique zxid and if zxid1 is smaller than zxid2
+  then zxid1 happened before zxid2.
+- **Version numbers**
+  Every change to a node will cause an increase to one of the
+  version numbers of that node. The three version numbers are version
+  (number of changes to the data of a znode), cversion (number of
+  changes to the children of a znode), and aversion (number of changes
+  to the ACL of a znode).
+- **Ticks**
+  When using multi-server ZooKeeper, servers use ticks to define
+  timing of events such as status uploads, session timeouts,
+  connection timeouts between peers, etc. The tick time is only
+  indirectly exposed through the minimum session timeout (2 times the
+  tick time); if a client requests a session timeout less than the
+  minimum session timeout, the server will tell the client that the
+  session timeout is actually the minimum session timeout.
+- **Real time**
+  ZooKeeper doesn't use real time, or clock time, at all except
+  to put timestamps into the stat structure on znode creation and
+  znode modification.
+
+## ZooKeeper Stat Structure
+
+The Stat structure for each znode in ZooKeeper is made up of the
+following fields:
+
+- **czxid**
+  The zxid of the change that caused this znode to be
+  created.
+- **mzxid**
+  The zxid of the change that last modified this znode.
+- **pzxid**
+  The zxid of the change that last modified children of this znode.
+- **ctime**
+  The time in milliseconds from epoch when this znode was
+  created.
+- **mtime**
+  The time in milliseconds from epoch when this znode was last
+  modified.
+- **version**
+  The number of changes to the data of this znode.
+- **cversion**
+  The number of changes to the children of this znode.
+- **aversion**
+  The number of changes to the ACL of this znode.
+- **ephemeralOwner**
+  The session id of the owner of this znode if the znode is an
+  ephemeral node. If it is not an ephemeral node, it will be
+  zero.
+- **dataLength**
+  The length of the data field of this znode.
+- **numChildren**
+  The number of children of this znode.
