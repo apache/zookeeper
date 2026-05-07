@@ -35,7 +35,6 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.X509CertSelector;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -95,25 +94,38 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    public static final String DEFAULT_PROTOCOL = defaultTlsProtocol();
+    private static final AtomicReference<String> defaultProtocol = new AtomicReference<>();
 
     /**
-     * Return TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
+     * Return TLSv1.2 when FIPS mode is enabled.
+     * Otherwise, returns TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
      * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
      */
-    private static String defaultTlsProtocol() {
-        String defaultProtocol = TLS_1_2;
-        List<String> supported = new ArrayList<>();
+    public static String defaultTlsProtocol(ZKConfig config) {
+        if (getFipsMode(config)) {
+            return TLS_1_2;
+        }
+
+        String proto = defaultProtocol.get();
+        if (proto != null) {
+            return proto;
+        }
+
+        proto = TLS_1_2;
         try {
-            supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
+            List<String> supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
             if (supported.contains(TLS_1_3)) {
-                defaultProtocol = TLS_1_3;
+                proto = TLS_1_3;
+            }
+            if (defaultProtocol.compareAndSet(null, proto)) {
+                LOG.info("Supported TLS protocols are {}, default TLS protocol is {}", supported, proto);
+            } else {
+                proto = defaultProtocol.get();
             }
         } catch (NoSuchAlgorithmException e) {
             // Ignore.
         }
-        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", defaultProtocol, supported);
-        return defaultProtocol;
+        return proto;
     }
 
     // ChaCha20 was introduced in OpenJDK 11.0.15 and it is not supported by JDK8.
@@ -467,8 +479,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                                               + trustStoreTypeProp, e);
             }
         }
-
-        String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        String defaultTlsProtocol = defaultTlsProtocol(config);
+        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
