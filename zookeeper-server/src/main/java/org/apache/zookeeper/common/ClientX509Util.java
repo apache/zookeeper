@@ -172,7 +172,7 @@ public class ClientX509Util extends X509Util {
     private String[] getEnabledProtocols(final ZKConfig config) {
         String enabledProtocolsInput = config.getProperty(getSslEnabledProtocolsProperty());
         if (enabledProtocolsInput == null) {
-            return new String[]{ config.getProperty(getSslProtocolProperty(), defaultTlsProtocol(config)) };
+            return null;
         }
         return enabledProtocolsInput.split(",");
     }
