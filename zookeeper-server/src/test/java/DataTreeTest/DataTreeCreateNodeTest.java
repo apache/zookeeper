@@ -55,7 +55,7 @@ public class DataTreeCreateNodeTest {
 
     static Stream<Arguments> validCreateNodeParameters() {
         return Stream.of(
-                // T1 - path valido semplice, DataTree con solo nodo radice
+                // T1 - path valido semplice
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -68,7 +68,7 @@ public class DataTreeCreateNodeTest {
                         Arrays.asList("/a")
                 ),
 
-                // T2 - path valido multilivello, nodo padre già presente
+                // T2 - path valido multilivello, padre presente
                 Arguments.of(
                         Arrays.asList("/a"),
                         "/a/b",
@@ -107,7 +107,7 @@ public class DataTreeCreateNodeTest {
                         Arrays.asList("/a")
                 ),
 
-                // T12 - data di dimensione elevata
+                // T12 - data grande
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -133,7 +133,7 @@ public class DataTreeCreateNodeTest {
                         Arrays.asList("/a")
                 ),
 
-                // T14 - ACL null
+                // T14 - ACL nulla
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -146,7 +146,8 @@ public class DataTreeCreateNodeTest {
                         Arrays.asList("/a")
                 ),
 
-                // T15 - ACL contenente elemento non valido/null
+                // T15 - ACL contenente elemento nullo
+                // Comportamento osservato: il nodo viene creato
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -159,7 +160,7 @@ public class DataTreeCreateNodeTest {
                         Arrays.asList("/a")
                 ),
 
-                // T16 - nodo persistente, ephemeralOwner = -1
+                // T16 - ephemeralOwner = -1
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -172,7 +173,7 @@ public class DataTreeCreateNodeTest {
                         Arrays.asList("/a")
                 ),
 
-                // T17 - nodo effimero, ephemeralOwner = 1L
+                // T17 - ephemeralOwner = 1L
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -186,6 +187,7 @@ public class DataTreeCreateNodeTest {
                 ),
 
                 // T18 - ephemeralOwner = 0L
+                // Caso valido: nodo persistente
                 Arguments.of(
                         Collections.emptyList(),
                         "/a",
@@ -365,7 +367,7 @@ public class DataTreeCreateNodeTest {
 
     @Test
     public void createNodeShouldThrowNoNodeExceptionWhenParentDoesNotExist() {
-        // T3 - path con nodo padre assente
+        // T3 - path valido multilivello con padre assente
 
         assertThrows(
                 KeeperException.NoNodeException.class,
@@ -385,7 +387,7 @@ public class DataTreeCreateNodeTest {
 
     @Test
     public void createNodeShouldThrowNodeExistsExceptionWhenNodeAlreadyExists() throws Exception {
-        // T4 - path di nodo già presente
+        // T4 - nodo già presente
 
         createValidNode("/a");
 
@@ -443,6 +445,7 @@ public class DataTreeCreateNodeTest {
         );
 
         assertNodeExists("/");
+        assertNodeDoesNotExist("/a");
     }
 
     static Stream<Arguments> malformedPathParameters() {
@@ -461,6 +464,8 @@ public class DataTreeCreateNodeTest {
     @ParameterizedTest(name = "{index}: malformed path = {0}")
     @MethodSource("malformedPathParameters")
     public void createNodeWithMalformedPathShouldNotCorruptTree(String malformedPath) {
+        // T7, T8, T9 - path vuoto o malformato
+
         assertThrows(
                 Exception.class,
                 () -> dataTree.createNode(
@@ -475,11 +480,12 @@ public class DataTreeCreateNodeTest {
         );
 
         assertNodeExists("/");
+        assertNodeDoesNotExist("/a");
     }
 
     @Test
     public void createNodeWithEphemeralOwnerShouldRegisterEphemeralNode() throws Exception {
-        // Verifica specifica del caso T17
+        // Verifica specifica T17
 
         long sessionId = 1L;
 
@@ -498,8 +504,33 @@ public class DataTreeCreateNodeTest {
     }
 
     @Test
+    public void createNodeWithZeroEphemeralOwnerShouldCreatePersistentNode() throws Exception {
+        // Verifica specifica T18
+        // ephemeralOwner = 0L indica nodo persistente
+
+        long persistentOwner = 0L;
+
+        dataTree.createNode(
+                "/a",
+                VALID_DATA,
+                VALID_ACL,
+                persistentOwner,
+                0,
+                1L,
+                VALID_TIME
+        );
+
+        assertNodeExists("/a");
+
+        Stat stat = dataTree.statNode("/a", null);
+        assertEquals(0L, stat.getEphemeralOwner());
+
+        assertFalse(dataTree.getEphemerals(persistentOwner).contains("/a"));
+    }
+
+    @Test
     public void createNodeShouldStoreEmptyDataCorrectly() throws Exception {
-        // Verifica specifica del caso T10
+        // Verifica specifica T10
 
         dataTree.createNode(
                 "/a",
@@ -511,8 +542,7 @@ public class DataTreeCreateNodeTest {
                 VALID_TIME
         );
 
-        Stat stat = new Stat();
-        byte[] storedData = dataTree.getData("/a", stat, null);
+        byte[] storedData = dataTree.getData("/a", new Stat(), null);
 
         assertNotNull(storedData);
         assertEquals(0, storedData.length);
@@ -520,7 +550,7 @@ public class DataTreeCreateNodeTest {
 
     @Test
     public void createNodeShouldStoreNullDataCorrectly() throws Exception {
-        // Verifica specifica del caso T11
+        // Verifica specifica T11
 
         dataTree.createNode(
                 "/a",
@@ -532,15 +562,35 @@ public class DataTreeCreateNodeTest {
                 VALID_TIME
         );
 
-        Stat stat = new Stat();
-        byte[] storedData = dataTree.getData("/a", stat, null);
+        byte[] storedData = dataTree.getData("/a", new Stat(), null);
 
         assertNull(storedData);
     }
 
     @Test
+    public void createNodeShouldStoreLargeDataCorrectly() throws Exception {
+        // Verifica specifica T12
+
+        byte[] largeData = new byte[1024 * 1024];
+
+        dataTree.createNode(
+                "/a",
+                largeData,
+                VALID_ACL,
+                -1L,
+                0,
+                1L,
+                VALID_TIME
+        );
+
+        byte[] storedData = dataTree.getData("/a", new Stat(), null);
+
+        assertArrayEquals(largeData, storedData);
+    }
+
+    @Test
     public void createNodeOnIndependentBranchShouldNotAlterExistingBranch() throws Exception {
-        // Verifica specifica del caso T28
+        // Verifica specifica T28
 
         createValidNode("/a");
         createValidNode("/x");

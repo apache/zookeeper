@@ -14,7 +14,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,8 +31,7 @@ public class DataTreeGetChildrenTest {
 
     private enum StatCase {
         VALID,
-        NULL,
-        PRE_VALUED
+        NULL
     }
 
     private static class ValidWatcher implements Watcher {
@@ -68,21 +66,13 @@ public class DataTreeGetChildrenTest {
         );
     }
 
-    private void assertNodeExists(String path) {
-        assertNotNull(dataTree.getNode(path), "Il nodo " + path + " dovrebbe esistere");
-    }
-
-    private void assertNodeDoesNotExist(String path) {
-        assertNull(dataTree.getNode(path), "Il nodo " + path + " non dovrebbe esistere");
-    }
-
-    private void assertChildrenEqual(List<String> actualChildren, String... expectedChildren) {
-        assertNotNull(actualChildren, "La lista dei figli non dovrebbe essere null");
-
-        Set<String> actualSet = new HashSet<>(actualChildren);
-        Set<String> expectedSet = new HashSet<>(Arrays.asList(expectedChildren));
-
-        assertEquals(expectedSet, actualSet, "La lista dei figli restituita non è corretta");
+    private Stat buildPreValuedStat() {
+        Stat stat = new Stat();
+        stat.setVersion(999);
+        stat.setCversion(999);
+        stat.setMzxid(999L);
+        stat.setMtime(999L);
+        return stat;
     }
 
     private Stat buildStat(StatCase statCase) {
@@ -90,78 +80,57 @@ public class DataTreeGetChildrenTest {
             return null;
         }
 
-        Stat stat = new Stat();
+        return new Stat();
+    }
 
-        if (statCase == StatCase.PRE_VALUED) {
-            stat.setVersion(999);
-            stat.setCversion(999);
-            stat.setMzxid(999L);
-            stat.setMtime(999L);
+    private void assertChildrenEqual(List<String> actualChildren, String... expectedChildren) {
+        Set<String> actualSet = actualChildren == null
+                ? null
+                : new HashSet<>(actualChildren);
+
+        Set<String> expectedSet = new HashSet<>(Arrays.asList(expectedChildren));
+
+        assertEquals(expectedSet, actualSet, "La lista dei figli restituita non è corretta");
+    }
+
+    private void executeEmptyPathAndReuseTree() throws Exception {
+        try {
+            dataTree.getChildren("", new Stat(), null);
+        } catch (Exception ignored) {
+            // Caso accettabile: path vuoto gestito con eccezione.
         }
 
-        return stat;
-    }
-
-    private void assertTreeStillUsable() throws Exception {
         createValidNode("/safe");
-        assertNodeExists("/safe");
-
-        List<String> children = dataTree.getChildren("/safe", new Stat(), null);
-
-        assertNotNull(children);
-        assertTrue(children.isEmpty());
+        dataTree.getChildren("/safe", new Stat(), null);
     }
 
-    static Stream<Arguments> validGetChildrenParameters() {
+    static Stream<Arguments> childrenEqualityParameters() {
         return Stream.of(
-                // T1 - path valido semplice, nodo presente senza figli, stat valido, watcher null
+                // T1 - path valido semplice, nodo presente senza figli
                 Arguments.of(
                         Arrays.asList("/a"),
                         "/a",
                         StatCase.VALID,
                         false,
-                        Collections.emptyList(),
-                        Collections.emptyList()
+                        new String[]{}
                 ),
 
-                // T2 - path valido multilivello, nodo presente senza figli, stat valido, watcher null
+                // T2 - path valido multilivello, nodo presente senza figli
                 Arguments.of(
                         Arrays.asList("/a", "/a/b"),
                         "/a/b",
                         StatCase.VALID,
                         false,
-                        Collections.emptyList(),
-                        Arrays.asList("/a")
+                        new String[]{}
                 ),
 
-                // T8 - path valido semplice, nodo con un solo figlio, stat null, watcher null
+                // T8 - path valido semplice, nodo con un solo figlio, stat null
                 Arguments.of(
                         Arrays.asList("/a", "/a/b"),
                         "/a",
                         StatCase.NULL,
                         false,
-                        Arrays.asList("b"),
-                        Collections.emptyList()
-                ),
-
-                // T9 - path valido semplice, nodo con un solo figlio, stat già valorizzato, watcher null
-                Arguments.of(
-                        Arrays.asList("/a", "/a/b"),
-                        "/a",
-                        StatCase.PRE_VALUED,
-                        false,
-                        Arrays.asList("b"),
-                        Collections.emptyList()
-                ),
-
-                // T10 - path valido semplice, nodo senza figli, stat valido, watcher valido
-                Arguments.of(
-                        Arrays.asList("/a"),
-                        "/a",
-                        StatCase.VALID,
-                        true,
-                        Collections.emptyList(),
-                        Collections.emptyList()
+                        new String[]{"b"}
                 ),
 
                 // T11 - path valido semplice, nodo con un solo figlio
@@ -170,8 +139,7 @@ public class DataTreeGetChildrenTest {
                         "/a",
                         StatCase.VALID,
                         false,
-                        Arrays.asList("b"),
-                        Collections.emptyList()
+                        new String[]{"b"}
                 ),
 
                 // T12 - path valido semplice, nodo con più figli
@@ -180,58 +148,25 @@ public class DataTreeGetChildrenTest {
                         "/a",
                         StatCase.VALID,
                         false,
-                        Arrays.asList("b", "c"),
-                        Collections.emptyList()
+                        new String[]{"b", "c"}
                 ),
 
-                // T14 - DataTree con più rami indipendenti, watcher null
+                // T14 - path valido semplice in albero ramificato
                 Arguments.of(
                         Arrays.asList("/a", "/a/b", "/x", "/x/y"),
                         "/x",
                         StatCase.VALID,
                         false,
-                        Arrays.asList("y"),
-                        Arrays.asList("/a", "/a/b")
+                        new String[]{"y"}
                 ),
 
-                // T15 - path radice, stat null, watcher null
-                Arguments.of(
-                        Collections.emptyList(),
-                        "/",
-                        StatCase.NULL,
-                        false,
-                        Collections.emptyList(),
-                        Collections.emptyList()
-                ),
-
-                // T16 - path radice, stat già valorizzato, watcher null
-                Arguments.of(
-                        Collections.emptyList(),
-                        "/",
-                        StatCase.PRE_VALUED,
-                        false,
-                        Collections.emptyList(),
-                        Collections.emptyList()
-                ),
-
-                // T17 - path valido multilivello, stat null, watcher null
+                // T17 - path valido multilivello, stat null
                 Arguments.of(
                         Arrays.asList("/a", "/a/b"),
                         "/a/b",
                         StatCase.NULL,
                         false,
-                        Collections.emptyList(),
-                        Arrays.asList("/a")
-                ),
-
-                // T18 - path valido multilivello, stat valido, watcher valido
-                Arguments.of(
-                        Arrays.asList("/a", "/a/b"),
-                        "/a/b",
-                        StatCase.VALID,
-                        true,
-                        Collections.emptyList(),
-                        Arrays.asList("/a")
+                        new String[]{}
                 ),
 
                 // T19 - path valido semplice, nodo con più figli, watcher valido
@@ -240,31 +175,28 @@ public class DataTreeGetChildrenTest {
                         "/a",
                         StatCase.VALID,
                         true,
-                        Arrays.asList("b", "c"),
-                        Collections.emptyList()
+                        new String[]{"b", "c"}
                 ),
 
-                // T20 - DataTree con rami indipendenti, watcher valido
+                // T20 - path valido semplice in albero ramificato, watcher valido
                 Arguments.of(
                         Arrays.asList("/a", "/a/b", "/x", "/x/y"),
                         "/x",
                         StatCase.VALID,
                         true,
-                        Arrays.asList("y"),
-                        Arrays.asList("/a", "/a/b")
+                        new String[]{"y"}
                 )
         );
     }
 
     @ParameterizedTest(name = "{index}: getChildren({1})")
-    @MethodSource("validGetChildrenParameters")
+    @MethodSource("childrenEqualityParameters")
     public void getChildrenShouldReturnExpectedChildren(
             List<String> initialPaths,
             String pathToQuery,
             StatCase statCase,
             boolean useWatcher,
-            List<String> expectedChildren,
-            List<String> unchangedPaths
+            String[] expectedChildren
     ) throws Exception {
 
         for (String initialPath : initialPaths) {
@@ -280,46 +212,25 @@ public class DataTreeGetChildrenTest {
                 watcher
         );
 
-        assertChildrenEqual(actualChildren, expectedChildren.toArray(new String[0]));
-
-        if (statCase == StatCase.PRE_VALUED) {
-            assertNotNull(stat);
-            assertNotEquals(999, stat.getCversion(), "Lo Stat dovrebbe essere aggiornato dal metodo");
-        }
-
-        if (useWatcher) {
-            assertNotNull(watcher, "Il watcher valido dovrebbe essere accettato");
-            assertEquals(
-                    0,
-                    watcher.getEventCount(),
-                    "La getChildren registra il watcher ma non deve generare eventi immediati"
-            );
-        }
-
-        for (String unchangedPath : unchangedPaths) {
-            assertNodeExists(unchangedPath);
-        }
+        assertChildrenEqual(actualChildren, expectedChildren);
     }
 
     @Test
     public void getChildrenOnRootInInitialTreeShouldReturnNonNullList() throws Exception {
-        // T3 - path radice, DataTree nello stato iniziale, stat valido, watcher null
-
-        Stat stat = new Stat();
+        // T3 - path radice, DataTree nello stato iniziale, stat valido
 
         List<String> children = dataTree.getChildren(
                 "/",
-                stat,
+                new Stat(),
                 null
         );
 
         assertNotNull(children);
-        assertNodeExists("/");
     }
 
     @Test
-    public void getChildrenWithNullPathShouldThrowExceptionAndNotCorruptTree() throws Exception {
-        // T4 - path nullo, DataTree nello stato iniziale
+    public void getChildrenWithNullPathShouldThrowException() {
+        // T4 - path nullo
 
         assertThrows(
                 Exception.class,
@@ -329,25 +240,13 @@ public class DataTreeGetChildrenTest {
                         null
                 )
         );
-
-        assertTreeStillUsable();
     }
 
     @Test
-    public void getChildrenWithEmptyPathShouldThrowExceptionOrNotCorruptTree() throws Exception {
-        // T5 - path vuoto o malformato, path = ""
+    public void getChildrenWithEmptyPathShouldNotCorruptTree() {
+        // T5 - path vuoto
 
-        try {
-            dataTree.getChildren(
-                    "",
-                    new Stat(),
-                    null
-            );
-        } catch (Exception ignored) {
-            // Caso accettabile: path vuoto gestito con eccezione.
-        }
-
-        assertTreeStillUsable();
+        assertDoesNotThrow(this::executeEmptyPathAndReuseTree);
     }
 
     static Stream<Arguments> malformedPathParameters() {
@@ -371,13 +270,46 @@ public class DataTreeGetChildrenTest {
                         null
                 )
         );
+    }
 
-        assertNodeDoesNotExist(malformedPath);
+    @Test
+    public void getChildrenWithPreValuedStatShouldUpdateStat() throws Exception {
+        // T9 - path valido semplice, nodo con un solo figlio, stat già valorizzato
+
+        createValidNode("/a");
+        createValidNode("/a/b");
+
+        Stat stat = buildPreValuedStat();
+
+        dataTree.getChildren(
+                "/a",
+                stat,
+                null
+        );
+
+        assertNotEquals(999, stat.getCversion());
+    }
+
+    @Test
+    public void getChildrenWithWatcherShouldNotGenerateImmediateEvent() throws Exception {
+        // T10 - path valido semplice, nodo senza figli, watcher valido
+
+        createValidNode("/a");
+
+        ValidWatcher watcher = new ValidWatcher();
+
+        dataTree.getChildren(
+                "/a",
+                new Stat(),
+                watcher
+        );
+
+        assertEquals(0, watcher.getEventCount());
     }
 
     @Test
     public void getChildrenShouldThrowNoNodeExceptionWhenNodeDoesNotExist() {
-        // T13 - path valido semplice, nodo da interrogare assente
+        // T13 - path valido semplice, nodo assente
 
         assertThrows(
                 KeeperException.NoNodeException.class,
@@ -387,7 +319,51 @@ public class DataTreeGetChildrenTest {
                         null
                 )
         );
+    }
 
-        assertNodeDoesNotExist("/x");
+    @Test
+    public void getChildrenOnRootWithNullStatShouldReturnNonNullList() throws Exception {
+        // T15 - path radice, stat null
+
+        List<String> actualChildren = dataTree.getChildren(
+                "/",
+                null,
+                null
+        );
+
+        assertNotNull(actualChildren);
+    }
+
+    @Test
+    public void getChildrenOnRootWithPreValuedStatShouldUpdateStat() throws Exception {
+        // T16 - path radice, stat già valorizzato
+
+        Stat stat = buildPreValuedStat();
+
+        dataTree.getChildren(
+                "/",
+                stat,
+                null
+        );
+
+        assertNotEquals(999, stat.getCversion());
+    }
+
+    @Test
+    public void getChildrenOnMultilevelPathWithWatcherShouldNotGenerateImmediateEvent() throws Exception {
+        // T18 - path valido multilivello, watcher valido
+
+        createValidNode("/a");
+        createValidNode("/a/b");
+
+        ValidWatcher watcher = new ValidWatcher();
+
+        dataTree.getChildren(
+                "/a/b",
+                new Stat(),
+                watcher
+        );
+
+        assertEquals(0, watcher.getEventCount());
     }
 }

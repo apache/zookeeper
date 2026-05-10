@@ -509,4 +509,32 @@ public class DataTreeSetDataTest {
         assertDataEquals("/x", INITIAL_DATA);
         assertDataEquals("/x/y", "new-y-data".getBytes());
     }
+
+    @Test
+    public void getDataWithEmptyPathShouldNotCorruptTree() {
+        try {
+            dataTree.getData("", new Stat(), null);
+        } catch (Exception ignored) {
+            // In questo test non vincoliamo il tipo di eccezione.
+            // Verifichiamo solo che lo stato del DataTree rimanga consistente.
+        }
+
+        assertDoesNotThrow(() -> {
+            dataTree.createNode(
+                    "/valid",
+                    "valid-data".getBytes(),
+                    VALID_ACL,
+                    -1L,
+                    0,
+                    1L,
+                    VALID_TIME
+            );
+
+            Stat stat = new Stat();
+            byte[] data = dataTree.getData("/valid", stat, null);
+
+            assertArrayEquals("valid-data".getBytes(), data);
+            assertNotNull(dataTree.getNode("/valid"));
+        });
+    }
 }
