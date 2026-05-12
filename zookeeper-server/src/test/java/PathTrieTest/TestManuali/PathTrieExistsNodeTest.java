@@ -1,4 +1,4 @@
-package PathTrieTest;
+package PathTrieTest.TestManuali;
 
 import org.apache.zookeeper.common.PathTrie;
 import org.junit.jupiter.api.Test;
