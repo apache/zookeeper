@@ -2326,7 +2326,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
 
 *  *metricsProvider.ssl.keyStore.type*:
    **New in 3.10.0:**
-   Specifies the file format of the PrometheusMetricsProvider keystore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+   Specifies the file format of the PrometheusMetricsProvider keystore. Values: JKS, PEM, PKCS12, BCFKS or null (detect by filename).
    Default: null.
 
 * *metricsProvider.ssl.trustStore.location* and *metricsProvider.ssl.trustStore.password*:
@@ -2337,7 +2337,7 @@ options are used to configure the [AdminServer](#sc_adminserver).
 
 * *metricsProvider.ssl.trustStore.type*:
    **New in 3.10.0:**
-   Specifies the file format of the PrometheusMetricsProvider truststore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+   Specifies the file format of the PrometheusMetricsProvider truststore. Values: JKS, PEM, PKCS12, BCFKS or null (detect by filename).
    Default: null.
 
 * *metricsProvider.ssl.need.client.auth*:
