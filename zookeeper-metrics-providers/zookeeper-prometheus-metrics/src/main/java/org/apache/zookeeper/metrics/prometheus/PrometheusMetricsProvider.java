@@ -34,7 +34,6 @@ import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.CounterSet;
@@ -285,7 +284,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     "'" + SSL_NEED_CLIENT_AUTH + "' is true, but '" + SSL_TRUSTSTORE_LOCATION + "' is not set.");
         }
         if (this.trustStorePath != null) {
-            KeyStore trustStore = X509Util.loadTrustStore(this.trustStorePath, this.trustStorePassword, this.trustStoreType);
+            KeyStore trustStore = X509Util.loadTrustStore(this.trustStorePath, this.trustStorePassword,
+                    this.trustStoreType);
             LOG.debug("Successfully loaded certificate authority from {}", this.trustStorePath);
 
             sslContextFactory.setTrustStore(trustStore);
