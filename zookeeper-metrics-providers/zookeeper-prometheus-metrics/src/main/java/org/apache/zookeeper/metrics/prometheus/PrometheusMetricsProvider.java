@@ -23,6 +23,8 @@ import io.prometheus.metrics.exporter.servlet.javax.PrometheusMetricsServlet;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -32,6 +34,7 @@ import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
@@ -50,6 +53,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.KeyStoreScanner;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -144,10 +148,10 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         if (this.httpsPort != -1) {
             this.keyStorePath = configuration.getProperty(SSL_KEYSTORE_LOCATION);
             this.keyStorePassword = configuration.getProperty(SSL_KEYSTORE_PASSWORD);
-            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE, "PKCS12");
+            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE);
             this.trustStorePath = configuration.getProperty(SSL_TRUSTSTORE_LOCATION);
             this.trustStorePassword = configuration.getProperty(SSL_TRUSTSTORE_PASSWORD);
-            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE, "PKCS12");
+            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE);
             this.needClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_NEED_CLIENT_AUTH, "true"));
             this.wantClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_WANT_CLIENT_AUTH, "true"));
             this.enabledProtocols = configuration.getProperty(SSL_ENABLED_PROTOCOLS);
@@ -258,18 +262,21 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      *
      * @return A configured SslContextFactory.Server instance.
      */
-    private SslContextFactory.Server createSslContextFactory() {
+    private SslContextFactory.Server createSslContextFactory() throws GeneralSecurityException, IOException {
         SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
 
         // Validate and set KeyStore properties
         if (this.keyStorePath == null || this.keyStorePath.isEmpty()) {
             throw new IllegalArgumentException("SSL/TLS is enabled, but '" + SSL_KEYSTORE_LOCATION + "' is not set.");
         }
-        sslContextFactory.setKeyStorePath(this.keyStorePath);
+        KeyStore keyStore = X509Util.loadKeyStore(this.keyStorePath, this.keyStorePassword, this.keyStoreType);
+        LOG.debug("Successfully loaded private key from {}", this.keyStorePath);
+
+        sslContextFactory.setKeyStore(keyStore);
         sslContextFactory.setKeyStorePassword(this.keyStorePassword);
-        if (this.keyStoreType != null) {
-            sslContextFactory.setKeyStoreType(this.keyStoreType);
-        }
+
+        // This is needed for KeyStoreScanner to work.
+        sslContextFactory.setKeyStoreResource(Resource.newResource(this.keyStorePath));
 
         // Validate and set TrustStore properties (often needed for client auth)
         if (this.needClientAuth && (this.trustStorePath == null || this.trustStorePath.isEmpty())) {
@@ -277,11 +284,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     "'" + SSL_NEED_CLIENT_AUTH + "' is true, but '" + SSL_TRUSTSTORE_LOCATION + "' is not set.");
         }
         if (this.trustStorePath != null) {
-            sslContextFactory.setTrustStorePath(this.trustStorePath);
+            KeyStore trustStore = X509Util.loadTrustStore(this.trustStorePath, this.trustStorePassword,
+                    this.trustStoreType);
+            LOG.debug("Successfully loaded certificate authority from {}", this.trustStorePath);
+
+            sslContextFactory.setTrustStore(trustStore);
             sslContextFactory.setTrustStorePassword(this.trustStorePassword);
-            if (this.trustStoreType != null) {
-                sslContextFactory.setTrustStoreType(this.trustStoreType);
-            }
         }
 
         sslContextFactory.setNeedClientAuth(this.needClientAuth);
