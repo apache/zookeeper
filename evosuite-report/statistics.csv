@@ -1,0 +1,3 @@
+TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals
+org.apache.zookeeper.server.DataTree,LINE;BRANCH,0.3422456130795138,1379,491
+org.apache.zookeeper.common.PathTrie,LINE;BRANCH,0.9670354481824339,146,142
