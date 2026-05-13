@@ -1,5 +1,3 @@
-package org.apache.zookeeper.randoop.generati;
-
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -24,22 +22,19 @@ public class ErrorTest0 {
     public void test1() throws Throwable {
         if (debug)
             System.out.format("%n%s%n", "ErrorTest0.test1");
-        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
-        pathTrie0.deletePath("hi!");
-        pathTrie0.clear();
-        pathTrie0.clear();
+        org.apache.zookeeper.server.DataTree dataTree0 = new org.apache.zookeeper.server.DataTree();
         // during test generation this statement threw an exception of type java.lang.NullPointerException in error
-        pathTrie0.deletePath("/");
+        dataTree0.compareSnapshotDigests((long) (-1));
     }
 
     @Test
     public void test2() throws Throwable {
         if (debug)
             System.out.format("%n%s%n", "ErrorTest0.test2");
-        org.apache.zookeeper.common.PathTrie pathTrie0 = new org.apache.zookeeper.common.PathTrie();
-        pathTrie0.deletePath("hi!");
+        org.apache.zookeeper.server.DataTree dataTree0 = new org.apache.zookeeper.server.DataTree();
+        dataTree0.setCversionPzxid("", (int) (byte) 100, (long) (-1));
         // during test generation this statement threw an exception of type java.lang.NullPointerException in error
-        pathTrie0.deletePath("/");
+        dataTree0.compareSnapshotDigests((long) (byte) 1);
     }
 }
 

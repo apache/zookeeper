@@ -1,5 +1,8 @@
 package DataTreeTest.TestLLM;
 
+
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.WatcherType;
@@ -11,8 +14,13 @@ import org.apache.zookeeper.server.DataTree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -37,15 +45,14 @@ public class DataTreeZeroShotRun10Test {
         dataTree.createNode(path, DATA, ACL_LIST, -1L, 0, ZXID, TIME);
     }
 
-    // --- Node Counts and Initialization ---
+    // ====================================================================================
+    // 1-40: CORE LOGIC TESTS (Node Counts, Create, Delete, SetData, GetData, Ephemerals)
+    // ====================================================================================
 
     @Test
     public void testGetNodeCount_InitialState() {
-        // A newly initialized DataTree contains internal standard nodes like /, /zookeeper, etc.
         assertTrue(dataTree.getNodeCount() > 0, "Initial node count should be greater than zero due to internal nodes");
     }
-
-    // --- Create Node Tests ---
 
     @Test
     public void testCreateNode_Success() throws Exception {
@@ -92,12 +99,9 @@ public class DataTreeZeroShotRun10Test {
 
     @Test
     public void testCreateNode_Container() throws Exception {
-        // Long.MIN_VALUE acts as the EphemeralType.CONTAINER_EPHEMERAL_OWNER marker
         dataTree.createNode("/node1", DATA, ACL_LIST, Long.MIN_VALUE, 0, ZXID, TIME);
         assertTrue(dataTree.getContainers().contains("/node1"), "Container node should be tracked internally");
     }
-
-    // --- Delete Node Tests ---
 
     @Test
     public void testDeleteNode_Success() throws Exception {
@@ -112,8 +116,6 @@ public class DataTreeZeroShotRun10Test {
             dataTree.deleteNode("/missing", ZXID);
         }, "Should throw NoNodeException when trying to delete a non-existent node");
     }
-
-    // --- Set Data Tests ---
 
     @Test
     public void testSetData_Success() throws Exception {
@@ -139,8 +141,6 @@ public class DataTreeZeroShotRun10Test {
         assertEquals(TIME + 100, stat.getMtime(), "Mtime should be updated on setData");
     }
 
-    // --- Get Data Tests ---
-
     @Test
     public void testGetData_Success() throws Exception {
         createBaseNode("/node1");
@@ -162,8 +162,6 @@ public class DataTreeZeroShotRun10Test {
         dataTree.getData("/node1", stat, null);
         assertEquals(DATA.length, stat.getDataLength(), "Stat should be correctly populated with data length");
     }
-
-    // --- Get Children Tests ---
 
     @Test
     public void testGetChildren_EmptyList() throws Exception {
@@ -189,8 +187,6 @@ public class DataTreeZeroShotRun10Test {
         }, "Should throw NoNodeException when retrieving children for a missing node");
     }
 
-    // --- Stat Node Tests ---
-
     @Test
     public void testStatNode_Success() throws Exception {
         createBaseNode("/node1");
@@ -206,21 +202,16 @@ public class DataTreeZeroShotRun10Test {
         }, "Should throw NoNodeException for statNode on missing path");
     }
 
-    // --- Set/Get ACL Tests ---
-
     @Test
     public void testSetACL_Success() throws Exception {
         createBaseNode("/node1");
         List<ACL> newAcl = ZooDefs.Ids.READ_ACL_UNSAFE;
+        int expectedNewVersion = 2;
 
-        // Eseguiamo il setACL ignorando la versione (-1)
-        dataTree.setACL("/node1", newAcl, -1);
-
-        // Invece di usare lo Stat di ritorno, interroghiamo direttamente l'albero per il vero stato del nodo
+        dataTree.setACL("/node1", newAcl, expectedNewVersion);
         Stat realNodeStat = dataTree.statNode("/node1", null);
 
-        // La versione ACL originale era 0, ora deve essere maggiore di 0 (tipicamente 1)
-        assertTrue(realNodeStat.getAversion() > 0, "ACL version should be incremented in the real node state");
+        assertEquals(expectedNewVersion, realNodeStat.getAversion(), "ACL version should be explicitly updated to the provided version by DataTree");
     }
 
     @Test
@@ -243,8 +234,6 @@ public class DataTreeZeroShotRun10Test {
             dataTree.getACL("/missing", new Stat());
         }, "Should throw NoNodeException when getting ACL for a missing node");
     }
-
-    // --- Tree Metadata and Hierarchy Counting Tests ---
 
     @Test
     public void testGetAllChildrenNumber_Root() throws Exception {
@@ -275,8 +264,6 @@ public class DataTreeZeroShotRun10Test {
         assertTrue(cachedSize >= 0, "Cached approximate size should be non-negative");
     }
 
-    // --- Ephemerals and Session Tracking Tests ---
-
     @Test
     public void testGetEphemerals_ForSpecificSession() throws Exception {
         dataTree.createNode("/eph1", DATA, ACL_LIST, SESSION_ID, 0, ZXID, TIME);
@@ -300,19 +287,13 @@ public class DataTreeZeroShotRun10Test {
         assertEquals(initialCount + 2, dataTree.getEphemeralsCount(), "Total ephemeral count should scale dynamically");
     }
 
-    // --- Advanced Features (CVersion, Quotas, Watches, Digests, ACL Cache) ---
-
     @Test
     public void testSetCversionPzxid_Success() throws Exception {
         createBaseNode("/node1");
         int initialCversion = dataTree.statNode("/node1", null).getCversion();
-
-        // Tentiamo di aumentare il cversion
         dataTree.setCversionPzxid("/node1", initialCversion + 5, ZXID + 10);
-
         Stat stat = dataTree.statNode("/node1", null);
 
-        // Verifichiamo il comportamento logico: il cversion deve essere aumentato
         assertTrue(stat.getCversion() > initialCversion, "CVersion should be dynamically updated and increased");
         assertEquals(ZXID + 10, stat.getPzxid(), "PZxid should be successfully overridden");
     }
@@ -327,16 +308,12 @@ public class DataTreeZeroShotRun10Test {
     @Test
     public void testSetCversionPzxid_IgnoresLowerVersion() throws Exception {
         createBaseNode("/node1");
-
-        // Settiamo una versione forzatamente alta
         dataTree.setCversionPzxid("/node1", 20, ZXID + 10);
         int highCversion = dataTree.statNode("/node1", null).getCversion();
 
-        // Tentiamo di settare una versione PIÙ BASSA
         dataTree.setCversionPzxid("/node1", 2, ZXID + 20);
         Stat stat = dataTree.statNode("/node1", null);
 
-        // La versione deve rimanere quella alta precedente, ignorando il downgrade
         assertEquals(highCversion, stat.getCversion(), "Lower CVersion attempt should be securely ignored by ZooKeeper");
     }
 
@@ -358,11 +335,8 @@ public class DataTreeZeroShotRun10Test {
     @Test
     public void testAclCacheSize_IncreasesOnNewAcl() throws Exception {
         int initialSize = dataTree.aclCacheSize();
-
-        // Creiamo un'ACL custom che ZooKeeper non ha mai visto prima nella sua cache di default
         List<ACL> customAcl = new ArrayList<>();
         customAcl.add(new ACL(31, new Id("digest", "user:custom_password")));
-
         dataTree.createNode("/nodeAclCustom", DATA, customAcl, -1L, 0, ZXID, TIME);
 
         assertTrue(dataTree.aclCacheSize() > initialSize, "ACL cache size should increase when encountering completely unseen ACL combinations");
@@ -372,7 +346,7 @@ public class DataTreeZeroShotRun10Test {
     public void testContainsWatcher_DataWatch() throws Exception {
         createBaseNode("/node1");
         Watcher dummyWatcher = event -> {};
-        dataTree.getData("/node1", new Stat(), dummyWatcher); // Automatically attaches standard data watch
+        dataTree.getData("/node1", new Stat(), dummyWatcher);
         assertTrue(dataTree.containsWatcher("/node1", WatcherType.Data, dummyWatcher), "DataTree should report presence of actively bound data watcher");
     }
 
@@ -382,7 +356,127 @@ public class DataTreeZeroShotRun10Test {
         Watcher dummyWatcher = event -> {};
         dataTree.getData("/node1", new Stat(), dummyWatcher);
         boolean removed = dataTree.removeWatch("/node1", WatcherType.Data, dummyWatcher);
+
         assertTrue(removed, "Watch should be successfully removed returning true");
         assertFalse(dataTree.containsWatcher("/node1", WatcherType.Data, dummyWatcher), "Watcher should be unlinked dynamically");
+    }
+
+    // ====================================================================================
+    // 41-50: ADVANCED AND PERIPHERAL METHODS (Serialization, Dumps, Massive Watches, TTLs)
+    // ====================================================================================
+
+    @Test
+    public void testSerializeAndDeserialize_MaintainsIntegrity() throws Exception {
+        dataTree.createNode("/serializeNode", DATA, ACL_LIST, -1L, 0, ZXID, TIME);
+
+        // Serialize
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        dataTree.serialize(boa, "tree");
+        byte[] serializedData = baos.toByteArray();
+
+        // Deserialize
+        DataTree newTree = new DataTree();
+        ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
+        BinaryInputArchive bia = BinaryInputArchive.getArchive(bais);
+        newTree.deserialize(bia, "tree");
+
+        assertNotNull(newTree.getNode("/serializeNode"), "Deserialized tree must contain the serialized nodes");
+    }
+
+    @Test
+    public void testDumpEphemerals_WritesToPrintWriter() throws Exception {
+        dataTree.createNode("/ephDump", DATA, ACL_LIST, SESSION_ID, 0, ZXID, TIME);
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        dataTree.dumpEphemerals(pw);
+        pw.flush();
+
+        String output = sw.toString();
+        assertTrue(output.contains(Long.toHexString(SESSION_ID)), "Dump should contain the session ID in hex format");
+        assertTrue(output.contains("/ephDump"), "Dump should list the specific ephemeral paths");
+    }
+
+
+
+    @Test
+    public void testDumpWatchesSummary_ExecutesWithoutError() throws Exception {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        assertDoesNotThrow(() -> dataTree.dumpWatchesSummary(pw), "dumpWatchesSummary should execute safely");
+    }
+
+    @Test
+    public void testSetWatches_MassiveRegistration() throws Exception {
+        createBaseNode("/massiveWatch");
+        Watcher dummyWatcher = event -> {};
+
+        List<String> dataWatches = Collections.singletonList("/massiveWatch");
+        List<String> existWatches = Collections.emptyList();
+        List<String> childWatches = Collections.emptyList();
+
+        // Aggiungiamo le due nuove liste vuote richieste dalle versioni recenti di ZooKeeper (Persistent Watches)
+        List<String> persistentWatches = Collections.emptyList();
+        List<String> persistentRecursiveWatches = Collections.emptyList();
+
+        // Passiamo 7 argomenti invece di 5
+        dataTree.setWatches(ZXID, dataWatches, existWatches, childWatches, persistentWatches, persistentRecursiveWatches, dummyWatcher);
+
+        assertTrue(dataTree.containsWatcher("/massiveWatch", WatcherType.Data, dummyWatcher),
+                "Watch should be successfully registered via setWatches massive operation");
+    }
+
+    @Test
+    public void testRemoveCnxn_RemovesAllAssociatedWatches() throws Exception {
+        createBaseNode("/cnxnNode1");
+        createBaseNode("/cnxnNode2");
+        Watcher dummyWatcher = event -> {};
+
+        dataTree.getData("/cnxnNode1", new Stat(), dummyWatcher);
+        dataTree.getChildren("/cnxnNode2", new Stat(), dummyWatcher);
+
+        // Remove connection
+        dataTree.removeCnxn(dummyWatcher);
+
+        assertFalse(dataTree.containsWatcher("/cnxnNode1", WatcherType.Data, dummyWatcher), "Data watch should be removed");
+        assertFalse(dataTree.containsWatcher("/cnxnNode2", WatcherType.Children, dummyWatcher), "Child watch should be removed");
+    }
+
+    @Test
+    public void testGetTtls_ReturnsValidSet() {
+        Set<String> ttls = dataTree.getTtls();
+        assertNotNull(ttls, "TTL set should be properly initialized and returned, even if empty");
+    }
+
+    @Test
+    public void testKillSession_RemovesEphemerals() throws Exception {
+        dataTree.createNode("/ephToKill", DATA, ACL_LIST, SESSION_ID, 0, ZXID, TIME);
+        assertTrue(dataTree.getEphemerals(SESSION_ID).contains("/ephToKill"));
+
+        // Utilizziamo la Reflection per accedere a killSession anche se non è public e siamo in un pacchetto diverso
+        java.lang.reflect.Method killMethod = DataTree.class.getDeclaredMethod("killSession", long.class, long.class);
+        killMethod.setAccessible(true);
+        killMethod.invoke(dataTree, SESSION_ID, ZXID + 1);
+
+        assertNull(dataTree.getNode("/ephToKill"), "Ephemeral node must be removed internally after killing the session");
+        assertFalse(dataTree.getSessions().contains(SESSION_ID), "Session should be completely cleared from active sessions");
+    }
+
+    @Test
+    public void testGetEphemerals_WithEmptySession_ReturnsEmptySet() {
+        Set<String> emptyEphemerals = dataTree.getEphemerals(999999L);
+        assertNotNull(emptyEphemerals);
+        assertTrue(emptyEphemerals.isEmpty(), "Should return an empty set for non-existent session IDs");
+    }
+
+    @Test
+    public void testDeleteNode_ContainerNode_CleansUpContainersSet() throws Exception {
+        dataTree.createNode("/container1", DATA, ACL_LIST, Long.MIN_VALUE, 0, ZXID, TIME);
+        assertTrue(dataTree.getContainers().contains("/container1"));
+
+        dataTree.deleteNode("/container1", ZXID + 1);
+
+        assertFalse(dataTree.getContainers().contains("/container1"), "Deleting a container node should remove it from the containers set");
     }
 }
