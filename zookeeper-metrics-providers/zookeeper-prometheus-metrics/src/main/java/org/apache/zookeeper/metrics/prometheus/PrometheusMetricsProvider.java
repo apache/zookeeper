@@ -25,6 +25,7 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -136,7 +137,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
-        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", configuration);
+        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", redactSensitiveValues(configuration));
 
         this.host = configuration.getProperty(HTTP_HOST, "0.0.0.0");
         this.httpPort = Integer.parseInt(configuration.getProperty(HTTP_PORT, "-1"));
@@ -528,13 +529,13 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 return new PrometheusLabelledSummaryWrapper(prometheusSummary);
             });
         }
+
     }
 
     // --- Wrapper classes to adapt Prometheus metrics to ZooKeeper's metric interfaces ---
-
     private static class PrometheusCounterWrapper implements Counter {
-        private final io.prometheus.metrics.core.metrics.Counter prometheusCounter;
 
+        private final io.prometheus.metrics.core.metrics.Counter prometheusCounter;
         public PrometheusCounterWrapper(io.prometheus.metrics.core.metrics.Counter prometheusCounter) {
             this.prometheusCounter = prometheusCounter;
         }
@@ -601,5 +602,21 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         public void add(String key, long value) {
             this.prometheusSummary.labelValues(key).observe(value);
         }
+    }
+
+    private static Properties redactSensitiveValues(Properties configuration) {
+        Properties redactedConfig = new Properties();
+        configuration.forEach((k, v) -> redactedConfig.put(k, logRedactor((String) k, (String) v)));
+        return redactedConfig;
+    }
+
+    private static String logRedactor(String key, String value) {
+        if (key == null) {
+            return value;
+        }
+        if (key.toLowerCase(Locale.ROOT).endsWith("password")) {
+            return "***";
+        }
+        return value;
     }
 }
