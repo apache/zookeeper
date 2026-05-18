@@ -529,13 +529,13 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 return new PrometheusLabelledSummaryWrapper(prometheusSummary);
             });
         }
-
     }
 
     // --- Wrapper classes to adapt Prometheus metrics to ZooKeeper's metric interfaces ---
-    private static class PrometheusCounterWrapper implements Counter {
 
+    private static class PrometheusCounterWrapper implements Counter {
         private final io.prometheus.metrics.core.metrics.Counter prometheusCounter;
+
         public PrometheusCounterWrapper(io.prometheus.metrics.core.metrics.Counter prometheusCounter) {
             this.prometheusCounter = prometheusCounter;
         }
