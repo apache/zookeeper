@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
+import static org.apache.zookeeper.common.LogRedactor.redactSensitiveValues;
 import io.prometheus.metrics.core.metrics.GaugeWithCallback;
 import io.prometheus.metrics.exporter.servlet.javax.PrometheusMetricsServlet;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
@@ -25,7 +26,6 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -602,21 +602,5 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         public void add(String key, long value) {
             this.prometheusSummary.labelValues(key).observe(value);
         }
-    }
-
-    private static Properties redactSensitiveValues(Properties configuration) {
-        Properties redactedConfig = new Properties();
-        configuration.forEach((k, v) -> redactedConfig.put(k, logRedactor((String) k, (String) v)));
-        return redactedConfig;
-    }
-
-    private static String logRedactor(String key, String value) {
-        if (key == null) {
-            return value;
-        }
-        if (key.toLowerCase(Locale.ROOT).endsWith("password")) {
-            return "***";
-        }
-        return value;
     }
 }
