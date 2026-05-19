@@ -133,6 +133,22 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
 
             // Validate status code at the end of authentication exchange.
             checkAuthStatus(sock, qpStatus);
+        } catch (SaslException e) {
+            // Authentication failed. Try to re-login so that the next
+            // authentication attempt (after the caller reconnects) will
+            // use fresh credentials. This handles the case where the
+            // Kerberos TGT has expired and the Login refresh thread has
+            // exited, or credentials have otherwise become stale.
+            LOG.warn(
+                "SASL authentication failed against server addr: {}, attempting re-login for next retry",
+                sock.getRemoteSocketAddress(), e);
+            try {
+                learnerLogin.forceReLogin();
+                LOG.info("Successfully re-logged in after SASL authentication failure");
+            } catch (LoginException le) {
+                LOG.error("Failed to re-login after SASL authentication failure", le);
+            }
+            throw e;
         } finally {
             if (sc != null) {
                 try {
@@ -170,6 +186,11 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
         authPacket = QuorumAuth.createPacket(QuorumAuth.Status.IN_PROGRESS, response);
         boa.writeRecord(authPacket, QuorumAuth.QUORUM_AUTH_MESSAGE_TAG);
         bufferedOutput.flush();
+    }
+
+    // Visible for testing
+    Login getLogin() {
+        return learnerLogin;
     }
 
     // TODO: need to consolidate the #createSaslToken() implementation between ZooKeeperSaslClient#createSaslToken().
