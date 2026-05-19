@@ -2694,7 +2694,7 @@ command:
 
 <a name="sc_adminserver"></a>
 
-#### The AdminServer
+### The AdminServer
 
 **New in 3.5.0:** The AdminServer is
 an embedded Jetty server that provides an HTTP interface to the four-letter
@@ -2719,7 +2719,106 @@ The AdminServer is enabled by default, but can be disabled by either:
 Note that the TCP four-letter word interface is still available if
 the AdminServer is disabled.
 
-##### Configuring AdminServer for SSL/TLS
+#### Security Considerations
+
+> **Important:** The AdminServer is enabled by default and listens on all network interfaces (`0.0.0.0`) on port `8080` 
+> unless explicitly configured otherwise. By default, communication is **unencrypted (HTTP)** and **client authentication 
+> is disabled**. Most administrative commands can be executed by any client that can connect to the AdminServer.
+
+#### Default Security Posture
+
+The default AdminServer configuration is intended for ease of use in trusted environments, but it is **not secure for 
+exposure to untrusted networks**.
+
+Default settings include:
+
+* `admin.enableServer=true`
+* `admin.serverAddress=0.0.0.0`
+* `admin.serverPort=8080`
+* `admin.forceHttps=false`
+* `admin.needClientAuth=false`
+
+With these defaults:
+
+* All traffic is transmitted in clear text over HTTP.
+* Administrative data, including configuration and runtime details, can be viewed by anyone with network access.
+* Many commands (such as `stat`, `srvr`, `conf`, and `cons`) do not require authentication.
+* Sensitive operational information may be disclosed.
+* In some environments, unrestricted administrative access can increase the impact of vulnerabilities or misconfiguration.
+
+#### Recommended Deployment Practices
+
+Administrators should ensure that the AdminServer is accessible only to authorized users.
+
+#### Option 1: Restrict Access with Firewall Rules (Minimum Recommendation)
+
+Limit access to the AdminServer port to trusted hosts or management networks only.
+
+Examples:
+
+* Bind the server to localhost:
+
+  ```properties
+  admin.serverAddress=127.0.0.1
+  ```
+* Use host-based firewall rules (such as `iptables`, `firewalld`, or cloud security groups) to allow access only from 
+* administrative systems.
+
+This is the minimum recommended protection when HTTPS and client authentication are not enabled.
+
+#### Option 2: Enable HTTPS
+
+To encrypt all communication, configure SSL/TLS and force HTTPS:
+
+```properties
+admin.forceHttps=true
+```
+
+This prevents credentials and administrative data from being transmitted in clear text. ZooKeeper supports configuring 
+the AdminServer with TLS certificates and trust stores.
+
+#### Option 3: Require Client Authentication
+
+To restrict access to trusted clients using X.509 certificates:
+
+```properties
+admin.needClientAuth=true
+```
+
+When enabled, only clients presenting valid certificates trusted by the server will be allowed to connect.
+
+#### Recommended Secure Configuration
+
+For production environments, the following configuration is strongly recommended:
+
+```properties
+admin.forceHttps=true
+admin.needClientAuth=true
+admin.serverAddress=<management-network-ip>
+```
+
+In addition, restrict access to the AdminServer port using firewall rules.
+
+#### Disable the AdminServer If Not Needed
+
+If you do not use the AdminServer, disable it entirely:
+
+```properties
+admin.enableServer=false
+```
+
+#### Security Warning
+
+Exposing the AdminServer to untrusted networks with the default configuration may allow unauthorized users to:
+
+* Retrieve server configuration and runtime information
+* Inspect connected clients and sessions
+* Reset statistics
+* Execute other administrative commands
+
+Always protect the AdminServer with **network-level controls** and, preferably, **HTTPS with client certificate authentication**.
+
+#### Configuring AdminServer for SSL/TLS
 - Generating the **keystore.jks** and **truststore.jks** which can be found in the [Quorum TLS](http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Quorum+TLS).
 - Add the following configuration settings to the `zoo.cfg` config file:
 
@@ -2739,7 +2838,7 @@ ssl.quorum.trustStore.password=password
 2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
 ```
 
-###### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
+#### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
 
 From 3.10.0 AdminServer uses the following already existing properties:
 
