@@ -252,7 +252,7 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
                 @Override
                 protected void setupRequestProcessors() {
                     RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-                    commitProcessor = new MockCommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
+                    commitProcessor = new MockCommitProcessor(finalProcessor, Long.toString(getServerId()), getZooKeeperServerListener());
                     commitProcessor.start();
 
                     firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
@@ -279,9 +279,9 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
 
     private static class MockCommitProcessor extends CommitProcessor {
         public MockCommitProcessor(final RequestProcessor nextProcessor, final String id,
-                                   final boolean matchSyncs, final ZooKeeperServerListener listener) {
+                                   final ZooKeeperServerListener listener) {
 
-            super(nextProcessor, id, matchSyncs, listener);
+            super(nextProcessor, id, listener);
         }
 
         @Override

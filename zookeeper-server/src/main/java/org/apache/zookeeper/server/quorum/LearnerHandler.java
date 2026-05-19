@@ -40,7 +40,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
-import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestRecord;
@@ -105,7 +104,7 @@ public class LearnerHandler extends ZooKeeperThread {
         return sock == null ? "<null>" : sock.getRemoteSocketAddress().toString();
     }
 
-    protected int version = 0x1;
+    protected int version = ProtocolVersion.ANCIENT;
 
     int getVersion() {
         return version;
@@ -525,7 +524,7 @@ public class LearnerHandler extends ZooKeeperThread {
             long newEpoch = learnerMaster.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
             long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
 
-            if (this.getVersion() < 0x10000) {
+            if (this.getVersion() < ProtocolVersion.V3_4_0) {
                 // we are going to have to extrapolate the epoch information
                 long epoch = ZxidUtils.getEpochFromZxid(zxid);
                 ss = new StateSummary(epoch, zxid);
@@ -533,7 +532,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 learnerMaster.waitForEpochAck(this.getSid(), ss);
             } else {
                 byte[] ver = new byte[4];
-                ByteBuffer.wrap(ver).putInt(0x10000);
+                ByteBuffer.wrap(ver).putInt(ProtocolVersion.CURRENT);
                 QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
                 messageTracker.trackSent(Leader.LEADERINFO);
@@ -597,7 +596,7 @@ public class LearnerHandler extends ZooKeeperThread {
             // the version of this quorumVerifier will be set by leader.lead() in case
             // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
             // we got here, so the version was set
-            if (getVersion() < 0x10000) {
+            if (getVersion() < ProtocolVersion.V3_4_0) {
                 QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER, newLeaderZxid, null, null);
                 oa.writeRecord(newLeaderQP, "packet");
             } else {
@@ -687,6 +686,13 @@ public class LearnerHandler extends ZooKeeperThread {
                     DataInputStream dis = new DataInputStream(bis);
                     while (dis.available() > 0) {
                         long sess = dis.readLong();
+                        if (sess == Leader.PING_SESSION_END) {
+                            int n = dis.available();
+                            byte[] payload = new byte[n];
+                            dis.read(payload);
+                            learnerMaster.processPing(this.sid, qp.getZxid(), payload);
+                            break;
+                        }
                         int to = dis.readInt();
                         learnerMaster.touch(sess, to);
                     }
@@ -701,12 +707,7 @@ public class LearnerHandler extends ZooKeeperThread {
                     cxid = bb.getInt();
                     type = bb.getInt();
                     bb = bb.slice();
-                    Request si;
-                    if (type == OpCode.sync) {
-                        si = new LearnerSyncRequest(this, sessionId, cxid, type, RequestRecord.fromBytes(bb), qp.getAuthinfo());
-                    } else {
-                        si = new Request(null, sessionId, cxid, type, RequestRecord.fromBytes(bb), qp.getAuthinfo());
-                    }
+                    Request si = new Request(null, sessionId, cxid, type, RequestRecord.fromBytes(bb), qp.getAuthinfo());
                     si.setOwner(this);
                     learnerMaster.submitLearnerRequest(si);
                     requestsReceived.incrementAndGet();

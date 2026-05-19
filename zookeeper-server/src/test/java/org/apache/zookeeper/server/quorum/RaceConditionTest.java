@@ -194,7 +194,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
                      */
                     RequestProcessor finalProcessor = new FinalRequestProcessor(this);
                     RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
-                    commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
+                    commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), getZooKeeperServerListener());
                     commitProcessor.start();
                     ProposalRequestProcessor proposalProcessor = new MockProposalRequestProcessor(this, commitProcessor);
                     proposalProcessor.initialize();
