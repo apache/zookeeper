@@ -2362,6 +2362,43 @@ options are used to configure the [AdminServer](#sc_adminserver).
    The enabled protocols to be used in TLS negotiation for PrometheusMetricsProvider.
    Default value is Jetty default.
 
+#### Timeline Metrics Provider
+
+**New in 3.10.0:** ZooKeeper includes integration with Timeline-based metrics collection systems
+such as Apache Ambari Metrics Collector.
+
+The Timeline Metrics Provider uses a push-based model, actively sending metrics to a collector at
+regular intervals, unlike Prometheus which uses a pull-based model.
+
+* *metricsProvider.className* :
+    Set to "org.apache.zookeeper.metrics.timeline.TimelineMetricsProvider" to
+    enable Timeline metrics exporter.
+
+* *metricsProvider.timeline.sink.class* :
+    The fully qualified class name of the sink implementation that sends metrics
+    to your Timeline Metrics Collector. The class must implement the
+    `org.apache.zookeeper.metrics.timeline.TimelineMetricsSink` interface and
+    be available on the ZooKeeper classpath.
+    Default: "org.apache.hadoop.metrics2.sink.timeline.ZooKeeperTimelineMetricsSink"
+
+* *metricsProvider.timeline.collection.period* :
+    The interval in seconds at which metrics are collected and sent to the collector.
+    Default value is 60 seconds.
+
+* *metricsProvider.timeline.hostname* :
+    The hostname to be reported in the metrics. If not specified, the system hostname
+    will be automatically detected.
+
+* *metricsProvider.timeline.appId* :
+    The application ID to identify this ZooKeeper instance in the metrics system.
+    Default value is "zookeeper".
+
+**Note:** Additional configuration properties with the `metricsProvider.timeline.` prefix
+(such as collector hosts, ports, protocols, SSL settings) are passed directly to the sink
+implementation. These properties are sink-specific and depend on your metrics collection
+system. Refer to your sink implementation documentation (e.g., Ambari Metrics Sink) for
+available configuration options.
+
 <a name="Communication+using+the+Netty+framework"></a>
 
 ### Communication using the Netty framework
