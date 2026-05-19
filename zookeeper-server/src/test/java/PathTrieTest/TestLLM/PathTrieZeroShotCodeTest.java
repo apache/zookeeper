@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Verifica in modo completo l'inserimento, l'eliminazione, l'esistenza,
  * la ricerca del prefisso massimo e la pulizia dell'albero dei percorsi.
  */
-public class PathTrieOneShotCodeTest {
+public class PathTrieZeroShotCodeTest {
 
     private PathTrie pathTrie;
 

@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Zero-shot comprehensive test suite for Apache ZooKeeper's PathTrie class.
  * Tests node addition, deletion, prefix matching, and tree clearing.
  */
-public class PathTrieOneShotTest {
+public class PathTrieZeroShotTest {
 
     private PathTrie pathTrie;
 
