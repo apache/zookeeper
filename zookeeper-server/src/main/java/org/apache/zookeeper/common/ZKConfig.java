@@ -18,12 +18,13 @@
 
 package org.apache.zookeeper.common;
 
+import static org.apache.zookeeper.common.LogRedactor.redactSensitiveValues;
+import static org.apache.zookeeper.common.LogRedactor.redactValue;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -94,11 +95,7 @@ public class ZKConfig {
     public ZKConfig(File configFile) throws QuorumPeerConfig.ConfigException {
         this();
         addConfiguration(configFile);
-        Map<String, String> p = new HashMap<>();
-        for (Entry<String, String> entry : properties.entrySet()) {
-            p.put(entry.getKey(), logRedactor(entry.getKey(), entry.getValue()));
-        }
-        LOG.info("ZK Config {}", p);
+        LOG.info("ZK Config {}", redactSensitiveValues(properties));
     }
 
     /**
@@ -211,7 +208,7 @@ public class ZKConfig {
         }
         String oldValue = properties.put(key, value);
         if (null != oldValue && !oldValue.equals(value)) {
-            LOG.debug("key {}'s value {} is replaced with new value {}", key, logRedactor(key, oldValue), logRedactor(key, value));
+            LOG.debug("key {}'s value {} is replaced with new value {}", key, redactValue(key, oldValue), redactValue(key, value));
         }
     }
 
@@ -333,15 +330,5 @@ public class ZKConfig {
             return Integer.decode(value.trim());
         }
         return defaultValue;
-    }
-
-    private String logRedactor(String key, String value) {
-        if (key == null) {
-            return value;
-        }
-        if (key.toLowerCase(Locale.ROOT).endsWith("password")) {
-            return "***";
-        }
-        return value;
     }
 }
