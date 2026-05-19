@@ -59,6 +59,7 @@ public class FileTxnSnapLog {
     final File snapDir;
     TxnLog txnLog;
     SnapShot snapLog;
+    private volatile boolean closed;
     private final boolean autoCreateDB;
     private final boolean trustEmptySnapshot;
     public static final int VERSION = 2;
@@ -173,7 +174,15 @@ public class FileTxnSnapLog {
             System.getProperty(ZOOKEEPER_DB_AUTOCREATE, ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
     }
 
+    private void checkNotClosed() {
+        if (closed) {
+            throw new IllegalStateException(
+                "FileTxnSnapLog has been closed. This may indicate a stale reference to a stopped server instance.");
+        }
+    }
+
     public void setServerStats(ServerStats serverStats) {
+        checkNotClosed();
         txnLog.setServerStats(serverStats);
     }
 
@@ -226,6 +235,7 @@ public class FileTxnSnapLog {
      * @return info of last snapshot
      */
     public SnapshotInfo getLastSnapshotInfo() {
+        checkNotClosed();
         return this.snapLog.getLastSnapshotInfo();
     }
 
@@ -250,6 +260,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions, PlayBackListener listener) throws IOException {
+        checkNotClosed();
         long snapLoadingStartTime = Time.currentElapsedTime();
         long deserializeResult = snapLog.deserialize(dt, sessions);
         ServerMetrics.getMetrics().STARTUP_SNAP_LOAD_TIME.add(Time.currentElapsedTime() - snapLoadingStartTime);
@@ -327,6 +338,7 @@ public class FileTxnSnapLog {
         DataTree dt,
         Map<Long, Integer> sessions,
         PlayBackListener listener) throws IOException {
+        checkNotClosed();
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid + 1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
@@ -475,6 +487,7 @@ public class FileTxnSnapLog {
         DataTree dataTree,
         ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
         boolean syncSnap) throws IOException {
+        checkNotClosed();
         long lastZxid = dataTree.lastProcessedZxid;
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
@@ -511,9 +524,10 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public boolean truncateLog(long zxid) {
+        boolean reopen = !closed;
         try {
             // close the existing txnLog and snapLog
-            close();
+            closeResources();
 
             // truncate it
             try (FileTxnLog truncLog = new FileTxnLog(dataDir)) {
@@ -523,8 +537,10 @@ public class FileTxnSnapLog {
                 // I'd rather just close/reopen this object itself, however that
                 // would have a big impact outside ZKDatabase as there are other
                 // objects holding a reference to this object.
-                txnLog = new FileTxnLog(dataDir);
-                snapLog = new FileSnap(snapDir);
+                if (reopen) {
+                    txnLog = new FileTxnLog(dataDir);
+                    snapLog = new FileSnap(snapDir);
+                }
 
                 return truncated;
             }
@@ -589,6 +605,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
+        checkNotClosed();
         return txnLog.append(si);
     }
 
@@ -597,6 +614,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void commit() throws IOException {
+        checkNotClosed();
         txnLog.commit();
     }
 
@@ -605,6 +623,7 @@ public class FileTxnSnapLog {
      * @return elapsed sync time of transaction log commit in milliseconds
      */
     public long getTxnLogElapsedSyncTime() {
+        checkNotClosed();
         return txnLog.getTxnLogSyncElapsedTime();
     }
 
@@ -613,6 +632,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void rollLog() throws IOException {
+        checkNotClosed();
         txnLog.rollLog();
     }
 
@@ -621,6 +641,14 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void close() throws IOException {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        closeResources();
+    }
+
+    private void closeResources() throws IOException {
         TxnLog txnLogToClose = txnLog;
         if (txnLogToClose != null) {
             txnLogToClose.close();
@@ -664,10 +692,12 @@ public class FileTxnSnapLog {
     }
 
     public void setTotalLogSize(long size) {
+        checkNotClosed();
         txnLog.setTotalLogSize(size);
     }
 
     public long getTotalLogSize() {
+        checkNotClosed();
         return txnLog.getTotalLogSize();
     }
 }
