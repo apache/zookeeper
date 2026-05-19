@@ -61,11 +61,12 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.ClientNettyX509Util;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.NettyUtils;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.NettyServerCnxn.HandshakeState;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
@@ -112,7 +113,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private InetSocketAddress localAddress;
     private int maxClientCnxns = 60;
     int listenBacklog = -1;
-    private final ClientX509Util x509Util;
+    private final ClientNettyX509Util x509Util;
 
     public static final String NETTY_ADVANCED_FLOW_CONTROL = "zookeeper.netty.advancedFlowControl.enabled";
     private boolean advancedFlowControlEnabled = false;
@@ -121,7 +122,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private static final AtomicReference<ByteBufAllocator> TEST_ALLOCATOR = new AtomicReference<>(null);
 
-    public static final String CLIENT_CERT_RELOAD_KEY = "zookeeper.client.certReload";
+    public static final String CLIENT_CERT_RELOAD_KEY = X509Util.CLIENT_CERT_RELOAD_KEY;
 
     /**
      * A handler that detects whether the client would like to use
@@ -511,7 +512,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     NettyServerCnxnFactory() {
-        x509Util = new ClientX509Util();
+        x509Util = new ClientNettyX509Util();
 
         boolean useClientReload = Boolean.getBoolean(CLIENT_CERT_RELOAD_KEY);
         LOG.info("{}={}", CLIENT_CERT_RELOAD_KEY, useClientReload);

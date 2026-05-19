@@ -162,6 +162,14 @@ public abstract class ServerCnxnFactory {
     public abstract void closeAll(ServerCnxn.DisconnectReason reason);
 
     /**
+     * Returns the number of connections that are currently performing a TLS handshake.
+     * Non-Netty implementations return 0.
+     */
+    public int getOutstandingHandshakeNum() {
+        return 0;
+    }
+
+    /**
      * Attempts to shed approximately the specified percentage of connections.
      *
      * @param percentage [0-100] percentage of connections to shed
@@ -225,6 +233,49 @@ public abstract class ServerCnxnFactory {
         } catch (Exception e) {
             IOException ioe = new IOException("Couldn't instantiate " + serverCnxnFactoryName, e);
             throw ioe;
+        }
+    }
+
+    /**
+     * Creates a ServerCnxnFactory, defaulting to NettyServerCnxnFactory when
+     * {@code secure} is {@code true} and no explicit factory is configured via
+     * the {@value #ZOOKEEPER_SERVER_CNXN_FACTORY} system property. SSL/TLS
+     * requires Netty; if Netty is not present on the classpath a helpful
+     * {@link IOException} is thrown.
+     *
+     * @param secure {@code true} when the factory will be used for secure (SSL/TLS) connections
+     * @return a new ServerCnxnFactory instance
+     * @throws IOException if the factory cannot be instantiated
+     */
+    public static ServerCnxnFactory createFactory(boolean secure) throws IOException {
+        String serverCnxnFactoryName = System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);
+        if (serverCnxnFactoryName == null) {
+            if (secure) {
+                serverCnxnFactoryName = "org.apache.zookeeper.server.NettyServerCnxnFactory";
+            } else {
+                serverCnxnFactoryName = NIOServerCnxnFactory.class.getName();
+            }
+        }
+        try {
+            ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName)
+                                                                           .getDeclaredConstructor()
+                                                                           .newInstance();
+            LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
+            return serverCnxnFactory;
+        } catch (Exception e) {
+            String msg = "Couldn't instantiate " + serverCnxnFactoryName;
+            if (secure) {
+                msg += ". SSL/TLS support requires Netty; please add netty-handler"
+                    + " (and optionally netty-tcnative-boringssl-static) to your project's dependencies.";
+            }
+            throw new IOException(msg, e);
+        } catch (NoClassDefFoundError e) {
+            String msg = "Couldn't instantiate " + serverCnxnFactoryName;
+            if (secure) {
+                msg += ". SSL/TLS support requires Netty; please add netty-handler"
+                    + " (and optionally netty-tcnative-boringssl-static) to your project's dependencies.";
+            }
+            throw new IOException(msg, e);
         }
     }
 
