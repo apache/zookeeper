@@ -662,8 +662,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         ChangeRecord parentRecord = getRecordForPath(parentPath);
 
         zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
-        int parentCVersion = parentRecord.stat.getCversion();
-        if (createMode.isSequential()) {
+        if (createMode.isLongSequential()) {
+            long zxid = request.getHdr().getZxid();
+            path = path + String.format(Locale.ENGLISH, "%019d", zxid);
+        } else if (createMode.isSequential()) {
+            int parentCVersion = parentRecord.stat.getCversion();
             path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
         }
         validatePath(path, request.sessionId);

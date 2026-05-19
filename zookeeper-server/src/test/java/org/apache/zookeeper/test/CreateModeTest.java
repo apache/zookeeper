@@ -37,31 +37,81 @@ public class CreateModeTest extends ZKTestCase {
         assertEquals(cm.toFlag(), 0);
         assertFalse(cm.isEphemeral());
         assertFalse(cm.isSequential());
+        assertFalse(cm.isLongSequential());
         assertFalse(cm.isContainer());
+        assertFalse(cm.isTTL());
 
         cm = CreateMode.EPHEMERAL;
         assertEquals(cm.toFlag(), 1);
         assertTrue(cm.isEphemeral());
         assertFalse(cm.isSequential());
+        assertFalse(cm.isLongSequential());
         assertFalse(cm.isContainer());
+        assertFalse(cm.isTTL());
 
         cm = CreateMode.PERSISTENT_SEQUENTIAL;
         assertEquals(cm.toFlag(), 2);
         assertFalse(cm.isEphemeral());
         assertTrue(cm.isSequential());
+        assertFalse(cm.isLongSequential());
         assertFalse(cm.isContainer());
+        assertFalse(cm.isTTL());
 
         cm = CreateMode.EPHEMERAL_SEQUENTIAL;
         assertEquals(cm.toFlag(), 3);
         assertTrue(cm.isEphemeral());
         assertTrue(cm.isSequential());
+        assertFalse(cm.isLongSequential());
         assertFalse(cm.isContainer());
+        assertFalse(cm.isTTL());
 
         cm = CreateMode.CONTAINER;
         assertEquals(cm.toFlag(), 4);
         assertFalse(cm.isEphemeral());
         assertFalse(cm.isSequential());
+        assertFalse(cm.isLongSequential());
         assertTrue(cm.isContainer());
+        assertFalse(cm.isTTL());
+
+        cm = CreateMode.PERSISTENT_WITH_TTL;
+        assertEquals(cm.toFlag(), 5);
+        assertFalse(cm.isEphemeral());
+        assertFalse(cm.isSequential());
+        assertFalse(cm.isLongSequential());
+        assertFalse(cm.isContainer());
+        assertTrue(cm.isTTL());
+
+        cm = CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
+        assertEquals(cm.toFlag(), 6);
+        assertFalse(cm.isEphemeral());
+        assertTrue(cm.isSequential());
+        assertFalse(cm.isLongSequential());
+        assertFalse(cm.isContainer());
+        assertTrue(cm.isTTL());
+
+        cm = CreateMode.PERSISTENT_SEQUENTIAL_LONG;
+        assertEquals(cm.toFlag(), 7);
+        assertFalse(cm.isEphemeral());
+        assertTrue(cm.isSequential());
+        assertTrue(cm.isLongSequential());
+        assertFalse(cm.isContainer());
+        assertFalse(cm.isTTL());
+
+        cm = CreateMode.EPHEMERAL_SEQUENTIAL_LONG;
+        assertEquals(cm.toFlag(), 8);
+        assertTrue(cm.isEphemeral());
+        assertTrue(cm.isSequential());
+        assertTrue(cm.isLongSequential());
+        assertFalse(cm.isContainer());
+        assertFalse(cm.isTTL());
+
+        cm = CreateMode.PERSISTENT_SEQUENTIAL_LONG_WITH_TTL;
+        assertEquals(cm.toFlag(), 9);
+        assertFalse(cm.isEphemeral());
+        assertTrue(cm.isSequential());
+        assertTrue(cm.isLongSequential());
+        assertFalse(cm.isContainer());
+        assertTrue(cm.isTTL());
     }
 
     @Test
@@ -89,6 +139,8 @@ public class CreateModeTest extends ZKTestCase {
         } catch (KeeperException ke) {
             assertEquals(Code.BADARGUMENTS, ke.code());
         }
+
+        assertEquals(CreateMode.PERSISTENT, CreateMode.fromFlag(-1, CreateMode.PERSISTENT));
     }
 
 }
