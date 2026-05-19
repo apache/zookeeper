@@ -2750,7 +2750,7 @@ With these defaults:
 
 Administrators should ensure that the AdminServer is accessible only to authorized users.
 
-#### Option 1: Restrict Access with Firewall Rules (Minimum Recommendation)
+##### Option 1: Restrict Access with Firewall Rules (Minimum Recommendation)
 
 Limit access to the AdminServer port to trusted hosts or management networks only.
 
@@ -2766,7 +2766,7 @@ Examples:
 
 This is the minimum recommended protection when HTTPS and client authentication are not enabled.
 
-#### Option 2: Enable HTTPS
+##### Option 2: Enable HTTPS
 
 To encrypt all communication, configure SSL/TLS and force HTTPS:
 
@@ -2777,7 +2777,7 @@ admin.forceHttps=true
 This prevents credentials and administrative data from being transmitted in clear text. ZooKeeper supports configuring 
 the AdminServer with TLS certificates and trust stores.
 
-#### Option 3: Require Client Authentication
+##### Option 3: Require Client Authentication
 
 To restrict access to trusted clients using X.509 certificates:
 
