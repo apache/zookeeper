@@ -21,6 +21,11 @@ package org.apache.zookeeper.metrics.prometheus;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,6 +41,7 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.zookeeper.metrics.Counter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests about Prometheus Metrics Provider. Please note that we are not testing Prometheus but only our integration.
@@ -175,5 +181,40 @@ public class PrometheusHttpsMetricsProviderTest extends PrometheusMetricsTestBas
     private void validateMetricResponse(String response) throws IOException {
         assertThat(response, containsString("# TYPE cc_total counter"));
         assertThat(response, containsString("cc_total 10.0"));
+    }
+
+    @Test
+    void testLogRedactorRedactsPasswords() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(PrometheusMetricsProvider.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+
+        try {
+            provider = new PrometheusMetricsProvider();
+            Properties configuration = new Properties();
+            configuration.setProperty("httpPort", String.valueOf(httpPort));
+            configuration.setProperty("httpsPort", String.valueOf(httpsPort));
+            configuration.setProperty("ssl.keyStore.location", testDataPath + "/ssl/server_keystore.jks");
+            configuration.setProperty("ssl.keyStore.password", "SuperSecret123!");
+            configuration.setProperty("ssl.trustStore.location", testDataPath + "/ssl/server_truststore.jks");
+            configuration.setProperty("ssl.trustStore.password", "AnotherSecret456!");
+            provider.configure(configuration);
+
+            String logOutput = listAppender.list.stream()
+                    .map(ILoggingEvent::getFormattedMessage)
+                    .filter(msg -> msg.contains("configuration"))
+                    .findFirst()
+                    .orElse("");
+
+            assertFalse(logOutput.contains("SuperSecret123!"),
+                    "Logs should not contain keyStore password");
+            assertFalse(logOutput.contains("AnotherSecret456!"),
+                    "Logs should not contain trustStore password");
+            assertTrue(logOutput.contains(testDataPath + "/ssl/server_keystore.jks"),
+                    "Logs should still contain non-sensitive config like keyStore location");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
     }
 }

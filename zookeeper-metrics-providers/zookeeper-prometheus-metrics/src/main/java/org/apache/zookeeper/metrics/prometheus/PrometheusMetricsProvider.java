@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
+import static org.apache.zookeeper.common.LogRedactor.redactSensitiveValues;
 import io.prometheus.metrics.core.metrics.GaugeWithCallback;
 import io.prometheus.metrics.exporter.servlet.javax.PrometheusMetricsServlet;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
@@ -136,7 +137,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
-        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", configuration);
+        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", redactSensitiveValues(configuration));
 
         this.host = configuration.getProperty(HTTP_HOST, "0.0.0.0");
         this.httpPort = Integer.parseInt(configuration.getProperty(HTTP_PORT, "-1"));
