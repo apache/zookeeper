@@ -38,7 +38,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.server.admin.JettyAdminServer;
+import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 import org.junit.jupiter.api.AfterEach;
@@ -168,7 +168,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public MainThread(int myid, String quorumCfgSection, Integer secureClientPort, boolean writeDynamicConfigFile) throws IOException {
-            this(myid, UNSET_STATIC_CLIENTPORT, JettyAdminServer.DEFAULT_PORT, secureClientPort, quorumCfgSection, null, null, writeDynamicConfigFile, null);
+            this(myid, UNSET_STATIC_CLIENTPORT, AdminServer.DEFAULT_PORT, secureClientPort, quorumCfgSection, null, null, writeDynamicConfigFile, null);
         }
 
         public MainThread(int myid, String quorumCfgSection, boolean writeDynamicConfigFile) throws IOException {
@@ -176,19 +176,19 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, boolean writeDynamicConfigFile) throws IOException {
-            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, null, writeDynamicConfigFile);
+            this(myid, clientPort, AdminServer.DEFAULT_PORT, quorumCfgSection, null, null, writeDynamicConfigFile);
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, String peerType, boolean writeDynamicConfigFile) throws IOException {
-            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, peerType, writeDynamicConfigFile);
+            this(myid, clientPort, AdminServer.DEFAULT_PORT, quorumCfgSection, null, peerType, writeDynamicConfigFile);
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, boolean writeDynamicConfigFile, String version) throws IOException {
-            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, null, writeDynamicConfigFile, version);
+            this(myid, clientPort, AdminServer.DEFAULT_PORT, quorumCfgSection, null, null, writeDynamicConfigFile, version);
         }
 
         public MainThread(int myid, int clientPort, String quorumCfgSection, String configs) throws IOException {
-            this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, configs, null, true);
+            this(myid, clientPort, AdminServer.DEFAULT_PORT, quorumCfgSection, configs, null, true);
         }
 
         public MainThread(int myid, int clientPort, int adminServerPort, String quorumCfgSection, String configs) throws IOException {

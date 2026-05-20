@@ -287,6 +287,15 @@
 
   <profiles>
     <profile>
+      <id>jdk17+</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <modules>
+        <module>zookeeper-server-http-admin</module>
+      </modules>
+    </profile>
+    <profile>
       <id>full-build</id>
       <modules>
         <module>zookeeper-contrib</module>

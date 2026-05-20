@@ -72,7 +72,6 @@ import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.RateLimiter;
 import org.apache.zookeeper.server.util.ZxidUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -676,7 +675,7 @@ public class Commands {
 
             // check rate limiting
             if (!rateLimiter.allow()) {
-                response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS_429);
+                response.setStatusCode(CommandResponse.SC_TOO_MANY_REQUESTS);
                 ServerMetrics.getMetrics().RESTORE_RATE_LIMITED_COUNT.add(1);
                 LOG.warn("Restore request was rate limited");
                 return response;
@@ -792,7 +791,7 @@ public class Commands {
 
             // check rate limiting
             if (!rateLimiter.allow()) {
-                response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS_429);
+                response.setStatusCode(CommandResponse.SC_TOO_MANY_REQUESTS);
                 ServerMetrics.getMetrics().SNAPSHOT_RATE_LIMITED_COUNT.add(1);
                 LOG.warn("Snapshot request was rate limited");
                 return response;

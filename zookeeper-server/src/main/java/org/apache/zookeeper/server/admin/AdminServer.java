@@ -29,6 +29,8 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 @InterfaceAudience.Public
 public interface AdminServer {
 
+    int DEFAULT_PORT = 8080;
+
     void start() throws AdminServerException;
     void shutdown() throws AdminServerException;
     void setZooKeeperServer(ZooKeeperServer zkServer);
