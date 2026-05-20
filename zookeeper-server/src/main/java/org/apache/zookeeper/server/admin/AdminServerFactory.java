@@ -55,7 +55,9 @@ public class AdminServerFactory {
             } catch (NoSuchMethodException e) {
                 LOG.warn("Unable to start JettyAdminServer", e);
             } catch (NoClassDefFoundError e) {
-                LOG.warn("Unable to load jetty, not starting JettyAdminServer", e);
+                LOG.warn("The HTTP admin server (JettyAdminServer) requires Java 17 or later. "
+                    + "The admin server will be disabled. To suppress this warning, set "
+                    + "zookeeper.admin.enableServer=false", e);
             }
         }
         return new DummyAdminServer();
