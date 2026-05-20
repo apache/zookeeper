@@ -18,11 +18,17 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.prometheus.client.CollectorRegistry;
 import java.util.Properties;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.junit.Assert;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
 
 public class PrometheusMetricsProviderConfigTest {
@@ -63,4 +69,36 @@ public class PrometheusMetricsProviderConfigTest {
         provider.start();
     }
 
+    @Test
+    public void testLogRedactorRedactsPasswords() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(PrometheusMetricsProvider.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+
+        try {
+            PrometheusMetricsProvider provider = new PrometheusMetricsProvider();
+            Properties configuration = new Properties();
+            configuration.setProperty("httpHost", "0.0.0.0");
+            configuration.setProperty("httpPort", "65536");
+            configuration.setProperty("some.password", "SuperSecret123!");
+            configuration.setProperty("some-other.password", "AnotherSecret456!");
+            provider.configure(configuration);
+
+            String logOutput = listAppender.list.stream()
+                    .map(ILoggingEvent::getFormattedMessage)
+                    .filter(msg -> msg.contains("configuration"))
+                    .findFirst()
+                    .orElse("");
+
+            assertFalse(logOutput.contains("SuperSecret123!"),
+                    "Logs should not contain some password");
+            assertFalse(logOutput.contains("AnotherSecret456!"),
+                    "Logs should not contain other password");
+            assertTrue(logOutput.contains("0.0.0.0"),
+                    "Logs should still contain non-sensitive config like host");
+        } finally {
+            logger.detachAppender(listAppender);
+        }
+    }
 }
