@@ -18,16 +18,39 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.DigestWatcher;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.Quotas;
+import org.apache.zookeeper.StatsTrack;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.Watcher.WatcherType;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.audit.AuditConstants;
 import org.apache.zookeeper.audit.AuditEvent.Result;
@@ -37,20 +60,29 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
-import org.apache.zookeeper.server.watch.*;
-import org.apache.zookeeper.txn.*;
+import org.apache.zookeeper.server.watch.IWatchManager;
+import org.apache.zookeeper.server.watch.WatchManagerFactory;
+import org.apache.zookeeper.server.watch.WatcherMode;
+import org.apache.zookeeper.server.watch.WatcherOrBitSet;
+import org.apache.zookeeper.server.watch.WatchesPathReport;
+import org.apache.zookeeper.server.watch.WatchesReport;
+import org.apache.zookeeper.server.watch.WatchesSummary;
+import org.apache.zookeeper.txn.CheckVersionTxn;
+import org.apache.zookeeper.txn.CloseSessionTxn;
+import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateTTLTxn;
+import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.MultiTxn;
+import org.apache.zookeeper.txn.SetACLTxn;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.Txn;
+import org.apache.zookeeper.txn.TxnDigest;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -207,7 +239,7 @@ public class DataTree {
      */
     public long approximateDataSize() {
         long result = 0;
-        for (Entry<String, DataNode> entry : nodes.entrySet()) {
+        for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
             DataNode value = entry.getValue();
             synchronized (value) {
                 result += getNodeSize(entry.getKey(), value.data);
@@ -485,9 +517,9 @@ public class DataTree {
             updateQuotaStat(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, EventType.NodeCreated, zxid, acl);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated, zxid, acl);
         childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
-                EventType.NodeChildrenChanged, zxid, parentAcl);
+                Event.EventType.NodeChildrenChanged, zxid, parentAcl);
     }
 
     /**
@@ -786,7 +818,7 @@ public class DataTree {
          * Equality is defined as the clientId and the cxid being the same. This
          * allows us to use hash tables to track completion of transactions.
          *
-         * @see Object#equals(Object)
+         * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
         public boolean equals(Object o) {
@@ -801,7 +833,7 @@ public class DataTree {
          * See equals() to find the rationale for how this hashcode is generated.
          *
          * @see ProcessTxnResult#equals(Object)
-         * @see Object#hashCode()
+         * @see java.lang.Object#hashCode()
          */
         @Override
         public int hashCode() {
