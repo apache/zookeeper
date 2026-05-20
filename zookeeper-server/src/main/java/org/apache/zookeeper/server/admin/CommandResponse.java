@@ -36,6 +36,10 @@ public class CommandResponse {
      * The key in the map returned by {@link #toMap()} for the error string.
      */
     public static final String KEY_ERROR = "error";
+    /**
+     * HTTP 429 status code, defined here to avoid a compile-time dependency on Jetty.
+     */
+    public static final int SC_TOO_MANY_REQUESTS = 429;
 
     private final String command;
     private final String error;

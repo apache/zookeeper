@@ -50,6 +50,10 @@ import org.junit.jupiter.api.Test;
 
 public class CommandsTest extends ClientBase {
 
+    private static String buildAuthorizationForDigest() {
+        return "digest" + Commands.AUTH_INFO_SEPARATOR + "root:root_passwd";
+    }
+
     /**
      * Checks that running a given Command returns the expected Map. Asserts
      * that all specified keys are present with values of the specified types
@@ -235,7 +239,7 @@ public class CommandsTest extends ClientBase {
         try (final InputStream inputStream = new ByteArrayInputStream("Invalid snapshot data".getBytes())){
             final Map<String, String> kwargs = new HashMap<>();
             final Map<String, String> expectedHeaders = new HashMap<>();
-            final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+            final String authInfo = buildAuthorizationForDigest();
             testCommand("restore", kwargs, inputStream, authInfo, expectedHeaders, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             clearForRestoreCommand();
@@ -248,7 +252,7 @@ public class CommandsTest extends ClientBase {
         final ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         try {
 
-            final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+            final String authInfo = buildAuthorizationForDigest();
             final CommandResponse commandResponse = Commands.runPostCommand("restore", zks, null, authInfo, null);
             assertNotNull(commandResponse);
             assertEquals(HttpServletResponse.SC_BAD_REQUEST, commandResponse.getStatusCode());
@@ -363,7 +367,7 @@ public class CommandsTest extends ClientBase {
     public void testShedConnections() throws IOException, InterruptedException {
         final Map<String, String> kwargs = new HashMap<>();
         final InputStream inputStream = new ByteArrayInputStream("{\"percentage\": 25}".getBytes());
-        final String authInfo = CommandAuthTest.buildAuthorizationForDigest();
+        final String authInfo = buildAuthorizationForDigest();
         testCommand("shed_connections", kwargs, inputStream, authInfo, new HashMap<>(), HttpServletResponse.SC_OK,
                 new Field("percentage_requested", Integer.class),
                 new Field("connections_shed", Integer.class));
@@ -376,7 +380,7 @@ public class CommandsTest extends ClientBase {
         try {
             final Map<String, String> kwargs = new HashMap<>();
             kwargs.put(REQUEST_QUERY_PARAM_STREAMING, String.valueOf(streaming));
-            final String autInfo = CommandAuthTest.buildAuthorizationForDigest();
+            final String autInfo = buildAuthorizationForDigest();
             final Map<String, String> expectedHeaders = new HashMap<>();
             expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_LAST_ZXID, "0x0");
             expectedHeaders.put(Commands.SnapshotCommand.RESPONSE_HEADER_SNAPSHOT_SIZE, "478");
