@@ -225,4 +225,14 @@ public class ZooKeeperServerTest extends ZKTestCase {
     public void testUpdateQuotaExceededMetrics_nullNamespace() {
         assertDoesNotThrow(() -> ZooKeeperServer.updateQuotaExceededMetrics(null));
     }
+
+    @Test
+    public void testRemoveCnxnBeforeStartData() {
+        // Simulate a connection cleanup triggered before the server has fully started.
+        // During this phase zkDb is still null (before startdata()).
+        // 4-letter commands can hit this path.
+        ZooKeeperServer zks = new ZooKeeperServer();
+        ServerCnxn cnxn = mock(ServerCnxn.class);
+        assertDoesNotThrow(() -> zks.removeCnxn(cnxn));
+    }
 }

@@ -330,7 +330,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final AuthenticationHelper authHelper = new AuthenticationHelper();
 
     void removeCnxn(ServerCnxn cnxn) {
-        zkDb.removeCnxn(cnxn);
+        ZKDatabase db = zkDb;
+        if (db != null) {
+            db.removeCnxn(cnxn);
+        }
     }
 
     /**
