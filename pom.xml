@@ -350,9 +350,6 @@
           <name>m2e.version</name>
         </property>
       </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
       <build>
         <pluginManagement>
           <plugins>
@@ -435,15 +432,6 @@
           </plugins>
         </pluginManagement>
       </build>
-    </profile>
-    <profile>
-      <id>jdk-release-flag</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
     </profile>
     <profile>
       <id>clover</id>
@@ -540,8 +528,7 @@
 
   <properties>
     <!-- maven properties -->
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.outputTimestamp>1691130453</project.build.outputTimestamp>
     <dependency.locations.enabled>false</dependency.locations.enabled>
     <surefire.version>2.22.1</surefire.version>
