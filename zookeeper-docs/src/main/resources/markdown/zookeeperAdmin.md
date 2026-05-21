@@ -125,8 +125,8 @@ is no full support.
 
 #### Required Software
 
-ZooKeeper runs in Java, release 1.8 or greater
-(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported).
+ZooKeeper runs in Java, release 17 or greater
+(JDK 17 LTS, JDK 21 LTS, JDK 25 LTS - other Java versions are not supported).
 It runs as an _ensemble_ of ZooKeeper servers. Three
 ZooKeeper servers is the minimum recommended size for an
 ensemble, and we also recommend that they run on separate
@@ -1897,11 +1897,7 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 ##### TLS Cipher Suites
 
 From 3.5.5 to 3.9 a hard coded default cipher list was used, with the ordering
-dependent on whether it is run Java 8 or a later version.
-
-The list on Java 8 includes TLSv1.2 CBC, GCM and TLSv1.3 ciphers in ordering: *TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256*
-
-The list on Java 9+ includes TLSv1.2 GCM, CBC and TLSv1.3 ciphers in ordering: *TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256*
+dependent on whether it was run Java 8 or a later version.
 
 Since 3.10 there is no hardcoded list, and the JDK defaults are used.
 
