@@ -350,9 +350,6 @@
           <name>m2e.version</name>
         </property>
       </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
       <build>
         <pluginManagement>
           <plugins>
@@ -435,15 +432,6 @@
           </plugins>
         </pluginManagement>
       </build>
-    </profile>
-    <profile>
-      <id>jdk-release-flag</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
     </profile>
     <profile>
       <id>clover</id>
@@ -540,8 +528,7 @@
 
   <properties>
     <!-- maven properties -->
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.outputTimestamp>1691130453</project.build.outputTimestamp>
     <dependency.locations.enabled>false</dependency.locations.enabled>
     <surefire.version>2.22.1</surefire.version>
@@ -556,7 +543,7 @@
     <jmockit.version>1.48</jmockit.version>
     <junit.version>5.6.2</junit.version>
     <junit-platform.version>1.6.2</junit-platform.version>
-    <mockito.version>4.9.0</mockito.version>
+    <mockito.version>5.23.0</mockito.version>
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.5.0</commons-cli.version>
     <netty.version>4.1.130.Final</netty.version>
@@ -568,11 +555,11 @@
     <bouncycastle.version>1.78</bouncycastle.version>
     <commons-collections.version>4.4</commons-collections.version>
     <dropwizard.version>4.1.12.1</dropwizard.version>
-    <spotbugsannotations.version>4.0.2</spotbugsannotations.version>
+    <spotbugsannotations.version>4.9.3</spotbugsannotations.version>
     <checkstyle.version>8.39</checkstyle.version>
     <enforcer.version>3.0.0-M3</enforcer.version>
     <commons-io.version>2.17.0</commons-io.version>
-    <burningwave.mockdns.version>0.25.4</burningwave.mockdns.version>
+    <burningwave.mockdns.version>0.27.2</burningwave.mockdns.version>
     <dnsjava.version>3.5.1</dnsjava.version>
     <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
     <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
@@ -703,12 +690,6 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-inline</artifactId>
-        <version>${mockito.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
@@ -887,10 +868,39 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>4.0.0</version>
+          <version>4.9.3.0</version>
           <configuration>
             <excludeFilterFile>excludeFindBugsFilter.xml</excludeFilterFile>
           </configuration>
+          <dependencies>
+            <!-- Override ASM version to support JDK 25 (class file version 69)
+             TODO: Remove this override when future SpotBugs version bundles ASM 9.9+ -->
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm</artifactId>
+              <version>9.9.1</version>
+            </dependency>
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm-analysis</artifactId>
+              <version>9.9.1</version>
+            </dependency>
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm-commons</artifactId>
+              <version>9.9.1</version>
+            </dependency>
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm-tree</artifactId>
+              <version>9.9.1</version>
+            </dependency>
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm-util</artifactId>
+              <version>9.9.1</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.owasp</groupId>
