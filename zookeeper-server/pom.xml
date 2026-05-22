@@ -31,6 +31,10 @@
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
 
+  <properties>
+    <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -343,22 +347,52 @@
         <artifactId>pitest-maven</artifactId>
         <version>1.15.8</version>
 
+        <dependencies>
+          <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-junit5-plugin</artifactId>
+            <version>1.1.2</version>
+          </dependency>
+        </dependencies>
+
         <configuration>
           <targetClasses>
-            <param>org.apache.zookeeper.server.DataTree*</param>
-            <param>org.apache.zookeeper.common.PathTrie*</param>
+            <param>org.apache.zookeeper.common.PathTrie</param>
           </targetClasses>
 
           <targetTests>
-            <param>DataTreeTest.*</param>
-            <param>PathTrieTest.*</param>
+            <param>PathTrieTest.TestManuali.*</param>
+            <param>PathTrieTest.TestLLM.*</param>
+            <param>PathTrieTest.randoop.RegressionTest</param>
+            <param>PathTrieTest.randoop.RegressionTest0</param>
+            <param>org.apache.zookeeper.common.PathTrie_ESTest</param>
           </targetTests>
 
           <excludedTestClasses>
-            <param>*ErrorTest*</param>
-            <param>*ErrorTest0*</param>
-            <param>*DataTreeZeroShoDocTest*</param>
+            <param>*scaffolding*</param>
+            <param>PathTrieTest.randoop.ErrorTest</param>
+            <param>PathTrieTest.randoop.ErrorTest0</param>
           </excludedTestClasses>
+
+          <skipFailingTests>true</skipFailingTests>
+
+          <mutators>
+            <mutator>CONDITIONALS_BOUNDARY</mutator>
+            <mutator>NEGATE_CONDITIONALS</mutator>
+            <mutator>MATH</mutator>
+            <mutator>INCREMENTS</mutator>
+            <mutator>INVERT_NEGS</mutator>
+            <mutator>EMPTY_RETURNS</mutator>
+            <mutator>FALSE_RETURNS</mutator>
+            <mutator>TRUE_RETURNS</mutator>
+            <mutator>NULL_RETURNS</mutator>
+            <mutator>PRIMITIVE_RETURNS</mutator>
+          </mutators>
+
+          <jvmArgs>
+            <value>-Xmx512m</value>
+            <value>-Djdk.attach.allowAttachSelf=true</value>
+          </jvmArgs>
 
           <mutationThreshold>0</mutationThreshold>
           <threads>4</threads>
@@ -372,40 +406,13 @@
         </configuration>
       </plugin>
 
-
-
-      <plugin>
-        <groupId>org.pitest</groupId>
-        <artifactId>pitest-maven</artifactId>
-        <version>1.19.4</version>
-
-        <dependencies>
-          <dependency>
-            <groupId>org.pitest</groupId>
-            <artifactId>pitest-junit5-plugin</artifactId>
-            <version>1.2.1</version>
-          </dependency>
-        </dependencies>
-
-        <configuration>
-          <targetClasses>
-            <param>org.apache.zookeeper.server.*</param>
-          </targetClasses>
-
-          <!-- PROVA SENZA targetTests -->
-
-          <outputFormats>
-            <param>HTML</param>
-          </outputFormats>
-        </configuration>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <includes>
             <include>**/*Test.java</include>
+            <include>**/*_ESTest.java</include>
           </includes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>

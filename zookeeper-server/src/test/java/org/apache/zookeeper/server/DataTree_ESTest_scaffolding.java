@@ -70,7 +70,8 @@ public class DataTree_ESTest_scaffolding {
   } 
 
   public static void setSystemProperties() {
- 
+
+
     java.lang.System.setProperties((java.util.Properties) defaultProperties.clone()); 
     java.lang.System.setProperty("file.encoding", "UTF-8"); 
     java.lang.System.setProperty("java.awt.headless", "true"); 
@@ -84,6 +85,7 @@ public class DataTree_ESTest_scaffolding {
   }
 
   private static void initializeClasses() {
+
     org.evosuite.runtime.classhandling.ClassStateSupport.initializeClasses(DataTree_ESTest_scaffolding.class.getClassLoader() ,
       "org.apache.zookeeper.KeeperException$RequestTimeoutException",
       "org.apache.zookeeper.server.ServerStats$Provider",
