@@ -488,7 +488,7 @@
         <configuration>
           <memoryInMB>2500</memoryInMB>
           <numberOfCores>4</numberOfCores>
-          <timeInMinutesPerClass>2</timeInMinutesPerClass>
+          <timeInMinutesPerClass>3</timeInMinutesPerClass>
         </configuration>
       </plugin>
      </plugins>

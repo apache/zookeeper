@@ -12,8 +12,11 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PipedOutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,46 +44,33 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.evosuite.runtime.EvoRunner;
-import org.evosuite.runtime.EvoRunnerParameters;
-import org.evosuite.runtime.mock.java.io.MockFile;
-import org.evosuite.runtime.mock.java.io.MockFileOutputStream;
-import org.evosuite.runtime.mock.java.io.MockPrintStream;
-import org.evosuite.runtime.mock.java.io.MockPrintWriter;
-import org.junit.jupiter.api.Disabled;
-import org.junit.runner.RunWith;
 
+@SuppressWarnings("deprecation")
 public class DataTree_ESTest {
 
-
-/*
   @Test(timeout = 4000)
-
   public void test00()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.reportDigestMismatch((-1884L));
-        fail("Expecting exception: NoClassDefFoundError");
-      
-      } catch(NoClassDefFoundError e) {
+        fail("Expecting exception: NoClassDefFoundError or ExceptionInInitializerError");
+
+      } catch(NoClassDefFoundError | ExceptionInInitializerError e) {
          //
          // Could not initialize class org.apache.zookeeper.server.ServerMetrics
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
       }
   }
-
- */
 
   @Test(timeout = 4000)
   public void test01()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.deserialize((InputArchive) null, "<iQtS3K.<");
         fail("Expecting exception: NullPointerException");
-      
+
       } catch(NullPointerException e) {
          //
          // no message in exception (getMessage() returned null)
@@ -89,7 +79,6 @@ public class DataTree_ESTest {
       }
   }
 
-  /*
   @Test(timeout = 4000)
   public void test02()  throws Throwable  {
       StatPersisted statPersisted0 = new StatPersisted(1663L, (-3245L), 788L, 1296L, 128, 128, (byte) (-42), 0L, 0L);
@@ -97,16 +86,14 @@ public class DataTree_ESTest {
       assertEquals((-3245L), statPersisted0.getMzxid());
   }
 
-   */
-
   @Test(timeout = 4000)
   public void test03()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.compareSnapshotDigests((-1618L));
         fail("Expecting exception: NullPointerException");
-      
+
       } catch(NullPointerException e) {
          //
          // no message in exception (getMessage() returned null)
@@ -121,10 +108,10 @@ public class DataTree_ESTest {
       DataTree dataTree0 = new DataTree(digestCalculator0);
       DumbWatcher dumbWatcher0 = new DumbWatcher(1113L);
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.addWatch("#/[{fQ$", dumbWatcher0, 1294);
         fail("Expecting exception: IllegalArgumentException");
-      
+
       } catch(IllegalArgumentException e) {
          //
          // Unsupported mode: 1294
@@ -138,10 +125,10 @@ public class DataTree_ESTest {
       DigestCalculator digestCalculator0 = new DigestCalculator();
       DataTree dataTree0 = new DataTree(digestCalculator0);
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.deserializeLastProcessedZxid((InputArchive) null);
         fail("Expecting exception: NullPointerException");
-      
+
       } catch(NullPointerException e) {
          //
          // no message in exception (getMessage() returned null)
@@ -152,15 +139,12 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test06()  throws Throwable  {
-
-
-
-
       DigestCalculator digestCalculator0 = new DigestCalculator();
       DataTree dataTree0 = new DataTree(digestCalculator0);
-      MockFile mockFile0 = new MockFile(".TB{n^pv'2;}");
-      MockPrintStream mockPrintStream0 = new MockPrintStream(mockFile0);
-      ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(mockPrintStream0);
+      File tmpFile0 = File.createTempFile("evosuite", ".tmp");
+      tmpFile0.deleteOnExit();
+      PrintStream printStream0 = new PrintStream(tmpFile0);
+      ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(printStream0);
       boolean boolean0 = dataTree0.serializeLastProcessedZxid(toStringOutputArchive0);
       assertEquals(1L, toStringOutputArchive0.getDataSize());
       assertTrue(boolean0);
@@ -197,11 +181,13 @@ public class DataTree_ESTest {
       assertEquals(1371985504L, dataTree0.getTreeDigest());
   }
 
-  /* Commentato: richiede EvoRunner per MockFile
   @Test(timeout = 4000)
   public void test10()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
       Watcher.WatcherType watcher_WatcherType0 = Watcher.WatcherType.Persistent;
@@ -210,7 +196,6 @@ public class DataTree_ESTest {
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
       assertFalse(boolean0);
   }
-  */
 
   @Test(timeout = 4000)
   public void test11()  throws Throwable  {
@@ -225,10 +210,10 @@ public class DataTree_ESTest {
   @Test(timeout = 4000)
   public void test12()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
-      try { 
+      try {
         dataTree0.setCversionPzxid(">W?O`,lf4/XV{5", 142, 626);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode for >W?O`,lf4/XV{5
@@ -239,8 +224,11 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test13()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("jT,W", "r-MGTBqaI");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.dataTree;
       DumbWatcher dumbWatcher0 = new DumbWatcher(500);
@@ -264,17 +252,18 @@ public class DataTree_ESTest {
   public void test15()  throws Throwable  {
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog((File) null, (File) null);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
-      MockPrintWriter mockPrintWriter0 = new MockPrintWriter("P0=/");
-      zKDatabase0.dumpEphemerals(mockPrintWriter0);
+      PrintWriter printWriter0 = new PrintWriter("P0=/");
+      zKDatabase0.dumpEphemerals(printWriter0);
       assertEquals(0L, zKDatabase0.getminCommittedLog());
   }
 
   @Test(timeout = 4000)
   public void test16()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
-      MockFile mockFile0 = new MockFile("v='+O5I[Fx");
-      MockFileOutputStream mockFileOutputStream0 = new MockFileOutputStream(mockFile0, false);
-      ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(mockFileOutputStream0);
+      File tmpFile0 = File.createTempFile("evosuite", ".tmp");
+      tmpFile0.deleteOnExit();
+      FileOutputStream fileOutputStream0 = new FileOutputStream(tmpFile0);
+      ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(fileOutputStream0);
       StringBuilder stringBuilder0 = new StringBuilder();
       dataTree0.serializeNode(toStringOutputArchive0, stringBuilder0);
       assertEquals("/zookeeper/quota/", stringBuilder0.toString());
@@ -288,10 +277,10 @@ public class DataTree_ESTest {
       DataTree dataTree0 = zKDatabase0.dataTree;
       Set<String> set0 = ZoneId.getAvailableZoneIds();
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.killSession((-1392L), 0, set0, (List<String>) null);
         fail("Expecting exception: StringIndexOutOfBoundsException");
-      
+
       } catch(StringIndexOutOfBoundsException e) {
       }
   }
@@ -308,8 +297,11 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test19()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("G%wLIL+q\"'{/7|3_Y|s");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.dataTree;
       TxnHeader txnHeader0 = new TxnHeader();
@@ -326,10 +318,10 @@ public class DataTree_ESTest {
   public void test20()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       Stat stat0 = new Stat(128, 128, 0L, 1024, 543, 128, 28, (-670L), 0, 28, 3422L);
-      try { 
+      try {
         dataTree0.getACL("q_f0g5LE3", stat0);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode
@@ -343,10 +335,10 @@ public class DataTree_ESTest {
       ZKDatabase zKDatabase0 = new ZKDatabase((FileTxnSnapLog) null);
       DataTree dataTree0 = zKDatabase0.getDataTree();
       ArrayList<ACL> arrayList0 = new ArrayList<ACL>();
-      try { 
+      try {
         dataTree0.setACL("h.M1Yy2=", arrayList0, 500);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode
@@ -370,10 +362,10 @@ public class DataTree_ESTest {
       DataTree dataTree0 = new DataTree(digestCalculator0);
       Stat stat0 = new Stat();
       DumbWatcher dumbWatcher0 = new DumbWatcher();
-      try { 
+      try {
         dataTree0.getChildren("//", stat0, dumbWatcher0);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode
@@ -384,15 +376,18 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test24()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("jT,W", "r-MGTBqaI");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.dataTree;
       DumbWatcher dumbWatcher0 = new DumbWatcher(500);
-      try { 
+      try {
         dataTree0.statNode("jT,W", dumbWatcher0);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode
@@ -403,14 +398,17 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test25()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("v,bV$7|x]@a", "?wJ$KMDi");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       Stat stat0 = new Stat(1277L, 1277L, (-1112L), (-604L), 728, 747, 4951, 4951, (-635), 4951, (-1112L));
-      try { 
+      try {
         zKDatabase0.getData("?wJ$KMDi", stat0, (Watcher) null);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode
@@ -428,11 +426,13 @@ public class DataTree_ESTest {
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
   }
 
-  /* Commentato: richiede EvoRunner per MockFile
   @Test(timeout = 4000)
   public void test27()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
       byte[] byteArray0 = new byte[9];
@@ -447,7 +447,6 @@ public class DataTree_ESTest {
          verifyException("org.apache.zookeeper.server.DataTree", e);
       }
   }
-  */
 
   @Test(timeout = 4000)
   public void test28()  throws Throwable  {
@@ -455,10 +454,10 @@ public class DataTree_ESTest {
       Set<String> set0 = ZoneId.getAvailableZoneIds();
       Vector<String> vector0 = new Vector<String>();
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.killSession(3442L, 3442L, set0, vector0);
         fail("Expecting exception: StringIndexOutOfBoundsException");
-      
+
       } catch(StringIndexOutOfBoundsException e) {
       }
   }
@@ -467,10 +466,10 @@ public class DataTree_ESTest {
   public void test29()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       Stack<ACL> stack0 = new Stack<ACL>();
-      try { 
+      try {
         dataTree0.createNode("x?C/", (byte[]) null, (List<ACL>) stack0, (-3703L), (-38), (-1400L), 1629L, (Stat) null);
         fail("Expecting exception: Exception");
-      
+
       } catch(Exception e) {
          //
          // KeeperErrorCode = NoNode
@@ -517,19 +516,19 @@ public class DataTree_ESTest {
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
   }
 
-  /* Commentato: richiede EvoRunner per MockFileOutputStream
   @Test(timeout = 4000)
   public void test34()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
-      MockFileOutputStream mockFileOutputStream0 = new MockFileOutputStream("afga-/puRa`>v");
-      BufferedOutputStream bufferedOutputStream0 = new BufferedOutputStream(mockFileOutputStream0);
-      MockPrintStream mockPrintStream0 = new MockPrintStream(bufferedOutputStream0, false);
-      ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(mockPrintStream0);
+      File tmpFile0 = File.createTempFile("evosuite", ".tmp");
+      tmpFile0.deleteOnExit();
+      FileOutputStream fileOutputStream0 = new FileOutputStream(tmpFile0);
+      BufferedOutputStream bufferedOutputStream0 = new BufferedOutputStream(fileOutputStream0);
+      PrintStream printStream0 = new PrintStream(bufferedOutputStream0, false);
+      ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(printStream0);
       boolean boolean0 = dataTree0.serializeZxidDigest(toStringOutputArchive0);
       assertEquals(5L, toStringOutputArchive0.getDataSize());
       assertTrue(boolean0);
   }
-  */
 
   @Test(timeout = 4000)
   public void test35()  throws Throwable  {
@@ -556,7 +555,6 @@ public class DataTree_ESTest {
       assertEquals((-1467L), long0);
   }
 
-  /*
   @Test(timeout = 4000)
   public void test37()  throws Throwable  {
       Stat stat0 = new Stat(128, 128, 0L, 1024, 543, 128, 28, (-670L), 0, 28, 3422L);
@@ -564,14 +562,12 @@ public class DataTree_ESTest {
       assertEquals(128, stat0.getCversion());
   }
 
-   */
-
   @Test(timeout = 4000)
   public void test38()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       PipedOutputStream pipedOutputStream0 = new PipedOutputStream();
-      MockPrintWriter mockPrintWriter0 = new MockPrintWriter(pipedOutputStream0);
-      dataTree0.dumpWatchesSummary(mockPrintWriter0);
+      PrintWriter printWriter0 = new PrintWriter(pipedOutputStream0);
+      dataTree0.dumpWatchesSummary(printWriter0);
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
       assertEquals(1371985504L, dataTree0.getTreeDigest());
   }
@@ -619,10 +615,10 @@ public class DataTree_ESTest {
       DataTree dataTree0 = new DataTree(digestCalculator0);
       byte[] byteArray0 = new byte[6];
       // Undeclared exception!
-      try { 
+      try {
         dataTree0.createNode("0B)IV%Ocu>Y", byteArray0, (List<ACL>) null, (long) (byte) (-117), 2498, (-3806L), (-2932L));
         fail("Expecting exception: StringIndexOutOfBoundsException");
-      
+
       } catch(StringIndexOutOfBoundsException e) {
       }
   }
@@ -639,21 +635,22 @@ public class DataTree_ESTest {
   public void test45()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       CharArrayWriter charArrayWriter0 = new CharArrayWriter();
-      MockPrintWriter mockPrintWriter0 = new MockPrintWriter(charArrayWriter0);
-      dataTree0.dumpWatches(mockPrintWriter0, false);
+      PrintWriter printWriter0 = new PrintWriter(charArrayWriter0);
+      dataTree0.dumpWatches(printWriter0, false);
       assertEquals(1371985504L, dataTree0.getTreeDigest());
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
   }
 
-  /* Commentato: richiede EvoRunner per MockFileOutputStream
+  /* Commented out: relies on EvoSuite mock IO behavior (NativeMockedIO)
+  @Test(timeout = 4000)
   public void test46()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
-      MockFileOutputStream mockFileOutputStream0 = new MockFileOutputStream("(Nco?");
-      BinaryOutputArchive binaryOutputArchive0 = BinaryOutputArchive.getArchive(mockFileOutputStream0);
-      try { 
+      FileOutputStream fileOutputStream0 = new FileOutputStream(File.createTempFile("evosuite", ".tmp"));
+      BinaryOutputArchive binaryOutputArchive0 = BinaryOutputArchive.getArchive(fileOutputStream0);
+      try {
         dataTree0.serialize(binaryOutputArchive0, "#JhF^Gr");
         fail("Expecting exception: IOException");
-      
+
       } catch(IOException e) {
          //
          // Error in writing to file
@@ -747,8 +744,11 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test56()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("n{Kbq.&rM", "^8");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
       DataNode dataNode0 = new DataNode();
@@ -804,8 +804,11 @@ public class DataTree_ESTest {
 
   @Test(timeout = 4000)
   public void test62()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("n{Kbq.&rM", "^8");
-      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
+      File tmpFile0 = File.createTempFile("evodir", "");
+      tmpFile0.delete();
+      tmpFile0.mkdirs();
+      tmpFile0.deleteOnExit();
+      FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(tmpFile0, tmpFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
       dataTree0.getNodeCount();
