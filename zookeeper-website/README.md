@@ -31,7 +31,9 @@ The official website for Apache ZooKeeper, built with modern web technologies to
   - [Project Architecture](#project-architecture)
   - [Getting Started](#getting-started)
   - [Development Workflow](#development-workflow)
+  - [Testing](#testing)
   - [Building for Production](#building-for-production)
+    - [Continuous Integration](#continuous-integration)
   - [Maven Integration](#maven-integration)
   - [Deployment](#deployment)
   - [Publishing a New ZooKeeper Release](#publishing-a-new-zookeeper-release)
@@ -42,8 +44,6 @@ The official website for Apache ZooKeeper, built with modern web technologies to
 ## Content Editing
 
 Most landing pages store content in **Markdown (`.md`)** or **JSON (`.json`)** files located in `app/pages/_landing/[page-name]/`. Docs content lives under `app/pages/_docs/` and is authored in MDX.
-
-Legacy documentation is preserved for those users who have old bookmarked links and notes: the old book lives at `/public/book.html`, and its static assets are in `public/old-book-static-files/`.
 
 **Examples:**
 
@@ -61,7 +61,7 @@ Before you begin, ensure you have the following installed:
 
 - **Node.js version 22** - JavaScript runtime (like the JVM for Java)
   - Download from [nodejs.org](https://nodejs.org/)
-  - Verify installation: `node --version` (should show v20.19+ or v22.12+)
+  - Verify installation: `node --version` (should show v22.12 or newer)
 
 - **NPM** - Node Package Manager (like Maven for Java)
   - Comes bundled with Node.js
@@ -95,12 +95,12 @@ The website uses **progressive enhancement** ([learn more](https://reactrouter.c
   - Smooth animations and interactive features
   - Enhanced user experience
 
-- **Without JavaScript**: Users still get a fully functional website
-  - All links and forms work via traditional HTML
-  - Content is accessible to everyone
-  - Better for search engines and accessibility tools
+- **Without JavaScript**: Core content and navigation remain accessible via server-rendered HTML
+  - Primary page content and most links work without client-side routing
+  - Critical flows such as the "Older docs" menu include no-JS fallbacks
+  - Some features (search, theme toggle, interactive menus) require JavaScript
 
-This approach ensures the website works for all users, regardless of their browser capabilities or connection speed.
+This approach keeps the site usable without JavaScript while still providing a richer experience when it is available.
 
 #### UI Components
 
@@ -133,7 +133,7 @@ This approach ensures the website works for all users, regardless of their brows
 The project follows a clear directory structure with separation of concerns:
 
 ```
-my-react-router-app/
+zookeeper-website/
 ├── app/                               # Application source code
 │   ├── ui/                            # Reusable UI components (no business logic)
 │   │   ├── button.tsx                 # Generic button component
@@ -144,7 +144,6 @@ my-react-router-app/
 │   │   ├── site-navbar.tsx            # Website navigation bar
 │   │   ├── site-footer.tsx            # Website footer
 │   │   ├── theme-toggle.tsx           # Dark/light mode toggle
-│   │   └── markdown-layout.tsx        # Layout for markdown content pages
 │   │
 │   ├── pages/                         # Complete pages (composed of ui + components)
 │   │   ├── _landing/                  # Landing pages + layout
@@ -153,7 +152,7 @@ my-react-router-app/
 │   │   │   │   ├── hero.tsx           # Hero section (not exported)
 │   │   │   │   ├── features.tsx       # Features section (not exported)
 │   │   │   │   └── ...
-│   │   │   ├── team/                  # Landing page content
+│   │   │   ├── news/                  # Landing page content
 │   │   │   └── ...
 │   │   ├── _docs/                     # Documentation (Fumadocs)
 │   │   │   ├── docs/                  # MDX content and structure
@@ -161,9 +160,11 @@ my-react-router-app/
 │   │   │   └── ...
 │   │
 │   ├── routes/                        # Route definitions and metadata
-│   │   ├── home.tsx                   # Home route configuration
-│   │   ├── team.tsx                   # Team route configuration
-│   │   └── ...
+│   │   ├── _landing/                  # Landing page routes
+│   │   │   ├── home.tsx               # Home route configuration
+│   │   │   ├── news.tsx               # News route configuration
+│   │   │   └── ...
+│   │   └── _docs/                     # Docs route configuration
 │   │
 │   ├── lib/                           # Utility functions and integrations
 │   │   ├── utils.ts                   # Helper functions
@@ -182,6 +183,7 @@ my-react-router-app/
 ├── public/                       # Static files (copied as-is to build/)
 │   ├── favicon.ico               # Website icon
 │   ├── images/                   # Image assets
+│   ├── docs-images/              # Docs image assets
 │   └── ...
 │
 ├── node_modules/                 # Dependencies (like Maven's .m2 directory)
@@ -233,7 +235,7 @@ The ZooKeeper website includes pages that are not part of this React Router appl
 import { Link } from "@/components/link";
 
 export const MyComponent = () => (
-  <Link to="/team">Team</Link>
+  <Link to="/news">News</Link>
 );
 ```
 
@@ -242,7 +244,7 @@ export const MyComponent = () => (
 import { Link } from "react-router";
 
 export const MyComponent = () => (
-  <Link to="/team">Team</Link>
+  <Link to="/news">News</Link>
 );
 ```
 
@@ -281,12 +283,12 @@ This starts a local development server with:
 
 #### Common Tasks
 
-**Add a new page:**
+**Add a new landing page:**
 
-1. Create directory in `app/pages/my-new-page/`
-2. Create `index.tsx` in that directory
-3. Create route file in `app/routes/my-new-page.tsx`
-4. Register route in `app/routes.ts`
+1. Create a directory in `app/pages/_landing/my-new-page/`
+2. Create `index.tsx` in that directory and export the page component
+3. Create a route file in `app/routes/_landing/my-new-page.tsx` with `meta()` and a default export
+4. Register the route in `app/routes.ts` inside the `_landing` layout block
 
 **Add a new documentation page:**
 
@@ -305,9 +307,10 @@ This starts a local development server with:
 
 **Update the 404 page:**
 
-- Edit the standalone static page in `public/404.html`.
-- Apache 404 handling lives in `public/.htaccess` (uses `ErrorDocument 404 /404.html`).
-- Keep `public/robots.txt` disallowing `/404.html` so the error page is not indexed.
+There are two separate 404 mechanisms:
+
+- **Static Apache 404** (`public/404.html`): Served by Apache for requests that never reach the SPA (missing static files, direct URL hits). Configure handling in `public/.htaccess` (`ErrorDocument 404 /404.html`). Keep `public/robots.txt` disallowing `/404.html` so the error page is not indexed.
+- **In-app error boundary** (`app/root.tsx`): Handles unknown routes after the React app loads (for example, invalid docs paths). Edit `ErrorBoundary` in `root.tsx` to change that experience.
 
 **Update sitemap generation:**
 
@@ -354,18 +357,18 @@ npm run test:e2e:ui
 
 **Writing new tests:**
 
-Use the `renderWithProviders` utility in `test/utils.tsx` to ensure components have access to routing and theme context:
+Use the `renderWithProviders` utility in `unit-tests/utils.tsx` to ensure components have access to routing and theme context:
 
 ```typescript
-import { renderWithProviders, screen } from './utils'
-import { MyComponent } from '@/components/my-component'
+import { renderWithProviders, screen } from "./utils";
+import { MyComponent } from "@/components/my-component";
 
-describe('MyComponent', () => {
-  it('renders correctly', () => {
-    renderWithProviders(<MyComponent />)
-    expect(screen.getByText('Hello World')).toBeInTheDocument()
-  })
-})
+describe("MyComponent", () => {
+  it("renders correctly", () => {
+    renderWithProviders(<MyComponent />);
+    expect(screen.getByText("Hello World")).toBeInTheDocument();
+  });
+});
 ```
 
 ### Building for Production
@@ -389,6 +392,16 @@ npm run ci-skip-tests
 This runs docs initialization and the production build (without lint/typecheck and without unit/e2e test suites).
 
 Generated files are located under the `build/` directory.
+
+#### Continuous Integration
+
+GitHub Actions runs the website build on every push and pull request via [`.github/workflows/website.yaml`](../.github/workflows/website.yaml). The workflow:
+
+1. Sets up JDK 11 and Node.js 22
+2. Runs `npm ci` and installs Playwright browsers with system dependencies
+3. Executes `mvn -pl zookeeper-website site` (same checks as local `npm run ci`)
+
+Pull requests should pass the **Website / website-site** check before merge.
 
 ### Maven Integration
 
@@ -494,44 +507,52 @@ cd zookeeper-website
 mvn site
 ```
 
-**Skip Website Build:**
-
-If you are running the Maven `site` lifecycle but want to disable the website frontend build:
-
-```bash
-# From ZooKeeper root or zookeeper-website directory
-mvn site -DskipSite
-```
-
 ### Deployment
 
-The website source lives on the **`website`** branch of the [apache/zookeeper](https://github.com/apache/zookeeper) repository. The live production site at [zookeeper.apache.org](https://zookeeper.apache.org) is served from the **`asf-site`** branch. Any commit pushed to `asf-site` is immediately reflected on the live site via Apache's gitpubsub infrastructure.
+The website source lives on the **`master`** branch of the [apache/zookeeper](https://github.com/apache/zookeeper) repository under `zookeeper-website/`. The live production site at [zookeeper.apache.org](https://zookeeper.apache.org) is served from the **`asf-site`** branch. Any commit pushed to `asf-site` is immediately reflected on the live site via Apache's gitpubsub infrastructure.
 
 #### Basic workflow
 
-1. Make changes on the `website` branch.
+1. Make changes on a feature branch based off `master`.
 2. Run the CI pipeline locally to verify everything passes.
-3. Build the production bundle — the output ends up in `build/client/`.
-4. Replace the contents of `asf-site` with the new `build/client/` and push.
+3. Merge to `master` after review.
+4. Build the production bundle — the output ends up in `build/client/`.
+5. Publish to `asf-site`, preserving any existing archived docs under `content/released-docs/`.
 
 ```bash
-# 1. Clone / switch to the website source branch
-git clone -b website https://github.com/apache/zookeeper.git
+# 1. Clone the repository and work from master
+git clone https://github.com/apache/zookeeper.git
 cd zookeeper
+git checkout master
 
-# 2. Edit content, then verify
+# 2. Edit content in zookeeper-website/, then verify
+cd zookeeper-website
 npm run ci
 
-# 3. Commit the source changes
+# 3. Commit the source changes on your feature branch, open a PR, and merge to master
 git add <changed files>
 git commit -m "Update website content"
-git push origin website
+git push origin <your-branch>
 
-# 4. Publish: switch to asf-site and replace content
+# 4. Publish: copy the build output, then switch to asf-site
+cp -R build/client /tmp/zookeeper-site-build
+cd ..
 git checkout asf-site
+
+# Preserve archived docs before replacing content
+if [ -d content/released-docs ]; then
+  cp -R content/released-docs /tmp/released-docs-backup
+fi
+
 rm -rf content
 mkdir -p content
-cp -R build/client/. content/
+cp -R /tmp/zookeeper-site-build/. content/
+
+# Restore archived docs
+if [ -d /tmp/released-docs-backup ]; then
+  cp -R /tmp/released-docs-backup content/released-docs
+fi
+
 git add content
 git commit -m "Publish website <date>"
 git push origin asf-site
@@ -551,13 +572,19 @@ The built HTML of the outgoing release docs must be preserved so users can still
 
 Each archived version should live under `/released-docs/r<version>` in the deployed site content, with entry pages available at `/released-docs/r<version>/index.html` (for example `/released-docs/r3.9.4/index.html`).
 
-After building `master`, copy the outgoing generated docs into the `asf-site` branch:
+After building on `master`, copy the outgoing generated docs into the `asf-site` branch under `content/released-docs/`:
 
 ```bash
-# Example: archiving 3.9.4 before publishing 3.9.5
-mkdir -p released-docs/r3.9.4
-cp -R <path-to-3.9.4-docs-html>/* released-docs/r3.9.4/
+# On the asf-site branch — example: archiving 3.9.4 before publishing 3.9.5
+git checkout asf-site
+mkdir -p content/released-docs/r3.9.4
+cp -R <path-to-3.9.4-docs-html>/* content/released-docs/r3.9.4/
+git add content/released-docs/r3.9.4
+git commit -m "Archive docs for 3.9.4"
+git push origin asf-site
 ```
+
+When publishing a new site build, preserve `content/released-docs/` as shown in the [deployment steps](#deployment) above.
 
 #### Step 2 — Update the released-docs version list
 
