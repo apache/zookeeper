@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-ErrorDocument 404 /404/index.html
+ErrorDocument 404 /404.html
 
 <IfModule mod_headers.c>
   Header always set Cache-Control "no-cache, must-revalidate"

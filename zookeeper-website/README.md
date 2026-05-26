@@ -305,9 +305,9 @@ This starts a local development server with:
 
 **Update the 404 page:**
 
-- Edit the content in `app/routes/_landing/404.tsx`.
-- Apache 404 handling lives in `public/.htaccess` (uses `ErrorDocument 404 /404/index.html`).
-- Keep `public/robots.txt` disallowing `/404/` so the error page is not indexed.
+- Edit the standalone static page in `public/404.html`.
+- Apache 404 handling lives in `public/.htaccess` (uses `ErrorDocument 404 /404.html`).
+- Keep `public/robots.txt` disallowing `/404.html` so the error page is not indexed.
 
 **Update sitemap generation:**
 
@@ -543,23 +543,36 @@ Once `asf-site` is pushed the updates are live within minutes.
 
 ### Publishing a New ZooKeeper Release
 
-When a new ZooKeeper version is released, update the **current version** identifier and archive the previous release's generated documentation.
+When a new ZooKeeper version is released, update the **current version** identifier in `master`, add the outgoing version to the released-docs list, and archive the outgoing generated documentation in the `asf-site` branch.
 
 #### Step 1 — Archive the outgoing documentation
 
-The built HTML of the outgoing release docs must be preserved so users can still access them via the "Older docs" picker in the sidebar and navbar. Each archived version lives in its own folder under `public/released-docs/`, named `r<version>` (e.g. `r3.9.4`).
+The built HTML of the outgoing release docs must be preserved so users can still access it via the "Older docs" picker in the sidebar and navbar. Archived docs are stored only in the published `asf-site` branch to avoid keeping large generated archives in `master`.
 
-Copy the fully-rendered HTML documentation into that folder:
+Each archived version should live under `/released-docs/r<version>` in the deployed site content, for example `/released-docs/r3.9.4`.
+
+After building `master`, copy the outgoing generated docs into the `asf-site` branch:
 
 ```bash
-# Example: archiving 3.9.4 before bumping to 3.9.5
-mkdir -p public/released-docs/r3.9.4
-cp -R <path-to-3.9.4-docs-html>/* public/released-docs/r3.9.4/
+# Example: archiving 3.9.4 before publishing 3.9.5
+mkdir -p released-docs/r3.9.4
+cp -R <path-to-3.9.4-docs-html>/* released-docs/r3.9.4/
 ```
 
-> The "Older docs" picker reads folder names from `public/released-docs/` at build time — no configuration file needs to be updated.
+#### Step 2 — Update the released-docs version list
 
-#### Step 2 — Bump `CURRENT_VERSION`
+Open `app/lib/released-docs-versions.ts` and add the outgoing version to `RAW_RELEASED_DOC_VERSIONS` without the leading `r` prefix:
+
+```typescript
+export const RAW_RELEASED_DOC_VERSIONS: string[] = [
+  // ...
+  "3.9.4"
+];
+```
+
+The website builds "Older docs" links from this list using `/released-docs/r<version>`. Keep this list in sync with the directories published in `asf-site`.
+
+#### Step 3 — Bump `CURRENT_VERSION`
 
 Open `app/lib/current-version.ts` and update the version string:
 
@@ -573,11 +586,11 @@ This single constant drives the version shown across the current docs experience
 - The docs overview page title and description (`3.9.5 Overview`, `Official Apache ZooKeeper 3.9.5 documentation…`)
 - Other components that reference `CURRENT_VERSION`
 
-#### Step 3 — Update the in-app documentation
+#### Step 4 — Update the in-app documentation
 
 The current release's documentation source lives in `app/pages/_docs/docs/_mdx/`. Update or replace the MDX files there to reflect the new release.
 
-#### Step 4 — Build and publish
+#### Step 5 — Build and publish
 
 ```bash
 npm run ci          # verify everything passes

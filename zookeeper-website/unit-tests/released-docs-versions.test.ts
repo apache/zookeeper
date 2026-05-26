@@ -17,67 +17,13 @@
 //
 
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, rmSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
-import { RAW_RELEASED_DOC_VERSIONS } from "virtual:released-docs-versions";
 import {
+  RAW_RELEASED_DOC_VERSIONS,
   RELEASED_DOC_VERSIONS,
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
-import {
-  extractReleasedDocsVersions,
-  getReleasedDocsVersions
-} from "../plugins/released-docs-versions";
 
 const MOCK_RELEASED_DOC_VERSIONS = ["3.9.4", "3.10.0", "3.9.0-beta", "3.8.12"];
-
-function mockDirEntry(name: string, isDirectory: boolean) {
-  return {
-    name,
-    isDirectory: () => isDirectory
-  };
-}
-
-describe("extractReleasedDocsVersions", () => {
-  it("strips the leading 'r' prefix from mocked release directories", () => {
-    const versions = extractReleasedDocsVersions([
-      mockDirEntry("r3.9.4", true),
-      mockDirEntry("r3.10.0-beta", true)
-    ]);
-
-    expect(versions).toEqual(["3.9.4", "3.10.0-beta"]);
-  });
-
-  it("ignores non-release folders and loose files from mocked entries", () => {
-    const versions = extractReleasedDocsVersions([
-      mockDirEntry("r3.9.4", true),
-      mockDirEntry("draft-docs", true),
-      mockDirEntry("r3.8.0", false),
-      mockDirEntry("README.md", false)
-    ]);
-
-    expect(versions).toEqual(["3.9.4"]);
-  });
-});
-
-describe("getReleasedDocsVersions", () => {
-  it("returns an empty array when the released-docs directory is missing", () => {
-    const missingDir = join(tmpdir(), `released-docs-missing-${Date.now()}`);
-
-    expect(getReleasedDocsVersions(missingDir)).toEqual([]);
-  });
-
-  it("returns an empty array for an empty released-docs directory", () => {
-    const emptyDir = mkdtempSync(join(tmpdir(), "released-docs-empty-"));
-
-    try {
-      expect(getReleasedDocsVersions(emptyDir)).toEqual([]);
-    } finally {
-      rmSync(emptyDir, { recursive: true, force: true });
-    }
-  });
-});
 
 describe("sortVersionsDesc with mocked released-docs versions", () => {
   it("places the numerically highest version first", () => {
@@ -101,7 +47,7 @@ describe("sortVersionsDesc with mocked released-docs versions", () => {
   });
 });
 
-describe("virtual:released-docs-versions plugin", () => {
+describe("RAW_RELEASED_DOC_VERSIONS", () => {
   it("exposes an array", () => {
     expect(Array.isArray(RAW_RELEASED_DOC_VERSIONS)).toBe(true);
   });
@@ -122,6 +68,18 @@ describe("virtual:released-docs-versions plugin", () => {
     RAW_RELEASED_DOC_VERSIONS.forEach((v) => {
       expect(v).toMatch(/^\d+\.\d+\.\d+/);
     });
+  });
+
+  it("contains the first and latest archived documentation versions", () => {
+    expect(RAW_RELEASED_DOC_VERSIONS).toContain("3.1.2");
+    expect(RAW_RELEASED_DOC_VERSIONS).toContain("3.9.4");
+  });
+
+  it("contains every archived docs version exactly once", () => {
+    expect(new Set(RAW_RELEASED_DOC_VERSIONS).size).toBe(
+      RAW_RELEASED_DOC_VERSIONS.length
+    );
+    expect(RAW_RELEASED_DOC_VERSIONS.length).toBe(52);
   });
 });
 

@@ -98,27 +98,67 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let message = "Something went wrong";
+  let details =
+    "An unexpected error occurred while loading this page. Please try again or return home.";
   let stack: string | undefined;
+  let eyebrow = "Error";
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+    eyebrow = String(error.status);
+
+    if (error.status === 404) {
+      message = "Page not found";
+      details =
+        "The website was updated recently, so the route you were trying to visit might have changed.";
+    } else {
+      message = error.statusText || message;
+      details =
+        typeof error.data === "string" && error.data.trim().length > 0
+          ? error.data
+          : details;
+    }
   } else if (import.meta.env.DEV && error && error instanceof Error) {
+    eyebrow = "Development error";
     details = error.message;
     stack = error.stack;
   }
 
   return (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>{message}</h1>
-      <p>{details}</p>
+    <main className="grid min-h-screen place-items-center px-4 py-16">
+      <section
+        className="mx-auto flex max-w-2xl flex-col items-center text-center"
+        aria-labelledby="error-title"
+      >
+        <p className="text-muted-foreground text-sm font-semibold tracking-[0.3em] uppercase">
+          {eyebrow}
+        </p>
+        <h1
+          id="error-title"
+          className="mt-4 text-4xl font-semibold tracking-tight text-balance md:text-6xl"
+        >
+          {message}
+        </h1>
+        <p className="text-muted-foreground mt-4 text-lg text-pretty md:text-xl">
+          {details}
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <a
+            className="bg-primary text-primary-foreground focus-visible:ring-primary/50 hover:bg-primary/90 inline-flex h-10 items-center justify-center gap-2 rounded-md px-6 text-sm font-medium whitespace-nowrap shadow-sm transition-all focus-visible:ring-[3px] focus-visible:outline-none"
+            href="/"
+          >
+            Go back home
+          </a>
+          <a
+            className="border-border bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center gap-2 rounded-md border px-6 text-sm font-medium whitespace-nowrap shadow-xs transition-all focus-visible:ring-[3px] focus-visible:outline-none"
+            href="/docs"
+          >
+            Browse docs
+          </a>
+        </div>
+      </section>
       {stack && (
-        <pre className="w-full overflow-x-auto p-4">
+        <pre className="bg-muted text-muted-foreground border-border mx-auto mt-8 max-h-96 w-full max-w-4xl overflow-x-auto rounded-lg border p-4 text-left text-sm">
           <code>{stack}</code>
         </pre>
       )}

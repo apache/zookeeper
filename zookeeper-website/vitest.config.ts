@@ -22,16 +22,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { resolve } from "path";
 import mdx from "fumadocs-mdx/vite";
 import * as MdxConfig from "./source.config";
-import { releasedDocsVersionsPlugin } from "./plugins/released-docs-versions";
 import { CURRENT_VERSION } from "./app/lib/current-version";
 
 export default defineConfig({
-  plugins: [
-    releasedDocsVersionsPlugin(),
-    mdx(MdxConfig),
-    react(),
-    tsconfigPaths()
-  ],
+  plugins: [mdx(MdxConfig), react(), tsconfigPaths()],
   define: {
     __CURRENT_VERSION__: JSON.stringify(CURRENT_VERSION)
   },
