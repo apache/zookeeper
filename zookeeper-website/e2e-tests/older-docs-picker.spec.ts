@@ -222,3 +222,35 @@ test.describe("Older Docs Picker – navbar Documentation menu", () => {
     }
   });
 });
+
+test.describe("Older Docs Picker – no-JS navbar fallback", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("Documentation menu exposes older-docs links without JavaScript", async ({
+    page
+  }) => {
+    await page.goto("/");
+
+    const documentationMenu = page
+      .getByRole("banner")
+      .locator("details")
+      .filter({ hasText: "Documentation" })
+      .first();
+    await documentationMenu.locator("summary").first().click();
+
+    const olderDocs = documentationMenu
+      .locator("details")
+      .filter({ hasText: "Older docs" })
+      .first();
+    await expect(olderDocs.locator("summary")).toBeVisible();
+
+    await olderDocs.locator("summary").click();
+
+    const links = olderDocs.locator('a[href^="/released-docs/r"]');
+    await expect(links.first()).toBeVisible();
+    await expect(links).toHaveCount(52);
+    await expect(
+      olderDocs.locator('a[href="/released-docs/r3.9.4/index.html"]')
+    ).toBeVisible();
+  });
+});

@@ -549,7 +549,7 @@ When a new ZooKeeper version is released, update the **current version** identif
 
 The built HTML of the outgoing release docs must be preserved so users can still access it via the "Older docs" picker in the sidebar and navbar. Archived docs are stored only in the published `asf-site` branch to avoid keeping large generated archives in `master`.
 
-Each archived version should live under `/released-docs/r<version>` in the deployed site content, for example `/released-docs/r3.9.4`.
+Each archived version should live under `/released-docs/r<version>` in the deployed site content, with entry pages available at `/released-docs/r<version>/index.html` (for example `/released-docs/r3.9.4/index.html`).
 
 After building `master`, copy the outgoing generated docs into the `asf-site` branch:
 
@@ -570,7 +570,7 @@ export const RAW_RELEASED_DOC_VERSIONS: string[] = [
 ];
 ```
 
-The website builds "Older docs" links from this list using `/released-docs/r<version>`. Keep this list in sync with the directories published in `asf-site`.
+The website builds "Older docs" links from this list using `/released-docs/r<version>/index.html`. Keep this list in sync with the directories published in `asf-site`.
 
 #### Step 3 — Bump `CURRENT_VERSION`
 
