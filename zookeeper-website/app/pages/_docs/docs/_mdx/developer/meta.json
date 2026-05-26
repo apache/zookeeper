@@ -6,6 +6,6 @@
     "java-example",
     "basic-tutorial",
     "recipes",
-    "external:[API Docs](https://zookeeper.apache.org/doc/current/apidocs/zookeeper-server/index.html)"
+    "external:[API Docs](/apidocs/zookeeper-server/index.html)"
   ]
 }
