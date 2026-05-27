@@ -51,8 +51,10 @@ public class PathTrie {
     /** Logger for this class */
     private static final Logger LOG = LoggerFactory.getLogger(PathTrie.class);
 
-    /** Messaggio di errore standard per path nulli */
+    /** Costanti per evitare la duplicazione di stringhe letterali (java:S1192) */
     private static final String PATH_CANNOT_BE_NULL = "Path cannot be null";
+    private static final String INVALID_PATH_PREFIX = "Invalid path: ";
+    private static final String ROOT_PATH = "/";
 
     /** Root node of PathTrie */
     private final TrieNode rootNode;
@@ -65,10 +67,11 @@ public class PathTrie {
 
     static class TrieNode {
 
-        final String value;
-        final Map<String, TrieNode> children;
-        boolean property;
-        TrieNode parent;
+        // Campi resi strict-private per garantire un corretto incapsulamento (java:S1104)
+        private final String value;
+        private final Map<String, TrieNode> children;
+        private boolean property;
+        private TrieNode parent;
 
         /**
          * Create a trie node with parent as parameter.
@@ -195,7 +198,7 @@ public class PathTrie {
      * Construct a new PathTrie with a root node.
      */
     public PathTrie() {
-        this.rootNode = new TrieNode(null, "/");
+        this.rootNode = new TrieNode(null, ROOT_PATH);
     }
 
     /**
@@ -207,7 +210,7 @@ public class PathTrie {
         Objects.requireNonNull(path, PATH_CANNOT_BE_NULL);
 
         if (path.isEmpty()) {
-            throw new IllegalArgumentException("Invalid path: " + path);
+            throw new IllegalArgumentException(INVALID_PATH_PREFIX + path);
         }
         final String[] pathComponents = split(path);
 
@@ -237,7 +240,7 @@ public class PathTrie {
         Objects.requireNonNull(path, PATH_CANNOT_BE_NULL);
 
         if (path.isEmpty()) {
-            throw new IllegalArgumentException("Invalid path: " + path);
+            throw new IllegalArgumentException(INVALID_PATH_PREFIX + path);
         }
         final String[] pathComponents = split(path);
 
@@ -265,13 +268,13 @@ public class PathTrie {
      * All paths are relative to the root node.
      *
      * @param path the input path
-     * @return true if the largest prefix exists, false otherwise
+     * @return true if the path exists, false otherwise
      */
     public boolean existsNode(final String path) {
         Objects.requireNonNull(path, PATH_CANNOT_BE_NULL);
 
         if (path.isEmpty()) {
-            throw new IllegalArgumentException("Invalid path: " + path);
+            throw new IllegalArgumentException(INVALID_PATH_PREFIX + path);
         }
         final String[] pathComponents = split(path);
 
@@ -320,16 +323,16 @@ public class PathTrie {
             }
 
             if (deepestPropertyNode == null) {
-                return "/";
+                return ROOT_PATH;
             }
 
             final Deque<String> treePath = new ArrayDeque<>();
             TrieNode node = deepestPropertyNode;
             while (node != this.rootNode) {
                 treePath.offerFirst(node.getValue());
-                node = node.parent;
+                node = node.getParent(); // Accesso tramite getter per rispettare l'incapsulamento
             }
-            return "/" + String.join("/", treePath);
+            return ROOT_PATH + String.join(ROOT_PATH, treePath);
         } finally {
             readLock.unlock();
         }
@@ -348,7 +351,7 @@ public class PathTrie {
     }
 
     private static String[] split(final String path) {
-        return Stream.of(path.split("/"))
+        return Stream.of(path.split(ROOT_PATH))
                 .filter(t -> !t.trim().isEmpty())
                 .toArray(String[]::new);
     }

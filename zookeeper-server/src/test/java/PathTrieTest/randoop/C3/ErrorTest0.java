@@ -1,4 +1,4 @@
-package PathTrieTest.randoop;
+package PathTrieTest.randoop.C3;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;

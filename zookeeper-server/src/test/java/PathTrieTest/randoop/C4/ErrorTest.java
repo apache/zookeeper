@@ -1,4 +1,4 @@
-package PathTrieTest.randoop;
+package PathTrieTest.randoop.C4;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

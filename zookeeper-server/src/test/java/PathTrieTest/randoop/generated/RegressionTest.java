@@ -1,4 +1,4 @@
-package PathTrieTest.randoop;
+package PathTrieTest.randoop.generated;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
