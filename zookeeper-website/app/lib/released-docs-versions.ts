@@ -47,7 +47,7 @@ const preReleaseOrder: Record<PreRelease, number> = {
   alpha: 0
 };
 
-export const RAW_RELEASED_DOC_VERSIONS: string[] = [
+export const LEGACY_RELEASED_DOC_VERSIONS = new Set([
   "3.1.2",
   "3.2.2",
   "3.3.2",
@@ -100,6 +100,15 @@ export const RAW_RELEASED_DOC_VERSIONS: string[] = [
   "3.9.2",
   "3.9.3",
   "3.9.4"
+]);
+
+export const REACT_ROUTER_RELEASED_DOC_VERSIONS = new Set<string>();
+
+export const RAW_RELEASED_DOC_VERSIONS: string[] = [
+  ...new Set([
+    ...LEGACY_RELEASED_DOC_VERSIONS,
+    ...REACT_ROUTER_RELEASED_DOC_VERSIONS
+  ])
 ];
 
 export function sortVersionsDesc(versions: string[]): string[] {
@@ -120,6 +129,13 @@ export function sortVersionsDesc(versions: string[]): string[] {
 export const RELEASED_DOC_VERSIONS: string[] = sortVersionsDesc(
   RAW_RELEASED_DOC_VERSIONS
 );
+
+export function getReleasedDocUrl(version: string): string {
+  const basePath = `/released-docs/r${version}`;
+  return LEGACY_RELEASED_DOC_VERSIONS.has(version)
+    ? `${basePath}/index.html`
+    : `${basePath}/docs/`;
+}
 
 export function getReleasedDocVersions(): string[] {
   if (typeof window !== "undefined") {

@@ -22,11 +22,14 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./utils";
 import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import {
+  getReleasedDocUrl,
+  LEGACY_RELEASED_DOC_VERSIONS,
   RELEASED_DOC_VERSIONS,
+  REACT_ROUTER_RELEASED_DOC_VERSIONS,
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
 
-const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.0-beta"];
+const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.3"];
 
 describe("sortVersionsDesc", () => {
   it("sorts stable versions newest first", () => {
@@ -68,6 +71,25 @@ describe("RELEASED_DOC_VERSIONS", () => {
   it("is already sorted newest to oldest", () => {
     const sorted = sortVersionsDesc([...RELEASED_DOC_VERSIONS]);
     expect(RELEASED_DOC_VERSIONS).toEqual(sorted);
+  });
+
+  it("combines legacy and React Router archive versions", () => {
+    expect(RELEASED_DOC_VERSIONS).toEqual(
+      sortVersionsDesc([
+        ...LEGACY_RELEASED_DOC_VERSIONS,
+        ...REACT_ROUTER_RELEASED_DOC_VERSIONS
+      ])
+    );
+  });
+});
+
+describe("getReleasedDocUrl", () => {
+  it("uses /index.html for legacy static archives", () => {
+    expect(getReleasedDocUrl("3.9.4")).toBe("/released-docs/r3.9.4/index.html");
+  });
+
+  it("uses /docs/ for React Router archives", () => {
+    expect(getReleasedDocUrl("3.10.0")).toBe("/released-docs/r3.10.0/docs/");
   });
 });
 
@@ -166,9 +188,8 @@ describe("OlderDocsPicker", () => {
       expect(items.length).toBeGreaterThan(0);
       items.forEach((item) => {
         // With asChild, the <a> IS the option element
-        expect(item.getAttribute("href")).toMatch(
-          /^\/released-docs\/r[\d.].+\/index\.html$/
-        );
+        const version = item.textContent?.trim() ?? "";
+        expect(item.getAttribute("href")).toBe(getReleasedDocUrl(version));
       });
     });
   });

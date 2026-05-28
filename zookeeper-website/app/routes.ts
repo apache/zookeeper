@@ -23,7 +23,13 @@ import {
   route
 } from "@react-router/dev/routes";
 
-export default [
+const isDocsArchiveBuild = Boolean(process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE);
+
+const docsRoutes = layout("./pages/_docs/docs-layout.tsx", [
+  route("docs/*", "routes/_docs/docs.tsx")
+]);
+
+const websiteRoutes = [
   // Landing
   layout("./pages/_landing/landing-layout.tsx", [
     index("routes/_landing/home.tsx"),
@@ -38,10 +44,16 @@ export default [
     route("version-control", "routes/_landing/version-control.tsx")
   ]),
   // Docs
-  layout("./pages/_docs/docs-layout.tsx", [
-    route("docs/*", "routes/_docs/docs.tsx")
-  ]),
+  docsRoutes,
   // API (Rendered at build time)
   route("llms-full.txt", "routes/_api/llms-full.ts"),
   route("api/search", "routes/_api/search.ts")
 ] satisfies RouteConfig;
+
+const docsArchiveRoutes = [
+  docsRoutes,
+  route("api/search", "routes/_api/search.ts"),
+  route("*", "routes/_archive/redirect-to-live-route.tsx")
+] satisfies RouteConfig;
+
+export default isDocsArchiveBuild ? docsArchiveRoutes : websiteRoutes;

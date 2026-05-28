@@ -26,7 +26,10 @@ import {
   CommandItem,
   CommandList
 } from "@/ui/command";
-import { getReleasedDocVersions } from "@/lib/released-docs-versions";
+import {
+  getReleasedDocUrl,
+  getReleasedDocVersions
+} from "@/lib/released-docs-versions";
 
 interface OlderDocsVersionsProps {
   versions?: string[];
@@ -45,7 +48,7 @@ export function OlderDocsVersionList({
         <CommandGroup>
           {versions.map((version) => (
             <CommandItem key={version} value={version} asChild>
-              <a href={`/released-docs/r${version}/index.html`}>{version}</a>
+              <a href={getReleasedDocUrl(version)}>{version}</a>
             </CommandItem>
           ))}
         </CommandGroup>

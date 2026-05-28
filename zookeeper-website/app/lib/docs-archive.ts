@@ -16,28 +16,17 @@
 // limitations under the License.
 //
 
-import type { Config } from "@react-router/dev/config";
-import { glob } from "node:fs/promises";
-import { createGetUrl, getSlugs } from "fumadocs-core/source";
-import { normalizeDocsArchiveBase } from "./app/lib/docs-archive";
+export const DOCS_ARCHIVE_BASE_ENV = "ZOOKEEPER_DOCS_ARCHIVE_BASE";
 
-const docsArchiveBase = normalizeDocsArchiveBase(
-  process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE
-);
-const getUrl = createGetUrl("/docs");
-
-export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
-  ssr: false,
-  basename: docsArchiveBase || "/",
-  async prerender({ getStaticPaths }) {
-    const paths: string[] = [...getStaticPaths()];
-    for await (const entry of glob("**/*.mdx", {
-      cwd: "app/pages/_docs/docs/_mdx"
-    })) {
-      paths.push(getUrl(getSlugs(entry)));
-    }
-    return paths;
+export function normalizeDocsArchiveBase(value?: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return "";
   }
-} satisfies Config;
+
+  const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  const withoutDuplicateSlashes = withLeadingSlash.replace(/\/+/g, "/");
+  return withoutDuplicateSlashes.endsWith("/")
+    ? withoutDuplicateSlashes
+    : `${withoutDuplicateSlashes}/`;
+}

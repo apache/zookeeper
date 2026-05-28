@@ -38,7 +38,10 @@ import { createPortal } from "react-dom";
 import { Link } from "@/components/link";
 import { asfLinks, documentationLinks, projectLinks } from "./links";
 import { OlderDocsVersionList } from "@/components/docs/older-docs-picker";
-import { getReleasedDocVersions } from "@/lib/released-docs-versions";
+import {
+  getReleasedDocUrl,
+  getReleasedDocVersions
+} from "@/lib/released-docs-versions";
 import { ThemeToggle } from "./theme-toggle";
 
 const navLinkClass =
@@ -544,7 +547,7 @@ function NoJSOlderDocsSubMenu() {
         {versions.map((version) => (
           <a
             key={version}
-            href={`/released-docs/r${version}/index.html`}
+            href={getReleasedDocUrl(version)}
             className="hover:bg-accent hover:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
           >
             {version}
@@ -694,7 +697,7 @@ function NoJSMobileOlderDocsSection() {
         {versions.map((version) => (
           <a
             key={version}
-            href={`/released-docs/r${version}/index.html`}
+            href={getReleasedDocUrl(version)}
             className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center py-1 text-xs"
           >
             {version}

@@ -54,7 +54,7 @@ export function baseOptions(): BaseLayoutProps {
       title: (
         <div className="flex items-center gap-2">
           <img
-            src="/favicon.ico"
+            src={`${import.meta.env.BASE_URL}favicon.ico`}
             alt="ZooKeeper favicon"
             width={16}
             height={16}

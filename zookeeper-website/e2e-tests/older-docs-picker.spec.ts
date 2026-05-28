@@ -18,8 +18,16 @@
 
 import { test, expect } from "@playwright/test";
 
-const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.0-beta"];
+const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.3"];
 const RELEASED_DOC_VERSIONS_OVERRIDE_KEY = "__released_doc_versions_override__";
+
+function expectedReleasedDocUrl(version: string): string {
+  if (version === "3.9.4" || version === "3.9.3") {
+    return `/released-docs/r${version}/index.html`;
+  }
+
+  return `/released-docs/r${version}/docs/`;
+}
 
 test.describe("Older Docs Picker – sidebar", () => {
   test.beforeEach(async ({ page }) => {
@@ -75,7 +83,7 @@ test.describe("Older Docs Picker – sidebar", () => {
     );
   });
 
-  test("each version item is a link to /released-docs/r{version}/index.html", async ({
+  test("each version item links to the correct archive path", async ({
     page
   }) => {
     await page.getByRole("button", { name: /older docs/i }).click();
@@ -84,9 +92,7 @@ test.describe("Older Docs Picker – sidebar", () => {
     await expect(options).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
     for (let i = 0; i < MOCK_RELEASED_DOC_VERSIONS.length; i++) {
       const href = await options.nth(i).getAttribute("href");
-      expect(href).toBe(
-        `/released-docs/r${MOCK_RELEASED_DOC_VERSIONS[i]}/index.html`
-      );
+      expect(href).toBe(expectedReleasedDocUrl(MOCK_RELEASED_DOC_VERSIONS[i]));
     }
   });
 
@@ -199,7 +205,9 @@ test.describe("Older Docs Picker – navbar Documentation menu", () => {
     await expect(versionLinks).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
   });
 
-  test("navbar older-docs links point to /released-docs/", async ({ page }) => {
+  test("navbar older-docs links point to the correct archive paths", async ({
+    page
+  }) => {
     await page
       .getByRole("banner")
       .getByRole("button", { name: /documentation/i })
@@ -216,9 +224,7 @@ test.describe("Older Docs Picker – navbar Documentation menu", () => {
     await expect(links).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
     for (let i = 0; i < MOCK_RELEASED_DOC_VERSIONS.length; i++) {
       const href = await links.nth(i).getAttribute("href");
-      expect(href).toBe(
-        `/released-docs/r${MOCK_RELEASED_DOC_VERSIONS[i]}/index.html`
-      );
+      expect(href).toBe(expectedReleasedDocUrl(MOCK_RELEASED_DOC_VERSIONS[i]));
     }
   });
 });

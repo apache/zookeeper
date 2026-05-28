@@ -16,28 +16,22 @@
 // limitations under the License.
 //
 
-import type { Config } from "@react-router/dev/config";
-import { glob } from "node:fs/promises";
-import { createGetUrl, getSlugs } from "fumadocs-core/source";
-import { normalizeDocsArchiveBase } from "./app/lib/docs-archive";
+import { describe, expect, it } from "vitest";
+import { normalizeDocsArchiveBase } from "@/lib/docs-archive";
 
-const docsArchiveBase = normalizeDocsArchiveBase(
-  process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE
-);
-const getUrl = createGetUrl("/docs");
+describe("docs archive path helpers", () => {
+  const archiveBase = "/released-docs/r3.9.6/";
 
-export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
-  ssr: false,
-  basename: docsArchiveBase || "/",
-  async prerender({ getStaticPaths }) {
-    const paths: string[] = [...getStaticPaths()];
-    for await (const entry of glob("**/*.mdx", {
-      cwd: "app/pages/_docs/docs/_mdx"
-    })) {
-      paths.push(getUrl(getSlugs(entry)));
-    }
-    return paths;
-  }
-} satisfies Config;
+  it("normalizes archive base paths", () => {
+    expect(normalizeDocsArchiveBase("released-docs/r3.9.6")).toBe(archiveBase);
+    expect(normalizeDocsArchiveBase("/released-docs/r3.9.6")).toBe(archiveBase);
+    expect(normalizeDocsArchiveBase("/released-docs/r3.9.6/")).toBe(
+      archiveBase
+    );
+  });
+
+  it("returns an empty string when archive mode is disabled", () => {
+    expect(normalizeDocsArchiveBase(undefined)).toBe("");
+    expect(normalizeDocsArchiveBase("")).toBe("");
+  });
+});

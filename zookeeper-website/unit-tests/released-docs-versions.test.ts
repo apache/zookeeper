@@ -18,7 +18,10 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  getReleasedDocUrl,
+  LEGACY_RELEASED_DOC_VERSIONS,
   RAW_RELEASED_DOC_VERSIONS,
+  REACT_ROUTER_RELEASED_DOC_VERSIONS,
   RELEASED_DOC_VERSIONS,
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
@@ -81,6 +84,20 @@ describe("RAW_RELEASED_DOC_VERSIONS", () => {
     );
     expect(RAW_RELEASED_DOC_VERSIONS.length).toBe(52);
   });
+
+  it("combines legacy and React Router archive versions", () => {
+    expect(RAW_RELEASED_DOC_VERSIONS).toEqual([
+      ...LEGACY_RELEASED_DOC_VERSIONS,
+      ...REACT_ROUTER_RELEASED_DOC_VERSIONS
+    ]);
+  });
+
+  it("keeps legacy and React Router archive version sets distinct", () => {
+    const legacyVersions = new Set(LEGACY_RELEASED_DOC_VERSIONS);
+    REACT_ROUTER_RELEASED_DOC_VERSIONS.forEach((version) => {
+      expect(legacyVersions.has(version)).toBe(false);
+    });
+  });
 });
 
 describe("RELEASED_DOC_VERSIONS (sorted output)", () => {
@@ -94,5 +111,15 @@ describe("RELEASED_DOC_VERSIONS (sorted output)", () => {
     expect(RELEASED_DOC_VERSIONS.slice().sort()).toEqual(
       RAW_RELEASED_DOC_VERSIONS.slice().sort()
     );
+  });
+});
+
+describe("getReleasedDocUrl", () => {
+  it("links legacy static archives to index.html", () => {
+    expect(getReleasedDocUrl("3.9.4")).toBe("/released-docs/r3.9.4/index.html");
+  });
+
+  it("links new React Router archives to /docs/", () => {
+    expect(getReleasedDocUrl("3.10.0")).toBe("/released-docs/r3.10.0/docs/");
   });
 });
