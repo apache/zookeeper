@@ -25,9 +25,10 @@ public class HexDumpOutputFormatter implements OutputFormatter {
     private static final int BYTES_PER_ROW = 16;
     private static final int ASCII_PRINTABLE_MIN = 0x20; // space
     private static final int ASCII_PRINTABLE_MAX = 0x7f; // DEL (exclusive)
+    private static final String LINE_SEPARATOR = System.lineSeparator();
     private static final String HEADER_LINE =
-        "         +-------------------------------------------------+\n"
-        + "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n"
+        "         +-------------------------------------------------+" + LINE_SEPARATOR
+        + "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |" + LINE_SEPARATOR
         + "+--------+-------------------------------------------------+----------------+";
     private static final String FOOTER_LINE =
         "+--------+-------------------------------------------------+----------------+";
@@ -38,7 +39,7 @@ public class HexDumpOutputFormatter implements OutputFormatter {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(HEADER_LINE).append('\n');
+        sb.append(HEADER_LINE).append(LINE_SEPARATOR);
         for (int offset = 0; offset < data.length; offset += BYTES_PER_ROW) {
             sb.append(String.format("|%08x|", offset));
             StringBuilder charPart = new StringBuilder();
@@ -53,7 +54,7 @@ public class HexDumpOutputFormatter implements OutputFormatter {
                     charPart.append(' ');
                 }
             }
-            sb.append("  |").append(charPart).append("|\n");
+            sb.append(" |").append(charPart).append("|").append(LINE_SEPARATOR);
         }
         sb.append(FOOTER_LINE);
         return sb.toString();
