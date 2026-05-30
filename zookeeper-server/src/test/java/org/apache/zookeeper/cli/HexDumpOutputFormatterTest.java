@@ -19,7 +19,6 @@
 package org.apache.zookeeper.cli;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +29,8 @@ public class HexDumpOutputFormatterTest {
         byte[] data = ("Hello," + "\n" + "Zoo" + "\u0001" + "Keep!").getBytes(StandardCharsets.UTF_8);
         String lineSeparator = System.lineSeparator();
 
-        String expected = String.join(lineSeparator,
+        String expected = String.join(
+            lineSeparator,
             "         +-------------------------------------------------+",
             "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |",
             "+--------+-------------------------------------------------+----------------+",
