@@ -486,10 +486,12 @@
         <configuration>
           <includes>
             <include>**/*Test.java</include>
+            <include>**/*_ESTest.java</include>
           </includes>
           <excludes>
             <exclude>**/*ErrorTest*.java</exclude>
-            <exclude>**/*_ESTest.java</exclude>
+            <exclude>**/PathTrieC*_ESTest.java</exclude>
+            <exclude>**/DataTreeC*_ESTest.java</exclude>
           </excludes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
