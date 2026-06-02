@@ -16,21 +16,22 @@
 // limitations under the License.
 //
 
-import type { Route } from "./+types/docs";
-import { source } from "@/lib/source";
-import { DocsPage } from "@/pages/_docs/docs";
+import { describe, expect, it } from "vitest";
+import { CURRENT_DOCS_PATH, resolveDocsHref } from "@/lib/docs-paths";
 
-export async function loader({ params }: Route.LoaderArgs) {
-  const slugs = (params["*"] ?? "").split("/").filter((v) => v.length > 0);
-  const page = source.getPage(slugs);
-  if (!page) throw new Response("Not found", { status: 404 });
-  return {
-    path: page.path,
-    url: page.url,
-    tree: source.getPageTree()
-  };
-}
+describe("resolveDocsHref", () => {
+  it("prefixes internal paths with the live docs base", () => {
+    expect(resolveDocsHref("/overview/quick-start")).toBe(
+      `${CURRENT_DOCS_PATH}/overview/quick-start`
+    );
+    expect(resolveDocsHref("/")).toBe(CURRENT_DOCS_PATH);
+  });
 
-export default function Docs(props: Route.ComponentProps) {
-  return <DocsPage {...props} />;
-}
+  it("leaves external and non-root paths unchanged", () => {
+    expect(resolveDocsHref("https://example.com")).toBe("https://example.com");
+    expect(resolveDocsHref("#section")).toBe("#section");
+    expect(resolveDocsHref("overview/quick-start")).toBe(
+      "overview/quick-start"
+    );
+  });
+});

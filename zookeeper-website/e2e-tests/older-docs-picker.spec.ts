@@ -23,10 +23,10 @@ const RELEASED_DOC_VERSIONS_OVERRIDE_KEY = "__released_doc_versions_override__";
 
 function expectedReleasedDocUrl(version: string): string {
   if (version === "3.9.4" || version === "3.9.3") {
-    return `/released-docs/r${version}/index.html`;
+    return `/doc/r${version}/index.html`;
   }
 
-  return `/released-docs/r${version}/docs/`;
+  return `/doc/r${version}/`;
 }
 
 test.describe("Older Docs Picker – sidebar", () => {
@@ -40,7 +40,7 @@ test.describe("Older Docs Picker – sidebar", () => {
         versions: MOCK_RELEASED_DOC_VERSIONS
       }
     );
-    await page.goto("/docs");
+    await page.goto("/doc/r3.9.5/");
     await page.waitForLoadState("networkidle");
   });
 
@@ -200,7 +200,7 @@ test.describe("Older Docs Picker – navbar Documentation menu", () => {
     await expect(page.getByRole("menu")).toHaveCount(2, { timeout: 10000 });
     const subMenu = page.getByRole("menu").last();
 
-    const versionLinks = subMenu.locator('a[href^="/released-docs/r"]');
+    const versionLinks = subMenu.locator('a[href^="/doc/r"]');
     await expect(versionLinks.first()).toBeVisible();
     await expect(versionLinks).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
   });
@@ -220,7 +220,7 @@ test.describe("Older Docs Picker – navbar Documentation menu", () => {
     const subMenu = page.getByRole("menu").last();
     await expect(subMenu).toBeVisible();
 
-    const links = subMenu.locator('a[href^="/released-docs/r"]');
+    const links = subMenu.locator('a[href^="/doc/r"]');
     await expect(links).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
     for (let i = 0; i < MOCK_RELEASED_DOC_VERSIONS.length; i++) {
       const href = await links.nth(i).getAttribute("href");
@@ -252,11 +252,11 @@ test.describe("Older Docs Picker – no-JS navbar fallback", () => {
 
     await olderDocs.locator("summary").click();
 
-    const links = olderDocs.locator('a[href^="/released-docs/r"]');
+    const links = olderDocs.locator('a[href^="/doc/r"]');
     await expect(links.first()).toBeVisible();
     await expect(links).toHaveCount(52);
     await expect(
-      olderDocs.locator('a[href="/released-docs/r3.9.4/index.html"]')
+      olderDocs.locator('a[href="/doc/r3.9.4/index.html"]')
     ).toBeVisible();
   });
 });

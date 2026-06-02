@@ -29,6 +29,7 @@ import type { Route } from "./+types/root";
 import appStyles from "./app.css?url";
 import "katex/dist/katex.css";
 import { ThemeProvider } from "./lib/theme-provider";
+import { CURRENT_DOCS_PATH } from "./lib/docs-paths";
 
 export const links: Route.LinksFunction = () => [
   {
@@ -151,7 +152,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           </a>
           <a
             className="border-border bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center gap-2 rounded-md border px-6 text-sm font-medium whitespace-nowrap shadow-xs transition-all focus-visible:ring-[3px] focus-visible:outline-none"
-            href="/docs"
+            href={CURRENT_DOCS_PATH}
           >
             Browse docs
           </a>

@@ -123,7 +123,7 @@ export function sortVersionsDesc(versions: string[]): string[] {
 }
 
 /**
- * All released documentation versions available under /released-docs/.
+ * All released documentation versions available under /doc/.
  * Maintained manually because archived docs live in the asf-site branch.
  */
 export const RELEASED_DOC_VERSIONS: string[] = sortVersionsDesc(
@@ -131,10 +131,10 @@ export const RELEASED_DOC_VERSIONS: string[] = sortVersionsDesc(
 );
 
 export function getReleasedDocUrl(version: string): string {
-  const basePath = `/released-docs/r${version}`;
+  const basePath = `/doc/r${version}`;
   return LEGACY_RELEASED_DOC_VERSIONS.has(version)
     ? `${basePath}/index.html`
-    : `${basePath}/docs/`;
+    : `${basePath}/`;
 }
 
 export function getReleasedDocVersions(): string[] {

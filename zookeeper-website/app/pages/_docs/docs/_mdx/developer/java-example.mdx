@@ -317,7 +317,7 @@ If the client-side ZooKeeper libraries can re-establish the
 communication channel (SyncConnected event) to ZooKeeper before
 session expiration (Expired event) all of the session's watches will
 automatically be re-established with the server (auto-reset of watches
-is new in ZooKeeper 3.0.0). See [ZooKeeper Watches](/docs/developer/programmers-guide/watches)
+is new in ZooKeeper 3.0.0). See [ZooKeeper Watches](/developer/programmers-guide/watches)
 in the programmer guide for more on this. A bit lower down in this
 function, when DataMonitor gets an event for a znode, it calls`ZooKeeper.exists()` to find out what has changed.
 

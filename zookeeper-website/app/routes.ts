@@ -22,11 +22,18 @@ import {
   layout,
   route
 } from "@react-router/dev/routes";
+import { CURRENT_VERSION } from "./lib/current-version";
 
 const isDocsArchiveBuild = Boolean(process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE);
 
 const docsRoutes = layout("./pages/_docs/docs-layout.tsx", [
-  route("docs/*", "routes/_docs/docs.tsx")
+  route(`doc/r${CURRENT_VERSION}`, "routes/_docs/docs-index.tsx"),
+  route(`doc/r${CURRENT_VERSION}/*`, "routes/_docs/docs.tsx")
+]);
+
+const docsArchiveRoutes = layout("./pages/_docs/docs-layout.tsx", [
+  index("routes/_docs/docs-index.tsx"),
+  route("*", "routes/_docs/docs.tsx")
 ]);
 
 const websiteRoutes = [
@@ -50,10 +57,9 @@ const websiteRoutes = [
   route("api/search", "routes/_api/search.ts")
 ] satisfies RouteConfig;
 
-const docsArchiveRoutes = [
-  docsRoutes,
-  route("api/search", "routes/_api/search.ts"),
-  route("*", "routes/_archive/redirect-to-live-route.tsx")
+const websiteArchiveRoutes = [
+  docsArchiveRoutes,
+  route("api/search", "routes/_api/search.ts")
 ] satisfies RouteConfig;
 
-export default isDocsArchiveBuild ? docsArchiveRoutes : websiteRoutes;
+export default isDocsArchiveBuild ? websiteArchiveRoutes : websiteRoutes;

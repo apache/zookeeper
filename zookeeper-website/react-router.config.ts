@@ -20,11 +20,14 @@ import type { Config } from "@react-router/dev/config";
 import { glob } from "node:fs/promises";
 import { createGetUrl, getSlugs } from "fumadocs-core/source";
 import { normalizeDocsArchiveBase } from "./app/lib/docs-archive";
+import { CURRENT_VERSION } from "./app/lib/current-version";
 
 const docsArchiveBase = normalizeDocsArchiveBase(
   process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE
 );
-const getUrl = createGetUrl("/docs");
+const getUrl = createGetUrl(
+  docsArchiveBase ? "/" : `/doc/r${CURRENT_VERSION}`
+);
 
 export default {
   // Config options...

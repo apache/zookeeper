@@ -11,7 +11,7 @@ cluster however you must be aware of the following:
 ### Ongoing Data Directory Cleanup
 
 The ZooKeeper [Data
-Directory](/docs/admin-ops/administrators-guide/data-file-management#the-data-directory) contains files which are a persistent copy
+Directory](/admin-ops/administrators-guide/data-file-management#the-data-directory) contains files which are a persistent copy
 of the znodes stored by a particular serving ensemble. These
 are the snapshot and transactional log files. As changes are
 made to the znodes these changes are appended to a
@@ -32,7 +32,7 @@ different and therefore the requirements of managing these
 files may differ from install to install (backup for example).
 
 The PurgeTxnLog utility implements a simple retention
-policy that administrators can use. The [API docs](/docs) contains details on
+policy that administrators can use. The [API docs](/ contains details on
 calling conventions (arguments, etc...).
 
 In the following example the last count snapshots and
@@ -50,7 +50,7 @@ $ java -cp zookeeper.jar:lib/slf4j-api-1.7.30.jar:lib/logback-classic-1.2.10.jar
 Automatic purging of the snapshots and corresponding
 transaction logs was introduced in version 3.4.0 and can be
 enabled via the following configuration parameters **autopurge.snapRetainCount** and **autopurge.purgeInterval**. For more on
-this, see [Advanced Configuration](/docs/admin-ops/administrators-guide/configuration-parameters#advanced-configuration).
+this, see [Advanced Configuration](/admin-ops/administrators-guide/configuration-parameters#advanced-configuration).
 
 ### Debug Log Cleanup (logback)
 
@@ -98,9 +98,9 @@ these options.
 
 The ZooKeeper service can be monitored in one of three primary ways:
 
-- the command port through the use of [4 letter words](/docs/admin-ops/administrators-guide/commands#the-four-letter-words)
-- with [JMX](/docs/admin-ops/jmx)
-- using the [`zkServer.sh status` command](/docs/admin-ops/tools#zkserversh)
+- the command port through the use of [4 letter words](/admin-ops/administrators-guide/commands#the-four-letter-words)
+- with [JMX](/admin-ops/jmx)
+- using the [`zkServer.sh status` command](/admin-ops/tools#zkserversh)
 
 ## Logging
 
@@ -136,8 +136,8 @@ For more information about Logback, see
 
 **New in 3.6.0:** The following options are used to configure metrics.
 
-By default ZooKeeper server exposes useful metrics using the [AdminServer](/docs/admin-ops/administrators-guide/commands#the-adminserver)
-and [Four Letter Words](/docs/admin-ops/administrators-guide/commands#the-four-letter-words) interface.
+By default ZooKeeper server exposes useful metrics using the [AdminServer](/admin-ops/administrators-guide/commands#the-adminserver)
+and [Four Letter Words](/admin-ops/administrators-guide/commands#the-four-letter-words) interface.
 
 Since 3.6.0 you can configure a different Metrics Provider, that exports metrics
 to your favourite system.

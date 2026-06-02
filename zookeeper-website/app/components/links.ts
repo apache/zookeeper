@@ -17,6 +17,7 @@
 //
 
 import { CURRENT_VERSION } from "@/lib/current-version";
+import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
 
 interface LinkType {
   label: string;
@@ -63,7 +64,7 @@ export const projectLinks: LinkType[] = [
 export const documentationLinks: (LinkType | NestedLinkType)[] = [
   {
     label: `${CURRENT_VERSION} Documentation`,
-    to: "/docs"
+    to: CURRENT_DOCS_PATH
   },
   {
     label: "Issue Tracking",

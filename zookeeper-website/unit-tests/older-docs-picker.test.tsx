@@ -85,11 +85,11 @@ describe("RELEASED_DOC_VERSIONS", () => {
 
 describe("getReleasedDocUrl", () => {
   it("uses /index.html for legacy static archives", () => {
-    expect(getReleasedDocUrl("3.9.4")).toBe("/released-docs/r3.9.4/index.html");
+    expect(getReleasedDocUrl("3.9.4")).toBe("/doc/r3.9.4/index.html");
   });
 
-  it("uses /docs/ for React Router archives", () => {
-    expect(getReleasedDocUrl("3.10.0")).toBe("/released-docs/r3.10.0/docs/");
+  it("uses /doc/r<version>/ for React Router archives", () => {
+    expect(getReleasedDocUrl("3.10.0")).toBe("/doc/r3.10.0/");
   });
 });
 
@@ -175,7 +175,7 @@ describe("OlderDocsPicker", () => {
     });
   });
 
-  it("each version links to the correct /released-docs/ path", async () => {
+  it("each version links to the correct /doc/ path", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <OlderDocsPicker versions={MOCK_RELEASED_DOC_VERSIONS} />

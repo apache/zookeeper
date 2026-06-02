@@ -62,7 +62,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npx serve build/client -l 5178",
+    command: "npx vite preview --host 127.0.0.1 --port 5178",
     url: "http://localhost:5178",
     reuseExistingServer: false,
     timeout: 60000

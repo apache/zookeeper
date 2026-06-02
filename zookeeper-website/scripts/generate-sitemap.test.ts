@@ -42,8 +42,8 @@ describe("toSiteUrl", () => {
   });
 
   it("maps nested index files to trailing-slash URLs", () => {
-    expect(toSiteUrl("docs/features/metrics/index.html")).toBe(
-      "/docs/features/metrics/"
+    expect(toSiteUrl("doc/r3.9.5/features/metrics/index.html")).toBe(
+      "/doc/r3.9.5/features/metrics/"
     );
   });
 
@@ -99,7 +99,7 @@ describe("shouldIncludeInSitemap", () => {
   it("includes normal prerendered pages", () => {
     expect(
       shouldIncludeInSitemap(
-        "docs/features/metrics/index.html",
+        "doc/r3.9.5/features/metrics/index.html",
         "<html><body><h1>Metrics</h1></body></html>"
       )
     ).toBe(true);

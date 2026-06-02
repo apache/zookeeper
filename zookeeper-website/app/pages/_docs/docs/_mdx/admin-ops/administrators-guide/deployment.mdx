@@ -76,7 +76,7 @@ machines ZooKeeper can handle the failure of two machines.
 
 <Callout type="info">
   As mentioned in the [ZooKeeper Getting Started
-  Guide](/docs/overview/quick-start), a minimum of three servers are required
+  Guide](/overview/quick-start), a minimum of three servers are required
   for a fault tolerant clustered setup, and it is strongly recommended that you
   have an odd number of servers.
 
@@ -130,7 +130,7 @@ server.3=zoo3:2888:3888
 ```
 
     You can find the meanings of these and other configuration settings in the section
-    [Configuration Parameters](/docs/admin-ops/administrators-guide/configuration-parameters). Every machine that is part of the ZooKeeper
+    [Configuration Parameters](/admin-ops/administrators-guide/configuration-parameters). Every machine that is part of the ZooKeeper
     ensemble should know about every other machine in the ensemble. You accomplish this with the
     series of lines of the form **server.id=host:port:port**. (The parameters **host** and **port**
     are straightforward; for each server you need to specify first a Quorum port then a dedicated
@@ -165,7 +165,7 @@ $ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPee
 
     QuorumPeerMain starts a ZooKeeper server; [JMX](http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/)
     management beans are also registered which allows management through a JMX management console.
-    The [ZooKeeper JMX document](/docs/admin-ops/jmx) contains details on managing ZooKeeper with JMX.
+    The [ZooKeeper JMX document](/admin-ops/jmx) contains details on managing ZooKeeper with JMX.
     See the script _bin/zkServer.sh_, which is included in the release, for an example of starting
     server instances.
 
@@ -191,13 +191,13 @@ development machine.
 The steps to setting up a single server instance are the similar
 to the above, except the configuration file is simpler. You can find the
 complete instructions in the [Installing and
-Running ZooKeeper in Single Server Mode](/docs/overview/quick-start#standalone-operation) section of the [ZooKeeper Getting Started
-Guide](/docs/overview/quick-start).
+Running ZooKeeper in Single Server Mode](/overview/quick-start#standalone-operation) section of the [ZooKeeper Getting Started
+Guide](/overview/quick-start).
 
 For information on installing the client side libraries, refer to
-the [Bindings](/docs/developer/programmers-guide/bindings)
+the [Bindings](/developer/programmers-guide/bindings)
 section of the [ZooKeeper
-Programmer's Guide](/docs/developer/programmers-guide).
+Programmer's Guide](/developer/programmers-guide).
 
 ## Designing a ZooKeeper Deployment
 
@@ -276,5 +276,5 @@ degradation:
   Therefore, make certain that the maximum heap size given
   to ZooKeeper is not bigger than the amount of real memory
   available to ZooKeeper. For more on this, see
-  [Things to Avoid](/docs/admin-ops/administrators-guide/best-practices#things-to-avoid)
+  [Things to Avoid](/admin-ops/administrators-guide/best-practices#things-to-avoid)
   in the Best Practices guide.

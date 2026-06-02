@@ -87,10 +87,10 @@ describe("MDX Components", () => {
       const components = getMDXComponents();
       const A = components.a as React.ComponentType<any>;
 
-      renderWithProviders(<A href="/docs/test">Internal Link</A>);
+      renderWithProviders(<A href="/admin-ops/test">Internal Link</A>);
 
       const link = screen.getByRole("link", { name: "Internal Link" });
-      expect(link).toHaveAttribute("href", "/docs/test");
+      expect(link).toHaveAttribute("href", "/admin-ops/test");
       expect(link).not.toHaveAttribute("target", "_blank");
     });
 

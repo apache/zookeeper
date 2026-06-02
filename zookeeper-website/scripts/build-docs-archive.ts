@@ -36,12 +36,20 @@ import {
 const ROOT = join(import.meta.dirname, "..");
 const BUILD_DIR = join(ROOT, "build");
 const BUILD_CLIENT_DIR = join(BUILD_DIR, "client");
-const ARCHIVE_OUTPUT_ROOT = join(BUILD_DIR, "released-docs");
-const REQUIRED_ARCHIVE_PATHS = ["docs/index.html", "api/search", ".htaccess"];
+const ARCHIVE_OUTPUT_ROOT = join(BUILD_DIR, "doc");
+const REQUIRED_ARCHIVE_PATHS = ["index.html", "api/search", ".htaccess"];
+const ROOT_RELATIVE_DOC_SECTIONS = "overview|developer|admin-ops|miscellaneous";
+
 export const ROOT_URL_PATTERNS = [
-  /(?:href|src)=["']\/(?:docs|assets|docs-images|api\/search|apidocs|fonts|images|favicon\.ico)\b/g,
+  new RegExp(
+    `(?:href|src)=["']\\/(?:${ROOT_RELATIVE_DOC_SECTIONS}|assets|docs-images|api\\/search|apidocs|fonts|images|favicon\\.ico)\\b`,
+    "g"
+  ),
   /fetch\(["']\/api\/search["']/g,
-  /url\(["']?\/(?:docs|assets|docs-images|api\/search|apidocs|fonts|images|favicon\.ico)\b/g
+  new RegExp(
+    `url\\(["']?\\/(?:${ROOT_RELATIVE_DOC_SECTIONS}|assets|docs-images|api\\/search|apidocs|fonts|images|favicon\\.ico)\\b`,
+    "g"
+  )
 ];
 // Vite rewrites imported assets, but archive-local public URLs and Fumadocs
 // external links can remain literal root paths in prerendered HTML.
@@ -108,13 +116,9 @@ async function collectFiles(directory: string): Promise<string[]> {
   return files.sort();
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 async function copyArchiveOutput(version: string): Promise<string> {
   const outputDir = join(ARCHIVE_OUTPUT_ROOT, `r${version}`);
-  const nestedBuildDir = join(BUILD_CLIENT_DIR, "released-docs", `r${version}`);
+  const nestedBuildDir = join(BUILD_CLIENT_DIR, "doc", `r${version}`);
   const sourceDir = (await pathExists(nestedBuildDir))
     ? nestedBuildDir
     : BUILD_CLIENT_DIR;
@@ -142,11 +146,8 @@ async function copyArchiveOutput(version: string): Promise<string> {
   return outputDir;
 }
 
-async function writeArchiveHtaccess(outputDir: string, archiveBase: string) {
-  const escapedArchiveBase = escapeRegExp(archiveBase);
-  await writeFile(
-    join(outputDir, ".htaccess"),
-    `# Licensed to the Apache Software Foundation (ASF) under one
+export function createArchiveHtaccessContent(): string {
+  return `# Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
 # regarding copyright ownership.  The ASF licenses this file
@@ -164,15 +165,15 @@ async function writeArchiveHtaccess(outputDir: string, archiveBase: string) {
 # under the License.
 
 RewriteEngine On
-RewriteRule ^$ / [R=302,L]
 
-RewriteCond %{REQUEST_URI} !^${escapedArchiveBase}docs(?:/|$)
-RewriteCond %{REQUEST_URI} !^${escapedArchiveBase}api/search$
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ /$1 [R=302,L]
-`
-  );
+`;
+}
+
+async function writeArchiveHtaccess(outputDir: string) {
+  await writeFile(join(outputDir, ".htaccess"), createArchiveHtaccessContent());
 }
 
 async function rewriteArchiveLocalUrls(outputDir: string, archiveBase: string) {
@@ -212,12 +213,7 @@ export async function verifyArchiveOutput(outputDir: string) {
   }
 
   if (
-    !files.some(
-      (file) =>
-        file.startsWith("docs/") &&
-        file !== "docs/index.html" &&
-        file.endsWith("/index.html")
-    )
+    !files.some((file) => file !== "index.html" && file.endsWith("/index.html"))
   ) {
     throw new Error("Archive build is missing nested docs pages");
   }
@@ -243,7 +239,7 @@ export async function verifyArchiveOutput(outputDir: string) {
 
 export async function main() {
   const version = parseVersion();
-  const archiveBase = normalizeDocsArchiveBase(`/released-docs/r${version}/`);
+  const archiveBase = normalizeDocsArchiveBase(`/doc/r${version}/`);
   const env = {
     ...process.env,
     [DOCS_ARCHIVE_BASE_ENV]: archiveBase
@@ -257,17 +253,17 @@ export async function main() {
   runCommand("npx", ["react-router", "build"], env);
 
   const outputDir = await copyArchiveOutput(version);
-  await writeArchiveHtaccess(outputDir, archiveBase);
+  await writeArchiveHtaccess(outputDir);
   await rewriteArchiveLocalUrls(outputDir, archiveBase);
   await verifyArchiveOutput(outputDir);
 
   console.log("");
   console.log("Publish with:");
   console.log(`  git checkout asf-site`);
-  console.log(`  rm -rf content/released-docs/r${version}`);
-  console.log(`  mkdir -p content/released-docs/r${version}`);
+  console.log(`  rm -rf content/doc/r${version}`);
+  console.log(`  mkdir -p content/doc/r${version}`);
   console.log(
-    `  cp -R zookeeper-website/build/released-docs/r${version}/. content/released-docs/r${version}/`
+    `  cp -R zookeeper-website/build/doc/r${version}/. content/doc/r${version}/`
   );
 }
 

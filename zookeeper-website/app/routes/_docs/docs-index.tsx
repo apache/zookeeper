@@ -16,21 +16,4 @@
 // limitations under the License.
 //
 
-import type { Route } from "./+types/docs";
-import { source } from "@/lib/source";
-import { DocsPage } from "@/pages/_docs/docs";
-
-export async function loader({ params }: Route.LoaderArgs) {
-  const slugs = (params["*"] ?? "").split("/").filter((v) => v.length > 0);
-  const page = source.getPage(slugs);
-  if (!page) throw new Response("Not found", { status: 404 });
-  return {
-    path: page.path,
-    url: page.url,
-    tree: source.getPageTree()
-  };
-}
-
-export default function Docs(props: Route.ComponentProps) {
-  return <DocsPage {...props} />;
-}
+export { default, loader } from "./docs";

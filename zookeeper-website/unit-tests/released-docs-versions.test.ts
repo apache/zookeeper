@@ -116,10 +116,10 @@ describe("RELEASED_DOC_VERSIONS (sorted output)", () => {
 
 describe("getReleasedDocUrl", () => {
   it("links legacy static archives to index.html", () => {
-    expect(getReleasedDocUrl("3.9.4")).toBe("/released-docs/r3.9.4/index.html");
+    expect(getReleasedDocUrl("3.9.4")).toBe("/doc/r3.9.4/index.html");
   });
 
-  it("links new React Router archives to /docs/", () => {
-    expect(getReleasedDocUrl("3.10.0")).toBe("/released-docs/r3.10.0/docs/");
+  it("links new React Router archives to /doc/r<version>/", () => {
+    expect(getReleasedDocUrl("3.10.0")).toBe("/doc/r3.10.0/");
   });
 });

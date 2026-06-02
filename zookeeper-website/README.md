@@ -402,17 +402,17 @@ To snapshot a released documentation version, build a versioned website archive:
 npm run build:docs-archive -- 3.9.6
 ```
 
-This creates `build/released-docs/r3.9.6/`, ready to copy to `asf-site` at `content/released-docs/r3.9.6/`.
+This creates `build/doc/r3.9.6/`, ready to copy to `asf-site` at `content/doc/r3.9.6/`.
 
 Before building the archive, this command runs `npm run ci` without the archive base path. That verifies lint, typecheck, unit tests, the normal production build, and Playwright e2e tests. It then rebuilds with the archive base path and validates the generated archive output.
 
-Archived docs keep the normal website route structure under the versioned base path:
+Archived docs use the same versioned route shape as current docs:
 
-- `/released-docs/r3.9.6/docs/`
-- `/released-docs/r3.9.6/docs/overview/quick-start`
-- `/released-docs/r3.9.6/docs/developer/programmers-guide`
+- `/doc/r3.9.6/`
+- `/doc/r3.9.6/overview/quick-start`
+- `/doc/r3.9.6/developer/programmers-guide`
 
-The archive build uses React Router's `basename` and Vite's `base` to serve the site from `/released-docs/r<version>/`. It uses the archive route set from `app/routes.ts`: docs and search remain available in the archive, while every other client-side route is handled by a catch-all redirect route that sends users to the matching live-site path. The archive also writes a local `.htaccess` file so direct non-doc requests under `/released-docs/r<version>/` are redirected by Apache.
+The archive build uses React Router's `basename` and Vite's `base` to serve docs from `/doc/r<version>/`. It uses the archive route set from `app/routes.ts`: docs and search remain available in the archive, while non-doc archive-local requests such as `/doc/r3.9.6/news` are redirected by the generated `.htaccess` file to the matching live-site path (`/news`).
 
 #### Continuous Integration
 
@@ -538,7 +538,7 @@ The website source lives on the **`master`** branch of the [apache/zookeeper](ht
 2. Run the CI pipeline locally to verify everything passes.
 3. Merge to `master` after review.
 4. Build the production bundle — the output ends up in `build/client/`.
-5. Publish to `asf-site`, preserving archived docs under `content/released-docs/` and generated API docs under `content/apidocs/`.
+5. Publish to `asf-site`, preserving archived docs under `content/doc/` and generated API docs under `content/apidocs/`.
 
 ```bash
 # 1. Clone the repository and work from master
@@ -561,8 +561,8 @@ cd ..
 git checkout asf-site
 
 # Preserve archived docs and API docs before replacing content
-if [ -d content/released-docs ]; then
-  cp -R content/released-docs /tmp/released-docs-backup
+if [ -d content/doc ]; then
+  cp -R content/doc /tmp/doc-backup
 fi
 if [ -d content/apidocs ]; then
   cp -R content/apidocs /tmp/apidocs-backup
@@ -572,9 +572,11 @@ rm -rf content
 mkdir -p content
 cp -R /tmp/zookeeper-site-build/. content/
 
-# Restore archived docs and API docs
-if [ -d /tmp/released-docs-backup ]; then
-  cp -R /tmp/released-docs-backup content/released-docs
+# Restore archived docs first, then restore the freshly built current docs
+if [ -d /tmp/doc-backup ]; then
+  mkdir -p content/doc
+  cp -R /tmp/doc-backup/. content/doc/
+  cp -R /tmp/zookeeper-site-build/doc/. content/doc/
 fi
 if [ -d /tmp/apidocs-backup ]; then
   cp -R /tmp/apidocs-backup content/apidocs
@@ -605,7 +607,7 @@ cd zookeeper-website
 npm run build:docs-archive -- 3.9.6
 ```
 
-This creates `build/released-docs/r3.9.6/`. Docs pages keep the normal `/docs` route prefix under the archive base, so the deployed docs entry page is `/released-docs/r3.9.6/docs/` and docs pages use URLs such as `/released-docs/r3.9.6/docs/developer/programmers-guide`. Non-doc archive entry pages redirect to `/`.
+This creates `build/doc/r3.9.6/`. The deployed docs entry page is `/doc/r3.9.6/` and docs pages use URLs such as `/doc/r3.9.6/developer/programmers-guide`. Non-doc archive-local paths such as `/doc/r3.9.6/news` redirect to `/news`.
 
 The command runs the full normal website CI checks before creating the archive, then performs archive-specific output validation after the archive build.
 
@@ -614,19 +616,19 @@ Copy the generated archive into the `asf-site` branch:
 ```bash
 # On the asf-site branch
 git checkout asf-site
-rm -rf content/released-docs/r3.9.6
-mkdir -p content/released-docs/r3.9.6
-cp -R <path-to-zookeeper-website>/build/released-docs/r3.9.6/. content/released-docs/r3.9.6/
-git add content/released-docs/r3.9.6
+rm -rf content/doc/r3.9.6
+mkdir -p content/doc/r3.9.6
+cp -R <path-to-zookeeper-website>/build/doc/r3.9.6/. content/doc/r3.9.6/
+git add content/doc/r3.9.6
 git commit -m "Archive docs for 3.9.6"
 git push origin asf-site
 ```
 
-When publishing a new site build, preserve `content/released-docs/` as shown in the [deployment steps](#deployment) above.
+When publishing a new site build, preserve `content/doc/` as shown in the [deployment steps](#deployment) above.
 
 #### Step 2 — Update the released-docs version list
 
-Open `app/lib/released-docs-versions.ts` and add the outgoing version to the matching archive list without the leading `r` prefix. Existing pre-migration archives remain in `LEGACY_RELEASED_DOC_VERSIONS` and link to `/released-docs/r<version>/index.html`. Archives produced by the React Router website build go in `REACT_ROUTER_RELEASED_DOC_VERSIONS` and link to `/released-docs/r<version>/docs/`:
+Open `app/lib/released-docs-versions.ts` and add the outgoing version to the matching archive list without the leading `r` prefix. Existing pre-migration archives remain in `LEGACY_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/index.html`. Archives produced by the React Router website build go in `REACT_ROUTER_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/`:
 
 ```typescript
 export const LEGACY_RELEASED_DOC_VERSIONS = new Set([
@@ -662,7 +664,7 @@ The current release's documentation source lives in `app/pages/_docs/docs/_mdx/`
 
 #### Step 5 — Publish API docs and update the docs nav link
 
-Java API documentation is generated by the Maven build and published separately on `asf-site`. Current API docs live under `content/apidocs/` (for example `content/apidocs/zookeeper-server/index.html`). Versioned archive API docs should live under the docs archive, for example `content/released-docs/r3.9.6/apidocs/zookeeper-server/index.html`.
+Java API documentation is generated by the Maven build and published separately on `asf-site`. Current API docs live under `content/apidocs/` (for example `content/apidocs/zookeeper-server/index.html`). Versioned archive API docs should live under the docs archive, for example `content/doc/r3.9.6/apidocs/zookeeper-server/index.html`.
 
 After generating API docs for the new release, copy them to `asf-site`:
 
@@ -681,9 +683,9 @@ To make an archived docs snapshot self-contained, also copy the outgoing version
 
 ```bash
 # On the asf-site branch — example: API docs for the 3.9.6 archive
-mkdir -p content/released-docs/r3.9.6/apidocs
-cp -R <path-to-generated-apidocs>/* content/released-docs/r3.9.6/apidocs/
-git add content/released-docs/r3.9.6/apidocs
+mkdir -p content/doc/r3.9.6/apidocs
+cp -R <path-to-generated-apidocs>/* content/doc/r3.9.6/apidocs/
+git add content/doc/r3.9.6/apidocs
 git commit -m "Archive API docs for 3.9.6"
 git push origin asf-site
 ```
@@ -694,7 +696,7 @@ The **API Docs** entry in the developer docs sidebar is a hardcoded absolute pat
 "external:[API Docs](/apidocs/zookeeper-server/index.html)"
 ```
 
-Unlike most docs links, this URL is not relative and does not derive from `CURRENT_VERSION`. The archive build runs with Vite's `base` set to `/released-docs/r<version>/` and postprocesses literal archive-local URLs, so archived docs point at `content/released-docs/r<version>/apidocs/`. Update the `meta.json` entry manually whenever the published API docs location changes.
+Unlike most docs links, this URL is not relative and does not derive from `CURRENT_VERSION`. The archive build runs with Vite's `base` set to `/doc/r<version>/` and postprocesses literal archive-local URLs, so archived docs point at `content/doc/r<version>/apidocs/`. Update the `meta.json` entry manually whenever the published API docs location changes.
 
 When publishing a new site build, preserve `content/apidocs/` as shown in the [deployment steps](#deployment) above.
 

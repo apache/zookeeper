@@ -21,6 +21,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
+  createArchiveHtaccessContent,
   parseVersion,
   verifyArchiveOutput
 } from "../scripts/build-docs-archive";
@@ -36,15 +37,11 @@ async function writeFixtureFile(relativePath: string, content: string) {
 async function writeValidArchiveFixture() {
   await writeFixtureFile(
     "index.html",
-    '<html><script>window.location.replace("/")</script></html>'
+    '<html><a href="/doc/r3.9.6/developer/programmers-guide/">Guide</a></html>'
   );
   await writeFixtureFile(
-    "docs/index.html",
-    '<html><a href="/released-docs/r3.9.6/docs/developer/programmers-guide/">Guide</a></html>'
-  );
-  await writeFixtureFile(
-    "docs/developer/programmers-guide/index.html",
-    '<html><img src="/released-docs/r3.9.6/docs-images/zkservice.jpg"></html>'
+    "developer/programmers-guide/index.html",
+    '<html><img src="/doc/r3.9.6/docs-images/zkservice.jpg"></html>'
   );
   await writeFixtureFile("api/search", "{}");
   await writeFixtureFile(".htaccess", "RewriteEngine On");
@@ -81,7 +78,7 @@ describe("parseVersion", () => {
 });
 
 describe("verifyArchiveOutput", () => {
-  it("accepts an archive with docs under /docs and redirected landing pages", async () => {
+  it("accepts an archive with docs at the archive root", async () => {
     await writeValidArchiveFixture();
 
     await expect(verifyArchiveOutput(tempDir)).resolves.toBeUndefined();
@@ -89,13 +86,13 @@ describe("verifyArchiveOutput", () => {
 
   it("rejects an archive without the docs index page", async () => {
     await writeFixtureFile(
-      "docs/developer/programmers-guide/index.html",
+      "developer/programmers-guide/index.html",
       "<html>Guide</html>"
     );
     await writeFixtureFile("api/search", "{}");
 
     await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
-      /missing docs\/index\.html/
+      /missing index\.html/
     );
   });
 
@@ -104,7 +101,6 @@ describe("verifyArchiveOutput", () => {
       "index.html",
       '<html><script>window.location.replace("/")</script></html>'
     );
-    await writeFixtureFile("docs/index.html", "<html>Docs</html>");
     await writeFixtureFile("api/search", "{}");
     await writeFixtureFile(".htaccess", "RewriteEngine On");
 
@@ -125,8 +121,8 @@ describe("verifyArchiveOutput", () => {
   it("rejects root-relative docs URLs in html", async () => {
     await writeValidArchiveFixture();
     await writeFixtureFile(
-      "docs/developer/programmers-guide/index.html",
-      '<html><a href="/docs/admin-ops/cli">CLI</a></html>'
+      "developer/programmers-guide/index.html",
+      '<html><a href="/admin-ops/cli">CLI</a></html>'
     );
 
     await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
@@ -149,10 +145,22 @@ describe("verifyArchiveOutput", () => {
   it("allows route paths serialized into prerendered data", async () => {
     await writeValidArchiveFixture();
     await writeFixtureFile(
-      "docs/index.html",
-      '<html><script>window.__reactRouterContext.streamController.enqueue("\\"/docs\\"")</script></html>'
+      "index.html",
+      '<html><script>window.__reactRouterContext.streamController.enqueue("\\"/admin-ops/cli\\"")</script></html>'
     );
 
     await expect(verifyArchiveOutput(tempDir)).resolves.toBeUndefined();
+  });
+});
+
+describe("createArchiveHtaccessContent", () => {
+  it("redirects only missing archive-local paths to matching live-site paths", () => {
+    const htaccess = createArchiveHtaccessContent();
+
+    expect(htaccess).toContain("RewriteEngine On");
+    expect(htaccess).toContain("RewriteCond %{REQUEST_FILENAME} !-f");
+    expect(htaccess).toContain("RewriteCond %{REQUEST_FILENAME} !-d");
+    expect(htaccess).toContain("RewriteRule ^(.*)$ /$1 [R=302,L]");
+    expect(htaccess).not.toContain("/doc/r");
   });
 });

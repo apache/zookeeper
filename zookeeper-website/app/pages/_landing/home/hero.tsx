@@ -18,6 +18,7 @@
 
 import { Button } from "@/ui/button";
 import { Link } from "@/components/link";
+import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
 import { Terminal } from "lucide-react";
 
 export function Hero() {
@@ -59,7 +60,7 @@ export function Hero() {
                 <Link to="/releases">Download</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/docs">Read Documentation</Link>
+                <Link to={CURRENT_DOCS_PATH}>Read Documentation</Link>
               </Button>
             </div>
           </div>

@@ -16,21 +16,27 @@
 // limitations under the License.
 //
 
-import type { Route } from "./+types/docs";
-import { source } from "@/lib/source";
-import { DocsPage } from "@/pages/_docs/docs";
+import { CURRENT_VERSION } from "@/lib/current-version";
 
-export async function loader({ params }: Route.LoaderArgs) {
-  const slugs = (params["*"] ?? "").split("/").filter((v) => v.length > 0);
-  const page = source.getPage(slugs);
-  if (!page) throw new Response("Not found", { status: 404 });
-  return {
-    path: page.path,
-    url: page.url,
-    tree: source.getPageTree()
-  };
+export const CURRENT_DOCS_PATH = `/doc/r${CURRENT_VERSION}`;
+
+export function getDocsBasePath(): string {
+  return import.meta.env.BASE_URL === "/" ? CURRENT_DOCS_PATH : "";
 }
 
-export default function Docs(props: Route.ComponentProps) {
-  return <DocsPage {...props} />;
+function isExternalHref(href: string): boolean {
+  return /^(?:https?:|mailto:|#)/i.test(href);
+}
+
+export function resolveDocsHref(href: string): string {
+  if (!href.startsWith("/") || isExternalHref(href)) {
+    return href;
+  }
+
+  const base = getDocsBasePath();
+  if (!base) {
+    return href;
+  }
+
+  return href === "/" ? base : `${base}${href}`;
 }

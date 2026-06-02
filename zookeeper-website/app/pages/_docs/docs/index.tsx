@@ -36,6 +36,7 @@ import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Link } from "@/components/link";
 import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import type { MDXComponents } from "mdx/types";
+import { getDocsBasePath, resolveDocsHref } from "@/lib/docs-paths";
 
 // Extend default MDX components to include shared UI blocks globally.
 // Note: We'll override the 'a' component in the renderer to handle route-specific logic
@@ -98,13 +99,17 @@ const renderer = toClientRenderer(
     const mdxFileRoute = `${trimmedRoute === "" ? "index" : trimmedRoute}.mdx`;
     const isGroupedRoute =
       !!trimmedRoute && groupedRoutes.includes(trimmedRoute);
+    const groupedRouteUrl = `${getDocsBasePath()}/${trimmedRoute}`;
     const displayTitle = pageTitle ?? frontmatter.title;
     const displayDescription = pageDescription ?? frontmatter.description;
 
     // Use default Link component for all links (external links are handled by Link component)
     const CustomLink = ({ href, children, ...rest }: any) => {
       return (
-        <Link to={href} {...rest}>
+        <Link
+          to={typeof href === "string" ? resolveDocsHref(href) : href}
+          {...rest}
+        >
           {children}
         </Link>
       );
@@ -129,7 +134,7 @@ const renderer = toClientRenderer(
             <div className="flex flex-col">
               <p>In this section:</p>
               <Cards>
-                {getPageTreePeers(tree, `/docs/${trimmedRoute}`).map((peer) => (
+                {getPageTreePeers(tree, groupedRouteUrl).map((peer) => (
                   <Card key={peer.url} title={peer.name} href={peer.url}>
                     {peer.description}
                   </Card>

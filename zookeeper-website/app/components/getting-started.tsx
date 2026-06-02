@@ -17,6 +17,7 @@
 //
 
 import { Link } from "@/components/link";
+import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
 import { ArrowRight } from "lucide-react";
 
 export function GettingStartedSection() {
@@ -29,12 +30,12 @@ export function GettingStartedSection() {
     {
       title: "2. Quick Start",
       desc: "Set up a single ZooKeeper server and learn the basics of the CLI.",
-      to: "/docs/overview/quick-start"
+      to: `${CURRENT_DOCS_PATH}/overview/quick-start`
     },
     {
       title: "3. Write a Client",
       desc: "Follow the basic tutorial to implement distributed primitives like barriers and queues.",
-      to: "/docs/developer/basic-tutorial"
+      to: `${CURRENT_DOCS_PATH}/developer/basic-tutorial`
     }
   ];
   return (

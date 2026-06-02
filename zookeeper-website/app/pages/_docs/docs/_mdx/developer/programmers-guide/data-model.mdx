@@ -56,7 +56,7 @@ Clients can set watches on znodes. Changes to that znode trigger
 the watch and then clear the watch. When a watch triggers, ZooKeeper
 sends the client a notification. More information about watches can be
 found in the section
-[ZooKeeper Watches](/docs/developer/programmers-guide/watches).
+[ZooKeeper Watches](/developer/programmers-guide/watches).
 
 ### Data Access
 
@@ -109,7 +109,7 @@ counter has a format of %010d — that is 10 digits with 0
 (zero) padding (the counter is formatted in this way to
 simplify sorting), i.e. "`<path>0000000001`". See
 [Queue
-Recipe](/docs/developer/recipes#queues) for an example use of this feature. Note: the
+Recipe](/developer/recipes#queues) for an example use of this feature. Note: the
 counter used to store the next sequence number is a signed int
 (4bytes) maintained by the parent node, the counter will
 overflow when incremented beyond 2147483647 (resulting in a
@@ -140,7 +140,7 @@ is not modified within the TTL and has no children it will become a candidate
 to be deleted by the server at some point in the future.
 
 Note: TTL Nodes must be enabled via System property as they
-are disabled by default. See the [Administrator's Guide](/docs/admin-ops/administrators-guide/configuration-parameters#advanced-configuration) for
+are disabled by default. See the [Administrator's Guide](/admin-ops/administrators-guide/configuration-parameters#advanced-configuration) for
 details. If you attempt to create TTL Nodes without the
 proper System property set the server will throw
 KeeperException.UnimplementedException.

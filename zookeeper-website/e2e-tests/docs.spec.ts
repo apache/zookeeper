@@ -18,18 +18,20 @@
 
 import { test, expect } from "@playwright/test";
 
+const DOCS_ROOT = "/doc/r3.9.5/";
+
 test.describe("Documentation Page - Basic Loading", () => {
   test("docs page loads successfully with title", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Check URL and title
-    await expect(page).toHaveURL(/.*docs/);
+    await expect(page).toHaveURL(/.*doc\/r3\.9\.5/);
     await expect(page).toHaveTitle(/Overview|ZooKeeper/i);
   });
 
   test("docs page has visible content", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Check for meaningful text content
@@ -39,7 +41,7 @@ test.describe("Documentation Page - Basic Loading", () => {
   });
 
   test("docs page has header with Apache ZooKeeper link", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Check for header link
@@ -52,7 +54,7 @@ test.describe("Documentation Page - Basic Loading", () => {
 
 test.describe("Documentation Page - Sidebar Navigation", () => {
   test("sidebar is visible and has navigation items", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Look for sidebar (aside element)
@@ -66,12 +68,12 @@ test.describe("Documentation Page - Sidebar Navigation", () => {
   });
 
   test("sidebar has multiple navigation links", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Verify sidebar has multiple links to different pages
     const sidebar = page.locator("aside");
-    const allLinks = sidebar.locator('a[href^="/docs/"]');
+    const allLinks = sidebar.locator(`a[href^="${DOCS_ROOT}"]`);
     const linkCount = await allLinks.count();
 
     // Should have many navigation links in sidebar
@@ -83,7 +85,7 @@ test.describe("Documentation Page - Sidebar Navigation", () => {
   });
 
   test("sidebar collapse button works", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Look for collapse button (use .first() for desktop version)
@@ -106,7 +108,7 @@ test.describe("Documentation Page - Sidebar Navigation", () => {
 
 test.describe("Documentation Page - Search Functionality", () => {
   test("search button is visible on docs page", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Look for search button with more flexible matching
@@ -115,7 +117,7 @@ test.describe("Documentation Page - Search Functionality", () => {
   });
 
   test("can open search dialog by clicking button", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Click search button - look for button containing "Search"
@@ -131,7 +133,7 @@ test.describe("Documentation Page - Search Functionality", () => {
   });
 
   test("can type in search input", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Open search
@@ -148,7 +150,7 @@ test.describe("Documentation Page - Search Functionality", () => {
   });
 
   test("can close search with ESC key", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Open search
@@ -169,7 +171,7 @@ test.describe("Documentation Page - Search Functionality", () => {
   });
 
   test("keyboard shortcut Cmd+K opens search", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Press Cmd+K (or Ctrl+K)
@@ -186,7 +188,7 @@ test.describe("Documentation Page - Search Functionality", () => {
 
 test.describe("Documentation Page - Content & Navigation", () => {
   test("docs page has headings", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Check for headings
@@ -196,7 +198,9 @@ test.describe("Documentation Page - Content & Navigation", () => {
   });
 
   test("can navigate to configuration docs", async ({ page }) => {
-    await page.goto("/docs/configuration");
+    await page.goto(
+      `${DOCS_ROOT}admin-ops/administrators-guide/configuration-parameters`
+    );
     await page.waitForLoadState("networkidle");
 
     await expect(page).toHaveURL(/.*configuration/);
@@ -207,7 +211,7 @@ test.describe("Documentation Page - Content & Navigation", () => {
   });
 
   test("Edit on GitHub link is present", async ({ page }) => {
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Look for GitHub link
@@ -225,7 +229,7 @@ test.describe("Documentation Page - Content & Navigation", () => {
 test.describe("Documentation Page - Mobile Responsiveness", () => {
   test("mobile menu button is visible on small screens", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Look for mobile menu button
@@ -235,7 +239,7 @@ test.describe("Documentation Page - Mobile Responsiveness", () => {
 
   test("can open mobile sidebar", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Click mobile menu button
@@ -244,14 +248,14 @@ test.describe("Documentation Page - Mobile Responsiveness", () => {
     await page.waitForTimeout(500);
 
     // Sidebar drawer should appear (check for navigation elements)
-    const sidebarLinks = page.locator('a[href^="/docs"]');
+    const sidebarLinks = page.locator(`a[href^="${DOCS_ROOT}"]`);
     const linkCount = await sidebarLinks.count();
     expect(linkCount).toBeGreaterThan(5);
   });
 
   test("search button visible on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto("/docs");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
     // Look for search button

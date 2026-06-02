@@ -14,8 +14,8 @@ configuration files match.
   In 3.5.0 and later, some of these parameters should be placed in a dynamic
   configuration file. If they are placed in the static configuration file,
   ZooKeeper will automatically move them over to the dynamic configuration file.
-  See [Dynamic Reconfiguration](/docs/admin-ops/dynamic-reconfiguration) for
-  more information.
+  See [Dynamic Reconfiguration](/admin-ops/dynamic-reconfiguration) for more
+  information.
 </Callout>
 
 ## Minimum Configuration
@@ -255,7 +255,7 @@ property, when available, is noted below.
 - _extendedTypesEnabled_ :
   (Java system property only: **zookeeper.extendedTypesEnabled**)
   **New in 3.5.4, 3.6.0:** Define to `true` to enable
-  extended features such as the creation of [TTL Nodes](/docs/developer/programmers-guide/data-model#ttl-nodes).
+  extended features such as the creation of [TTL Nodes](/developer/programmers-guide/data-model#ttl-nodes).
   They are disabled by default. IMPORTANT: when enabled server IDs must
   be less than 255 due to internal limitations.
 
@@ -463,7 +463,7 @@ property, when available, is noted below.
   (Java system property: **zookeeper.enforceQuota**)
   **New in 3.7.0:**
   Enforce the quota check. When enabled and the client exceeds the total bytes or children count hard quota under a znode, the server will reject the request and reply the client a `QuotaExceededException` by force.
-  The default value is: false. Exploring [quota feature](/docs/admin-ops/quota-guide) for more details.
+  The default value is: false. Exploring [quota feature](/admin-ops/quota-guide) for more details.
 
 - _requestThrottleLimit_ :
   (Java system property: **zookeeper.request_throttle_max_requests**)
@@ -605,14 +605,14 @@ property, when available, is noted below.
   (Java system property: **zookeeper.audit.enable**)
   **New in 3.6.0:**
   By default audit logs are disabled. Set to "true" to enable it. Default value is "false".
-  See the [ZooKeeper audit logs](/docs/admin-ops/monitor-and-audit-logs) for more information.
+  See the [ZooKeeper audit logs](/admin-ops/monitor-and-audit-logs) for more information.
 
 - _audit.impl.class_ :
   (Java system property: **zookeeper.audit.impl.class**)
   **New in 3.6.0:**
   Class to implement the audit logger. By default logback based audit logger org.apache.zookeeper.audit
   .Slf4jAuditLogger is used.
-  See the [ZooKeeper audit logs](/docs/admin-ops/monitor-and-audit-logs) for more information.
+  See the [ZooKeeper audit logs](/admin-ops/monitor-and-audit-logs) for more information.
 
 - _largeRequestMaxBytes_ :
   (Java system property: **zookeeper.largeRequestMaxBytes**)
@@ -815,7 +815,7 @@ of servers — that is, when deploying clusters of servers.
   The left-hand side of the assignment is a colon-separated list of server
   identifiers. Note that groups must be disjoint and the union of all groups
   must be the ZooKeeper ensemble.
-  You will find an example [here](/docs/admin-ops/quorums)
+  You will find an example [here](/admin-ops/quorums)
 
 - _weight.x=nnnnn_ :
   (No Java system property)
@@ -825,7 +825,7 @@ of servers — that is, when deploying clusters of servers.
   such as leader election and the atomic broadcast protocol. By default
   the weight of server is 1. If the configuration defines groups, but not
   weights, then a value of 1 will be assigned to all servers.
-  You will find an example [here](/docs/admin-ops/quorums)
+  You will find an example [here](/admin-ops/quorums)
 
 - _cnxTimeout_ :
   (Java system property: zookeeper.**cnxTimeout**)
@@ -859,7 +859,7 @@ of servers — that is, when deploying clusters of servers.
   (No Java system property)
   **New in 3.5.3:**
   This controls the enabling or disabling of
-  [Dynamic Reconfiguration](/docs/admin-ops/dynamic-reconfiguration) feature. When the feature
+  [Dynamic Reconfiguration](/admin-ops/dynamic-reconfiguration) feature. When the feature
   is enabled, users can perform reconfigure operations through
   the ZooKeeper client API or through ZooKeeper command line tools
   assuming users are authorized to perform such operations.
@@ -884,7 +884,7 @@ of servers — that is, when deploying clusters of servers.
 - _4lw.commands.whitelist_ :
   (Java system property: **zookeeper.4lw.commands.whitelist**)
   **New in 3.5.3:**
-  A list of comma separated [Four Letter Words](/docs/admin-ops/administrators-guide/commands#the-four-letter-words)
+  A list of comma separated [Four Letter Words](/admin-ops/administrators-guide/commands#the-four-letter-words)
   commands that user wants to use. A valid Four Letter Words
   command must be put in this list else ZooKeeper server will
   not enable the command.
@@ -978,7 +978,7 @@ The options in this section allow control over
 encryption/authentication/authorization performed by the service.
 
 Beside this page, you can also find useful information about client side configuration in the
-[Programmers Guide](/docs/developer/programmers-guide/bindings#client-configuration-parameters).
+[Programmers Guide](/developer/programmers-guide/bindings#client-configuration-parameters).
 The ZooKeeper Wiki also has useful pages about [ZooKeeper SSL support](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide),
 and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL).
 

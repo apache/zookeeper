@@ -12,11 +12,11 @@ example. Finally, as a convenience, there are a few sections regarding
 more complicated installations, for example running replicated
 deployments, and optimizing the transaction log. However for the complete
 instructions for commercial deployments, please refer to the [ZooKeeper
-Administrator's Guide](/docs/admin-ops/administrators-guide).
+Administrator's Guide](/admin-ops/administrators-guide).
 
 ### Pre-requisites
 
-See [System Requirements](/docs/admin-ops/administrators-guide/deployment#system-requirements) in the Admin guide.
+See [System Requirements](/admin-ops/administrators-guide/deployment#system-requirements) in the Admin guide.
 
 ### Download
 
@@ -69,7 +69,7 @@ bin/zkServer.sh start
 
 ZooKeeper logs messages using _logback_ — more detail
 available in the
-[Logging](/docs/admin-ops/administrators-guide/administration#logging)
+[Logging](/admin-ops/administrators-guide/administration#logging)
 section of the Administrator's Guide. You will see log messages
 coming to the console (default) and/or a log file depending on
 the logback configuration.
@@ -84,7 +84,7 @@ ZooKeeper](#running-replicated-zookeeper).
 
 For long running production systems ZooKeeper storage must
 be managed externally (dataDir and logs). See the section on
-[maintenance](/docs/admin-ops/administrators-guide/administration#maintenance) for
+[maintenance](/admin-ops/administrators-guide/administration#maintenance) for
 more details.
 
 ### Connecting to ZooKeeper
@@ -229,7 +229,7 @@ Finally, let's `delete` the node by issuing:
 [zkshell: 18]
 ```
 
-That's it for now. To explore more, see the [Zookeeper CLI](/docs/admin-ops/cli).
+That's it for now. To explore more, see the [Zookeeper CLI](/admin-ops/cli).
 
 ### Programming to ZooKeeper
 
@@ -237,7 +237,7 @@ ZooKeeper has a Java bindings and C bindings. They are
 functionally equivalent. The C bindings exist in two variants: single
 threaded and multi-threaded. These differ only in how the messaging loop
 is done. For more information, see the [Programming
-Examples in the ZooKeeper Programmer's Guide](/docs/developer/java-example#program-design) for
+Examples in the ZooKeeper Programmer's Guide](/developer/java-example#program-design) for
 sample code using the different APIs.
 
 ### Running Replicated ZooKeeper
@@ -323,7 +323,7 @@ second port in the server entry.
 > If you have multiple network interfaces in your ZooKeeper machines,
 > you can also instruct ZooKeeper to bind on all of your interfaces and
 > automatically switch to a healthy interface in case of a network failure.
-> For details, see the [Configuration Parameters](/docs/admin-ops/administrators-guide/configuration-parameters#cluster-options).
+> For details, see the [Configuration Parameters](/admin-ops/administrators-guide/configuration-parameters#cluster-options).
 
 ### Other Optimizations
 

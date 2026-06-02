@@ -20,14 +20,12 @@ import { describe, expect, it } from "vitest";
 import { normalizeDocsArchiveBase } from "@/lib/docs-archive";
 
 describe("docs archive path helpers", () => {
-  const archiveBase = "/released-docs/r3.9.6/";
+  const archiveBase = "/doc/r3.9.6/";
 
   it("normalizes archive base paths", () => {
-    expect(normalizeDocsArchiveBase("released-docs/r3.9.6")).toBe(archiveBase);
-    expect(normalizeDocsArchiveBase("/released-docs/r3.9.6")).toBe(archiveBase);
-    expect(normalizeDocsArchiveBase("/released-docs/r3.9.6/")).toBe(
-      archiveBase
-    );
+    expect(normalizeDocsArchiveBase("doc/r3.9.6")).toBe(archiveBase);
+    expect(normalizeDocsArchiveBase("/doc/r3.9.6")).toBe(archiveBase);
+    expect(normalizeDocsArchiveBase("/doc/r3.9.6/")).toBe(archiveBase);
   });
 
   it("returns an empty string when archive mode is disabled", () => {
