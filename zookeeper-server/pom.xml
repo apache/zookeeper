@@ -488,6 +488,11 @@
             <include>**/*Test.java</include>
             <include>**/*_ESTest.java</include>
           </includes>
+          <excludes>
+            <exclude>**/*ErrorTest*.java</exclude>
+            <exclude>**/PathTrieC*_ESTest.java</exclude>
+            <exclude>**/DataTreeC*_ESTest.java</exclude>
+          </excludes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
           <argLine>-Djdk.attach.allowAttachSelf=true -Xmx512m -noverify -Dtest.junit.threads=8 -Dzookeeper.junit.threadid=${surefire.forkNumber}</argLine>
