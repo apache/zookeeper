@@ -490,7 +490,7 @@
           </includes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
-          <argLine>-Djdk.attach.allowAttachSelf=true -Xmx512m -Dtest.junit.threads=8 -Dzookeeper.junit.threadid=${surefire.forkNumber}</argLine>
+          <argLine>-Djdk.attach.allowAttachSelf=true -Xmx512m -noverify -Dtest.junit.threads=8 -Dzookeeper.junit.threadid=${surefire.forkNumber}</argLine>
           <basedir>${project.basedir}</basedir>
           <systemPropertyVariables>
             <build.test.dir>${project.build.directory}/surefire</build.test.dir>
