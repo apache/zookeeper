@@ -490,8 +490,6 @@
           <excludes>
             <exclude>**/*ErrorTest*.java</exclude>
             <exclude>**/*_ESTest.java</exclude>
-            <exclude>**/DataTreeTest/TestLLM/C*/DataTreeTotCodeFinalTest.java</exclude>
-            <exclude>**/DataTreeTest/TestLLM/C*/DataTreeZeroShotRun10Test.java</exclude>
           </excludes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
