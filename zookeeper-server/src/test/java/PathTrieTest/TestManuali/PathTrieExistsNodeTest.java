@@ -248,17 +248,16 @@ public class PathTrieExistsNodeTest {
         assertTrieStillUsable(trie);
     }
 
-    @Test
-    public void T13_pathVuoto_trieVuoto_eccezioneEStatoNonCorrotto() {
-        PathTrie trie = new PathTrie();
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> trie.existsNode("")
-        );
-
-        assertTrieStillUsable(trie);
-    }
+     @Test
+     public void T13_pathVuoto_trieVuoto_eccezioneEStatoNonCorrotto() {
+         PathTrie trie = new PathTrie();
+         assertThrows(
+                 IllegalArgumentException.class,
+                 () -> trie.existsNode("")
+         );
+         assertTrieStillUsable(trie);
+     }
 
     private void assertTrieStillUsable(PathTrie trie) {
         trie.addPath("/valid");

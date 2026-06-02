@@ -32,7 +32,8 @@
   <description>ZooKeeper server</description>
 
   <properties>
-    <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
+    <sonar.sources>src/main/java,src/test/java</sonar.sources>
+    <sonar.tests></sonar.tests>
   </properties>
 
   <dependencies>
@@ -217,10 +218,86 @@
       <version>1.0.6</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jacoco</groupId>
+      <artifactId>org.jacoco.agent</artifactId>
+      <version>0.8.12</version>
+      <classifier>runtime</classifier>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <configuration>
+              <showWarnings>false</showWarnings>
+              <compilerArgs combine.self="override"/>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.12</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <phase>none</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>none</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>jacoco-instrument</id>
+            <phase>none</phase>
+            <goals>
+              <goal>instrument</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>org/apache/zookeeper/common/PathTrie.class</include>
+              </includes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>jacoco-restore</id>
+            <phase>none</phase>
+            <goals>
+              <goal>restore-instrumented-classes</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>jacoco-report</id>
+            <phase>none</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -361,17 +438,11 @@
           </targetClasses>
 
           <targetTests>
-            <param>PathTrieTest.TestManuali.*</param>
-            <param>PathTrieTest.TestLLM.*</param>
-            <param>PathTrieTest.randoop.RegressionTest</param>
-            <param>PathTrieTest.randoop.RegressionTest0</param>
-            <param>org.apache.zookeeper.common.PathTrie_ESTest</param>
+            <param>PathTrieTest.TestLLM.C2.*</param>
           </targetTests>
 
           <excludedTestClasses>
             <param>*scaffolding*</param>
-            <param>PathTrieTest.randoop.ErrorTest</param>
-            <param>PathTrieTest.randoop.ErrorTest0</param>
           </excludedTestClasses>
 
           <skipFailingTests>true</skipFailingTests>
@@ -388,6 +459,9 @@
             <mutator>NULL_RETURNS</mutator>
             <mutator>PRIMITIVE_RETURNS</mutator>
           </mutators>
+
+          <useClasspathJar>true</useClasspathJar>
+          <parseSurefireConfig>false</parseSurefireConfig>
 
           <jvmArgs>
             <value>-Xmx512m</value>
@@ -416,11 +490,12 @@
           </includes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
-          <argLine>${argLine} -Xmx512m -Dtest.junit.threads=8 -Dzookeeper.junit.threadid=${surefire.forkNumber}</argLine>
+          <argLine>-Djdk.attach.allowAttachSelf=true -Xmx512m -Dtest.junit.threads=8 -Dzookeeper.junit.threadid=${surefire.forkNumber}</argLine>
           <basedir>${project.basedir}</basedir>
           <systemPropertyVariables>
             <build.test.dir>${project.build.directory}/surefire</build.test.dir>
             <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
+            <jacoco-agent.destfile>${project.build.directory}/jacoco.exec</jacoco-agent.destfile>
           </systemPropertyVariables>
         </configuration>
       </plugin>

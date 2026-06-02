@@ -1,0 +1,2771 @@
+{
+  "total": 64,
+  "issues": [
+    {
+      "key": "AZ59PI8LDJcDccZnAIOP",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "7b9440edff0600acc878eee81e780bd6",
+      "textRange": {
+        "startLine": 25,
+        "endLine": 25,
+        "startOffset": 0,
+        "endOffset": 6
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINe",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "a274f4bcad3b0686b2491217e7e26728",
+      "textRange": {
+        "startLine": 40,
+        "endLine": 40,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINf",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "41212d5b0b91fb63b73fd8892069df4e",
+      "textRange": {
+        "startLine": 48,
+        "endLine": 48,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINg",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "267faa7680d7cc36baa8b0f89032488d",
+      "textRange": {
+        "startLine": 53,
+        "endLine": 53,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINh",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "d9dddd5e2a167a821c886fd76125b680",
+      "textRange": {
+        "startLine": 58,
+        "endLine": 58,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINi",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "aac423a6cfc380931a55adb2563ce814",
+      "textRange": {
+        "startLine": 64,
+        "endLine": 64,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINj",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "4c135515f2f3312287f4aa9d6a074e53",
+      "textRange": {
+        "startLine": 72,
+        "endLine": 72,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINk",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "94d8bf10ec6fe724fd5607d5d7b8fe7c",
+      "textRange": {
+        "startLine": 79,
+        "endLine": 79,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINl",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "b31edbae1e7a80ed9e0e1d635df9f542",
+      "textRange": {
+        "startLine": 87,
+        "endLine": 87,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINm",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "32319151afce71acb71207fa712e0580",
+      "textRange": {
+        "startLine": 95,
+        "endLine": 95,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINn",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "07adf750ca9ba431d6879f97a8725569",
+      "textRange": {
+        "startLine": 102,
+        "endLine": 102,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINo",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "07bd7972c9cef86b9fa7ef815bcc9e6b",
+      "textRange": {
+        "startLine": 109,
+        "endLine": 109,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINp",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "521b3327fa670b7ba7d3ed343363812e",
+      "textRange": {
+        "startLine": 116,
+        "endLine": 116,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINq",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "a5c6e95570f9a4ed5418d85348e68cf8",
+      "textRange": {
+        "startLine": 123,
+        "endLine": 123,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINr",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "e527737d3c0b439741ca3401bd369a83",
+      "textRange": {
+        "startLine": 130,
+        "endLine": 130,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINs",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "e75bf389025d11cbf93c79d2067c1c16",
+      "textRange": {
+        "startLine": 138,
+        "endLine": 138,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINt",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "3bf97b1658586f371f834b471c87d032",
+      "textRange": {
+        "startLine": 145,
+        "endLine": 145,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINu",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "535328d58bb03fd707e74903ec87884e",
+      "textRange": {
+        "startLine": 153,
+        "endLine": 153,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINv",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "df23cf7ab6fd50b68069480a0f9ab4f6",
+      "textRange": {
+        "startLine": 160,
+        "endLine": 160,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINw",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "801e2f3f29b035031de98bc4d0b8374b",
+      "textRange": {
+        "startLine": 167,
+        "endLine": 167,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINx",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "6e0fd945ce8d917f441e73b82332fc3a",
+      "textRange": {
+        "startLine": 174,
+        "endLine": 174,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINy",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "0f3c799ea1a5ff8313df1e38156623ca",
+      "textRange": {
+        "startLine": 181,
+        "endLine": 181,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAINz",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "cabd8f920f37506570d828f1e0e66877",
+      "textRange": {
+        "startLine": 192,
+        "endLine": 192,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN0",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "cd09867b8114af7ab8a4feed9ad36148",
+      "textRange": {
+        "startLine": 199,
+        "endLine": 199,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN1",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "5eb0078f409a661ee8327a295e67cbcf",
+      "textRange": {
+        "startLine": 207,
+        "endLine": 207,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN2",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "03dc2e610869a1d14afb6f4f79e4a32e",
+      "textRange": {
+        "startLine": 214,
+        "endLine": 214,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN3",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "98c214872cfc20c7b692d583d033b018",
+      "textRange": {
+        "startLine": 222,
+        "endLine": 222,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN4",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "bfce867e497e5b224bb664cc20a0d18d",
+      "textRange": {
+        "startLine": 231,
+        "endLine": 231,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN5",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "84eca974fbf6447e4a79db622fcb112a",
+      "textRange": {
+        "startLine": 238,
+        "endLine": 238,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN6",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "2fea1cb2e84aeb3e0ee58356ed5e1c36",
+      "textRange": {
+        "startLine": 246,
+        "endLine": 246,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN7",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "4b2147709f0d5a268b82e1c7b6d44412",
+      "textRange": {
+        "startLine": 253,
+        "endLine": 253,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN8",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "6509d47a7c8268b651d704c52d0715e2",
+      "textRange": {
+        "startLine": 261,
+        "endLine": 261,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN9",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "ef50955760401dde270dae1157169c7e",
+      "textRange": {
+        "startLine": 271,
+        "endLine": 271,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN-",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "a2eed3f41bc6a6550f5a302a5751e79c",
+      "textRange": {
+        "startLine": 277,
+        "endLine": 277,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIN_",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "579487319e169a5e07a7080c10e48acd",
+      "textRange": {
+        "startLine": 282,
+        "endLine": 282,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOA",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "16e27ff70a82f7ebb757883bc5a439e1",
+      "textRange": {
+        "startLine": 287,
+        "endLine": 287,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOB",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "2b5702c60b51c0adebc1e7952f1edb01",
+      "textRange": {
+        "startLine": 294,
+        "endLine": 294,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOC",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "95dc1bca9a9a5e042a51782184e2a7ec",
+      "textRange": {
+        "startLine": 299,
+        "endLine": 299,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOD",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "2b6e7d3334ae96e2684753590fac203a",
+      "textRange": {
+        "startLine": 306,
+        "endLine": 306,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOE",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "e0a21db7a8cf684b2a1e3544856f1f9b",
+      "textRange": {
+        "startLine": 313,
+        "endLine": 313,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOF",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "d54bb3f13c9db27b6f77688db2fb0943",
+      "textRange": {
+        "startLine": 321,
+        "endLine": 321,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOG",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "79f377879ac9631f4db574a94f53bdba",
+      "textRange": {
+        "startLine": 327,
+        "endLine": 327,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOH",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "a61e62e12b64da20de6d22613d1d4cf3",
+      "textRange": {
+        "startLine": 337,
+        "endLine": 337,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOI",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "11d3c74362e12269e48d3e41d59c50dd",
+      "textRange": {
+        "startLine": 348,
+        "endLine": 348,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOJ",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "a4b3743b7271c11d1a873c2fbd4f3dd9",
+      "textRange": {
+        "startLine": 359,
+        "endLine": 359,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOK",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "aba651f9d351ba9d8b3f6108ebc5d3f4",
+      "textRange": {
+        "startLine": 364,
+        "endLine": 364,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOL",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "10538e7ea7da07475f4fde2045706367",
+      "textRange": {
+        "startLine": 373,
+        "endLine": 373,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOM",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "302ece043c1b7e5252a90e6b87b34e2c",
+      "textRange": {
+        "startLine": 380,
+        "endLine": 380,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAION",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "98c326db3529929f8307d4647d441c4f",
+      "textRange": {
+        "startLine": 389,
+        "endLine": 389,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8LDJcDccZnAIOO",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeZeroShotRun10Test.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "e2d42870006b3252d74490f8f0523966",
+      "textRange": {
+        "startLine": 397,
+        "endLine": 397,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "author": "",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-31T08:52:01+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINR",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "2c90a132bd6a31f01ad40db0dcc0444f",
+      "textRange": {
+        "startLine": 27,
+        "endLine": 27,
+        "startOffset": 0,
+        "endOffset": 6
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINQ",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "a274f4bcad3b0686b2491217e7e26728",
+      "textRange": {
+        "startLine": 36,
+        "endLine": 36,
+        "startOffset": 4,
+        "endOffset": 10
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINS",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "cf7d5720a27eb6445761c8b8d25da320",
+      "textRange": {
+        "startLine": 46,
+        "endLine": 46,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINT",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "94d8bf10ec6fe724fd5607d5d7b8fe7c",
+      "textRange": {
+        "startLine": 58,
+        "endLine": 58,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINU",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "4c135515f2f3312287f4aa9d6a074e53",
+      "textRange": {
+        "startLine": 69,
+        "endLine": 69,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINV",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "00e8e005df4eee6c5e64dcea7132260a",
+      "textRange": {
+        "startLine": 84,
+        "endLine": 84,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINW",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "07adf750ca9ba431d6879f97a8725569",
+      "textRange": {
+        "startLine": 94,
+        "endLine": 94,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINX",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "6067ad76818604c606d2c038d1519ed6",
+      "textRange": {
+        "startLine": 107,
+        "endLine": 107,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINY",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "b2dac2b6072cdfc61d06b25841951e39",
+      "textRange": {
+        "startLine": 125,
+        "endLine": 125,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINZ",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "229afe2a302a98e5898b3d92b345caa5",
+      "textRange": {
+        "startLine": 145,
+        "endLine": 145,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINa",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "2499b8351abff547a42b962d8d11ddc1",
+      "textRange": {
+        "startLine": 161,
+        "endLine": 161,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINb",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "583085bb02801f33d8b84ace4c18ad38",
+      "textRange": {
+        "startLine": 179,
+        "endLine": 179,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINc",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "4a92bd7852d874a34f7c652ec945de45",
+      "textRange": {
+        "startLine": 190,
+        "endLine": 190,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    },
+    {
+      "key": "AZ59PI8CDJcDccZnAINd",
+      "rule": "java:S5786",
+      "severity": "INFO",
+      "component": "lucacupellaro_zookeeper:src/test/java/DataTreeTest/TestLLM/C1/DataTreeTotCodeFinalTest.java",
+      "project": "lucacupellaro_zookeeper",
+      "hash": "7d49ecab696e7810757d27fe213275a3",
+      "textRange": {
+        "startLine": 210,
+        "endLine": 210,
+        "startOffset": 8,
+        "endOffset": 14
+      },
+      "flows": [],
+      "resolution": "FIXED",
+      "status": "CLOSED",
+      "message": "Remove this 'public' modifier.",
+      "effort": "2min",
+      "debt": "2min",
+      "assignee": "lucacupellaro@github",
+      "author": "luca.cupellaro@students.uniroma2.eu",
+      "tags": [
+        "junit",
+        "tests"
+      ],
+      "creationDate": "2026-05-27T08:58:36+0000",
+      "updateDate": "2026-05-31T09:00:35+0000",
+      "closeDate": "2026-05-31T09:00:35+0000",
+      "type": "CODE_SMELL",
+      "organization": "lucacupellaro",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "INFO"
+        }
+      ],
+      "issueStatus": "FIXED",
+      "projectName": "Apache ZooKeeper - Server",
+      "internalTags": [],
+      "lastChangeAnalysisUuid": "a4c68f9f-d110-4930-bfef-582929c926e8",
+      "lastChangeSource": "ANALYSIS"
+    }
+  ]
+}

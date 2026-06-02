@@ -48,8 +48,7 @@ import org.evosuite.runtime.mock.java.io.MockPrintStream;
 import org.evosuite.runtime.mock.java.io.MockPrintWriter;
 import org.junit.runner.RunWith;
 
-@RunWith(EvoRunner.class) @EvoRunnerParameters(mockJVMNonDeterminism = true, useVFS = true, useVNET = true, resetStaticState = true, separateClassLoader = true, useJEE = true) 
-public class DataTreeC1_ESTest extends DataTreeC1_ESTest_scaffolding {
+public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test00()  throws Throwable  {

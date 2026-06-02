@@ -4,7 +4,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
 import org.junit.runners.MethodSorters;
-@SuppressWarnings("all")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RegressionTest0 {
 

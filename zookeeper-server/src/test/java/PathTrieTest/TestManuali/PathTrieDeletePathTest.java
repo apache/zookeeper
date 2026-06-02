@@ -55,6 +55,7 @@ public class PathTrieDeletePathTest {
         assertTrue(trie.existsNode("/a"));
     }
 
+
     @Test
     @Disabled
     public void T5_pathValidoSemplice_pathPrefissoDiAltriPath() {
@@ -112,14 +113,13 @@ public class PathTrieDeletePathTest {
         assertTrieStillUsable(trie);
     }
 
-    @Test
+
+     @Test
     public void T10_pathVuoto_trieVuoto_statoNonCorrotto() {
         PathTrie trie = new PathTrie();
-
-        executeAllowingRuntimeException(() -> trie.deletePath(""));
-
-        assertTrieStillUsable(trie);
-    }
+         executeAllowingRuntimeException(() -> trie.deletePath(""));
+         assertTrieStillUsable(trie);
+     }
 
     @ParameterizedTest(name = "{0} - path malformato/anomalo: {1}")
     @MethodSource("malformedPathsWithExistingNode")

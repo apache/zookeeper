@@ -1,4 +1,4 @@
-package PathTrieTest.TestLLM.C4;
+package PathTrieTest.TestLLM.C2;
 
 
 
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PathTrieOneShotCodeTest {
+public class PathTrieZeroShotCodeTest {
 
     private PathTrie pathTrie;
 
@@ -22,55 +22,58 @@ public class PathTrieOneShotCodeTest {
     @DisplayName("Test adding a path and checking its existence")
     public void testAddAndExistsNodeSuccess() {
         String testPath = "/zookeeper/quota/serviceA";
-        assertFalse(pathTrie.existsNode(testPath), "Path should not exist prior to addition");
+        assertFalse(pathTrie.existsNode(testPath), "Path should not exist before being added");
 
         pathTrie.addPath(testPath);
-        assertTrue(pathTrie.existsNode(testPath), "Path must be recognized as existing post-addition");
+        assertTrue(pathTrie.existsNode(testPath), "Path should exist after being successfully added");
 
-        // Validate that intermediate structural elements exist as well
-        assertTrue(pathTrie.existsNode("/zookeeper"), "Intermediate root parent token missing");
-        assertTrue(pathTrie.existsNode("/zookeeper/quota"), "Intermediate sub-branch directory missing");
+        // Validate that all intermediate path components exist as well
+        assertTrue(pathTrie.existsNode("/zookeeper"), "Intermediate root component should exist");
+        assertTrue(pathTrie.existsNode("/zookeeper/quota"), "Intermediate sub-branch component should exist");
     }
 
     @Test
-    @DisplayName("Test successful deletion of a mapped path and leaf pruning")
+    @DisplayName("Test successful deletion of a path and leaf node pruning")
     public void testDeletePathSuccess() {
         String targetPath = "/proc/status/nodeToPrune";
         pathTrie.addPath(targetPath);
         assertTrue(pathTrie.existsNode(targetPath));
 
         pathTrie.deletePath(targetPath);
-        assertFalse(pathTrie.existsNode(targetPath), "Target leaf node should be successfully pruned and unmapped");
+        assertFalse(pathTrie.existsNode(targetPath), "Leaf node should be completely pruned and non-existent");
+
+        // Parent components should still structurally exist if needed
+        assertTrue(pathTrie.existsNode("/proc/status"), "Parent paths should remain intact if they contain structure");
     }
 
     @Test
-    @DisplayName("Test that deleting a non-existent path gracefully functions as a no-op")
+    @DisplayName("Test that deleting a non-existent path behaves gracefully as a no-op")
     public void testDeleteNonExistentPathNoOp() {
         assertDoesNotThrow(() -> pathTrie.deletePath("/missing/unmapped/namespace"),
-                "Erasing an unmapped path should terminate cleanly without raising structural errors");
+                "Deleting a path that does not exist should handle safely without throwing exceptions");
     }
 
     @Test
-    @DisplayName("Test maximum prefix match resolution engine paths")
+    @DisplayName("Test maximum common prefix isolation scenarios")
     public void testFindMaxPrefixScenarios() {
         pathTrie.addPath("/zookeeper/quota");
         pathTrie.addPath("/zookeeper/quota/app1");
 
-        // Scenario 1: Exact matching parameter path configuration
+        // Scenario 1: Exact path configuration match
         assertEquals("/zookeeper/quota/app1", pathTrie.findMaxPrefix("/zookeeper/quota/app1"),
-                "Exact structural lookup match failed");
+                "Exact structural match resolution failed");
 
-        // Scenario 2: Deep tracking underneath an existing property node branch layout
+        // Scenario 2: Trailing lookups under a valid configuration property branch path
         assertEquals("/zookeeper/quota/app1", pathTrie.findMaxPrefix("/zookeeper/quota/app1/subFolder/logs/file.log"),
-                "Tracking evaluation underneath an active property node branch failed");
+                "Evaluating paths nested below an active property branch failed");
 
-        // Scenario 3: Fallback match matching the closest registered ancestor node
+        // Scenario 3: Fallback match to the closest matching ancestor configuration path
         assertEquals("/zookeeper/quota", pathTrie.findMaxPrefix("/zookeeper/quota/app2"),
-                "Resolution engine failed to match closest configured ancestor boundary");
+                "Resolution engine failed to fall back to the closest configured ancestor");
 
-        // Scenario 4: Absolute miss falling back to system namespace root symbol token
+        // Scenario 4: Extreme prefix match failure falling back to system root namespace token
         assertEquals("/", pathTrie.findMaxPrefix("/unrelated/tenant/space"),
-                "Complete lookup tree misses must safely revert back to absolute root namespace");
+                "Complete lookup misses must cleanly fall back to absolute root symbol");
     }
 
     @Test
@@ -83,36 +86,36 @@ public class PathTrieOneShotCodeTest {
 
         pathTrie.clear();
 
-        assertFalse(pathTrie.existsNode("/quota/limitA"), "Trie nodes must be completely unmapped post-clear");
-        assertFalse(pathTrie.existsNode("/quota/limitB"), "Trie nodes must be completely unmapped post-clear");
+        assertFalse(pathTrie.existsNode("/quota/limitA"), "Trie nodes must be completely unmapped after clear");
+        assertFalse(pathTrie.existsNode("/quota/limitB"), "Trie nodes must be completely unmapped after clear");
     }
 
     @Test
-    @DisplayName("Test all public interaction entries enforce NullPointerException constraints")
+    @DisplayName("Test all interaction endpoints enforce NullPointerException guardrails")
     public void testNullPathValidations() {
         NullPointerException addEx = assertThrows(NullPointerException.class, () -> pathTrie.addPath(null));
-        assertEquals("Path cannot be null", addEx.getMessage(), "Mismatched null diagnostic text");
+        assertEquals("Path cannot be null", addEx.getMessage());
 
         NullPointerException delEx = assertThrows(NullPointerException.class, () -> pathTrie.deletePath(null));
-        assertEquals("Path cannot be null", delEx.getMessage(), "Mismatched null diagnostic text");
+        assertEquals("Path cannot be null", delEx.getMessage());
 
         NullPointerException existsEx = assertThrows(NullPointerException.class, () -> pathTrie.existsNode(null));
-        assertEquals("Path cannot be null", existsEx.getMessage(), "Mismatched null diagnostic text");
+        assertEquals("Path cannot be null", existsEx.getMessage());
 
         NullPointerException prefixEx = assertThrows(NullPointerException.class, () -> pathTrie.findMaxPrefix(null));
-        assertEquals("Path cannot be null", prefixEx.getMessage(), "Mismatched null diagnostic text");
+        assertEquals("Path cannot be null", prefixEx.getMessage());
     }
 
     @Test
     @DisplayName("Test that interaction entries reject empty value string parameters")
     public void testEmptyPathValidations() {
         IllegalArgumentException addEx = assertThrows(IllegalArgumentException.class, () -> pathTrie.addPath(""));
-        assertTrue(addEx.getMessage().contains("Invalid path:"), "Expected specific invalid prefix string message format");
+        assertTrue(addEx.getMessage().contains("Invalid path"), "Expected specific invalid prefix string message content");
 
         IllegalArgumentException delEx = assertThrows(IllegalArgumentException.class, () -> pathTrie.deletePath(""));
-        assertTrue(delEx.getMessage().contains("Invalid path:"), "Expected specific invalid prefix string message format");
+        assertTrue(delEx.getMessage().contains("Invalid path"), "Expected specific invalid prefix string message content");
 
         IllegalArgumentException existsEx = assertThrows(IllegalArgumentException.class, () -> pathTrie.existsNode(""));
-        assertTrue(existsEx.getMessage().contains("Invalid path:"), "Expected specific invalid prefix string message format");
+        assertTrue(existsEx.getMessage().contains("Invalid path"), "Expected specific invalid prefix string message content");
     }
 }

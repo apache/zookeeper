@@ -2,248 +2,384 @@ package DataTreeTest.TestLLM.C4;
 
 
 
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.DataNode;
+import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
+import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("deprecation")
 public class DataTreeTotCodeFinalTest {
 
     private DataTree dataTree;
-    private static final long SESSION_ID = 0x123456789L;
-    private static final long ZXID = 100L;
-    private static final long TIME = System.currentTimeMillis();
-    private static final byte[] SAMPLE_DATA = "tot_test_payload".getBytes();
+    private List<ACL> defaultAcl;
+    private DummyWatcher dummyWatcher;
 
     @BeforeEach
     public void setUp() {
         dataTree = new DataTree();
+        defaultAcl = ZooDefs.Ids.OPEN_ACL_UNSAFE;
+        dummyWatcher = new DummyWatcher();
     }
 
-    @Nested
-    @DisplayName("Node Mutation & Lifecycle Verification")
-    class NodeLifecycleTests {
+    // --- State and Initialization Tests ---
 
-        @Test
-        @DisplayName("Verify successful creation and node count incrementation")
-        public void testCreateNodeSuccess() throws Exception {
-            String path = "/validNode";
-            int initialCount = dataTree.getNodeCount();
-
-            dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-
-            DataNode node = dataTree.getNode(path);
-            assertNotNull(node, "Node should exist within lookup map");
-            assertArrayEquals(SAMPLE_DATA, node.getData(), "Data payload matching failed");
-            assertEquals(initialCount + 1, dataTree.getNodeCount(), "Global node count did not increment properly");
-        }
-
-        @Test
-        @DisplayName("Ensure NodeExistsException is thrown upon duplicate path insertion")
-        public void testCreateNodeThrowsNodeExistsException() throws Exception {
-            String path = "/duplicateZnode";
-            dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-
-            assertThrows(NodeExistsException.class,
-                    () -> dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID + 1, TIME),
-                    "Expected NodeExistsException when creating duplicate znode configuration");
-        }
-
-        @Test
-        @DisplayName("Ensure NoNodeException is thrown when creating child path under non-existent parent")
-        public void testCreateNodeThrowsNoNodeExceptionForMissingParent() {
-            String path = "/orphanParent/targetChild";
-
-            assertThrows(NoNodeException.class,
-                    () -> dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME),
-                    "Expected NoNodeException due to non-existent parent path namespace");
-        }
-
-        @Test
-        @DisplayName("Verify smooth node deletion path")
-        public void testDeleteNodeSuccess() throws Exception {
-            String path = "/targetDeletionNode";
-            dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-
-            assertNotNull(dataTree.getNode(path));
-            dataTree.deleteNode(path, ZXID + 1);
-
-            assertNull(dataTree.getNode(path), "Znode tracking map reference should be nullified post-deletion");
-        }
-
-        @Test
-        @DisplayName("Ensure NoNodeException is triggered when trying to delete a missing node")
-        public void testDeleteNodeThrowsNoNodeException() {
-            assertThrows(NoNodeException.class,
-                    () -> dataTree.deleteNode("/absentNode", ZXID),
-                    "Expected NoNodeException when trying to delete an invalid node target");
-        }
+    @Test
+    public void testInitialNodeCount() {
+        // Root, /zookeeper, /zookeeper/quota, /zookeeper/config
+        assertTrue(dataTree.getNodeCount() >= 4, "Initial node count should contain special internal nodes");
     }
 
-    @Nested
-    @DisplayName("Data Mutations & ACL Constraint Verification")
-    class DataAndAclTests {
-
-        @Test
-        @DisplayName("Verify updating data updates node state and increments internal versioning statistics")
-        public void testSetAndGetData() throws Exception {
-            String path = "/mutableDataNode";
-            dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-
-            byte[] updatedData = "refactored_payload_data".getBytes();
-            Stat trackingStat = dataTree.setData(path, updatedData, 0, ZXID + 2, TIME + 1000);
-
-            assertEquals(0, trackingStat.getVersion(), "Initial state update version tracking should reflect input parameter index");
-
-            Stat readStat = new Stat();
-            byte[] pulledData = dataTree.getData(path, readStat, null);
-
-            assertArrayEquals(updatedData, pulledData, "Pulled payload state does not match structural updates");
-            assertEquals(0, readStat.getVersion(), "Read statistical layout version should match structural update tracking index");
-        }
-
-        @Test
-        @DisplayName("Verify setting custom access controls increments structural ACL verification indices")
-        public void testSetAndGetACL() throws Exception {
-            String path = "/securedAclNode";
-            dataTree.createNode(path, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-
-            List<ACL> uniqueAclScheme = Ids.READ_ACL_UNSAFE;
-            Stat statusMetadata = dataTree.setACL(path, uniqueAclScheme, 1);
-
-            assertEquals(1, statusMetadata.getAversion(), "Aversion should accurately match targeted update bounds");
-
-            List<ACL> dynamicPulledAcls = dataTree.getACL(path, new Stat());
-            assertEquals(uniqueAclScheme, dynamicPulledAcls, "Pulled structural access validation entries mismatch");
-        }
+    @Test
+    public void testAddConfigNodeDoesNotThrow() {
+        assertDoesNotThrow(() -> dataTree.addConfigNode());
     }
 
-    @Nested
-    @DisplayName("Structural Traversal & Path Profiling Verification")
-    class HierarchyAndPathTests {
+    // --- Create Node Tests ---
 
-        @Test
-        @DisplayName("Verify mapping precision of immediate children structures")
-        public void testGetChildrenAndCounts() throws Exception {
-            String rootPath = "/hierarchyRoot";
-            dataTree.createNode(rootPath, new byte[0], Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-            dataTree.createNode(rootPath + "/subBranchA", new byte[0], Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-            dataTree.createNode(rootPath + "/subBranchB", new byte[0], Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
-
-            List<String> discoveredBranches = dataTree.getChildren(rootPath, new Stat(), null);
-
-            assertNotNull(discoveredBranches);
-            assertEquals(2, discoveredBranches.size(), "Discovered tracking branch mismatch under designated directory root");
-            assertTrue(discoveredBranches.contains("subBranchA"));
-            assertTrue(discoveredBranches.contains("subBranchB"));
-
-            int globalRecurseChildren = dataTree.getAllChildrenNumber(rootPath);
-            assertEquals(2, globalRecurseChildren, "Recursive structural indexing checks failed");
-        }
-
-        @Test
-        @DisplayName("Bypass visibility boundaries via Reflection to inspect internal special paths safely")
-        public void testIsSpecialPathBypass() throws Exception {
-            Method targetSpecialPathMethod = DataTree.class.getDeclaredMethod("isSpecialPath", String.class);
-            targetSpecialPathMethod.setAccessible(true);
-
-            assertTrue((boolean) targetSpecialPathMethod.invoke(dataTree, "/"), "System root namespace check failure");
-            assertTrue((boolean) targetSpecialPathMethod.invoke(dataTree, "/zookeeper"), "Internal server subsystem boundary check failure");
-            assertTrue((boolean) targetSpecialPathMethod.invoke(dataTree, "/zookeeper/quota"), "Quota tracking engine boundary check failure");
-            assertFalse((boolean) targetSpecialPathMethod.invoke(dataTree, "/userAppNode"), "Standard user namespace flagged as system internal");
-        }
+    @Test
+    public void testCreateNode_TypicalUseCase() throws Exception {
+        dataTree.createNode("/typicalNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        assertNotNull(dataTree.getNode("/typicalNode"));
     }
 
-    @Nested
-    @DisplayName("Session Expirations & Transient Types Verification")
-    class SessionAndTransientTests {
-
-        @Test
-        @DisplayName("Verify session assignment maps and logs ephemeral nodes effectively")
-        public void testEphemeralTrackingAndRegistration() throws Exception {
-            String operationalEphemeralPath = "/ephemeralLeaf";
-            dataTree.createNode(operationalEphemeralPath, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, SESSION_ID, -1, ZXID, TIME);
-
-            Set<String> sessionTrackedPaths = dataTree.getEphemerals(SESSION_ID);
-            assertTrue(sessionTrackedPaths.contains(operationalEphemeralPath), "Target session allocation map context mapping lost");
-            assertEquals(1, dataTree.getEphemeralsCount(), "Global short-lived configuration count check failed");
-        }
-
-        @Test
-        @DisplayName("Verify specialized Container and Time-To-Live storage classes register smoothly")
-        public void testSpecializedEphemeralClasses() throws Exception {
-            String proxyContainerNode = "/autonomousContainer";
-            dataTree.createNode(proxyContainerNode, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, EphemeralType.CONTAINER_EPHEMERAL_OWNER, -1, ZXID, TIME);
-            assertTrue(dataTree.getContainers().contains(proxyContainerNode), "Target context class mapping failed on container registry");
-
-            String activeTtlNode = "/expiringTtlZnode";
-            long calculatedOwnerBits = EphemeralType.TTL.toEphemeralOwner(5000);
-            dataTree.createNode(activeTtlNode, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, calculatedOwnerBits, -1, ZXID, TIME);
-            assertTrue(dataTree.getTtls().contains(activeTtlNode), "Target context class mapping failed on TTL tracker layout registry");
-        }
-
-        @Test
-        @DisplayName("Bypass package access boundaries via Reflection to clean up node structures upon session death")
-        public void testKillSessionClearsState() throws Exception {
-            String ephemeralPath = "/volatileZnodeToPrune";
-            dataTree.createNode(ephemeralPath, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, SESSION_ID, -1, ZXID, TIME);
-
-            assertNotNull(dataTree.getNode(ephemeralPath));
-
-            Method executeKillSession = DataTree.class.getDeclaredMethod("killSession", long.class, long.class);
-            executeKillSession.setAccessible(true);
-            executeKillSession.invoke(dataTree, SESSION_ID, ZXID + 1);
-
-            assertNull(dataTree.getNode(ephemeralPath), "Short-lived session node failed structural cleanup sequence during purge processing");
-            assertTrue(dataTree.getEphemerals(SESSION_ID).isEmpty(), "Allocation maps for matching expired identifiers should be cleared");
-        }
+    @Test
+    public void testCreateNode_PopulatesOutputStat() throws Exception {
+        Stat stat = new Stat();
+        dataTree.createNode("/statNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1, stat);
+        assertEquals(1, stat.getCzxid());
+        assertEquals(1, stat.getMzxid());
     }
 
-    @Nested
-    @DisplayName("Persistence & Archival Encoding Logic Verification")
-    class DataTreeSerializationTests {
+    @Test
+    public void testCreateNode_NodeExistsException() throws Exception {
+        dataTree.createNode("/duplicateNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        assertThrows(NodeExistsException.class, () -> {
+            dataTree.createNode("/duplicateNode", "data2".getBytes(), defaultAcl, 0, -1, 2, 2);
+        });
+    }
 
-        @Test
-        @DisplayName("Verify precise operational recovery metrics over simulated storage streaming boundaries")
-        public void testDeepDataTreeStateSerializationCycle() throws Exception {
-            String stateValidationNode = "/checkpointZnodeData";
-            dataTree.createNode(stateValidationNode, SAMPLE_DATA, Ids.OPEN_ACL_UNSAFE, -1, -1, ZXID, TIME);
+    @Test
+    public void testCreateNode_NoNodeExceptionForMissingParent() {
+        assertThrows(NoNodeException.class, () -> {
+            dataTree.createNode("/missingParent/child", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        });
+    }
 
-            ByteArrayOutputStream outputStreamBuffer = new ByteArrayOutputStream();
-            BinaryOutputArchive runtimeOutputArchiver = BinaryOutputArchive.getArchive(outputStreamBuffer);
+    // --- Ephemeral, Container, and TTL Node Tests ---
 
-            dataTree.serialize(runtimeOutputArchiver, "snapshot_tag");
-            byte[] binaryArchivalOutput = outputStreamBuffer.toByteArray();
+    @Test
+    public void testCreateNode_Ephemeral() throws Exception {
+        long sessionId = 999L;
+        dataTree.createNode("/ephemeralNode", "data".getBytes(), defaultAcl, sessionId, -1, 1, 1);
+        Set<String> ephemerals = dataTree.getEphemerals(sessionId);
+        assertTrue(ephemerals.contains("/ephemeralNode"));
+        assertEquals(1, dataTree.getEphemeralsCount());
+        assertTrue(dataTree.getSessions().contains(sessionId));
+    }
 
-            assertTrue(binaryArchivalOutput.length > 0, "Archival serialization byte streams should not be completely empty");
+    @Test
+    public void testCreateNode_Container() throws Exception {
+        dataTree.createNode("/containerNode", "data".getBytes(), defaultAcl, EphemeralType.CONTAINER_EPHEMERAL_OWNER, -1, 1, 1);
+        assertTrue(dataTree.getContainers().contains("/containerNode"));
+    }
 
-            DataTree restoredRuntimeEngineInstance = new DataTree();
-            ByteArrayInputStream inputStreamBuffer = new ByteArrayInputStream(binaryArchivalOutput);
-            BinaryInputArchive runtimeInputArchiver = BinaryInputArchive.getArchive(inputStreamBuffer);
+    @Test
+    public void testCreateNode_TTL() throws Exception {
+        long ttlOwner = EphemeralType.TTL.toEphemeralOwner(10000);
+        dataTree.createNode("/ttlNode", "data".getBytes(), defaultAcl, ttlOwner, -1, 1, 1);
+        assertTrue(dataTree.getTtls().contains("/ttlNode"));
+    }
 
-            restoredRuntimeEngineInstance.deserialize(runtimeInputArchiver, "snapshot_tag");
+    // --- Delete Node Tests ---
 
-            DataNode verifiedNodeCheckpoint = restoredRuntimeEngineInstance.getNode(stateValidationNode);
-            assertNotNull(verifiedNodeCheckpoint, "Recovered tree environment failed lookup checks for registered historical targets");
-            assertArrayEquals(SAMPLE_DATA, verifiedNodeCheckpoint.getData(), "Recovered memory array does not retain original structural bytes");
+    @Test
+    public void testDeleteNode_TypicalUseCase() throws Exception {
+        dataTree.createNode("/deleteMe", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        dataTree.deleteNode("/deleteMe", 2);
+        assertNull(dataTree.getNode("/deleteMe"));
+    }
+
+    @Test
+    public void testDeleteNode_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.deleteNode("/nonExistent", 1));
+    }
+
+    @Test
+    public void testDeleteNode_RemovesEphemeral() throws Exception {
+        long sessionId = 777L;
+        dataTree.createNode("/ephemeralDelete", "data".getBytes(), defaultAcl, sessionId, -1, 1, 1);
+        dataTree.deleteNode("/ephemeralDelete", 2);
+        assertFalse(dataTree.getEphemerals(sessionId).contains("/ephemeralDelete"));
+    }
+
+    // --- SetData and GetData Tests ---
+
+    @Test
+    public void testSetData_TypicalUseCase() throws Exception {
+        dataTree.createNode("/setDataNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        Stat stat = dataTree.setData("/setDataNode", "newData".getBytes(), -1, 2, 2);
+        assertEquals(2, stat.getMzxid());
+    }
+
+    @Test
+    public void testSetData_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.setData("/nonExistent", "data".getBytes(), -1, 1, 1));
+    }
+
+    @Test
+    public void testGetData_TypicalUseCase() throws Exception {
+        byte[] expectedData = "testData".getBytes();
+        dataTree.createNode("/getDataNode", expectedData, defaultAcl, 0, -1, 1, 1);
+        Stat stat = new Stat();
+        byte[] actualData = dataTree.getData("/getDataNode", stat, null);
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    public void testGetData_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.getData("/nonExistent", new Stat(), null));
+    }
+
+    // --- Stat and Children Tests ---
+
+    @Test
+    public void testStatNode_TypicalUseCase() throws Exception {
+        dataTree.createNode("/statCheckNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        Stat stat = dataTree.statNode("/statCheckNode", null);
+        assertNotNull(stat);
+        assertEquals(1, stat.getCzxid());
+    }
+
+    @Test
+    public void testStatNode_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.statNode("/nonExistent", null));
+    }
+
+    @Test
+    public void testGetChildren_TypicalUseCase() throws Exception {
+        dataTree.createNode("/parent", "".getBytes(), defaultAcl, 0, -1, 1, 1);
+        dataTree.createNode("/parent/child1", "".getBytes(), defaultAcl, 0, -1, 2, 2);
+        List<String> children = dataTree.getChildren("/parent", new Stat(), null);
+        assertEquals(1, children.size());
+        assertTrue(children.contains("child1"));
+    }
+
+    @Test
+    public void testGetChildren_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.getChildren("/nonExistent", new Stat(), null));
+    }
+
+    @Test
+    public void testGetAllChildrenNumber_Root() {
+        assertTrue(dataTree.getAllChildrenNumber("/") >= 0);
+    }
+
+    @Test
+    public void testGetAllChildrenNumber_SpecificNode() throws Exception {
+        dataTree.createNode("/parentLeaf", "".getBytes(), defaultAcl, 0, -1, 1, 1);
+        assertEquals(0, dataTree.getAllChildrenNumber("/parentLeaf"));
+    }
+
+    // --- ACL Tests ---
+
+    @Test
+    public void testSetACL_TypicalUseCase() throws Exception {
+        dataTree.createNode("/aclNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        Stat stat = dataTree.setACL("/aclNode", defaultAcl, -1);
+        assertNotNull(stat);
+    }
+
+    @Test
+    public void testSetACL_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.setACL("/nonExistent", defaultAcl, -1));
+    }
+
+    @Test
+    public void testGetACL_TypicalUseCase() throws Exception {
+        dataTree.createNode("/getAclNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        List<ACL> retrievedAcl = dataTree.getACL("/getAclNode", new Stat());
+        assertFalse(retrievedAcl.isEmpty());
+    }
+
+    @Test
+    public void testGetACL_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.getACL("/nonExistent", new Stat()));
+    }
+
+    @Test
+    public void testAclCacheSize() throws Exception {
+        int initialSize = dataTree.aclCacheSize();
+        dataTree.createNode("/aclCacheNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        assertTrue(dataTree.aclCacheSize() >= initialSize);
+    }
+
+    // --- Size and Metrics Tests ---
+
+    @Test
+    public void testApproximateDataSize() throws Exception {
+        long initialSize = dataTree.approximateDataSize();
+        dataTree.createNode("/sizeNode", "12345".getBytes(), defaultAcl, 0, -1, 1, 1);
+        assertTrue(dataTree.approximateDataSize() > initialSize);
+    }
+
+    @Test
+    public void testCachedApproximateDataSize() throws Exception {
+        long initialSize = dataTree.cachedApproximateDataSize();
+        dataTree.createNode("/cachedSizeNode", "12345".getBytes(), defaultAcl, 0, -1, 1, 1);
+        assertTrue(dataTree.cachedApproximateDataSize() > initialSize);
+    }
+
+    @Test
+    public void testGetMaxPrefixWithQuota_NoQuota() {
+        assertNull(dataTree.getMaxPrefixWithQuota("/nonExistentQuota"));
+    }
+
+    // --- Cversion and State Operations ---
+
+    @Test
+    public void testSetCversionPzxid_TypicalUseCase() throws Exception {
+        dataTree.createNode("/cversionNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        dataTree.setCversionPzxid("/cversionNode", 10, 5);
+        Stat stat = dataTree.statNode("/cversionNode", null);
+        assertEquals(10, stat.getCversion());
+        assertEquals(5, stat.getPzxid());
+    }
+
+    @Test
+    public void testSetCversionPzxid_NoNodeException() {
+        assertThrows(NoNodeException.class, () -> dataTree.setCversionPzxid("/nonExistent", 5, 2));
+    }
+
+    // --- Watcher Tests ---
+
+    @Test
+    public void testAddWatch_IncreasesWatchCount() throws Exception {
+        int initialWatches = dataTree.getWatchCount();
+        dataTree.createNode("/watchNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        dataTree.addWatch("/watchNode", dummyWatcher, 1);
+        assertTrue(dataTree.getWatchCount() > initialWatches);
+    }
+
+    @Test
+    public void testContainsWatcher_ReturnsTrue() throws Exception {
+        dataTree.createNode("/containsWatchNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        dataTree.addWatch("/containsWatchNode", dummyWatcher, 1);
+        assertTrue(dataTree.containsWatcher("/containsWatchNode", Watcher.WatcherType.Data, dummyWatcher));
+    }
+
+    @Test
+    public void testRemoveWatch_ReturnsTrue() throws Exception {
+        dataTree.createNode("/removeWatchNode", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        dataTree.addWatch("/removeWatchNode", dummyWatcher, 1);
+        assertTrue(dataTree.removeWatch("/removeWatchNode", Watcher.WatcherType.Data, dummyWatcher));
+    }
+
+    // --- Transaction Processing Tests ---
+
+    @Test
+    public void testProcessTxn_CreateOpCode() {
+        TxnHeader header = new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create);
+        CreateTxn createTxn = new CreateTxn("/txnCreate", "data".getBytes(), defaultAcl, false, 0);
+        DataTree.ProcessTxnResult result = dataTree.processTxn(header, createTxn);
+
+        assertEquals(0, result.err);
+        assertEquals("/txnCreate", result.path);
+        assertDoesNotThrow(() -> dataTree.getNode("/txnCreate"));
+    }
+
+    @Test
+    public void testProcessTxn_DeleteOpCode() throws Exception {
+        dataTree.createNode("/txnDelete", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+        TxnHeader header = new TxnHeader(1, 1, 2, 2, ZooDefs.OpCode.delete);
+        DeleteTxn deleteTxn = new DeleteTxn("/txnDelete");
+        DataTree.ProcessTxnResult result = dataTree.processTxn(header, deleteTxn);
+
+        assertEquals(0, result.err);
+        assertNull(dataTree.getNode("/txnDelete"));
+    }
+
+    @Test
+    public void testProcessTxn_SetDataOpCode() throws Exception {
+        // 1. Create the initial node
+        dataTree.createNode("/txnSetData", "data".getBytes(), defaultAcl, 0, -1, 1, 1);
+
+        // 2. Process the SetData transaction
+        TxnHeader header = new TxnHeader(1, 1, 2, 2, ZooDefs.OpCode.setData);
+        SetDataTxn setDataTxn = new SetDataTxn("/txnSetData", "newData".getBytes(), -1);
+        DataTree.ProcessTxnResult result = dataTree.processTxn(header, setDataTxn);
+
+        // 3. Verify the transaction succeeded
+        assertEquals(0, result.err);
+
+        // 4. Safely retrieve the updated data using the public API instead of accessing DataNode directly
+        Stat stat = new Stat();
+        byte[] actualData = dataTree.getData("/txnSetData", stat, null);
+
+        // 5. Assert the data matches
+        assertArrayEquals("newData".getBytes(), actualData);
+    }
+
+    // --- Utility and Deprecated Methods ---
+
+    @Test
+    public void testCopyStatPersisted_Deprecated() {
+        StatPersisted from = new StatPersisted();
+        from.setCzxid(100L);
+        StatPersisted to = new StatPersisted();
+        DataTree.copyStatPersisted(from, to);
+        assertEquals(100L, to.getCzxid());
+    }
+
+    @Test
+    public void testCopyStat_Deprecated() {
+        Stat from = new Stat();
+        from.setCzxid(200L);
+        Stat to = new Stat();
+        DataTree.copyStat(from, to);
+        assertEquals(200L, to.getCzxid());
+    }
+
+    @Test
+    public void testCreateStat_StaticMethod() {
+        StatPersisted stat = DataTree.createStat(123L, 456L, 789L);
+        assertEquals(123L, stat.getCzxid());
+        assertEquals(456L, stat.getCtime());
+        assertEquals(789L, stat.getEphemeralOwner());
+    }
+
+    @Test
+    public void testGetTreeDigest() {
+        assertDoesNotThrow(() -> dataTree.getTreeDigest());
+    }
+
+    @Test
+    public void testGetDigestLog() {
+        assertNotNull(dataTree.getDigestLog());
+    }
+
+    // --- Dummy Watcher Implementation for Tests ---
+
+    private static class DummyWatcher implements Watcher {
+        @Override
+        public void process(WatchedEvent event) {
+            // No-op for tests
         }
     }
 }

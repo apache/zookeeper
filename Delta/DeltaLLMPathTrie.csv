@@ -1,0 +1,14 @@
+,C0,C1,C2,C3,C4
+Jacoco stamanet,100%,100%,100%,100%,100%
+jacoco branch,100%,100%,100%,100%,100%
+pit Line coverage,99%,99%,99%,99%,99%
+pit MUtation coverage,95%,95%,95%,95%,95%
+PItTestSTrenght,95%,95%,95%,95%,95%
+Chiarezza ,1,2,2,2,2
+Manutenibilita,A (68),A (0),A (0),A (0),A (0)
+NumeroCodeSmellsTotali,68,0,0,0,0
+CodeSmells,68,0,0,0,0
+CodeSmellsConsistency,58,0,0,0,0
+CodeSmellsIntentionality,0,0,0,0,0
+CodeSmellsAdaptability,10,0,0,0,0
+CodeSmellsResponsibility,0,0,0,0,0

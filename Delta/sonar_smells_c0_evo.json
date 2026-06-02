@@ -1,0 +1,13 @@
+{
+  "total": 25,
+  "breakdown": {
+    "DataTree_ESTest.java": 24,
+    "DataTree_ESTest_scaffolding.java": 1
+  },
+  "byCategory": {
+    "INTENTIONAL": 19,
+    "CONSISTENT": 6,
+    "ADAPTABLE": 0,
+    "RESPONSIBLE": 0
+  }
+}
