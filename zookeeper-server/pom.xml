@@ -490,8 +490,7 @@
           </includes>
           <excludes>
             <exclude>**/*ErrorTest*.java</exclude>
-            <exclude>**/PathTrieC*_ESTest.java</exclude>
-            <exclude>**/DataTreeC*_ESTest.java</exclude>
+            <exclude>**/*_ESTest_scaffolding.java</exclude>
           </excludes>
           <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>

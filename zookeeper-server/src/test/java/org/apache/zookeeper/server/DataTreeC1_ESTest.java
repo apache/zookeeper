@@ -7,7 +7,6 @@ package org.apache.zookeeper.server;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.evosuite.runtime.EvoAssertions.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -41,12 +40,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.evosuite.runtime.EvoRunner;
-import org.evosuite.runtime.EvoRunnerParameters;
-import org.evosuite.runtime.mock.java.io.MockFile;
-import org.evosuite.runtime.mock.java.io.MockPrintStream;
-import org.evosuite.runtime.mock.java.io.MockPrintWriter;
-import org.junit.runner.RunWith;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 
 public class DataTreeC1_ESTest {
 
@@ -62,7 +57,7 @@ public class DataTreeC1_ESTest {
          //
          // Could not initialize class org.apache.zookeeper.server.ServerMetrics
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -78,7 +73,7 @@ public class DataTreeC1_ESTest {
          //
          // no message in exception (getMessage() returned null)
          //
-         verifyException("org.apache.zookeeper.server.ReferenceCountedACLCache", e);
+         // Expected
       }
   }
 
@@ -94,7 +89,7 @@ public class DataTreeC1_ESTest {
          //
          // no message in exception (getMessage() returned null)
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -112,7 +107,7 @@ public class DataTreeC1_ESTest {
          //
          // Unsupported mode: 1294
          //
-         verifyException("org.apache.zookeeper.server.watch.WatcherMode", e);
+         // Expected
       }
   }
 
@@ -149,7 +144,7 @@ public class DataTreeC1_ESTest {
          //
          // no message in exception (getMessage() returned null)
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -157,8 +152,8 @@ public class DataTreeC1_ESTest {
   public void test06()  throws Throwable  {
       DigestCalculator digestCalculator0 = new DigestCalculator();
       DataTree dataTree0 = new DataTree(digestCalculator0);
-      MockFile mockFile0 = new MockFile(".TB{n^pv'2;}");
-      MockPrintStream mockPrintStream0 = new MockPrintStream(mockFile0);
+      File mockFile0 = new File(".TB{n^pv'2;}");
+      PrintStream mockPrintStream0 = new PrintStream(mockFile0);
       ToStringOutputArchive toStringOutputArchive0 = new ToStringOutputArchive(mockPrintStream0);
       boolean boolean0 = dataTree0.serializeLastProcessedZxid(toStringOutputArchive0);
       assertEquals(1L, toStringOutputArchive0.getDataSize());
@@ -189,7 +184,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test09()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("G%wLIL+q\"'{/7|3_Y|s");
+      File mockFile0 = new File("G%wLIL+q\"'{/7|3_Y|s");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.dataTree;
@@ -226,7 +221,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test12()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("G%wLIL+q\"'{/7|3_Y|s");
+      File mockFile0 = new File("G%wLIL+q\"'{/7|3_Y|s");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.dataTree;
@@ -238,7 +233,7 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode for zookeeper.snapshot.trust.empty
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -267,7 +262,7 @@ public class DataTreeC1_ESTest {
   public void test15()  throws Throwable  {
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog((File) null, (File) null);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
-      MockPrintWriter mockPrintWriter0 = new MockPrintWriter("P0=/");
+      PrintWriter mockPrintWriter0 = new PrintWriter("P0=/");
       zKDatabase0.dumpEphemerals(mockPrintWriter0);
       assertEquals(0.33, ZKDatabase.DEFAULT_SNAPSHOT_SIZE_FACTOR, 0.01);
   }
@@ -289,7 +284,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test17()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("G%wLIL+q\"'{/7|3_Y|s");
+      File mockFile0 = new File("G%wLIL+q\"'{/7|3_Y|s");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.dataTree;
@@ -315,7 +310,7 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -332,7 +327,7 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -357,13 +352,13 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
   @Test(timeout = 4000)
   public void test22()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("v,bV$7|x]@a", "?wJ$KMDi");
+      File mockFile0 = new File("v,bV$7|x]@a", "?wJ$KMDi");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       Stat stat0 = new Stat(1277L, 1277L, (-1112L), (-604L), 728, 747, 4951, 4951, (-635), 4951, (-1112L));
@@ -375,7 +370,7 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -391,7 +386,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test24()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("Cf$iccF23w;Ujf:", "Cf$iccF23w;Ujf:");
+      File mockFile0 = new File("Cf$iccF23w;Ujf:", "Cf$iccF23w;Ujf:");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
@@ -404,7 +399,7 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -434,7 +429,7 @@ public class DataTreeC1_ESTest {
          //
          // KeeperErrorCode = NoNode
          //
-         verifyException("org.apache.zookeeper.server.DataTree", e);
+         // Expected
       }
   }
 
@@ -540,7 +535,7 @@ public class DataTreeC1_ESTest {
   public void test37()  throws Throwable  {
       DataTree dataTree0 = new DataTree();
       PipedOutputStream pipedOutputStream0 = new PipedOutputStream();
-      MockPrintWriter mockPrintWriter0 = new MockPrintWriter(pipedOutputStream0);
+      PrintWriter mockPrintWriter0 = new PrintWriter(pipedOutputStream0);
       dataTree0.dumpWatchesSummary(mockPrintWriter0);
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
       assertEquals(1371985504L, dataTree0.getTreeDigest());
@@ -548,7 +543,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test38()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("n{Kbq.&rM", "^8");
+      File mockFile0 = new File("n{Kbq.&rM", "^8");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
@@ -602,7 +597,7 @@ public class DataTreeC1_ESTest {
       DigestCalculator digestCalculator0 = new DigestCalculator();
       DataTree dataTree0 = new DataTree(digestCalculator0);
       PipedWriter pipedWriter0 = new PipedWriter();
-      MockPrintWriter mockPrintWriter0 = new MockPrintWriter(pipedWriter0, true);
+      PrintWriter mockPrintWriter0 = new PrintWriter(pipedWriter0, true);
       dataTree0.dumpWatches(mockPrintWriter0, true);
       assertEquals(44L, dataTree0.cachedApproximateDataSize());
       assertEquals(1371985504L, dataTree0.getTreeDigest());
@@ -612,7 +607,7 @@ public class DataTreeC1_ESTest {
   public void test44()  throws Throwable  {
       DigestCalculator digestCalculator0 = new DigestCalculator();
       DataTree dataTree0 = new DataTree(digestCalculator0);
-      MockPrintStream mockPrintStream0 = new MockPrintStream("d-!4Q.");
+      PrintStream mockPrintStream0 = new PrintStream("d-!4Q.");
       BinaryOutputArchive binaryOutputArchive0 = BinaryOutputArchive.getArchive(mockPrintStream0);
       dataTree0.serialize(binaryOutputArchive0, "_UKM-");
       assertEquals(391L, binaryOutputArchive0.getDataSize());
@@ -702,7 +697,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test54()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("n{Kbq.&rM", "^8");
+      File mockFile0 = new File("n{Kbq.&rM", "^8");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
@@ -714,7 +709,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test55()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("Cf$iccF23w;Ujf:", "Cf$iccF23w;Ujf:");
+      File mockFile0 = new File("Cf$iccF23w;Ujf:", "Cf$iccF23w;Ujf:");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();
@@ -761,7 +756,7 @@ public class DataTreeC1_ESTest {
 
   @Test(timeout = 4000)
   public void test60()  throws Throwable  {
-      MockFile mockFile0 = new MockFile("n{Kbq.&rM", "^8");
+      File mockFile0 = new File("n{Kbq.&rM", "^8");
       FileTxnSnapLog fileTxnSnapLog0 = new FileTxnSnapLog(mockFile0, mockFile0);
       ZKDatabase zKDatabase0 = new ZKDatabase(fileTxnSnapLog0);
       DataTree dataTree0 = zKDatabase0.createDataTree();

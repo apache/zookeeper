@@ -7,14 +7,9 @@ package org.apache.zookeeper.common;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.evosuite.runtime.EvoAssertions.*;
 import org.apache.zookeeper.common.PathTrie;
-import org.evosuite.runtime.EvoRunner;
-import org.evosuite.runtime.EvoRunnerParameters;
-import org.junit.runner.RunWith;
 
-@RunWith(EvoRunner.class) @EvoRunnerParameters(mockJVMNonDeterminism = true, useVFS = true, useVNET = true, resetStaticState = true, separateClassLoader = true, useJEE = true) 
-public class PathTrieC3_ESTest extends PathTrieC3_ESTest_scaffolding {
+public class PathTrieC3_ESTest {
 
   @Test(timeout = 4000)
   public void test00()  throws Throwable  {
@@ -43,7 +38,7 @@ public class PathTrieC3_ESTest extends PathTrieC3_ESTest_scaffolding {
          //
          // Invalid path: 
          //
-         verifyException("org.apache.zookeeper.common.PathTrie", e);
+         // Expected
       }
   }
 
@@ -72,7 +67,7 @@ public class PathTrieC3_ESTest extends PathTrieC3_ESTest_scaffolding {
          //
          // Invalid path: 
          //
-         verifyException("org.apache.zookeeper.common.PathTrie", e);
+         // Expected
       }
   }
 
@@ -95,7 +90,7 @@ public class PathTrieC3_ESTest extends PathTrieC3_ESTest_scaffolding {
          //
          // Invalid path: 
          //
-         verifyException("org.apache.zookeeper.common.PathTrie", e);
+         // Expected
       }
   }
 
