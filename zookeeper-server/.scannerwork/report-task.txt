@@ -1,0 +1,8 @@
+organization=lucacupellaro
+projectKey=lucacupellaro_zookeeper
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.88979
+branch=C4-LLM
+dashboardUrl=https://sonarcloud.io/dashboard?id=lucacupellaro_zookeeper&branch=C4-LLM&resolved=false
+ceTaskId=AZ6E3v4X6eTnWh90-J69
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZ6E3v4X6eTnWh90-J69

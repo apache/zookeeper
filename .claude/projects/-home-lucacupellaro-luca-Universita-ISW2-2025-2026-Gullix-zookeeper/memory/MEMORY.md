@@ -1,0 +1,2 @@
+- [Delta metrics PathTrie progress](project_delta_metrics.md) — Stato completo raccolta metriche C1-C4 EVO/LLM/RND, dati JaCoCo/PIT/SonarCloud, problemi aperti
+- [SonarCloud credentials](reference_sonarcloud.md) — Token valido: a7616df5...d1, project key lucacupellaro_zookeeper, org lucacupellaro
