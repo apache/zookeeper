@@ -262,14 +262,7 @@ public abstract class ServerCnxnFactory {
                                                                            .newInstance();
             LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
             return serverCnxnFactory;
-        } catch (Exception e) {
-            String msg = "Couldn't instantiate " + serverCnxnFactoryName;
-            if (secure) {
-                msg += ". SSL/TLS support requires Netty; please add netty-handler"
-                    + " (and optionally netty-tcnative-boringssl-static) to your project's dependencies.";
-            }
-            throw new IOException(msg, e);
-        } catch (NoClassDefFoundError e) {
+        } catch (Exception | NoClassDefFoundError e) {
             String msg = "Couldn't instantiate " + serverCnxnFactoryName;
             if (secure) {
                 msg += ". SSL/TLS support requires Netty; please add netty-handler"
