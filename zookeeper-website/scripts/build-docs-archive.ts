@@ -32,6 +32,7 @@ import {
   DOCS_ARCHIVE_BASE_ENV,
   normalizeDocsArchiveBase
 } from "../app/lib/docs-archive";
+import { formatDocsBase } from "../app/lib/docs-paths";
 
 const ROOT = join(import.meta.dirname, "..");
 const BUILD_DIR = join(ROOT, "build");
@@ -239,7 +240,7 @@ export async function verifyArchiveOutput(outputDir: string) {
 
 export async function main() {
   const version = parseVersion();
-  const archiveBase = normalizeDocsArchiveBase(`/doc/r${version}/`);
+  const archiveBase = normalizeDocsArchiveBase(formatDocsBase(version));
   const env = {
     ...process.env,
     [DOCS_ARCHIVE_BASE_ENV]: archiveBase

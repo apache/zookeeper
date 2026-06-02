@@ -16,10 +16,21 @@
 // limitations under the License.
 //
 
-import { CURRENT_VERSION } from "@/lib/current-version";
+// Imported via a relative path (not the `@` alias) so this module can also be
+// loaded by Node-only configs/scripts run via tsx, which does not resolve `@`.
+import { CURRENT_VERSION } from "./current-version";
 
-export const CURRENT_DOCS_PATH = `/doc/r${CURRENT_VERSION}`;
+export function formatDocsBase(version: string): string {
+  return `/doc/r${version}`;
+}
 
+export const CURRENT_DOCS_PATH = formatDocsBase(CURRENT_VERSION);
+
+// Docs base flows across two execution contexts:
+//   ZOOKEEPER_DOCS_ARCHIVE_BASE (process.env, Node configs/scripts)
+//     -> Vite `base`
+//     -> import.meta.env.BASE_URL (bundled browser code, read below).
+// It is the same value in both worlds; only the access mechanism differs.
 export function getDocsBasePath(): string {
   return import.meta.env.BASE_URL === "/" ? CURRENT_DOCS_PATH : "";
 }
@@ -38,5 +49,5 @@ export function resolveDocsHref(href: string): string {
     return href;
   }
 
-  return href === "/" ? base : `${base}${href}`;
+  return `${base}${href}`;
 }

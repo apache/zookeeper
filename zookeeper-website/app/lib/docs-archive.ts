@@ -16,6 +16,11 @@
 // limitations under the License.
 //
 
+// Archive builds set ZOOKEEPER_DOCS_ARCHIVE_BASE in process.env. Vite turns it
+// into the app `base`, which bundled browser code reads back as
+// import.meta.env.BASE_URL (see getDocsBasePath in docs-paths.ts). Node-side
+// code (vite/react-router configs, scripts) reads it here via process.env;
+// it is the same value in two execution contexts.
 export const DOCS_ARCHIVE_BASE_ENV = "ZOOKEEPER_DOCS_ARCHIVE_BASE";
 
 export function normalizeDocsArchiveBase(value?: string): string {
@@ -29,4 +34,10 @@ export function normalizeDocsArchiveBase(value?: string): string {
   return withoutDuplicateSlashes.endsWith("/")
     ? withoutDuplicateSlashes
     : `${withoutDuplicateSlashes}/`;
+}
+
+// Single Node-side read of the archive base: owns the env-var name and the
+// normalization. Used by the vite and react-router configs.
+export function getDocsArchiveBase(): string {
+  return normalizeDocsArchiveBase(process.env[DOCS_ARCHIVE_BASE_ENV]);
 }

@@ -24,11 +24,9 @@ import { resolve } from "path";
 import mdx from "fumadocs-mdx/vite";
 import * as MdxConfig from "./source.config";
 import { CURRENT_VERSION } from "./app/lib/current-version";
-import { normalizeDocsArchiveBase } from "./app/lib/docs-archive";
+import { getDocsArchiveBase } from "./app/lib/docs-archive";
 
-const docsArchiveBase = normalizeDocsArchiveBase(
-  process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE
-);
+const docsArchiveBase = getDocsArchiveBase();
 
 // Create custom logger to filter out benign warnings
 const logger = createLogger();

@@ -296,6 +296,12 @@ This starts a local development server with:
 1. Create a new `.mdx` file in `app/pages/_docs/docs/_mdx/` (for example `my-topic.mdx`).
 2. Add the new file to the relevant `meta.json` in the same section folder so it appears in navigation.
 
+**Docs link & image conventions:**
+
+- Internal doc links are **doc-root-relative** — write `/admin-ops/cli`, not `/docs/...` and not a hardcoded `/doc/r<version>/...`. The version prefix (`/doc/r<version>`) is added automatically at render time (`resolveDocsHref` on the live site, React Router `basename` in an archive).
+- Images use the static asset path `/docs-images/...` (served from `public/docs-images/`).
+- Use absolute `https://` URLs for off-site links (e.g. `https://zookeeper.apache.org/`).
+
 **Update content:**
 
 - Edit the appropriate `.md` or `.json` file
@@ -413,6 +419,8 @@ Archived docs use the same versioned route shape as current docs:
 - `/doc/r3.9.6/developer/programmers-guide`
 
 The archive build uses React Router's `basename` and Vite's `base` to serve docs from `/doc/r<version>/`. It uses the archive route set from `app/routes.ts`: docs and search remain available in the archive, while non-doc archive-local requests such as `/doc/r3.9.6/news` are redirected by the generated `.htaccess` file to the matching live-site path (`/news`).
+
+Archive builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into the app `base`, which the browser reads back as `import.meta.env.BASE_URL`. Rule of thumb: Node-side code (vite/react-router configs, scripts) reads `ZOOKEEPER_DOCS_ARCHIVE_BASE` from `process.env`; bundled app code reads `import.meta.env.BASE_URL`. They are the same value in two execution contexts.
 
 #### Continuous Integration
 

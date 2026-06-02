@@ -17,14 +17,25 @@
 //
 
 import { describe, expect, it } from "vitest";
-import { CURRENT_DOCS_PATH, resolveDocsHref } from "@/lib/docs-paths";
+import {
+  CURRENT_DOCS_PATH,
+  formatDocsBase,
+  resolveDocsHref
+} from "@/lib/docs-paths";
+
+describe("formatDocsBase", () => {
+  it("formats the versioned docs base path", () => {
+    expect(formatDocsBase("3.9.6")).toBe("/doc/r3.9.6");
+    expect(formatDocsBase("3.10.0")).toBe("/doc/r3.10.0");
+  });
+});
 
 describe("resolveDocsHref", () => {
   it("prefixes internal paths with the live docs base", () => {
     expect(resolveDocsHref("/overview/quick-start")).toBe(
       `${CURRENT_DOCS_PATH}/overview/quick-start`
     );
-    expect(resolveDocsHref("/")).toBe(CURRENT_DOCS_PATH);
+    expect(resolveDocsHref("/")).toBe(`${CURRENT_DOCS_PATH}/`);
   });
 
   it("leaves external and non-root paths unchanged", () => {
