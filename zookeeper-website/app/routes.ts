@@ -23,8 +23,9 @@ import {
   route
 } from "@react-router/dev/routes";
 import { CURRENT_VERSION } from "./lib/current-version";
+import { getDocsArchiveBase } from "./lib/docs-archive";
 
-const isDocsArchiveBuild = Boolean(process.env.ZOOKEEPER_DOCS_ARCHIVE_BASE);
+const isDocsArchiveBuild = Boolean(getDocsArchiveBase());
 
 const docsRoutes = layout("./pages/_docs/docs-layout.tsx", [
   route(`doc/r${CURRENT_VERSION}`, "routes/_docs/docs-index.tsx"),
