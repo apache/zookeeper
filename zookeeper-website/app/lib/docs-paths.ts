@@ -32,8 +32,9 @@ export const CURRENT_DOCS_PATH = formatDocsBase(CURRENT_VERSION);
 //     -> import.meta.env.BASE_URL (bundled browser code, read below).
 // It is the same value in both worlds; only the access mechanism differs.
 export function getDocsBasePath(): string {
-  // In archive builds BASE_URL is already /doc/rX/, and React Router basename
-  // applies it to links, so docs hrefs should remain archive-local.
+  // Live builds run at the site root, so internal docs links need the current
+  // docs prefix. Archive builds already have /doc/rX/ in React Router basename,
+  // so internal docs links should remain archive-local and unprefixed here.
   return import.meta.env.BASE_URL === "/" ? CURRENT_DOCS_PATH : "";
 }
 

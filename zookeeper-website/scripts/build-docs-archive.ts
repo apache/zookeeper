@@ -38,6 +38,7 @@ const ROOT = join(import.meta.dirname, "..");
 const BUILD_DIR = join(ROOT, "build");
 const BUILD_CLIENT_DIR = join(BUILD_DIR, "client");
 const ARCHIVE_OUTPUT_ROOT = join(BUILD_DIR, "doc");
+const DOCS_MDX_DIR = join(ROOT, "app", "pages", "_docs", "docs", "_mdx");
 const REQUIRED_ARCHIVE_PATHS = ["index.html", "api/search", ".htaccess"];
 const ROOT_RELATIVE_DOC_SECTIONS = "overview|developer|admin-ops|miscellaneous";
 
@@ -115,6 +116,24 @@ async function collectFiles(directory: string): Promise<string[]> {
 
   await visit(directory);
   return files.sort();
+}
+
+export function toArchiveHtmlPathFromMdx(relativePath: string): string {
+  const routePath = relativePath
+    .replaceAll("\\", "/")
+    .replace(/\.mdx$/, "")
+    .replace(/(?:^|\/)index$/, "");
+
+  return routePath ? `${routePath}/index.html` : "index.html";
+}
+
+export async function collectExpectedDocsArchivePaths(
+  docsMdxDir = DOCS_MDX_DIR
+): Promise<string[]> {
+  return (await collectFiles(docsMdxDir))
+    .filter((file) => file.endsWith(".mdx"))
+    .map(toArchiveHtmlPathFromMdx)
+    .sort();
 }
 
 async function copyArchiveOutput(version: string): Promise<string> {
@@ -203,7 +222,10 @@ async function rewriteArchiveLocalUrls(outputDir: string, archiveBase: string) {
   }
 }
 
-export async function verifyArchiveOutput(outputDir: string) {
+export async function verifyArchiveOutput(
+  outputDir: string,
+  docsMdxDir = DOCS_MDX_DIR
+) {
   const files = await collectFiles(outputDir);
   const fileSet = new Set(files);
 
@@ -217,6 +239,12 @@ export async function verifyArchiveOutput(outputDir: string) {
     !files.some((file) => file !== "index.html" && file.endsWith("/index.html"))
   ) {
     throw new Error("Archive build is missing nested docs pages");
+  }
+
+  for (const path of await collectExpectedDocsArchivePaths(docsMdxDir)) {
+    if (!fileSet.has(path)) {
+      throw new Error(`Archive build is missing docs page ${path}`);
+    }
   }
 
   const textFiles = files.filter((file) => /\.(?:html|css)$/.test(file));

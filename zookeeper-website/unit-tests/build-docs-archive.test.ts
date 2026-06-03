@@ -23,10 +23,12 @@ import { tmpdir } from "node:os";
 import {
   createArchiveHtaccessContent,
   parseVersion,
+  toArchiveHtmlPathFromMdx,
   verifyArchiveOutput
 } from "../scripts/build-docs-archive";
 
 let tempDir: string;
+let tempDocsDir: string;
 
 async function writeFixtureFile(relativePath: string, content: string) {
   const filePath = join(tempDir, relativePath);
@@ -34,7 +36,18 @@ async function writeFixtureFile(relativePath: string, content: string) {
   await writeFile(filePath, content);
 }
 
+async function writeDocsSourceFile(
+  relativePath: string,
+  content = "---\n---\n"
+) {
+  const filePath = join(tempDocsDir, relativePath);
+  await mkdir(dirname(filePath), { recursive: true });
+  await writeFile(filePath, content);
+}
+
 async function writeValidArchiveFixture() {
+  await writeDocsSourceFile("index.mdx");
+  await writeDocsSourceFile("developer/programmers-guide/index.mdx");
   await writeFixtureFile(
     "index.html",
     '<html><a href="/doc/r3.9.6/developer/programmers-guide/">Guide</a></html>'
@@ -49,12 +62,14 @@ async function writeValidArchiveFixture() {
 
 beforeEach(async () => {
   tempDir = await mkdtemp(join(tmpdir(), "zk-docs-archive-test-"));
+  tempDocsDir = await mkdtemp(join(tmpdir(), "zk-docs-source-test-"));
   vi.spyOn(console, "log").mockImplementation(() => undefined);
 });
 
 afterEach(async () => {
   vi.restoreAllMocks();
   await rm(tempDir, { recursive: true, force: true });
+  await rm(tempDocsDir, { recursive: true, force: true });
 });
 
 describe("parseVersion", () => {
@@ -77,26 +92,44 @@ describe("parseVersion", () => {
   });
 });
 
+describe("toArchiveHtmlPathFromMdx", () => {
+  it("maps docs source files to archive html paths", () => {
+    expect(toArchiveHtmlPathFromMdx("index.mdx")).toBe("index.html");
+    expect(toArchiveHtmlPathFromMdx("overview/quick-start.mdx")).toBe(
+      "overview/quick-start/index.html"
+    );
+    expect(
+      toArchiveHtmlPathFromMdx("developer/programmers-guide/index.mdx")
+    ).toBe("developer/programmers-guide/index.html");
+  });
+});
+
 describe("verifyArchiveOutput", () => {
   it("accepts an archive with docs at the archive root", async () => {
     await writeValidArchiveFixture();
 
-    await expect(verifyArchiveOutput(tempDir)).resolves.toBeUndefined();
+    await expect(
+      verifyArchiveOutput(tempDir, tempDocsDir)
+    ).resolves.toBeUndefined();
   });
 
   it("rejects an archive without the docs index page", async () => {
+    await writeDocsSourceFile("index.mdx");
+    await writeDocsSourceFile("developer/programmers-guide/index.mdx");
     await writeFixtureFile(
       "developer/programmers-guide/index.html",
       "<html>Guide</html>"
     );
     await writeFixtureFile("api/search", "{}");
 
-    await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
       /missing index\.html/
     );
   });
 
   it("rejects an archive without nested docs pages", async () => {
+    await writeDocsSourceFile("index.mdx");
+    await writeDocsSourceFile("developer/programmers-guide/index.mdx");
     await writeFixtureFile(
       "index.html",
       '<html><script>window.location.replace("/")</script></html>'
@@ -104,7 +137,7 @@ describe("verifyArchiveOutput", () => {
     await writeFixtureFile("api/search", "{}");
     await writeFixtureFile(".htaccess", "RewriteEngine On");
 
-    await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
       /missing nested docs pages/
     );
   });
@@ -113,8 +146,17 @@ describe("verifyArchiveOutput", () => {
     await writeValidArchiveFixture();
     await rm(join(tempDir, "api/search"));
 
-    await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
       /missing api\/search/
+    );
+  });
+
+  it("rejects a missing generated page for an mdx source file", async () => {
+    await writeValidArchiveFixture();
+    await writeDocsSourceFile("overview/quick-start.mdx");
+
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
+      /missing docs page overview\/quick-start\/index\.html/
     );
   });
 
@@ -125,7 +167,7 @@ describe("verifyArchiveOutput", () => {
       '<html><a href="/admin-ops/cli">CLI</a></html>'
     );
 
-    await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
       /root-relative docs URL/
     );
   });
@@ -137,7 +179,7 @@ describe("verifyArchiveOutput", () => {
       '.hero { background: url("/docs-images/zkservice.jpg"); }'
     );
 
-    await expect(verifyArchiveOutput(tempDir)).rejects.toThrow(
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
       /root-relative docs URL/
     );
   });
@@ -149,7 +191,9 @@ describe("verifyArchiveOutput", () => {
       '<html><script>window.__reactRouterContext.streamController.enqueue("\\"/admin-ops/cli\\"")</script></html>'
     );
 
-    await expect(verifyArchiveOutput(tempDir)).resolves.toBeUndefined();
+    await expect(
+      verifyArchiveOutput(tempDir, tempDocsDir)
+    ).resolves.toBeUndefined();
   });
 });
 

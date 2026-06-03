@@ -410,7 +410,7 @@ npm run build:docs-archive -- 3.9.6
 
 This creates `build/doc/r3.9.6/`, ready to copy to `asf-site` at `content/doc/r3.9.6/`.
 
-Before building the archive, this command runs `npm run ci` without the archive base path. That verifies lint, typecheck, unit tests, the normal production build, and Playwright e2e tests. It then rebuilds with the archive base path and validates the generated archive output.
+Before building the archive, this command runs `npm run ci` without the archive base path. That verifies lint, typecheck, unit tests, the normal production build, and Playwright e2e tests. It then rebuilds with the archive base path and validates the generated archive output, including that every source MDX docs page has a corresponding archive HTML page.
 
 Archived docs use the same versioned route shape as current docs:
 
