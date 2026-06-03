@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="font" href="/fonts/inter-latin-wght-normal.woff2" type="font/woff2" crossorigin="anonymous"/><link rel="prefetch" as="font" href="/fonts/inter-latin-wght-italic.woff2" type="font/woff2" crossorigin="anonymous"/><link rel="icon" href="/images/logo.svg" type="image/svg+xml"/><link rel="icon" href="/favicon.ico" sizes="any"/><link rel="modulepreload" href="/assets/manifest-4c027c24.js"/><link rel="modulepreload" href="/assets/entry.client-DyMXYsmj.js"/><link rel="modulepreload" href="/assets/chunk-EPOLDU6W-BACfhBcx.js"/><link rel="modulepreload" href="/assets/index-B4y4XthL.js"/><link rel="modulepreload" href="/assets/root-QJsC7eB7.js"/><link rel="modulepreload" href="/assets/theme-provider-VJDhrFwO.js"/><link rel="modulepreload" href="/assets/docs-paths-B5zZy3rE.js"/><link rel="stylesheet" href="/assets/root-BtA_CDVx.css"/><link rel="stylesheet" href="/assets/app-DxKXKjTC.css"/><script>
+              (function() {
+                const theme = localStorage.getItem('theme');
+                const root = document.documentElement;
+                root.classList.remove('light', 'dark');
+                
+                if (theme && ['light', 'dark'].includes(theme)) {
+                  root.classList.add(theme);
+                } else {
+                  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  root.classList.add(systemTheme);
+                  localStorage.setItem('theme', systemTheme);
+                }
+              })();
+            </script><noscript><style>.theme-toggle-wrapper { display: none !important; }</style></noscript></head><body class="font-base"><script>
+              console.log(
+                "💿 Hey developer 👋. You can provide a way better UX than this " +
+                "when your app is loading JS modules and/or running `clientLoader` " +
+                "functions. Check out https://reactrouter.com/start/framework/route-module#hydratefallback " +
+                "for more information."
+              );
+            </script><script>window.__reactRouterContext = {"basename":"/","future":{"unstable_optimizeDeps":false,"unstable_subResourceIntegrity":false,"unstable_trailingSlashAwareDataRequests":false,"v8_middleware":false,"v8_splitRouteModules":false,"v8_viteEnvironmentApi":false},"routeDiscovery":{"mode":"initial"},"ssr":false,"isSpaMode":true};window.__reactRouterContext.stream = new ReadableStream({start(controller){window.__reactRouterContext.streamController = controller;}}).pipeThrough(new TextEncoderStream());</script><script type="module" async="">import "/assets/manifest-4c027c24.js";
+import * as route0 from "/assets/root-QJsC7eB7.js";
+  
+  window.__reactRouterRouteModules = {"root":route0};
+
+import("/assets/entry.client-DyMXYsmj.js");</script><!--$--><script>window.__reactRouterContext.streamController.enqueue("[{\"_1\":2,\"_3\":-5,\"_4\":-5},\"loaderData\",{},\"actionData\",\"errors\"]\n");</script><!--$--><script>window.__reactRouterContext.streamController.close();</script><!--/$--><!--/$--></body></html>

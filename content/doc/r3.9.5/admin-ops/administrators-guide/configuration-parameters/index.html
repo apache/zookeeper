@@ -1,0 +1,1846 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="image" href="/favicon.ico"/><link rel="preload" as="font" href="/fonts/inter-latin-wght-normal.woff2" type="font/woff2" crossorigin="anonymous"/><link rel="prefetch" as="font" href="/fonts/inter-latin-wght-italic.woff2" type="font/woff2" crossorigin="anonymous"/><link rel="icon" href="/images/logo.svg" type="image/svg+xml"/><link rel="icon" href="/favicon.ico" sizes="any"/><link rel="modulepreload" href="/assets/manifest-4c027c24.js"/><link rel="modulepreload" href="/assets/entry.client-DyMXYsmj.js"/><link rel="modulepreload" href="/assets/chunk-EPOLDU6W-BACfhBcx.js"/><link rel="modulepreload" href="/assets/index-B4y4XthL.js"/><link rel="modulepreload" href="/assets/root-QJsC7eB7.js"/><link rel="modulepreload" href="/assets/theme-provider-VJDhrFwO.js"/><link rel="modulepreload" href="/assets/docs-paths-B5zZy3rE.js"/><link rel="modulepreload" href="/assets/docs-layout-mDyp5BAO.js"/><link rel="modulepreload" href="/assets/docs-layout-BeWLI2XC.js"/><link rel="modulepreload" href="/assets/index-Cv-GOfj2.js"/><link rel="modulepreload" href="/assets/index-Cs9Qw-RI.js"/><link rel="modulepreload" href="/assets/index-lnR2ABT4.js"/><link rel="modulepreload" href="/assets/index-COYzL8KN.js"/><link rel="modulepreload" href="/assets/Combination-UmHtcqv6.js"/><link rel="modulepreload" href="/assets/docs-oHh_nnQX.js"/><link rel="modulepreload" href="/assets/button-DtNaQh3h.js"/><link rel="modulepreload" href="/assets/mdx-CYfG3yYh.js"/><link rel="modulepreload" href="/assets/older-docs-picker-Cle2aUef.js"/><link rel="modulepreload" href="/assets/utils-CLp7IS1B.js"/><link rel="modulepreload" href="/assets/external-link-CJzPu-RX.js"/><title>Configuration Parameters | Zookeeper</title><meta name="description" content="Complete reference for all ZooKeeper configuration parameters, including minimum and advanced settings, cluster options, encryption and authentication, performance tuning, and the AdminServer."/><link rel="stylesheet" href="/assets/root-BtA_CDVx.css"/><link rel="stylesheet" href="/assets/app-DxKXKjTC.css"/><script>
+              (function() {
+                const theme = localStorage.getItem('theme');
+                const root = document.documentElement;
+                root.classList.remove('light', 'dark');
+                
+                if (theme && ['light', 'dark'].includes(theme)) {
+                  root.classList.add(theme);
+                } else {
+                  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  root.classList.add(systemTheme);
+                  localStorage.setItem('theme', systemTheme);
+                }
+              })();
+            </script><noscript><style>.theme-toggle-wrapper { display: none !important; }</style></noscript></head><body class="font-base"><script>((e,i,s,u,m,a,l,h)=>{let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=>{let k=y==="class",S=k&&a?m.map(f=>a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)</script><div id="nd-docs-layout" class="grid min-h-(--fd-docs-height) auto-cols-auto auto-rows-auto overflow-x-clip transition-[grid-template-columns] [--fd-docs-height:100dvh] [--fd-header-height:0px] [--fd-sidebar-width:0px] [--fd-toc-popover-height:0px] [--fd-toc-width:285px] max-xl:[--fd-toc-popover-height:--spacing(10)] max-md:[--fd-header-height:--spacing(14)] md:[--fd-sidebar-width:285px]" data-sidebar-collapsed="false" style="grid-template:&quot;sidebar header toc&quot;
+        &quot;sidebar toc-popover toc&quot;
+        &quot;sidebar main toc&quot; 1fr / minmax(var(--fd-sidebar-col), 1fr) minmax(0, calc(var(--fd-layout-width,97rem) - var(--fd-sidebar-width) - var(--fd-toc-width))) minmax(min-content, 1fr);--fd-docs-row-1:var(--fd-banner-height, 0px);--fd-docs-row-2:calc(var(--fd-docs-row-1) + var(--fd-header-height));--fd-docs-row-3:calc(var(--fd-docs-row-2) + var(--fd-toc-popover-height));--fd-sidebar-col:var(--fd-sidebar-width)"><header data-transparent="false" id="nd-subnav" class="data-[transparent=false]:bg-fd-background/80 sticky top-(--fd-docs-row-1) z-30 flex h-(--fd-header-height) items-center border-b ps-4 pe-2.5 backdrop-blur-sm transition-colors [grid-area:header] md:hidden"><a class="inline-flex items-center gap-2.5 font-semibold" href="/" data-discover="true"><div class="flex items-center gap-2"><img src="/favicon.ico" alt="ZooKeeper favicon" width="16" height="16"/><p>Apache ZooKeeper</p></div></a><div class="flex-1"></div><button type="button" class="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*=&#x27;size-&#x27;])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 hover:bg-accent hover:text-accent-foreground size-8 p-2" data-search="" aria-label="Open Search"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></button><button aria-label="Open Sidebar" class="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*=&#x27;size-&#x27;])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 hover:bg-accent hover:text-accent-foreground size-8 p-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg></button></header><div data-sidebar-placeholder="" class="pointer-events-none sticky top-(--fd-docs-row-1) z-20 h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] [grid-area:sidebar] *:pointer-events-auto max-md:hidden"><aside id="nd-sidebar" data-collapsed="false" data-hovered="false" class="bg-fd-card absolute inset-y-0 start-0 flex flex-col items-end border-e text-sm duration-250 *:w-(--fd-sidebar-width)"><div class="flex flex-col gap-3 p-4 pb-2"><div class="flex"><a class="inline-flex text-[0.9375rem] items-center gap-2.5 font-medium me-auto" href="/" data-discover="true"><div class="flex items-center gap-2"><img src="/favicon.ico" alt="ZooKeeper favicon" width="16" height="16"/><p>Apache ZooKeeper</p></div></a><button type="button" aria-label="Collapse Sidebar" data-collapsed="false" class="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*=&#x27;size-&#x27;])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 hover:bg-accent hover:text-accent-foreground size-8 text-fd-muted-foreground mb-auto"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg></button></div><button type="button" data-search-full="" class="bg-fd-secondary/50 text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-accent-foreground inline-flex items-center gap-2 rounded-lg border p-1.5 ps-2 text-sm transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search size-4"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>Search<div class="ms-auto inline-flex gap-0.5"><kbd class="bg-fd-background rounded-md border px-1.5">⌘</kbd><kbd class="bg-fd-background rounded-md border px-1.5">K</kbd></div></button><button class="text-fd-muted-foreground hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 relative flex w-full flex-row items-center gap-2 rounded-lg p-2 text-start transition-colors hover:transition-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-_R_135aj5_" data-state="closed"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg><span class="flex-1 text-sm">Older docs</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right ms-auto opacity-60"><path d="m9 18 6-6-6-6"></path></svg></button></div><div dir="ltr" data-slot="scroll-area" class="relative min-h-0 flex-1" style="position:relative;--radix-scroll-area-corner-width:0px;--radix-scroll-area-corner-height:0px"><style>[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}</style><div data-radix-scroll-area-viewport="" data-slot="scroll-area-viewport" class="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1" style="overflow-x:hidden;overflow-y:hidden"><div style="min-width:100%;display:table"><style>[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}</style><div data-radix-scroll-area-viewport="" class="overscroll-contain p-4" style="overflow-x:unset;overflow-y:unset;mask-image:linear-gradient(to bottom, transparent, white 12px, white calc(100% - 12px), transparent)"><div style="min-width:100%;display:table"><p class="mt-6 mb-1.5 inline-flex items-center gap-2 px-2 empty:mb-0 first:mt-0 [&amp;_svg]:size-4 [&amp;_svg]:shrink-0" style="padding-inline-start:calc(2 * var(--spacing))">Getting Started</p><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5" data-discover="true">Overview</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/overview/quick-start" data-discover="true">Quick Start</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/overview/release-notes" data-discover="true">Release Notes</a><p class="mt-6 mb-1.5 inline-flex items-center gap-2 px-2 empty:mb-0 first:mt-0 [&amp;_svg]:size-4 [&amp;_svg]:shrink-0" style="padding-inline-start:calc(2 * var(--spacing))">Developer</p><div data-state="closed" data-slot="collapsible" class="group"><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors w-full" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/developer/programmers-guide" data-discover="true">Programmer&#x27;s Guide<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ms-auto transition-transform -rotate-90" data-icon="true"><path d="m6 9 6 6 6-6"></path></svg></a><div data-state="closed" id="radix-_R_dad5aj5_" hidden="" data-slot="collapsible-content" class="relative before:bg-fd-border before:absolute before:inset-y-1 before:start-2.5 before:w-px before:content-[&#x27;&#x27;]"></div></div><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/developer/use-cases" data-discover="true">Use Cases</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/developer/java-example" data-discover="true">Java Example</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/developer/basic-tutorial" data-discover="true">Basic tutorial</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/developer/recipes" data-discover="true">Recipes and Solutions</a><a href="/apidocs/zookeeper-server/index.html" rel="noreferrer noopener" target="_blank" data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>API Docs</a><p class="mt-6 mb-1.5 inline-flex items-center gap-2 px-2 empty:mb-0 first:mt-0 [&amp;_svg]:size-4 [&amp;_svg]:shrink-0" style="padding-inline-start:calc(2 * var(--spacing))">Admin &amp; Ops</p><div data-state="open" data-slot="collapsible" class="group"><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors w-full" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide" data-discover="true">Administrator&#x27;s Guide<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ms-auto transition-transform" data-icon="true"><path d="m6 9 6 6 6-6"></path></svg></a><div data-state="open" id="radix-_R_rad5aj5_" data-slot="collapsible-content" class="relative before:bg-fd-border before:absolute before:inset-y-1 before:start-2.5 before:w-px before:content-[&#x27;&#x27;]"><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/deployment" data-discover="true">Deployment</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/administration" data-discover="true">Administration</a><a data-active="true" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters" data-discover="true">Configuration Parameters</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/communication-using-the-netty-framework" data-discover="true">Communication using the Netty framework</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/commands" data-discover="true">Commands</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/data-file-management" data-discover="true">Data File Management</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors data-[active=true]:before:content-[&#x27;&#x27;] data-[active=true]:before:bg-fd-primary data-[active=true]:before:absolute data-[active=true]:before:w-px data-[active=true]:before:inset-y-2.5 data-[active=true]:before:start-2.5" style="padding-inline-start:calc(5 * var(--spacing))" href="/doc/r3.9.5/admin-ops/administrators-guide/best-practices" data-discover="true">Best Practices</a></div></div><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/quota-guide" data-discover="true">Quota Guide</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/snapshot-and-restore-guide" data-discover="true">Snapshot and Restore Guide</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/jmx" data-discover="true">JMX</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/quorums" data-discover="true">Quorums</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/observers-guide" data-discover="true">Observers</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/dynamic-reconfiguration" data-discover="true">Dynamic Reconfiguration</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/cli" data-discover="true">CLI</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/tools" data-discover="true">Tools</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/admin-ops/monitor-and-audit-logs" data-discover="true">Monitor &amp; Audit Logs</a><p class="mt-6 mb-1.5 inline-flex items-center gap-2 px-2 empty:mb-0 first:mt-0 [&amp;_svg]:size-4 [&amp;_svg]:shrink-0" style="padding-inline-start:calc(2 * var(--spacing))">Miscellaneous</p><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/doc/r3.9.5/miscellaneous/internals" data-discover="true">Internals</a><a data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))" href="/mailing-lists" data-discover="true">Mailing Lists</a><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER" rel="noreferrer noopener" target="_blank" data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>Wiki</a><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ" rel="noreferrer noopener" target="_blank" data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>FAQ</a><a href="/llms-full.txt" rel="noreferrer noopener" target="_blank" data-active="false" class="relative flex flex-row items-center gap-2 rounded-lg p-2 text-start text-fd-muted-foreground wrap-anywhere [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 transition-colors hover:bg-fd-accent/50 hover:text-fd-accent-foreground/80 hover:transition-none data-[active=true]:bg-fd-primary/10 data-[active=true]:text-fd-primary data-[active=true]:hover:transition-colors" style="padding-inline-start:calc(2 * var(--spacing))"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>All docs for LLMs</a></div></div></div></div></div><div class="flex flex-col border-t p-4 pt-2 empty:hidden"><div class="text-fd-muted-foreground flex items-center empty:hidden"><a href="https://github.com/apache/zookeeper/" rel="noreferrer noopener" target="_blank" class="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*=&#x27;size-&#x27;])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 hover:bg-accent hover:text-accent-foreground size-8" aria-label="GitHub" data-active="false"><svg role="img" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg></a><button class="inline-flex items-center rounded-full border ms-auto p-0" aria-label="Toggle Theme" data-theme-toggle=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun size-6.5 rounded-full p-1.5 text-fd-muted-foreground"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon size-6.5 rounded-full p-1.5 text-fd-muted-foreground"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button></div></div></aside></div><div data-sidebar-panel="" class="bg-fd-muted text-fd-muted-foreground fixed start-4 top-[calc(--spacing(4)+var(--fd-docs-row-3))] z-10 flex rounded-xl border p-0.5 shadow-lg transition-opacity pointer-events-none opacity-0"><button type="button" aria-label="Collapse Sidebar" data-collapsed="false" class="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*=&#x27;size-&#x27;])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 hover:bg-accent hover:text-accent-foreground size-8 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg></button><button type="button" class="inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*=&#x27;size-&#x27;])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 hover:bg-accent hover:text-accent-foreground size-8 rounded-lg" data-search="" aria-label="Open Search"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></button></div><div data-state="closed" data-slot="collapsible" class="group sticky top-(--fd-docs-row-2) z-10 h-(--fd-toc-popover-height) [grid-area:toc-popover] xl:hidden" data-toc-popover=""><header class="border-b backdrop-blur-sm transition-colors bg-fd-background/80"><button type="button" aria-controls="radix-_R_1ij5_" aria-expanded="false" data-state="closed" class="cursor-pointer text-fd-muted-foreground flex h-10 w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm focus-visible:outline-none md:px-6 [&amp;_svg]:size-4" data-slot="collapsible-trigger" data-toc-popover-trigger=""><svg role="progressbar" viewBox="0 0 24 24" aria-valuenow="0" aria-valuemin="0" aria-valuemax="1" class="shrink-0"><circle cx="12" cy="12" r="11" fill="none" stroke-width="2" class="stroke-current/25"></circle><circle cx="12" cy="12" r="11" fill="none" stroke-width="2" stroke="currentColor" stroke-dasharray="69.11503837897544" stroke-dashoffset="69.11503837897544" stroke-linecap="round" transform="rotate(-90 12 12)" class="transition-all"></circle></svg><span class="grid flex-1 *:col-start-1 *:row-start-1 *:my-auto"><span class="truncate transition-[opacity,translate,color]">Configuration Parameters</span><span class="truncate transition-[opacity,translate] pointer-events-none translate-y-full opacity-0"></span></span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down mx-0.5 shrink-0 transition-transform"><path d="m6 9 6 6 6-6"></path></svg></button><div data-state="closed" id="radix-_R_1ij5_" hidden="" data-slot="collapsible-content" data-toc-popover-content="" class="flex max-h-[50vh] flex-col px-4 md:px-6"></div></header></div><article id="nd-page" data-full="false" class="mx-auto flex w-full max-w-[900px] flex-col gap-4 px-4 py-6 [grid-area:main] md:px-6 md:pt-8 xl:px-8 xl:pt-14 xl:[--fd-toc-width:285px]"><div class="text-fd-muted-foreground flex items-center gap-1.5 text-sm"><a class="truncate text-fd-primary font-medium transition-opacity hover:opacity-80" href="/doc/r3.9.5/admin-ops/administrators-guide" data-discover="true">Administrator&#x27;s Guide</a></div><h1 class="text-[1.75em] font-semibold">Configuration Parameters</h1><p class="text-fd-muted-foreground mb-8 text-lg">Complete reference for all ZooKeeper configuration parameters, including minimum and advanced settings, cluster options, encryption and authentication, performance tuning, and the AdminServer.</p><div class="prose flex-1"><p class="wrap-anywhere">ZooKeeper&#x27;s behavior is governed by the ZooKeeper configuration
+file. This file is designed so that the exact same file can be used by
+all the servers that make up a ZooKeeper server assuming the disk
+layouts are the same. If servers use different configuration files, care
+must be taken to ensure that the list of servers in all of the different
+configuration files match.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">In 3.5.0 and later, some of these parameters should be placed in a dynamic
+configuration file. If they are placed in the static configuration file,
+ZooKeeper will automatically move them over to the dynamic configuration file.
+See <a href="/doc/r3.9.5/admin-ops/dynamic-reconfiguration" data-discover="true">Dynamic Reconfiguration</a> for more
+information.</p></div></div></div>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="minimum-configuration"><a data-card="" href="#minimum-configuration" class="peer">Minimum Configuration</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">Here are the minimum configuration keywords that must be defined
+in the configuration file:</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>clientPort</em> :
+the port to listen for client connections; that is, the
+port that clients attempt to connect to.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>secureClientPort</em> :
+the port to listen on for secure client connections using SSL.
+<strong>clientPort</strong> specifies
+the port for plaintext connections while <strong>secureClientPort</strong> specifies the port for SSL
+connections. Specifying both enables mixed-mode while omitting
+either will disable that mode.
+Note that SSL feature will be enabled when user plugs-in
+zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>observerMasterPort</em> :
+the port to listen for observer connections; that is, the
+port that observers attempt to connect to.
+if the property is set then the server will host observer connections
+when in follower mode in addition to when in leader mode and correspondingly
+attempt to connect to any voting peer when in observer mode.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>dataDir</em> :
+the location where ZooKeeper will store the in-memory
+database snapshots and, unless specified otherwise, the
+transaction log of updates to the database.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">Be careful where you put the transaction log. A dedicated transaction log
+device is key to consistent good performance. Putting the log on a busy
+device will adversely affect performance.</p></div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>tickTime</em> :
+the length of a single tick, which is the basic time unit
+used by ZooKeeper, as measured in milliseconds. It is used to
+regulate heartbeats, and timeouts. For example, the minimum
+session timeout will be two ticks.</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="advanced-configuration"><a data-card="" href="#advanced-configuration" class="peer">Advanced Configuration</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">The configuration settings in the section are optional. You can
+use them to further fine tune the behaviour of your ZooKeeper servers.
+Some can also be set using Java system properties, generally of the
+form <em>zookeeper.keyword</em>. The exact system
+property, when available, is noted below.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>dataLogDir</em> :
+(No Java system property)
+This option will direct the machine to write the
+transaction log to the <strong>dataLogDir</strong> rather than the <strong>dataDir</strong>. This allows a dedicated log
+device to be used, and helps avoid competition between logging
+and snapshots.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">Having a dedicated log device has a large impact on throughput and stable
+latencies. It is highly recommended dedicating a log device and set
+<strong>dataLogDir</strong> to point to a directory on that device, and then make sure to
+point <strong>dataDir</strong> to a directory <em>not</em> residing on that device.</p></div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>globalOutstandingLimit</em> :
+(Java system property: <strong>zookeeper.globalOutstandingLimit.</strong>)
+Clients can submit requests faster than ZooKeeper can
+process them, especially if there are a lot of clients. To
+prevent ZooKeeper from running out of memory due to queued
+requests, ZooKeeper will throttle clients so that there are no
+more than globalOutstandingLimit outstanding requests across
+entire ensemble, equally divided. The default limit is 1,000
+and, for example, with 3 members each of them will have
+1000 / 2 = 500 individual limit.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>preAllocSize</em> :
+(Java system property: <strong>zookeeper.preAllocSize</strong>)
+To avoid seeks ZooKeeper allocates space in the
+transaction log file in blocks of preAllocSize kilobytes. The
+default block size is 64M. One reason for changing the size of
+the blocks is to reduce the block size if snapshots are taken
+more often. (Also, see <strong>snapCount</strong> and <strong>snapSizeLimitInKb</strong>).</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>snapCount</em> :
+(Java system property: <strong>zookeeper.snapCount</strong>)
+ZooKeeper records its transactions using snapshots and
+a transaction log (think write-ahead log). The number of
+transactions recorded in the transaction log before a snapshot
+can be taken (and the transaction log rolled) is determined
+by snapCount. In order to prevent all of the machines in the quorum
+from taking a snapshot at the same time, each ZooKeeper server
+will take a snapshot when the number of transactions in the transaction log
+reaches a runtime generated random value in the [snapCount/2+1, snapCount]
+range. The default snapCount is 100,000.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>commitLogCount</em> * :
+(Java system property: <strong>zookeeper.commitLogCount</strong>)
+Zookeeper maintains an in-memory list of last committed requests for fast synchronization with
+followers when the followers are not too behind. This improves sync performance in case when your
+snapshots are large (&gt;100,000). The default value is 500 which is the recommended minimum.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>snapSizeLimitInKb</em> :
+(Java system property: <strong>zookeeper.snapSizeLimitInKb</strong>)
+ZooKeeper records its transactions using snapshots and
+a transaction log (think write-ahead log). The total size in bytes allowed
+in the set of transactions recorded in the transaction log before a snapshot
+can be taken (and the transaction log rolled) is determined
+by snapSize. In order to prevent all of the machines in the quorum
+from taking a snapshot at the same time, each ZooKeeper server
+will take a snapshot when the size in bytes of the set of transactions in the
+transaction log reaches a runtime generated random value in the [snapSize/2+1, snapSize]
+range. Each file system has a minimum standard file size and in order
+to for valid functioning of this feature, the number chosen must be larger
+than that value. The default snapSizeLimitInKb is 4,194,304 (4GB).
+A non-positive value will disable the feature.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>txnLogSizeLimitInKb</em> :
+(Java system property: <strong>zookeeper.txnLogSizeLimitInKb</strong>)
+Zookeeper transaction log file can also be controlled more
+directly using txnLogSizeLimitInKb. Larger txn logs can lead to
+slower follower syncs when sync is done using transaction log.
+This is because leader has to scan through the appropriate log
+file on disk to find the transaction to start sync from.
+This feature is turned off by default and snapCount and snapSizeLimitInKb are the
+only values that limit transaction log size. When enabled
+Zookeeper will roll the log when any of the limits is hit.
+Please note that actual log size can exceed this value by the size
+of the serialized transaction. On the other hand, if this value is
+set too close to (or smaller than) <strong>preAllocSize</strong>,
+it can cause Zookeeper to roll the log for every transaction. While
+this is not a correctness issue, this may cause severely degraded
+performance. To avoid this and to get most out of this feature, it is
+recommended to set the value to N * <strong>preAllocSize</strong>
+where N &gt;= 2.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxCnxns</em> :
+(Java system property: <strong>zookeeper.maxCnxns</strong>)
+Limits the total number of concurrent connections that can be made to a
+zookeeper server (per client Port of each server ). This is used to prevent certain
+classes of DoS attacks. The default is 0 and setting it to 0 entirely removes
+the limit on total number of concurrent connections. Accounting for the
+number of connections for serverCnxnFactory and a secureServerCnxnFactory is done
+separately, so a peer is allowed to host up to 2*maxCnxns provided they are of appropriate types.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxClientCnxns</em> :
+(No Java system property)
+Limits the number of concurrent connections (at the socket
+level) that a single client, identified by IP address, may make
+to a single member of the ZooKeeper ensemble. This is used to
+prevent certain classes of DoS attacks, including file
+descriptor exhaustion. The default is 60. Setting this to 0
+entirely removes the limit on concurrent connections.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>clientPortAddress</em> :
+<strong>New in 3.3.0:</strong> the
+address (ipv4, ipv6 or hostname) to listen for client
+connections; that is, the address that clients attempt
+to connect to. This is optional, by default we bind in
+such a way that any connection to the <strong>clientPort</strong> for any
+address/interface/nic on the server will be
+accepted.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>minSessionTimeout</em> :
+(No Java system property)
+<strong>New in 3.3.0:</strong> the
+minimum session timeout in milliseconds that the server
+will allow the client to negotiate. Defaults to 2 times
+the <strong>tickTime</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxSessionTimeout</em> :
+(No Java system property)
+<strong>New in 3.3.0:</strong> the
+maximum session timeout in milliseconds that the server
+will allow the client to negotiate. Defaults to 20 times
+the <strong>tickTime</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>fsync.warningthresholdms</em> :
+(Java system property: <strong>zookeeper.fsync.warningthresholdms</strong>)
+<strong>New in 3.3.4:</strong> A
+warning message will be output to the log whenever an
+fsync in the Transactional Log (WAL) takes longer than
+this value. The values is specified in milliseconds and
+defaults to 1000. This value can only be set as a
+system property.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxResponseCacheSize</em> :
+(Java system property: <strong>zookeeper.maxResponseCacheSize</strong>)
+When set to a positive integer, it determines the size
+of the cache that stores the serialized form of recently
+read records. Helps save the serialization cost on
+popular znodes. The metrics <strong>response_packet_cache_hits</strong>
+and <strong>response_packet_cache_misses</strong> can be used to tune
+this value to a given workload. The feature is turned on
+by default with a value of 400, set to 0 or a negative
+integer to turn the feature off.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxGetChildrenResponseCacheSize</em> :
+(Java system property: <strong>zookeeper.maxGetChildrenResponseCacheSize</strong>)
+<strong>New in 3.6.0:</strong>
+Similar to <strong>maxResponseCacheSize</strong>, but applies to get children
+requests. The metrics <strong>response_packet_get_children_cache_hits</strong>
+and <strong>response_packet_get_children_cache_misses</strong> can be used to tune
+this value to a given workload. The feature is turned on
+by default with a value of 400, set to 0 or a negative
+integer to turn the feature off.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>autopurge.snapRetainCount</em> :
+(No Java system property)
+<strong>New in 3.4.0:</strong>
+When enabled, ZooKeeper auto purge feature retains
+the <strong>autopurge.snapRetainCount</strong> most
+recent snapshots and the corresponding transaction logs in the
+<strong>dataDir</strong> and <strong>dataLogDir</strong> respectively and deletes the rest.
+Defaults to 3. Minimum value is 3.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>autopurge.purgeInterval</em> :
+(No Java system property)
+<strong>New in 3.4.0:</strong> The
+time interval in hours for which the purge task has to
+be triggered. Set to a positive integer (1 and above)
+to enable the auto purging. Defaults to 0.
+<strong>Suffix support added in 3.10.0:</strong> The interval is specified as an integer with an optional suffix to indicate the time unit.
+Supported suffixes are: <code>ms</code> for milliseconds, <code>s</code> for seconds, <code>m</code> for minutes, <code>h</code> for hours, and <code>d</code> for days.
+For example, &quot;10m&quot; represents 10 minutes, and &quot;5h&quot; represents 5 hours.
+If no suffix is provided, the default unit is hours.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>syncEnabled</em> :
+(Java system property: <strong>zookeeper.observer.syncEnabled</strong>)
+<strong>New in 3.4.6, 3.5.0:</strong>
+The observers now log transaction and write snapshot to disk
+by default like the participants. This reduces the recovery time
+of the observers on restart. Set to &quot;false&quot; to disable this
+feature. Default is &quot;true&quot;</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>extendedTypesEnabled</em> :
+(Java system property only: <strong>zookeeper.extendedTypesEnabled</strong>)
+<strong>New in 3.5.4, 3.6.0:</strong> Define to <code>true</code> to enable
+extended features such as the creation of <a href="/doc/r3.9.5/developer/programmers-guide/data-model#ttl-nodes" data-discover="true">TTL Nodes</a>.
+They are disabled by default. IMPORTANT: when enabled server IDs must
+be less than 255 due to internal limitations.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>emulate353TTLNodes</em> :
+(Java system property only:<strong>zookeeper.emulate353TTLNodes</strong>).
+<strong>New in 3.5.4, 3.6.0:</strong> Due to [ZOOKEEPER-2901]
+(<a href="https://issues.apache.org/jira/browse/ZOOKEEPER-2901">https://issues.apache.org/jira/browse/ZOOKEEPER-2901</a>) TTL nodes
+created in version 3.5.3 are not supported in 3.5.4/3.6.0. However, a workaround is provided via the
+zookeeper.emulate353TTLNodes system property. If you used TTL nodes in ZooKeeper 3.5.3 and need to maintain
+compatibility set <strong>zookeeper.emulate353TTLNodes</strong> to <code>true</code> in addition to
+<strong>zookeeper.extendedTypesEnabled</strong>. NOTE: due to the bug, server IDs
+must be 127 or less. Additionally, the maximum support TTL value is <code>1099511627775</code> which is smaller
+than what was allowed in 3.5.3 (<code>1152921504606846975</code>)</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>watchManagerName</em> :
+(Java system property only: <strong>zookeeper.watchManagerName</strong>)
+<strong>New in 3.6.0:</strong> Added in <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a>
+New watcher manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
+config is used to define which watcher manager to be used. Currently, we only support WatchManager and
+WatchManagerOptimized.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>watcherCleanThreadsNum</em> :
+(Java system property only: <strong>zookeeper.watcherCleanThreadsNum</strong>)
+<strong>New in 3.6.0:</strong> Added in <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a>
+The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, this config is used to decide how
+many thread is used in the WatcherCleaner. More thread usually means larger clean up throughput. The
+default value is 2, which is good enough even for heavy and continuous session closing/recreating cases.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>watcherCleanThreshold</em> :
+(Java system property only: <strong>zookeeper.watcherCleanThreshold</strong>)
+<strong>New in 3.6.0:</strong> Added in <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a>
+The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the cleanup process is relatively
+heavy, batch processing will reduce the cost and improve the performance. This setting is used to decide
+the batch size. The default one is 1000, we don&#x27;t need to change it if there is no memory or clean up
+speed issue.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>watcherCleanIntervalInSeconds</em> :
+(Java system property only:<strong>zookeeper.watcherCleanIntervalInSeconds</strong>)
+<strong>New in 3.6.0:</strong> Added in <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a>
+The new watcher manager WatchManagerOptimized will clean up the dead watchers lazily, the cleanup process is relatively
+heavy, batch processing will reduce the cost and improve the performance. Besides watcherCleanThreshold,
+this setting is used to clean up the dead watchers after certain time even the dead watchers are not larger
+than watcherCleanThreshold, so that we won&#x27;t leave the dead watchers there for too long. The default setting
+is 10 minutes, which usually don&#x27;t need to be changed.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxInProcessingDeadWatchers</em> :
+(Java system property only: <strong>zookeeper.maxInProcessingDeadWatchers</strong>)
+<strong>New in 3.6.0:</strong> Added in <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a>
+This is used to control how many backlog can we have in the WatcherCleaner, when it reaches this number, it will
+slow down adding the dead watcher to WatcherCleaner, which will in turn slow down adding and closing
+watchers, so that we can avoid OOM issue. By default there is no limit, you can set it to values like
+watcherCleanThreshold * 1000.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>bitHashCacheSize</em> :
+(Java system property only: <strong>zookeeper.bitHashCacheSize</strong>)
+<strong>New 3.6.0</strong>: Added in <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a>
+This is the setting used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
+need to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
+keep the size small to make sure it doesn&#x27;t cost too much in memory, there is a trade off between memory
+and time complexity. The default value is 10, which seems a relatively reasonable cache size.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>fastleader.minNotificationInterval</em> :
+(Java system property: <strong>zookeeper.fastleader.minNotificationInterval</strong>)
+Lower bound for length of time between two consecutive notification
+checks on the leader election. This interval determines how long a
+peer waits to check the set of election votes and effects how
+quickly an election can resolve. The interval follows a backoff
+strategy from the configured minimum (this) and the configured maximum
+(fastleader.maxNotificationInterval) for long elections.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>fastleader.maxNotificationInterval</em> :
+(Java system property: <strong>zookeeper.fastleader.maxNotificationInterval</strong>)
+Upper bound for length of time between two consecutive notification
+checks on the leader election. This interval determines how long a
+peer waits to check the set of election votes and effects how
+quickly an election can resolve. The interval follows a backoff
+strategy from the configured minimum (fastleader.minNotificationInterval)
+and the configured maximum (this) for long elections.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionMaxTokens</em> :
+(Java system property: <strong>zookeeper.connection_throttle_tokens</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping.
+This parameter defines the maximum number of tokens in the token-bucket.
+When set to 0, throttling is disabled. Default is 0.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionTokenFillTime</em> :
+(Java system property: <strong>zookeeper.connection_throttle_fill_time</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping.
+This parameter defines the interval in milliseconds when the token bucket is re-filled with
+<em>connectionTokenFillCount</em> tokens. Default is 1.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionTokenFillCount</em> :
+(Java system property: <strong>zookeeper.connection_throttle_fill_count</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping.
+This parameter defines the number of tokens to add to the token bucket every
+<em>connectionTokenFillTime</em> milliseconds. Default is 1.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionFreezeTime</em> :
+(Java system property: <strong>zookeeper.connection_throttle_freeze_time</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping.
+This parameter defines the interval in milliseconds when the dropping
+probability is adjusted. When set to -1, probabilistic dropping is disabled.
+Default is -1.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionDropIncrease</em> :
+(Java system property: <strong>zookeeper.connection_throttle_drop_increase</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping.
+This parameter defines the dropping probability to increase. The throttler
+checks every <em>connectionFreezeTime</em> milliseconds and if the token bucket is
+empty, the dropping probability will be increased by <em>connectionDropIncrease</em>.
+The default is 0.02.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionDropDecrease</em> :
+(Java system property: <strong>zookeeper.connection_throttle_drop_decrease</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping.
+This parameter defines the dropping probability to decrease. The throttler
+checks every <em>connectionFreezeTime</em> milliseconds and if the token bucket has
+more tokens than a threshold, the dropping probability will be decreased by
+<em>connectionDropDecrease</em>. The threshold is <em>connectionMaxTokens</em> *
+<em>connectionDecreaseRatio</em>. The default is 0.002.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectionDecreaseRatio</em> :
+(Java system property: <strong>zookeeper.connection_throttle_decrease_ratio</strong>)
+<strong>New in 3.6.0:</strong>
+This is one of the parameters to tune the server-side connection throttler,
+which is a token-based rate limiting mechanism with optional probabilistic
+dropping. This parameter defines the threshold to decrease the dropping
+probability. The default is 0.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.connection_throttle_weight_enabled</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong>
+Whether to consider connection weights when throttling. Only useful when connection throttle is enabled, that is, connectionMaxTokens is larger than 0. The default is false.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.connection_throttle_global_session_weight</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong>
+The weight of a global session. It is the number of tokens required for a global session request to get through the connection throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 3.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.connection_throttle_local_session_weight</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong>
+The weight of a local session. It is the number of tokens required for a local session request to get through the connection throttler. It has to be a positive integer no larger than the weight of a global session or a renew session. The default is 1.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.connection_throttle_renew_session_weight</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong>
+The weight of renewing a session. It is also the number of tokens required for a reconnect request to get through the throttler. It has to be a positive integer no smaller than the weight of a local session. The default is 2.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>clientPortListenBacklog</em> :
+(No Java system property)
+<strong>New in 3.4.14, 3.5.5, 3.6.0:</strong>
+The socket backlog length for the ZooKeeper server socket. This controls
+the number of requests that will be queued server-side to be processed
+by the ZooKeeper server. Connections that exceed this length will receive
+a network timeout (30s) which may cause ZooKeeper session expiry issues.
+By default, this value is unset (<code>-1</code>) which, on Linux, uses a backlog of
+<code>50</code>. This value must be a positive number.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>serverCnxnFactory</em> :
+(Java system property: <strong>zookeeper.serverCnxnFactory</strong>)
+Specifies ServerCnxnFactory implementation.
+This should be set to <code>NettyServerCnxnFactory</code> in order to use TLS based server communication.
+Default is <code>NIOServerCnxnFactory</code>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>flushDelay</em> :
+(Java system property: <strong>zookeeper.flushDelay</strong>)
+Time in milliseconds to delay the flush of the commit log.
+Does not affect the limit defined by <em>maxBatchSize</em>.
+Disabled by default (with value 0). Ensembles with high write rates
+may see throughput improved with a value of 10-20 ms.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxWriteQueuePollTime</em> :
+(Java system property: <strong>zookeeper.maxWriteQueuePollTime</strong>)
+If <em>flushDelay</em> is enabled, this determines the amount of time in milliseconds
+to wait before flushing when no new requests are being queued.
+Set to <em>flushDelay</em>/3 by default (implicitly disabled by default).</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxBatchSize</em> :
+(Java system property: <strong>zookeeper.maxBatchSize</strong>)
+The number of transactions allowed in the server before a flush of the
+commit log is triggered.
+Does not affect the limit defined by <em>flushDelay</em>.
+Default is 1000.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>enforceQuota</em> :
+(Java system property: <strong>zookeeper.enforceQuota</strong>)
+<strong>New in 3.7.0:</strong>
+Enforce the quota check. When enabled and the client exceeds the total bytes or children count hard quota under a znode, the server will reject the request and reply the client a <code>QuotaExceededException</code> by force.
+The default value is: false. Exploring <a href="/doc/r3.9.5/admin-ops/quota-guide" data-discover="true">quota feature</a> for more details.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>requestThrottleLimit</em> :
+(Java system property: <strong>zookeeper.request_throttle_max_requests</strong>)
+<strong>New in 3.6.0:</strong>
+The total number of outstanding requests allowed before the RequestThrottler starts stalling. When set to 0, throttling is disabled. The default is 0.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>requestThrottleStallTime</em> :
+(Java system property: <strong>zookeeper.request_throttle_stall_time</strong>)
+<strong>New in 3.6.0:</strong>
+The maximum time (in milliseconds) for which a thread may wait to be notified that it may proceed processing a request. The default is 100.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>requestThrottleDropStale</em> :
+(Java system property: <strong>request_throttle_drop_stale</strong>)
+<strong>New in 3.6.0:</strong>
+When enabled, the throttler will drop stale requests rather than issue them to the request pipeline. A stale request is a request sent by a connection that is now closed, and/or a request that will have a request latency higher than the sessionTimeout. The default is true.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>requestStaleLatencyCheck</em> :
+(Java system property: <strong>zookeeper.request_stale_latency_check</strong>)
+<strong>New in 3.6.0:</strong>
+When enabled, a request is considered stale if the request latency is higher than its associated session timeout. Disabled by default.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>requestStaleConnectionCheck</em> :
+(Java system property: <strong>zookeeper.request_stale_connection_check</strong>)
+<strong>New in 3.6.0:</strong>
+When enabled, a request is considered stale if the request&#x27;s connection has closed. Enabled by default.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.request_throttler.shutdownTimeout</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong>
+The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>advancedFlowControlEnabled</em> :
+(Java system property: <strong>zookeeper.netty.advancedFlowControl.enabled</strong>)
+Using accurate flow control in netty based on the status of ZooKeeper
+pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
+Netty.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>enableEagerACLCheck</em> :
+(Java system property only: <strong>zookeeper.enableEagerACLCheck</strong>)
+When set to &quot;true&quot;, enables eager ACL check on write requests on each local
+server before sending the requests to quorum. Default is &quot;false&quot;.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxConcurrentSnapSyncs</em> :
+(Java system property: <strong>zookeeper.leader.maxConcurrentSnapSyncs</strong>)
+The maximum number of snap syncs a leader or a follower can serve at the same
+time. The default is 10.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxConcurrentDiffSyncs</em> :
+(Java system property: <strong>zookeeper.leader.maxConcurrentDiffSyncs</strong>)
+The maximum number of diff syncs a leader or a follower can serve at the same
+time. The default is 100.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>digest.enabled</em> :
+(Java system property only: <strong>zookeeper.digest.enabled</strong>)
+<strong>New in 3.6.0:</strong>
+The digest feature is added to detect the data inconsistency inside
+ZooKeeper when loading database from disk, catching up and following
+leader, its doing incrementally hash check for the DataTree based on
+the adHash paper mentioned in</p>
+<p class="wrap-anywhere"><a href="https://cseweb.ucsd.edu/~daniele/papers/IncHash.pdf">https://cseweb.ucsd.edu/~daniele/papers/IncHash.pdf</a></p>
+<p class="wrap-anywhere">The idea is simple, the hash value of DataTree will be updated incrementally
+based on the changes to the set of data. When the leader is preparing the txn,
+it will pre-calculate the hash of the tree based on the changes happened with
+formula:</p>
+<p class="wrap-anywhere"><code>current_hash = current_hash + hash(new node data) - hash(old node data)</code></p>
+<p class="wrap-anywhere">If it’s creating a new node, the hash(old node data) will be 0, and if it’s a
+delete node op, the hash(new node data) will be 0.</p>
+<p class="wrap-anywhere">This hash will be associated with each txn to represent the expected hash value
+after applying the txn to the data tree, it will be sent to followers with
+original proposals. Learner will compare the actual hash value with the one in
+the txn after applying the txn to the data tree, and report mismatch if it’s not
+the same.</p>
+<p class="wrap-anywhere">These digest value will also be persisted with each txn and snapshot on the disk,
+so when servers restarted and load data from disk, it will compare and see if
+there is hash mismatch, which will help detect data loss issue on disk.</p>
+<p class="wrap-anywhere">For the actual hash function, we’re using CRC internally, it’s not a collisionless
+hash function, but it’s more efficient compared to collisionless hash, and the
+collision possibility is really really rare and can already meet our needs here.</p>
+<p class="wrap-anywhere">This feature is backward and forward compatible, so it can safely roll upgrade,
+downgrade, enabled and later disabled without any compatible issue. Here are the
+scenarios have been covered and tested:</p>
+<ol>
+<li>When leader runs with new code while follower runs with old one, the digest will
+be appended to the end of each txn, follower will only read header and txn data,
+digest value in the txn will be ignored. It won&#x27;t affect the follower reads and
+processes the next txn.</li>
+<li>When leader runs with old code while follower runs with new one, the digest won&#x27;t
+be sent with txn, when follower tries to read the digest, it will throw EOF which
+is caught and handled gracefully with digest value set to null.</li>
+<li>When loading old snapshot with new code, it will throw IOException when trying to
+read the non-exist digest value, and the exception will be caught and digest will
+be set to null, which means we won&#x27;t compare digest when loading this snapshot,
+which is expected to happen during rolling upgrade</li>
+<li>When loading new snapshot with old code, it will finish successfully after deserializing
+the data tree, the digest value at the end of snapshot file will be ignored</li>
+<li>The scenarios of rolling restart with flags change are similar to the 1st and 2nd
+scenarios discussed above, if the leader enabled but follower not, digest value will
+be ignored, and follower won&#x27;t compare the digest during runtime; if leader disabled
+but follower enabled, follower will get EOF exception which is handled gracefully.</li>
+</ol>
+<p class="wrap-anywhere">Note: the current digest calculation excluded nodes under /zookeeper
+due to the potential inconsistency in the /zookeeper/quota stat node,
+we can include that after that issue is fixed.</p>
+<p class="wrap-anywhere">By default, this feature is enabled, set &quot;false&quot; to disable it.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>snapshot.compression.method</em> :
+(Java system property: <strong>zookeeper.snapshot.compression.method</strong>)
+<strong>New in 3.6.0:</strong>
+This property controls whether or not ZooKeeper should compress snapshots
+before storing them on disk (see <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3179">ZOOKEEPER-3179</a>).
+Possible values are:</p>
+<ul>
+<li>&quot;&quot;: Disabled (no snapshot compression). This is the default behavior.</li>
+<li>&quot;gz&quot;: See <a href="https://en.wikipedia.org/wiki/Gzip">gzip compression</a>.</li>
+<li>&quot;snappy&quot;: See <a href="https://en.wikipedia.org/wiki/Snappy_(compression)">Snappy compression</a>.</li>
+</ul>
+</li>
+<li>
+<p class="wrap-anywhere"><em>snapshot.trust.empty</em> :
+(Java system property: <strong>zookeeper.snapshot.trust.empty</strong>)
+<strong>New in 3.5.6:</strong>
+This property controls whether or not ZooKeeper should treat missing
+snapshot files as a fatal state that can&#x27;t be recovered from.
+Set to true to allow ZooKeeper servers recover without snapshot
+files. This should only be set during upgrading from old versions of
+ZooKeeper (3.4.x, pre 3.5.3) where ZooKeeper might only have transaction
+log files but without presence of snapshot files. If the value is set
+during upgrade, we recommend setting the value back to false after upgrading
+and restart ZooKeeper process so ZooKeeper can continue normal data
+consistency check during recovery process.
+Default value is false.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>audit.enable</em> :
+(Java system property: <strong>zookeeper.audit.enable</strong>)
+<strong>New in 3.6.0:</strong>
+By default audit logs are disabled. Set to &quot;true&quot; to enable it. Default value is &quot;false&quot;.
+See the <a href="/doc/r3.9.5/admin-ops/monitor-and-audit-logs" data-discover="true">ZooKeeper audit logs</a> for more information.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>audit.impl.class</em> :
+(Java system property: <strong>zookeeper.audit.impl.class</strong>)
+<strong>New in 3.6.0:</strong>
+Class to implement the audit logger. By default logback based audit logger org.apache.zookeeper.audit
+.Slf4jAuditLogger is used.
+See the <a href="/doc/r3.9.5/admin-ops/monitor-and-audit-logs" data-discover="true">ZooKeeper audit logs</a> for more information.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>largeRequestMaxBytes</em> :
+(Java system property: <strong>zookeeper.largeRequestMaxBytes</strong>)
+<strong>New in 3.6.0:</strong>
+The maximum number of bytes of all inflight large request. The connection will be closed if a coming large request causes the limit exceeded. The default is 100 * 1024 * 1024.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>largeRequestThreshold</em> :
+(Java system property: <strong>zookeeper.largeRequestThreshold</strong>)
+<strong>New in 3.6.0:</strong>
+The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>outstandingHandshake.limit</em>
+(Java system property only: <strong>zookeeper.netty.server.outstandingHandshake.limit</strong>)
+The maximum in-flight TLS handshake connections could have in ZooKeeper,
+the connections exceed this limit will be rejected before starting handshake.
+This setting doesn&#x27;t limit the max TLS concurrency, but helps avoid herd
+effect due to TLS handshake timeout when there are too many in-flight TLS
+handshakes. Set it to something like 250 is good enough to avoid herd effect.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>netty.server.earlyDropSecureConnectionHandshakes</em>
+(Java system property: <strong>zookeeper.netty.server.earlyDropSecureConnectionHandshakes</strong>)
+If the ZooKeeper server is not fully started, drop TCP connections before performing the TLS handshake.
+This is useful in order to prevent flooding the server with many concurrent TLS handshakes after a restart.
+Please note that if you enable this flag the server won&#x27;t answer to &#x27;ruok&#x27; commands if it is not fully started.
+The behaviour of dropping the connection has been introduced in ZooKeeper 3.7 and it was not possible to disable it.
+Since 3.7.1 and 3.8.0 this feature is disabled by default.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>throttledOpWaitTime</em>
+(Java system property: <strong>zookeeper.throttled_op_wait_time</strong>)
+The time in the RequestThrottler queue longer than which a request will be marked as throttled.
+A throttled requests will not be processed other than being fed down the pipeline of the server it belongs
+to preserve the order of all requests.
+The FinalProcessor will issue an error response (new error code: ZTHROTTLEDOP) for these undigested requests.
+The intent is for the clients not to retry them immediately.
+When set to 0, no requests will be throttled. The default is 0.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>learner.closeSocketAsync</em>
+(Java system property: <strong>zookeeper.learner.closeSocketAsync</strong>)
+(Java system property: <strong>learner.closeSocketAsync</strong>)(Added for backward compatibility)
+<strong>New in 3.7.0:</strong>
+When enabled, a learner will close the quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, potentially delay a new leader election, and leave the quorum unavailable. Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time and a new leader election can be started while the socket being closed.
+The default is false.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>leader.closeSocketAsync</em>
+(Java system property: <strong>zookeeper.leader.closeSocketAsync</strong>)
+(Java system property: <strong>leader.closeSocketAsync</strong>)(Added for backward compatibility)
+<strong>New in 3.7.0:</strong>
+When enabled, the leader will close a quorum socket asynchronously. This is useful for TLS connections where closing a socket might take a long time. If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck then the long socket closing time will block the sending of pings to other followers. Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. Setting this flag to true ensures that pings will be sent regularly.
+The default is false.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>learner.asyncSending</em>
+(Java system property: <strong>zookeeper.learner.asyncSending</strong>)
+(Java system property: <strong>learner.asyncSending</strong>)(Added for backward compatibility)
+<strong>New in 3.7.0:</strong>
+The sending and receiving packets in Learner were done synchronously in a critical section. An untimely network issue could cause the followers to hang (see <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3575">ZOOKEEPER-3575</a> and <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-4074">ZOOKEEPER-4074</a>). The new design moves sending packets in Learner to a separate thread and sends the packets asynchronously. The new design is enabled with this parameter (learner.asyncSending).
+The default is false.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>forward_learner_requests_to_commit_processor_disabled</em>
+(Java system property: <strong>zookeeper.forward_learner_requests_to_commit_processor_disabled</strong>)
+When this property is set, the requests from learners won&#x27;t be enqueued to
+CommitProcessor queue, which will help save the resources and GC time on
+leader. The default value is false.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>serializeLastProcessedZxid.enabled</em>
+(Java system property: <strong>zookeeper.serializeLastProcessedZxid.enabled</strong>)
+<strong>New in 3.9.0:</strong>
+If enabled, ZooKeeper serializes the lastProcessedZxid when snapshot and deserializes it
+when restore. Defaults to true. Needs to be enabled for performing snapshot and restore
+via admin server commands, as there is no snapshot file name to extract the lastProcessedZxid.</p>
+<p class="wrap-anywhere">This feature is backward and forward compatible. Here are the different scenarios.</p>
+<ol>
+<li>
+<p class="wrap-anywhere">Snapshot triggered by server internally</p>
+<ul>
+<li>When loading old snapshot with new code, it will throw EOFException when trying to
+read the non-exist lastProcessedZxid value, and the exception will be caught.
+The lastProcessedZxid will be set using the snapshot file name.</li>
+<li>When loading new snapshot with old code, it will finish successfully after deserializing
+the digest value, the lastProcessedZxid at the end of snapshot file will be ignored.
+The lastProcessedZxid will be set using the snapshot file name.</li>
+</ul>
+</li>
+<li>
+<p class="wrap-anywhere">Sync up between leader and follower: The lastProcessedZxid will not be serialized by
+leader and deserialized by follower in both new and old code. It will be set to the
+lastProcessedZxid sent from leader via QuorumPacket.</p>
+</li>
+<li>
+<p class="wrap-anywhere">Snapshot triggered via admin server APIs: The feature flag need to be enabled for the
+snapshot command to work.</p>
+</li>
+</ol>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="cluster-options"><a data-card="" href="#cluster-options" class="peer">Cluster Options</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">The options in this section are designed for use with an ensemble
+of servers — that is, when deploying clusters of servers.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>electionAlg</em> :
+(No Java system property)
+Election implementation to use. A value of &quot;1&quot; corresponds to the
+non-authenticated UDP-based version of fast leader election, &quot;2&quot;
+corresponds to the authenticated UDP-based version of fast
+leader election, and &quot;3&quot; corresponds to TCP-based version of
+fast leader election. Algorithm 3 was made default in 3.2.0 and
+prior versions (3.0.0 and 3.1.0) were using algorithm 1 and 2 as well.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">The implementations of leader election 1, and 2 were <strong>deprecated</strong> in
+3.4.0. Since 3.6.0 only FastLeaderElection is available, in case of upgrade
+you have to shut down all of your servers and restart them with
+electionAlg=3 (or by removing the line from the configuration file).</p></div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>maxTimeToWaitForEpoch</em> :
+(Java system property: <strong>zookeeper.leader.maxTimeToWaitForEpoch</strong>)
+<strong>New in 3.6.0:</strong>
+The maximum time to wait for epoch from voters when activating
+leader. If leader received a LOOKING notification from one of
+its voters, and it hasn&#x27;t received epoch packets from majority
+within maxTimeToWaitForEpoch, then it will goto LOOKING and
+elect leader again.
+This can be tuned to reduce the quorum or server unavailable
+time, it can be set to be much smaller than initLimit * tickTime.
+In cross datacenter environment, it can be set to something
+like 2s.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>initLimit</em> :
+(No Java system property)
+Amount of time, in ticks (see <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#minimum-configuration" data-discover="true">tickTime</a>), to allow followers to
+connect and sync to a leader. Increased this value as needed, if
+the amount of data managed by ZooKeeper is large.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>connectToLearnerMasterLimit</em> :
+(Java system property: zookeeper.<strong>connectToLearnerMasterLimit</strong>)
+Amount of time, in ticks (see <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#minimum-configuration" data-discover="true">tickTime</a>), to allow followers to
+connect to the leader after leader election. Defaults to the value of initLimit.
+Use when initLimit is high so connecting to learner master doesn&#x27;t result in higher timeout.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>leaderServes</em> :
+(Java system property: zookeeper.<strong>leaderServes</strong>)
+Leader accepts client connections. Default value is &quot;yes&quot;.
+The leader machine coordinates updates. For higher update
+throughput at the slight expense of read throughput the leader
+can be configured to not accept clients and focus on
+coordination. The default to this option is yes, which means
+that a leader will accept client connections.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">Turning on leader selection is highly recommended when you have more than
+three ZooKeeper servers in an ensemble.</p></div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>server.x=[hostname]:nnnnn[:nnnnn] etc</em> :
+(No Java system property)
+Servers making up the ZooKeeper ensemble. When the server
+starts up, it determines which server it is by looking for the
+file <em>myid</em> in the data directory. That file contains the server number, in ASCII,
+and it should match <strong>x</strong> in <strong>server.x</strong> in the left hand side of this setting.
+The list of servers that make up ZooKeeper servers that is
+used by the clients must match the list of ZooKeeper servers
+that each ZooKeeper server has.
+There are two port numbers <strong>nnnnn</strong>.
+The first followers used to connect to the leader, and the second is for
+leader election. If you want to test multiple servers on a single machine, then
+different ports can be used for each server.</p>
+<p class="wrap-anywhere">Since ZooKeeper 3.6.0 it is possible to specify <strong>multiple addresses</strong> for each
+ZooKeeper server (see <a href="https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3188">ZOOKEEPER-3188</a>).
+To enable this feature, you must set the <em>multiAddress.enabled</em> configuration property
+to <em>true</em>. This helps to increase availability and adds network level
+resiliency to ZooKeeper. When multiple physical network interfaces are used
+for the servers, ZooKeeper is able to bind on all interfaces and runtime switching
+to a working interface in case a network error. The different addresses can be specified
+in the config using a pipe (&#x27;|&#x27;) character. A valid configuration using multiple addresses looks like:</p>
+<figure dir="ltr" class="my-4 bg-fd-card rounded-xl shiki relative border shadow-sm not-prose overflow-hidden text-sm shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e" tabindex="-1"><div class="empty:hidden absolute top-2 right-2 z-2 backdrop-blur-lg rounded-lg text-fd-muted-foreground"><button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring p-1 [&amp;_svg]:size-4 hover:text-fd-accent-foreground data-checked:text-fd-accent-foreground" aria-label="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg></button></div><div role="region" tabindex="0" class="text-[13px] py-3.5 overflow-auto max-h-[600px] fd-scroll-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fd-ring" style="--padding-right:calc(var(--spacing) * 8)"><pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line"><span>server.1=zoo1-net1:2888:3888|zoo1-net2:2889:3889</span></span>
+<span class="line"><span>server.2=zoo2-net1:2888:3888|zoo2-net2:2889:3889</span></span>
+<span class="line"><span>server.3=zoo3-net1:2888:3888|zoo3-net2:2889:3889</span></span></code></pre></div></figure>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">By enabling this feature, the Quorum protocol (ZooKeeper Server-Server
+protocol) will change. The users will not notice this and when anyone starts
+a ZooKeeper cluster with the new config, everything will work normally.
+However, it&#x27;s not possible to enable this feature and specify multiple
+addresses during a rolling upgrade if the old ZooKeeper cluster didn&#x27;t
+support the <em>multiAddress</em> feature (and the new Quorum protocol). In case if
+you need this feature but you also need to perform a rolling upgrade from a
+ZooKeeper cluster older than <em>3.6.0</em>, then you first need to do the rolling
+upgrade without enabling the MultiAddress feature and later make a separate
+rolling restart with the new configuration where <strong>multiAddress.enabled</strong> is
+set to <strong>true</strong> and multiple addresses are provided.</p></div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>syncLimit</em> :
+(No Java system property)
+Amount of time, in ticks (see <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#minimum-configuration" data-discover="true">tickTime</a>), to allow followers to sync
+with ZooKeeper. If followers fall too far behind a leader, they
+will be dropped.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>group.x=nnnnn[:nnnnn]</em> :
+(No Java system property)
+Enables a hierarchical quorum construction.&quot;x&quot; is a group identifier
+and the numbers following the &quot;=&quot; sign correspond to server identifiers.
+The left-hand side of the assignment is a colon-separated list of server
+identifiers. Note that groups must be disjoint and the union of all groups
+must be the ZooKeeper ensemble.
+You will find an example <a href="/doc/r3.9.5/admin-ops/quorums" data-discover="true">here</a></p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>weight.x=nnnnn</em> :
+(No Java system property)
+Used along with &quot;group&quot;, it assigns a weight to a server when
+forming quorums. Such a value corresponds to the weight of a server
+when voting. There are a few parts of ZooKeeper that require voting
+such as leader election and the atomic broadcast protocol. By default
+the weight of server is 1. If the configuration defines groups, but not
+weights, then a value of 1 will be assigned to all servers.
+You will find an example <a href="/doc/r3.9.5/admin-ops/quorums" data-discover="true">here</a></p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>cnxTimeout</em> :
+(Java system property: zookeeper.<strong>cnxTimeout</strong>)
+Sets the timeout value for opening connections for leader election notifications.
+Only applicable if you are using electionAlg 3.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden">Default value is 5 seconds.</div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>quorumCnxnTimeoutMs</em> :
+(Java system property: zookeeper.<strong>quorumCnxnTimeoutMs</strong>)
+Sets the read timeout value for the connections for leader election notifications.
+Only applicable if you are using electionAlg 3.</p>
+<div class="flex gap-2 my-4 rounded-xl border bg-fd-card p-3 ps-1 text-sm text-fd-card-foreground shadow-md" style="--callout-color:var(--color-fd-info, var(--color-fd-muted))"><div role="none" class="w-0.5 bg-(--callout-color)/50 rounded-sm"></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-5 -me-0.5 fill-(--callout-color) text-fd-card"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg><div class="flex flex-col gap-2 min-w-0 flex-1"><div class="text-fd-muted-foreground prose-no-margin empty:hidden"><p class="wrap-anywhere">Default value is -1, which will then use the syncLimit * tickTime as the
+timeout.</p></div></div></div>
+</li>
+<li>
+<p class="wrap-anywhere"><em>standaloneEnabled</em> :
+(No Java system property)
+<strong>New in 3.5.0:</strong>
+When set to false, a single server can be started in replicated
+mode, a lone participant can run with observers, and a cluster
+can reconfigure down to one node, and up from one node. The
+default is true for backwards compatibility. It can be set
+using QuorumPeerConfig&#x27;s setStandaloneEnabled method or by
+adding &quot;standaloneEnabled=false&quot; or &quot;standaloneEnabled=true&quot;
+to a server&#x27;s config file.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>reconfigEnabled</em> :
+(No Java system property)
+<strong>New in 3.5.3:</strong>
+This controls the enabling or disabling of
+<a href="/doc/r3.9.5/admin-ops/dynamic-reconfiguration" data-discover="true">Dynamic Reconfiguration</a> feature. When the feature
+is enabled, users can perform reconfigure operations through
+the ZooKeeper client API or through ZooKeeper command line tools
+assuming users are authorized to perform such operations.
+When the feature is disabled, no user, including the super user,
+can perform a reconfiguration. Any attempt to reconfigure will return an error.
+<strong>&quot;reconfigEnabled&quot;</strong> option can be set as
+<strong>&quot;reconfigEnabled=false&quot;</strong> or
+<strong>&quot;reconfigEnabled=true&quot;</strong>
+to a server&#x27;s config file, or using QuorumPeerConfig&#x27;s
+setReconfigEnabled method. The default value is false.
+If present, the value should be consistent across every server in
+the entire ensemble. Setting the value as true on some servers and false
+on other servers will cause inconsistent behavior depending on which server
+is elected as leader. If the leader has a setting of
+<strong>&quot;reconfigEnabled=true&quot;</strong>, then the ensemble
+will have reconfig feature enabled. If the leader has a setting of
+<strong>&quot;reconfigEnabled=false&quot;</strong>, then the ensemble
+will have reconfig feature disabled. It is thus recommended having a consistent
+value for <strong>&quot;reconfigEnabled&quot;</strong> across servers
+in the ensemble.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>4lw.commands.whitelist</em> :
+(Java system property: <strong>zookeeper.4lw.commands.whitelist</strong>)
+<strong>New in 3.5.3:</strong>
+A list of comma separated <a href="/doc/r3.9.5/admin-ops/administrators-guide/commands#the-four-letter-words" data-discover="true">Four Letter Words</a>
+commands that user wants to use. A valid Four Letter Words
+command must be put in this list else ZooKeeper server will
+not enable the command.
+By default the whitelist only contains &quot;srvr&quot; command
+which zkServer.sh uses. Additionally, if Read Only Mode is enabled by setting
+Java system property <strong>readonlymode.enabled</strong>, then the &quot;isro&quot; command is
+added to the whitelist. The rest of four-letter word commands are disabled
+by default: attempting to use them will gain a response
+&quot;.... is not executed because it is not in the whitelist.&quot;
+Here&#x27;s an example of the configuration that enables stat, ruok, conf, and isro
+command while disabling the rest of Four Letter Words command:</p>
+<figure dir="ltr" class="my-4 bg-fd-card rounded-xl shiki relative border shadow-sm not-prose overflow-hidden text-sm shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e" tabindex="-1"><div class="empty:hidden absolute top-2 right-2 z-2 backdrop-blur-lg rounded-lg text-fd-muted-foreground"><button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring p-1 [&amp;_svg]:size-4 hover:text-fd-accent-foreground data-checked:text-fd-accent-foreground" aria-label="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg></button></div><div role="region" tabindex="0" class="text-[13px] py-3.5 overflow-auto max-h-[600px] fd-scroll-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fd-ring" style="--padding-right:calc(var(--spacing) * 8)"><pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line"><span>4lw.commands.whitelist=stat, ruok, conf, isro</span></span></code></pre></div></figure>
+<p class="wrap-anywhere">If you really need enable all four-letter word commands by default, you can use
+the asterisk option so you don&#x27;t have to include every command one by one in the list.
+As an example, this will enable all four-letter word commands:</p>
+<figure dir="ltr" class="my-4 bg-fd-card rounded-xl shiki relative border shadow-sm not-prose overflow-hidden text-sm shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e" tabindex="-1"><div class="empty:hidden absolute top-2 right-2 z-2 backdrop-blur-lg rounded-lg text-fd-muted-foreground"><button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring p-1 [&amp;_svg]:size-4 hover:text-fd-accent-foreground data-checked:text-fd-accent-foreground" aria-label="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg></button></div><div role="region" tabindex="0" class="text-[13px] py-3.5 overflow-auto max-h-[600px] fd-scroll-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fd-ring" style="--padding-right:calc(var(--spacing) * 8)"><pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line"><span>4lw.commands.whitelist=*</span></span></code></pre></div></figure>
+</li>
+<li>
+<p class="wrap-anywhere"><em>tcpKeepAlive</em> :
+(Java system property: <strong>zookeeper.tcpKeepAlive</strong>)
+<strong>New in 3.5.4:</strong>
+Setting this to true sets the TCP keepAlive flag on the
+sockets used by quorum members to perform elections.
+This will allow for connections between quorum members to
+remain up when there is network infrastructure that may
+otherwise break them. Some NATs and firewalls may terminate
+or lose state for long-running or idle connections.
+Enabling this option relies on OS level settings to work
+properly, check your operating system&#x27;s options regarding TCP
+keepalive for more information. Defaults to
+<strong>false</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>clientTcpKeepAlive</em> :
+(Java system property: <strong>zookeeper.clientTcpKeepAlive</strong>)
+<strong>New in 3.6.1:</strong>
+Setting this to true sets the TCP keepAlive flag on the
+client sockets. Some broken network infrastructure may lose
+the FIN packet that is sent from closing client. These never
+closed client sockets cause OS resource leak. Enabling this
+option terminates these zombie sockets by idle check.
+Enabling this option relies on OS level settings to work
+properly, check your operating system&#x27;s options regarding TCP
+keepalive for more information. Defaults to <strong>false</strong>. Please
+note the distinction between it and <strong>tcpKeepAlive</strong>. It is
+applied for the client sockets while <strong>tcpKeepAlive</strong> is for
+the sockets used by quorum members. Currently this option is
+only available when default <code>NIOServerCnxnFactory</code> is used.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>electionPortBindRetry</em> :
+(Java system property only: <strong>zookeeper.electionPortBindRetry</strong>)
+Property set max retry count when Zookeeper server fails to bind
+leader election port. Such errors can be temporary and recoverable,
+such as DNS issue described in <a href="https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3320">ZOOKEEPER-3320</a>,
+or non-retryable, such as port already in use.
+In case of transient errors, this property can improve availability
+of Zookeeper server and help it to self recover.
+Default value 3. In container environment, especially in Kubernetes,
+this value should be increased or set to 0(infinite retry) to overcome issues
+related to DNS name resolving.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>observer.reconnectDelayMs</em> :
+(Java system property: <strong>zookeeper.observer.reconnectDelayMs</strong>)
+When observer loses its connection with the leader, it waits for the
+specified value before trying to reconnect with the leader so that
+the entire observer fleet won&#x27;t try to run leader election and reconnect
+to the leader at once.
+Defaults to 0 ms.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>observer.election.DelayMs</em> :
+(Java system property: <strong>zookeeper.observer.election.DelayMs</strong>)
+Delay the observer&#x27;s participation in a leader election upon disconnect
+so as to prevent unexpected additional load on the voting peers during
+the process. Defaults to 200 ms.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>localSessionsEnabled</em> and <em>localSessionsUpgradingEnabled</em> :
+<strong>New in 3.5:</strong>
+Optional value is true or false. Their default values are false.
+Turning on the local session feature by setting <em>localSessionsEnabled=true</em>. Turning on
+<em>localSessionsUpgradingEnabled</em> can upgrade a local session to a global session automatically as required (e.g. creating ephemeral nodes),
+which only matters when <em>localSessionsEnabled</em> is enabled.</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="encryption-authentication-authorization-options"><a data-card="" href="#encryption-authentication-authorization-options" class="peer">Encryption, Authentication, Authorization Options</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">The options in this section allow control over
+encryption/authentication/authorization performed by the service.</p>
+<p class="wrap-anywhere">Beside this page, you can also find useful information about client side configuration in the
+<a href="/doc/r3.9.5/developer/programmers-guide/bindings#client-configuration-parameters" data-discover="true">Programmers Guide</a>.
+The ZooKeeper Wiki also has useful pages about <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+SSL+User+Guide">ZooKeeper SSL support</a>,
+and <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL">SASL authentication for ZooKeeper</a>.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>DigestAuthenticationProvider.enabled</em> :
+(Java system property: <strong>zookeeper.DigestAuthenticationProvider.enabled</strong>)
+<strong>New in 3.7:</strong>
+Determines whether the <code>digest</code> authentication provider is
+enabled. The default value is <strong>true</strong> for backwards
+compatibility, but it may be a good idea to disable this provider
+if not used, as it can result in misleading entries appearing in
+audit logs
+(see <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-3979">ZOOKEEPER-3979</a>)</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>DigestAuthenticationProvider.superDigest</em> :
+(Java system property: <strong>zookeeper.DigestAuthenticationProvider.superDigest</strong>)
+By default this feature is <strong>disabled</strong>
+<strong>New in 3.2:</strong>
+Enables a ZooKeeper ensemble administrator to access the
+znode hierarchy as a &quot;super&quot; user. In particular no ACL
+checking occurs for a user authenticated as
+super.
+org.apache.zookeeper.server.auth.DigestAuthenticationProvider
+can be used to generate the superDigest, call it with
+one parameter of <code>&quot;super:&lt;password&gt;&quot;</code>. Provide the
+generated <code>&quot;super:&lt;data&gt;&quot;</code> as the system property value
+when starting each server of the ensemble.
+When authenticating to a ZooKeeper server (from a
+ZooKeeper client) pass a scheme of <code>&quot;digest&quot;</code> and authdata
+of <code>&quot;super:&lt;password&gt;&quot;</code>. Note that digest auth passes
+the authdata in plaintext to the server, it would be
+prudent to use this authentication method only on
+localhost (not over the network) or over an encrypted
+connection.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>DigestAuthenticationProvider.digestAlg</em> :
+(Java system property: <strong>zookeeper.DigestAuthenticationProvider.digestAlg</strong>)
+<strong>New in 3.7.0:</strong>
+Set ACL digest algorithm. The default value is: <code>SHA1</code> which will be deprecated in the future for security issues.</p>
+<p class="wrap-anywhere">Set this property the same value in all the servers.</p>
+<ul>
+<li>
+<p class="wrap-anywhere">How to support other more algorithms?</p>
+<ul>
+<li>
+<p class="wrap-anywhere">Modify the <code>java.security</code> configuration file under <code>$JAVA_HOME/jre/lib/security/java.security</code> by specifying
+<code>security.provider.&lt;n&gt;=&lt;provider class name&gt;</code>.</p>
+<p class="wrap-anywhere">For example:</p>
+<figure dir="ltr" class="my-4 bg-fd-card rounded-xl shiki relative border shadow-sm not-prose overflow-hidden text-sm shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e" tabindex="-1"><div class="empty:hidden absolute top-2 right-2 z-2 backdrop-blur-lg rounded-lg text-fd-muted-foreground"><button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring p-1 [&amp;_svg]:size-4 hover:text-fd-accent-foreground data-checked:text-fd-accent-foreground" aria-label="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg></button></div><div role="region" tabindex="0" class="text-[13px] py-3.5 overflow-auto max-h-[600px] fd-scroll-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fd-ring" style="--padding-right:calc(var(--spacing) * 8)"><pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line"><span>set zookeeper.DigestAuthenticationProvider.digestAlg=RipeMD160</span></span>
+<span class="line"><span>security.provider.3=org.bouncycastle.jce.provider.BouncyCastleProvider</span></span></code></pre></div></figure>
+</li>
+<li>
+<p class="wrap-anywhere">Copy the jar file to <code>$JAVA_HOME/jre/lib/ext/</code>.</p>
+<p class="wrap-anywhere">For example:</p>
+<figure dir="ltr" class="my-4 bg-fd-card rounded-xl shiki relative border shadow-sm not-prose overflow-hidden text-sm shiki shiki-themes github-light github-dark" style="--shiki-light:#24292e;--shiki-dark:#e1e4e8;--shiki-light-bg:#fff;--shiki-dark-bg:#24292e" tabindex="-1"><div class="empty:hidden absolute top-2 right-2 z-2 backdrop-blur-lg rounded-lg text-fd-muted-foreground"><button type="button" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring p-1 [&amp;_svg]:size-4 hover:text-fd-accent-foreground data-checked:text-fd-accent-foreground" aria-label="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg></button></div><div role="region" tabindex="0" class="text-[13px] py-3.5 overflow-auto max-h-[600px] fd-scroll-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fd-ring" style="--padding-right:calc(var(--spacing) * 8)"><pre class="min-w-full w-max *:flex *:flex-col"><code><span class="line"><span>copy bcprov-jdk18on-1.60.jar to $JAVA_HOME/jre/lib/ext/</span></span></code></pre></div></figure>
+</li>
+</ul>
+</li>
+<li>
+<p class="wrap-anywhere">How to migrate from one digest algorithm to another?</p>
+<ul>
+<li>Regenerate <code>superDigest</code> when migrating to new algorithm.</li>
+<li>Run <code>SetAcl</code> for a znode which already had a digest auth of old algorithm.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p class="wrap-anywhere"><em>IPAuthenticationProvider.usexforwardedfor</em> :
+(Java system property: <strong>zookeeper.IPAuthenticationProvider.usexforwardedfor</strong>)
+<strong>New in 3.9.3:</strong>
+IPAuthenticationProvider uses the client IP address to authenticate the user. By
+default it reads the <strong>Host</strong> HTTP header to detect client IP address. In some
+proxy configurations the proxy server adds the <strong>X-Forwarded-For</strong> header to
+the request in order to provide the IP address of the original client request.
+By enabling <strong>usexforwardedfor</strong> ZooKeeper setting, <strong>X-Forwarded-For</strong> will be preferred
+over the standard <strong>Host</strong> header.
+Default value is <strong>false</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>X509AuthenticationProvider.superUser</em> :
+(Java system property: <strong>zookeeper.X509AuthenticationProvider.superUser</strong>)
+The SSL-backed way to enable a ZooKeeper ensemble
+administrator to access the znode hierarchy as a &quot;super&quot; user.
+When this parameter is set to an X500 principal name, only an
+authenticated client with that principal will be able to bypass
+ACL checking and have full privileges to all znodes.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.superUser</em> :
+(Java system property: <strong>zookeeper.superUser</strong>)
+Similar to <strong>zookeeper.X509AuthenticationProvider.superUser</strong>
+but is generic for SASL based logins. It stores the name of
+a user that can access the znode hierarchy as a &quot;super&quot; user.
+You can specify multiple SASL super users using the
+<strong>zookeeper.superUser.[suffix]</strong> notation, e.g.:
+<code>zookeeper.superUser.1=...</code>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.authProvider</em> :
+(Java system property: <strong>zookeeper.ssl.authProvider</strong>)
+Specifies a subclass of <strong>org.apache.zookeeper.auth.X509AuthenticationProvider</strong>
+to use for secure client authentication. This is useful in
+certificate key infrastructures that do not use JKS. It may be
+necessary to extend <strong>javax.net.ssl.X509KeyManager</strong> and <strong>javax.net.ssl.X509TrustManager</strong>
+to get the desired behavior from the SSL stack. To configure the
+ZooKeeper server to use the custom provider for authentication,
+choose a scheme name for the custom AuthenticationProvider and
+set the property <strong>zookeeper.authProvider.[scheme]</strong> to the fully-qualified class name of the custom
+implementation. This will load the provider into the ProviderRegistry.
+Then set this property <strong>zookeeper.ssl.authProvider=[scheme]</strong> and that provider
+will be used for secure authentication.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.ensembleAuthName</em> :
+(Java system property only: <strong>zookeeper.ensembleAuthName</strong>)
+<strong>New in 3.6.0:</strong>
+Specify a list of comma-separated valid names/aliases of an ensemble. A client
+can provide the ensemble name it intends to connect as the credential for scheme &quot;ensemble&quot;. The EnsembleAuthenticationProvider will check the credential against
+the list of names/aliases of the ensemble that receives the connection request.
+If the credential is not in the list, the connection request will be refused.
+This prevents a client accidentally connecting to a wrong ensemble.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>sessionRequireClientSASLAuth</em> :
+(Java system property: <strong>zookeeper.sessionRequireClientSASLAuth</strong>)
+<strong>New in 3.6.0:</strong>
+When set to <strong>true</strong>, ZooKeeper server will only accept connections and requests from clients
+that have authenticated with server via SASL. Clients that are not configured with SASL
+authentication, or configured with SASL but failed authentication (i.e. with invalid credential)
+will not be able to establish a session with server. A typed error code (-124) will be delivered
+in such case, both Java and C client will close the session with server thereafter,
+without further attempts on retrying to reconnect.</p>
+</li>
+</ul>
+<p class="wrap-anywhere">This configuration is shorthand for <strong>enforce.auth.enabled=true</strong> and <strong>enforce.auth.scheme=sasl</strong></p>
+<p class="wrap-anywhere">By default, this feature is disabled. Users who would like to opt-in can enable the feature
+by setting <strong>sessionRequireClientSASLAuth</strong> to <strong>true</strong>.</p>
+<p class="wrap-anywhere">This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
+configured to allow clients that fail SASL authentication to login, client will not be able to
+establish a session with server if this feature is enabled.</p>
+<ul>
+<li><em>enforce.auth.enabled</em> :
+(Java system property : <strong>zookeeper.enforce.auth.enabled</strong>)
+<strong>New in 3.7.0:</strong>
+When set to <strong>true</strong>, ZooKeeper server will only accept connections and requests from clients
+that have authenticated with server via configured auth scheme. Authentication schemes
+can be configured using property enforce.auth.schemes. Clients that are not
+configured with the any of the auth scheme configured at server or configured but failed authentication (i.e. with invalid credential)
+will not be able to establish a session with server. A typed error code (-124) will be delivered
+in such case, both Java and C client will close the session with server thereafter,
+without further attempts on retrying to reconnect.</li>
+</ul>
+<p class="wrap-anywhere">By default, this feature is disabled. Users who would like to opt-in can enable the feature
+by setting <strong>enforce.auth.enabled</strong> to <strong>true</strong>.</p>
+<p class="wrap-anywhere">When <strong>enforce.auth.enabled=true</strong> and <strong>enforce.auth.schemes=sasl</strong> then</p>
+<p class="wrap-anywhere"><emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> configuration
+is overruled. So even if server is configured to allow clients that fail SASL
+authentication to login, client will not be able to establish a session with
+server if this feature is enabled with sasl as authentication scheme.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>enforce.auth.schemes</em> :
+(Java system property : <strong>zookeeper.enforce.auth.schemes</strong>)
+<strong>New in 3.7.0:</strong>
+Comma separated list of authentication schemes. Clients must be authenticated with at least one
+authentication scheme before doing any zookeeper operations.
+This property is used only when <strong>enforce.auth.enabled</strong> is to <strong>true</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>sslQuorum</em> :
+(Java system property: <strong>zookeeper.sslQuorum</strong>)
+<strong>New in 3.5.5:</strong>
+Enables encrypted quorum communication. Default is <code>false</code>. When enabling this feature, please also consider enabling <em>leader.closeSocketAsync</em>
+and <em>learner.closeSocketAsync</em> to avoid issues associated with the potentially long socket closing time when shutting down an SSL connection.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.keyStore.location and ssl.keyStore.password</em> and <em>ssl.quorum.keyStore.location</em> and <em>ssl.quorum.keyStore.password</em> :
+(Java system properties: <strong>zookeeper.ssl.keyStore.location</strong> and <strong>zookeeper.ssl.keyStore.password</strong> and <strong>zookeeper.ssl.quorum.keyStore.location</strong> and <strong>zookeeper.ssl.quorum.keyStore.password</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the file path to a Java keystore containing the local
+credentials to be used for client and quorum TLS connections, and the
+password to unlock the file.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.keyStore.passwordPath</em> and <em>ssl.quorum.keyStore.passwordPath</em> :
+(Java system properties: <strong>zookeeper.ssl.keyStore.passwordPath</strong> and <strong>zookeeper.ssl.quorum.keyStore.passwordPath</strong>)
+<strong>New in 3.8.0:</strong>
+Specifies the file path that contains the keystore password. Reading the password from a file takes precedence over
+the explicit password property.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.keyStore.type</em> and <em>ssl.quorum.keyStore.type</em> :
+(Java system properties: <strong>zookeeper.ssl.keyStore.type</strong> and <strong>zookeeper.ssl.quorum.keyStore.type</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+Default: null.
+<strong>New in 3.5.10, 3.6.3, 3.7.0:</strong>
+The format BCFKS was added.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.trustStore.location</em> and <em>ssl.trustStore.password</em> and <em>ssl.quorum.trustStore.location</em> and <em>ssl.quorum.trustStore.password</em> :
+(Java system properties: <strong>zookeeper.ssl.trustStore.location</strong> and <strong>zookeeper.ssl.trustStore.password</strong> and <strong>zookeeper.ssl.quorum.trustStore.location</strong> and <strong>zookeeper.ssl.quorum.trustStore.password</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the file path to a Java truststore containing the remote
+credentials to be used for client and quorum TLS connections, and the
+password to unlock the file.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.trustStore.passwordPath</em> and <em>ssl.quorum.trustStore.passwordPath</em> :
+(Java system properties: <strong>zookeeper.ssl.trustStore.passwordPath</strong> and <strong>zookeeper.ssl.quorum.trustStore.passwordPath</strong>)
+<strong>New in 3.8.0:</strong>
+Specifies the file path that contains the truststore password. Reading the password from a file takes precedence over
+the explicit password property.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.trustStore.type</em> and <em>ssl.quorum.trustStore.type</em> :
+(Java system properties: <strong>zookeeper.ssl.trustStore.type</strong> and <strong>zookeeper.ssl.quorum.trustStore.type</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+Default: null.
+<strong>New in 3.5.10, 3.6.3, 3.7.0:</strong>
+The format BCFKS was added.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.protocol</em> and <em>ssl.quorum.protocol</em> :
+(Java system properties: <strong>zookeeper.ssl.protocol</strong> and <strong>zookeeper.ssl.quorum.protocol</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies to protocol to be used in client and quorum TLS negotiation.
+Default: TLSv1.3 or TLSv1.2 depending on Java runtime version being used.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.enabledProtocols</em> and <em>ssl.quorum.enabledProtocols</em> :
+(Java system properties: <strong>zookeeper.ssl.enabledProtocols</strong> and <strong>zookeeper.ssl.quorum.enabledProtocols</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the enabled protocols in client and quorum TLS negotiation.
+Default: TLSv1.3, TLSv1.2 if value of <code>protocol</code> property is TLSv1.3. TLSv1.2 if <code>protocol</code> is TLSv1.2.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.ciphersuites</em> and <em>ssl.quorum.ciphersuites</em> :
+(Java system properties: <strong>zookeeper.ssl.ciphersuites</strong> and <strong>zookeeper.ssl.quorum.ciphersuites</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the enabled cipher suites to be used in client and quorum TLS negotiation.
+Default: JDK defaults since 3.10.0, and hard coded cipher suites for 3.9 and earlier versions. See <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#tls-cipher-suites" data-discover="true">TLS Cipher Suites</a>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.context.supplier.class</em> and <em>ssl.quorum.context.supplier.class</em> :
+(Java system properties: <strong>zookeeper.ssl.context.supplier.class</strong> and <strong>zookeeper.ssl.quorum.context.supplier.class</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies the class to be used for creating SSL context in client and quorum SSL communication.
+This allows you to use custom SSL context and implement the following scenarios: 1. Use hardware keystore, loaded in using PKCS11 or something similar. 2. You don&#x27;t have access to the software keystore, but can retrieve an already-constructed SSLContext from their container.
+Default: null</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.hostnameVerification</em> and <em>ssl.quorum.hostnameVerification</em> :
+(Java system properties: <strong>zookeeper.ssl.hostnameVerification</strong> and <strong>zookeeper.ssl.quorum.hostnameVerification</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies whether the hostname verification is enabled in client and quorum TLS negotiation process.
+Disabling it only recommended for testing purposes.
+Default: true</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.clientHostnameVerification</em> and <em>ssl.quorum.clientHostnameVerification</em> :
+(Java system properties: <strong>zookeeper.ssl.clientHostnameVerification</strong> and <strong>zookeeper.ssl.quorum.clientHostnameVerification</strong>)
+<strong>New in 3.9.4:</strong>
+Specifies whether the client&#x27;s hostname verification is enabled in client and quorum TLS negotiation process.
+This option requires the corresponding <em>hostnameVerification</em> option to be <code>true</code>, or it will be ignored.
+Default: true for quorum, false for clients</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.allowReverseDnsLookup</em> and <em>ssl.quorum.allowReverseDnsLookup</em> :
+(Java system properties: <strong>zookeeper.ssl.allowReverseDnsLookup</strong> and <strong>zookeeper.ssl.quorum.allowReverseDnsLookup</strong>)
+<strong>New in 3.9.5:</strong>
+Allow reverse DNS lookup in both server- and client hostname verifications if the hostname verification is enabled in
+<code>ZKTrustManager</code>. Supported in both quorum and client TLS protocols. Not supported in FIPS mode. Reverse DNS lookups are
+expensive and unnecessary in most cases. Make sure that certificates are created with all required Subject Alternative
+Names (SAN) for successful identity verification. It&#x27;s recommended to add SAN:IP entries for identity verification
+of client certificates.
+Default: false</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.crl</em> and <em>ssl.quorum.crl</em> :
+(Java system properties: <strong>zookeeper.ssl.crl</strong> and <strong>zookeeper.ssl.quorum.crl</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies whether Certificate Revocation List is enabled in client and quorum TLS protocols.
+Default: jvm property &quot;com.sun.net.ssl.checkRevocation&quot; since 3.10.0, false otherwise</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.ocsp</em> and <em>ssl.quorum.ocsp</em> :
+(Java system properties: <strong>zookeeper.ssl.ocsp</strong> and <strong>zookeeper.ssl.quorum.ocsp</strong>)
+<strong>New in 3.5.5:</strong>
+Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
+<strong>Changed in 3.10.0:</strong>
+Before 3.10.0, <em>ssl.ocsp</em> and <em>ssl.quorum.ocsp</em> implies <em>ssl.crl</em> and <em>ssl.quorum.crl</em> correspondingly.
+After 3.10.0, one has to setup both <em>ssl.crl</em> and <em>ssl.ocsp</em> (or <em>ssl.quorum.crl</em> and <em>ssl.quorum.ocsp</em>)
+to enable OCSP. This is consistent with jdk&#x27;s method of <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html#setting-up-a-java-client-to-use-client-driven-ocsp">Setting up a Java Client to use Client-Driven OCSP</a>.
+Default: jvm security property &quot;ocsp.enable&quot; since 3.10.0, false otherwise</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.clientAuth</em> and <em>ssl.quorum.clientAuth</em> :
+(Java system properties: <strong>zookeeper.ssl.clientAuth</strong> and <strong>zookeeper.ssl.quorum.clientAuth</strong>)
+<strong>Added in 3.5.5, but broken until 3.5.7:</strong>
+Specifies options to authenticate ssl connections from clients. Valid values are</p>
+<ul>
+<li>&quot;none&quot;: server will not request client authentication</li>
+<li>&quot;want&quot;: server will &quot;request&quot; client authentication</li>
+<li>&quot;need&quot;: server will &quot;require&quot; client authentication</li>
+</ul>
+<p class="wrap-anywhere">Default: &quot;need&quot;</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.handshakeDetectionTimeoutMillis</em> and <em>ssl.quorum.handshakeDetectionTimeoutMillis</em> :
+(Java system properties: <strong>zookeeper.ssl.handshakeDetectionTimeoutMillis</strong> and <strong>zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis</strong>)
+<strong>New in 3.5.5:</strong>
+TBD</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>ssl.sslProvider</em> :
+(Java system property: <strong>zookeeper.ssl.sslProvider</strong>)
+<strong>New in 3.9.0:</strong>
+Allows to select SSL provider in the client-server communication when TLS is enabled. Netty-tcnative native library
+has been added to ZooKeeper in version 3.9.0 which allows us to use native SSL libraries like OpenSSL on supported
+platforms. See the available options in Netty-tcnative documentation. Default value is &quot;JDK&quot;.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>sslQuorumReloadCertFiles</em> :
+(No Java system property)
+<strong>New in 3.5.5, 3.6.0:</strong>
+Allows Quorum SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>client.certReload</em> :
+(Java system property: <strong>zookeeper.client.certReload</strong>)
+<strong>New in 3.7.2, 3.8.1, 3.9.0:</strong>
+Allows client SSL keyStore and trustStore reloading when the certificates on the filesystem change without having to restart the ZK process. Default: false</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>client.portUnification</em>:
+(Java system property: <strong>zookeeper.client.portUnification</strong>)
+Specifies that the client port should accept SSL connections
+(using the same configuration as the secure client port).
+Default: false</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>authProvider</em>:
+(Java system property: <strong>zookeeper.authProvider</strong>)
+You can specify multiple authentication provider classes for ZooKeeper.
+Usually you use this parameter to specify the SASL authentication provider
+like: <code>authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider</code></p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>kerberos.removeHostFromPrincipal</em>
+(Java system property: <strong>zookeeper.kerberos.removeHostFromPrincipal</strong>)
+You can instruct ZooKeeper to remove the host from the client principal name during authentication.
+(e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as <a href="mailto:zk@EXAMPLE.COM">zk@EXAMPLE.COM</a>)
+Default: false</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>kerberos.removeRealmFromPrincipal</em>
+(Java system property: <strong>zookeeper.kerberos.removeRealmFromPrincipal</strong>)
+You can instruct ZooKeeper to remove the realm from the client principal name during authentication.
+(e.g. the zk/myhost@EXAMPLE.COM client principal will be authenticated in ZooKeeper as zk/myhost)
+Default: false</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>kerberos.canonicalizeHostNames</em>
+(Java system property: <strong>zookeeper.kerberos.canonicalizeHostNames</strong>)
+<strong>New in 3.7.0:</strong>
+Instructs ZooKeeper to canonicalize server host names extracted from <em>server.x</em> lines.
+This allows using e.g. <code>CNAME</code> records to reference servers in configuration files, while still enabling SASL Kerberos authentication between quorum members.
+It is essentially the quorum equivalent of the <em>zookeeper.sasl.client.canonicalize.hostname</em> property for clients.
+The default value is <strong>false</strong> for backwards compatibility.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>multiAddress.enabled</em> :
+(Java system property: <strong>zookeeper.multiAddress.enabled</strong>)
+<strong>New in 3.6.0:</strong>
+Since ZooKeeper 3.6.0 you can also <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#cluster-options" data-discover="true">specify multiple addresses</a>
+for each ZooKeeper server instance (this can increase availability when multiple physical
+network interfaces can be used parallel in the cluster). Setting this parameter to
+<strong>true</strong> will enable this feature. Please note, that you can not enable this feature
+during a rolling upgrade if the version of the old ZooKeeper cluster is prior to 3.6.0.
+The default value is <strong>false</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>multiAddress.reachabilityCheckTimeoutMs</em> :
+(Java system property: <strong>zookeeper.multiAddress.reachabilityCheckTimeoutMs</strong>)
+<strong>New in 3.6.0:</strong>
+Since ZooKeeper 3.6.0 you can also <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#cluster-options" data-discover="true">specify multiple addresses</a>
+for each ZooKeeper server instance (this can increase availability when multiple physical
+network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find
+the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+In this property you can set the timeout in milliseconds for the reachability check. The check happens
+in parallel for the different addresses, so the timeout you set here is the maximum time will be taken
+by checking the reachability of all addresses.
+The default value is <strong>1000</strong>.</p>
+<p class="wrap-anywhere">This parameter has no effect, unless you enable the MultiAddress feature by setting <em>multiAddress.enabled=true</em>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>fips-mode</em> :
+(Java system property: <strong>zookeeper.fips-mode</strong>)
+<strong>New in 3.8.2:</strong>
+Enable FIPS compatibility mode in ZooKeeper. If enabled, the following things will be changed in order to comply
+with FIPS requirements:</p>
+<ul>
+<li>Custom trust manager (<code>ZKTrustManager</code>) that is used for hostname verification will be disabled. As a consequence,
+hostname verification is not available in the Quorum protocol, but still can be set in client-server communication.</li>
+<li>DIGEST-MD5 Sasl auth mechanism will be disabled in Quorum and ZooKeeper Sasl clients. Only GSSAPI (Kerberos)
+can be used.</li>
+</ul>
+<p class="wrap-anywhere">Default: <strong>true</strong> (3.9.0+), <strong>false</strong> (3.8.x)</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="tls-cipher-suites"><a data-card="" href="#tls-cipher-suites" class="peer">TLS Cipher Suites</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">From 3.5.5 to 3.9 a hard coded default cipher list was used, with the ordering
+dependent on whether it is run Java 8 or a later version.</p>
+<p class="wrap-anywhere">The list on Java 8 includes TLSv1.2 CBC, GCM and TLSv1.3 ciphers in ordering: <em>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256</em></p>
+<p class="wrap-anywhere">The list on Java 9+ includes TLSv1.2 GCM, CBC and TLSv1.3 ciphers in ordering: <em>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256</em></p>
+<p class="wrap-anywhere">Since 3.10 there is no hardcoded list, and the JDK defaults are used.</p>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="experimental-optionsfeatures"><a data-card="" href="#experimental-optionsfeatures" class="peer">Experimental Options/Features</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">New features that are currently considered experimental.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>Read Only Mode Server</em> :
+(Java system property: <strong>readonlymode.enabled</strong>)
+<strong>New in 3.4.0:</strong>
+Setting this value to true enables Read Only Mode server
+support (disabled by default).
+<em>localSessionsEnabled</em> has to be activated to serve clients.
+A downgrade of an existing connections is currently not supported.
+ROM allows clients sessions which requested ROM support to connect to the
+server even when the server might be partitioned from
+the quorum. In this mode ROM clients can still read
+values from the ZK service, but will be unable to write
+values and see changes from other clients. See
+ZOOKEEPER-784 for more details.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.follower.skipLearnerRequestToNextProcessor</em> :
+(Java system property: <strong>zookeeper.follower.skipLearnerRequestToNextProcessor</strong>)
+When our cluster has observers which are connected with ObserverMaster, then turning on this flag might help
+you reduce some memory pressure on the Observer Master. If your cluster doesn&#x27;t have any observers or
+they are not connected with ObserverMaster or your Observer&#x27;s don&#x27;t make much writes, then using this flag
+won&#x27;t help you.
+Currently the change here is guarded behind the flag to help us get more confidence around the memory gains.
+In Long run, we might want to remove this flag and set its behavior as the default codepath.</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="unsafe-options"><a data-card="" href="#unsafe-options" class="peer">Unsafe Options</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere">The following options can be useful, but be careful when you use
+them. The risk of each is explained along with the explanation of what
+the variable does.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>forceSync</em> :
+(Java system property: <strong>zookeeper.forceSync</strong>)
+Requires updates to be synced to media of the transaction
+log before finishing processing the update. If this option is
+set to no, ZooKeeper will not require updates to be synced to
+the media.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>jute.maxbuffer</em> :
+(Java system property:<strong>jute.maxbuffer</strong>).</p>
+<ul>
+<li>This option can only be set as a Java system property.
+There is no zookeeper prefix on it. It specifies the maximum
+size of the data that can be stored in a znode. The unit is: byte. The default is
+0xfffff(1048575) bytes, or just under 1M.</li>
+<li>If this option is changed, the system property must be set on all servers and clients otherwise
+problems will arise.</li>
+<li>When <em>jute.maxbuffer</em> in the client side is greater than the server side, the client wants to write the data
+exceeds <em>jute.maxbuffer</em> in the server side, the server side will get <strong>java.io.IOException: Len error</strong></li>
+<li>When <em>jute.maxbuffer</em> in the client side is less than the server side, the client wants to read the data
+exceeds <em>jute.maxbuffer</em> in the client side, the client side will get <strong>java.io.IOException: Unreasonable length</strong>
+or <strong>Packet len is out of range!</strong></li>
+<li>This is really a sanity check. ZooKeeper is designed to store data on the order of kilobytes in size.
+In the production environment, increasing this property to exceed the default value is not recommended for the following reasons:</li>
+<li>Large size znodes cause unwarranted latency spikes, worsen the throughput</li>
+<li>Large size znodes make the synchronization time between leader and followers unpredictable and non-convergent(sometimes timeout), cause the quorum unstable</li>
+</ul>
+</li>
+<li>
+<p class="wrap-anywhere"><em>jute.maxbuffer.extrasize</em>:
+(Java system property: <strong>zookeeper.jute.maxbuffer.extrasize</strong>)
+<strong>New in 3.5.7:</strong>
+While processing client requests ZooKeeper server adds some additional information into
+the requests before persisting it as a transaction. Earlier this additional information size
+was fixed to 1024 bytes. For many scenarios, specially scenarios where jute.maxbuffer value
+is more than 1 MB and request type is multi, this fixed size was insufficient.
+To handle all the scenarios additional information size is increased from 1024 byte
+to same as jute.maxbuffer size and also it is made configurable through jute.maxbuffer.extrasize.
+Generally this property is not required to be configured as default value is the most optimal value.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>skipACL</em> :
+(Java system property: <strong>zookeeper.skipACL</strong>)
+Skips ACL checks. This results in a boost in throughput,
+but opens up full access to the data tree to everyone.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>quorumListenOnAllIPs</em> :
+When set to true the ZooKeeper server will listen
+for connections from its peers on all available IP addresses,
+and not only the address configured in the server list of the
+configuration file. It affects the connections handling the
+ZAB protocol and the Fast Leader Election protocol. Default
+value is <strong>false</strong>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>multiAddress.reachabilityCheckEnabled</em> :
+(Java system property: <strong>zookeeper.multiAddress.reachabilityCheckEnabled</strong>)
+<strong>New in 3.6.0:</strong>
+Since ZooKeeper 3.6.0 you can also <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#cluster-options" data-discover="true">specify multiple addresses</a>
+for each ZooKeeper server instance (this can increase availability when multiple physical
+network interfaces can be used parallel in the cluster). ZooKeeper will perform ICMP ECHO requests
+or try to establish a TCP connection on port 7 (Echo) of the destination host in order to find
+the reachable addresses. This happens only if you provide multiple addresses in the configuration.
+The reachable check can fail if you hit some ICMP rate-limitation, (e.g. on macOS) when you try to
+start a large (e.g. 11+) ensemble members cluster on a single machine for testing.</p>
+<p class="wrap-anywhere">Default value is <strong>true</strong>. By setting this parameter to &#x27;false&#x27; you can disable the reachability checks.
+Please note, disabling the reachability check will cause the cluster not to be able to reconfigure
+itself properly during network problems, so the disabling is advised only during testing.</p>
+<p class="wrap-anywhere">This parameter has no effect, unless you enable the MultiAddress feature by setting <em>multiAddress.enabled=true</em>.</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="disabling-data-directory-autocreation"><a data-card="" href="#disabling-data-directory-autocreation" class="peer">Disabling data directory autocreation</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere"><strong>New in 3.5:</strong> The default
+behavior of a ZooKeeper server is to automatically create the
+data directory (specified in the configuration file) when
+started if that directory does not already exist. This can be
+inconvenient and even dangerous in some cases. Take the case
+where a configuration change is made to a running server,
+wherein the <strong>dataDir</strong> parameter
+is accidentally changed. When the ZooKeeper server is
+restarted it will create this non-existent directory and begin
+serving - with an empty znode namespace. This scenario can
+result in an effective &quot;split brain&quot; situation (i.e. data in
+both the new invalid directory and the original valid data
+store). As such is would be good to have an option to turn off
+this autocreate behavior. In general for production
+environments this should be done, unfortunately however the
+default legacy behavior cannot be changed at this point and
+therefore this must be done on a case by case basis. This is
+left to users and to packagers of ZooKeeper distributions.</p>
+<p class="wrap-anywhere">When running <strong>zkServer.sh</strong> autocreate can be disabled
+by setting the environment variable <strong>ZOO_DATADIR_AUTOCREATE_DISABLE</strong> to 1.
+When running ZooKeeper servers directly from class files this
+can be accomplished by setting <strong>zookeeper.datadir.autocreate=false</strong> on
+the java command line, i.e. <strong>-Dzookeeper.datadir.autocreate=false</strong></p>
+<p class="wrap-anywhere">When this feature is disabled, and the ZooKeeper server
+determines that the required directories do not exist it will
+generate an error and refuse to start.</p>
+<p class="wrap-anywhere">A new script <strong>zkServer-initialize.sh</strong> is provided to
+support this new feature. If autocreate is disabled it is
+necessary for the user to first install ZooKeeper, then create
+the data directory (and potentially txnlog directory), and
+then start the server. Otherwise as mentioned in the previous
+paragraph the server will not start. Running <strong>zkServer-initialize.sh</strong> will create the
+required directories, and optionally set up the myid file
+(optional command line parameter). This script can be used
+even if the autocreate feature itself is not used, and will
+likely be of use to users as this (setup, including creation
+of the myid file) has been an issue for users in the past.
+Note that this script ensures the data directories exist only,
+it does not create a config file, but rather requires a config
+file to be available in order to execute.</p>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="enabling-db-existence-validation"><a data-card="" href="#enabling-db-existence-validation" class="peer">Enabling db existence validation</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere"><strong>New in 3.6.0:</strong> The default
+behavior of a ZooKeeper server on startup when no data tree
+is found is to set zxid to zero and join the quorum as a
+voting member. This can be dangerous if some event (e.g. a
+rogue &#x27;rm -rf&#x27;) has removed the data directory while the
+server was down since this server may help elect a leader
+that is missing transactions. Enabling db existence validation
+will change the behavior on startup when no data tree is
+found: the server joins the ensemble as a non-voting participant
+until it is able to sync with the leader and acquire an up-to-date
+version of the ensemble data. To indicate an empty data tree is
+expected (ensemble creation), the user should place a file
+&#x27;initialize&#x27; in the same directory as &#x27;myid&#x27;. This file will
+be detected and deleted by the server on startup.</p>
+<p class="wrap-anywhere">Initialization validation can be enabled when running
+ZooKeeper servers directly from class files by setting
+<strong>zookeeper.db.autocreate=false</strong>
+on the java command line, i.e.
+<strong>-Dzookeeper.db.autocreate=false</strong>.
+Running <strong>zkServer-initialize.sh</strong>
+will create the required initialization file.</p>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="performance-tuning-options"><a data-card="" href="#performance-tuning-options" class="peer">Performance Tuning Options</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere"><strong>New in 3.5.0:</strong> Several subsystems have been reworked
+to improve read throughput. This includes multi-threading of the NIO communication subsystem and
+request processing pipeline (Commit Processor). NIO is the default client/server communication
+subsystem. Its threading model comprises 1 acceptor thread, 1-N selector threads and 0-M
+socket I/O worker threads. In the request processing pipeline the system can be configured
+to process multiple read request at once while maintaining the same consistency guarantee
+(same-session read-after-write). The Commit Processor threading model comprises 1 main
+thread and 0-N worker threads.</p>
+<p class="wrap-anywhere">The default values are aimed at maximizing read throughput on a dedicated ZooKeeper machine.
+Both subsystems need to have sufficient amount of threads to achieve peak read throughput.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.nio.numSelectorThreads</em> :
+(Java system property only: <strong>zookeeper.nio.numSelectorThreads</strong>)
+<strong>New in 3.5.0:</strong>
+Number of NIO selector threads. At least 1 selector thread required.
+It is recommended to use more than one selector for large numbers
+of client connections. The default value is sqrt( number of cpu cores / 2 ).</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.nio.numWorkerThreads</em> :
+(Java system property only: <strong>zookeeper.nio.numWorkerThreads</strong>)
+<strong>New in 3.5.0:</strong>
+Number of NIO worker threads. If configured with 0 worker threads, the selector threads
+do the socket I/O directly. The default value is 2 times the number of cpu cores.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.commitProcessor.numWorkerThreads</em> :
+(Java system property only: <strong>zookeeper.commitProcessor.numWorkerThreads</strong>)
+<strong>New in 3.5.0:</strong>
+Number of Commit Processor worker threads. If configured with 0 worker threads, the main thread
+will process the request directly. The default value is the number of cpu cores.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.commitProcessor.maxReadBatchSize</em> :
+(Java system property only: <strong>zookeeper.commitProcessor.maxReadBatchSize</strong>)
+Max number of reads to process from queuedRequests before switching to processing commits.
+If the value &lt; 0 (default), we switch whenever we have a local write, and pending commits.
+A high read batch size will delay commit processing, causing stale data to be served.
+If reads are known to arrive in fixed size batches then matching that batch size with
+the value of this property can smooth queue performance. Since reads are handled in parallel,
+one recommendation is to set this property to match <em>zookeeper.commitProcessor.numWorkerThread</em>
+(default is the number of cpu cores) or lower.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.commitProcessor.maxCommitBatchSize</em> :
+(Java system property only: <strong>zookeeper.commitProcessor.maxCommitBatchSize</strong>)
+Max number of commits to process before processing reads. We will try to process as many
+remote/local commits as we can till we reach this count. A high commit batch size will delay
+reads while processing more commits. A low commit batch size will favor reads.
+It is recommended to only set this property when an ensemble is serving a workload with a high
+commit rate. If writes are known to arrive in a set number of batches then matching that
+batch size with the value of this property can smooth queue performance. A generic
+approach would be to set this value to equal the ensemble size so that with the processing
+of each batch the current server will probabilistically handle a write related to one of
+its direct clients.
+Default is &quot;1&quot;. Negative and zero values are not supported.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>znode.container.checkIntervalMs</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong> The
+time interval in milliseconds for each check of candidate container
+and ttl nodes. Default is &quot;60000&quot;.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>znode.container.maxPerMinute</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong> The
+maximum number of container and ttl nodes that can be deleted per
+minute. This prevents herding during container deletion.
+Default is &quot;10000&quot;.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>znode.container.maxNeverUsedIntervalMs</em> :
+(Java system property only)
+<strong>New in 3.6.0:</strong> The
+maximum interval in milliseconds that a container that has never had
+any children is retained. Should be long enough for your client to
+create the container, do any needed work and then create children.
+Default is &quot;300000&quot;(a.k.a. 5 minutes) since 3.10.0, for earlier versions,
+it is &quot;0&quot; which is used to indicate that containers that have never had
+any children are never deleted.</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="debug-observability-configurations"><a data-card="" href="#debug-observability-configurations" class="peer">Debug Observability Configurations</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere"><strong>New in 3.6.0:</strong> The following options are introduced to make zookeeper easier to debug.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.messageTracker.BufferSize</em> :
+(Java system property only)
+Controls the maximum number of messages stored in <strong>MessageTracker</strong>. Value should be positive
+integers. The default value is 10. <strong>MessageTracker</strong> is introduced in <strong>3.6.0</strong> to record the
+last set of messages between a server (follower or observer) and a leader, when a server
+disconnects with leader. These set of messages will then be dumped to zookeeper&#x27;s log file,
+and will help reconstruct the state of the servers at the time of the disconnection and
+will be useful for debugging purpose.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>zookeeper.messageTracker.Enabled</em> :
+(Java system property only)
+When set to &quot;true&quot;, will enable <strong>MessageTracker</strong> to track and record messages. Default value
+is &quot;false&quot;.</p>
+</li>
+</ul>
+<h2 class="flex scroll-m-28 flex-row items-center gap-2" id="adminserver-configuration"><a data-card="" href="#adminserver-configuration" class="peer">AdminServer configuration</a><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide size-3.5 shrink-0 text-fd-muted-foreground opacity-0 transition-opacity peer-hover:opacity-100" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></h2>
+<p class="wrap-anywhere"><strong>New in 3.9.0:</strong> The following
+options are used to configure the <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#adminserver-configuration" data-discover="true">AdminServer</a>.</p>
+<ul>
+<li>
+<p class="wrap-anywhere"><em>admin.rateLimiterIntervalInMS</em> :
+(Java system property: <strong>zookeeper.admin.rateLimiterIntervalInMS</strong>)
+The time interval for rate limiting admin command to protect the server.
+Defaults to 5 mins.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.snapshot.enabled</em> :
+(Java system property: <strong>zookeeper.admin.snapshot.enabled</strong>)
+The flag for enabling the snapshot command. Defaults to true.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.restore.enabled</em> :
+(Java system property: <strong>zookeeper.admin.restore.enabled</strong>)
+The flag for enabling the restore command. Defaults to true.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.needClientAuth</em> :
+(Java system property: <strong>zookeeper.admin.needClientAuth</strong>)
+The flag to control whether client auth is needed. Using x509 auth requires true.
+Defaults to false.</p>
+<p class="wrap-anywhere"><strong>New in 3.7.1:</strong> The following
+options are used to configure the <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#adminserver-configuration" data-discover="true">AdminServer</a>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.forceHttps</em> :
+(Java system property: <strong>zookeeper.admin.forceHttps</strong>)
+Force AdminServer to use SSL, thus allowing only HTTPS traffic.
+Defaults to disabled.
+Overwrites <strong>admin.portUnification</strong> settings.</p>
+<p class="wrap-anywhere"><strong>New in 3.6.0:</strong> The following
+options are used to configure the <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#adminserver-configuration" data-discover="true">AdminServer</a>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.portUnification</em> :
+(Java system property: <strong>zookeeper.admin.portUnification</strong>)
+Enable the admin port to accept both HTTP and HTTPS traffic.
+Defaults to disabled.</p>
+<p class="wrap-anywhere"><strong>New in 3.5.0:</strong> The following
+options are used to configure the <a href="/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters/#adminserver-configuration" data-discover="true">AdminServer</a>.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.enableServer</em> :
+(Java system property: <strong>zookeeper.admin.enableServer</strong>)
+Set to &quot;false&quot; to disable the AdminServer. By default the
+AdminServer is enabled.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.serverAddress</em> :
+(Java system property: <strong>zookeeper.admin.serverAddress</strong>)
+The address the embedded Jetty server listens on. Defaults to 0.0.0.0.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.serverPort</em> :
+(Java system property: <strong>zookeeper.admin.serverPort</strong>)
+The port the embedded Jetty server listens on. Defaults to 8080.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.idleTimeout</em> :
+(Java system property: <strong>zookeeper.admin.idleTimeout</strong>)
+Set the maximum idle time in milliseconds that a connection can wait
+before sending or receiving data. Defaults to 30000 ms.</p>
+</li>
+<li>
+<p class="wrap-anywhere"><em>admin.commandURL</em> :
+(Java system property: <strong>zookeeper.admin.commandURL</strong>)
+The URL for listing and issuing commands relative to the
+root URL. Defaults to &quot;/commands&quot;.</p>
+</li>
+</ul></div><a href="https://github.com/apache/zookeeper/zookeeper-docs/app/pages/_docs/docs/_mdx/admin-ops/administrators-guide/configuration-parameters.mdx" rel="noreferrer noopener" target="_blank" class="text-fd-secondary-foreground bg-fd-secondary hover:text-fd-accent-foreground hover:bg-fd-accent w-fit rounded-xl border p-2 text-sm font-medium transition-colors">Edit on GitHub</a><div class="@container grid gap-4 grid-cols-2"><a class="hover:bg-fd-accent/80 hover:text-fd-accent-foreground flex flex-col gap-2 rounded-lg border p-4 text-sm transition-colors @max-lg:col-span-full" href="/doc/r3.9.5/admin-ops/administrators-guide/administration" data-discover="true"><div class="inline-flex items-center gap-1.5 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left -mx-1 size-4 shrink-0 rtl:rotate-180"><path d="m15 18-6-6 6-6"></path></svg><p>Administration</p></div><p class="text-fd-muted-foreground truncate">Operational guidance for running a ZooKeeper cluster, including provisioning, maintenance tasks, data directory cleanup, supervision, monitoring, logging, and troubleshooting.</p></a><a class="hover:bg-fd-accent/80 hover:text-fd-accent-foreground flex flex-col gap-2 rounded-lg border p-4 text-sm transition-colors @max-lg:col-span-full text-end" href="/doc/r3.9.5/admin-ops/administrators-guide/communication-using-the-netty-framework" data-discover="true"><div class="inline-flex items-center gap-1.5 font-medium flex-row-reverse"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right -mx-1 size-4 shrink-0 rtl:rotate-180"><path d="m9 18 6-6-6-6"></path></svg><p>Communication using the Netty framework</p></div><p class="text-fd-muted-foreground truncate">Explains how to configure ZooKeeper to use Netty instead of NIO for client/server communication, including Quorum TLS setup and zero-downtime migration from non-TLS clusters.</p></a></div></article><div id="nd-toc" class="sticky top-(--fd-docs-row-1) flex h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] w-(--fd-toc-width) flex-col justify-self-end pe-4 pt-12 pb-2 [grid-area:toc] max-xl:hidden"><h3 id="toc-title" class="text-fd-muted-foreground inline-flex items-center gap-1.5 text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-text size-4"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path d="M15.1 18H3"></path></svg>On this page</h3><div class="relative ms-px min-h-0 overflow-auto mask-[linear-gradient(to_bottom,transparent,white_16px,white_calc(100%-16px),transparent)] py-3 text-sm [scrollbar-width:none]"><div class="flex flex-col"><a data-active="false" href="#minimum-configuration" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Minimum Configuration</a><a data-active="false" href="#advanced-configuration" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Advanced Configuration</a><a data-active="false" href="#cluster-options" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Cluster Options</a><a data-active="false" href="#encryption-authentication-authorization-options" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Encryption, Authentication, Authorization Options</a><a data-active="false" href="#tls-cipher-suites" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>TLS Cipher Suites</a><a data-active="false" href="#experimental-optionsfeatures" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Experimental Options/Features</a><a data-active="false" href="#unsafe-options" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Unsafe Options</a><a data-active="false" href="#disabling-data-directory-autocreation" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Disabling data directory autocreation</a><a data-active="false" href="#enabling-db-existence-validation" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Enabling db existence validation</a><a data-active="false" href="#performance-tuning-options" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Performance Tuning Options</a><a data-active="false" href="#debug-observability-configurations" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>Debug Observability Configurations</a><a data-active="false" href="#adminserver-configuration" style="padding-inline-start:14px" class="prose text-fd-muted-foreground hover:text-fd-accent-foreground data-[active=true]:text-fd-primary relative py-1.5 text-sm wrap-anywhere transition-colors first:pt-0 last:pb-0"><div class="bg-fd-foreground/10 absolute inset-y-0 w-px" style="inset-inline-start:0"></div>AdminServer configuration</a></div></div></div></div><script>((storageKey2, restoreKey) => {
+    if (!window.history.state || !window.history.state.key) {
+      let key = Math.random().toString(32).slice(2);
+      window.history.replaceState({ key }, "");
+    }
+    try {
+      let positions = JSON.parse(sessionStorage.getItem(storageKey2) || "{}");
+      let storedY = positions[restoreKey || window.history.state.key];
+      if (typeof storedY === "number") {
+        window.scrollTo(0, storedY);
+      }
+    } catch (error) {
+      console.error(error);
+      sessionStorage.removeItem(storageKey2);
+    }
+  })("react-router-scroll-positions", null)</script><script>window.__reactRouterContext = {"basename":"/","future":{"unstable_optimizeDeps":false,"unstable_subResourceIntegrity":false,"unstable_trailingSlashAwareDataRequests":false,"v8_middleware":false,"v8_splitRouteModules":false,"v8_viteEnvironmentApi":false},"routeDiscovery":{"mode":"initial"},"ssr":false,"isSpaMode":false};window.__reactRouterContext.stream = new ReadableStream({start(controller){window.__reactRouterContext.streamController = controller;}}).pipeThrough(new TextEncoderStream());</script><script type="module" async="">import "/assets/manifest-4c027c24.js";
+import * as route0 from "/assets/root-QJsC7eB7.js";
+import * as route1 from "/assets/docs-layout-mDyp5BAO.js";
+import * as route2 from "/assets/docs-oHh_nnQX.js";
+  
+  window.__reactRouterRouteModules = {"root":route0,"pages/_docs/docs-layout":route1,"routes/_docs/docs":route2};
+
+import("/assets/entry.client-DyMXYsmj.js");</script><!--$--><script>window.__reactRouterContext.streamController.enqueue("[{\"_1\":2,\"_275\":-5,\"_276\":-5},\"loaderData\",{\"_3\":4},\"routes/_docs/docs\",{\"_5\":6,\"_7\":8,\"_9\":10},\"path\",\"admin-ops/administrators-guide/configuration-parameters.mdx\",\"url\",\"/doc/r3.9.5/admin-ops/administrators-guide/configuration-parameters\",\"tree\",{\"_11\":12,\"_13\":14,\"_15\":16},\"$id\",\"root\",\"name\",\"Multi-Page Documentation\",\"children\",[17,23,33,39,45,48,117,123,129,135,141,146,149,200,206,212,218,224,230,236,242,248,254,257,263,266,269,272],{\"_11\":18,\"_19\":20,\"_21\":-7,\"_13\":22},\"#0\",\"type\",\"separator\",\"icon\",\"Getting Started\",{\"_11\":24,\"_19\":25,\"_13\":26,\"_27\":28,\"_21\":-7,\"_7\":29,\"_30\":31},\"index.mdx\",\"page\",\"Overview\",\"description\",\"Official Apache ZooKeeper documentation covering installation, configuration, the data model, client APIs, administration, and operations.\",\"/doc/r3.9.5\",\"$ref\",{\"_32\":24},\"file\",{\"_11\":34,\"_19\":25,\"_13\":35,\"_27\":36,\"_21\":-7,\"_7\":37,\"_30\":38},\"overview/quick-start.mdx\",\"Quick Start\",\"This document contains information to get you started quickly with ZooKeeper.\",\"/doc/r3.9.5/overview/quick-start\",{\"_32\":34},{\"_11\":40,\"_19\":25,\"_13\":41,\"_27\":42,\"_21\":-7,\"_7\":43,\"_30\":44},\"overview/release-notes.mdx\",\"Release Notes\",\"Release notes for ZooKeeper 3.9.x, including new features, bug fixes, improvements, and breaking changes.\",\"/doc/r3.9.5/overview/release-notes\",{\"_32\":40},{\"_11\":46,\"_19\":20,\"_21\":-7,\"_13\":47},\"#3\",\"Developer\",{\"_19\":49,\"_13\":50,\"_21\":-7,\"_12\":-7,\"_51\":-7,\"_27\":-7,\"_52\":53,\"_15\":58,\"_11\":113,\"_30\":114},\"folder\",\"Programmer's Guide\",\"defaultOpen\",\"index\",{\"_11\":54,\"_19\":25,\"_13\":50,\"_27\":55,\"_21\":-7,\"_7\":56,\"_30\":57},\"developer/programmers-guide/index.mdx\",\"This document is a guide for developers wishing to create distributed applications that take advantage of ZooKeeper's coordination services. It contains conceptual and practical information.\",\"/doc/r3.9.5/developer/programmers-guide\",{\"_32\":54},[59,65,71,77,83,89,95,101,107],{\"_11\":60,\"_19\":25,\"_13\":61,\"_27\":62,\"_21\":-7,\"_7\":63,\"_30\":64},\"developer/programmers-guide/data-model.mdx\",\"Data Model\",\"Explains ZooKeeper's hierarchical namespace of znodes, including data access rules, ephemeral and sequence nodes, container nodes, TTL nodes, and the stat structure.\",\"/doc/r3.9.5/developer/programmers-guide/data-model\",{\"_32\":60},{\"_11\":66,\"_19\":25,\"_13\":67,\"_27\":68,\"_21\":-7,\"_7\":69,\"_30\":70},\"developer/programmers-guide/sessions.mdx\",\"Sessions\",\"Covers ZooKeeper client sessions: connection states, session timeouts, expiration, password-based recovery, and how clients connect to a ZooKeeper ensemble.\",\"/doc/r3.9.5/developer/programmers-guide/sessions\",{\"_32\":66},{\"_11\":72,\"_19\":25,\"_13\":73,\"_27\":74,\"_21\":-7,\"_7\":75,\"_30\":76},\"developer/programmers-guide/watches.mdx\",\"Watches\",\"Describes ZooKeeper watches — one-time event triggers sent to clients when znode data or children change — including watch semantics, guarantees, and removal.\",\"/doc/r3.9.5/developer/programmers-guide/watches\",{\"_32\":72},{\"_11\":78,\"_19\":25,\"_13\":79,\"_27\":80,\"_21\":-7,\"_7\":81,\"_30\":82},\"developer/programmers-guide/consistency-guarantees.mdx\",\"Consistency Guarantees\",\"Details ZooKeeper's consistency guarantees: sequential consistency, atomicity, single system image, reliability, and timeliness, and how they compare to other distributed systems.\",\"/doc/r3.9.5/developer/programmers-guide/consistency-guarantees\",{\"_32\":78},{\"_11\":84,\"_19\":25,\"_13\":85,\"_27\":86,\"_21\":-7,\"_7\":87,\"_30\":88},\"developer/programmers-guide/access-control-using-acls.mdx\",\"Access Control using ACLs\",\"Explains ZooKeeper's ACL-based access control for znodes, including permission types, built-in ACL schemes (world, auth, digest, host, IP), and the C client API.\",\"/doc/r3.9.5/developer/programmers-guide/access-control-using-acls\",{\"_32\":84},{\"_11\":90,\"_19\":25,\"_13\":91,\"_27\":92,\"_21\":-7,\"_7\":93,\"_30\":94},\"developer/programmers-guide/pluggable-authentication.mdx\",\"Pluggable Authentication\",\"Describes ZooKeeper's pluggable authentication framework, how authentication plugins authenticate clients and match ACL entries, and how to add a custom scheme.\",\"/doc/r3.9.5/developer/programmers-guide/pluggable-authentication\",{\"_32\":90},{\"_11\":96,\"_19\":25,\"_13\":97,\"_27\":98,\"_21\":-7,\"_7\":99,\"_30\":100},\"developer/programmers-guide/bindings.mdx\",\"Bindings\",\"Documents the Java and C client library bindings for ZooKeeper, including the ZooKeeper class, callbacks, POSIX-style C API, multithreaded and single-threaded libraries.\",\"/doc/r3.9.5/developer/programmers-guide/bindings\",{\"_32\":96},{\"_11\":102,\"_19\":25,\"_13\":103,\"_27\":104,\"_21\":-7,\"_7\":105,\"_30\":106},\"developer/programmers-guide/building-blocks-a-guide-to-zookeeper-operations.mdx\",\"Building Blocks: A Guide to ZooKeeper Operations\",\"A practical reference for all operations a developer can perform against a ZooKeeper server, covering error handling, connecting, and the full synchronous and asynchronous API.\",\"/doc/r3.9.5/developer/programmers-guide/building-blocks-a-guide-to-zookeeper-operations\",{\"_32\":102},{\"_11\":108,\"_19\":25,\"_13\":109,\"_27\":110,\"_21\":-7,\"_7\":111,\"_30\":112},\"developer/programmers-guide/gotchas-common-problems-and-troubleshooting.mdx\",\"Gotchas: Common Problems and Troubleshooting\",\"Common pitfalls and troubleshooting tips for ZooKeeper application developers, covering watches, server failures, connection loss, performance, and recoverable errors.\",\"/doc/r3.9.5/developer/programmers-guide/gotchas-common-problems-and-troubleshooting\",{\"_32\":108},\"developer/programmers-guide\",{\"_115\":116},\"metaFile\",\"developer/programmers-guide/meta.json\",{\"_11\":118,\"_19\":25,\"_13\":119,\"_27\":120,\"_21\":-7,\"_7\":121,\"_30\":122},\"developer/use-cases.mdx\",\"Use Cases\",\"A catalog of real-world projects and organizations that use Apache ZooKeeper for distributed coordination.\",\"/doc/r3.9.5/developer/use-cases\",{\"_32\":118},{\"_11\":124,\"_19\":25,\"_13\":125,\"_27\":126,\"_21\":-7,\"_7\":127,\"_30\":128},\"developer/java-example.mdx\",\"Java Example\",\"Walks through building a complete ZooKeeper watch client in Java, covering the Executor and DataMonitor design, watcher callbacks, and handling connection state changes.\",\"/doc/r3.9.5/developer/java-example\",{\"_32\":124},{\"_11\":130,\"_19\":25,\"_13\":131,\"_27\":132,\"_21\":-7,\"_7\":133,\"_30\":134},\"developer/basic-tutorial.mdx\",\"Basic tutorial\",\"Step-by-step tutorial implementing ZooKeeper-based Barrier and Queue primitives in Java, demonstrating watches, ephemeral nodes, and sequential znodes for distributed coordination.\",\"/doc/r3.9.5/developer/basic-tutorial\",{\"_32\":130},{\"_11\":136,\"_19\":25,\"_13\":137,\"_27\":138,\"_21\":-7,\"_7\":139,\"_30\":140},\"developer/recipes.mdx\",\"Recipes and Solutions\",\"Guidelines for using ZooKeeper to implement higher-order constructs such as barriers, queues, locks, and leader election.\",\"/doc/r3.9.5/developer/recipes\",{\"_32\":136},{\"_19\":25,\"_21\":-7,\"_13\":142,\"_7\":143,\"_144\":145},\"API Docs\",\"/apidocs/zookeeper-server/index.html\",\"external\",true,{\"_11\":147,\"_19\":20,\"_21\":-7,\"_13\":148},\"#6\",\"Admin \u0026 Ops\",{\"_19\":49,\"_13\":150,\"_21\":-7,\"_12\":-7,\"_51\":-7,\"_27\":-7,\"_52\":151,\"_15\":156,\"_11\":197,\"_30\":198},\"Administrator's Guide\",{\"_11\":152,\"_19\":25,\"_13\":150,\"_27\":153,\"_21\":-7,\"_7\":154,\"_30\":155},\"admin-ops/administrators-guide/index.mdx\",\"This document is a guide for operators deploying and managing ZooKeeper in production environments. It covers the full lifecycle of running a ZooKeeper ensemble: hardware and software requirements, configuration, day-to-day administration, monitoring, and troubleshooting.\",\"/doc/r3.9.5/admin-ops/administrators-guide\",{\"_32\":152},[157,163,169,173,179,185,191],{\"_11\":158,\"_19\":25,\"_13\":159,\"_27\":160,\"_21\":-7,\"_7\":161,\"_30\":162},\"admin-ops/administrators-guide/deployment.mdx\",\"Deployment\",\"Covers ZooKeeper deployment requirements and setup: supported platforms, system requirements, clustered multi-server ensemble configuration, and single-server developer setup.\",\"/doc/r3.9.5/admin-ops/administrators-guide/deployment\",{\"_32\":158},{\"_11\":164,\"_19\":25,\"_13\":165,\"_27\":166,\"_21\":-7,\"_7\":167,\"_30\":168},\"admin-ops/administrators-guide/administration.mdx\",\"Administration\",\"Operational guidance for running a ZooKeeper cluster, including provisioning, maintenance tasks, data directory cleanup, supervision, monitoring, logging, and troubleshooting.\",\"/doc/r3.9.5/admin-ops/administrators-guide/administration\",{\"_32\":164},{\"_11\":6,\"_19\":25,\"_13\":170,\"_27\":171,\"_21\":-7,\"_7\":8,\"_30\":172},\"Configuration Parameters\",\"Complete reference for all ZooKeeper configuration parameters, including minimum and advanced settings, cluster options, encryption and authentication, performance tuning, and the AdminServer.\",{\"_32\":6},{\"_11\":174,\"_19\":25,\"_13\":175,\"_27\":176,\"_21\":-7,\"_7\":177,\"_30\":178},\"admin-ops/administrators-guide/communication-using-the-netty-framework.mdx\",\"Communication using the Netty framework\",\"Explains how to configure ZooKeeper to use Netty instead of NIO for client/server communication, including Quorum TLS setup and zero-downtime migration from non-TLS clusters.\",\"/doc/r3.9.5/admin-ops/administrators-guide/communication-using-the-netty-framework\",{\"_32\":174},{\"_11\":180,\"_19\":25,\"_13\":181,\"_27\":182,\"_21\":-7,\"_7\":183,\"_30\":184},\"admin-ops/administrators-guide/commands.mdx\",\"Commands\",\"Reference for ZooKeeper's built-in commands: the four-letter words issued via telnet or nc, and the HTTP-based AdminServer interface with its endpoints and SSL/TLS configuration.\",\"/doc/r3.9.5/admin-ops/administrators-guide/commands\",{\"_32\":180},{\"_11\":186,\"_19\":25,\"_13\":187,\"_27\":188,\"_21\":-7,\"_7\":189,\"_30\":190},\"admin-ops/administrators-guide/data-file-management.mdx\",\"Data File Management\",\"Describes how ZooKeeper manages its data and transaction log directories, snapshot and log file lifecycle, file cleanup, and recovery using the TxnLogToolkit.\",\"/doc/r3.9.5/admin-ops/administrators-guide/data-file-management\",{\"_32\":186},{\"_11\":192,\"_19\":25,\"_13\":193,\"_27\":194,\"_21\":-7,\"_7\":195,\"_30\":196},\"admin-ops/administrators-guide/best-practices.mdx\",\"Best Practices\",\"Recommended best practices and common pitfalls to avoid when deploying and configuring ZooKeeper, covering server lists, transaction log placement, Java heap sizing, and more.\",\"/doc/r3.9.5/admin-ops/administrators-guide/best-practices\",{\"_32\":192},\"admin-ops/administrators-guide\",{\"_115\":199},\"admin-ops/administrators-guide/meta.json\",{\"_11\":201,\"_19\":25,\"_13\":202,\"_27\":203,\"_21\":-7,\"_7\":204,\"_30\":205},\"admin-ops/quota-guide.mdx\",\"Quota Guide\",\"ZooKeeper has both namespace and bytes quotas. You can use the ZooKeeperMain class to setup quotas.\",\"/doc/r3.9.5/admin-ops/quota-guide\",{\"_32\":201},{\"_11\":207,\"_19\":25,\"_13\":208,\"_27\":209,\"_21\":-7,\"_7\":210,\"_30\":211},\"admin-ops/snapshot-and-restore-guide.mdx\",\"Snapshot and Restore Guide\",\"How to use ZooKeeper's snapshot and restore APIs to recover a cluster from quorum loss or catastrophic failure.\",\"/doc/r3.9.5/admin-ops/snapshot-and-restore-guide\",{\"_32\":207},{\"_11\":213,\"_19\":25,\"_13\":214,\"_27\":215,\"_21\":-7,\"_7\":216,\"_30\":217},\"admin-ops/jmx.mdx\",\"JMX\",\"How to enable and use JMX monitoring and management for ZooKeeper ensembles, including starting with JMX, connecting via jconsole, and a full MBean reference for replicated and standalone servers.\",\"/doc/r3.9.5/admin-ops/jmx\",{\"_32\":213},{\"_11\":219,\"_19\":25,\"_13\":220,\"_27\":221,\"_21\":-7,\"_7\":222,\"_30\":223},\"admin-ops/quorums.mdx\",\"Quorums\",\"How to configure ZooKeeper quorums: hierarchical quorums using server groups and weights, and Oracle Quorum for increasing availability in two-instance clusters.\",\"/doc/r3.9.5/admin-ops/quorums\",{\"_32\":219},{\"_11\":225,\"_19\":25,\"_13\":226,\"_27\":227,\"_21\":-7,\"_7\":228,\"_30\":229},\"admin-ops/observers-guide.mdx\",\"Observers\",\"How ZooKeeper Observers enable scaling to large numbers of clients without hurting write performance, by using non-voting ensemble members that can be added freely without affecting quorum.\",\"/doc/r3.9.5/admin-ops/observers-guide\",{\"_32\":225},{\"_11\":231,\"_19\":25,\"_13\":232,\"_27\":233,\"_21\":-7,\"_7\":234,\"_30\":235},\"admin-ops/dynamic-reconfiguration.mdx\",\"Dynamic Reconfiguration\",\"How to use ZooKeeper's dynamic reconfiguration support (available since 3.5.0) to change ensemble membership, server roles, ports, and the quorum system at runtime without service interruption.\",\"/doc/r3.9.5/admin-ops/dynamic-reconfiguration\",{\"_32\":231},{\"_11\":237,\"_19\":25,\"_13\":238,\"_27\":239,\"_21\":-7,\"_7\":240,\"_30\":241},\"admin-ops/cli.mdx\",\"CLI\",\"Reference guide for all zkCli.sh commands, with examples showing command syntax, options, and expected output.\",\"/doc/r3.9.5/admin-ops/cli\",{\"_32\":237},{\"_11\":243,\"_19\":25,\"_13\":244,\"_27\":245,\"_21\":-7,\"_7\":246,\"_30\":247},\"admin-ops/tools.mdx\",\"Tools\",\"Reference for the scripts and tools bundled with ZooKeeper — including server management scripts, snapshot and transaction log utilities, benchmark tools, and testing frameworks.\",\"/doc/r3.9.5/admin-ops/tools\",{\"_32\":243},{\"_11\":249,\"_19\":25,\"_13\":250,\"_27\":251,\"_21\":-7,\"_7\":252,\"_30\":253},\"admin-ops/monitor-and-audit-logs.mdx\",\"Monitor \u0026 Audit Logs\",\"How to monitor ZooKeeper with Prometheus, Grafana, and InfluxDB metrics, and how to enable and configure audit logging to track operations performed on the cluster.\",\"/doc/r3.9.5/admin-ops/monitor-and-audit-logs\",{\"_32\":249},{\"_11\":255,\"_19\":20,\"_21\":-7,\"_13\":256},\"#8\",\"Miscellaneous\",{\"_11\":258,\"_19\":25,\"_13\":259,\"_27\":260,\"_21\":-7,\"_7\":261,\"_30\":262},\"miscellaneous/internals.mdx\",\"Internals\",\"This document covers the inner workings of ZooKeeper, including the atomic broadcast protocol, consistency guarantees, quorum design, and logging conventions.\",\"/doc/r3.9.5/miscellaneous/internals\",{\"_32\":258},{\"_19\":25,\"_21\":-7,\"_13\":264,\"_7\":265,\"_144\":-7},\"Mailing Lists\",\"/mailing-lists\",{\"_19\":25,\"_21\":-7,\"_13\":267,\"_7\":268,\"_144\":145},\"Wiki\",\"https://cwiki.apache.org/confluence/display/ZOOKEEPER\",{\"_19\":25,\"_21\":-7,\"_13\":270,\"_7\":271,\"_144\":145},\"FAQ\",\"https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ\",{\"_19\":25,\"_21\":-7,\"_13\":273,\"_7\":274,\"_144\":145},\"All docs for LLMs\",\"/llms-full.txt\",\"actionData\",\"errors\"]\n");</script><!--$--><script>window.__reactRouterContext.streamController.close();</script><!--/$--><!--/$--></body></html>

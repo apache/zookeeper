@@ -1,0 +1,1 @@
+const n="3.9.5";function r(t){return`/doc/r${t}`}const o=r(n);function a(){return o}function e(t){return/^(?:https?:|mailto:|#)/i.test(t)}function c(t){if(!t.startsWith("/")||e(t))return t;const s=a();return s?`${s}${t}`:t}export{o as C,n as a,a as g,c as r};
