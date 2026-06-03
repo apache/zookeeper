@@ -422,6 +422,10 @@ The archive build uses React Router's `basename` and Vite's `base` to serve docs
 
 Archive builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into the app `base`, which the browser reads back as `import.meta.env.BASE_URL`. Rule of thumb: Node-side code (vite/react-router configs, scripts) reads `ZOOKEEPER_DOCS_ARCHIVE_BASE` from `process.env`; bundled app code reads `import.meta.env.BASE_URL`. They are the same value in two execution contexts.
 
+The archive script packages the generated docs into a self-contained directory. React Router prerenders archive HTML under `build/client/doc/r<version>/`, while Vite and `public/` assets are emitted at the build root (`build/client/assets/`, `build/client/docs-images/`, `build/client/fonts/`, `build/client/images/`, `build/client/favicon.ico`). The script copies the docs HTML plus those known static assets into `build/doc/r<version>/` so URLs such as `/doc/r3.9.6/assets/...` exist after publishing. If new top-level static folders or asset roots are introduced, update `scripts/build-docs-archive.ts` so they are copied, URL-rewritten if needed, and covered by archive validation.
+
+Archive output intentionally does not copy the live site's root-only files such as `404.html`, `robots.txt`, `__spa-fallback.html`, or the root `.htaccess`. Archives get their own generated `.htaccess`: existing archive files are served directly, and missing archive-local paths redirect to the matching live-site path (for example `/doc/r3.9.6/news` redirects to `/news`). The archive keeps only docs routes and `api/search`.
+
 #### Continuous Integration
 
 GitHub Actions runs the website build on every push and pull request via [`.github/workflows/website.yaml`](../.github/workflows/website.yaml). The workflow:
