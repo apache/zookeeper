@@ -568,24 +568,35 @@ git commit -m "Update website content"
 git push origin <your-branch>
 
 # 4. Publish: copy the build output, then switch to asf-site
+# Set this to the current docs version from app/lib/current-version.ts
+DOC_VERSION=3.9.5
 cp -R build/client /tmp/zookeeper-site-build
 cd ..
 git checkout asf-site
 
 # Preserve archived/current docs and versioned API docs before replacing content
+rm -rf /tmp/doc-backup /tmp/zookeeper-apidocs-r${DOC_VERSION}
 if [ -d content/doc ]; then
   cp -R content/doc /tmp/doc-backup
+fi
+if [ -d content/doc/r${DOC_VERSION}/apidocs ]; then
+  cp -R content/doc/r${DOC_VERSION}/apidocs /tmp/zookeeper-apidocs-r${DOC_VERSION}
 fi
 
 rm -rf content
 mkdir -p content
 cp -R /tmp/zookeeper-site-build/. content/
 
-# Restore archived docs first, then restore the freshly built current docs
+# Restore all published docs, then replace the current docs with the fresh build
 if [ -d /tmp/doc-backup ]; then
   mkdir -p content/doc
   cp -R /tmp/doc-backup/. content/doc/
-  cp -R /tmp/zookeeper-site-build/doc/. content/doc/
+fi
+rm -rf content/doc/r${DOC_VERSION}
+mkdir -p content/doc/r${DOC_VERSION}
+cp -R /tmp/zookeeper-site-build/doc/r${DOC_VERSION}/. content/doc/r${DOC_VERSION}/
+if [ -d /tmp/zookeeper-apidocs-r${DOC_VERSION} ]; then
+  cp -R /tmp/zookeeper-apidocs-r${DOC_VERSION} content/doc/r${DOC_VERSION}/apidocs
 fi
 
 git add content
@@ -605,15 +616,15 @@ When a new ZooKeeper version is released, update the **current version** identif
 
 The outgoing release docs must be preserved so users can still access them via the "Older docs" picker in the sidebar and navbar. Archived docs are stored only in the published `asf-site` branch to avoid keeping generated archives in `master`.
 
-Build a versioned website archive for the outgoing version:
+Build a versioned website archive for the outgoing version. For example, if the current version is 3.9.5 and the new release is 3.9.6, archive 3.9.5 before bumping `CURRENT_VERSION`:
 
 ```bash
-# On master — example: archiving 3.9.6 before publishing the next version
+# On master
 cd zookeeper-website
-npm run build:docs-archive -- 3.9.6
+npm run build:docs-archive -- 3.9.5
 ```
 
-This creates `build/doc/r3.9.6/`. The deployed docs entry page is `/doc/r3.9.6/` and docs pages use URLs such as `/doc/r3.9.6/developer/programmers-guide`. Non-doc archive-local paths such as `/doc/r3.9.6/news` redirect to `/news`.
+This creates `build/doc/r3.9.5/`. The deployed docs entry page is `/doc/r3.9.5/` and docs pages use URLs such as `/doc/r3.9.5/developer/programmers-guide`. Non-doc archive-local paths such as `/doc/r3.9.5/news` redirect to `/news`.
 
 The command runs the full normal website CI checks before creating the archive, then performs archive-specific output validation after the archive build.
 
@@ -622,18 +633,18 @@ Copy the generated archive into the `asf-site` branch:
 ```bash
 # On the asf-site branch
 git checkout asf-site
-rm -rf /tmp/zookeeper-apidocs-r3.9.6
-if [ -d content/doc/r3.9.6/apidocs ]; then
-  cp -R content/doc/r3.9.6/apidocs /tmp/zookeeper-apidocs-r3.9.6
+rm -rf /tmp/zookeeper-apidocs-r3.9.5
+if [ -d content/doc/r3.9.5/apidocs ]; then
+  cp -R content/doc/r3.9.5/apidocs /tmp/zookeeper-apidocs-r3.9.5
 fi
-rm -rf content/doc/r3.9.6
-mkdir -p content/doc/r3.9.6
-cp -R <path-to-zookeeper-website>/build/doc/r3.9.6/. content/doc/r3.9.6/
-if [ -d /tmp/zookeeper-apidocs-r3.9.6 ]; then
-  cp -R /tmp/zookeeper-apidocs-r3.9.6 content/doc/r3.9.6/apidocs
+rm -rf content/doc/r3.9.5
+mkdir -p content/doc/r3.9.5
+cp -R <path-to-zookeeper-website>/build/doc/r3.9.5/. content/doc/r3.9.5/
+if [ -d /tmp/zookeeper-apidocs-r3.9.5 ]; then
+  cp -R /tmp/zookeeper-apidocs-r3.9.5 content/doc/r3.9.5/apidocs
 fi
-git add content/doc/r3.9.6
-git commit -m "Archive docs for 3.9.6"
+git add content/doc/r3.9.5
+git commit -m "Archive docs for 3.9.5"
 git push origin asf-site
 ```
 
@@ -651,7 +662,7 @@ export const LEGACY_RELEASED_DOC_VERSIONS = new Set([
 
 export const REACT_ROUTER_RELEASED_DOC_VERSIONS = new Set([
   // ...
-  "3.9.6"
+  "3.9.5"
 ]);
 ```
 
@@ -663,7 +674,7 @@ Open `app/lib/current-version.ts` and update the version string:
 
 ```typescript
 // app/lib/current-version.ts
-export const CURRENT_VERSION = "3.9.5"; // ← change to the new version
+export const CURRENT_VERSION = "3.9.6"; // ← change to the new version
 ```
 
 This single constant drives the version shown across the current docs experience, including:
