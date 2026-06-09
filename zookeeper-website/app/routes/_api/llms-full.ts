@@ -17,6 +17,7 @@
 //
 
 import { source } from "@/lib/source";
+import { resolveDocsHref } from "@/lib/docs-paths";
 import type { InferPageType } from "fumadocs-core/source";
 
 export async function loader() {
@@ -29,5 +30,44 @@ export async function loader() {
 export async function getLLMText(page: InferPageType<typeof source>) {
   const processed = await page.data.getText("processed");
   return `# ${page.data.title} (${page.url})
-${processed}`;
+${resolveLLMTextLinks(processed, page.data.extractedReferences)}`;
+}
+
+export function resolveLLMTextLinks(
+  text: string,
+  references: Array<{ href: string }> = []
+): string {
+  let resolved = text;
+
+  for (const { href } of references) {
+    const docsHref = resolveDocsHref(href);
+    if (docsHref === href) {
+      continue;
+    }
+
+    // Processed MDX is plain text with markdown links from our docs, e.g.
+    //   [JMX](/admin-ops/jmx)
+    //   [Advanced Configuration](/admin-ops/.../configuration-parameters#advanced-configuration)
+    //
+    // .replace() swaps only its match — "(" + path, not the closing ")":
+    //
+    //   [JMX](/admin-ops/jmx)
+    //        └──── match ───┘
+    //   → [JMX](/doc/r3.9.5/admin-ops/jmx)
+    //
+    // Lookahead (?=...) checks ")" comes next (also supports rare ` "title")` links we don't use).
+    resolved = resolved.replace(
+      new RegExp(`\\(${escapeRegExp(href)}(?=(?:\\s+["'][^)]*["'])?\\))`, "g"),
+      `(${docsHref}`
+    );
+  }
+
+  return resolved;
+}
+
+function escapeRegExp(value: string): string {
+  // "#" is special in regex (start of comment). Escape it in the pattern only:
+  //   in:  /admin-ops/.../configuration-parameters#advanced-configuration
+  //   out: /admin-ops/.../configuration-parameters\#advanced-configuration  (RegExp string)
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
