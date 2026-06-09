@@ -89,7 +89,7 @@ const renderer = toClientRenderer(
     { tree }: { tree: PageTree.Root }
   ) => {
     const route = useParams()["*"];
-    const baseGithubPath = "zookeeper-docs/app/pages/_docs/docs/_mdx/";
+    const baseGithubPath = "zookeeper-website/app/pages/_docs/docs/_mdx/";
 
     const groupedRoutes = [
       "developer/programmers-guide",
