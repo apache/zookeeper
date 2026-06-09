@@ -592,6 +592,8 @@ cp -R /tmp/zookeeper-apidocs-r${DOC_VERSION} content/doc/r${DOC_VERSION}/apidocs
 git add content
 git commit -m "Publish website <date>"
 git push origin asf-site
+
+rm -rf /tmp/zookeeper-site-build /tmp/zookeeper-apidocs-r${DOC_VERSION}
 ```
 
 Once `asf-site` is pushed the updates are live within minutes.
@@ -600,111 +602,96 @@ Once `asf-site` is pushed the updates are live within minutes.
 
 ### Publishing a New ZooKeeper Release
 
-When a new ZooKeeper version is released, update the **current version** identifier in `master`, add the outgoing version to the released-docs list, and archive the outgoing generated documentation in the `asf-site` branch.
+When a new ZooKeeper version ships, archive the outgoing docs on `asf-site`, bump the current version on `master`, and publish the new site plus API docs. Run both builds on `master`, copy outputs to `/tmp`, then switch to `asf-site` once.
 
-#### Step 1 — Archive the outgoing documentation
+Example: current release is **3.9.5**, new release is **3.9.6**.
 
-The outgoing release docs must be preserved so users can still access them via the "Older docs" picker in the sidebar and navbar. Archived docs are stored only in the published `asf-site` branch to avoid keeping generated archives in `master`.
+Copy build outputs to `/tmp` before switching branches. `build/` is gitignored and is easy to lose when checking out another branch or cleaning untracked files.
 
-Build a versioned website archive for the outgoing version. For example, if the current version is 3.9.5 and the new release is 3.9.6, archive 3.9.5 before bumping `CURRENT_VERSION`:
+#### Step 1 — Prepare on `master`
+
+**1. Archive build for the outgoing version** — run this **before** bumping `CURRENT_VERSION`:
 
 ```bash
-# On master
 cd zookeeper-website
-npm run build:docs-archive -- 3.9.5
+OUTGOING=3.9.5
+CURRENT=3.9.6
+
+npm run build:docs-archive -- ${OUTGOING}
+rm -rf /tmp/zookeeper-archive-r${OUTGOING}
+cp -R build/doc/r${OUTGOING} /tmp/zookeeper-archive-r${OUTGOING}
 ```
 
-This creates `build/doc/r3.9.5/`. The deployed docs entry page is `/doc/r3.9.5/` and docs pages use URLs such as `/doc/r3.9.5/developer/programmers-guide`. Non-doc archive-local paths such as `/doc/r3.9.5/news` redirect to `/news`.
+This creates a self-contained archive at `build/doc/r3.9.5/`. See [Building Archived Docs](#building-archived-docs) for details.
 
-The command runs the full normal website CI checks before creating the archive, then performs archive-specific output validation after the archive build.
+**2. Update source for the new release:**
 
-Copy the generated archive into the `asf-site` branch:
-
-```bash
-cd ..
-DOC_VERSION=3.9.5
-cp -R zookeeper-website/build/doc/r${DOC_VERSION} /tmp/zookeeper-website-r${DOC_VERSION}
-# Switch to the asf-site branch
-git checkout asf-site
-rm -rf /tmp/zookeeper-apidocs-r${DOC_VERSION}
-cp -R content/doc/r${DOC_VERSION}/apidocs /tmp/zookeeper-apidocs-r${DOC_VERSION}
-rm -rf content/doc/r${DOC_VERSION}
-mkdir -p content/doc/r${DOC_VERSION}
-cp -R /tmp/zookeeper-website-r${DOC_VERSION}/. content/doc/r${DOC_VERSION}/
-cp -R /tmp/zookeeper-apidocs-r${DOC_VERSION} content/doc/r${DOC_VERSION}/apidocs
-git add content/doc/r${DOC_VERSION}
-git commit -m "Archive docs for ${DOC_VERSION}"
-git push origin asf-site
-```
-
-When publishing a new site build, preserve `content/doc/` as shown in the [deployment steps](#deployment) above.
-
-#### Step 2 — Update the released-docs version list
-
-Open `app/lib/released-docs-versions.ts` and add the outgoing version to the matching archive list without the leading `r` prefix. Existing pre-migration archives remain in `LEGACY_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/index.html`. Archives produced by the React Router website build go in `REACT_ROUTER_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/`:
+- Add the outgoing version to `REACT_ROUTER_RELEASED_DOC_VERSIONS` in `app/lib/released-docs-versions.ts` (without the `r` prefix). Existing pre-migration archives stay in `LEGACY_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/index.html`; React Router archives link to `/doc/r<version>/`:
 
 ```typescript
-export const LEGACY_RELEASED_DOC_VERSIONS = new Set([
-  // ...
-  "3.9.4"
-]);
-
 export const REACT_ROUTER_RELEASED_DOC_VERSIONS = new Set([
   // ...
   "3.9.5"
 ]);
 ```
 
-The website combines these lists into `RELEASED_DOC_VERSIONS` for display, while `getReleasedDocUrl()` preserves the correct URL shape for each archive type. Keep these lists in sync with the directories published in `asf-site`.
+Keep these lists in sync with the directories published in `asf-site`.
 
-#### Step 3 — Bump `CURRENT_VERSION`
-
-Open `app/lib/current-version.ts` and update the version string:
+- Bump `CURRENT_VERSION` in `app/lib/current-version.ts`:
 
 ```typescript
-// app/lib/current-version.ts
-export const CURRENT_VERSION = "3.9.6"; // ← change to the new version
+export const CURRENT_VERSION = "3.9.6";
 ```
 
-This single constant drives the version shown across the current docs experience, including:
+- Update MDX under `app/pages/_docs/docs/_mdx/` for the new release.
 
-- The docs overview page title and description (`3.9.5 Overview`, `Official Apache ZooKeeper 3.9.5 documentation…`)
-- Other components that reference `CURRENT_VERSION`
 
-#### Step 4 — Update the in-app documentation
-
-The current release's documentation source lives in `app/pages/_docs/docs/_mdx/`. Update or replace the MDX files there to reflect the new release.
-
-#### Step 5 — Publish API docs and update the docs nav link
-
-Java API documentation is generated by the Maven build and published separately on `asf-site`. API docs are versioned with the docs release under `content/doc/r<version>/apidocs/` (for example `content/doc/r3.9.6/apidocs/zookeeper-server/index.html`).
-
-After generating API docs for the new current release, copy them into that version's docs directory on `asf-site`:
+**3. Build the new release site and stage API docs:**
 
 ```bash
-# On the asf-site branch — example: publishing API docs for 3.9.6
+# Still in zookeeper-website/
+
+npm run ci
+cp -R build/client /tmp/zookeeper-site-build
+
+# Generate Java API docs with the Maven build, then stage them:
+cd ..
+cp -R <path-to-generated-apidocs> /tmp/zookeeper-apidocs-r${CURRENT}
+```
+
+#### Step 2 — Publish on `asf-site` (once)
+
+```bash
+# Currently in the root directory
+
 git checkout asf-site
-mkdir -p content/doc/r3.9.6/apidocs
-cp -R <path-to-generated-apidocs>/* content/doc/r3.9.6/apidocs/
-git add content/doc/r3.9.6/apidocs
-git commit -m "Publish API docs for 3.9.6"
+
+# Archive outgoing docs (preserve existing API docs on asf-site)
+cp -R content/doc/r${OUTGOING}/apidocs /tmp/zookeeper-apidocs-r${OUTGOING}
+rm -rf content/doc/r${OUTGOING}
+cp -R /tmp/zookeeper-archive-r${OUTGOING}/. content/doc/r${OUTGOING}/
+cp -R /tmp/zookeeper-apidocs-r${OUTGOING} content/doc/r${OUTGOING}/apidocs
+
+# Deploy landing page and current docs, then add API docs for the new release
+find content -mindepth 1 -maxdepth 1 ! -name doc -exec rm -rf {} +
+find /tmp/zookeeper-site-build -mindepth 1 -maxdepth 1 ! -name doc -exec cp -R {} content/ \;
+
+mkdir -p content/doc/r${CURRENT}
+cp -R /tmp/zookeeper-site-build/doc/r${CURRENT}/. content/doc/r${CURRENT}/
+cp -R /tmp/zookeeper-apidocs-r${CURRENT} content/doc/r${CURRENT}/apidocs
+
+git add content
+git commit -m "Publish ZooKeeper ${CURRENT}"
 git push origin asf-site
+
+rm -rf \
+  /tmp/zookeeper-archive-r${OUTGOING} \
+  /tmp/zookeeper-site-build \
+  /tmp/zookeeper-apidocs-r${OUTGOING} \
+  /tmp/zookeeper-apidocs-r${CURRENT}
 ```
 
-The **API Docs** entry in the developer docs sidebar is a hardcoded absolute path in `app/pages/_docs/docs/_mdx/developer/meta.json`:
-
-```json
-"external:[API Docs](/apidocs/zookeeper-server/index.html)"
-```
-
-Unlike most docs links, this URL is not relative and does not derive from `CURRENT_VERSION`. The live docs renderer and archive postprocessing make it resolve under the versioned docs path, so published docs point at `content/doc/r<version>/apidocs/`. Update the `meta.json` entry manually whenever the published API docs location changes.
-
-#### Step 6 — Build and publish
-
-```bash
-npm run ci          # verify everything passes
-# then follow the deployment steps above with DOC_VERSION=3.9.6
-```
+For routine updates to the current version (without a release), use the [basic deployment workflow](#basic-workflow) instead.
 
 ### Troubleshooting
 
