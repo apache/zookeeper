@@ -49,6 +49,7 @@ const websiteRoutes = [
     route("irc", "routes/_landing/irc.tsx"),
     route("version-control", "routes/_landing/version-control.tsx")
   ]),
+  route("doc", "routes/_docs/doc-redirect.tsx"),
   // Docs
   docsRoutes,
   // API (Rendered at build time)
