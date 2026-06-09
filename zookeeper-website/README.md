@@ -574,30 +574,20 @@ cp -R build/client /tmp/zookeeper-site-build
 cd ..
 git checkout asf-site
 
-# Preserve archived/current docs and versioned API docs before replacing content
-rm -rf /tmp/doc-backup /tmp/zookeeper-apidocs-r${DOC_VERSION}
-if [ -d content/doc ]; then
-  cp -R content/doc /tmp/doc-backup
-fi
-if [ -d content/doc/r${DOC_VERSION}/apidocs ]; then
-  cp -R content/doc/r${DOC_VERSION}/apidocs /tmp/zookeeper-apidocs-r${DOC_VERSION}
-fi
+# Preserve current version API docs before replacing generated docs
+rm -rf /tmp/zookeeper-apidocs-r${DOC_VERSION}
+cp -R content/doc/r${DOC_VERSION}/apidocs /tmp/zookeeper-apidocs-r${DOC_VERSION}
 
-rm -rf content
+# Replace the website root while preserving all published docs under content/doc/
 mkdir -p content
-cp -R /tmp/zookeeper-site-build/. content/
+find content -mindepth 1 -maxdepth 1 ! -name doc -exec rm -rf {} +
+find /tmp/zookeeper-site-build -mindepth 1 -maxdepth 1 ! -name doc -exec cp -R {} content/ \;
 
-# Restore all published docs, then replace the current docs with the fresh build
-if [ -d /tmp/doc-backup ]; then
-  mkdir -p content/doc
-  cp -R /tmp/doc-backup/. content/doc/
-fi
+# Replace the current docs version with the fresh build, then restore API docs
 rm -rf content/doc/r${DOC_VERSION}
 mkdir -p content/doc/r${DOC_VERSION}
 cp -R /tmp/zookeeper-site-build/doc/r${DOC_VERSION}/. content/doc/r${DOC_VERSION}/
-if [ -d /tmp/zookeeper-apidocs-r${DOC_VERSION} ]; then
-  cp -R /tmp/zookeeper-apidocs-r${DOC_VERSION} content/doc/r${DOC_VERSION}/apidocs
-fi
+cp -R /tmp/zookeeper-apidocs-r${DOC_VERSION} content/doc/r${DOC_VERSION}/apidocs
 
 git add content
 git commit -m "Publish website <date>"
@@ -631,20 +621,19 @@ The command runs the full normal website CI checks before creating the archive, 
 Copy the generated archive into the `asf-site` branch:
 
 ```bash
-# On the asf-site branch
+cd ..
+DOC_VERSION=3.9.5
+cp -R zookeeper-website/build/doc/r${DOC_VERSION} /tmp/zookeeper-website-r${DOC_VERSION}
+# Switch to the asf-site branch
 git checkout asf-site
-rm -rf /tmp/zookeeper-apidocs-r3.9.5
-if [ -d content/doc/r3.9.5/apidocs ]; then
-  cp -R content/doc/r3.9.5/apidocs /tmp/zookeeper-apidocs-r3.9.5
-fi
-rm -rf content/doc/r3.9.5
-mkdir -p content/doc/r3.9.5
-cp -R <path-to-zookeeper-website>/build/doc/r3.9.5/. content/doc/r3.9.5/
-if [ -d /tmp/zookeeper-apidocs-r3.9.5 ]; then
-  cp -R /tmp/zookeeper-apidocs-r3.9.5 content/doc/r3.9.5/apidocs
-fi
-git add content/doc/r3.9.5
-git commit -m "Archive docs for 3.9.5"
+rm -rf /tmp/zookeeper-apidocs-r${DOC_VERSION}
+cp -R content/doc/r${DOC_VERSION}/apidocs /tmp/zookeeper-apidocs-r${DOC_VERSION}
+rm -rf content/doc/r${DOC_VERSION}
+mkdir -p content/doc/r${DOC_VERSION}
+cp -R /tmp/zookeeper-website-r${DOC_VERSION}/. content/doc/r${DOC_VERSION}/
+cp -R /tmp/zookeeper-apidocs-r${DOC_VERSION} content/doc/r${DOC_VERSION}/apidocs
+git add content/doc/r${DOC_VERSION}
+git commit -m "Archive docs for ${DOC_VERSION}"
 git push origin asf-site
 ```
 
@@ -714,7 +703,7 @@ Unlike most docs links, this URL is not relative and does not derive from `CURRE
 
 ```bash
 npm run ci          # verify everything passes
-# then follow the deployment steps above to push to asf-site
+# then follow the deployment steps above with DOC_VERSION=3.9.6
 ```
 
 ### Troubleshooting
