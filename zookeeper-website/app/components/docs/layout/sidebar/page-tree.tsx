@@ -19,6 +19,7 @@
 import { useTreeContext, useTreePath } from "fumadocs-ui/contexts/tree";
 import { type FC, type ReactNode, useMemo, Fragment } from "react";
 import type * as PageTree from "fumadocs-core/page-tree";
+import { resolveApidocsHref } from "@/lib/docs-paths";
 import type * as Base from "./base";
 
 export interface SidebarPageTreeComponents {
@@ -112,7 +113,7 @@ export function createPageTreeRenderer({
           return (
             <SidebarItem
               key={item.url}
-              href={item.url}
+              href={resolveApidocsHref(item.url)}
               external={item.external}
               icon={item.icon}
             >

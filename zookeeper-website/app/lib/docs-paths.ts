@@ -54,3 +54,9 @@ export function resolveDocsHref(href: string): string {
 
   return `${base}${href}`;
 }
+
+// Fumadocs applies baseUrl to MDX pages in the sidebar, but not to custom meta.json
+// links such as external:[API Docs](/apidocs/...).
+export function resolveApidocsHref(href: string): string {
+  return href.startsWith("/apidocs/") ? resolveDocsHref(href) : href;
+}

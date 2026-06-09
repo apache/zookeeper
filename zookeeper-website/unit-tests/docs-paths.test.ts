@@ -20,6 +20,7 @@ import { describe, expect, it } from "vitest";
 import {
   CURRENT_DOCS_PATH,
   formatDocsBase,
+  resolveApidocsHref,
   resolveDocsHref
 } from "@/lib/docs-paths";
 
@@ -36,6 +37,13 @@ describe("resolveDocsHref", () => {
       `${CURRENT_DOCS_PATH}/overview/quick-start`
     );
     expect(resolveDocsHref("/")).toBe(`${CURRENT_DOCS_PATH}/`);
+  });
+
+  it("prefixes only /apidocs paths for custom sidebar meta.json links", () => {
+    expect(resolveApidocsHref("/apidocs/zookeeper-server/index.html")).toBe(
+      `${CURRENT_DOCS_PATH}/apidocs/zookeeper-server/index.html`
+    );
+    expect(resolveApidocsHref("/mailing-lists")).toBe("/mailing-lists");
   });
 
   it("leaves external and non-root paths unchanged", () => {
