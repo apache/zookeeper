@@ -19,6 +19,7 @@
 package org.apache.zookeeper.common;
 
 import io.netty.handler.ssl.DelegatingSslContext;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -81,7 +82,9 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.protocols(enabledProtocols);
         }
         Iterable<String> enabledCiphers = getCipherSuites(config);
-        if (enabledCiphers != null) {
+        if (enabledCiphers == null) {
+            sslContextBuilder.ciphers(null, IdentityCipherSuiteFilter.INSTANCE_DEFAULTING_TO_SUPPORTED_CIPHERS);
+        } else {
             sslContextBuilder.ciphers(enabledCiphers);
         }
         sslContextBuilder.sslProvider(getSslProvider(config));

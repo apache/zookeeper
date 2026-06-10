@@ -25,8 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import io.netty.buffer.UnpooledByteBufAllocator;
-import io.netty.handler.ssl.SslContext;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -54,6 +53,9 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+
+import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.handler.ssl.SslContext;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -732,7 +734,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         ZKConfig zkConfig = new ZKConfig();
-        try (ClientX509Util clientX509Util = new ClientX509Util();) {
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
             zkConfig.setProperty(clientX509Util.getSslOcspEnabledProperty(), "true");
             // Must not throw IllegalArgumentException
             clientX509Util.createSSLContext(zkConfig);
@@ -758,6 +760,32 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             SslContext serverContext = clientX509Util.createNettySslContextForServer(zkConfig);
             SSLEngine serverEngine = serverContext.newEngine(byteBufAllocator);
             assertEquals(serverEngine.getSSLParameters().getEndpointIdentificationAlgorithm(), "HTTPS");
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateSSLContext_ChaCha20Cipher(X509KeyType caKeyType,
+            X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+
+        // TLS_CHACHA20_POLY1305_SHA256 cipher is a mandatory cipher suite on TLSv1.3,
+        // so a client with default configuration must support it.
+
+        ZKConfig zkConfig = new ZKConfig();
+        zkConfig.setProperty(x509Util.getSslEnabledProtocolsProperty(), "TLSv1.3");
+
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            SslContext context = clientX509Util.createNettySslContextForClient(zkConfig);
+
+            UnpooledByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false);
+            SSLEngine engine = context.newEngine(byteBufAllocator);
+
+            String[] enabledProtocols = engine.getEnabledProtocols();
+            assertArrayEquals(new String[] { "TLSv1.3" }, enabledProtocols);
+
+            List<String> enabledCipherSuites = Arrays.asList(engine.getEnabledCipherSuites());
+            assertTrue(enabledCipherSuites.contains("TLS_CHACHA20_POLY1305_SHA256"));
         }
     }
 
