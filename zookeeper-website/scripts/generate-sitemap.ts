@@ -31,6 +31,7 @@ import { access, glob, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { SitemapStream, streamToPromise } from "sitemap";
+import { SITE_URL } from "../app/lib/site";
 
 const ROOT = join(import.meta.dirname, "..");
 const BUILD_DIR = join(ROOT, "build", "client");
@@ -39,7 +40,6 @@ const BUILD_DIR = join(ROOT, "build", "client");
 // partial builds (landing-only or docs-only) keep the other slice's URLs.
 const BUILD_SITEMAP_PATH = join(BUILD_DIR, "sitemap.xml");
 const PUBLIC_SITEMAP_PATH = join(ROOT, "public", "sitemap.xml");
-const SITE_URL = "https://zookeeper.apache.org";
 
 const EXCLUDED_HTML_PATHS = new Set([
   "404.html",

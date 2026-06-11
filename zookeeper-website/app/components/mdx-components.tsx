@@ -20,6 +20,7 @@ import type { MDXComponents } from "mdx/types";
 import { ExternalLinkIcon } from "lucide-react";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { cn } from "@/lib/utils";
+import { SITE_URL } from "@/lib/site";
 import { Link } from "./link";
 
 export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
@@ -54,8 +55,7 @@ export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
 
     a: ({ href, children, ...rest }) => {
       const isExternal =
-        href?.startsWith("http") &&
-        !href?.startsWith("https://zookeeper.apache.org/");
+        href?.startsWith("http") && !href?.startsWith(`${SITE_URL}/`);
       if (isExternal) {
         const onlyImg = Array.isArray(children)
           ? children.every(

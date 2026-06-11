@@ -16,21 +16,7 @@
 // limitations under the License.
 //
 
-import type { ComponentPropsWithoutRef } from "react";
-import { Link as ReactRouterLink } from "react-router";
-import { SITE_URL } from "@/lib/site";
-
-export const Link = (
-  props: ComponentPropsWithoutRef<typeof ReactRouterLink>
-) => {
-  const href = typeof props.to === "string" ? props.to : props.to.pathname;
-  // Docs (`/doc/...`) and API docs (`/apidocs/...`) are separate builds from the
-  // landing app, so navigating to them must trigger a full page load rather than
-  // client-side routing within the landing bundle.
-  const reloadDocument =
-    href?.startsWith(SITE_URL) ||
-    href?.startsWith("/doc/") ||
-    href?.startsWith("/apidocs/");
-
-  return <ReactRouterLink reloadDocument={reloadDocument} {...props} />;
-};
+// Canonical production origin of the live site. Intentionally NOT named
+// BASE_URL to avoid confusion with Vite's `import.meta.env.BASE_URL`, which is
+// the app's base *path* (`/` on the live site, `/doc/rX/` in a docs build).
+export const SITE_URL = "https://zookeeper.apache.org";
