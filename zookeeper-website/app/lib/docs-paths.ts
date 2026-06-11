@@ -38,7 +38,7 @@ export function getDocsBasePath(): string {
   return import.meta.env.BASE_URL === "/" ? CURRENT_DOCS_PATH : "";
 }
 
-function isExternalHref(href: string): boolean {
+export function isExternalHref(href: string): boolean {
   return /^(?:https?:|mailto:|#)/i.test(href);
 }
 

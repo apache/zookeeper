@@ -17,8 +17,17 @@
 //
 
 import { source } from "@/lib/source";
-import { resolveDocsHref } from "@/lib/docs-paths";
+import { CURRENT_DOCS_PATH, isExternalHref } from "@/lib/docs-paths";
 import type { InferPageType } from "fumadocs-core/source";
+
+// llms-full.txt is emitted only by the docs build, where pages are served under
+// /doc/rX/ and Fumadocs returns root-relative URLs (e.g. /admin-ops/jmx). The
+// static .txt therefore needs the versioned public base from Vite.
+function getDocsUrlBase(): string {
+  return import.meta.env.BASE_URL === "/"
+    ? CURRENT_DOCS_PATH
+    : import.meta.env.BASE_URL.slice(0, -1);
+}
 
 export async function loader() {
   const scan = source.getPages().map(getLLMText);
@@ -29,7 +38,7 @@ export async function loader() {
 
 export async function getLLMText(page: InferPageType<typeof source>) {
   const processed = await page.data.getText("processed");
-  return `# ${page.data.title} (${page.url})
+  return `# ${page.data.title} (${getDocsUrlBase()}${page.url})
 ${resolveLLMTextLinks(processed, page.data.extractedReferences)}`;
 }
 
@@ -37,13 +46,15 @@ export function resolveLLMTextLinks(
   text: string,
   references: Array<{ href: string }> = []
 ): string {
+  const base = getDocsUrlBase();
   let resolved = text;
 
   for (const { href } of references) {
-    const docsHref = resolveDocsHref(href);
-    if (docsHref === href) {
+    if (!href.startsWith("/") || isExternalHref(href)) {
       continue;
     }
+
+    const docsHref = `${base}${href}`;
 
     // Processed MDX is plain text with markdown links from our docs, e.g.
     //   [JMX](/admin-ops/jmx)

@@ -44,7 +44,7 @@ The official website for Apache ZooKeeper, built with modern web technologies to
 
 ## Content Editing
 
-Most landing pages store content in **Markdown (`.md`)** or **JSON (`.json`)** files located in `app/pages/_landing/[page-name]/`. Docs content lives under `app/pages/_docs/` and is authored in MDX.
+Most landing pages store content in **Markdown (`.md`)**, and some in **JSON (`.json`)**, files located in `app/pages/_landing/[page-name]/`. Docs content lives under `app/pages/_docs/` and content is stored in `.mdx` (it's just extended markdown).
 
 **Examples:**
 
@@ -99,7 +99,7 @@ The website uses **progressive enhancement** ([learn more](https://reactrouter.c
 - **Without JavaScript**: Core content and navigation remain accessible via server-rendered HTML
   - Primary page content and most links work without client-side routing
   - Critical flows such as the "Older docs" menu include no-JS fallbacks
-  - Some features (search, theme toggle, interactive menus) require JavaScript
+  - Some features (search, theme toggle, interactive menus) don't work since they require JavaScript
 
 This approach keeps the site usable without JavaScript while still providing a richer experience when it is available.
 
@@ -213,10 +213,14 @@ zookeeper-website/
    - Maps URLs to pages
    - Sets page titles, meta tags, etc.
 
-5. **Two Layout Systems in One App**:
-   - **Landing pages** live under `app/pages/_landing/` and use the landing layout.
-   - **Docs pages** live under `app/pages/_docs/` and use Fumadocs layouts.
-   - Both are part of the same React Router application, but render with different layouts and visual styles.
+5. **One Codebase, Two Independent Builds**:
+   - **Landing pages** live under `app/pages/_landing/` and use the landing layout; they are served from the site root (`/`).
+   - **Docs pages** live under `app/pages/_docs/` and use Fumadocs layouts; they are served from a versioned base (`/doc/r<version>/`).
+   - They share one codebase but are produced as two **separate** builds (landing at base `/`, docs at base `/doc/r<version>/`). A docs change therefore never rewrites landing assets, and vice versa, keeping `asf-site` diffs clean. `npm run build` runs both and merges them; `npm run dev` serves a combined site so local authoring is unaffected.
+   - The build context is selected by environment variables read in [`app/routes.ts`](app/routes.ts) and the Vite/React Router configs:
+     - `ZOOKEEPER_DOCS_ARCHIVE_BASE=/doc/rX/` → **docs build** (any version, including the current one): docs catch-all + `api/search` + `llms-full.txt`, served under `/doc/rX/`.
+     - `ZOOKEEPER_BUILD_TARGET=landing` → **landing build**: landing pages + the `/doc` redirect only.
+     - neither (default, e.g. `react-router dev`) → **combined** site for local development.
 
 6. **Documentation Structure**:
    - **Docs** live under `app/pages/_docs/docs/_mdx/` and are the source of truth.
@@ -296,7 +300,7 @@ This starts a local development server with:
 1. Create a new `.mdx` file in `app/pages/_docs/docs/_mdx/` (for example `my-topic.mdx`).
 2. Add the new file to the relevant `meta.json` in the same section folder so it appears in navigation.
 
-**Docs link & image conventions:**
+When writing docs content, follow these conventions:
 
 - Internal doc links are **doc-root-relative** — write `/admin-ops/cli`, not `/docs/...` and not a hardcoded `/doc/r<version>/...`. The version prefix (`/doc/r<version>`) is added automatically at render time (`resolveDocsHref` on the live site, React Router `basename` in an archive).
 - Images use the static asset path `/docs-images/...` (served from `public/docs-images/`).
@@ -304,7 +308,7 @@ This starts a local development server with:
 
 **Update content:**
 
-- Edit the appropriate `.md` or `.json` file
+- Edit the appropriate `.md`, `.mdx`, or `.json` file
 - Changes appear automatically
 
 **Add a UI component:**
@@ -318,11 +322,6 @@ There are two separate 404 mechanisms:
 
 - **Static Apache 404** (`public/404.html`): Served by Apache for requests that never reach the SPA (missing static files, direct URL hits). Configure handling in `public/.htaccess` (`ErrorDocument 404 /404.html`). Keep `public/robots.txt` disallowing `/404.html` so the error page is not indexed.
 - **In-app error boundary** (`app/root.tsx`): Handles unknown routes after the React app loads (for example, invalid docs paths). Edit `ErrorBoundary` in `root.tsx` to change that experience.
-
-**Update sitemap generation:**
-
-- Edit `scripts/generate-sitemap.ts` and its tests in `scripts/generate-sitemap.test.ts`.
-- `npm run build` generates `build/client/sitemap.xml`, and `public/robots.txt` should keep pointing at the production sitemap URL.
 
 **Check code quality:**
 
@@ -400,31 +399,53 @@ This runs docs initialization and the production build (without lint/typecheck a
 
 Generated files are located under the `build/` directory.
 
+**Build commands:**
+
+The landing site and the docs are produced as two independent Vite builds (see [One Codebase, Two Independent Builds](#key-principles)). `npm run build` orchestrates them via [`scripts/build-site.ts`](scripts/build-site.ts):
+
+- `npm run build` — builds the current docs (`/doc/r<CURRENT_VERSION>/`), then the landing site (base `/`), then merges the docs into `build/client/doc/r<CURRENT_VERSION>/` and regenerates the full sitemap (`--scope all`). The merged `build/client/` is what `npm run start`, `vite preview`, and the e2e tests serve.
+- `npm run build:landing` — landing-only build (sets `ZOOKEEPER_BUILD_TARGET=landing`), output at `build/client/` (root pages), and upserts the landing slice of the sitemap (`--scope landing`), keeping the current-docs URLs from the committed `public/sitemap.xml`.
+- `npm run build:docs` — pure docs build for `CURRENT_VERSION`, output at `build/doc/r<CURRENT_VERSION>/`, and upserts the docs slice of the sitemap (`--scope docs`), keeping landing URLs from the committed base. No CI checks.
+- `npm run build:docs-archive` — runs `npm run ci` first, then the same docs build, output at `build/doc/r<CURRENT_VERSION>/`, with the archived-docs banner enabled, for snapshotting `CURRENT_VERSION` (see below). It does not touch the sitemap (archived versions are excluded).
+
+The docs version always comes from [`app/lib/current-version.ts`](app/lib/current-version.ts). Update `CURRENT_VERSION` when the source version changes.
+
+Because each docs version and the landing site are separate Vite builds, they have independent asset hashes: editing docs never changes landing output, and vice versa.
+
+> Note: React Router cleans the entire `build/` directory at the start of every build, so the orchestrator stashes the docs output outside `build/` before running the landing build, then restores it into `build/client/`.
+
 #### Building Archived Docs
 
 To snapshot a released documentation version, build a versioned website archive:
 
 ```bash
-npm run build:docs-archive -- 3.9.6
+npm run build:docs-archive
 ```
 
-This creates `build/doc/r3.9.6/`, ready to copy to `asf-site` at `content/doc/r3.9.6/`.
+This creates `build/doc/r<CURRENT_VERSION>/`, ready to copy to `asf-site` at `content/doc/r<CURRENT_VERSION>/`.
 
-Before building the archive, this command runs `npm run ci` without the archive base path. That verifies lint, typecheck, unit tests, the normal production build, and Playwright e2e tests. It then rebuilds with the archive base path and validates the generated archive output, including that every source MDX docs page has a corresponding archive HTML page.
+Before building the archive, this command runs `npm run ci` without the archive base path. That verifies lint, typecheck, unit tests, the normal production build, and Playwright e2e tests. It then rebuilds with the archive base path and validates the generated docs output, including that every source MDX docs page has a corresponding HTML page.
 
-Archived docs use the same versioned route shape as current docs:
+The current version's docs are built with this **same** pipeline (`npm run build:docs`); an archive is the same build, just produced before `CURRENT_VERSION` is bumped and with the switch-to-latest banner enabled. Archived and current docs share one versioned route shape:
 
 - `/doc/r3.9.6/`
 - `/doc/r3.9.6/overview/quick-start`
 - `/doc/r3.9.6/developer/programmers-guide`
 
-The archive build uses React Router's `basename` and Vite's `base` to serve docs from `/doc/r<version>/`. It uses the archive route set from `app/routes.ts`: docs and search remain available in the archive, while non-doc archive-local requests such as `/doc/r3.9.6/news` are redirected by the generated `.htaccess` file to the matching live-site path (`/news`).
+The docs build uses React Router's `basename` and Vite's `base` to serve docs from `/doc/r<version>/`. It uses the docs route set from `app/routes.ts`: the docs catch-all, `api/search`, and `llms-full.txt`. Non-doc archive-local requests such as `/doc/r3.9.6/news` are redirected by the generated `.htaccess` file to the matching live-site path (`/news`).
 
-Archive builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into the app `base`, which the browser reads back as `import.meta.env.BASE_URL`. Rule of thumb: Node-side code (vite/react-router configs, scripts) reads `ZOOKEEPER_DOCS_ARCHIVE_BASE` from `process.env`; bundled app code reads `import.meta.env.BASE_URL`. They are the same value in two execution contexts.
+Docs builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into the app `base`, which the browser reads back as `import.meta.env.BASE_URL`. Rule of thumb for the build context:
 
-The archive script packages the generated docs into a self-contained directory. React Router prerenders archive HTML under `build/client/doc/r<version>/`, while Vite and `public/` assets are emitted at the build root (`build/client/assets/`, `build/client/docs-images/`, `build/client/fonts/`, `build/client/images/`, `build/client/favicon.ico`). The script copies the docs HTML plus those known static assets into `build/doc/r<version>/` so URLs such as `/doc/r3.9.6/assets/...` exist after publishing. If new top-level static folders or asset roots are introduced, update `scripts/build-docs-archive.ts` so they are copied, URL-rewritten if needed, and covered by archive validation.
+- Node-side code (vite/react-router configs, scripts) reads `ZOOKEEPER_DOCS_ARCHIVE_BASE` and `ZOOKEEPER_BUILD_TARGET` from `process.env` (via `getDocsArchiveBase()` / `getBuildTarget()` in [`app/lib/docs-archive.ts`](app/lib/docs-archive.ts)).
+- Bundled app code reads the docs base back as `import.meta.env.BASE_URL`.
 
-Archive output intentionally does not copy the live site's root-only files such as `404.html`, `robots.txt`, `__spa-fallback.html`, or the root `.htaccess`. Archives get their own generated `.htaccess`: existing archive files are served directly, and missing archive-local paths redirect to the matching live-site path (for example `/doc/r3.9.6/news` redirects to `/news`). The archive keeps only docs routes and `api/search`.
+`ZOOKEEPER_DOCS_ARCHIVE_BASE` and `import.meta.env.BASE_URL` are the same value in two execution contexts. `ZOOKEEPER_BUILD_TARGET=landing` is the orthogonal signal that selects the landing-only build.
+
+`build:docs-archive` additionally sets `VITE_ZOOKEEPER_DOCS_ARCHIVE_SNAPSHOT=1`. Vite exposes that flag to bundled browser code via `import.meta.env`, and the archive banner reads it directly. The flag is intentionally not a version comparison: archives are built before `CURRENT_VERSION` is bumped, so the outgoing version can still equal the current source version during the archive build.
+
+The docs build script packages the generated docs into a self-contained directory. React Router prerenders docs HTML under `build/client/doc/r<version>/`, while Vite and `public/` assets are emitted at the build root (`build/client/assets/`, `build/client/docs-images/`, `build/client/fonts/`, `build/client/images/`, `build/client/favicon.ico`). The script copies the docs HTML plus those known static assets into `build/doc/r<version>/` so URLs such as `/doc/r3.9.6/assets/...` exist after publishing. If new top-level static folders or asset roots are introduced, update `scripts/build-docs.ts` so they are copied, URL-rewritten if needed, and covered by docs build validation.
+
+Archive output intentionally does not copy the live site's root-only files such as `404.html`, `robots.txt`, `__spa-fallback.html`, or the root `.htaccess`. Archives get their own generated `.htaccess` (described above). The docs build keeps only docs routes, `api/search`, and `llms-full.txt`.
 
 #### Continuous Integration
 
@@ -542,15 +563,16 @@ mvn site
 
 ### Deployment
 
-The website source lives on the **`master`** branch of the [apache/zookeeper](https://github.com/apache/zookeeper) repository under `zookeeper-website/`. The live production site at [zookeeper.apache.org](https://zookeeper.apache.org) is served from the **`asf-site`** branch. Any commit pushed to `asf-site` is immediately reflected on the live site via Apache's gitpubsub infrastructure.
+The website source lives on the **`master`** branch of the [apache/zookeeper](https://github.com/apache/zookeeper) repository under `zookeeper-website/`. The live production site at [zookeeper.apache.org](https://zookeeper.apache.org) is served from the **`asf-site`** branch. Any commit pushed to `asf-site` is immediately reflected on the live site.
 
 #### Basic workflow
 
 1. Make changes on a feature branch based off `master`.
 2. Run the CI pipeline locally to verify everything passes.
 3. Merge to `master` after review.
-4. Build the production bundle — the output ends up in `build/client/`.
-5. Publish to `asf-site`, preserving docs and versioned API docs under `content/doc/`.
+4. Build the production bundle — the output ends up in `build/client/` (landing at the root, the current docs under `build/client/doc/r<CURRENT_VERSION>/`).
+5. Publish to `asf-site`, preserving docs and versioned API docs under `content/doc/`.  
+   These publish steps run on the **`asf-site`** branch. Because the landing site and the current docs are independent builds with independent asset hashes, they are treated as separate directories: landing files at the root and current docs under `content/doc/r<CURRENT_VERSION>/`. If a part's source did not change, its rebuilt output is byte-identical and produces no `content/` diff, so seeing changes in only landing or only docs after a build is expected. The current docs directory is self-contained (its own assets, `.htaccess`, and `llms-full.txt`); only the Maven-generated `apidocs/` is layered back in during publish.
 
 ```bash
 # 1. Clone the repository and work from master
@@ -617,16 +639,16 @@ cd zookeeper-website
 OUTGOING=3.9.5
 CURRENT=3.9.6
 
-npm run build:docs-archive -- ${OUTGOING}
+npm run build:docs-archive
 rm -rf /tmp/zookeeper-archive-r${OUTGOING}
 cp -R build/doc/r${OUTGOING} /tmp/zookeeper-archive-r${OUTGOING}
 ```
 
-This creates a self-contained archive at `build/doc/r3.9.5/`. See [Building Archived Docs](#building-archived-docs) for details.
+This creates a self-contained archive at `build/doc/r3.9.5/` because `CURRENT_VERSION` is still `3.9.5` at this point. See [Building Archived Docs](#building-archived-docs) for details.
 
 **2. Update source for the new release:**
 
-- Add the outgoing version to `REACT_ROUTER_RELEASED_DOC_VERSIONS` in `app/lib/released-docs-versions.ts` (without the `r` prefix). Existing pre-migration archives stay in `LEGACY_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/index.html`; React Router archives link to `/doc/r<version>/`:
+- Add the outgoing version to `REACT_ROUTER_RELEASED_DOC_VERSIONS` in `app/lib/released-docs-versions.ts` (without the `r` prefix). Existing old mvn-site archives stay in `LEGACY_RELEASED_DOC_VERSIONS` and link to `/doc/r<version>/index.html`; React Router archives link to `/doc/r<version>/`:
 
 ```typescript
 export const REACT_ROUTER_RELEASED_DOC_VERSIONS = new Set([
@@ -644,7 +666,6 @@ export const CURRENT_VERSION = "3.9.6";
 ```
 
 - Update MDX under `app/pages/_docs/docs/_mdx/` for the new release.
-
 
 **3. Build the new release site and stage API docs:**
 
@@ -672,10 +693,12 @@ rm -rf content/doc/r${OUTGOING}
 cp -R /tmp/zookeeper-archive-r${OUTGOING}/. content/doc/r${OUTGOING}/
 cp -R /tmp/zookeeper-apidocs-r${OUTGOING} content/doc/r${OUTGOING}/apidocs
 
-# Deploy landing page and current docs, then add API docs for the new release
+# Replace only the non-doc root files (landing, sitemap, robots, ...).
+# `! -name doc` leaves content/doc/ and every archived version under it intact.
 find content -mindepth 1 -maxdepth 1 ! -name doc -exec rm -rf {} +
 find /tmp/zookeeper-site-build -mindepth 1 -maxdepth 1 ! -name doc -exec cp -R {} content/ \;
 
+# Add the new current docs version, then layer its API docs back in
 mkdir -p content/doc/r${CURRENT}
 cp -R /tmp/zookeeper-site-build/doc/r${CURRENT}/. content/doc/r${CURRENT}/
 cp -R /tmp/zookeeper-apidocs-r${CURRENT} content/doc/r${CURRENT}/apidocs

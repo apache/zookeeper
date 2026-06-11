@@ -18,8 +18,11 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  isDocsUrl,
   isRedirectOnlyPage,
+  mergeSitemapUrls,
   normalizePath,
+  parseSitemapScope,
   shouldIncludeInSitemap,
   toSiteUrl
 } from "../scripts/generate-sitemap";
@@ -85,6 +88,9 @@ describe("shouldIncludeInSitemap", () => {
     expect(shouldIncludeInSitemap("__spa-fallback.html", "<html></html>")).toBe(
       false
     );
+    expect(shouldIncludeInSitemap("doc/index.html", "<html></html>")).toBe(
+      false
+    );
   });
 
   it("excludes redirect-only pages even if the path is not prelisted", () => {
@@ -103,5 +109,78 @@ describe("shouldIncludeInSitemap", () => {
         "<html><body><h1>Metrics</h1></body></html>"
       )
     ).toBe(true);
+  });
+});
+
+describe("isDocsUrl", () => {
+  it("treats /doc/ paths as docs", () => {
+    expect(isDocsUrl("/doc/")).toBe(true);
+    expect(isDocsUrl("/doc/r3.9.5/")).toBe(true);
+    expect(isDocsUrl("/doc/r3.9.5/admin-ops/cli")).toBe(true);
+  });
+
+  it("treats everything else as landing", () => {
+    expect(isDocsUrl("/")).toBe(false);
+    expect(isDocsUrl("/news/")).toBe(false);
+    expect(isDocsUrl("/releases")).toBe(false);
+  });
+});
+
+describe("parseSitemapScope", () => {
+  it("defaults to all when no flag is given", () => {
+    expect(parseSitemapScope([])).toBe("all");
+  });
+
+  it("reads --scope <value> and --scope=<value>", () => {
+    expect(parseSitemapScope(["--scope", "landing"])).toBe("landing");
+    expect(parseSitemapScope(["--scope=docs"])).toBe("docs");
+  });
+
+  it("rejects unknown scopes", () => {
+    expect(() => parseSitemapScope(["--scope", "bogus"])).toThrow(/Invalid/);
+  });
+});
+
+describe("mergeSitemapUrls", () => {
+  it("replaces landing URLs and keeps docs from base", () => {
+    const base = ["/", "/doc/r3.9.5/", "/doc/r3.9.5/admin-ops/cli"];
+    const fresh = ["/", "/news/"];
+
+    expect(mergeSitemapUrls(base, fresh, "landing")).toEqual([
+      "/",
+      "/doc/r3.9.5/",
+      "/doc/r3.9.5/admin-ops/cli",
+      "/news/"
+    ]);
+  });
+
+  it("replaces docs URLs and keeps landing from base", () => {
+    const base = ["/", "/news/", "/doc/r3.9.5/"];
+    const fresh = ["/doc/r3.9.5/", "/doc/r3.9.5/admin-ops/cli"];
+
+    expect(mergeSitemapUrls(base, fresh, "docs")).toEqual([
+      "/",
+      "/doc/r3.9.5/",
+      "/doc/r3.9.5/admin-ops/cli",
+      "/news/"
+    ]);
+  });
+
+  it("deduplicates URLs that appear in both retained and rebuilt slices", () => {
+    const base = ["/", "/doc/r3.9.5/"];
+    const fresh = ["/", "/news/"];
+
+    expect(mergeSitemapUrls(base, fresh, "landing")).toEqual([
+      "/",
+      "/doc/r3.9.5/",
+      "/news/"
+    ]);
+  });
+
+  it("replaces everything for the all scope", () => {
+    const base = ["/", "/doc/r3.9.5/"];
+    const fresh = ["/"];
+
+    expect(mergeSitemapUrls(base, fresh, "all")).toEqual(["/"]);
   });
 });

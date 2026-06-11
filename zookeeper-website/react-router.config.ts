@@ -19,11 +19,12 @@
 import type { Config } from "@react-router/dev/config";
 import { glob } from "node:fs/promises";
 import { createGetUrl, getSlugs } from "fumadocs-core/source";
-import { getDocsArchiveBase } from "./app/lib/docs-archive";
+import { getBuildTarget, getDocsArchiveBase } from "./app/lib/docs-archive";
 import { CURRENT_VERSION } from "./app/lib/current-version";
 import { formatDocsBase } from "./app/lib/docs-paths";
 
 const docsArchiveBase = getDocsArchiveBase();
+const isLandingBuild = getBuildTarget() === "landing";
 const getUrl = createGetUrl(
   docsArchiveBase ? "/" : formatDocsBase(CURRENT_VERSION)
 );
@@ -35,10 +36,13 @@ export default {
   basename: docsArchiveBase || "/",
   async prerender({ getStaticPaths }) {
     const paths: string[] = [...getStaticPaths()];
-    for await (const entry of glob("**/*.mdx", {
-      cwd: "app/pages/_docs/docs/_mdx"
-    })) {
-      paths.push(getUrl(getSlugs(entry)));
+    // The landing build has no docs routes, so skip enumerating MDX pages.
+    if (!isLandingBuild) {
+      for await (const entry of glob("**/*.mdx", {
+        cwd: "app/pages/_docs/docs/_mdx"
+      })) {
+        paths.push(getUrl(getSlugs(entry)));
+      }
     }
     return paths;
   }

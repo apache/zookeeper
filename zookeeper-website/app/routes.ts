@@ -23,43 +23,62 @@ import {
   route
 } from "@react-router/dev/routes";
 import { CURRENT_VERSION } from "./lib/current-version";
-import { getDocsArchiveBase } from "./lib/docs-archive";
+import { getBuildTarget, getDocsArchiveBase } from "./lib/docs-archive";
 
+// Three build contexts share one codebase:
+//   - Docs build (archive base set): docs are served under /doc/rX/ via Vite
+//     `base` + React Router `basename`. Includes search + llms-full.txt. The
+//     current version is built exactly like an archive.
+//   - Landing build (ZOOKEEPER_BUILD_TARGET=landing): landing pages + the /doc
+//     redirect only, so docs changes never touch landing output.
+//   - Dev / default (neither): a combined site so `react-router dev` serves
+//     landing and current docs together for authoring.
 const isDocsArchiveBuild = Boolean(getDocsArchiveBase());
+const isLandingBuild = getBuildTarget() === "landing";
 
-const docsRoutes = layout("./pages/_docs/docs-layout.tsx", [
-  route(`doc/r${CURRENT_VERSION}/*`, "routes/_docs/docs.tsx")
+const landingRoutes = layout("./pages/_landing/landing-layout.tsx", [
+  index("routes/_landing/home.tsx"),
+  route("releases", "routes/_landing/releases.tsx"),
+  route("events", "routes/_landing/events.tsx"),
+  route("news", "routes/_landing/news.tsx"),
+  route("credits", "routes/_landing/credits.tsx"),
+  route("bylaws", "routes/_landing/bylaws.tsx"),
+  route("mailing-lists", "routes/_landing/mailing-lists.tsx"),
+  route("security", "routes/_landing/security.tsx"),
+  route("irc", "routes/_landing/irc.tsx"),
+  route("version-control", "routes/_landing/version-control.tsx")
 ]);
 
-const docsArchiveRoutes = layout("./pages/_docs/docs-layout.tsx", [
-  route("*", "routes/_docs/docs.tsx")
-]);
+const docRedirectRoute = route("doc", "routes/_docs/doc-redirect.tsx");
 
-const websiteRoutes = [
-  // Landing
-  layout("./pages/_landing/landing-layout.tsx", [
-    index("routes/_landing/home.tsx"),
-    route("releases", "routes/_landing/releases.tsx"),
-    route("events", "routes/_landing/events.tsx"),
-    route("news", "routes/_landing/news.tsx"),
-    route("credits", "routes/_landing/credits.tsx"),
-    route("bylaws", "routes/_landing/bylaws.tsx"),
-    route("mailing-lists", "routes/_landing/mailing-lists.tsx"),
-    route("security", "routes/_landing/security.tsx"),
-    route("irc", "routes/_landing/irc.tsx"),
-    route("version-control", "routes/_landing/version-control.tsx")
+const docsBuildRoutes = [
+  layout("./pages/_docs/docs-layout.tsx", [
+    index("routes/_docs/docs.tsx", { id: "docs-index" }),
+    route("*", "routes/_docs/docs.tsx", { id: "docs-splat" })
   ]),
-  route("doc", "routes/_docs/doc-redirect.tsx"),
-  // Docs
-  docsRoutes,
-  // API (Rendered at build time)
-  route("llms-full.txt", "routes/_api/llms-full.ts"),
-  route("api/search", "routes/_api/search.ts")
+  route("api/search", "routes/_api/search.ts"),
+  route("llms-full.txt", "routes/_api/llms-full.ts")
 ] satisfies RouteConfig;
 
-const websiteArchiveRoutes = [
-  docsArchiveRoutes,
-  route("api/search", "routes/_api/search.ts")
+const landingBuildRoutes = [
+  landingRoutes,
+  docRedirectRoute
 ] satisfies RouteConfig;
 
-export default isDocsArchiveBuild ? websiteArchiveRoutes : websiteRoutes;
+const devCombinedRoutes = [
+  landingRoutes,
+  docRedirectRoute,
+  layout("./pages/_docs/docs-layout.tsx", [
+    route(`doc/r${CURRENT_VERSION}/*`, "routes/_docs/docs.tsx")
+  ]),
+  route("api/search", "routes/_api/search.ts"),
+  route("llms-full.txt", "routes/_api/llms-full.ts")
+] satisfies RouteConfig;
+
+const routes = isDocsArchiveBuild
+  ? docsBuildRoutes
+  : isLandingBuild
+    ? landingBuildRoutes
+    : devCombinedRoutes;
+
+export default routes;

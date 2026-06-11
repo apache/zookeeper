@@ -41,3 +41,18 @@ export function normalizeDocsArchiveBase(value?: string): string {
 export function getDocsArchiveBase(): string {
   return normalizeDocsArchiveBase(process.env[DOCS_ARCHIVE_BASE_ENV]);
 }
+
+// The production landing build sets ZOOKEEPER_BUILD_TARGET=landing so the route
+// table and prerender exclude docs. Archive/docs builds use the archive base
+// instead; dev (`react-router dev`) sets neither and serves a combined site.
+export const DOCS_BUILD_TARGET_ENV = "ZOOKEEPER_BUILD_TARGET";
+
+export function getBuildTarget(): "landing" | undefined {
+  return process.env[DOCS_BUILD_TARGET_ENV] === "landing"
+    ? "landing"
+    : undefined;
+}
+
+// Marks a docs build as an archived snapshot of an older release. The VITE_
+// prefix intentionally exposes it to bundled browser code via import.meta.env.
+export const DOCS_ARCHIVE_SNAPSHOT_ENV = "VITE_ZOOKEEPER_DOCS_ARCHIVE_SNAPSHOT";

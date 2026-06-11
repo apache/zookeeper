@@ -24,7 +24,13 @@ export const Link = (
 ) => {
   const BASE_URL = "https://zookeeper.apache.org";
   const href = typeof props.to === "string" ? props.to : props.to.pathname;
-  const reloadDocument = href?.startsWith(BASE_URL);
+  // Docs (`/doc/...`) and API docs (`/apidocs/...`) are separate builds from the
+  // landing app, so navigating to them must trigger a full page load rather than
+  // client-side routing within the landing bundle.
+  const reloadDocument =
+    href?.startsWith(BASE_URL) ||
+    href?.startsWith("/doc/") ||
+    href?.startsWith("/apidocs/");
 
   return <ReactRouterLink reloadDocument={reloadDocument} {...props} />;
 };

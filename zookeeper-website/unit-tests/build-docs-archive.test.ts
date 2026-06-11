@@ -22,10 +22,10 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   createArchiveHtaccessContent,
-  parseVersion,
+  parseDocsBuildArgs,
   toArchiveHtmlPathFromMdx,
   verifyArchiveOutput
-} from "../scripts/build-docs-archive";
+} from "../scripts/build-docs";
 
 let tempDir: string;
 let tempDocsDir: string;
@@ -57,6 +57,7 @@ async function writeValidArchiveFixture() {
     '<html><img src="/doc/r3.9.6/docs-images/zkservice.jpg"></html>'
   );
   await writeFixtureFile("api/search", "{}");
+  await writeFixtureFile("llms-full.txt", "# Docs\n");
   await writeFixtureFile(".htaccess", "RewriteEngine On");
 }
 
@@ -72,23 +73,20 @@ afterEach(async () => {
   await rm(tempDocsDir, { recursive: true, force: true });
 });
 
-describe("parseVersion", () => {
-  it("accepts stable and prerelease version strings", () => {
-    expect(parseVersion("3.9.6")).toBe("3.9.6");
-    expect(parseVersion("3.10.0-alpha")).toBe("3.10.0-alpha");
-    expect(parseVersion("3.10.0-beta")).toBe("3.10.0-beta");
+describe("parseDocsBuildArgs", () => {
+  it("uses the current version docs build by default", () => {
+    expect(parseDocsBuildArgs([])).toEqual({ snapshot: false });
   });
 
-  it("trims surrounding whitespace", () => {
-    expect(parseVersion(" 3.9.6 ")).toBe("3.9.6");
+  it("marks archive builds from the npm script name", () => {
+    expect(parseDocsBuildArgs([], "build:docs-archive")).toEqual({
+      snapshot: true
+    });
   });
 
-  it("rejects missing or malformed versions", () => {
-    expect(() => parseVersion(undefined)).toThrow(/build:docs-archive/);
-    expect(() => parseVersion("")).toThrow(/build:docs-archive/);
-    expect(() => parseVersion("v3.9.6")).toThrow(/build:docs-archive/);
-    expect(() => parseVersion("3.9")).toThrow(/build:docs-archive/);
-    expect(() => parseVersion("3.9.6-rc1")).toThrow(/build:docs-archive/);
+  it("rejects CLI version overrides", () => {
+    expect(() => parseDocsBuildArgs(["3.9.6"])).toThrow(/build:docs/);
+    expect(() => parseDocsBuildArgs(["--archive"])).toThrow(/build:docs/);
   });
 });
 
@@ -135,6 +133,7 @@ describe("verifyArchiveOutput", () => {
       '<html><script>window.location.replace("/")</script></html>'
     );
     await writeFixtureFile("api/search", "{}");
+    await writeFixtureFile("llms-full.txt", "# Docs\n");
     await writeFixtureFile(".htaccess", "RewriteEngine On");
 
     await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
@@ -148,6 +147,15 @@ describe("verifyArchiveOutput", () => {
 
     await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
       /missing api\/search/
+    );
+  });
+
+  it("rejects a missing llms-full.txt resource", async () => {
+    await writeValidArchiveFixture();
+    await rm(join(tempDir, "llms-full.txt"));
+
+    await expect(verifyArchiveOutput(tempDir, tempDocsDir)).rejects.toThrow(
+      /missing llms-full\.txt/
     );
   });
 

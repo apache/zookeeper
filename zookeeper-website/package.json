@@ -6,7 +6,9 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "react-router build && npm run generate-sitemap",
+    "build": "tsx scripts/build-site.ts",
+    "build:landing": "npm run fumadocs-init && ZOOKEEPER_BUILD_TARGET=landing react-router build && npm run generate-sitemap -- --scope landing",
+    "build:docs": "tsx scripts/build-docs.ts",
     "dev": "react-router dev",
     "start": "serve -s build/client -l 5173",
     "typecheck": "react-router typegen && tsc",
@@ -23,7 +25,7 @@
     "test:e2e:debug": "playwright test --debug",
     "fumadocs-init": "fumadocs-mdx",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts",
-    "build:docs-archive": "tsx scripts/build-docs-archive.ts",
+    "build:docs-archive": "tsx scripts/build-docs.ts",
     "ci": "npm run fumadocs-init && npm run lint && npm run typecheck && npm run test:unit:run && npm run build && npx playwright install && npm run test:e2e",
     "ci-skip-tests": "npm run fumadocs-init && npm run build"
   },

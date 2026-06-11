@@ -19,9 +19,11 @@
 import { ArrowRight, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CURRENT_VERSION } from "@/lib/current-version";
+import { DOCS_ARCHIVE_SNAPSHOT_ENV } from "@/lib/docs-archive";
 import { Button } from "@/ui/button";
 
-const isArchiveDocsView = import.meta.env.BASE_URL !== "/";
+// Set only by `build:docs-archive`, never by the current docs build or dev.
+const isArchiveDocsView = import.meta.env[DOCS_ARCHIVE_SNAPSHOT_ENV] === "1";
 const bannerStorageKey = `zookeeper-docs-archive-banner-dismissed:${CURRENT_VERSION}`;
 
 export function ArchiveDocsBanner() {
