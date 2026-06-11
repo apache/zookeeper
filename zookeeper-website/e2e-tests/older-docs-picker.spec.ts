@@ -17,6 +17,7 @@
 //
 
 import { test, expect } from "@playwright/test";
+import { DOCS_ROOT, RELEASED_DOC_VERSION_COUNT } from "./constants";
 
 const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.3"];
 const RELEASED_DOC_VERSIONS_OVERRIDE_KEY = "__released_doc_versions_override__";
@@ -40,7 +41,7 @@ test.describe("Older Docs Picker – sidebar", () => {
         versions: MOCK_RELEASED_DOC_VERSIONS
       }
     );
-    await page.goto("/doc/r3.9.5/");
+    await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
   });
 
@@ -254,7 +255,7 @@ test.describe("Older Docs Picker – no-JS navbar fallback", () => {
 
     const links = olderDocs.locator('a[href^="/doc/r"]');
     await expect(links.first()).toBeVisible();
-    await expect(links).toHaveCount(52);
+    await expect(links).toHaveCount(RELEASED_DOC_VERSION_COUNT);
     await expect(
       olderDocs.locator('a[href="/doc/r3.9.4/index.html"]')
     ).toBeVisible();

@@ -17,8 +17,7 @@
 //
 
 import { test, expect } from "@playwright/test";
-
-const DOCS_ROOT = "/doc/r3.9.5/";
+import { DOCS_ROOT, DOCS_URL_PATTERN } from "./constants";
 
 test.describe("Documentation Page - Basic Loading", () => {
   test("docs page loads successfully with title", async ({ page }) => {
@@ -26,7 +25,7 @@ test.describe("Documentation Page - Basic Loading", () => {
     await page.waitForLoadState("networkidle");
 
     // Check URL and title
-    await expect(page).toHaveURL(/.*doc\/r3\.9\.5/);
+    await expect(page).toHaveURL(DOCS_URL_PATTERN);
     await expect(page).toHaveTitle(/Overview|ZooKeeper/i);
   });
 
