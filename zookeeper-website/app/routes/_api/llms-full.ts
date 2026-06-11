@@ -20,13 +20,24 @@ import { source } from "@/lib/source";
 import { CURRENT_DOCS_PATH, isExternalHref } from "@/lib/docs-paths";
 import type { InferPageType } from "fumadocs-core/source";
 
-// llms-full.txt is emitted only by the docs build, where pages are served under
-// /doc/rX/ and Fumadocs returns root-relative URLs (e.g. /admin-ops/jmx). The
-// static .txt therefore needs the versioned public base from Vite.
+// llms-full.txt needs absolute, version-prefixed URLs (e.g. /doc/rX/admin-ops/jmx).
+// The base differs by context: in the docs build BASE_URL is already /doc/rX/, while
+// under dev/vitest it is "/" and we fall back to the current version's base.
 function getDocsUrlBase(): string {
   return import.meta.env.BASE_URL === "/"
     ? CURRENT_DOCS_PATH
     : import.meta.env.BASE_URL.slice(0, -1);
+}
+
+// Prefix a docs path with the version base, idempotently. `page.url` is already
+// prefixed in dev (source baseUrl = /doc/rX) but root-relative in the docs build
+// (source baseUrl = "/"), so guard against double-prefixing.
+export function toAbsoluteDocsUrl(url: string): string {
+  const base = getDocsUrlBase();
+  if (url === base || url.startsWith(`${base}/`)) {
+    return url;
+  }
+  return `${base}${url}`;
 }
 
 export async function loader() {
@@ -38,7 +49,7 @@ export async function loader() {
 
 export async function getLLMText(page: InferPageType<typeof source>) {
   const processed = await page.data.getText("processed");
-  return `# ${page.data.title} (${getDocsUrlBase()}${page.url})
+  return `# ${page.data.title} (${toAbsoluteDocsUrl(page.url)})
 ${resolveLLMTextLinks(processed, page.data.extractedReferences)}`;
 }
 
@@ -46,7 +57,6 @@ export function resolveLLMTextLinks(
   text: string,
   references: Array<{ href: string }> = []
 ): string {
-  const base = getDocsUrlBase();
   let resolved = text;
 
   for (const { href } of references) {
@@ -54,7 +64,7 @@ export function resolveLLMTextLinks(
       continue;
     }
 
-    const docsHref = `${base}${href}`;
+    const docsHref = toAbsoluteDocsUrl(href);
 
     // Processed MDX is plain text with markdown links from our docs, e.g.
     //   [JMX](/admin-ops/jmx)

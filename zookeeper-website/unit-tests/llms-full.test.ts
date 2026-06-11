@@ -18,7 +18,32 @@
 
 import { describe, expect, it } from "vitest";
 import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
-import { resolveLLMTextLinks } from "@/routes/_api/llms-full";
+import {
+  resolveLLMTextLinks,
+  toAbsoluteDocsUrl
+} from "@/routes/_api/llms-full";
+
+describe("toAbsoluteDocsUrl", () => {
+  it("prefixes root-relative docs paths (docs build shape)", () => {
+    expect(toAbsoluteDocsUrl("/admin-ops/jmx")).toBe(
+      `${CURRENT_DOCS_PATH}/admin-ops/jmx`
+    );
+  });
+
+  it("maps the root-relative index to the docs base", () => {
+    expect(toAbsoluteDocsUrl("/")).toBe(`${CURRENT_DOCS_PATH}/`);
+  });
+
+  it("is idempotent for already-prefixed URLs (dev shape)", () => {
+    expect(toAbsoluteDocsUrl(`${CURRENT_DOCS_PATH}/admin-ops/jmx`)).toBe(
+      `${CURRENT_DOCS_PATH}/admin-ops/jmx`
+    );
+  });
+
+  it("does not double-prefix the index page URL equal to the base", () => {
+    expect(toAbsoluteDocsUrl(CURRENT_DOCS_PATH)).toBe(CURRENT_DOCS_PATH);
+  });
+});
 
 describe("resolveLLMTextLinks", () => {
   it("prefixes Fumadocs-extracted root-relative link references", () => {
