@@ -50,6 +50,7 @@
           <excludes combine.children="append">
             <exclude>**/*.mdx</exclude>
             <exclude>public/robots.txt</exclude>
+            <exclude>public/sitemap.xml</exclude>
           </excludes>
         </configuration>
       </plugin>
