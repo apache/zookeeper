@@ -31,6 +31,7 @@ create [-s] [-e] [-c] [-t ttl] path [data] [acl]
 delete [-v version] path
 deleteall path
 delquota [-n|-b|-N|-B] path
+exit
 get [-s] [-w] path
 getAcl [-s] path
 getAllChildrenNumber path
@@ -365,9 +366,9 @@ printwatches is off
 printwatches is on
 ```
 
-## quit
+## quit (or exit)
 
-Quit the CLI.
+Quit the CLI. Both `quit` and `exit` work.
 
 ```bash
 [zkshell: 1] quit

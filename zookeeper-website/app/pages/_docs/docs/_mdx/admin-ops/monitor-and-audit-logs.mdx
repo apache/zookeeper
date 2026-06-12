@@ -63,6 +63,22 @@ metricsProvider.httpsPort=4443
 
 </Callout>
 
+#### Restricting TLS Protocols and Cipher Suites
+
+You can restrict the TLS versions and cipher suites used by the Prometheus `MetricsProvider`. Add the following to `zoo.cfg`:
+
+```properties
+metricsProvider.ssl.enabledProtocols=TLSv1.2,TLSv1.3
+metricsProvider.ssl.ciphersuites=TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+```
+
+To verify, raise the log level of `PrometheusMetricsProvider` to `DEBUG` and confirm these entries appear in the logs:
+
+```
+INFO  [main:o.a.z.m.p.PrometheusMetricsProvider] - Setting enabled protocols: 'TLSv1.2,TLSv1.3'
+INFO  [main:o.a.z.m.p.PrometheusMetricsProvider] - Setting enabled cipherSuites: 'TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
+```
+
 ### Prometheus
 
 [Prometheus](https://prometheus.io/) is the easiest way to ingest and record ZooKeeper metrics.
