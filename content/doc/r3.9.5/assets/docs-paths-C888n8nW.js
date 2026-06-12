@@ -1,0 +1,1 @@
+import{C as s}from"./current-version-_XF0iDSY.js";function r(t){return`/doc/r${t}`}const e=r(s);function i(){return""}function o(t){return/^(?:https?:|mailto:|#)/i.test(t)}function n(t){return!t.startsWith("/")||o(t),t}function c(t){return t.startsWith("/apidocs/")?n(t):t}export{e as C,n as a,i as g,c as r};
