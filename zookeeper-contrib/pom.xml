@@ -43,7 +43,6 @@
       <id>full-build</id>
       <modules>
         <module>zookeeper-contrib-fatjar</module>
-        <module>zookeeper-contrib-loggraph</module>
         <module>zookeeper-contrib-rest</module>
         <module>zookeeper-contrib-zooinspector</module>
       </modules>

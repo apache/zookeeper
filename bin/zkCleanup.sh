@@ -31,27 +31,34 @@
 # use POSIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"
 ZOOBIN="$(dirname "$ZOOBIN")"
-ZOOBINDIR="$(cd "$ZOOBIN" && pwd)"
+ZOOBINDIR="$(cd "$ZOOBIN" && pwd)" || exit
 
 if [[ -e "$ZOOBIN/../libexec/zkEnv.sh" ]]; then
   # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh "$@"
 else
   # shellcheck source=bin/zkEnv.sh
-  . "$ZOOBINDIR"/zkEnv.sh
+  . "$ZOOBINDIR"/zkEnv.sh "$@"
 fi
 
-ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//')"
-ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')"
+ZOODATADIR=""
+ZOODATALOGDIR=""
+
+# Only try to read config if ZOOCFG exists
+if [[ -f $ZOOCFG ]]; then
+  re='^[^=]*=[[:space:]]*(.*)[[:space:]]*$'
+  ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" 2>/dev/null)"
+  [[ $ZOODATADIR =~ $re ]] && ZOODATADIR="${BASH_REMATCH[1]}"
+  ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" 2>/dev/null)"
+  [[ $ZOODATALOGDIR =~ $re ]] && ZOODATALOGDIR="${BASH_REMATCH[1]}"
+fi
 
 ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
 
 # shellcheck disable=SC2206
-flags=($JVMFLAGS)
-if [[ -z $ZOODATALOGDIR ]]; then
-  "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" "${flags[@]}" \
-    org.apache.zookeeper.server.PurgeTxnLog "$ZOODATADIR" "$@"
-else
-  "$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" "${flags[@]}" \
-    org.apache.zookeeper.server.PurgeTxnLog "$ZOODATALOGDIR" "$ZOODATADIR" "$@"
-fi
+flags=("-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" $JVMFLAGS)
+
+directories=()
+[[ -n $ZOODATADIR ]] && directories=("$ZOODATADIR")
+[[ -n $ZOODATALOGDIR ]] && directories=("$ZOODATALOGDIR" "${directories[@]}")
+"$JAVA" "${flags[@]}" org.apache.zookeeper.server.PurgeTxnLog "${directories[@]}" "$@"
