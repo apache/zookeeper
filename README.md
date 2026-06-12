@@ -7,4 +7,4 @@ Updating this branch and pushing to the Apache git repo will cause gitpubsub to 
 ## How to update
 
 Typically the website will need to be updated as part of a release. Prior to updating this branch
-update the website in the "master" branch appropriately. More info can be found in the `zookeeper-website` directory: [https://github.com/apache/zookeeper/zookeeper-website/README.md](https://github.com/apache/zookeeper/zookeeper-website/README.md)
+update the website in the "master" branch appropriately. More info can be found on [wiki](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=430408714)
