@@ -53,7 +53,11 @@ const baseMdxComponents: MDXComponents = {
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      url: SITE_URL,
+      // Archive docs builds run under a /doc/rX/ basename, so a bare "/" would
+      // resolve to the docs index rather than the site landing page. Point at
+      // the absolute site root there; in dev (BASE_URL === "/") an
+      // internal "/" already reaches the landing page.
+      url: import.meta.env.BASE_URL === "/" ? "/" : SITE_URL,
       title: (
         <div className="flex items-center gap-2">
           <img

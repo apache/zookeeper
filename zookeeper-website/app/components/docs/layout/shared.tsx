@@ -111,7 +111,7 @@ export function renderTitleNav(
 ) {
   if (typeof title === "function") return title({ href: url, ...props });
   return (
-    <Link href={url} {...props}>
+    <Link href={url} external={false} {...props}>
       {title}
     </Link>
   );
