@@ -47,8 +47,7 @@ export function SearchDialog(props: SharedProps) {
     type: "static",
     from: docsSearchUrl,
     initOrama,
-    locale,
-    tag: "multi-page"
+    locale
   });
 
   return (
