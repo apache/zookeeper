@@ -17,6 +17,24 @@
 
 ErrorDocument 404 /404.html
 
+# Redirect legacy *.html URLs to the new clean React Router paths.
+# Note: URL fragments (e.g. releases.html#news) are never sent to the server,
+# so releases.html#news lands on /releases; the old "news" section now lives at
+# its own /news route.
+<IfModule mod_alias.c>
+  Redirect 301 /releases.html /releases
+  Redirect 301 /credits.html  /credits
+  Redirect 301 /bylaws.html   /bylaws
+  Redirect 301 /security.html /security
+  Redirect 301 /irc.html      /irc
+  Redirect 301 /events.html   /events
+  Redirect 301 /lists.html    /mailing-lists
+  Redirect 301 /git.html      /version-control
+
+  # No local privacy page anymore — it now points to the ASF privacy policy.
+  Redirect 301 /privacy.html https://privacy.apache.org/policies/privacy-policy-public.html
+</IfModule>
+
 <IfModule mod_headers.c>
   Header always set Cache-Control "no-cache, must-revalidate"
 
