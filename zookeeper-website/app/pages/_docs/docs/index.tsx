@@ -37,6 +37,7 @@ import { Link } from "@/components/link";
 import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import type { MDXComponents } from "mdx/types";
 import { getDocsBasePath, resolveDocsHref } from "@/lib/docs-paths";
+import { SITE_URL } from "@/lib/site";
 
 // Extend default MDX components to include shared UI blocks globally.
 // Note: We'll override the 'a' component in the renderer to handle route-specific logic
@@ -52,6 +53,7 @@ const baseMdxComponents: MDXComponents = {
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
+      url: SITE_URL,
       title: (
         <div className="flex items-center gap-2">
           <img
