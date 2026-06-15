@@ -20,16 +20,15 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.prometheus.client.CollectorRegistry;
 import java.util.Properties;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.junit.Assert;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
-
 
 public class PrometheusMetricsProviderConfigTest {
 
