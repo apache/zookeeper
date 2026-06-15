@@ -34,6 +34,13 @@ export default {
   // Server-side render by default, to enable SPA mode set this to `false`
   ssr: false,
   basename: docsArchiveBase || "/",
+  future: {
+    v8_middleware: false,
+    v8_splitRouteModules: false,
+    v8_viteEnvironmentApi: false,
+    v8_passThroughRequests: false,
+    v8_trailingSlashAwareDataRequests: false
+  },
   async prerender({ getStaticPaths }) {
     const paths: string[] = [...getStaticPaths()];
     // The landing build has no docs routes, so skip enumerating MDX pages.
