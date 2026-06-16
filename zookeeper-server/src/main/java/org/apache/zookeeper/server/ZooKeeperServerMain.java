@@ -173,6 +173,10 @@ public class ZooKeeperServerMain {
 
             serverStarted();
 
+            if (config.registerShutdownHook()) {
+                Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+            }
+
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
             shutdownLatch.await();

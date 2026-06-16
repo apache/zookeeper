@@ -227,6 +227,10 @@ public class QuorumPeerMain {
                 quorumPeer.setJvmPauseMonitor(new JvmPauseMonitor(config));
             }
 
+            if (config.registerShutdownHook()) {
+                Runtime.getRuntime().addShutdownHook(new Thread(quorumPeer::shutdown));
+            }
+
             quorumPeer.start();
             ZKAuditProvider.addZKStartStopAuditLog();
             quorumPeer.join();

@@ -50,6 +50,7 @@ public class ServerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
+    protected boolean registerShutdownHook;
     protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
     /** defaults to -1 if not set explicitly */
@@ -113,6 +114,7 @@ public class ServerConfig {
         maxClientCnxns = config.getMaxClientCnxns();
         minSessionTimeout = config.getMinSessionTimeout();
         maxSessionTimeout = config.getMaxSessionTimeout();
+        registerShutdownHook = config.registerShutdownHook();
         jvmPauseMonitorToRun = config.isJvmPauseMonitorToRun();
         jvmPauseInfoThresholdMs = config.getJvmPauseInfoThresholdMs();
         jvmPauseWarnThresholdMs = config.getJvmPauseWarnThresholdMs();
@@ -148,6 +150,10 @@ public class ServerConfig {
     /** maximum session timeout in milliseconds, -1 if unset */
     public int getMaxSessionTimeout() {
         return maxSessionTimeout;
+    }
+
+    public boolean registerShutdownHook() {
+        return registerShutdownHook;
     }
 
     public long getJvmPauseInfoThresholdMs() {
