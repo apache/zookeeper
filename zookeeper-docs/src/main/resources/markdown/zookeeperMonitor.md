@@ -21,6 +21,7 @@ limitations under the License.
     * [Prometheus](#Prometheus)
     * [Alerting with Prometheus](#Alerting)
     * [Grafana](#Grafana)
+    * [Timeline Metrics](#Timeline-Metrics)
     * [InfluxDB](#influxdb)
 
 * [JMX](#JMX)
@@ -262,6 +263,45 @@ To verify raise the log level of PrometheusMetricsProvider to DEBUG and check th
     ```
 - Then download and import the default ZooKeeper dashboard [template](https://grafana.com/grafana/dashboards/10465) and customize.
 - Users can ask for Grafana dashboard account if having any good improvements by writing a email to **dev@zookeeper.apache.org**.
+
+<a name="Timeline-Metrics"></a>
+
+### Timeline Metrics
+
+**New in 3.10.0:** ZooKeeper supports integration with Timeline-based metrics collection systems
+such as Apache Ambari Metrics Collector.
+
+### Pre-requisites:
+- The Timeline Metrics Provider requires a sink implementation to connect to your metrics collector.
+  For Ambari Metrics, you'll need the Ambari Metrics Hadoop Sink library in the ZooKeeper classpath.
+
+- Enable the `Timeline MetricsProvider` by setting the following in `zoo.cfg`:
+  ```conf
+  metricsProvider.className=org.apache.zookeeper.metrics.timeline.TimelineMetricsProvider
+  metricsProvider.timeline.sink.class=org.apache.hadoop.metrics2.sink.timeline.ZooKeeperTimelineMetricsSink
+  ```
+
+- Configure the collection period (in seconds):
+  ```conf
+  metricsProvider.timeline.collection.period=60  # Default is 60 seconds
+  ```
+
+- Optionally configure hostname and application ID:
+  ```conf
+  metricsProvider.timeline.hostname=zk1.example.com  # Auto-detected if not specified
+  metricsProvider.timeline.appId=zookeeper           # Default is "zookeeper"
+  ```
+
+- Additional sink-specific configuration properties can be added with the `metricsProvider.timeline.` prefix.
+  These are passed directly to the sink implementation. For example, Ambari Metrics Sink supports:
+  ```conf
+  metricsProvider.timeline.collector.hosts=collector.example.com
+  metricsProvider.timeline.collector.protocol=http
+  metricsProvider.timeline.collector.port=6188
+  ```
+
+**Note:** Unlike Prometheus which uses a pull-based model, the Timeline Metrics Provider actively
+pushes metrics to the collector at the configured interval.
 
 <a name="influxdb"></a>
 
