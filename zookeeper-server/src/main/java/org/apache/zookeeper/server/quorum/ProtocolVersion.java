@@ -18,18 +18,28 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.util.List;
-import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestRecord;
+public class ProtocolVersion {
+    private ProtocolVersion() {}
 
-public class LearnerSyncRequest extends Request {
+    /**
+     * Pre ZAB 1.0.
+     */
+    public static final int ANCIENT = 1;
 
-    LearnerHandler fh;
-    public LearnerSyncRequest(
-        LearnerHandler fh, long sessionId, int xid, int type, RequestRecord request, List<Id> authInfo) {
-        super(null, sessionId, xid, type, request, authInfo);
-        this.fh = fh;
-    }
+    /**
+     * ZAB 1.0.
+     */
+    public static final int V3_4_0 = 0x10000;
 
+    /**
+     * Protocol changes:
+     * * Learner will piggyback whatever data leader attached in {@link Leader#PING} after session data.
+     *   This way, leader is free to enhance {@link Leader#PING} in future without agreement from learner.
+     */
+    public static final int V3_10_0 = 0x20000;
+
+    /**
+     * Point to the newest coding version.
+     */
+    public static final int CURRENT = V3_10_0;
 }

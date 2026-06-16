@@ -109,7 +109,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
                 public void shutdown() {
                 }
-            }, "0", false, new ZooKeeperServerListener() {
+            }, "0", new ZooKeeperServerListener() {
 
                 @Override
                 public void notifyStopping(String threadName, int errorCode) {
