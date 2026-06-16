@@ -64,9 +64,9 @@ public class JvmPauseMonitor {
     public static final String INFO_THRESHOLD_KEY = "jvm.pause.info-threshold.ms";
     public static final long INFO_THRESHOLD_DEFAULT = 1000;
 
-    private long numGcWarnThresholdExceeded = 0;
-    private long numGcInfoThresholdExceeded = 0;
-    private long totalGcExtraSleepTime = 0;
+    private volatile long numGcWarnThresholdExceeded = 0;
+    private volatile long numGcInfoThresholdExceeded = 0;
+    private volatile long totalGcExtraSleepTime = 0;
 
     private Thread monitorThread;
     private volatile boolean shouldRun = true;
