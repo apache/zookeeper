@@ -38,6 +38,8 @@ public class CommandFactory {
         LS(LsCommand::new),
         GET_ACL(GetAclCommand::new),
         SET_ACL(SetAclCommand::new),
+        EXPORT(ExportCommand::new),
+        IMPORT(ImportCommand::new),
         STAT(StatCommand::new),
         SYNC(SyncCommand::new),
         SET_QUOTA(SetQuotaCommand::new),
