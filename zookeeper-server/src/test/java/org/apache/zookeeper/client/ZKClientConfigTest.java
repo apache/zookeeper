@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.ZKConfig;
 import org.junit.jupiter.api.Test;
@@ -123,6 +124,34 @@ public class ZKClientConfigTest {
         assertEquals(conf.getProperty(LOGIN_CONTEXT_NAME_KEY), "MyClient");
         assertEquals(conf.getProperty(ZOOKEEPER_SERVER_REALM), "HADOOP.COM");
         assertEquals(conf.getProperty("dummyProperty"), "dummyValue");
+    }
+
+    @Test
+    @Timeout(value = 10)
+    public void testServerSslPropertyFallback(@TempDir File testDataDir) throws IOException, ConfigException {
+        File file = File.createTempFile("clientConfigSsl", ".conf", testDataDir);
+        Properties clientConfProp = new Properties();
+        clientConfProp.setProperty("ssl.trustStore.location", "/tmp/server-truststore.jks");
+        clientConfProp.setProperty("ssl.trustStore.password", "server-pass");
+        clientConfProp.setProperty("ssl.keyStore.location", "/tmp/server-keystore.jks");
+        clientConfProp.setProperty("ssl.keyStore.password", "server-pass");
+        clientConfProp.setProperty("zookeeper.ssl.trustStore.location", "/tmp/client-truststore.jks");
+        OutputStream io = new FileOutputStream(file);
+        try {
+            clientConfProp.store(io, "Client Configurations");
+        } finally {
+            io.close();
+        }
+
+        ZKClientConfig conf = new ZKClientConfig();
+        conf.addConfiguration(Paths.get(file.getAbsolutePath()));
+
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            assertEquals("/tmp/client-truststore.jks", conf.getProperty(clientX509Util.getSslTruststoreLocationProperty()));
+            assertEquals("server-pass", conf.getProperty(clientX509Util.getSslTruststorePasswdProperty()));
+            assertEquals("/tmp/server-keystore.jks", conf.getProperty(clientX509Util.getSslKeystoreLocationProperty()));
+            assertEquals("server-pass", conf.getProperty(clientX509Util.getSslKeystorePasswdProperty()));
+        }
     }
 
     @Test
