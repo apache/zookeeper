@@ -1044,14 +1044,45 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 
 * *IPAuthenticationProvider.usexforwardedfor* :
   (Java system property: **zookeeper.IPAuthenticationProvider.usexforwardedfor**)
+
   **New in 3.9.3:**
-  IPAuthenticationProvider uses the client IP address to authenticate the user. By
-  default it reads the **Host** HTTP header to detect client IP address. In some
-  proxy configurations the proxy server adds the **X-Forwarded-For** header to
-  the request in order to provide the IP address of the original client request.
-  By enabling **usexforwardedfor** ZooKeeper setting, **X-Forwarded-For** will be preferred
-  over the standard **Host** header.
-  Default value is **false**.
+
+  \`IPAuthenticationProvider\` authenticates clients based on their IP address. By
+  default, ZooKeeper determines the client IP using the standard \`Host\` HTTP header.
+  In certain reverse proxy or load balancer deployments, proxies may include the
+  \`X-Forwarded-For\` header to indicate the originating client’s IP address.
+  When \`usexforwardedfor\` is enabled, ZooKeeper will prefer the \`X-Forwarded-For\`
+  header over the \`Host\` header when determining the client IP address for authentication
+  purposes.
+
+  Default value is **false**
+
+<Callout type="warning">
+  **Security Warning**
+
+  Enabling \`usexforwardedfor\` introduces significant security risks unless ZooKeeper
+  is deployed strictly behind trusted, controlled proxy infrastructure:
+
+  * ZooKeeper does **not** validate the \`X-Forwarded-For\` header against the actual TCP
+    source IP address.
+  * ZooKeeper does **not** enforce a trusted proxy allowlist or verify that the request
+    originated from an approved intermediary.
+  * Any client capable of connecting to ZooKeeper can forge an arbitrary \`X-Forwarded-For\`
+    header value.
+  * A malicious client may impersonate any IP address, potentially bypassing IP-based
+    authentication and ZooKeeper ACL restrictions entirely.
+
+  **Recommendation**
+
+  Enable this setting **only** when:
+
+  * ZooKeeper is accessible exclusively through trusted reverse proxies or load balancers
+  * Direct client access is blocked at the network layer
+  * Proxy infrastructure sanitizes and overwrites incoming \`X-Forwarded-For\` headers
+
+  For most deployments, leaving this property disabled is strongly recommended to preserve
+  the integrity of IP-based access controls.
+</Callout>
 
 * *X509AuthenticationProvider.superUser* :
   (Java system property: **zookeeper.X509AuthenticationProvider.superUser**)
@@ -2426,15 +2457,19 @@ connection.`},{heading:"encryption-authentication-authorization-options",content
 New in 3.7.0:
 Set ACL digest algorithm. The default value is: SHA1 which will be deprecated in the future for security issues.`},{heading:"encryption-authentication-authorization-options",content:"Set this property the same value in all the servers."},{heading:"encryption-authentication-authorization-options",content:"How to support other more algorithms?"},{heading:"encryption-authentication-authorization-options",content:`Modify the java.security configuration file under $JAVA_HOME/jre/lib/security/java.security by specifying
 security.provider.<n>=<provider class name>.`},{heading:"encryption-authentication-authorization-options",content:"For example:"},{heading:"encryption-authentication-authorization-options",content:"Copy the jar file to $JAVA_HOME/jre/lib/ext/."},{heading:"encryption-authentication-authorization-options",content:"For example:"},{heading:"encryption-authentication-authorization-options",content:"How to migrate from one digest algorithm to another?"},{heading:"encryption-authentication-authorization-options",content:"Regenerate superDigest when migrating to new algorithm."},{heading:"encryption-authentication-authorization-options",content:"Run SetAcl for a znode which already had a digest auth of old algorithm."},{heading:"encryption-authentication-authorization-options",content:`IPAuthenticationProvider.usexforwardedfor :
-(Java system property: zookeeper.IPAuthenticationProvider.usexforwardedfor)
-New in 3.9.3:
-IPAuthenticationProvider uses the client IP address to authenticate the user. By
-default it reads the Host HTTP header to detect client IP address. In some
-proxy configurations the proxy server adds the X-Forwarded-For header to
-the request in order to provide the IP address of the original client request.
-By enabling usexforwardedfor ZooKeeper setting, X-Forwarded-For will be preferred
-over the standard Host header.
-Default value is false.`},{heading:"encryption-authentication-authorization-options",content:`X509AuthenticationProvider.superUser :
+(Java system property: zookeeper.IPAuthenticationProvider.usexforwardedfor)`},{heading:"encryption-authentication-authorization-options",content:"New in 3.9.3:"},{heading:"encryption-authentication-authorization-options",content:`IPAuthenticationProvider authenticates clients based on their IP address. By
+default, ZooKeeper determines the client IP using the standard Host HTTP header.
+In certain reverse proxy or load balancer deployments, proxies may include the
+X-Forwarded-For header to indicate the originating client’s IP address.
+When usexforwardedfor is enabled, ZooKeeper will prefer the X-Forwarded-For
+header over the Host header when determining the client IP address for authentication
+purposes.`},{heading:"encryption-authentication-authorization-options",content:"Default value is false"},{heading:"encryption-authentication-authorization-options",content:"type: warning"},{heading:"encryption-authentication-authorization-options",content:"Security Warning"},{heading:"encryption-authentication-authorization-options",content:`Enabling usexforwardedfor introduces significant security risks unless ZooKeeper
+is deployed strictly behind trusted, controlled proxy infrastructure:`},{heading:"encryption-authentication-authorization-options",content:`ZooKeeper does not validate the X-Forwarded-For header against the actual TCP
+source IP address.`},{heading:"encryption-authentication-authorization-options",content:`ZooKeeper does not enforce a trusted proxy allowlist or verify that the request
+originated from an approved intermediary.`},{heading:"encryption-authentication-authorization-options",content:`Any client capable of connecting to ZooKeeper can forge an arbitrary X-Forwarded-For
+header value.`},{heading:"encryption-authentication-authorization-options",content:`A malicious client may impersonate any IP address, potentially bypassing IP-based
+authentication and ZooKeeper ACL restrictions entirely.`},{heading:"encryption-authentication-authorization-options",content:"Recommendation"},{heading:"encryption-authentication-authorization-options",content:"Enable this setting only when:"},{heading:"encryption-authentication-authorization-options",content:"ZooKeeper is accessible exclusively through trusted reverse proxies or load balancers"},{heading:"encryption-authentication-authorization-options",content:"Direct client access is blocked at the network layer"},{heading:"encryption-authentication-authorization-options",content:"Proxy infrastructure sanitizes and overwrites incoming X-Forwarded-For headers"},{heading:"encryption-authentication-authorization-options",content:`For most deployments, leaving this property disabled is strongly recommended to preserve
+the integrity of IP-based access controls.`},{heading:"encryption-authentication-authorization-options",content:`X509AuthenticationProvider.superUser :
 (Java system property: zookeeper.X509AuthenticationProvider.superUser)
 The SSL-backed way to enable a ZooKeeper ensemble
 administrator to access the znode hierarchy as a "super" user.
@@ -3974,16 +4009,35 @@ Set ACL digest algorithm. The default value is: `,e.jsx(n.code,{children:"SHA1"}
 `]}),`
 `,e.jsxs(n.li,{children:[`
 `,e.jsxs(n.p,{children:[e.jsx(n.em,{children:"IPAuthenticationProvider.usexforwardedfor"}),` :
-(Java system property: `,e.jsx(n.strong,{children:"zookeeper.IPAuthenticationProvider.usexforwardedfor"}),`)
-`,e.jsx(n.strong,{children:"New in 3.9.3:"}),`
-IPAuthenticationProvider uses the client IP address to authenticate the user. By
-default it reads the `,e.jsx(n.strong,{children:"Host"}),` HTTP header to detect client IP address. In some
-proxy configurations the proxy server adds the `,e.jsx(n.strong,{children:"X-Forwarded-For"}),` header to
-the request in order to provide the IP address of the original client request.
-By enabling `,e.jsx(n.strong,{children:"usexforwardedfor"})," ZooKeeper setting, ",e.jsx(n.strong,{children:"X-Forwarded-For"}),` will be preferred
-over the standard `,e.jsx(n.strong,{children:"Host"}),` header.
-Default value is `,e.jsx(n.strong,{children:"false"}),"."]}),`
+(Java system property: `,e.jsx(n.strong,{children:"zookeeper.IPAuthenticationProvider.usexforwardedfor"}),")"]}),`
+`,e.jsx(n.p,{children:e.jsx(n.strong,{children:"New in 3.9.3:"})}),`
+`,e.jsxs(n.p,{children:[e.jsx(n.code,{children:"IPAuthenticationProvider"}),` authenticates clients based on their IP address. By
+default, ZooKeeper determines the client IP using the standard `,e.jsx(n.code,{children:"Host"}),` HTTP header.
+In certain reverse proxy or load balancer deployments, proxies may include the
+`,e.jsx(n.code,{children:"X-Forwarded-For"}),` header to indicate the originating client’s IP address.
+When `,e.jsx(n.code,{children:"usexforwardedfor"})," is enabled, ZooKeeper will prefer the ",e.jsx(n.code,{children:"X-Forwarded-For"}),`
+header over the `,e.jsx(n.code,{children:"Host"}),` header when determining the client IP address for authentication
+purposes.`]}),`
+`,e.jsxs(n.p,{children:["Default value is ",e.jsx(n.strong,{children:"false"})]}),`
 `]}),`
+`]}),`
+`,e.jsxs(t,{type:"warning",children:[e.jsx(n.p,{children:e.jsx(n.strong,{children:"Security Warning"})}),e.jsxs(n.p,{children:["Enabling ",e.jsx(n.code,{children:"usexforwardedfor"}),` introduces significant security risks unless ZooKeeper
+is deployed strictly behind trusted, controlled proxy infrastructure:`]}),e.jsxs(n.ul,{children:[`
+`,e.jsxs(n.li,{children:["ZooKeeper does ",e.jsx(n.strong,{children:"not"})," validate the ",e.jsx(n.code,{children:"X-Forwarded-For"}),` header against the actual TCP
+source IP address.`]}),`
+`,e.jsxs(n.li,{children:["ZooKeeper does ",e.jsx(n.strong,{children:"not"}),` enforce a trusted proxy allowlist or verify that the request
+originated from an approved intermediary.`]}),`
+`,e.jsxs(n.li,{children:["Any client capable of connecting to ZooKeeper can forge an arbitrary ",e.jsx(n.code,{children:"X-Forwarded-For"}),`
+header value.`]}),`
+`,e.jsx(n.li,{children:`A malicious client may impersonate any IP address, potentially bypassing IP-based
+authentication and ZooKeeper ACL restrictions entirely.`}),`
+`]}),e.jsx(n.p,{children:e.jsx(n.strong,{children:"Recommendation"})}),e.jsxs(n.p,{children:["Enable this setting ",e.jsx(n.strong,{children:"only"})," when:"]}),e.jsxs(n.ul,{children:[`
+`,e.jsx(n.li,{children:"ZooKeeper is accessible exclusively through trusted reverse proxies or load balancers"}),`
+`,e.jsx(n.li,{children:"Direct client access is blocked at the network layer"}),`
+`,e.jsxs(n.li,{children:["Proxy infrastructure sanitizes and overwrites incoming ",e.jsx(n.code,{children:"X-Forwarded-For"})," headers"]}),`
+`]}),e.jsx(n.p,{children:`For most deployments, leaving this property disabled is strongly recommended to preserve
+the integrity of IP-based access controls.`})]}),`
+`,e.jsxs(n.ul,{children:[`
 `,e.jsxs(n.li,{children:[`
 `,e.jsxs(n.p,{children:[e.jsx(n.em,{children:"X509AuthenticationProvider.superUser"}),` :
 (Java system property: `,e.jsx(n.strong,{children:"zookeeper.X509AuthenticationProvider.superUser"}),`)
