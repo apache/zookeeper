@@ -20,7 +20,43 @@ limitations under the License.
 
 The Apache Software Foundation takes security issues very seriously. Due to the infrastructure nature of the Apache ZooKeeper project specifically, we haven't had many reports over time, but it doesn't mean that we haven't had concerns over some bugs and vulnerabilities. If you have any concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the e-mail address [security@zookeeper.apache.org](mailto:security@zookeeper.apache.org?Subject=[SECURITY]%20My%20security%20issue). In the message, try to provide a description of the issue and ideally a way of reproducing it. Note that this security address should be used only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly via jira and the mailing lists. **Please report any security problems to the project security address before disclosing it publicly.**
 
-The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their [Web page](https://www.apache.org/security/) for more information.
+The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their [Web page](https://security.apache.org/report/) for more information.
+
+## Security model
+
+ZooKeeper is a coordination service intended for use inside a trusted network, not exposed directly to the Internet. The [Admin Guide](https://zookeeper.apache.org/doc/current/zookeeperAdmin.html) states it plainly: "A ZooKeeper ensemble is expected to operate in a trusted computing environment. It is thus recommended deploying ZooKeeper behind a firewall." A fresh ensemble ships with no transport encryption, no peer authentication, and world-readable/writable znodes. Hardening is a shared responsibility between the ZooKeeper project and the operator.
+
+### Security is opt-in
+
+The following controls exist but must be explicitly enabled:
+
+- **Transport encryption** — TLS for client-server and quorum traffic, with optional hostname verification. Disabled by default.
+- **Authentication** — digest (username/password), SASL/Kerberos, or x509/mTLS for clients; SASL or TLS for quorum peers. None are enabled by default.
+- **Access control** — per-znode ACLs using the `world`, `auth`, `digest`, `sasl`, `ip`, or `x509` schemes. ACLs are not applied automatically; unless the application sets a restrictive ACL, nodes are commonly created with the wide-open `OPEN_ACL_UNSAFE` (`world:anyone` with all permissions).
+
+Known limitations of these controls, by design:
+
+- ACLs are **not recursive**. An ACL on a parent znode does not protect its children; each znode's ACL must be set independently.
+- The `ip` ACL scheme matches source IP address and is **spoofable**. Operators must ensure network-level controls prevent IP address forgery on any path that relies on this scheme.
+- The AdminServer's default client IP detection honors the `X-Forwarded-For` header, which can be forged by an attacker to bypass IP-based access controls (see CVE-2024-51504). Operators exposing the AdminServer should configure a trusted proxy or restrict access at the network layer.
+- The `digest` scheme transmits the password during authentication and stores an unsalted SHA-1 hash. Use SASL/Kerberos or mTLS where credential confidentiality is required.
+
+### In scope for security reports
+
+Reports sent to [security@zookeeper.apache.org](mailto:security@zookeeper.apache.org?Subject=[SECURITY]%20My%20security%20issue) are appropriate for:
+
+- Vulnerabilities in the **core ZooKeeper server, Java client library, and AdminServer** published to [Maven Central](https://central.sonatype.com/search?q=g:org.apache.zookeeper) under `org.apache.zookeeper`.
+- Bypass of an **enabled and correctly configured** security control (e.g., authentication bypass when SASL is on, ACL enforcement bugs).
+- Behaviors that contradict documented guarantees in the current [ZooKeeper documentation](https://zookeeper.apache.org/doc/current/).
+
+### Out of scope for security reports
+
+The following are **not** in scope for private disclosure:
+
+- **`zookeeper-contrib` and `zookeeper-recipes`** — these are community contributions not published to Maven Central and carry no security support commitment.
+- **The C CLI example shells** (`cli_st`, `cli_mt`) — these are sample code illustrating C client usage, not production tools (see CVE-2016-5017).
+- **Missing hardening on a default installation** — the default configuration is intentionally minimal. Absence of encryption or authentication on a fresh ensemble is expected behavior, not a vulnerability.
+- **Third-party dependency CVEs** — if a dependency bundled in a ZooKeeper distribution carries a known CVE but poses no direct exploit path through ZooKeeper, this is not a private vulnerability. Please open a public [JIRA](https://issues.apache.org/jira/projects/ZOOKEEPER) ticket or post to the [dev mailing list](https://zookeeper.apache.org/mailinglists.html) instead. See the [ASF reporting guide](https://security.apache.org/report/) for guidance on choosing the right channel.
 
 ## Vulnerability reports
 
