@@ -1,0 +1,7 @@
+import{p as n,w as o}from"./chunk-6CSD65Y2-DODP7Jas.js";import{M as c}from"./mdx-components--dZKdJBR.js";import"./index-B2Kz81D8.js";import"./index-BwnU5Ru5.js";import"./index-BQdt_NF-.js";n.jsx(n.Fragment,{children:"IRC Channel"}),n.jsx(n.Fragment,{children:"Channel"}),n.jsx(n.Fragment,{children:"Connecting"});function r(t){const e={br:"br",code:"code",h1:"h1",h2:"h2",p:"p",strong:"strong",...t.components};return n.jsxs(n.Fragment,{children:[n.jsx(e.h1,{id:"irc-channel",children:"IRC Channel"}),`
+`,n.jsx(e.p,{children:"The Apache ZooKeeper community uses IRC for real-time chat and informal discussion."}),`
+`,n.jsx(e.h2,{id:"channel",children:"Channel"}),`
+`,n.jsxs(e.p,{children:[n.jsx(e.strong,{children:"Server:"})," ",n.jsx(e.code,{children:"irc.libera.chat"}),n.jsx(e.br,{}),`
+`,n.jsx(e.strong,{children:"Channel:"})," ",n.jsx(e.code,{children:"#zookeeper"})]}),`
+`,n.jsx(e.h2,{id:"connecting",children:"Connecting"}),`
+`,n.jsx(e.p,{children:"The IRC channel can be used for online discussion about zookeeper related stuff, but developers should be careful to transfer all the official decisions or useful discussions to the issue tracking system."})]})}function i(t={}){const{wrapper:e}=t.components||{};return e?n.jsx(e,{...t,children:n.jsx(r,{...t})}):r(t)}function s(){return n.jsx(c,{Content:i,className:"mt-12"})}function m({}){return[{title:"IRC Channel - Apache ZooKeeper"},{name:"description",content:"Connect with the Apache ZooKeeper community on IRC."}]}const p=o(function(){return n.jsx(s,{})});export{p as default,m as meta};
