@@ -1,0 +1,17 @@
+{
+  "title": "Multi-Page Documentation",
+  "description": "Apache ZooKeeper multi-page reference",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "...overview",
+    "---Developer---",
+    "programmers-guide",
+    "...developer",
+    "---Admin & Ops---",
+    "...admin-ops",
+    "---Miscellaneous---",
+    "...miscellaneous"
+  ]
+}

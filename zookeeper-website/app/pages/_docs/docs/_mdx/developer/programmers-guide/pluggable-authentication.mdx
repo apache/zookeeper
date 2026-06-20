@@ -1,0 +1,115 @@
+---
+title: "Pluggable Authentication"
+description: "Describes ZooKeeper's pluggable authentication framework, how authentication plugins authenticate clients and match ACL entries, and how to add a custom scheme."
+---
+
+ZooKeeper runs in a variety of different environments with
+various different authentication schemes, so it has a completely
+pluggable authentication framework. Even the builtin authentication
+schemes use the pluggable authentication framework.
+
+To understand how the authentication framework works, first you must
+understand the two main authentication operations. The framework
+first must authenticate the client. This is usually done as soon as
+the client connects to a server and consists of validating information
+sent from or gathered about a client and associating it with the connection.
+The second operation handled by the framework is finding the entries in an
+ACL that correspond to client. ACL entries are `<idspec, permissions>` pairs. The _idspec_ may be
+a simple string match against the authentication information associated
+with the connection or it may be a expression that is evaluated against that
+information. It is up to the implementation of the authentication plugin
+to do the match. Here is the interface that an authentication plugin must
+implement:
+
+```java
+public interface AuthenticationProvider {
+    String getScheme();
+    KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte authData[]);
+    boolean isValid(String id);
+    boolean matches(String id, String aclExpr);
+    boolean isAuthenticated();
+}
+
+```
+
+The first method _getScheme_ returns the string
+that identifies the plugin. Because we support multiple methods of authentication,
+an authentication credential or an _idspec_ will always be
+prefixed with _scheme:_. The ZooKeeper server uses the scheme
+returned by the authentication plugin to determine which ids the scheme
+applies to.
+
+_handleAuthentication_ is called when a client
+sends authentication information to be associated with a connection. The
+client specifies the scheme to which the information corresponds. The
+ZooKeeper server passes the information to the authentication plugin whose
+_getScheme_ matches the scheme passed by the client. The
+implementor of _handleAuthentication_ will usually return
+an error if it determines that the information is bad, or it will associate information
+with the connection using _cnxn.getAuthInfo().add(new Id(getScheme(), data))_.
+
+The authentication plugin is involved in both setting and using ACLs. When an
+ACL is set for a znode, the ZooKeeper server will pass the id part of the entry to
+the _isValid(String id)_ method. It is up to the plugin to verify
+that the id has a correct form. For example, _ip:172.16.0.0/16_
+is a valid id, but _ip:host.com_ is not. If the new ACL includes
+an "auth" entry, _isAuthenticated_ is used to see if the
+authentication information for this scheme that is associated with the connection
+should be added to the ACL. Some schemes
+should not be included in auth. For example, the IP address of the client is not
+considered as an id that should be added to the ACL if auth is specified.
+
+ZooKeeper invokes _matches(String id, String aclExpr)_ when checking an ACL. It
+needs to match authentication information of the client against the relevant ACL
+entries. To find the entries which apply to the client, the ZooKeeper server will
+find the scheme of each entry and if there is authentication information
+from that client for that scheme, _matches(String id, String aclExpr)_
+will be called with _id_ set to the authentication information
+that was previously added to the connection by _handleAuthentication_ and
+_aclExpr_ set to the id of the ACL entry. The authentication plugin
+uses its own logic and matching scheme to determine if _id_ is included
+in _aclExpr_.
+
+There are two built in authentication plugins: _ip_ and
+_digest_. Additional plugins can adding using system properties. At
+startup the ZooKeeper server will look for system properties that start with
+"zookeeper.authProvider." and interpret the value of those properties as the class name
+of an authentication plugin. These properties can be set using the
+_-Dzookeeper.authProvider.X=com.f.MyAuth_ or adding entries such as
+the following in the server configuration file:
+
+```properties
+authProvider.1=com.f.MyAuth
+authProvider.2=com.f.MyAuth2
+
+```
+
+Care should be taking to ensure that the suffix on the property is unique. If there are
+duplicates such as _-Dzookeeper.authProvider.X=com.f.MyAuth -Dzookeeper.authProvider.X=com.f.MyAuth2_,
+only one will be used. Also all servers must have the same plugins defined, otherwise clients using
+the authentication schemes provided by the plugins will have problems connecting to some servers.
+
+**Added in 3.6.0**: An alternate abstraction is available for pluggable
+authentication. It provides additional arguments.
+
+```java
+public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
+    public abstract KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte authData[]);
+    public abstract boolean matches(ServerObjs serverObjs, MatchValues matchValues);
+}
+
+```
+
+Instead of implementing AuthenticationProvider you extend ServerAuthenticationProvider. Your handleAuthentication()
+and matches() methods will then receive the additional parameters (via ServerObjs and MatchValues).
+
+- **ZooKeeperServer**
+  The ZooKeeperServer instance
+- **ServerCnxn**
+  The current connection
+- **path**
+  The ZNode path being operated on (or null if not used)
+- **perm**
+  The operation value or 0
+- **setAcls**
+  When the setAcl() method is being operated on, the list of ACLs that are being set

@@ -1,0 +1,73 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Website
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+permissions:
+  contents: read
+
+jobs:
+  site:
+    name: website-site
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up JDK 11
+      uses: actions/setup-java@v5
+      with:
+        java-version: 11
+        distribution: temurin
+        cache: 'maven'
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v5
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: zookeeper-website/package-lock.json
+    - name: Show the first log message
+      run: git log -n1
+    - name: Install website npm dependencies
+      working-directory: zookeeper-website
+      run: npm ci
+    - name: Install Playwright browsers and system dependencies
+      working-directory: zookeeper-website
+      run: npx playwright install --with-deps
+    - name: Build website with Maven site
+      run: mvn -B -V -e -ntp "-Dstyle.color=always" -pl zookeeper-website site
+      env:
+        MAVEN_OPTS: -Djansi.force=true
+    - name: Upload website Playwright report
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: website-playwright-report
+        path: zookeeper-website/playwright-report/
+        if-no-files-found: ignore
+    - name: Upload website test results
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: website-test-results
+        path: zookeeper-website/test-results/
+        if-no-files-found: ignore
