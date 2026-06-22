@@ -51,7 +51,7 @@ import javax.net.ssl.SSLException;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.ClientNettyX509Util;
 import org.apache.zookeeper.common.NettyUtils;
 import org.apache.zookeeper.common.X509Exception;
 import org.slf4j.Logger;
@@ -445,7 +445,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         private synchronized void initSSL(ChannelPipeline pipeline)
             throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
             if (sslContext == null) {
-                try (ClientX509Util x509Util = new ClientX509Util()) {
+                try (ClientNettyX509Util x509Util = new ClientNettyX509Util()) {
                     sslContext = x509Util.createNettySslContextForClient(clientConfig);
                 }
             }

@@ -3142,10 +3142,17 @@ public class ZooKeeper implements AutoCloseable {
 
     private ClientCnxnSocket getClientCnxnSocket() throws IOException {
         String clientCnxnSocketName = getClientConfig().getProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
-        if (clientCnxnSocketName == null || clientCnxnSocketName.equals(ClientCnxnSocketNIO.class.getSimpleName())) {
+        if (clientCnxnSocketName == null) {
+            boolean secureClient = getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT);
+            if (secureClient) {
+                clientCnxnSocketName = "org.apache.zookeeper.ClientCnxnSocketNetty";
+            } else {
+                clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
+            }
+        } else if (clientCnxnSocketName.equals(ClientCnxnSocketNIO.class.getSimpleName())) {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
-        } else if (clientCnxnSocketName.equals(ClientCnxnSocketNetty.class.getSimpleName())) {
-            clientCnxnSocketName = ClientCnxnSocketNetty.class.getName();
+        } else if (clientCnxnSocketName.equals("ClientCnxnSocketNetty")) {
+            clientCnxnSocketName = "org.apache.zookeeper.ClientCnxnSocketNetty";
         }
 
         try {
@@ -3153,8 +3160,13 @@ public class ZooKeeper implements AutoCloseable {
                                                        .getDeclaredConstructor(ZKClientConfig.class);
             ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) clientCxnConstructor.newInstance(getClientConfig());
             return clientCxnSocket;
-        } catch (Exception e) {
-            throw new IOException("Couldn't instantiate " + clientCnxnSocketName, e);
+        } catch (Exception | NoClassDefFoundError e) {
+            String msg = "Couldn't instantiate " + clientCnxnSocketName;
+            if (getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT)) {
+                msg += ". SSL/TLS support requires Netty; please add netty-handler"
+                    + " (and optionally netty-tcnative-boringssl-static) to your project's dependencies.";
+            }
+            throw new IOException(msg, e);
         }
     }
 
