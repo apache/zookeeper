@@ -2807,7 +2807,7 @@ ssl.quorum.trustStore.password=password
 2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
 ```
 
-##### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
+#### Restrict TLS protocols and cipher suites for SSL/TLS negotiation in AdminServer
 
 From 3.9.6 AdminServer uses the following already existing properties:
 
