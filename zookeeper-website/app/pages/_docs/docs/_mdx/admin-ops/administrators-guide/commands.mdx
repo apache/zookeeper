@@ -183,28 +183,129 @@ $ echo ruok | nc 127.0.0.1 5111
 
 ## The AdminServer
 
-**New in 3.5.0:** The AdminServer is
-an embedded Jetty server that provides an HTTP interface to the four-letter
-word commands. By default, the server is started on port 8080,
-and commands are issued by going to the URL "/commands/\[command name]",
-e.g., http://localhost:8080/commands/stat. The command response is
-returned as JSON. Unlike the original protocol, commands are not
-restricted to four-letter names, and commands can have multiple names;
-for instance, "stmk" can also be referred to as "set_trace_mask". To
-view a list of all available commands, point a browser to the URL
-/commands (e.g., http://localhost:8080/commands). See the [AdminServer configuration options](#configuring-adminserver-for-ssltls)
-for how to change the port and URLs.
+**New in 3.5.0:** The AdminServer is an embedded Jetty server that provides an HTTP interface to the four-letter word
+commands. In ZooKeeper releases 3.5.0 through 3.9.x, the AdminServer was enabled by default. Starting with ZooKeeper
+3.10.0, the default configuration disables the AdminServer. When enabled, the server listens on port 8080 by default,
+and commands are issued by accessing the URL `/commands/[command name]`, for example, `http://localhost:8080/commands/stat`.
+Command responses are returned in JSON format.
 
-The AdminServer is enabled by default, but can be disabled by either:
+Unlike the original protocol, commands are not restricted to four-letter names, and commands can have multiple aliases;
+for example, `stmk` can also be referred to as `set_trace_mask`. To view a list of all available commands, access the
+`/commands` endpoint (for example, `http://localhost:8080/commands`). See the AdminServer configuration options for
+information on changing the port and URL mappings.
 
-- Setting the zookeeper.admin.enableServer system
-  property to false.
-- Removing Jetty from the classpath. (This option is
-  useful if you would like to override ZooKeeper's jetty
-  dependency.)
+Beginning with ZooKeeper 3.10.0, the AdminServer is disabled by default and can be enabled by setting the
+`zookeeper.admin.enableServer` system property to `true`. When enabled without additional configuration, the AdminServer
+listens on all network interfaces (`0.0.0.0`), uses unencrypted HTTP, and does not require client authentication.
+Administrators are strongly encouraged to restrict network access and configure appropriate transport security and
+authentication before exposing the AdminServer in production environments.
 
-Note that the TCP four-letter word interface is still available if
+Make sure that Jetty is available on the classpath, because the AdminServer will automatically remain disabled if Jetty
+cannot be found. This behavior can be useful when overriding ZooKeeper's Jetty dependency.
+
+Note that the TCP four-letter word interface is still available for monitoring purposes if
 the AdminServer is disabled.
+
+### Security Considerations
+
+> **Important:** The AdminServer is disabled by default. When enabled without additional configuration,
+> it listens on all network interfaces (0.0.0.0) on port 8080, uses unencrypted HTTP, and does not
+> require client authentication. As a result, most administrative commands are accessible to any client
+> that can reach the AdminServer. Administrators should restrict access appropriately and enable transport
+> security and authentication when deploying the AdminServer in production.
+
+### Default Security Posture
+
+The default AdminServer configuration is intended for ease of use in trusted environments, but it is **not secure for
+exposure to untrusted networks**.
+
+Default settings include:
+
+* `admin.enableServer=false`
+* `admin.serverAddress=0.0.0.0`
+* `admin.serverPort=8080`
+* `admin.forceHttps=false`
+* `admin.needClientAuth=false`
+
+With these defaults:
+
+* All traffic is transmitted in clear text over HTTP.
+* Administrative data, including configuration and runtime details, can be viewed by anyone with network access.
+* Many commands (such as `stat`, `srvr`, `conf`, and `cons`) do not require authentication.
+* Sensitive operational information may be disclosed.
+* In some environments, unrestricted administrative access can increase the impact of vulnerabilities or misconfiguration.
+
+### Recommended Deployment Practices
+
+Administrators should ensure that the AdminServer is accessible only to authorized users.
+
+#### Option 1: Restrict Access with Firewall Rules (Minimum Recommendation)
+
+Limit access to the AdminServer port to trusted hosts or management networks only.
+
+Examples:
+
+* Bind the server to localhost:
+
+  ```properties
+  admin.serverAddress=127.0.0.1
+  ```
+* Use host-based firewall rules (such as `iptables`, `firewalld`, or cloud security groups) to allow access only from
+* administrative systems.
+
+This is the minimum recommended protection when HTTPS and client authentication are not enabled.
+
+#### Option 2: Enable HTTPS
+
+To encrypt all communication, configure SSL/TLS and force HTTPS:
+
+```properties
+admin.forceHttps=true
+```
+
+This prevents credentials and administrative data from being transmitted in clear text. ZooKeeper supports configuring
+the AdminServer with TLS certificates and trust stores.
+
+#### Option 3: Require Client Authentication
+
+To restrict access to trusted clients using X.509 certificates:
+
+```properties
+admin.needClientAuth=true
+```
+
+When enabled, only clients presenting valid certificates trusted by the server will be allowed to connect.
+
+### Recommended Secure Configuration
+
+For production environments, the following configuration is strongly recommended:
+
+```properties
+admin.forceHttps=true
+admin.needClientAuth=true
+admin.serverAddress=<management-network-ip>
+```
+
+In addition, restrict access to the AdminServer port using firewall rules.
+
+### Leave AdminServer disabled If Not Needed
+
+If you do not use the AdminServer, disable it explicitly:
+
+```properties
+admin.enableServer=false
+```
+
+### Security Warning
+
+Exposing the AdminServer to untrusted networks with the default configuration may allow unauthorized users to:
+
+* Retrieve server configuration and runtime information
+* Inspect connected clients and sessions
+* Reset statistics
+* Execute other administrative commands
+
+Always protect the AdminServer with **network-level controls** and, preferably, **HTTPS with client certificate authentication**.
 
 ## Configuring AdminServer for SSL/TLS
 
