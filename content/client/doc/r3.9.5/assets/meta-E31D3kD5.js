@@ -1,1 +1,0 @@
-const e="Multi-Page Documentation",o=["---Getting Started---","index","...overview","---Developer---","programmers-guide","...developer","---Admin & Ops---","...admin-ops","---Miscellaneous---","...miscellaneous"],t="Apache ZooKeeper multi-page reference",n=!0,r={title:e,pages:o,description:t,root:!0};export{r as default,t as description,o as pages,n as root,e as title};
