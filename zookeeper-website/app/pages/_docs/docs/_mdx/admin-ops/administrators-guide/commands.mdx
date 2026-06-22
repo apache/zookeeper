@@ -221,19 +221,19 @@ exposure to untrusted networks**.
 
 Default settings include:
 
-* `admin.enableServer=false`
-* `admin.serverAddress=0.0.0.0`
-* `admin.serverPort=8080`
-* `admin.forceHttps=false`
-* `admin.needClientAuth=false`
+- `admin.enableServer=false`
+- `admin.serverAddress=0.0.0.0`
+- `admin.serverPort=8080`
+- `admin.forceHttps=false`
+- `admin.needClientAuth=false`
 
 With these defaults:
 
-* All traffic is transmitted in clear text over HTTP.
-* Administrative data, including configuration and runtime details, can be viewed by anyone with network access.
-* Many commands (such as `stat`, `srvr`, `conf`, and `cons`) do not require authentication.
-* Sensitive operational information may be disclosed.
-* In some environments, unrestricted administrative access can increase the impact of vulnerabilities or misconfiguration.
+- All traffic is transmitted in clear text over HTTP.
+- Administrative data, including configuration and runtime details, can be viewed by anyone with network access.
+- Many commands (such as `stat`, `srvr`, `conf`, and `cons`) do not require authentication.
+- Sensitive operational information may be disclosed.
+- In some environments, unrestricted administrative access can increase the impact of vulnerabilities or misconfiguration.
 
 ### Recommended Deployment Practices
 
@@ -245,13 +245,14 @@ Limit access to the AdminServer port to trusted hosts or management networks onl
 
 Examples:
 
-* Bind the server to localhost:
+- Bind the server to localhost:
 
   ```properties
   admin.serverAddress=127.0.0.1
   ```
-* Use host-based firewall rules (such as `iptables`, `firewalld`, or cloud security groups) to allow access only from
-* administrative systems.
+
+- Use host-based firewall rules (such as `iptables`, `firewalld`, or cloud security groups) to allow access only from
+- administrative systems.
 
 This is the minimum recommended protection when HTTPS and client authentication are not enabled.
 
@@ -300,10 +301,10 @@ admin.enableServer=false
 
 Exposing the AdminServer to untrusted networks with the default configuration may allow unauthorized users to:
 
-* Retrieve server configuration and runtime information
-* Inspect connected clients and sessions
-* Reset statistics
-* Execute other administrative commands
+- Retrieve server configuration and runtime information
+- Inspect connected clients and sessions
+- Reset statistics
+- Execute other administrative commands
 
 Always protect the AdminServer with **network-level controls** and, preferably, **HTTPS with client certificate authentication**.
 
