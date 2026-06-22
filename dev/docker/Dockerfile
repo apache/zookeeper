@@ -31,4 +31,5 @@ RUN apt-get install -y \
   libssl-dev \
   libsasl2-modules-gssapi-mit \
   libsasl2-modules \
-  libsasl2-dev
+  libsasl2-dev \
+  gnupg
