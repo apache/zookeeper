@@ -17,7 +17,12 @@
  */
 package org.apache.zookeeper.server.auth;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import ch.qos.logback.classic.Level;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.test.LoggerTestTool;
@@ -25,13 +30,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 public class EnsembleAuthenticationProviderTest {
     private static LoggerTestTool loggerTestTool;
