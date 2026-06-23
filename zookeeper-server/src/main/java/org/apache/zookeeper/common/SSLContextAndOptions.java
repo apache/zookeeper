@@ -184,6 +184,27 @@ public class SSLContextAndOptions {
                 break;
             }
         }
+
+        // In FIPS-mode we deal with hostname verification here,
+        // while in non-FIPS mode verification is handled by ZKTrustManager.
+        if (X509Util.getFipsMode(config)) {
+            String clientOrServer = isClientSocket ? "Server" : "Client";
+            if (isClientSocket) {
+                if (x509Util.isServerHostnameVerificationEnabled(config)) {
+                    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("{} hostname verification: enabled HTTPS style endpoint identification algorithm", clientOrServer);
+                    }
+                }
+            } else {
+                if (x509Util.isClientHostnameVerificationEnabled(config)) {
+                    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("{} hostname verification: enabled HTTPS style endpoint identification algorithm", clientOrServer);
+                    }
+                }
+            }
+        }
     }
 
     private String[] getEnabledProtocols(final ZKConfig config, final SSLContext sslContext) {
