@@ -47,7 +47,7 @@ public class SSLContextAndOptions {
     private final X509Util.ClientAuth clientAuth;
     private final SSLContext sslContext;
     private final int handshakeDetectionTimeoutMillis;
-
+    private final ZKConfig zkConfig;
 
     /**
      * Note: constructor is intentionally package-private, only the X509Util class should be creating instances of this
@@ -59,10 +59,11 @@ public class SSLContextAndOptions {
     SSLContextAndOptions(final X509Util x509Util, final ZKConfig config, final SSLContext sslContext) {
         this.x509Util = requireNonNull(x509Util);
         this.sslContext = requireNonNull(sslContext);
-        this.enabledProtocols = getEnabledProtocols(requireNonNull(config), sslContext);
-        this.cipherSuites = getCipherSuites(config);
-        this.clientAuth = getClientAuth(config);
-        this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(config);
+        this.zkConfig = requireNonNull(config);
+        this.enabledProtocols = getEnabledProtocols(zkConfig, sslContext);
+        this.cipherSuites = getCipherSuites(zkConfig);
+        this.clientAuth = getClientAuth(zkConfig);
+        this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(zkConfig);
     }
 
     public SSLContext getSSLContext() {
@@ -142,6 +143,27 @@ public class SSLContextAndOptions {
             default:
                 sslParameters.setNeedClientAuth(false); // also clears the wantClientAuth flag according to docs
                 break;
+            }
+        }
+
+        // In FIPS-mode we deal with hostname verification here,
+        // while in non-FIPS mode verification is handled by ZKTrustManager.
+        if (X509Util.getFipsMode(zkConfig)) {
+            String clientOrServer = isClientSocket ? "Server" : "Client";
+            if (isClientSocket) {
+                if (x509Util.isServerHostnameVerificationEnabled(zkConfig)) {
+                    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("{} hostname verification: enabled HTTPS style endpoint identification algorithm", clientOrServer);
+                    }
+                }
+            } else {
+                if (x509Util.isClientHostnameVerificationEnabled(zkConfig)) {
+                    sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("{} hostname verification: enabled HTTPS style endpoint identification algorithm", clientOrServer);
+                    }
+                }
             }
         }
     }
