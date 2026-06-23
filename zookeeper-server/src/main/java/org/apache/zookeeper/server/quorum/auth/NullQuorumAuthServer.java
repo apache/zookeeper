@@ -32,4 +32,9 @@ public class NullQuorumAuthServer implements QuorumAuthServer {
         // simply return don't require auth
     }
 
+    @Override
+    public void shutdown() {
+        // no-op
+    }
+
 }
