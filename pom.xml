@@ -563,6 +563,8 @@
     <dnsjava.version>3.5.1</dnsjava.version>
     <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
     <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
+    <maven.min.version>3.5.0</maven.min.version>
+    <java.min.version>${maven.compiler.release}</java.min.version>
 
     <!-- parameters to pass to C client build -->
     <c-client-openssl>yes</c-client-openssl>
@@ -1167,6 +1169,38 @@
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>${enforcer.version}</version>
         <executions>
+          <execution>
+            <id>display-info</id>
+            <goals>
+              <goal>display-info</goal>
+            </goals>
+            <phase>initialize</phase>
+            <inherited>false</inherited>
+          </execution>
+          <execution>
+            <id>zookeeper-min-maven-min-java</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>[${maven.min.version},)</version>
+                  <message>Maven is out of date.
+                    ZooKeeper requires at least version ${maven.min.version} of Maven to properly build from source.
+                    You appear to be using an older version. You can use either "mvn -version" or
+                    "mvn enforcer:display-info" to verify what version is active.</message>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[${java.min.version},)</version>
+                  <message>Java is out of date.
+                    ZooKeeper requires at least version ${java.min.version} of the JDK to properly build from source.
+                    You appear to be using an older version. You can use either "mvn -version" or
+                    "mvn enforcer:display-info" to verify what version is active.</message>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
           <execution>
             <id>banned-commons-lang</id>
             <goals>
