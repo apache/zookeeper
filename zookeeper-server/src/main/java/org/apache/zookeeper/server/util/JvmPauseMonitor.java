@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -64,9 +65,9 @@ public class JvmPauseMonitor {
     public static final String INFO_THRESHOLD_KEY = "jvm.pause.info-threshold.ms";
     public static final long INFO_THRESHOLD_DEFAULT = 1000;
 
-    private volatile long numGcWarnThresholdExceeded = 0;
-    private volatile long numGcInfoThresholdExceeded = 0;
-    private volatile long totalGcExtraSleepTime = 0;
+    private final AtomicLong numGcWarnThresholdExceeded = new AtomicLong(0);
+    private final AtomicLong numGcInfoThresholdExceeded = new AtomicLong(0);
+    private final AtomicLong totalGcExtraSleepTime = new AtomicLong(0);
 
     private Thread monitorThread;
     private volatile boolean shouldRun = true;
@@ -106,15 +107,15 @@ public class JvmPauseMonitor {
     }
 
     public long getNumGcWarnThresholdExceeded() {
-        return numGcWarnThresholdExceeded;
+        return numGcWarnThresholdExceeded.get();
     }
 
     public long getNumGcInfoThresholdExceeded() {
-        return numGcInfoThresholdExceeded;
+        return numGcInfoThresholdExceeded.get();
     }
 
     public long getTotalGcExtraSleepTime() {
-        return totalGcExtraSleepTime;
+        return totalGcExtraSleepTime.get();
     }
 
     private String formatMessage(long extraSleepTime, Map<String, GcTimes> gcTimesAfterSleep, Map<String, GcTimes> gcTimesBeforeSleep) {
@@ -133,8 +134,8 @@ public class JvmPauseMonitor {
         String ret = String.format("Detected pause in JVM or host machine (eg GC): pause of approximately %d ms, "
                                    + "total pause: info level: %d, warn level: %d %n",
                                    extraSleepTime,
-                                   numGcInfoThresholdExceeded,
-                                   numGcWarnThresholdExceeded);
+                                   numGcInfoThresholdExceeded.get(),
+                                   numGcWarnThresholdExceeded.get());
         if (gcDiffs.isEmpty()) {
             ret += ("No GCs detected");
         } else {
@@ -197,13 +198,13 @@ public class JvmPauseMonitor {
                 }
                 Map<String, GcTimes> gcTimesAfterSleep = getGcTimes();
                 if (extraSleepTime > warnThresholdMs) {
-                    ++numGcWarnThresholdExceeded;
+                    numGcWarnThresholdExceeded.incrementAndGet();
                     LOG.warn(formatMessage(extraSleepTime, gcTimesAfterSleep, gcTimesBeforeSleep));
                 } else if (extraSleepTime > infoThresholdMs) {
-                    ++numGcInfoThresholdExceeded;
+                    numGcInfoThresholdExceeded.incrementAndGet();
                     LOG.info(formatMessage(extraSleepTime, gcTimesAfterSleep, gcTimesBeforeSleep));
                 }
-                totalGcExtraSleepTime += extraSleepTime;
+                totalGcExtraSleepTime.addAndGet(extraSleepTime);
                 gcTimesBeforeSleep = gcTimesAfterSleep;
             }
         }
