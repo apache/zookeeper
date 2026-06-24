@@ -30,6 +30,7 @@ export default defineConfig({
     __CURRENT_VERSION__: JSON.stringify(CURRENT_VERSION)
   },
   test: {
+    execArgv: ["--no-webstorage"],
     globals: true,
     environment: "happy-dom",
     setupFiles: ["./unit-tests/setup.ts"],

@@ -18,7 +18,6 @@ These BSD licensed files:
   ./zookeeper-client/zookeeper-client-c/src/hashtable/hashtable_itr.c
   ./zookeeper-client/zookeeper-client-c/src/hashtable/hashtable_itr.h
   ./zookeeper-client/zookeeper-client-c/src/hashtable/hashtable_private.h
-  ./zookeeper-docs/src/main/resources/markdown/skin/prototype.js
 
 This Apache 2.0 licensed file:
 ./zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java

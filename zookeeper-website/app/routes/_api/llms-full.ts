@@ -87,8 +87,5 @@ export function resolveLLMTextLinks(
 }
 
 function escapeRegExp(value: string): string {
-  // "#" is special in regex (start of comment). Escape it in the pattern only:
-  //   in:  /admin-ops/.../configuration-parameters#advanced-configuration
-  //   out: /admin-ops/.../configuration-parameters\#advanced-configuration  (RegExp string)
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -13,8 +13,9 @@ some unit testing with both the c and java recipe code.
 zkr_recipe-name_methodname
 (eg. zkr_lock_lock in zookeeper-recipes-lock/src/c)
 
-6) The various recipes are in ../docs/recipes.html or
-../../docs/reciped.pdf. Also, this is not an exhaustive list by any chance.
+6) The various recipes are documented at
+   https://zookeeper.apache.org/doc/current/developer/recipes
+   Also, this is not an exhaustive list by any chance.
 Zookeeper is used (and can be used) for more than what we have listed in the docs.
 
 7) To run the c tests in all the recipes, 

@@ -86,6 +86,16 @@ describe("resolveLLMTextLinks", () => {
     ).toBe(text);
   });
 
+  it("rewrites links with hash fragments in the path", () => {
+    const href =
+      "/admin-ops/administrators-guide/configuration-parameters#advanced-configuration";
+    const text = `[Advanced Configuration](${href})`;
+
+    expect(resolveLLMTextLinks(text, [{ href }])).toBe(
+      `[Advanced Configuration](${CURRENT_DOCS_PATH}${href})`
+    );
+  });
+
   it("rewrites links inside MDX JSX text blocks when Fumadocs extracted them", () => {
     const text = `<Callout>
   See [Dynamic Reconfiguration](/admin-ops/dynamic-reconfiguration).

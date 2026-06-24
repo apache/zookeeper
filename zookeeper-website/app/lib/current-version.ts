@@ -16,4 +16,4 @@
 // limitations under the License.
 //
 
-export const CURRENT_VERSION = "3.9.5";
+export const CURRENT_VERSION = "3.9.10";
