@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         jdk: [17, 25]
-        zk: [3.5.9, 3.6.3, 3.7.0, nightly]
+        zk: [3.7.2, 3.8.6, 3.9.5, nightly]
       fail-fast: false
     timeout-minutes: 360
     runs-on: ubuntu-latest
