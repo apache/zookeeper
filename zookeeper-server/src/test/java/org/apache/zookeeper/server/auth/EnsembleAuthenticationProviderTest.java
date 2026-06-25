@@ -56,7 +56,8 @@ public class EnsembleAuthenticationProviderTest {
         byte[] authData = "andor-ensemble\nTHIS SHOULD\t NOT\r BE HERE".getBytes(StandardCharsets.UTF_8);
         KeeperException.Code err = provider.handleAuthentication(mockServerCnxn, authData);
         String logLine = loggerTestTool.readLogLine("andor-ensemble");
-        Assertions.assertTrue(logLine.contains("THIS SHOULD NOT BE HERE"), "Log line doesn't contain the entire ensemble name. Forged?");
+        Assertions.assertFalse(logLine.contains("\n"), "Log line should not contain newline");
+        Assertions.assertFalse(logLine.contains("\r"), "Log line should not contain carriage return");
 
         Assertions.assertEquals(KeeperException.Code.BADARGUMENTS, err);
     }

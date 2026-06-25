@@ -668,6 +668,11 @@
         <version>${logback-version}</version>
       </dependency>
       <dependency>
+        <groupId>org.owasp</groupId>
+        <artifactId>security-logging-logback</artifactId>
+        <version>1.1.6</version>
+      </dependency>
+      <dependency>
         <groupId>org.jmockit</groupId>
         <artifactId>jmockit</artifactId>
         <version>${jmockit.version}</version>

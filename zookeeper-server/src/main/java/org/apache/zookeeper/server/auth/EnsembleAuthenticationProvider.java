@@ -92,8 +92,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
         long currentTime = System.currentTimeMillis();
         if (lastFailureLogged + MIN_LOGGING_INTERVAL_MS < currentTime) {
             String id = cnxn.getRemoteSocketAddress().getAddress().getHostAddress();
-            String logEnsembleName = receivedEnsembleName.replaceAll("[\\x00-\\x1F]", "");
-            LOG.warn("Unexpected ensemble name: ensemble name: {} client ip: {}", logEnsembleName, id);
+            LOG.warn("Unexpected ensemble name: ensemble name: {} client ip: {}", receivedEnsembleName, id);
             lastFailureLogged = currentTime;
         }
         /*

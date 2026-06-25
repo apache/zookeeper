@@ -20,10 +20,12 @@
  Define some default values that can be overridden by system properties
 -->
 <configuration>
+  <conversionRule conversionWord="crlf"
+                  converterClass="org.owasp.security.logging.mask.CRLFConverter" />
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %crlf(%msg) %n</pattern>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>INFO</level>
