@@ -74,14 +74,8 @@ afterEach(async () => {
 });
 
 describe("parseDocsBuildArgs", () => {
-  it("uses the current version docs build by default", () => {
-    expect(parseDocsBuildArgs([])).toEqual({ snapshot: false });
-  });
-
-  it("marks archive builds from the npm script name", () => {
-    expect(parseDocsBuildArgs([], "build:docs-archive")).toEqual({
-      snapshot: true
-    });
+  it("accepts no arguments", () => {
+    expect(() => parseDocsBuildArgs([])).not.toThrow();
   });
 
   it("rejects CLI version overrides", () => {

@@ -25,7 +25,6 @@
     "test:e2e:debug": "playwright test --debug",
     "fumadocs-init": "fumadocs-mdx",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts",
-    "build:docs-archive": "tsx scripts/build-docs.ts",
     "ci": "npm run fumadocs-init && npm run lint && npm run typecheck && npm run test:unit:run && npm run build && npx playwright install && npm run test:e2e",
     "ci-skip-tests": "npm run fumadocs-init && npm run build"
   },

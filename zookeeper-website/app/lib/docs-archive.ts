@@ -52,7 +52,3 @@ export function getBuildTarget(): "landing" | undefined {
     ? "landing"
     : undefined;
 }
-
-// Marks a docs build as an archived snapshot of an older release. The VITE_
-// prefix intentionally exposes it to bundled browser code via import.meta.env.
-export const DOCS_ARCHIVE_SNAPSHOT_ENV = "VITE_ZOOKEEPER_DOCS_ARCHIVE_SNAPSHOT";

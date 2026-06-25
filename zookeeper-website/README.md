@@ -33,7 +33,7 @@ The official website for Apache ZooKeeper, built with modern web technologies to
   - [Development Workflow](#development-workflow)
   - [Testing](#testing)
   - [Building for Production](#building-for-production)
-    - [Building Archived Docs](#building-archived-docs)
+    - [How the Docs Build Works](#how-the-docs-build-works)
     - [Continuous Integration](#continuous-integration)
   - [Maven Integration](#maven-integration)
   - [Deployment](#deployment)
@@ -429,7 +429,6 @@ The landing site and the docs are produced as two independent Vite builds (see [
 - `npm run build` — builds the current docs (`/doc/r<CURRENT_VERSION>/`), then the landing site (base `/`), then merges the docs into `build/client/doc/r<CURRENT_VERSION>/` and regenerates the full sitemap (`--scope all`). The merged `build/client/` is what `npm run start`, `vite preview`, and the e2e tests serve.
 - `npm run build:landing` — landing-only build (sets `ZOOKEEPER_BUILD_TARGET=landing`), output at `build/client/` (root pages), and upserts the landing slice of the sitemap (`--scope landing`), keeping the current-docs URLs from the committed `public/sitemap.xml`.
 - `npm run build:docs` — pure docs build for `CURRENT_VERSION`, output at `build/doc/r<CURRENT_VERSION>/`, and upserts the docs slice of the sitemap (`--scope docs`), keeping landing URLs from the committed base. No CI checks.
-- `npm run build:docs-archive` — runs `npm run ci` first, then the same docs build, output at `build/doc/r<CURRENT_VERSION>/`, with the archived-docs banner enabled, for snapshotting `CURRENT_VERSION` (see below). It does not touch the sitemap (archived versions are excluded).
 
 The docs version always comes from [`app/lib/current-version.ts`](app/lib/current-version.ts).
 
@@ -443,25 +442,17 @@ Because each docs version and the landing site are separate Vite builds, they ha
 
 > Note: React Router cleans the entire `build/` directory at the start of every build, so the orchestrator stashes the docs output outside `build/` before running the landing build, then restores it into `build/client/`.
 
-#### Building Archived Docs
+#### How the Docs Build Works
 
-To snapshot a released documentation version, build a versioned website archive:
+`npm run build:docs` produces a self-contained docs tree at `build/doc/r<CURRENT_VERSION>/`, ready to copy to `asf-site` at `content/doc/r<CURRENT_VERSION>/`. It validates the output before exiting — every source MDX docs page must have a corresponding HTML page.
 
-```bash
-npm run build:docs-archive
-```
-
-This creates `build/doc/r<CURRENT_VERSION>/`, ready to copy to `asf-site` at `content/doc/r<CURRENT_VERSION>/`.
-
-Before building the archive, this command runs `npm run ci` without the archive base path. That verifies lint, typecheck, unit tests, the normal production build, and Playwright e2e tests. It then rebuilds with the archive base path and validates the generated docs output, including that every source MDX docs page has a corresponding HTML page.
-
-The current version's docs are built with this **same** pipeline (`npm run build:docs`); an archive is the same build, just produced before `CURRENT_VERSION` is bumped and with the switch-to-latest banner enabled. Archived and current docs share one versioned route shape:
+The docs build uses React Router's `basename` and Vite's `base` to serve docs from `/doc/r<version>/`. URL shape:
 
 - `/doc/r3.9.6/`
 - `/doc/r3.9.6/overview/quick-start`
 - `/doc/r3.9.6/developer/programmers-guide`
 
-The docs build uses React Router's `basename` and Vite's `base` to serve docs from `/doc/r<version>/`. It uses the docs route set from `app/routes.ts`: the docs catch-all, `api/search`, and `llms-full.txt`. Non-doc archive-local requests such as `/doc/r3.9.6/news` are redirected by the generated `.htaccess` file to the matching live-site path (`/news`).
+It uses the docs route set from `app/routes.ts`: the docs catch-all, `api/search`, and `llms-full.txt`. Non-doc archive-local requests such as `/doc/r3.9.6/news` are redirected by the generated `.htaccess` file to the matching live-site path (`/news`).
 
 Docs builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into the app `base`, which the browser reads back as `import.meta.env.BASE_URL`. Rule of thumb for the build context:
 
@@ -470,11 +461,9 @@ Docs builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into th
 
 `ZOOKEEPER_DOCS_ARCHIVE_BASE` and `import.meta.env.BASE_URL` are the same value in two execution contexts. `ZOOKEEPER_BUILD_TARGET=landing` is the orthogonal signal that selects the landing-only build.
 
-`build:docs-archive` additionally sets `VITE_ZOOKEEPER_DOCS_ARCHIVE_SNAPSHOT=1`. Vite exposes that flag to bundled browser code via `import.meta.env`, and the archive banner reads it directly. The flag is intentionally not a version comparison: archives are built before `CURRENT_VERSION` is bumped, so the outgoing version can still equal the current source version during the archive build.
-
 The docs build script packages the generated docs into a self-contained directory. React Router prerenders docs HTML under `build/client/doc/r<version>/`, while Vite and `public/` assets are emitted at the build root (`build/client/assets/`, `build/client/docs-images/`, `build/client/fonts/`, `build/client/images/`, `build/client/favicon.ico`). The script copies the docs HTML plus those known static assets into `build/doc/r<version>/` so URLs such as `/doc/r3.9.6/assets/...` exist after publishing. If new top-level static folders or asset roots are introduced, update `scripts/build-docs.ts` so they are copied, URL-rewritten if needed, and covered by docs build validation.
 
-Archive output intentionally does not copy the live site's root-only files such as `404.html`, `robots.txt`, `__spa-fallback.html`, or the root `.htaccess`. Archives get their own generated `.htaccess` (described above). The docs build keeps only docs routes, `api/search`, and `llms-full.txt`.
+Docs output intentionally does not copy the live site's root-only files such as `404.html`, `robots.txt`, `__spa-fallback.html`, or the root `.htaccess`. Docs builds get their own generated `.htaccess` (described above). The docs build keeps only docs routes, `api/search`, and `llms-full.txt`.
 
 #### Continuous Integration
 
@@ -709,7 +698,6 @@ This is the standard ZooKeeper release-branching step (e.g. `branch-3.9` → `br
 
 ```bash
 CURRENT=3.9.6
-OUTGOING=3.9.5
 
 # Working from branch-3.9.6 on a clean checkout
 cd zookeeper-website
