@@ -23,9 +23,8 @@ import { renderWithProviders } from "./utils";
 import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import {
   getReleasedDocUrl,
-  LEGACY_RELEASED_DOC_VERSIONS,
+  RAW_RELEASED_DOC_VERSIONS,
   RELEASED_DOC_VERSIONS,
-  REACT_ROUTER_RELEASED_DOC_VERSIONS,
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
 
@@ -73,22 +72,16 @@ describe("RELEASED_DOC_VERSIONS", () => {
     expect(RELEASED_DOC_VERSIONS).toEqual(sorted);
   });
 
-  it("combines legacy and React Router archive versions", () => {
+  it("matches the sorted raw archive versions", () => {
     expect(RELEASED_DOC_VERSIONS).toEqual(
-      sortVersionsDesc([
-        ...LEGACY_RELEASED_DOC_VERSIONS,
-        ...REACT_ROUTER_RELEASED_DOC_VERSIONS
-      ])
+      sortVersionsDesc([...RAW_RELEASED_DOC_VERSIONS])
     );
   });
 });
 
 describe("getReleasedDocUrl", () => {
-  it("uses /index.html for legacy static archives", () => {
-    expect(getReleasedDocUrl("3.9.4")).toBe("/doc/r3.9.4/index.html");
-  });
-
-  it("uses /doc/r<version>/ for React Router archives", () => {
+  it("links every archived version to /doc/r<version>/", () => {
+    expect(getReleasedDocUrl("3.9.4")).toBe("/doc/r3.9.4/");
     expect(getReleasedDocUrl("3.10.0")).toBe("/doc/r3.10.0/");
   });
 });

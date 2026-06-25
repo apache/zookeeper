@@ -21,7 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -37,11 +36,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@/components/link";
 import { asfLinks, documentationLinks, projectLinks } from "./links";
-import { OlderDocsVersionList } from "@/components/docs/older-docs-picker";
-import {
-  getReleasedDocUrl,
-  getReleasedDocVersions
-} from "@/lib/released-docs-versions";
 import { ThemeToggle } from "./theme-toggle";
 
 const navLinkClass =
@@ -163,17 +157,6 @@ function ProjectMenu() {
   );
 }
 
-function OlderDocsSubMenu() {
-  return (
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger>Older docs</DropdownMenuSubTrigger>
-      <DropdownMenuSubContent className="w-56 p-0">
-        <OlderDocsVersionList />
-      </DropdownMenuSubContent>
-    </DropdownMenuSub>
-  );
-}
-
 function DocsMenu() {
   return (
     <DropdownMenu>
@@ -217,8 +200,6 @@ function DocsMenu() {
             </DropdownMenuSub>
           )
         )}
-        <DropdownMenuSeparator />
-        <OlderDocsSubMenu />
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -355,20 +336,6 @@ function MobileMenu() {
   );
 }
 
-function MobileOlderDocsSection() {
-  return (
-    <Collapsible className="w-full">
-      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between py-1.5 text-left text-sm">
-        Older docs
-        <ChevronRight className="h-3 w-3 rotate-90 transition-transform group-data-[state=closed]:rotate-0" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="w-full pt-1 pl-3">
-        <OlderDocsVersionList />
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 function MobileDocsSection({ onLinkClick }: { onLinkClick: () => void }) {
   return (
     <Collapsible className="w-full">
@@ -414,7 +381,6 @@ function MobileDocsSection({ onLinkClick }: { onLinkClick: () => void }) {
             </Collapsible>
           )
         )}
-        <MobileOlderDocsSection />
       </CollapsibleContent>
     </Collapsible>
   );
@@ -528,31 +494,6 @@ function NoJSDocsMenu() {
             </details>
           )
         )}
-        <NoJSOlderDocsSubMenu />
-      </div>
-    </details>
-  );
-}
-
-function NoJSOlderDocsSubMenu() {
-  const versions = getReleasedDocVersions();
-
-  return (
-    <details className="group/sub relative">
-      <summary className="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none select-none">
-        Older docs
-        <ChevronRight className="ml-2 h-4 w-4" />
-      </summary>
-      <div className="bg-popover text-popover-foreground absolute top-0 left-full z-50 ml-1 max-h-72 min-w-[12rem] overflow-y-auto rounded-md border p-1 shadow-md">
-        {versions.map((version) => (
-          <a
-            key={version}
-            href={getReleasedDocUrl(version)}
-            className="hover:bg-accent hover:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
-          >
-            {version}
-          </a>
-        ))}
       </div>
     </details>
   );
@@ -678,31 +619,6 @@ function NoJSMobileDocsSection() {
             </details>
           )
         )}
-        <NoJSMobileOlderDocsSection />
-      </div>
-    </details>
-  );
-}
-
-function NoJSMobileOlderDocsSection() {
-  const versions = getReleasedDocVersions();
-
-  return (
-    <details className="w-full">
-      <summary className="text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center justify-between py-1.5 text-left text-sm">
-        Older docs
-        <ChevronRight className="h-3 w-3" />
-      </summary>
-      <div className="max-h-72 w-full space-y-1 overflow-y-auto pt-1 pl-3">
-        {versions.map((version) => (
-          <a
-            key={version}
-            href={getReleasedDocUrl(version)}
-            className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center py-1 text-xs"
-          >
-            {version}
-          </a>
-        ))}
       </div>
     </details>
   );

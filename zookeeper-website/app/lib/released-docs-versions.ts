@@ -16,6 +16,8 @@
 // limitations under the License.
 //
 
+import { CURRENT_VERSION } from "./current-version";
+
 type PreRelease = "alpha" | "beta" | "stable";
 
 interface ParsedVersion {
@@ -47,7 +49,7 @@ const preReleaseOrder: Record<PreRelease, number> = {
   alpha: 0
 };
 
-export const LEGACY_RELEASED_DOC_VERSIONS = new Set([
+const RAW_RELEASED_DOC_VERSIONS_LIST = [
   "3.1.2",
   "3.2.2",
   "3.3.2",
@@ -99,16 +101,22 @@ export const LEGACY_RELEASED_DOC_VERSIONS = new Set([
   "3.9.1",
   "3.9.2",
   "3.9.3",
-  "3.9.4"
-]);
+  "3.9.4",
+  "3.9.5",
+  CURRENT_VERSION
+] as const;
 
-export const REACT_ROUTER_RELEASED_DOC_VERSIONS = new Set<string>();
+export type ReleasedDocVersion =
+  (typeof RAW_RELEASED_DOC_VERSIONS_LIST)[number];
 
-export const RAW_RELEASED_DOC_VERSIONS: string[] = [
-  ...new Set([
-    ...LEGACY_RELEASED_DOC_VERSIONS,
-    ...REACT_ROUTER_RELEASED_DOC_VERSIONS
-  ])
+export const RAW_RELEASED_DOC_VERSIONS = new Set<ReleasedDocVersion>(
+  RAW_RELEASED_DOC_VERSIONS_LIST
+);
+
+export const LTS_VERSIONS: ReleasedDocVersion[] = [
+  CURRENT_VERSION,
+  "3.8.6",
+  "3.7.2"
 ];
 
 export function sortVersionsDesc(versions: string[]): string[] {
@@ -126,18 +134,17 @@ export function sortVersionsDesc(versions: string[]): string[] {
  * All released documentation versions available under /doc/.
  * Maintained manually because archived docs live in the asf-site branch.
  */
-export const RELEASED_DOC_VERSIONS: string[] = sortVersionsDesc(
-  RAW_RELEASED_DOC_VERSIONS
-);
+export const RELEASED_DOC_VERSIONS: string[] = sortVersionsDesc([
+  ...RAW_RELEASED_DOC_VERSIONS
+]);
 
 export function getReleasedDocUrl(version: string): string {
-  const basePath = `/doc/r${version}`;
-  return LEGACY_RELEASED_DOC_VERSIONS.has(version)
-    ? `${basePath}/index.html`
-    : `${basePath}/`;
+  return `/doc/r${version}/`;
 }
 
 export function getReleasedDocVersions(): string[] {
+  const ltsSet = new Set<string>(LTS_VERSIONS);
+
   if (typeof window !== "undefined") {
     const override = window.localStorage.getItem(
       "__released_doc_versions_override__"
@@ -149,7 +156,7 @@ export function getReleasedDocVersions(): string[] {
           Array.isArray(parsed) &&
           parsed.every((value) => typeof value === "string")
         ) {
-          return sortVersionsDesc(parsed);
+          return sortVersionsDesc(parsed).filter((v) => !ltsSet.has(v));
         }
       } catch {
         // Ignore invalid test overrides and fall back to build-time data.
@@ -157,5 +164,5 @@ export function getReleasedDocVersions(): string[] {
     }
   }
 
-  return RELEASED_DOC_VERSIONS;
+  return RELEASED_DOC_VERSIONS.filter((v) => !ltsSet.has(v));
 }
