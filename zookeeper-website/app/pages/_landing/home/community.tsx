@@ -40,7 +40,10 @@ export function CommunitySection() {
                 <Link to="/mailing-lists">Mailing Lists</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="https://github.com/apache/zookeeper" target="_blank">
+                <Link
+                  to="https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute"
+                  target="_blank"
+                >
                   Contribute
                 </Link>
               </Button>
