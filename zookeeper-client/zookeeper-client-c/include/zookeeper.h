@@ -141,7 +141,8 @@ enum ZOO_ERRORS {
   ZNOWATCHER = -121, /*!< The watcher couldn't be found */
   ZRECONFIGDISABLED = -123, /*!< Attempts to perform a reconfiguration operation when reconfiguration feature is disabled */
   ZSESSIONCLOSEDREQUIRESASLAUTH = -124, /*!< The session has been closed by server because server requires client to do authentication via configured authentication scheme at server, but client is not configured with required authentication scheme or configured but failed (i.e. wrong credential used.). */
-  ZTHROTTLEDOP = -127 /*!< Operation was throttled and not executed at all. please, retry! */
+  ZTHROTTLEDOP = -127, /*!< Operation was throttled and not executed at all. please, retry! */
+  ZTOOMANYEPHEMERALS = -128 /*!< Adding an ephemeral with the requested path could overflow transaction size */
 
   /* when adding/changing values here also update zerror(int) to return correct error message */
 };
