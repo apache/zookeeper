@@ -43,11 +43,11 @@ jobs:
     timeout-minutes: 360
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         ref: ${{ github.event.inputs.buildRef }}
     - name: Set up JDK 17
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
       with:
         java-version: 17
         distribution: temurin
@@ -64,14 +64,14 @@ jobs:
         MAVEN_OPTS: -Djansi.force=true
     - name: Upload unit test results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: surefire-reports
         path: ./**/target/surefire-reports/
         if-no-files-found: ignore
     - name: Upload integration test results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: failsafe-reports
         path: ./**/target/failsafe-reports/

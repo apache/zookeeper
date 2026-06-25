@@ -32,15 +32,15 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - name: Set up JDK 25
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
       with:
         java-version: 25
         distribution: temurin
         cache: 'maven'
     - name: Set up Node.js 22
-      uses: actions/setup-node@v5
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
       with:
         node-version: 22
         cache: 'npm'
@@ -59,14 +59,14 @@ jobs:
         MAVEN_OPTS: -Djansi.force=true
     - name: Upload website Playwright report
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: website-playwright-report
         path: zookeeper-website/playwright-report/
         if-no-files-found: ignore
     - name: Upload website test results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: website-test-results
         path: zookeeper-website/test-results/
