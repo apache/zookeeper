@@ -97,7 +97,7 @@
             </goals>
             <phase>pre-site</phase>
             <configuration>
-              <arguments>install</arguments>
+              <arguments>ci</arguments>
             </configuration>
           </execution>
           <execution>

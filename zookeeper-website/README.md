@@ -231,7 +231,7 @@ zookeeper-website/
    Three constants drive the versions surfaced by the site, all defined together for a reason:
 
    - **`CURRENT_VERSION`** ([`app/lib/current-version.ts`](app/lib/current-version.ts)) — the version the in-tree MDX corresponds to. On `master` this is the **canary** version that the next release is being prepared for. The docs build serves it from `/doc/r<CURRENT_VERSION>/`.
-   - **`RAW_RELEASED_DOC_VERSIONS_LIST`** ([`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts)) — every documentation version that has ever been published under `/doc/`. New entries are appended when a release ships, and the list is kept in sync with the `content/doc/r<version>/` directories on `asf-site`. `CURRENT_VERSION` is included at the end so it is exposed through the same machinery.
+   - **`RAW_RELEASED_DOC_VERSIONS_LIST`** (private literal in [`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts), exported as the Set `RAW_RELEASED_DOC_VERSIONS`) — every documentation version that has ever been published under `/doc/`. New entries are appended when a release ships, and the list is kept in sync with the `content/doc/r<version>/` directories on `asf-site`. `CURRENT_VERSION` is included at the end so it is exposed through the same machinery.
    - **`LTS_VERSIONS`** ([`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts)) — versions that are pinned to the top of the **Documentation** dropdown in the site navbar. By convention `CURRENT_VERSION` is **first** in this list, followed by the still-supported long-term branches. Everything else from `RAW_RELEASED_DOC_VERSIONS_LIST` is shown afterwards under "Older versions", sorted in descending order.
 
    When releasing a new version, both `RAW_RELEASED_DOC_VERSIONS_LIST` and `LTS_VERSIONS` typically need to be touched — see the [release flow](#publishing-a-new-zookeeper-release). For routine non-release edits, neither file changes.
@@ -317,6 +317,14 @@ This starts a local development server with:
 
 When writing docs content, follow these conventions:
 
+- Each MDX file starts with a YAML frontmatter block declaring at minimum `title` and `description`. These power the page `<title>`, the sidebar label, and the meta description:
+
+  ```mdx
+  ---
+  title: "My topic"
+  description: "Short one-liner."
+  ---
+  ```
 - Internal doc links are **doc-root-relative** — write `/admin-ops/cli`, not `/docs/...` and not a hardcoded `/doc/r<version>/...`. The version prefix (`/doc/r<version>`) is added automatically at render time (`resolveDocsHref` on the live site, React Router `basename` in an archive).
 - Images use the static asset path `/docs-images/...` (served from `public/docs-images/`).
 - Use absolute `https://` URLs for off-site links (e.g. `https://zookeeper.apache.org/`).
@@ -487,7 +495,7 @@ The website is integrated into the Apache ZooKeeper Maven build through two POMs
 
 The frontend plugin is intentionally bound only to the Maven `site` lifecycle:
 
-- `pre-site` installs Node.js/npm and runs `npm install`
+- `pre-site` installs Node.js/npm and runs `npm ci`
 - `site` runs the website CI command
 
 Because of that, the website is built **only during site generation** (`mvn site`) and is skipped during regular Maven lifecycle phases such as `mvn clean install`.
@@ -521,8 +529,8 @@ When you run `mvn site`, the website module automatically:
    - Installed to `target/` directory
    - Does not affect your system Node/npm installation
 
-3. **Runs `npm install`** to install all dependencies
-   - Reads from `package.json`
+3. **Runs `npm ci`** to install all dependencies
+   - Reads from `package.json` and pins to `package-lock.json`
    - Installs to `node_modules/`
 
 4. **Runs a website CI command**:
@@ -689,9 +697,7 @@ Done on the `master` branch, merged through normal PRs **before** the release br
 
 1. Confirm `CURRENT_VERSION` in [`app/lib/current-version.ts`](app/lib/current-version.ts) already equals the release being prepared (e.g. `"3.9.6"`). The bump should have happened when work on this version started. If it doesn't, do the bump now as a normal PR (see [Bumping `CURRENT_VERSION`](#bumping-current_version-canary)).
 2. Update landing pages that reference the version: `releases`, `news`, anywhere else that calls out the latest version by string.
-3. Update `RAW_RELEASED_DOC_VERSIONS_LIST` and `LTS_VERSIONS` in [`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts):
-   - Append the new version to `RAW_RELEASED_DOC_VERSIONS_LIST` (just before the trailing `CURRENT_VERSION` entry). The list must mirror the `content/doc/r<version>/` directories on `asf-site` once the release publishes.
-   - Update `LTS_VERSIONS` if this release changes long-term-support membership. By convention `CURRENT_VERSION` is the **first** entry — these versions get pinned to the top of the navbar's **Documentation** dropdown.
+3. Revisit `LTS_VERSIONS` in [`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts) if this release changes long-term-support membership. By convention `CURRENT_VERSION` is the **first** entry — these versions get pinned to the top of the navbar's **Documentation** dropdown. `RAW_RELEASED_DOC_VERSIONS_LIST` already terminates with `CURRENT_VERSION`, so the new version is exposed automatically.
 4. Update MDX under `app/pages/_docs/docs/_mdx/` for the new release (release notes, version-specific instructions, etc.).
 5. Run `npm ci && npm run ci` locally and open a PR. Merge once green.
 
