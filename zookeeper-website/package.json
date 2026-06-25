@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.12.0 || ^23.0.0 || ^24.0.0"
   },
   "scripts": {
     "build": "tsx scripts/build-site.ts",
