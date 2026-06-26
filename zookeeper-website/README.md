@@ -428,8 +428,8 @@ Generated files are located under the `build/` directory.
 The landing site and the docs are produced as two independent Vite builds (see [One Codebase, Two Independent Builds](#key-principles)). `npm run build` orchestrates them via [`scripts/build-site.ts`](scripts/build-site.ts):
 
 - `npm run build` — builds the current docs (`/doc/r<CURRENT_VERSION>/`), then the landing site (base `/`), then merges the docs into `build/client/doc/r<CURRENT_VERSION>/` and regenerates the full sitemap (`--scope all`). The merged `build/client/` is what `npm run start`, `vite preview`, and the e2e tests serve.
-- `npm run build:landing` — landing-only build (sets `ZOOKEEPER_BUILD_TARGET=landing`), output at `build/client/` (root pages), and upserts the landing slice of the sitemap (`--scope landing`), keeping the current-docs URLs from the committed `public/sitemap.xml`.
-- `npm run build:docs` — pure docs build for `CURRENT_VERSION`, output at `build/doc/r<CURRENT_VERSION>/`, and upserts the docs slice of the sitemap (`--scope docs`), keeping landing URLs from the committed base. No CI checks.
+- `npm run build:landing` — landing-only build (sets `ZOOKEEPER_BUILD_TARGET=landing`), output at `build/client/` (root pages).
+- `npm run build:docs` — pure docs build for `CURRENT_VERSION`, output at `build/doc/r<CURRENT_VERSION>/`. No CI checks.
 
 Two code-generation steps feed the build:
 

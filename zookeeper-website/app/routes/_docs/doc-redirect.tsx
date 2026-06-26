@@ -16,9 +16,14 @@
 // limitations under the License.
 //
 
-import { Navigate } from "react-router";
+import { redirect } from "react-router";
 import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
 
+// /doc -> /doc/r<CURRENT_VERSION>/.
+export function loader() {
+  return redirect(`${CURRENT_DOCS_PATH}/`);
+}
+
 export default function DocRedirect() {
-  return <Navigate to={`${CURRENT_DOCS_PATH}/`} replace />;
+  return null;
 }

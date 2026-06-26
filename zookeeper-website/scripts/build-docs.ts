@@ -289,13 +289,6 @@ export async function main() {
 
   await buildDocs(CURRENT_VERSION);
 
-  // The current docs build owns the docs slice of the sitemap.
-  runCommand(
-    "npm",
-    ["run", "generate-sitemap", "--", "--scope", "docs"],
-    process.env
-  );
-
   // react-router build emits to build/client/, then buildDocs() assembles the
   // self-contained deliverable at build/doc/r<v>/. The leftover build/client/
   // is just intermediate output — drop it so build/doc/ is the only root.

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "tsx scripts/build-site.ts",
-    "build:landing": "npm run extract-developers && ZOOKEEPER_BUILD_TARGET=landing react-router build && npm run generate-sitemap -- --scope landing",
+    "build:landing": "npm run extract-developers && ZOOKEEPER_BUILD_TARGET=landing react-router build",
     "build:docs": "tsx scripts/build-docs.ts",
     "dev": "react-router dev",
     "start": "vite preview --port 5173",
