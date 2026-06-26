@@ -115,8 +115,8 @@ export const RAW_RELEASED_DOC_VERSIONS = new Set<ReleasedDocVersion>(
 
 export const LTS_VERSIONS: ReleasedDocVersion[] = [
   CURRENT_VERSION,
-  "3.8.6",
-  "3.7.2"
+  "3.9.5",
+  "3.8.6"
 ];
 
 export function sortVersionsDesc(versions: string[]): string[] {
@@ -144,25 +144,5 @@ export function getReleasedDocUrl(version: string): string {
 
 export function getReleasedDocVersions(): string[] {
   const ltsSet = new Set<string>(LTS_VERSIONS);
-
-  if (typeof window !== "undefined") {
-    const override = window.localStorage.getItem(
-      "__released_doc_versions_override__"
-    );
-    if (override) {
-      try {
-        const parsed = JSON.parse(override);
-        if (
-          Array.isArray(parsed) &&
-          parsed.every((value) => typeof value === "string")
-        ) {
-          return sortVersionsDesc(parsed).filter((v) => !ltsSet.has(v));
-        }
-      } catch {
-        // Ignore invalid test overrides and fall back to build-time data.
-      }
-    }
-  }
-
   return RELEASED_DOC_VERSIONS.filter((v) => !ltsSet.has(v));
 }

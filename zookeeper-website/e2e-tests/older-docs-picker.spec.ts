@@ -18,25 +18,15 @@
 
 import { test, expect } from "@playwright/test";
 import { DOCS_ROOT } from "./constants";
+import {
+  getReleasedDocUrl,
+  getReleasedDocVersions
+} from "../app/lib/released-docs-versions";
 
-const MOCK_RELEASED_DOC_VERSIONS = ["3.10.0", "3.9.4", "3.9.3"];
-const RELEASED_DOC_VERSIONS_OVERRIDE_KEY = "__released_doc_versions_override__";
-
-function expectedReleasedDocUrl(version: string): string {
-  return `/doc/r${version}/`;
-}
+const EXPECTED_VERSIONS = getReleasedDocVersions();
 
 test.describe("Older Docs Picker – sidebar", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(
-      ({ key, versions }) => {
-        window.localStorage.setItem(key, JSON.stringify(versions));
-      },
-      {
-        key: RELEASED_DOC_VERSIONS_OVERRIDE_KEY,
-        versions: MOCK_RELEASED_DOC_VERSIONS
-      }
-    );
     await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
   });
@@ -65,7 +55,7 @@ test.describe("Older Docs Picker – sidebar", () => {
 
     const options = list.getByRole("option");
     await expect(options.first()).toBeVisible();
-    await expect(options).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
+    await expect(options).toHaveCount(EXPECTED_VERSIONS.length);
   });
 
   test("versions are displayed in descending order", async ({ page }) => {
@@ -75,9 +65,7 @@ test.describe("Older Docs Picker – sidebar", () => {
     await expect(options.first()).toBeVisible();
 
     const texts = await options.allTextContents();
-    expect(texts.map((text) => text.trim())).toEqual(
-      MOCK_RELEASED_DOC_VERSIONS
-    );
+    expect(texts.map((text) => text.trim())).toEqual(EXPECTED_VERSIONS);
   });
 
   test("each version item links to the correct archive path", async ({
@@ -86,10 +74,10 @@ test.describe("Older Docs Picker – sidebar", () => {
     await page.getByRole("button", { name: /older docs/i }).click();
 
     const options = page.getByRole("option");
-    await expect(options).toHaveCount(MOCK_RELEASED_DOC_VERSIONS.length);
-    for (let i = 0; i < MOCK_RELEASED_DOC_VERSIONS.length; i++) {
+    await expect(options).toHaveCount(EXPECTED_VERSIONS.length);
+    for (let i = 0; i < EXPECTED_VERSIONS.length; i++) {
       const href = await options.nth(i).getAttribute("href");
-      expect(href).toBe(expectedReleasedDocUrl(MOCK_RELEASED_DOC_VERSIONS[i]));
+      expect(href).toBe(getReleasedDocUrl(EXPECTED_VERSIONS[i]));
     }
   });
 
@@ -104,20 +92,25 @@ test.describe("Older Docs Picker – sidebar", () => {
     const allOptions = page.getByRole("option");
     const totalBefore = await allOptions.count();
 
-    // Type a prefix that matches only a subset of versions
-    await input.fill("3.9");
+    const [major, minor] = EXPECTED_VERSIONS[0].split(".");
+    const prefix = `${major}.${minor}`;
+    const expectedMatches = EXPECTED_VERSIONS.filter((v) =>
+      v.startsWith(prefix)
+    ).length;
+
+    await input.fill(prefix);
     await page.waitForTimeout(200);
 
     const filtered = page.getByRole("option");
     const totalAfter = await filtered.count();
 
-    expect(totalBefore).toBe(MOCK_RELEASED_DOC_VERSIONS.length);
-    expect(totalAfter).toBe(2);
+    expect(totalBefore).toBe(EXPECTED_VERSIONS.length);
+    expect(totalAfter).toBe(expectedMatches);
 
     // Every remaining option must contain the search term
     for (let i = 0; i < totalAfter; i++) {
       const text = await filtered.nth(i).textContent();
-      expect(text).toContain("3.9");
+      expect(text).toContain(prefix);
     }
   });
 
@@ -138,7 +131,7 @@ test.describe("Older Docs Picker – sidebar", () => {
 
     await trigger.click();
     const input = page.getByRole("combobox");
-    await input.fill("3.9");
+    await input.fill("anything");
 
     // Close the popover by pressing Escape
     await page.keyboard.press("Escape");
