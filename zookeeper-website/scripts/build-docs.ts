@@ -274,7 +274,6 @@ export async function buildDocs(version: string): Promise<string> {
   };
 
   console.log(`Building docs for ${docsBase}`);
-  runCommand("npm", ["run", "fumadocs-init"], env);
   runCommand("npx", ["react-router", "build"], env);
 
   const outputDir = await copyDocsOutput(version);
@@ -296,6 +295,11 @@ export async function main() {
     ["run", "generate-sitemap", "--", "--scope", "docs"],
     process.env
   );
+
+  // react-router build emits to build/client/, then buildDocs() assembles the
+  // self-contained deliverable at build/doc/r<v>/. The leftover build/client/
+  // is just intermediate output — drop it so build/doc/ is the only root.
+  await rm(BUILD_CLIENT_DIR, { recursive: true, force: true });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

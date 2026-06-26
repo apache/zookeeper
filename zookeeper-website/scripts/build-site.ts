@@ -60,6 +60,9 @@ export async function main() {
   await rm(stashDir, { recursive: true, force: true });
   await cp(docsOutputDir, stashDir, { recursive: true });
 
+  console.log("Extracting developers from parent pom.xml");
+  runCommand("npm", ["run", "extract-developers"], process.env);
+
   console.log("Building landing site");
   runCommand("npx", ["react-router", "build"], {
     ...process.env,

@@ -48,9 +48,10 @@ Most landing pages store content in **Markdown (`.md`)**, and some in **JSON (`.
 
 **Examples:**
 
-- `app/pages/_landing/credits/developers.json` - JSON data for developers
 - `app/pages/_landing/releases/index.tsx` - Releases page
 - `app/pages/_docs/docs/_mdx/...` - MDX content for documentation
+
+The credits page (`app/pages/_landing/credits/`) is a special case: its developer list is **generated** from the project's parent [`pom.xml`](../pom.xml) `<developers>` section by [`scripts/extract-developers.js`](scripts/extract-developers.js). The generated `developers.json` is gitignored and produced as the first step of both `npm run ci` and `npm run ci-skip-tests`. To edit who appears on `/credits`, update the `<developers>` block in the parent `pom.xml`.
 
 ---
 
@@ -229,7 +230,6 @@ zookeeper-website/
 7. **Documentation Versions**:
 
    Three constants drive the versions surfaced by the site, all defined together for a reason:
-
    - **`CURRENT_VERSION`** ([`app/lib/current-version.ts`](app/lib/current-version.ts)) — the version the in-tree MDX corresponds to. On `master` this is the **canary** version that the next release is being prepared for. The docs build serves it from `/doc/r<CURRENT_VERSION>/`.
    - **`RAW_RELEASED_DOC_VERSIONS_LIST`** (private literal in [`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts), exported as the Set `RAW_RELEASED_DOC_VERSIONS`) — every documentation version that has ever been published under `/doc/`. New entries are appended when a release ships, and the list is kept in sync with the `content/doc/r<version>/` directories on `asf-site`. `CURRENT_VERSION` is included at the end so it is exposed through the same machinery.
    - **`LTS_VERSIONS`** ([`app/lib/released-docs-versions.ts`](app/lib/released-docs-versions.ts)) — versions that are pinned to the top of the **Documentation** dropdown in the site navbar. By convention `CURRENT_VERSION` is **first** in this list, followed by the still-supported long-term branches. Everything else from `RAW_RELEASED_DOC_VERSIONS_LIST` is shown afterwards under "Older versions", sorted in descending order.
@@ -325,6 +325,7 @@ When writing docs content, follow these conventions:
   description: "Short one-liner."
   ---
   ```
+
 - Internal doc links are **doc-root-relative** — write `/admin-ops/cli`, not `/docs/...` and not a hardcoded `/doc/r<version>/...`. The version prefix (`/doc/r<version>`) is added automatically at render time (`resolveDocsHref` on the live site, React Router `basename` in an archive).
 - Images use the static asset path `/docs-images/...` (served from `public/docs-images/`).
 - Use absolute `https://` URLs for off-site links (e.g. `https://zookeeper.apache.org/`).
@@ -430,6 +431,11 @@ The landing site and the docs are produced as two independent Vite builds (see [
 - `npm run build:landing` — landing-only build (sets `ZOOKEEPER_BUILD_TARGET=landing`), output at `build/client/` (root pages), and upserts the landing slice of the sitemap (`--scope landing`), keeping the current-docs URLs from the committed `public/sitemap.xml`.
 - `npm run build:docs` — pure docs build for `CURRENT_VERSION`, output at `build/doc/r<CURRENT_VERSION>/`, and upserts the docs slice of the sitemap (`--scope docs`), keeping landing URLs from the committed base. No CI checks.
 
+Two code-generation steps feed the build:
+
+- **`npm run extract-developers`** writes `app/pages/_landing/credits/developers.json` from the parent [`pom.xml`](../pom.xml). It is invoked automatically by any landing-site build: `build:landing` runs it before Vite, and `build` runs it inside [`scripts/build-site.ts`](scripts/build-site.ts) before the landing step. `build:docs` does not need it (no credits route in the docs build).
+- **`npm run fumadocs-init`** writes the fumadocs MDX index to `.source/`. Vite's `fumadocs-mdx/vite` plugin regenerates `.source/` at build/test time, so this step is **not** needed by any build commands. It **is** needed by `lint`, because eslint's `import/no-unresolved` resolver reads the filesystem directly and will fail on the two `@/.source` imports if `.source/` does not exist.
+
 The docs version always comes from [`app/lib/current-version.ts`](app/lib/current-version.ts).
 
 `CURRENT_VERSION` on the **`master`** branch is **not** a released version — it is the **canary** for the next release that is being worked on. The actual released version is whatever sits at `content/doc/current/` on `asf-site`. `CURRENT_VERSION` is bumped on `master` as soon as work on the next version begins (see [Publishing a New ZooKeeper Release](#publishing-a-new-zookeeper-release)); from that point on, edits to docs on `master` accumulate under the new canary value and ship together when that release cuts.
@@ -461,7 +467,7 @@ Docs builds set the `ZOOKEEPER_DOCS_ARCHIVE_BASE` env var. Vite turns it into th
 
 `ZOOKEEPER_DOCS_ARCHIVE_BASE` and `import.meta.env.BASE_URL` are the same value in two execution contexts. `ZOOKEEPER_BUILD_TARGET=landing` is the orthogonal signal that selects the landing-only build.
 
-The docs build script packages the generated docs into a self-contained directory. React Router prerenders docs HTML under `build/client/doc/r<version>/`, while Vite and `public/` assets are emitted at the build root (`build/client/assets/`, `build/client/docs-images/`, `build/client/fonts/`, `build/client/images/`, `build/client/favicon.ico`). The script copies the docs HTML plus those known static assets into `build/doc/r<version>/` so URLs such as `/doc/r3.9.6/assets/...` exist after publishing. If new top-level static folders or asset roots are introduced, update `scripts/build-docs.ts` so they are copied, URL-rewritten if needed, and covered by docs build validation.
+The docs build script packages the generated docs into a self-contained directory. React Router prerenders docs HTML under `build/client/doc/r<version>/`, while Vite and `public/` assets are emitted at the build root (`build/client/assets/`, `build/client/docs-images/`, `build/client/fonts/`, `build/client/images/`, `build/client/favicon.ico`). The script copies the docs HTML plus those known static assets into `build/doc/r<version>/` so URLs such as `/doc/r3.9.6/assets/...` exist after publishing, then deletes the intermediate `build/client/` so `build/doc/r<version>/` is the only output. If new top-level static folders or asset roots are introduced, update `scripts/build-docs.ts` so they are copied, URL-rewritten if needed, and covered by docs build validation.
 
 Docs output intentionally does not copy the live site's root-only files such as `404.html`, `robots.txt`, `__spa-fallback.html`, or the root `.htaccess`. Docs builds get their own generated `.htaccess` (described above). The docs build keeps only docs routes, `api/search`, and `llms-full.txt`.
 
@@ -527,7 +533,7 @@ When you run `mvn site`, the website module automatically:
    - With test skipping (`mvn site -DskipTests`): `npm run ci-skip-tests`
 
    `npm run ci` executes:
-   - `npm run fumadocs-init` - Initialize Fumadocs
+   - `npm run fumadocs-init` - Intialize Fumadocs artifcats (`.source/`), so linter doesn't complain
    - `npm run lint` - ESLint code quality checks
    - `npm run typecheck` - TypeScript type checking
    - `npm run test:unit:run` - Vitest unit tests
@@ -536,7 +542,6 @@ When you run `mvn site`, the website module automatically:
    - `npm run test:e2e` - Playwright e2e tests
 
    `npm run ci-skip-tests` executes:
-   - `npm run fumadocs-init` - Initialize Fumadocs
    - `npm run build` - Production build
 
 5. **Build Output**: Generated files are in `build/` directory

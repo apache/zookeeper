@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "tsx scripts/build-site.ts",
-    "build:landing": "npm run fumadocs-init && ZOOKEEPER_BUILD_TARGET=landing react-router build && npm run generate-sitemap -- --scope landing",
+    "build:landing": "npm run extract-developers && ZOOKEEPER_BUILD_TARGET=landing react-router build && npm run generate-sitemap -- --scope landing",
     "build:docs": "tsx scripts/build-docs.ts",
     "dev": "react-router dev",
     "start": "vite preview --port 5173",
@@ -25,8 +25,9 @@
     "test:e2e:debug": "playwright test --debug",
     "fumadocs-init": "fumadocs-mdx",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts",
+    "extract-developers": "node scripts/extract-developers.js",
     "ci": "npm run fumadocs-init && npm run lint && npm run typecheck && npm run test:unit:run && npm run build && npx playwright install && npm run test:e2e",
-    "ci-skip-tests": "npm run fumadocs-init && npm run build"
+    "ci-skip-tests": "npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
