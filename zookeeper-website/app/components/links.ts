@@ -89,8 +89,8 @@ export const documentationLinks: (LinkType | NestedLinkType)[] = [
         external: true
       },
       {
-        label: "IRC Channel",
-        to: "/irc"
+        label: "Slack Channel",
+        to: "/slack"
       }
     ]
   }

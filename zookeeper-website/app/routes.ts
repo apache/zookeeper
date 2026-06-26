@@ -45,7 +45,7 @@ const landingRoutes = layout("./pages/_landing/landing-layout.tsx", [
   route("bylaws", "routes/_landing/bylaws.tsx"),
   route("mailing-lists", "routes/_landing/mailing-lists.tsx"),
   route("security", "routes/_landing/security.tsx"),
-  route("irc", "routes/_landing/irc.tsx"),
+  route("slack", "routes/_landing/slack.tsx"),
   route("version-control", "routes/_landing/version-control.tsx")
 ]);
 

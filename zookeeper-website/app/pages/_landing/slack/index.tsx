@@ -19,6 +19,6 @@
 import { MdLayout } from "@/components/mdx-components";
 import Content from "./content.md";
 
-export function IrcPage() {
+export function SlackPage() {
   return <MdLayout Content={Content} className="mt-12" />;
 }

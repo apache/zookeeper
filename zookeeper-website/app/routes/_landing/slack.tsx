@@ -16,19 +16,19 @@
 // limitations under the License.
 //
 
-import type { Route } from "./+types/irc";
-import { IrcPage } from "@/pages/_landing/irc";
+import type { Route } from "./+types/slack";
+import { SlackPage } from "@/pages/_landing/slack";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "IRC Channel - Apache ZooKeeper" },
+    { title: "Slack Channel - Apache ZooKeeper" },
     {
       name: "description",
-      content: "Connect with the Apache ZooKeeper community on IRC."
+      content: "Connect with the Apache ZooKeeper community on Slack."
     }
   ];
 }
 
-export default function Irc() {
-  return <IrcPage />;
+export default function Slack() {
+  return <SlackPage />;
 }
