@@ -45,9 +45,9 @@ const EXCLUDED_HTML_PATHS = new Set([
   "404.html",
   "404/index.html",
   "__spa-fallback.html",
-  // The /doc redirect is a client-side <Navigate> with no redirect marker in its
-  // prerendered HTML, so it must be excluded explicitly (and it only exists in
-  // builds that include landing, which would otherwise diverge from docs builds).
+  // /doc is a loader-driven redirect to /doc/r<CURRENT_VERSION>/. Its meta-
+  // refresh marker would already be caught by REDIRECT_PAGE_PATTERNS, but we
+  // exclude it explicitly so landing-inclusive and docs-only builds agree.
   "doc/index.html"
 ]);
 

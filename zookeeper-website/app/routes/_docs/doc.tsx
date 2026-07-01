@@ -16,7 +16,7 @@
 // limitations under the License.
 //
 
-import type { Route } from "./+types/docs";
+import type { Route } from "./+types/doc";
 import { source } from "@/lib/source";
 import { DocsPage } from "@/pages/_docs/docs";
 
@@ -31,6 +31,6 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-export default function Docs(props: Route.ComponentProps) {
+export default function Doc(props: Route.ComponentProps) {
   return <DocsPage {...props} />;
 }

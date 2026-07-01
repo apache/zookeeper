@@ -16,8 +16,7 @@
 // limitations under the License.
 //
 
-import { CURRENT_VERSION } from "@/lib/current-version";
-import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
+import { getReleasedDocUrl, LTS_VERSIONS } from "@/lib/released-docs-versions";
 
 interface LinkType {
   label: string;
@@ -62,10 +61,12 @@ export const projectLinks: LinkType[] = [
 ];
 
 export const documentationLinks: (LinkType | NestedLinkType)[] = [
-  {
-    label: `${CURRENT_VERSION} Documentation`,
-    to: CURRENT_DOCS_PATH
-  },
+  ...LTS_VERSIONS.map(
+    (version): LinkType => ({
+      label: `${version} Documentation`,
+      to: getReleasedDocUrl(version)
+    })
+  ),
   {
     label: "Issue Tracking",
     to: "https://issues.apache.org/jira/browse/ZOOKEEPER",
@@ -88,8 +89,8 @@ export const documentationLinks: (LinkType | NestedLinkType)[] = [
         external: true
       },
       {
-        label: "IRC Channel",
-        to: "/irc"
+        label: "Slack Channel",
+        to: "/slack"
       }
     ]
   }

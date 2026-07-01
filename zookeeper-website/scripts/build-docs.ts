@@ -31,7 +31,6 @@ import { fileURLToPath } from "node:url";
 import { CURRENT_VERSION } from "../app/lib/current-version";
 import {
   DOCS_ARCHIVE_BASE_ENV,
-  DOCS_ARCHIVE_SNAPSHOT_ENV,
   normalizeDocsArchiveBase
 } from "../app/lib/docs-archive";
 import { formatDocsBase } from "../app/lib/docs-paths";
@@ -66,19 +65,10 @@ export const ROOT_URL_PATTERNS = [
 const DOCS_LOCAL_PATHS =
   "(?:apidocs|assets|docs-images|fonts|images)\\b[^\"')]*|favicon\\.ico";
 
-interface DocsBuildArgs {
-  snapshot: boolean;
-}
-
-export function parseDocsBuildArgs(
-  args = process.argv.slice(2),
-  scriptName = process.env.npm_lifecycle_event
-): DocsBuildArgs {
+export function parseDocsBuildArgs(args = process.argv.slice(2)): void {
   if (args.length > 0) {
-    throw new Error("Usage: npm run build:docs or npm run build:docs-archive");
+    throw new Error("Usage: npm run build:docs");
   }
-
-  return { snapshot: scriptName === "build:docs-archive" };
 }
 
 function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv) {
@@ -95,13 +85,6 @@ function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv) {
   if (result.status !== 0) {
     throw new Error(`${command} ${args.join(" ")} failed`);
   }
-}
-
-function getWebsiteCheckEnv(): NodeJS.ProcessEnv {
-  const env = { ...process.env };
-  delete env[DOCS_ARCHIVE_BASE_ENV];
-  delete env[DOCS_ARCHIVE_SNAPSHOT_ENV];
-  return env;
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -282,21 +265,15 @@ export async function verifyArchiveOutput(
 
 // Pure, self-contained docs build for a single version. Produces a versioned
 // output at build/doc/r<version>/ with its own assets, .htaccess, rewritten
-// docs-local URLs, and llms-full.txt. Pass `snapshot: true` for archived
-// versions so the "switch to latest" banner shows.
-export async function buildDocs(
-  version: string,
-  { snapshot = false }: { snapshot?: boolean } = {}
-): Promise<string> {
+// docs-local URLs, and llms-full.txt.
+export async function buildDocs(version: string): Promise<string> {
   const docsBase = normalizeDocsArchiveBase(formatDocsBase(version));
   const env = {
     ...process.env,
-    [DOCS_ARCHIVE_BASE_ENV]: docsBase,
-    ...(snapshot ? { [DOCS_ARCHIVE_SNAPSHOT_ENV]: "1" } : {})
+    [DOCS_ARCHIVE_BASE_ENV]: docsBase
   };
 
   console.log(`Building docs for ${docsBase}`);
-  runCommand("npm", ["run", "fumadocs-init"], env);
   runCommand("npx", ["react-router", "build"], env);
 
   const outputDir = await copyDocsOutput(version);
@@ -308,36 +285,14 @@ export async function buildDocs(
 }
 
 export async function main() {
-  const { snapshot } = parseDocsBuildArgs();
+  parseDocsBuildArgs();
 
-  if (snapshot) {
-    console.log("Running website checks before building the docs archive");
-    runCommand("npm", ["run", "ci"], getWebsiteCheckEnv());
-  }
+  await buildDocs(CURRENT_VERSION);
 
-  const version = CURRENT_VERSION;
-  await buildDocs(version, { snapshot });
-
-  // The current docs build owns the docs slice of the sitemap. Archive snapshots
-  // are intentionally excluded, so they never touch it.
-  if (!snapshot) {
-    runCommand(
-      "npm",
-      ["run", "generate-sitemap", "--", "--scope", "docs"],
-      process.env
-    );
-  }
-
-  if (snapshot) {
-    console.log("");
-    console.log("Publish with:");
-    console.log(`  git checkout asf-site`);
-    console.log(`  rm -rf content/doc/r${version}`);
-    console.log(`  mkdir -p content/doc/r${version}`);
-    console.log(
-      `  cp -R zookeeper-website/build/doc/r${version}/. content/doc/r${version}/`
-    );
-  }
+  // react-router build emits to build/client/, then buildDocs() assembles the
+  // self-contained deliverable at build/doc/r<v>/. The leftover build/client/
+  // is just intermediate output — drop it so build/doc/ is the only root.
+  await rm(BUILD_CLIENT_DIR, { recursive: true, force: true });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

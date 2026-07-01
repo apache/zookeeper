@@ -18,7 +18,6 @@
 
 import { RootProvider } from "fumadocs-ui/provider/react-router";
 import { Outlet } from "react-router";
-import { ArchiveDocsBanner } from "@/components/docs/archive-docs-banner";
 import { SearchDialog } from "@/components/docs/search/docs-search";
 
 export default function DocsLayout() {
@@ -28,7 +27,6 @@ export default function DocsLayout() {
         SearchDialog
       }}
     >
-      <ArchiveDocsBanner />
       <Outlet />
     </RootProvider>
   );

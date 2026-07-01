@@ -38,6 +38,7 @@ import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import type { MDXComponents } from "mdx/types";
 import { getDocsBasePath, resolveDocsHref } from "@/lib/docs-paths";
 import { SITE_URL } from "@/lib/site";
+import { CURRENT_VERSION } from "@/lib/current-version";
 
 // Extend default MDX components to include shared UI blocks globally.
 // Note: We'll override the 'a' component in the renderer to handle route-specific logic
@@ -66,7 +67,7 @@ export function baseOptions(): BaseLayoutProps {
             width={16}
             height={16}
           />
-          <p>Apache ZooKeeper</p>
+          <p>Apache ZooKeeper {CURRENT_VERSION}</p>
         </div>
       )
     },

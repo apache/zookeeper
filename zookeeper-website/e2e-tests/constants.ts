@@ -17,7 +17,6 @@
 //
 
 import { CURRENT_VERSION } from "../app/lib/current-version";
-import { RELEASED_DOC_VERSIONS } from "../app/lib/released-docs-versions";
 
 // Current docs are served from this base in every build. Derived from
 // CURRENT_VERSION so a version bump needs no e2e edits.
@@ -27,7 +26,3 @@ export const DOCS_ROOT = `/doc/r${CURRENT_VERSION}/`;
 export const DOCS_URL_PATTERN = new RegExp(
   `doc/r${CURRENT_VERSION.replace(/\./g, "\\.")}`
 );
-
-// The no-JS older-docs fallback renders every released version from the real
-// list, so assert against its length instead of a hardcoded count.
-export const RELEASED_DOC_VERSION_COUNT = RELEASED_DOC_VERSIONS.length;

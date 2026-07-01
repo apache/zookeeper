@@ -16,14 +16,9 @@
 // limitations under the License.
 //
 
-import { redirect } from "react-router";
-import { CURRENT_DOCS_PATH } from "@/lib/docs-paths";
+import { MdLayout } from "@/components/mdx-components";
+import Content from "./content.md";
 
-// /doc -> /doc/r<CURRENT_VERSION>/.
-export function loader() {
-  return redirect(`${CURRENT_DOCS_PATH}/`);
-}
-
-export default function DocRedirect() {
-  return null;
+export function SlackPage() {
+  return <MdLayout Content={Content} className="mt-12" />;
 }

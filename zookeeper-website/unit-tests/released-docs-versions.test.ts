@@ -19,9 +19,7 @@
 import { describe, it, expect } from "vitest";
 import {
   getReleasedDocUrl,
-  LEGACY_RELEASED_DOC_VERSIONS,
   RAW_RELEASED_DOC_VERSIONS,
-  REACT_ROUTER_RELEASED_DOC_VERSIONS,
   RELEASED_DOC_VERSIONS,
   sortVersionsDesc
 } from "@/lib/released-docs-versions";
@@ -51,8 +49,8 @@ describe("sortVersionsDesc with mocked released-docs versions", () => {
 });
 
 describe("RAW_RELEASED_DOC_VERSIONS", () => {
-  it("exposes an array", () => {
-    expect(Array.isArray(RAW_RELEASED_DOC_VERSIONS)).toBe(true);
+  it("exposes a Set", () => {
+    expect(RAW_RELEASED_DOC_VERSIONS).toBeInstanceOf(Set);
   });
 
   it("strips the leading 'r' prefix from every folder name", () => {
@@ -74,52 +72,28 @@ describe("RAW_RELEASED_DOC_VERSIONS", () => {
   });
 
   it("contains the first and latest archived documentation versions", () => {
-    expect(RAW_RELEASED_DOC_VERSIONS).toContain("3.1.2");
-    expect(RAW_RELEASED_DOC_VERSIONS).toContain("3.9.4");
-  });
-
-  it("contains every archived docs version exactly once", () => {
-    expect(new Set(RAW_RELEASED_DOC_VERSIONS).size).toBe(
-      RAW_RELEASED_DOC_VERSIONS.length
-    );
-    expect(RAW_RELEASED_DOC_VERSIONS.length).toBe(52);
-  });
-
-  it("combines legacy and React Router archive versions", () => {
-    expect(RAW_RELEASED_DOC_VERSIONS).toEqual([
-      ...LEGACY_RELEASED_DOC_VERSIONS,
-      ...REACT_ROUTER_RELEASED_DOC_VERSIONS
-    ]);
-  });
-
-  it("keeps legacy and React Router archive version sets distinct", () => {
-    const legacyVersions = new Set(LEGACY_RELEASED_DOC_VERSIONS);
-    REACT_ROUTER_RELEASED_DOC_VERSIONS.forEach((version) => {
-      expect(legacyVersions.has(version)).toBe(false);
-    });
+    expect(RAW_RELEASED_DOC_VERSIONS.has("3.1.2")).toBe(true);
+    expect(RAW_RELEASED_DOC_VERSIONS.has("3.9.4")).toBe(true);
   });
 });
 
 describe("RELEASED_DOC_VERSIONS (sorted output)", () => {
   it("equals sortVersionsDesc applied to the raw virtual-module data", () => {
     expect(RELEASED_DOC_VERSIONS).toEqual(
-      sortVersionsDesc(RAW_RELEASED_DOC_VERSIONS)
+      sortVersionsDesc([...RAW_RELEASED_DOC_VERSIONS])
     );
   });
 
   it("contains the same entries as RAW_RELEASED_DOC_VERSIONS, just reordered", () => {
     expect(RELEASED_DOC_VERSIONS.slice().sort()).toEqual(
-      RAW_RELEASED_DOC_VERSIONS.slice().sort()
+      [...RAW_RELEASED_DOC_VERSIONS].sort()
     );
   });
 });
 
 describe("getReleasedDocUrl", () => {
-  it("links legacy static archives to index.html", () => {
-    expect(getReleasedDocUrl("3.9.4")).toBe("/doc/r3.9.4/index.html");
-  });
-
-  it("links new React Router archives to /doc/r<version>/", () => {
+  it("links every archived version to /doc/r<version>/", () => {
+    expect(getReleasedDocUrl("3.9.4")).toBe("/doc/r3.9.4/");
     expect(getReleasedDocUrl("3.10.0")).toBe("/doc/r3.10.0/");
   });
 });

@@ -24,7 +24,7 @@ The ASF Security team maintains a page with a description of how vulnerabilities
 
 ## Security model
 
-ZooKeeper is a coordination service intended for use inside a trusted network, not exposed directly to the Internet. The [Admin Guide](https://zookeeper.apache.org/doc/current/zookeeperAdmin.html) states it plainly: "A ZooKeeper ensemble is expected to operate in a trusted computing environment. It is thus recommended deploying ZooKeeper behind a firewall." A fresh ensemble ships with no transport encryption, no peer authentication, and world-readable/writable znodes. Hardening is a shared responsibility between the ZooKeeper project and the operator.
+ZooKeeper is a coordination service intended for use inside a trusted network, not exposed directly to the Internet. The [Admin Guide](https://zookeeper.apache.org/doc/current/admin-ops/administrators-guide/) states it plainly: "A ZooKeeper ensemble is expected to operate in a trusted computing environment. It is thus recommended deploying ZooKeeper behind a firewall." A fresh ensemble ships with no transport encryption, no peer authentication, and world-readable/writable znodes. Hardening is a shared responsibility between the ZooKeeper project and the operator.
 
 ### Security is opt-in
 
@@ -254,7 +254,7 @@ See the documentation for more details on correct cluster administration.
 
 **Credit:** This issue was identified by Földi Tamás and Eugene Koontz.
 
-**References:** [ZOOKEEPER-1045](https://issues.apache.org/jira/browse/ZOOKEEPER-1045) · [Server-Server mutual authentication](https://cwiki.apache.org/confluence/display/ZOOKEEPER/Server-Server+mutual+authentication) · [ZooKeeper Admin Guide](https://zookeeper.apache.org/doc/current/zookeeperAdmin.html)
+**References:** [ZOOKEEPER-1045](https://issues.apache.org/jira/browse/ZOOKEEPER-1045) · [Server-Server mutual authentication](https://cwiki.apache.org/confluence/display/ZOOKEEPER/Server-Server+mutual+authentication) · [ZooKeeper Admin Guide](https://zookeeper.apache.org/doc/current/admin-ops/administrators-guide/)
 
 ---
 

@@ -40,7 +40,10 @@ export function CommunitySection() {
                 <Link to="/mailing-lists">Mailing Lists</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="https://github.com/apache/zookeeper" target="_blank">
+                <Link
+                  to="https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute"
+                  target="_blank"
+                >
                   Contribute
                 </Link>
               </Button>
@@ -64,16 +67,17 @@ export function CommunitySection() {
                 <ArrowUpRight className="text-muted-foreground group-hover:text-primary absolute top-6 right-6 size-5 transition-colors" />
               </Link>
             </li>
-            <li id="irc" className="relative p-0">
+            <li id="slack" className="relative p-0">
               <Link
-                to="/irc"
+                to="/slack"
                 className="group border-border/60 bg-card/50 hover:bg-card hover:border-primary/50 focus-visible:ring-primary block rounded-2xl border p-6 shadow-sm transition-all duration-200 hover:shadow-md focus-visible:ring-2 focus-visible:outline-none"
               >
                 <span className="text-foreground text-lg font-semibold">
-                  IRC Channel
+                  Slack Channel
                 </span>
                 <p className="text-muted-foreground mt-1 text-base">
-                  Chat with the community on #zookeeper at irc.libera.chat.
+                  Chat with the community on #zookeeper in the ASF Slack
+                  workspace.
                 </p>
                 <ArrowUpRight className="text-muted-foreground group-hover:text-primary absolute top-6 right-6 size-5 transition-colors" />
               </Link>

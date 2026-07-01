@@ -8,7 +8,8 @@ For the latest information about ZooKeeper, please visit our website at:
 and our wiki, at:
    https://cwiki.apache.org/confluence/display/ZOOKEEPER
 
-Full documentation for this release can also be found in ../../docs/index.html
+Full documentation for this release can also be found at:
+   https://zookeeper.apache.org/doc/current/
 
 
 OVERVIEW
@@ -34,8 +35,9 @@ Sync and Async API.
 
 INSTALLATION
 
-Please refer to the "Installation" item under "C Binding" section in file
-".../trunk/zookeeper-docs/src/main/resources/markdown/zookeeperProgrammers.md"
+Please refer to the "Installation" item under "C Binding" in the
+Programmer's Guide:
+   https://zookeeper.apache.org/doc/current/developer/programmers-guide/bindings#installation
 
 EXAMPLE/SAMPLE C CLIENT SHELL
 

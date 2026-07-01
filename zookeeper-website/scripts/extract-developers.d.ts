@@ -16,19 +16,13 @@
 // limitations under the License.
 //
 
-import type { Route } from "./+types/irc";
-import { IrcPage } from "@/pages/_landing/irc";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "IRC Channel - Apache ZooKeeper" },
-    {
-      name: "description",
-      content: "Connect with the Apache ZooKeeper community on IRC."
-    }
-  ];
+export interface Developer {
+  id: string;
+  name: string;
+  email: string;
+  timezone: string;
 }
 
-export default function Irc() {
-  return <IrcPage />;
-}
+export function extractField(block: string, fieldName: string): string;
+export function parseDevelopers(pomContent: string): Developer[];
+export function main(): void;

@@ -16,9 +16,19 @@
 // limitations under the License.
 //
 
-import { MdLayout } from "@/components/mdx-components";
-import Content from "./content.md";
+import type { Route } from "./+types/slack";
+import { SlackPage } from "@/pages/_landing/slack";
 
-export function IrcPage() {
-  return <MdLayout Content={Content} className="mt-12" />;
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Slack Channel - Apache ZooKeeper" },
+    {
+      name: "description",
+      content: "Connect with the Apache ZooKeeper community on Slack."
+    }
+  ];
+}
+
+export default function Slack() {
+  return <SlackPage />;
 }

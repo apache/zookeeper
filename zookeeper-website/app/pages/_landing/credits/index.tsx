@@ -16,21 +16,16 @@
 // limitations under the License.
 //
 
-import data from "./developers.json";
+import developers from "./developers.json";
 
-interface Member {
+interface Developer {
   id: string;
   name: string;
-  organization: string;
+  email: string;
   timezone: string;
 }
 
-interface Credits {
-  pmc: Member[];
-  committers: Member[];
-}
-
-function MemberTable({ members }: { members: Member[] }) {
+function DeveloperTable({ developers }: { developers: Developer[] }) {
   return (
     <div className="border-border my-8 w-full overflow-x-auto rounded-lg border">
       <table className="mt-0 mb-0 w-full table-fixed border-collapse text-sm">
@@ -38,22 +33,20 @@ function MemberTable({ members }: { members: Member[] }) {
           <tr className="border-border border-b">
             <th className="px-4 py-3 text-left font-semibold">Username</th>
             <th className="px-4 py-3 text-left font-semibold">Name</th>
-            <th className="px-4 py-3 text-left font-semibold">Organization</th>
+            <th className="px-4 py-3 text-left font-semibold">Email</th>
             <th className="px-4 py-3 text-left font-semibold">Time Zone</th>
           </tr>
         </thead>
         <tbody>
-          {members.map((member) => (
+          {developers.map((developer) => (
             <tr
-              key={member.id}
+              key={developer.id}
               className="border-border hover:bg-muted/50 border-b transition-colors"
             >
-              <td className="px-4 py-3 align-top">{member.id}</td>
-              <td className="px-4 py-3 align-top">{member.name || "-"}</td>
-              <td className="px-4 py-3 align-top">
-                {member.organization || "-"}
-              </td>
-              <td className="px-4 py-3 align-top">{member.timezone || "-"}</td>
+              <td className="px-4 py-3 align-top">{developer.id}</td>
+              <td className="px-4 py-3 align-top">{developer.name}</td>
+              <td className="px-4 py-3 align-top">{developer.email}</td>
+              <td className="px-4 py-3 align-top">{developer.timezone}</td>
             </tr>
           ))}
         </tbody>
@@ -63,8 +56,6 @@ function MemberTable({ members }: { members: Member[] }) {
 }
 
 export function CreditsPage() {
-  const credits = data as Credits;
-
   return (
     <div className="container mx-auto px-4 py-12">
       <article className="prose prose-slate dark:prose-invert max-w-none">
@@ -79,24 +70,15 @@ export function CreditsPage() {
         </p>
 
         <h2 className="mt-12 mb-4 scroll-mt-28 text-3xl font-semibold tracking-tight md:text-4xl">
-          PMC Members
+          Developers
         </h2>
 
         <p className="mb-4 text-base leading-7">
-          ZooKeeper&apos;s active PMC members are listed below.
+          ZooKeeper&apos;s developers, as listed in the project&apos;s parent{" "}
+          <code>pom.xml</code>, are shown below.
         </p>
 
-        <MemberTable members={credits.pmc} />
-
-        <h2 className="mt-12 mb-4 scroll-mt-28 text-3xl font-semibold tracking-tight md:text-4xl">
-          Committers
-        </h2>
-
-        <p className="mb-4 text-base leading-7">
-          ZooKeeper&apos;s active committers are listed below.
-        </p>
-
-        <MemberTable members={credits.committers} />
+        <DeveloperTable developers={developers} />
 
         <h2 className="mt-12 mb-4 scroll-mt-28 text-3xl font-semibold tracking-tight md:text-4xl">
           Contributors

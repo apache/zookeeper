@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.12.0 || ^23.0.0 || ^24.0.0"
   },
   "scripts": {
     "build": "tsx scripts/build-site.ts",
-    "build:landing": "npm run fumadocs-init && ZOOKEEPER_BUILD_TARGET=landing react-router build && npm run generate-sitemap -- --scope landing",
+    "build:landing": "npm run extract-developers && ZOOKEEPER_BUILD_TARGET=landing react-router build",
     "build:docs": "tsx scripts/build-docs.ts",
     "dev": "react-router dev",
     "start": "vite preview --port 5173",
@@ -25,9 +25,9 @@
     "test:e2e:debug": "playwright test --debug",
     "fumadocs-init": "fumadocs-mdx",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts",
-    "build:docs-archive": "tsx scripts/build-docs.ts",
+    "extract-developers": "node scripts/extract-developers.js",
     "ci": "npm run fumadocs-init && npm run lint && npm run typecheck && npm run test:unit:run && npm run build && npx playwright install && npm run test:e2e",
-    "ci-skip-tests": "npm run fumadocs-init && npm run build"
+    "ci-skip-tests": "npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -46,7 +46,7 @@
     "@radix-ui/react-presence": "^1.1.5",
     "@radix-ui/react-scroll-area": "1.2.2",
     "@radix-ui/react-separator": "1.1.1",
-    "@radix-ui/react-slot": "latest",
+    "@radix-ui/react-slot": "1.2.3",
     "@radix-ui/react-tabs": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.6",
     "@react-router/node": "^7.17.0",

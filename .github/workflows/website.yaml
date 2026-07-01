@@ -32,15 +32,15 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - name: Set up JDK 25
+    - uses: actions/checkout@v7
+    - name: Set up JDK 11
       uses: actions/setup-java@v5
       with:
         java-version: 25
         distribution: temurin
         cache: 'maven'
     - name: Set up Node.js 22
-      uses: actions/setup-node@v5
+      uses: actions/setup-node@v6
       with:
         node-version: 22
         cache: 'npm'
@@ -50,6 +50,11 @@ jobs:
     - name: Install website npm dependencies
       working-directory: zookeeper-website
       run: npm ci
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('zookeeper-website/package-lock.json') }}
     - name: Install Playwright browsers and system dependencies
       working-directory: zookeeper-website
       run: npx playwright install --with-deps

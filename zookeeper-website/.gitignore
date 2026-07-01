@@ -41,3 +41,9 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Generated developer list (see scripts/extract-developers.js)
+/app/pages/_landing/credits/developers.json
+
+# Generated sitemap (see scripts/generate-sitemap.ts)
+/public/sitemap.xml

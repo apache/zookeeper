@@ -45,7 +45,7 @@ const landingRoutes = layout("./pages/_landing/landing-layout.tsx", [
   route("bylaws", "routes/_landing/bylaws.tsx"),
   route("mailing-lists", "routes/_landing/mailing-lists.tsx"),
   route("security", "routes/_landing/security.tsx"),
-  route("irc", "routes/_landing/irc.tsx"),
+  route("slack", "routes/_landing/slack.tsx"),
   route("version-control", "routes/_landing/version-control.tsx")
 ]);
 
@@ -53,8 +53,8 @@ const docRedirectRoute = route("doc", "routes/_docs/doc-redirect.tsx");
 
 const docsBuildRoutes = [
   layout("./pages/_docs/docs-layout.tsx", [
-    index("routes/_docs/docs.tsx", { id: "docs-index" }),
-    route("*", "routes/_docs/docs.tsx", { id: "docs-splat" })
+    index("routes/_docs/doc.tsx", { id: "docs-index" }),
+    route("*", "routes/_docs/doc.tsx", { id: "docs-splat" })
   ]),
   route("api/search", "routes/_api/search.ts"),
   route("llms-full.txt", "routes/_api/llms-full.ts")
@@ -69,7 +69,7 @@ const devCombinedRoutes = [
   landingRoutes,
   docRedirectRoute,
   layout("./pages/_docs/docs-layout.tsx", [
-    route(`doc/r${CURRENT_VERSION}/*`, "routes/_docs/docs.tsx")
+    route(`doc/r${CURRENT_VERSION}/*`, "routes/_docs/doc.tsx")
   ]),
   route("api/search", "routes/_api/search.ts"),
   route("llms-full.txt", "routes/_api/llms-full.ts")

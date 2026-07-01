@@ -16,15 +16,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# IRC Channel
+# Slack Channel
 
-The Apache ZooKeeper community uses IRC for real-time chat and informal discussion.
+The Apache ZooKeeper community uses the ASF Slack workspace for real-time chat and informal discussion.
 
 ## Channel
 
-**Server:** `irc.libera.chat`  
+**Workspace:** [the-asf.slack.com](https://the-asf.slack.com/)
 **Channel:** `#zookeeper`
 
-## Connecting
+## Joining
 
-The IRC channel can be used for online discussion about zookeeper related stuff, but developers should be careful to transfer all the official decisions or useful discussions to the issue tracking system.
+See the [ASF Infrastructure guide to Slack](https://infra.apache.org/slack.html) for instructions on how to join the workspace.
+
+The Slack channel can be used for online discussion about ZooKeeper related topics, but developers should be careful to transfer all official decisions or useful discussions to the issue tracking system.

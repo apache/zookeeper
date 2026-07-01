@@ -35,7 +35,7 @@ export function GettingStartedSection() {
     {
       title: "3. Write a Client",
       desc: "Follow the basic tutorial to implement distributed primitives like barriers and queues.",
-      to: `${CURRENT_DOCS_PATH}/developer/basic-tutorial`
+      to: "https://cwiki.apache.org/confluence/display/ZOOKEEPER/Tutorial"
     }
   ];
   return (
