@@ -36,6 +36,8 @@ ErrorDocument 404 /404.html
 </IfModule>
 
 <IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
   Header always set Cache-Control "no-cache, must-revalidate"
 
   <FilesMatch "\.(?:css|js|mjs|gif|ico|jpe?g|png|svg|webp|avif|woff2?|ttf|otf|eot|pdf)$">
