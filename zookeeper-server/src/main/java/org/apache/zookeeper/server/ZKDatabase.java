@@ -299,9 +299,16 @@ public class ZKDatabase {
     /**
      * Fast-forward the database adding transactions from the committed log into memory.
      * @return the last valid zxid.
-     * @throws IOException
+     * @throws IOException IO or inconsistent database error
      */
     public long fastForwardDataBase() throws IOException {
+        long lastLoggedZxid = snapLog.getLastLoggedZxid();
+        if (lastLoggedZxid < dataTree.lastProcessedZxid) {
+            String msg = String.format("memory database(zxid: 0x%s) is ahead of disk(zxid: 0x%s)",
+                Long.toHexString(dataTree.lastProcessedZxid),
+                Long.toHexString(lastLoggedZxid));
+            throw new IOException(msg);
+        }
         long zxid = snapLog.fastForwardFromEdits(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
         initialized = true;
         return zxid;
