@@ -31,13 +31,16 @@
   <property name="zookeeper.log.maxfilesize" value="256MB" />
   <property name="zookeeper.log.maxbackupindex" value="20" />
 
+  <conversionRule conversionWord="crlf"
+                  converterClass="org.owasp.security.logging.mask.CRLFConverter" />
+
   <!--
     console
     Add "console" to root logger if you want to use this
   -->
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+      <pattern>%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %crlf(%msg) %n</pattern>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>${zookeeper.console.threshold}</level>
