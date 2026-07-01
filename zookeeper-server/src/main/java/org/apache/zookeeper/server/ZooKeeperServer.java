@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -1083,7 +1083,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     protected boolean checkPasswd(long sessionId, byte[] passwd) {
-        return sessionId != 0 && Arrays.equals(passwd, generatePasswd(sessionId));
+        return sessionId != 0 && MessageDigest.isEqual(passwd, generatePasswd(sessionId));
     }
 
     long createSession(ServerCnxn cnxn, byte[] passwd, int timeout) {
