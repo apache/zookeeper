@@ -1279,7 +1279,7 @@ WriteToTxnLog(i) == IF \/ connectInfo[i].syncMode = DIFF
 
 \* See lastProposed in Leader for details.
 LastProposed(i) == IF Len(history[i]) = 0 THEN [ index |-> 0, 
-                                                 zxid  |-> <<0, 0>> ]
+                                                 zxid  |-> <<Maximum({tempMaxEpoch[i], 0}), 0>> ]
                    ELSE
                    LET lastIndex == Len(history[i])
                        entry     == history[i][lastIndex]
