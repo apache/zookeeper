@@ -138,6 +138,13 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
         }
     }
 
+    @Override
+    public void shutdown() {
+        if (learnerLogin != null) {
+            learnerLogin.shutdown();
+        }
+    }
+
     private void checkAuthStatus(Socket sock, QuorumAuth.Status qpStatus) throws SaslException {
         if (qpStatus == QuorumAuth.Status.SUCCESS) {
             LOG.info(

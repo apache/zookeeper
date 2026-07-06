@@ -147,6 +147,13 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
         }
     }
 
+    @Override
+    public void shutdown() {
+        if (serverLogin != null) {
+            serverLogin.shutdown();
+        }
+    }
+
     private byte[] receive(DataInputStream din) throws IOException {
         QuorumAuthPacket authPacket = new QuorumAuthPacket();
         BinaryInputArchive bia = BinaryInputArchive.getArchive(din);
