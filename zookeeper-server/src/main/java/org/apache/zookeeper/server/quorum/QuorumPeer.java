@@ -1650,6 +1650,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         } catch (IOException ie) {
             LOG.warn("Error closing logs ", ie);
         }
+        if (authServer != null) {
+            authServer.shutdown();
+        }
+        if (authLearner != null) {
+            authLearner.shutdown();
+        }
     }
 
     /**
