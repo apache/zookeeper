@@ -58,6 +58,7 @@ import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.Leader.PureRequestProposal;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -84,6 +85,13 @@ public class ZKDatabase {
     protected long minCommittedLog, maxCommittedLog;
 
     private final boolean allowDiscontinuousProposals = Boolean.getBoolean("zookeeper.test.allowDiscontinuousProposals");
+
+    /** How the zxids in this database are split into epoch and counter; set by the owning QuorumPeer. */
+    private volatile ZxidLayoutState zxidLayoutState = ZxidLayoutState.legacyOnly();
+
+    public void setZxidLayoutState(ZxidLayoutState zxidLayoutState) {
+        this.zxidLayoutState = zxidLayoutState;
+    }
 
     /**
      * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
@@ -332,7 +340,8 @@ public class ZKDatabase {
                 return;
             } else if (!allowDiscontinuousProposals
                     && request.zxid != maxCommittedLog + 1
-                    && ZxidUtils.getEpochFromZxid(request.zxid) <= ZxidUtils.getEpochFromZxid(maxCommittedLog)) {
+                    && zxidLayoutState.layoutFor(request.zxid).getEpochFromZxid(request.zxid)
+                            <= zxidLayoutState.layoutFor(maxCommittedLog).getEpochFromZxid(maxCommittedLog)) {
                 String msg = String.format(
                     "Committed proposal cached out of order: 0x%s is not the next proposal of 0x%s",
                     ZxidUtils.zxidToString(request.zxid),
