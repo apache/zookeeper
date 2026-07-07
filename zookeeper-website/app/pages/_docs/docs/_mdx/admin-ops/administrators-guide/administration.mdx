@@ -163,17 +163,18 @@ Since 3.6.0 ZooKeeper binary package bundles an integration with [Prometheus.io]
   If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
   The default is true.
 - _metricsProvider.numWorkerThreads_ :
-  **New in 3.7.1:**
+  **New in 3.7.1**, **deprecated in 3.10.0:**
   Number of worker threads for reporting Prometheus summary metrics.
-  Default value is 1.
-  If the number is less than 1, the main thread will be used.
+  This property is ignored since ZOOKEEPER-4741; the DataSketches-based summary
+  implementation is lock-free per-thread and no longer requires a worker pool.
 - _metricsProvider.maxQueueSize_ :
-  **New in 3.7.1:**
+  **New in 3.7.1**, **deprecated in 3.10.0:**
   The max queue size for Prometheus summary metrics reporting task.
-  Default value is 10000.
+  This property is ignored since ZOOKEEPER-4741; the DataSketches-based summary
+  implementation does not use a bounded worker queue.
 - _metricsProvider.workerShutdownTimeoutMs_ :
   **New in 3.7.1:**
-  The timeout in ms for Prometheus worker threads shutdown.
+  The timeout in ms for shutting down the Prometheus summary rotation executor.
   Default value is 1000ms.
 - _metricsProvider.ssl.keyStore.location_ and _metricsProvider.ssl.keyStore.password_ :
   **New in 3.10.0:**
@@ -207,3 +208,9 @@ Since 3.6.0 ZooKeeper binary package bundles an integration with [Prometheus.io]
   **New in 3.10.0:**
   The enabled protocols to be used in TLS negotiation for PrometheusMetricsProvider.
   Default value is the Jetty default.
+- _metricsProvider.prometheusMetricsSummaryRotateIntervalSeconds_ :
+  **New in 3.10.0:**
+  Interval in seconds for rotating per-thread DataSketches into the aggregated
+  result exposed via `/metrics`. Quantiles from observations in the current
+  interval become visible after the next rotation.
+  Default value is 60 seconds.
