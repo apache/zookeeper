@@ -34,6 +34,7 @@
   <properties>
       <prometheus.version>1.3.10</prometheus.version>
       <jetty.version>9.4.58.v20250814</jetty.version>
+      <datasketches.version>7.0.1</datasketches.version>
   </properties>
   <dependencies>
     <dependency>
@@ -74,6 +75,11 @@
       <groupId>io.prometheus</groupId>
       <artifactId>prometheus-metrics-config</artifactId>
       <version>${prometheus.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.datasketches</groupId>
+      <artifactId>datasketches-java</artifactId>
+      <version>${datasketches.version}</version>
     </dependency>
     <dependency>
         <groupId>org.eclipse.jetty</groupId>

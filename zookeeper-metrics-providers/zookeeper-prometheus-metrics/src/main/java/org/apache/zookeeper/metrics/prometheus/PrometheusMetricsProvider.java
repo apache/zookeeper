@@ -31,6 +31,11 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -81,6 +86,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     private Server server;
     private int numWorkerThreads;
+    private long workerShutdownTimeoutMs = 1000;
+    private int summaryRotateSeconds = 60;
+    private ScheduledExecutorService summaryRotateExecutor;
     private String host;
 
     // SSL Configuration fields
@@ -101,7 +109,27 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public static final String HTTP_PORT = "httpPort";
     public static final String EXPORT_JVM_INFO = "exportJvmInfo";
     public static final String HTTPS_PORT = "httpsPort";
+    /**
+     * @deprecated DataSketches-based summaries are lock-free per-thread and no longer require
+     *     worker threads. This property is ignored. See ZOOKEEPER-4741.
+     */
+    @Deprecated
     public static final String NUM_WORKER_THREADS = "numWorkerThreads";
+    /**
+     * @deprecated DataSketches-based summaries no longer use a bounded worker queue. This property
+     *     is ignored. See ZOOKEEPER-4741.
+     */
+    @Deprecated
+    public static final String MAX_QUEUE_SIZE = "maxQueueSize";
+    /** Timeout in ms for shutting down the summary rotation executor. */
+    public static final String WORKER_SHUTDOWN_TIMEOUT_MS = "workerShutdownTimeoutMs";
+    /**
+     * Interval in seconds for rotating per-thread DataSketches into the aggregated result that is
+     * exposed via {@code /metrics}. Quantiles from observations in the current interval become
+     * visible after the next rotation. Default is 60 seconds.
+     */
+    public static final String PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS =
+            "prometheusMetricsSummaryRotateIntervalSeconds";
     public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
     public static final String SSL_KEYSTORE_PASSWORD = "ssl.keyStore.password";
     public static final String SSL_KEYSTORE_TYPE = "ssl.keyStore.type";
@@ -144,6 +172,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         this.httpsPort = Integer.parseInt(configuration.getProperty(HTTPS_PORT, "-1"));
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty(EXPORT_JVM_INFO, "true"));
         this.numWorkerThreads = Integer.parseInt(configuration.getProperty(NUM_WORKER_THREADS, "10"));
+        if (configuration.containsKey(NUM_WORKER_THREADS) || configuration.containsKey(MAX_QUEUE_SIZE)) {
+            LOG.warn("The configuration {} and {} are deprecated and ignored. See ZOOKEEPER-4741.",
+                    NUM_WORKER_THREADS, MAX_QUEUE_SIZE);
+        }
+        this.workerShutdownTimeoutMs =
+                Long.parseLong(configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
+        this.summaryRotateSeconds =
+                Integer.parseInt(configuration.getProperty(PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS, "60"));
 
         // If httpsPort is specified, parse all SSL properties
         if (this.httpsPort != -1) {
@@ -244,11 +280,54 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             LOG.info("Prometheus metrics provider with Jetty started. HTTP port: {}, HTTPS port: {}",
                     httpPort != -1 ? httpPort : "disabled", httpsPort != -1 ? httpsPort : "disabled");
 
+            startSummaryRotateTask();
         } catch (Exception e) {
             LOG.error("Failed to start Prometheus Jetty server", e);
             // Ensure server is stopped on startup failure
             stop();
             throw new MetricsProviderLifeCycleException("Failed to start Prometheus Jetty server", e);
+        }
+    }
+
+    private void startSummaryRotateTask() {
+        summaryRotateExecutor = new ScheduledThreadPoolExecutor(1, new SummaryRotateThreadFactory());
+        summaryRotateExecutor.scheduleAtFixedRate(() -> {
+            try {
+                rootContext.rotateAllSummaries();
+            } catch (Exception err) {
+                LOG.error("Cannot rotate Prometheus summaries", err);
+            }
+        }, summaryRotateSeconds, summaryRotateSeconds, TimeUnit.SECONDS);
+    }
+
+    private void shutdownSummaryRotateExecutor() {
+        if (summaryRotateExecutor == null) {
+            return;
+        }
+        LOG.info("Shutting down Prometheus summary rotate executor with timeout {}ms", workerShutdownTimeoutMs);
+        summaryRotateExecutor.shutdown();
+        try {
+            if (!summaryRotateExecutor.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
+                LOG.warn("Summary rotate executor did not terminate in {}ms; forcing shutdown",
+                        workerShutdownTimeoutMs);
+                summaryRotateExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            summaryRotateExecutor.shutdownNow();
+        } finally {
+            summaryRotateExecutor = null;
+        }
+    }
+
+    private static class SummaryRotateThreadFactory implements ThreadFactory {
+        private static final AtomicInteger counter = new AtomicInteger(1);
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            Thread thread = new Thread(runnable, "PrometheusSummaryRotate-" + counter.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
         }
     }
 
@@ -335,6 +414,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     @Override
     public void stop() {
+        shutdownSummaryRotateExecutor();
         if (server != null) {
             try {
                 LOG.info("Stopping Prometheus Jetty server.");
@@ -482,16 +562,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             unregisterGauge(name);
         }
 
-        private io.prometheus.metrics.core.metrics.Summary createPrometheusSummary(String name, DetailLevel detailLevel,
-                String... labelNames) {
-            io.prometheus.metrics.core.metrics.Summary.Builder builder = io.prometheus.metrics.core.metrics.Summary
-                    .builder().name(name).help(name + " summary").quantile(0.5, 0.05); // Median
-
+        private SketchesSummary createSketchesSummary(String name, DetailLevel detailLevel, String... labelNames) {
+            SketchesSummary.Builder builder = SketchesSummary.build(name, name + " summary")
+                    .quantile(0.5); // Median
             if (detailLevel == DetailLevel.ADVANCED) {
-                builder.quantile(0.95, 0.05)   // 95th percentile
-                        .quantile(0.99, 0.05); // 99th percentile
+                builder.quantile(0.95).quantile(0.99); // 95th and 99th percentile
             }
-
             if (labelNames.length > 0) {
                 builder.labelNames(labelNames);
             }
@@ -508,9 +584,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     throw new IllegalArgumentException(
                             "Already registered a summary as " + key + " with a different detail level");
                 }
-                io.prometheus.metrics.core.metrics.Summary prometheusSummary = createPrometheusSummary(key,
-                        detailLevel);
-                return new PrometheusSummaryWrapper(prometheusSummary);
+                return new PrometheusSummaryWrapper(createSketchesSummary(key, detailLevel), key);
             });
         }
 
@@ -524,10 +598,15 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     throw new IllegalArgumentException(
                             "Already registered a summary set as " + key + " with a different detail level");
                 }
-                io.prometheus.metrics.core.metrics.Summary prometheusSummary = createPrometheusSummary(key, detailLevel,
-                        LABEL);
-                return new PrometheusLabelledSummaryWrapper(prometheusSummary);
+                return new PrometheusLabelledSummaryWrapper(createSketchesSummary(key, detailLevel, LABEL), key);
             });
+        }
+
+        void rotateAllSummaries() {
+            basicSummaries.values().forEach(s -> s.inner.rotate());
+            advancedSummaries.values().forEach(s -> s.inner.rotate());
+            basicSummarySets.values().forEach(s -> s.inner.rotate());
+            advancedSummarySets.values().forEach(s -> s.inner.rotate());
         }
     }
 
@@ -578,29 +657,43 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
-    private static class PrometheusSummaryWrapper implements Summary {
-        private final io.prometheus.metrics.core.metrics.Summary prometheusSummary;
+    static class PrometheusSummaryWrapper implements Summary {
+        // VisibleForTesting
+        final SketchesSummary inner;
+        private final String name;
 
-        public PrometheusSummaryWrapper(io.prometheus.metrics.core.metrics.Summary prometheusSummary) {
-            this.prometheusSummary = prometheusSummary;
+        PrometheusSummaryWrapper(SketchesSummary inner, String name) {
+            this.inner = inner;
+            this.name = name;
         }
 
         @Override
         public void add(long value) {
-            this.prometheusSummary.observe(value);
+            try {
+                inner.observe(value);
+            } catch (IllegalArgumentException err) {
+                LOG.error("invalid delta {} for metric {}", value, name, err);
+            }
         }
     }
 
-    private static class PrometheusLabelledSummaryWrapper implements SummarySet {
-        private final io.prometheus.metrics.core.metrics.Summary prometheusSummary;
+    static class PrometheusLabelledSummaryWrapper implements SummarySet {
+        // VisibleForTesting
+        final SketchesSummary inner;
+        private final String name;
 
-        public PrometheusLabelledSummaryWrapper(io.prometheus.metrics.core.metrics.Summary prometheusSummary) {
-            this.prometheusSummary = prometheusSummary;
+        PrometheusLabelledSummaryWrapper(SketchesSummary inner, String name) {
+            this.inner = inner;
+            this.name = name;
         }
 
         @Override
         public void add(String key, long value) {
-            this.prometheusSummary.labelValues(key).observe(value);
+            try {
+                inner.labels(key).observe(value);
+            } catch (IllegalArgumentException err) {
+                LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
+            }
         }
     }
 }
