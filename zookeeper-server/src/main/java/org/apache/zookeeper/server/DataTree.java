@@ -1489,9 +1489,9 @@ public class DataTree {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             if (node == null) {
-                watcher.process(new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path));
+                processWatchEvent(watcher, new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path), null);
             } else if (node.stat.getMzxid() > relativeZxid) {
-                watcher.process(new WatchedEvent(EventType.NodeDataChanged, KeeperState.SyncConnected, path));
+                processWatchEvent(watcher, new WatchedEvent(EventType.NodeDataChanged, KeeperState.SyncConnected, path), new ArrayList<>(getACL(node)));
             } else {
                 this.dataWatches.addWatch(path, watcher);
             }
@@ -1499,7 +1499,7 @@ public class DataTree {
         for (String path : existWatches) {
             DataNode node = getNode(path);
             if (node != null) {
-                watcher.process(new WatchedEvent(EventType.NodeCreated, KeeperState.SyncConnected, path));
+                processWatchEvent(watcher, new WatchedEvent(EventType.NodeCreated, KeeperState.SyncConnected, path), new ArrayList<>(getACL(node)));
             } else {
                 this.dataWatches.addWatch(path, watcher);
             }
@@ -1507,9 +1507,9 @@ public class DataTree {
         for (String path : childWatches) {
             DataNode node = getNode(path);
             if (node == null) {
-                watcher.process(new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path));
+                processWatchEvent(watcher, new WatchedEvent(EventType.NodeDeleted, KeeperState.SyncConnected, path), null);
             } else if (node.stat.getPzxid() > relativeZxid) {
-                watcher.process(new WatchedEvent(EventType.NodeChildrenChanged, KeeperState.SyncConnected, path));
+                processWatchEvent(watcher, new WatchedEvent(EventType.NodeChildrenChanged, KeeperState.SyncConnected, path), new ArrayList<>(getACL(node)));
             } else {
                 this.childWatches.addWatch(path, watcher);
             }
@@ -1520,6 +1520,18 @@ public class DataTree {
         }
         for (String path : persistentRecursiveWatches) {
             this.dataWatches.addWatch(path, watcher, WatcherMode.PERSISTENT_RECURSIVE);
+        }
+    }
+
+    /**
+     * Route replayed events through the ACL-aware overload so they get the same
+     * READ check as WatchManager.triggerWatch; acl is null for a deleted node.
+     */
+    private void processWatchEvent(Watcher watcher, WatchedEvent event, List<ACL> acl) {
+        if (watcher instanceof ServerWatcher) {
+            ((ServerWatcher) watcher).process(event, acl);
+        } else {
+            watcher.process(event);
         }
     }
 
