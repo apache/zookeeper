@@ -44,6 +44,15 @@ function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv) {
   }
 }
 
+export async function pruneLandingRootDocsImages(
+  buildClientDir = BUILD_CLIENT_DIR
+) {
+  await rm(join(buildClientDir, "docs-images"), {
+    recursive: true,
+    force: true
+  });
+}
+
 // Builds the live site as two independent Vite builds that get merged for local
 // serving (vite preview / e2e) and for publishing:
 //   1. Current docs (base /doc/r<CURRENT>/) -> build/doc/r<CURRENT>/. Built first
@@ -68,6 +77,7 @@ export async function main() {
     ...process.env,
     [DOCS_BUILD_TARGET_ENV]: "landing"
   });
+  await pruneLandingRootDocsImages();
 
   const mergedDocsDir = join(BUILD_CLIENT_DIR, "doc", `r${CURRENT_VERSION}`);
   await rm(mergedDocsDir, { recursive: true, force: true });

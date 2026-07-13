@@ -16,8 +16,7 @@
 // limitations under the License.
 //
 
-import { test, expect } from "@playwright/test";
-import { DOCS_ROOT } from "./constants";
+import { test, expect, type Page } from "@playwright/test";
 import {
   getReleasedDocUrl,
   getReleasedDocVersions
@@ -25,33 +24,41 @@ import {
 
 const EXPECTED_VERSIONS = getReleasedDocVersions();
 
-test.describe("Older Docs Picker – sidebar", () => {
+async function openOlderDocsMenu(page: Page) {
+  await page
+    .getByRole("button", { name: /^Documentation$/i })
+    .first()
+    .click();
+
+  const olderDocsTrigger = page.getByRole("menuitem", { name: /^Older docs$/ });
+  await expect(olderDocsTrigger).toBeVisible();
+  await olderDocsTrigger.focus();
+  await page.keyboard.press("ArrowRight");
+
+  const list = page.getByRole("listbox");
+  await expect(list).toBeVisible();
+  return list;
+}
+
+test.describe("Older Docs Picker - landing page navigation", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(DOCS_ROOT);
-    await page.waitForLoadState("networkidle");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
   });
 
-  test("trigger button is visible in the docs sidebar", async ({ page }) => {
-    const trigger = page.getByRole("button", { name: /older docs/i });
-    await expect(trigger).toBeVisible();
+  test("trigger is visible in the Documentation dropdown", async ({ page }) => {
+    await page
+      .getByRole("button", { name: /^Documentation$/i })
+      .first()
+      .click();
+
+    await expect(
+      page.getByRole("menuitem", { name: /^Older docs$/ })
+    ).toBeVisible();
   });
 
-  test("popover is closed by default", async ({ page }) => {
-    await expect(page.getByRole("combobox")).not.toBeVisible();
-  });
-
-  test("clicking the trigger opens a popover with a search input", async ({
-    page
-  }) => {
-    await page.getByRole("button", { name: /older docs/i }).click();
-    await expect(page.getByRole("combobox")).toBeVisible();
-  });
-
-  test("popover lists released doc versions", async ({ page }) => {
-    await page.getByRole("button", { name: /older docs/i }).click();
-
-    const list = page.getByRole("listbox");
-    await expect(list).toBeVisible();
+  test("submenu lists released doc versions", async ({ page }) => {
+    const list = await openOlderDocsMenu(page);
 
     const options = list.getByRole("option");
     await expect(options.first()).toBeVisible();
@@ -59,9 +66,8 @@ test.describe("Older Docs Picker – sidebar", () => {
   });
 
   test("versions are displayed in descending order", async ({ page }) => {
-    await page.getByRole("button", { name: /older docs/i }).click();
-
-    const options = page.getByRole("option");
+    const list = await openOlderDocsMenu(page);
+    const options = list.getByRole("option");
     await expect(options.first()).toBeVisible();
 
     const texts = await options.allTextContents();
@@ -71,9 +77,9 @@ test.describe("Older Docs Picker – sidebar", () => {
   test("each version item links to the correct archive path", async ({
     page
   }) => {
-    await page.getByRole("button", { name: /older docs/i }).click();
+    const list = await openOlderDocsMenu(page);
+    const options = list.getByRole("option");
 
-    const options = page.getByRole("option");
     await expect(options).toHaveCount(EXPECTED_VERSIONS.length);
     for (let i = 0; i < EXPECTED_VERSIONS.length; i++) {
       const href = await options.nth(i).getAttribute("href");
@@ -84,7 +90,7 @@ test.describe("Older Docs Picker – sidebar", () => {
   test("typing in the search box filters the version list", async ({
     page
   }) => {
-    await page.getByRole("button", { name: /older docs/i }).click();
+    await openOlderDocsMenu(page);
 
     const input = page.getByRole("combobox");
     await expect(input).toBeVisible();
@@ -107,7 +113,6 @@ test.describe("Older Docs Picker – sidebar", () => {
     expect(totalBefore).toBe(EXPECTED_VERSIONS.length);
     expect(totalAfter).toBe(expectedMatches);
 
-    // Every remaining option must contain the search term
     for (let i = 0; i < totalAfter; i++) {
       const text = await filtered.nth(i).textContent();
       expect(text).toContain(prefix);
@@ -117,29 +122,12 @@ test.describe("Older Docs Picker – sidebar", () => {
   test("searching for a non-existent version shows 'No versions found'", async ({
     page
   }) => {
-    await page.getByRole("button", { name: /older docs/i }).click();
+    await openOlderDocsMenu(page);
 
     const input = page.getByRole("combobox");
     await input.fill("99.99.99");
     await page.waitForTimeout(200);
 
     await expect(page.getByText(/no versions found/i)).toBeVisible();
-  });
-
-  test("search is cleared when the popover is reopened", async ({ page }) => {
-    const trigger = page.getByRole("button", { name: /older docs/i });
-
-    await trigger.click();
-    const input = page.getByRole("combobox");
-    await input.fill("anything");
-
-    // Close the popover by pressing Escape
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("combobox")).not.toBeVisible();
-
-    // Reopen
-    await trigger.click();
-    const newInput = page.getByRole("combobox");
-    await expect(newInput).toHaveValue("");
   });
 });

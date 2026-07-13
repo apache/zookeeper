@@ -173,11 +173,7 @@ export function DocsPage({ loaderData }: { loaderData: DocsLoaderData }) {
   const layoutOptions = baseOptions();
 
   return (
-    <DocsLayout
-      {...layoutOptions}
-      tree={tree as PageTree.Root}
-      sidebar={{ banner: <OlderDocsPicker /> }}
-    >
+    <DocsLayout {...layoutOptions} tree={tree as PageTree.Root}>
       <Content tree={tree as PageTree.Root} />
     </DocsLayout>
   );
