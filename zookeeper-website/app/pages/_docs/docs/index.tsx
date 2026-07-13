@@ -34,7 +34,7 @@ import { Card, Cards } from "fumadocs-ui/components/card";
 import { Callout } from "fumadocs-ui/components/callout";
 import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Link } from "@/components/link";
-import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
+//import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import type { MDXComponents } from "mdx/types";
 import { getDocsBasePath, resolveDocsHref } from "@/lib/docs-paths";
 import { SITE_URL } from "@/lib/site";
@@ -176,7 +176,7 @@ export function DocsPage({ loaderData }: { loaderData: DocsLoaderData }) {
     <DocsLayout
       {...layoutOptions}
       tree={tree as PageTree.Root}
-      sidebar={{ banner: <OlderDocsPicker /> }}
+  //    sidebar={{ banner: <OlderDocsPicker /> }}
     >
       <Content tree={tree as PageTree.Root} />
     </DocsLayout>

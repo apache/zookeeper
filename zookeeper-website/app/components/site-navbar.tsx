@@ -218,7 +218,7 @@ function DocsMenu() {
           )
         )}
         <DropdownMenuSeparator />
-        <OlderDocsSubMenu />
+        
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -528,7 +528,7 @@ function NoJSDocsMenu() {
             </details>
           )
         )}
-        <NoJSOlderDocsSubMenu />
+        
       </div>
     </details>
   );
