@@ -51,6 +51,7 @@ import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -645,6 +646,34 @@ public class DataTreeTest extends ZKTestCase {
         assertThrows(NodeExistsException.class, () ->
             dt.createNode("/the_parent", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 1, 1, 0));
         dt.createNode("/the_parent/the_child", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 2, 2, 2);
+    }
+
+    /**
+     * Applying a create txn to an existing node (routine when txns overlap
+     * with the state restored from a fuzzy snapshot, e.g. on DIFF sync) must
+     * keep the ACL reference counts exact, so that unused ACLs are garbage
+     * collected and the cache does not grow until the next reload.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testCreateTxnReplayOnExistingNodeKeepsAclRefCountExact() throws Exception {
+        DataTree dt = new DataTree();
+        int baseline = dt.aclCacheSize();
+
+        TxnHeader hdr = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
+        Record txn = new CreateTxn("/x", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
+        dt.processTxn(hdr, txn);
+        // Duplicate apply of the same create txn hits the node-exists branch.
+        dt.processTxn(hdr, txn);
+        assertEquals(baseline + 1, dt.aclCacheSize());
+
+        TxnHeader deleteHdr = new TxnHeader(1, 2, 3, 2, ZooDefs.OpCode.delete);
+        Record deleteTxn = new DeleteTxn("/x");
+        dt.processTxn(deleteHdr, deleteTxn);
+        // The ACL is no longer referenced by any node, so it must have been
+        // garbage collected.
+        assertEquals(baseline, dt.aclCacheSize());
     }
 
     private DataTree buildDataTreeForTest() {
