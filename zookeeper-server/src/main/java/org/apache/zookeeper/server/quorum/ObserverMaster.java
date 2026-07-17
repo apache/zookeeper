@@ -44,6 +44,7 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -219,8 +220,13 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
     }
 
     @Override
+    public ZxidLayoutState getZxidLayoutState() {
+        return self.getZxidLayoutState();
+    }
+
+    @Override
     public void processAck(long sid, long zxid, SocketAddress localSocketAddress) {
-        if ((zxid & 0xffffffffL) == 0) {
+        if (self.getZxidLayoutState().current().getCounterFromZxid(zxid) == 0) {
             /*
              * We no longer process NEWLEADER ack by this method. However,
              * the learner sends ack back to the leader after it gets UPTODATE
