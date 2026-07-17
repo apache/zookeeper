@@ -34,7 +34,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Election;
+import org.apache.zookeeper.server.quorum.Follower;
+import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
+import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -65,7 +71,7 @@ public class QuorumUtil {
 
     }
 
-    private final Map<Long, QuorumServer> peersView = new HashMap<>();
+    protected final Map<Long, QuorumServer> peersView = new HashMap<>();
 
     private final Map<Integer, PeerStruct> peers = new HashMap<>();
 
@@ -75,15 +81,15 @@ public class QuorumUtil {
 
     private String hostPort;
 
-    private int tickTime;
+    protected int tickTime;
 
-    private int initLimit;
+    protected int initLimit;
 
-    private int syncLimit;
+    protected int syncLimit;
 
-    private int connectToLearnerMasterLimit;
+    protected int connectToLearnerMasterLimit;
 
-    private int electionAlg;
+    protected int electionAlg;
 
     private boolean localSessionEnabled;
 
@@ -120,7 +126,7 @@ public class QuorumUtil {
             for (int i = 1; i <= ALL; ++i) {
                 PeerStruct ps = peers.get(i);
                 LOG.info("Creating QuorumPeer {}; public port {}", i, ps.clientPort);
-                ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+                ps.peer = newQuorumPeer(ps);
                 assertEquals(ps.clientPort, ps.peer.getClientPort());
             }
         } catch (Exception e) {
@@ -141,6 +147,28 @@ public class QuorumUtil {
 
     public void enableLocalSession(boolean localSessionEnabled) {
         this.localSessionEnabled = localSessionEnabled;
+    }
+
+    protected QuorumPeer newQuorumPeer(PeerStruct ps) throws IOException {
+        return new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit) {
+            @Override
+            protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
+                return QuorumUtil.this.makeLeader(this, logFactory);
+            }
+
+            @Override
+            protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
+                return QuorumUtil.this.makeFollower(this, logFactory);
+            }
+        };
+    }
+
+    protected Leader makeLeader(QuorumPeer self, FileTxnSnapLog logFactory) throws IOException, X509Exception {
+        return new Leader(self, new LeaderZooKeeperServer(logFactory, self, self.getZkDb()));
+    }
+
+    protected Follower makeFollower(QuorumPeer self, FileTxnSnapLog logFactory) throws IOException {
+        return new Follower(self, new FollowerZooKeeperServer(logFactory, self, self.getZkDb()));
     }
 
     public void startAll() throws IOException {
@@ -206,7 +234,7 @@ public class QuorumUtil {
     public void start(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer {}; public port {}", ps.id, ps.clientPort);
-        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        ps.peer = newQuorumPeer(ps);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
@@ -225,7 +253,7 @@ public class QuorumUtil {
     public void startThenShutdown(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer {}; public port {}", ps.id, ps.clientPort);
-        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        ps.peer = newQuorumPeer(ps);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
