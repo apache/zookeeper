@@ -31,6 +31,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -54,7 +55,9 @@ import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.SessionTracker;
 import org.apache.zookeeper.server.TxnLogEntry;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -579,6 +582,7 @@ public class Learner {
         boolean snapshotNeeded = true;
         boolean syncSnapshot = false;
         readPacket(qp);
+        boolean diffSync = qp.getType() == Leader.DIFF;
         Deque<Long> packetsCommitted = new ArrayDeque<>();
         Deque<PacketInFlight> packetsNotLogged = new ArrayDeque<>();
 
@@ -633,6 +637,10 @@ public class Learner {
             }
             zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
             zk.createSessionTracker();
+            // DIFF keeps the local tree; clear ephemerals without sessions before applying new transactions.
+            if (diffSync) {
+                purgeOrphanedEphemerals();
+            }
 
             // TODO: Ideally, this should be lastProcessZxid(a.k.a. QuorumPacket::zxid from above), but currently
             // LearnerHandler does not guarantee this. So, let's be conservative and keep it unchange for now.
@@ -868,6 +876,43 @@ public class Learner {
         } else {
             // New server type need to handle in-flight packets
             throw new UnsupportedOperationException("Unknown server type");
+        }
+
+    }
+
+    void purgeOrphanedEphemerals() {
+        if (zk == null) {
+            return;
+        }
+        SessionTracker sessionTracker = zk.getSessionTracker();
+        if (sessionTracker == null) {
+            return;
+        }
+        ZKDatabase zkDatabase = zk.getZKDatabase();
+        if (zkDatabase == null) {
+            return;
+        }
+
+        Set<Long> globalSessions = sessionTracker.globalSessions();
+        Set<Long> localSessions = sessionTracker.localSessions();
+        Set<Long> sessionsWithEphemerals = new HashSet<>(zkDatabase.getSessions());
+        if (sessionsWithEphemerals.isEmpty()) {
+            return;
+        }
+
+        long zxid = zkDatabase.getDataTreeLastProcessedZxid();
+        for (Long sessionId : sessionsWithEphemerals) {
+            if (globalSessions.contains(sessionId)
+                || localSessions.contains(sessionId)
+                || (sessionTracker instanceof UpgradeableSessionTracker
+                    && ((UpgradeableSessionTracker) sessionTracker).isUpgradingSession(sessionId))) {
+                continue;
+            }
+            LOG.warn(
+                "Removing ephemeral nodes for unknown session 0x{} after DIFF sync",
+                Long.toHexString(sessionId));
+            zkDatabase.killSession(sessionId, zxid);
+            sessionTracker.removeSession(sessionId);
         }
     }
 
