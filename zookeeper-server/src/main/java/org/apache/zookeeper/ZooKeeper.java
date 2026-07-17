@@ -1537,7 +1537,7 @@ public class ZooKeeper implements AutoCloseable {
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        setCreateHeader(createMode, h);
+        setCreateHeader(createMode, h, stat != null);
         Create2Response response = new Create2Response();
         Record record = makeCreateRecord(createMode, serverPath, data, acl, ttl);
         ReplyHeader r = cnxn.submitRequest(h, record, response, null);
@@ -1550,11 +1550,15 @@ public class ZooKeeper implements AutoCloseable {
         return chroot.strip(response.getPath());
     }
 
-    private void setCreateHeader(CreateMode createMode, RequestHeader h) {
+    private void setCreateHeader(CreateMode createMode, RequestHeader h, boolean requestStat) {
         if (createMode.isTTL()) {
             h.setType(ZooDefs.OpCode.createTTL);
+        } else if (createMode.isContainer()) {
+            h.setType(ZooDefs.OpCode.createContainer);
+        } else if (requestStat) {
+            h.setType(ZooDefs.OpCode.create2);
         } else {
-            h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
+            h.setType(ZooDefs.OpCode.create);
         }
     }
 
@@ -1646,7 +1650,7 @@ public class ZooKeeper implements AutoCloseable {
         cb = chroot.interceptCallback(cb);
 
         RequestHeader h = new RequestHeader();
-        setCreateHeader(createMode, h);
+        setCreateHeader(createMode, h, false);
         ReplyHeader r = new ReplyHeader();
         Create2Response response = new Create2Response();
         Record record = makeCreateRecord(createMode, serverPath, data, acl, ttl);
