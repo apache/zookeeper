@@ -31,9 +31,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.RequestRecord;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -48,6 +50,8 @@ public class SyncRequestProcessorMetricTest {
 
     @BeforeEach
     public void setup() throws Exception {
+        ServerMetrics.metricsProviderInitialized(new DefaultMetricsProvider());
+
         ZKDatabase db = mock(ZKDatabase.class);
         when(db.append(any(Request.class))).thenReturn(true);
         doAnswer(invocation -> {
