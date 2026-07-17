@@ -41,9 +41,9 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
-import io.netty.util.concurrent.DefaultEventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -107,7 +107,10 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private final ServerBootstrap bootstrap;
     private Channel parentChannel;
-    private final ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns", new DefaultEventExecutor());
+    // GlobalEventExecutor's shared thread starts on demand and stops itself when idle,
+    // so unlike a dedicated DefaultEventExecutor it needs no explicit shutdown to avoid
+    // leaking a non-daemon thread on factory shutdown (ZOOKEEPER-5044).
+    private final ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns", GlobalEventExecutor.INSTANCE);
     private final Map<InetAddress, AtomicInteger> ipMap = new ConcurrentHashMap<>();
     private InetSocketAddress localAddress;
     private int maxClientCnxns = 60;
