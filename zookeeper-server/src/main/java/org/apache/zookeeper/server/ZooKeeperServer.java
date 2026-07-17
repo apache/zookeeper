@@ -935,7 +935,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     // This will fast-forward the database to the last recorded transaction
                     zkDb.fastForwardDataBase();
                 } catch (IOException e) {
-                    LOG.error("Error updating DB", e);
+                    LOG.error("Failed to update memory database, will clear it to avoid inconsistency", e);
                     fullyShutDown = true;
                 }
             }
