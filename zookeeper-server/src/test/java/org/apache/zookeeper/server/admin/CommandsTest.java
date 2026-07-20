@@ -28,23 +28,34 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;
+import org.apache.zookeeper.server.watch.WatchManager;
+import org.apache.zookeeper.server.watch.WatchManagerFactory;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
 
@@ -312,6 +323,465 @@ public class CommandsTest extends ClientBase {
     @Test
     public void testWatchSummary() throws IOException, InterruptedException {
         testCommand("watch_summary", new Field("num_connections", Integer.class), new Field("num_paths", Integer.class), new Field("num_total_watches", Integer.class));
+    }
+
+    @Test
+    public void testWatchDetailsRegistrationMetadata() {
+        Command command = Commands.getCommand("watch_details");
+
+        assertNotNull(command);
+        assertSame(command, Commands.getCommand("wchd"));
+        assertEquals("watch_details", command.getPrimaryName());
+        assertTrue(Commands.getPrimaryNames().contains("watch_details"));
+        assertNull(command.getAuthRequest());
+    }
+
+    @Test
+    public void testWatchDetailsQueryValidationAndEmptyResponse() {
+        DataTree dataTree = mock(DataTree.class);
+        when(dataTree.getDataWatchRegistrations("/", Collections.emptySet(), 1001))
+            .thenReturn(Collections.emptyList());
+        when(dataTree.getChildWatchRegistrations("/", Collections.emptySet(), 1001))
+            .thenReturn(Collections.emptyList());
+        when(dataTree.getDataWatchRegistrations("/", Collections.emptySet(), 2))
+            .thenReturn(Collections.emptyList());
+        when(dataTree.getChildWatchRegistrations("/", Collections.emptySet(), 2))
+            .thenReturn(Collections.emptyList());
+        ZooKeeperServer zkServer = mockWatchDetailsServer(dataTree, null, null);
+        Commands.WatchDetailsCommand command = new Commands.WatchDetailsCommand();
+
+        assertWatchDetailsBadRequest(command, zkServer, "path", "relative", "Invalid path: relative");
+        assertWatchDetailsBadRequest(command, zkServer, "session_id", "not-a-session", "Invalid session_id: not-a-session");
+        assertWatchDetailsBadRequest(command, zkServer, "client_ip", "   ", "client_ip must not be empty");
+        assertWatchDetailsBadRequest(command, zkServer, "limit", "abc", "limit must be an integer");
+        assertWatchDetailsBadRequest(command, zkServer, "limit", "0", "limit must be between 1 and 1000");
+        assertWatchDetailsBadRequest(command, zkServer, "limit", "1001", "limit must be between 1 and 1000");
+
+        Map<String, String> kwargs = new HashMap<>();
+        kwargs.put("path", "/");
+        kwargs.put("session_id", "0xffffffffffffffff");
+        kwargs.put("client_ip", "127.0.0.1");
+        kwargs.put("limit", "1000");
+        CommandResponse response = command.runGet(zkServer, kwargs);
+
+        assertEquals(HttpServletResponse.SC_OK, response.getStatusCode());
+        assertEquals(7L, response.toMap().get("server_id"));
+        assertEquals(0, response.toMap().get("returned_count"));
+        assertEquals(false, response.toMap().get("truncated"));
+        assertEquals(new ArrayList<>(), response.toMap().get("watches"));
+
+        kwargs.put("limit", "1");
+        assertEquals(HttpServletResponse.SC_OK, command.runGet(zkServer, kwargs).getStatusCode());
+    }
+
+    @Test
+    public void testWatchDetailsDoesNotRequireAuthorization() {
+        ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
+        CommandResponse response = Commands.runGetCommand(
+            "watch_details",
+            zkServer,
+            new HashMap<>(),
+            null,
+            null);
+
+        assertEquals(HttpServletResponse.SC_OK, response.getStatusCode());
+        assertNull(response.getError());
+    }
+
+    @Test
+    public void testWatchDetailsIncludesKindsModesAndConnectionFields() throws Exception {
+        DataTree dataTree = newWatchDetailsDataTree();
+        try {
+            ServerCnxn plain = mockWatchConnection(
+                0x11L,
+                "10.10.1.11",
+                5111,
+                1000L,
+                20000,
+                false,
+                new AtomicBoolean(false));
+            ServerCnxn secure = mockWatchConnection(
+                -1L,
+                "10.10.1.25",
+                51324,
+                1784112305123L,
+                30000,
+                true,
+                new AtomicBoolean(false));
+
+            dataTree.statNode("/", plain);
+            dataTree.getChildren("/", null, secure);
+            dataTree.addWatch("/persistent", secure, ZooDefs.AddWatchModes.persistent);
+            dataTree.addWatch("/recursive", secure, ZooDefs.AddWatchModes.persistentRecursive);
+
+            ZooKeeperServer zkServer = mockWatchDetailsServer(
+                dataTree,
+                Collections.singletonList(plain),
+                Collections.singletonList(secure));
+            Map<String, String> kwargs = new HashMap<>();
+            kwargs.put("limit", "1000");
+            CommandResponse response = new Commands.WatchDetailsCommand().runGet(zkServer, kwargs);
+            List<Map<String, Object>> watches = watchDetails(response);
+
+            assertEquals(4, watches.size());
+            Map<String, Object> plainWatch = findWatch(watches, "/", "0x11", "standard");
+            assertEquals("0x11", plainWatch.get("session_id"));
+            assertEquals("10.10.1.11", plainWatch.get("client_ip"));
+            assertEquals(5111, plainWatch.get("client_port"));
+            assertEquals(Arrays.asList("data"), plainWatch.get("watch_kind"));
+            assertEquals("standard", plainWatch.get("watch_mode"));
+            assertEquals(1000L, plainWatch.get("connection_established_at"));
+            assertEquals(20000, plainWatch.get("session_timeout_ms"));
+            assertEquals(false, plainWatch.get("secure"));
+
+            Map<String, Object> childWatch = findWatch(
+                watches,
+                "/",
+                "0xffffffffffffffff",
+                "standard");
+            assertEquals(Arrays.asList("children"), childWatch.get("watch_kind"));
+
+            Map<String, Object> recursiveWatch = findWatch(
+                watches,
+                "/recursive",
+                "0xffffffffffffffff",
+                "persistent_recursive");
+            assertEquals("0xffffffffffffffff", recursiveWatch.get("session_id"));
+            assertEquals(Arrays.asList("data", "children"), recursiveWatch.get("watch_kind"));
+            assertEquals("persistent_recursive", recursiveWatch.get("watch_mode"));
+            assertEquals(true, recursiveWatch.get("secure"));
+
+            kwargs.put("path", "/persistent");
+            kwargs.put("session_id", "0xffffffffffffffff");
+            kwargs.put("client_ip", "10.10.1.25");
+            watches = watchDetails(new Commands.WatchDetailsCommand().runGet(zkServer, kwargs));
+            assertEquals(1, watches.size());
+            Map<String, Object> persistentWatch = findWatch(
+                watches,
+                "/persistent",
+                "0xffffffffffffffff",
+                "persistent");
+            assertEquals(Arrays.asList("data", "children"), persistentWatch.get("watch_kind"));
+
+            kwargs.remove("path");
+            kwargs.put("session_id", "18446744073709551615");
+            assertEquals(3, watchDetails(new Commands.WatchDetailsCommand().runGet(zkServer, kwargs)).size());
+        } finally {
+            dataTree.shutdownWatcher();
+        }
+    }
+
+    @Test
+    public void testWatchDetailsAggregatesStandardDataAndChildKinds() throws Exception {
+        DataTree dataTree = newWatchDetailsDataTree();
+        try {
+            ServerCnxn connection = mockWatchConnection(
+                0x12L,
+                "10.10.1.12",
+                5112,
+                1200L,
+                20000,
+                false,
+                new AtomicBoolean(false));
+            dataTree.statNode("/", connection);
+            dataTree.getChildren("/", null, connection);
+
+            ZooKeeperServer zkServer = mockWatchDetailsServer(
+                dataTree,
+                Collections.singletonList(connection),
+                null);
+            Map<String, String> kwargs = new HashMap<>();
+            kwargs.put("path", "/");
+            kwargs.put("limit", "1");
+
+            CommandResponse response = new Commands.WatchDetailsCommand().runGet(zkServer, kwargs);
+            List<Map<String, Object>> watches = watchDetails(response);
+
+            assertEquals(1, response.toMap().get("returned_count"));
+            assertEquals(false, response.toMap().get("truncated"));
+            assertEquals(1, watches.size());
+            Map<String, Object> watch = findWatch(watches, "/", "0x12", "standard");
+            assertEquals(Arrays.asList("data", "children"), watch.get("watch_kind"));
+        } finally {
+            dataTree.shutdownWatcher();
+        }
+    }
+
+    @Test
+    public void testWatchDetailsUsesNewestConnectionAndFiltersInactiveWatches() throws Exception {
+        DataTree dataTree = newWatchDetailsDataTree();
+        try {
+            ServerCnxn oldConnection = mockWatchConnection(
+                0x22L,
+                "10.10.2.1",
+                5201,
+                1000L,
+                20000,
+                false,
+                new AtomicBoolean(false));
+            ServerCnxn newConnection = mockWatchConnection(
+                0x22L,
+                "10.10.2.2",
+                5202,
+                2000L,
+                30000,
+                false,
+                new AtomicBoolean(false));
+            AtomicBoolean staleState = new AtomicBoolean(false);
+            ServerCnxn staleConnection = mockWatchConnection(
+                0x33L,
+                "10.10.3.3",
+                5303,
+                3000L,
+                30000,
+                false,
+                staleState);
+            ServerCnxn disconnected = mockWatchConnection(
+                0x44L,
+                "10.10.4.4",
+                5404,
+                4000L,
+                30000,
+                false,
+                new AtomicBoolean(false));
+
+            dataTree.statNode("/", oldConnection);
+            dataTree.addWatch("/stale", staleConnection, ZooDefs.AddWatchModes.persistentRecursive);
+            dataTree.addWatch("/disconnected", disconnected, ZooDefs.AddWatchModes.persistentRecursive);
+            staleState.set(true);
+
+            ZooKeeperServer zkServer = mockWatchDetailsServer(
+                dataTree,
+                Arrays.asList(oldConnection, newConnection, staleConnection),
+                null);
+            Map<String, String> kwargs = new HashMap<>();
+            kwargs.put("session_id", "34");
+            kwargs.put("client_ip", "10.10.2.2");
+            List<Map<String, Object>> watches = watchDetails(
+                new Commands.WatchDetailsCommand().runGet(zkServer, kwargs));
+
+            assertEquals(1, watches.size());
+            Map<String, Object> watch = watches.get(0);
+            assertEquals("10.10.2.2", watch.get("client_ip"));
+            assertEquals(5202, watch.get("client_port"));
+            assertEquals(2000L, watch.get("connection_established_at"));
+            assertEquals(30000, watch.get("session_timeout_ms"));
+
+            watches = watchDetails(new Commands.WatchDetailsCommand().runGet(zkServer, new HashMap<>()));
+            assertEquals(1, watches.size());
+            assertEquals("/", watches.get(0).get("path"));
+        } finally {
+            dataTree.shutdownWatcher();
+        }
+    }
+
+    @Test
+    public void testWatchDetailsLimitAndTruncation() {
+        DataTree dataTree = newWatchDetailsDataTree();
+        try {
+            ServerCnxn connection = mockWatchConnection(
+                0x55L,
+                "10.10.5.5",
+                5505,
+                5000L,
+                30000,
+                false,
+                new AtomicBoolean(false));
+            for (int i = 0; i < 101; i++) {
+                dataTree.addWatch("/watch-" + i, connection, ZooDefs.AddWatchModes.persistentRecursive);
+            }
+            ZooKeeperServer zkServer = mockWatchDetailsServer(
+                dataTree,
+                Collections.singletonList(connection),
+                null);
+
+            CommandResponse response = new Commands.WatchDetailsCommand().runGet(zkServer, new HashMap<>());
+            assertEquals(100, response.toMap().get("returned_count"));
+            assertEquals(true, response.toMap().get("truncated"));
+            assertEquals(100, watchDetails(response).size());
+
+            Map<String, String> kwargs = new HashMap<>();
+            kwargs.put("limit", "1000");
+            response = new Commands.WatchDetailsCommand().runGet(zkServer, kwargs);
+            assertEquals(101, response.toMap().get("returned_count"));
+            assertEquals(false, response.toMap().get("truncated"));
+            assertEquals(101, watchDetails(response).size());
+        } finally {
+            dataTree.shutdownWatcher();
+        }
+    }
+
+    @Test
+    public void testWatchDetailsReturnsNotImplementedForUnsupportedManager() {
+        DataTree dataTree = mock(DataTree.class);
+        when(dataTree.getDataWatchRegistrations("/", Collections.singleton(0x66L), 101))
+            .thenThrow(new UnsupportedOperationException("Watch registration details are not supported"));
+        ServerCnxn connection = mockWatchConnection(
+            0x66L,
+            "10.10.6.6",
+            5606,
+            6000L,
+            30000,
+            false,
+            new AtomicBoolean(false));
+        ZooKeeperServer zkServer = mockWatchDetailsServer(
+            dataTree,
+            Collections.singletonList(connection),
+            null);
+        Map<String, String> kwargs = new HashMap<>();
+        kwargs.put("path", "/");
+
+        CommandResponse response = new Commands.WatchDetailsCommand().runGet(zkServer, kwargs);
+
+        assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, response.getStatusCode());
+        assertEquals("Watch details are not supported by the configured WatchManager", response.getError());
+    }
+
+    @Test
+    public void testWatchDetailsReturnsNotImplementedWithoutActiveConnections() {
+        DataTree dataTree = mock(DataTree.class);
+        when(dataTree.getDataWatchRegistrations(null, Collections.emptySet(), 101))
+            .thenThrow(new UnsupportedOperationException("Watch registration details are not supported"));
+        ZooKeeperServer zkServer = mockWatchDetailsServer(dataTree, null, null);
+
+        CommandResponse response = new Commands.WatchDetailsCommand().runGet(
+            zkServer,
+            Collections.emptyMap());
+
+        assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, response.getStatusCode());
+        assertEquals("Watch details are not supported by the configured WatchManager", response.getError());
+    }
+
+    @Test
+    public void testWatchDetailsReturnsInternalServerErrorForUnexpectedFailure() {
+        DataTree dataTree = mock(DataTree.class);
+        when(dataTree.getDataWatchRegistrations("/", Collections.singleton(0x77L), 101))
+            .thenThrow(new IllegalStateException("unexpected"));
+        ServerCnxn connection = mockWatchConnection(
+            0x77L,
+            "10.10.7.7",
+            5707,
+            7000L,
+            30000,
+            false,
+            new AtomicBoolean(false));
+        ZooKeeperServer zkServer = mockWatchDetailsServer(
+            dataTree,
+            Collections.singletonList(connection),
+            null);
+        Map<String, String> kwargs = new HashMap<>();
+        kwargs.put("path", "/");
+
+        CommandResponse response = new Commands.WatchDetailsCommand().runGet(zkServer, kwargs);
+
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Failed to query watch details", response.getError());
+    }
+
+    @Test
+    public void testWatchDetailsDoesNotTreatConnectionFailureAsUnsupportedManager() {
+        ServerCnxnFactory factory = mock(ServerCnxnFactory.class);
+        when(factory.getConnections()).thenThrow(new UnsupportedOperationException("unexpected"));
+        ZooKeeperServer zkServer = mock(ZooKeeperServer.class);
+        when(zkServer.getServerCnxnFactory()).thenReturn(factory);
+
+        CommandResponse response = new Commands.WatchDetailsCommand().runGet(
+            zkServer,
+            Collections.emptyMap());
+
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Failed to query watch details", response.getError());
+    }
+
+    private void assertWatchDetailsBadRequest(
+            Commands.WatchDetailsCommand command,
+            ZooKeeperServer zkServer,
+            String key,
+            String value,
+            String expectedError) {
+        Map<String, String> kwargs = new HashMap<>();
+        kwargs.put(key, value);
+
+        CommandResponse response = command.runGet(zkServer, kwargs);
+
+        assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatusCode());
+        assertEquals(expectedError, response.getError());
+    }
+
+    private static DataTree newWatchDetailsDataTree() {
+        String property = WatchManagerFactory.ZOOKEEPER_WATCH_MANAGER_NAME;
+        String previous = System.getProperty(property);
+        System.setProperty(property, WatchManager.class.getName());
+        try {
+            return new DataTree();
+        } finally {
+            if (previous == null) {
+                System.clearProperty(property);
+            } else {
+                System.setProperty(property, previous);
+            }
+        }
+    }
+
+    private static ServerCnxn mockWatchConnection(
+            long sessionId,
+            String clientIp,
+            int clientPort,
+            long establishedAt,
+            int sessionTimeout,
+            boolean secure,
+            AtomicBoolean stale) {
+        ServerCnxn connection = mock(ServerCnxn.class);
+        when(connection.getSessionId()).thenReturn(sessionId);
+        when(connection.getRemoteSocketAddress()).thenReturn(new InetSocketAddress(clientIp, clientPort));
+        when(connection.getEstablished()).thenReturn(new Date(establishedAt));
+        when(connection.getSessionTimeout()).thenReturn(sessionTimeout);
+        when(connection.isSecure()).thenReturn(secure);
+        when(connection.isStale()).thenAnswer(invocation -> stale.get());
+        return connection;
+    }
+
+    private static ZooKeeperServer mockWatchDetailsServer(
+            DataTree dataTree,
+            Iterable<ServerCnxn> plainConnections,
+            Iterable<ServerCnxn> secureConnections) {
+        ZooKeeperServer zkServer = mock(ZooKeeperServer.class);
+        ZKDatabase zkDatabase = mock(ZKDatabase.class);
+        when(zkServer.getServerId()).thenReturn(7L);
+        when(zkServer.getZKDatabase()).thenReturn(zkDatabase);
+        when(zkDatabase.getDataTree()).thenReturn(dataTree);
+        if (plainConnections != null) {
+            ServerCnxnFactory factory = mock(ServerCnxnFactory.class);
+            when(factory.getConnections()).thenReturn(plainConnections);
+            when(zkServer.getServerCnxnFactory()).thenReturn(factory);
+        }
+        if (secureConnections != null) {
+            ServerCnxnFactory factory = mock(ServerCnxnFactory.class);
+            when(factory.getConnections()).thenReturn(secureConnections);
+            when(zkServer.getSecureServerCnxnFactory()).thenReturn(factory);
+        }
+        return zkServer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> watchDetails(CommandResponse response) {
+        return (List<Map<String, Object>>) response.toMap().get("watches");
+    }
+
+    private static Map<String, Object> findWatch(
+            List<Map<String, Object>> watches,
+            String path,
+            String sessionId,
+            String watchMode) {
+        for (Map<String, Object> watch : watches) {
+            if (path.equals(watch.get("path"))
+                    && sessionId.equals(watch.get("session_id"))
+                    && watchMode.equals(watch.get("watch_mode"))) {
+                return watch;
+            }
+        }
+        throw new AssertionError(
+            "Watch not found for path " + path + ", session " + sessionId + ", and mode " + watchMode);
     }
 
     @Test

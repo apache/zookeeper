@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.watch;
 
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -170,6 +171,18 @@ public interface IWatchManager {
      * @see WatchesPathReport
      */
     WatchesPathReport getWatchesByPath();
+
+    /**
+     * Returns bounded Watch registration details.
+     *
+     * @param path exact path filter, or null for every path
+     * @param sessionIds Session ID filter, or null for every session
+     * @param maxResults maximum registrations to return
+     * @return Watch registrations matching the filters
+     */
+    default List<WatchRegistration> getWatchRegistrations(String path, Set<Long> sessionIds, int maxResults) {
+        throw new UnsupportedOperationException("Watch registration details are not supported");
+    }
 
     /**
      * String representation of watches. Warning, may be large!
