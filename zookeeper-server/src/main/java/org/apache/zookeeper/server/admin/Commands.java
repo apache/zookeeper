@@ -29,11 +29,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -48,10 +52,12 @@ import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -72,6 +78,7 @@ import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.RateLimiter;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.server.watch.WatchRegistration;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -304,6 +311,7 @@ public class Commands {
         registerCommand(new SystemPropertiesCommand());
         registerCommand(new VotingViewCommand());
         registerCommand(new WatchCommand());
+        registerCommand(new WatchDetailsCommand());
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
         registerCommand(new ZabStateCommand());
@@ -1134,6 +1142,309 @@ public class Commands {
             CommandResponse response = initializeResponse();
             response.put("session_id_to_watched_paths", dt.getWatches().toMap());
             return response;
+        }
+
+    }
+
+    /**
+     * Detailed information about active watch registrations on this server.
+     */
+    public static class WatchDetailsCommand extends GetCommand {
+
+        private static final int DEFAULT_LIMIT = 100;
+        private static final int MIN_LIMIT = 1;
+        private static final int MAX_LIMIT = 1000;
+        private static final String DATA_WATCH_KIND = "data";
+        private static final String CHILDREN_WATCH_KIND = "children";
+
+        public WatchDetailsCommand() {
+            super(
+                Arrays.asList("watch_details", "wchd"),
+                true);
+        }
+
+        @Override
+        public CommandResponse runGet(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            WatchDetailsQuery query;
+            try {
+                query = parseQuery(kwargs == null ? Collections.emptyMap() : kwargs);
+            } catch (IllegalArgumentException e) {
+                return new CommandResponse(getPrimaryName(), e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
+            }
+
+            try {
+                return execute(zkServer, query);
+            } catch (RuntimeException e) {
+                LOG.warn("Failed to query watch details", e);
+                return new CommandResponse(
+                    getPrimaryName(),
+                    "Failed to query watch details",
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        private CommandResponse execute(ZooKeeperServer zkServer, WatchDetailsQuery query) {
+            Map<Long, ConnectionSnapshot> connections = snapshotConnections(zkServer);
+            Set<Long> candidateSessionIds = new HashSet<>();
+            for (ConnectionSnapshot connection : connections.values()) {
+                if ((query.sessionId == null || query.sessionId == connection.sessionId)
+                        && (query.clientIp == null || query.clientIp.equals(connection.clientIp))) {
+                    candidateSessionIds.add(connection.sessionId);
+                }
+            }
+
+            Map<WatchRegistration, WatchDetail> aggregatedWatchDetails = new LinkedHashMap<>();
+            int maxResults = query.limit + 1;
+            DataTree dataTree = zkServer.getZKDatabase().getDataTree();
+            List<WatchRegistration> dataRegistrations;
+            try {
+                dataRegistrations = dataTree.getDataWatchRegistrations(
+                    query.path,
+                    candidateSessionIds,
+                    maxResults);
+            } catch (UnsupportedOperationException e) {
+                return unsupportedWatchManagerResponse();
+            }
+            mergeWatchDetails(
+                aggregatedWatchDetails,
+                dataRegistrations,
+                connections,
+                DATA_WATCH_KIND);
+
+            List<WatchRegistration> childRegistrations;
+            try {
+                childRegistrations = dataTree.getChildWatchRegistrations(
+                    query.path,
+                    candidateSessionIds,
+                    maxResults);
+            } catch (UnsupportedOperationException e) {
+                return unsupportedWatchManagerResponse();
+            }
+            mergeWatchDetails(
+                aggregatedWatchDetails,
+                childRegistrations,
+                connections,
+                CHILDREN_WATCH_KIND);
+
+            List<Map<String, Object>> watchDetails = new ArrayList<>(aggregatedWatchDetails.size());
+            for (WatchDetail detail : aggregatedWatchDetails.values()) {
+                watchDetails.add(detail.toMap());
+            }
+
+            boolean truncated = watchDetails.size() > query.limit;
+            if (truncated) {
+                watchDetails = new ArrayList<>(watchDetails.subList(0, query.limit));
+            }
+            CommandResponse response = initializeResponse();
+            response.put("server_id", zkServer.getServerId());
+            response.put("returned_count", watchDetails.size());
+            response.put("truncated", truncated);
+            response.put("watches", watchDetails);
+            return response;
+        }
+
+        private CommandResponse unsupportedWatchManagerResponse() {
+            return new CommandResponse(
+                getPrimaryName(),
+                "Watch details are not supported by the configured WatchManager",
+                HttpServletResponse.SC_NOT_IMPLEMENTED);
+        }
+
+        private static WatchDetailsQuery parseQuery(Map<String, String> kwargs) {
+            String path = kwargs.get("path");
+            if (path != null) {
+                try {
+                    PathUtils.validatePath(path);
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid path: " + path);
+                }
+            }
+
+            String sessionId = kwargs.get("session_id");
+            Long parsedSessionId = null;
+            if (sessionId != null) {
+                try {
+                    if (sessionId.startsWith("0x") || sessionId.startsWith("0X")) {
+                        parsedSessionId = Long.parseUnsignedLong(sessionId.substring(2), 16);
+                    } else {
+                        parsedSessionId = Long.parseUnsignedLong(sessionId);
+                    }
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid session_id: " + sessionId);
+                }
+            }
+
+            String clientIp = kwargs.get("client_ip");
+            if (clientIp != null && clientIp.trim().isEmpty()) {
+                throw new IllegalArgumentException("client_ip must not be empty");
+            }
+            clientIp = clientIp == null ? null : clientIp.trim();
+
+            String rawLimit = kwargs.get("limit");
+            int limit = DEFAULT_LIMIT;
+            if (rawLimit != null) {
+                try {
+                    limit = Integer.parseInt(rawLimit);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("limit must be an integer");
+                }
+            }
+            if (limit < MIN_LIMIT || limit > MAX_LIMIT) {
+                throw new IllegalArgumentException("limit must be between 1 and 1000");
+            }
+            return new WatchDetailsQuery(path, parsedSessionId, clientIp, limit);
+        }
+
+        private static Map<Long, ConnectionSnapshot> snapshotConnections(ZooKeeperServer zkServer) {
+            Map<Long, ConnectionSnapshot> snapshots = new HashMap<>();
+            addConnectionSnapshots(snapshots, zkServer.getServerCnxnFactory());
+            addConnectionSnapshots(snapshots, zkServer.getSecureServerCnxnFactory());
+            return snapshots;
+        }
+
+        private static void addConnectionSnapshots(
+                Map<Long, ConnectionSnapshot> snapshots,
+                ServerCnxnFactory factory) {
+            if (factory == null) {
+                return;
+            }
+            Iterable<ServerCnxn> connections = factory.getConnections();
+            if (connections == null) {
+                return;
+            }
+            for (ServerCnxn connection : connections) {
+                if (connection == null || connection.isStale() || connection.getSessionId() == 0) {
+                    continue;
+                }
+                InetSocketAddress remoteAddress = connection.getRemoteSocketAddress();
+                if (remoteAddress == null || remoteAddress.getAddress() == null) {
+                    continue;
+                }
+                String clientIp = remoteAddress.getAddress().getHostAddress();
+                Date established = connection.getEstablished();
+                if (clientIp == null || clientIp.isEmpty() || established == null) {
+                    continue;
+                }
+                ConnectionSnapshot snapshot = new ConnectionSnapshot(
+                    connection.getSessionId(),
+                    clientIp,
+                    remoteAddress.getPort(),
+                    established.getTime(),
+                    connection.getSessionTimeout(),
+                    connection.isSecure());
+                if (connection.isStale()) {
+                    continue;
+                }
+                ConnectionSnapshot current = snapshots.get(snapshot.sessionId);
+                if (current == null || snapshot.establishedAt > current.establishedAt) {
+                    snapshots.put(snapshot.sessionId, snapshot);
+                }
+            }
+        }
+
+        private static void mergeWatchDetails(
+                Map<WatchRegistration, WatchDetail> watchDetails,
+                List<WatchRegistration> registrations,
+                Map<Long, ConnectionSnapshot> connections,
+                String watchKind) {
+            for (WatchRegistration registration : registrations) {
+                ConnectionSnapshot connection = connections.get(registration.getSessionId());
+                if (connection == null) {
+                    continue;
+                }
+                WatchDetail detail = watchDetails.get(registration);
+                if (detail == null) {
+                    detail = new WatchDetail(registration, connection);
+                    watchDetails.put(registration, detail);
+                }
+                detail.includeKind(watchKind);
+            }
+        }
+
+        private static final class WatchDetail {
+
+            private final WatchRegistration registration;
+            private final ConnectionSnapshot connection;
+            private boolean data;
+            private boolean children;
+
+            private WatchDetail(WatchRegistration registration, ConnectionSnapshot connection) {
+                this.registration = registration;
+                this.connection = connection;
+            }
+
+            private void includeKind(String watchKind) {
+                if (registration.getWatcherMode().isPersistent()) {
+                    data = true;
+                    children = true;
+                } else if (DATA_WATCH_KIND.equals(watchKind)) {
+                    data = true;
+                } else if (CHILDREN_WATCH_KIND.equals(watchKind)) {
+                    children = true;
+                }
+            }
+
+            private Map<String, Object> toMap() {
+                List<String> watchKinds = new ArrayList<>(2);
+                if (data) {
+                    watchKinds.add(DATA_WATCH_KIND);
+                }
+                if (children) {
+                    watchKinds.add(CHILDREN_WATCH_KIND);
+                }
+
+                Map<String, Object> detail = new LinkedHashMap<>();
+                detail.put("path", registration.getPath());
+                detail.put("session_id", "0x" + Long.toHexString(connection.sessionId));
+                detail.put("client_ip", connection.clientIp);
+                detail.put("client_port", connection.clientPort);
+                detail.put("watch_kind", watchKinds);
+                detail.put("watch_mode", registration.getWatcherMode().name().toLowerCase(Locale.ROOT));
+                detail.put("connection_established_at", connection.establishedAt);
+                detail.put("session_timeout_ms", connection.sessionTimeout);
+                detail.put("secure", connection.secure);
+                return detail;
+            }
+        }
+
+        private static final class WatchDetailsQuery {
+
+            private final String path;
+            private final Long sessionId;
+            private final String clientIp;
+            private final int limit;
+
+            private WatchDetailsQuery(String path, Long sessionId, String clientIp, int limit) {
+                this.path = path;
+                this.sessionId = sessionId;
+                this.clientIp = clientIp;
+                this.limit = limit;
+            }
+        }
+
+        private static final class ConnectionSnapshot {
+
+            private final long sessionId;
+            private final String clientIp;
+            private final int clientPort;
+            private final long establishedAt;
+            private final int sessionTimeout;
+            private final boolean secure;
+
+            private ConnectionSnapshot(
+                    long sessionId,
+                    String clientIp,
+                    int clientPort,
+                    long establishedAt,
+                    int sessionTimeout,
+                    boolean secure) {
+                this.sessionId = sessionId;
+                this.clientIp = clientIp;
+                this.clientPort = clientPort;
+                this.establishedAt = establishedAt;
+                this.sessionTimeout = sessionTimeout;
+                this.secure = secure;
+            }
         }
 
     }

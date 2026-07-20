@@ -62,6 +62,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.watch.IWatchManager;
 import org.apache.zookeeper.server.watch.WatchManagerFactory;
+import org.apache.zookeeper.server.watch.WatchRegistration;
 import org.apache.zookeeper.server.watch.WatcherMode;
 import org.apache.zookeeper.server.watch.WatcherOrBitSet;
 import org.apache.zookeeper.server.watch.WatchesPathReport;
@@ -1427,6 +1428,36 @@ public class DataTree {
      */
     public synchronized WatchesPathReport getWatchesByPath() {
         return dataWatches.getWatchesByPath();
+    }
+
+    /**
+     * Returns bounded Data Watch registrations.
+     *
+     * @param path exact path filter, or null for every path
+     * @param sessionIds Session ID filter, or null for every session
+     * @param maxResults maximum registrations to return
+     * @return matching Data Watch registrations
+     */
+    public List<WatchRegistration> getDataWatchRegistrations(
+            String path,
+            Set<Long> sessionIds,
+            int maxResults) {
+        return dataWatches.getWatchRegistrations(path, sessionIds, maxResults);
+    }
+
+    /**
+     * Returns bounded Children Watch registrations.
+     *
+     * @param path exact path filter, or null for every path
+     * @param sessionIds Session ID filter, or null for every session
+     * @param maxResults maximum registrations to return
+     * @return matching Children Watch registrations
+     */
+    public List<WatchRegistration> getChildWatchRegistrations(
+            String path,
+            Set<Long> sessionIds,
+            int maxResults) {
+        return childWatches.getWatchRegistrations(path, sessionIds, maxResults);
     }
 
     /**

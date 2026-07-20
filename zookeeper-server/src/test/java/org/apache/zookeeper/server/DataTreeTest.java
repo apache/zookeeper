@@ -25,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -33,7 +35,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +54,8 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.watch.WatchManager;
+import org.apache.zookeeper.server.watch.WatchRegistration;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
@@ -127,6 +133,60 @@ public class DataTreeTest extends ZKTestCase {
         dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
 
         assertTrue(fire.isDone(), "Root node watch not triggered");
+    }
+
+    @Test
+    public void testGetDataAndChildWatchRegistrations() throws Exception {
+        String property = org.apache.zookeeper.server.watch.WatchManagerFactory.ZOOKEEPER_WATCH_MANAGER_NAME;
+        String previous = System.getProperty(property);
+        System.setProperty(property, WatchManager.class.getName());
+        DataTree dataTree;
+        try {
+            dataTree = new DataTree();
+        } finally {
+            if (previous == null) {
+                System.clearProperty(property);
+            } else {
+                System.setProperty(property, previous);
+            }
+        }
+
+        try {
+            ServerCnxn connection = mock(ServerCnxn.class);
+            when(connection.getSessionId()).thenReturn(0x55L);
+            when(connection.isStale()).thenReturn(false);
+
+            dataTree.statNode("/", connection);
+            dataTree.getChildren("/", null, connection);
+            dataTree.addWatch("/persistent", connection, ZooDefs.AddWatchModes.persistent);
+            dataTree.addWatch("/recursive", connection, ZooDefs.AddWatchModes.persistentRecursive);
+
+            List<WatchRegistration> dataRegistrations = dataTree.getDataWatchRegistrations(null, null, 10);
+            List<WatchRegistration> childRegistrations = dataTree.getChildWatchRegistrations(null, null, 10);
+
+            Set<String> data = new java.util.HashSet<>();
+            for (WatchRegistration registration : dataRegistrations) {
+                data.add(registration.getPath() + ":" + registration.getWatcherMode());
+            }
+            Set<String> children = new java.util.HashSet<>();
+            for (WatchRegistration registration : childRegistrations) {
+                children.add(registration.getPath() + ":" + registration.getWatcherMode());
+            }
+
+            assertEquals(
+                new java.util.HashSet<>(java.util.Arrays.asList(
+                    "/:STANDARD",
+                    "/persistent:PERSISTENT",
+                    "/recursive:PERSISTENT_RECURSIVE")),
+                data);
+            assertEquals(
+                new java.util.HashSet<>(java.util.Arrays.asList(
+                    "/:STANDARD",
+                    "/persistent:PERSISTENT")),
+                children);
+        } finally {
+            dataTree.shutdownWatcher();
+        }
     }
 
     /**
