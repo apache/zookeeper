@@ -43,7 +43,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * * A HostProvider that prefers nearby hosts.
  */
 @InterfaceAudience.Public
-public interface HostProvider {
+public interface HostProvider extends AutoCloseable {
 
     int size();
 
@@ -72,4 +72,12 @@ public interface HostProvider {
      */
     boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost);
 
+    /**
+     * Close the HostProvider and release any resources.
+     *
+     * Default implementation does nothing for backward compatibility
+     */
+    @Override
+    default void close() {
+    }
 }

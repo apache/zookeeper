@@ -27,10 +27,10 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.SyncedLearnerTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class QuorumOracleMaj extends QuorumMaj {
         setOracle(oraclePath);
     }
 
-    public QuorumOracleMaj(Properties props, String oraclePath) throws QuorumPeerConfig.ConfigException {
+    public QuorumOracleMaj(Properties props, String oraclePath) throws ConfigException {
         super(props);
         setOracle(oraclePath);
     }

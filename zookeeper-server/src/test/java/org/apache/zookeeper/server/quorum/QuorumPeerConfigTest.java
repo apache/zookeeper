@@ -28,8 +28,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.jupiter.api.Test;
 
 public class QuorumPeerConfigTest {

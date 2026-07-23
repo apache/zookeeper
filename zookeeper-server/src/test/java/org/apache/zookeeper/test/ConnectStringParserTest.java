@@ -19,6 +19,11 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.junit.jupiter.api.Test;
@@ -106,4 +111,89 @@ public class ConnectStringParserTest extends ZKTestCase {
         assertEquals(2183, parser.getServerAddresses().get(2).getPort());
     }
 
+    @Test
+    public void testDnsSrvFormatNoChroot() {
+        testDnsSrvFormat("dns-srv://zookeeper.myapp.com", "zookeeper.myapp.com", null);
+    }
+
+    @Test
+    public void testDnsSrvFormatWithChroot() {
+        testDnsSrvFormat("dns-srv://zookeeper.myapp.com/myapp", "zookeeper.myapp.com", "/myapp");
+    }
+
+    @Test
+    public void testDnsSrvFormatWithNestedChroot() {
+        testDnsSrvFormat("dns-srv://zookeeper.shared.com/services/auth", "zookeeper.shared.com", "/services/auth");
+    }
+
+    @Test
+    public void testDnsSrvFormatWithRootChroot() {
+        testDnsSrvFormat("dns-srv://zookeeper.myapp.com/", "zookeeper.myapp.com", null);
+    }
+
+    @Test
+    public void testDnsSrvFormatWithSubdomain() {
+        testDnsSrvFormat("dns-srv://zk.prod.myapp.com/production", "zk.prod.myapp.com", "/production");
+    }
+
+    @Test
+    public void testDnsSrvFormatInvalidChroot() {
+        final String connectString = "dns-srv://zookeeper.myapp.com/invalid/";
+        assertThrows(IllegalArgumentException.class, () -> new ConnectStringParser(connectString));
+    }
+
+    @Test
+    public void testMixedFormatsComparison() {
+        final String hostPortFormat = "zk1:2181,zk2:2181/myapp";
+        final String dnsSrvFormat = "dns-srv://zookeeper.myapp.com/myapp";
+
+        final ConnectStringParser hostPortParser = new ConnectStringParser(hostPortFormat);
+        final ConnectStringParser dnsSrvParser = new ConnectStringParser(dnsSrvFormat);
+
+        // Both should have the same chroot path
+        assertEquals("/myapp", hostPortParser.getChrootPath());
+        assertEquals("/myapp", dnsSrvParser.getChrootPath());
+
+        // Host:Port format should have multiple server addresses
+        assertEquals(2, hostPortParser.getServerAddresses().size());
+        assertEquals("zk1", hostPortParser.getServerAddresses().get(0).getHostString());
+        assertEquals("zk2", hostPortParser.getServerAddresses().get(1).getHostString());
+
+        // DNS SRV format should have single DNS service name
+        assertEquals(1, dnsSrvParser.getServerAddresses().size());
+        assertEquals("zookeeper.myapp.com", dnsSrvParser.getServerAddresses().get(0).getHostString());
+    }
+
+    @Test
+    public void testBackwardCompatibility() {
+        final Map<String, Integer> testCases = new HashMap<>();
+
+        testCases.put("localhost:2181", 1);
+        testCases.put("zk1:2181,zk2:2181,zk3:2181", 3);
+        testCases.put("zk1:2181,zk2:2181/myapp", 2);
+        testCases.put("[::1]:2181", 1);
+        testCases.put("[2001:db8::1]:2181,[2001:db8::2]:2181/test", 2);
+
+        for (final Map.Entry<String, Integer> testCase : testCases.entrySet()) {
+            final String connectString = testCase.getKey();
+            final int expectedSize = testCase.getValue();
+
+            final ConnectStringParser parser = new ConnectStringParser(connectString);
+            assertNotNull(parser.getServerAddresses());
+            assertEquals(expectedSize, parser.getServerAddresses().size());
+        }
+    }
+
+    private void testDnsSrvFormat(final String connectString, final String expectedHostName, final String expectedChrootPath) {
+        final ConnectStringParser parser = new ConnectStringParser(connectString);
+
+        if (expectedChrootPath == null) {
+            assertNull(parser.getChrootPath());
+        } else {
+            assertEquals(expectedChrootPath, parser.getChrootPath());
+        }
+        assertEquals(1, parser.getServerAddresses().size());
+        assertEquals(expectedHostName, parser.getServerAddresses().get(0).getHostString());
+        assertEquals(2181, parser.getServerAddresses().get(0).getPort());
+    }
 }

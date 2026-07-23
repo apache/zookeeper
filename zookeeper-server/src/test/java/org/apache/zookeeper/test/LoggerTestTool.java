@@ -27,15 +27,24 @@ import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.StringReader;
 import org.slf4j.LoggerFactory;
 
 public class LoggerTestTool implements AutoCloseable {
   private final ByteArrayOutputStream os;
   private Appender<ILoggingEvent> appender;
   private Logger qlogger;
+  private Level logLevel = Level.INFO;
 
   public LoggerTestTool(Class<?> cls) {
     os = createLoggingStream(cls);
+  }
+
+  public LoggerTestTool(Class<?> cls, Level logLevel) {
+    this.logLevel = logLevel;
+    this.os = createLoggingStream(cls);
   }
 
   public LoggerTestTool(String cls) {
@@ -51,7 +60,7 @@ public class LoggerTestTool implements AutoCloseable {
     appender = getConsoleAppender(os);
     qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
     qlogger.addAppender(appender);
-    qlogger.setLevel(Level.INFO);
+    qlogger.setLevel(logLevel);
     appender.start();
     return os;
   }
@@ -61,7 +70,7 @@ public class LoggerTestTool implements AutoCloseable {
     appender = getConsoleAppender(os);
     qlogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(cls);
     qlogger.addAppender(appender);
-    qlogger.setLevel(Level.INFO);
+    qlogger.setLevel(logLevel);
     appender.start();
     return os;
   }
@@ -69,6 +78,7 @@ public class LoggerTestTool implements AutoCloseable {
   private OutputStreamAppender<ILoggingEvent> getConsoleAppender(ByteArrayOutputStream os) {
     Logger rootLogger =
         (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    rootLogger.setLevel(logLevel);
     Layout<ILoggingEvent> layout = ((LayoutWrappingEncoder<ILoggingEvent>)
         ((OutputStreamAppender<ILoggingEvent>) rootLogger.getAppender("CONSOLE")).getEncoder()).getLayout();
 
@@ -78,6 +88,21 @@ public class LoggerTestTool implements AutoCloseable {
     appender.setLayout(layout);
 
     return appender;
+  }
+
+  public String readLogLine(String search) throws IOException {
+    try {
+      LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+      String line;
+      while ((line = r.readLine()) != null) {
+        if (line.contains(search)) {
+          return line;
+        }
+      }
+      return null;
+    } finally {
+      os.reset();
+    }
   }
 
   @Override

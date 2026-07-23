@@ -486,6 +486,7 @@ public class DataTree {
                 containers.add(path);
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.add(path);
+                ServerMetrics.getMetrics().TTL_NODE_CREATED_COUNT.add(1);
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.computeIfAbsent(ephemeralOwner, k -> new HashSet<>());
                 synchronized (list) {

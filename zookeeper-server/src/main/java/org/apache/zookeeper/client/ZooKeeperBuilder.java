@@ -39,6 +39,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
 public class ZooKeeperBuilder {
     private final String connectString;
     private final Duration sessionTimeout;
+    private Duration newSessionTimeout = Duration.ofSeconds(Long.MAX_VALUE, 999_999_999L);
     private Function<Collection<InetSocketAddress>, HostProvider> hostProvider;
     private Watcher defaultWatcher;
     private boolean canBeReadOnly = false;
@@ -118,6 +119,21 @@ public class ZooKeeperBuilder {
     }
 
     /**
+     * Specifies timeout to establish a brand-new session.
+     *
+     * @param timeout timeout to get {@link org.apache.zookeeper.Watcher.Event.KeeperState#Expired} in establishing a
+     *                brand-new session. {@code Duration.ofSeconds(Long.MAX_VALUE, 999_999_999L)}, which is the default,
+     *                means endless retry until connected. {@code Duration.ZERO} means a sensible value deduced from
+     *                specified session timeout, currently, it is approximate {@code sessionTimeout * 4 / 3}.
+     * @return this
+     * @since 3.10.0
+     */
+    public ZooKeeperBuilder withNewSessionTimeout(Duration timeout) {
+        this.newSessionTimeout = timeout;
+        return this;
+    }
+
+    /**
      * Specifies the client config used to construct ZooKeeper instances.
      *
      * @param clientConfig
@@ -143,6 +159,7 @@ public class ZooKeeperBuilder {
         return new ZooKeeperOptions(
             connectString,
             sessionTimeout,
+            newSessionTimeout,
             defaultWatcher,
             hostProvider,
             canBeReadOnly,

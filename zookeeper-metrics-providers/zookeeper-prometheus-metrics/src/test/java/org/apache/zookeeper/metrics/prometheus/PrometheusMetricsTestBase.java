@@ -18,32 +18,27 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.hotspot.DefaultExports;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.lang.reflect.Field;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 
 /**
  * The base test for prometheus metrics unit tests.
  */
 public abstract class PrometheusMetricsTestBase {
 
-    @BeforeEach
-    void setUp() throws Exception {
-        CollectorRegistry.defaultRegistry.clear();
-        resetDefaultExportsInitializedFlag();
-    }
-
     @AfterEach
     void tearDown() throws Exception {
-        CollectorRegistry.defaultRegistry.clear();
-        resetDefaultExportsInitializedFlag();
-    }
-
-    protected void resetDefaultExportsInitializedFlag() throws Exception {
-        Field initializedField = DefaultExports.class.getDeclaredField("initialized");
-        initializedField.setAccessible(true);
-        initializedField.set(null, false);
+        PrometheusRegistry.defaultRegistry.clear();
+        // JvmMetrics uses a static Set to track which registries it has been
+        // registered with. We need to clear this set via reflection to allow
+        // re-initialization in subsequent tests.
+        Field registeredField = JvmMetrics.class.getDeclaredField("REGISTERED");
+        registeredField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Set<?> registeredSet = (Set<?>) registeredField.get(null);
+        registeredSet.clear();
     }
 }

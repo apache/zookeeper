@@ -20,10 +20,10 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import javax.management.JMException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.ZKAuditProvider;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -34,7 +34,6 @@ import org.apache.zookeeper.server.admin.AdminServerFactory;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
@@ -168,13 +167,7 @@ public class ZooKeeperServerMain {
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 
-            containerManager = new ContainerManager(
-                zkServer.getZKDatabase(),
-                zkServer.firstProcessor,
-                Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                Integer.getInteger("znode.container.maxPerMinute", 10000),
-                Long.getLong("znode.container.maxNeverUsedIntervalMs", 0)
-            );
+            containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor);
             containerManager.start();
             ZKAuditProvider.addZKStartStopAuditLog();
 

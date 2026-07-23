@@ -38,7 +38,7 @@ public class SaslServerPrincipal {
      * @return the name of the principal.
      */
     static String getServerPrincipal(InetSocketAddress addr, ZKClientConfig clientConfig) {
-        return getServerPrincipal(new WrapperInetSocketAddress(addr), clientConfig);
+        return getServerPrincipal(new WrapperInetSocketAddress(addr, clientConfig), clientConfig);
     }
 
     /**
@@ -96,13 +96,20 @@ public class SaslServerPrincipal {
     static class WrapperInetSocketAddress {
 
         private final InetSocketAddress addr;
+        private final ZKClientConfig clientConfig;
 
-        WrapperInetSocketAddress(InetSocketAddress addr) {
+        WrapperInetSocketAddress(InetSocketAddress addr, ZKClientConfig clientConfig) {
             this.addr = addr;
+            this.clientConfig = clientConfig;
         }
 
         public String getHostName() {
-            return addr.getHostName();
+            if (clientConfig.getBoolean(ZKClientConfig.ZK_SASL_CLIENT_ALLOW_REVERSE_DNS,
+                                        ZKClientConfig.ZK_SASL_CLIENT_ALLOW_REVERSE_DNS_DEFAULT)) {
+                return addr.getHostName();
+            } else {
+                return addr.getHostString();
+            }
         }
 
         public WrapperInetAddress getAddress() {

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.controller;
 
 import java.io.IOException;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -119,7 +120,7 @@ public class ControllerService {
     /**
      * Runs the main loop for this application but does not exit the process.
      */
-    public void initializeAndRun(String[] args) throws QuorumPeerConfig.ConfigException {
+    public void initializeAndRun(String[] args) throws ConfigException {
         initConfig(args);
         run();
     }
@@ -127,7 +128,7 @@ public class ControllerService {
     /**
      * Derived classes may override to do custom initialization of command line args.
      */
-    protected void initConfig(String[] args) throws QuorumPeerConfig.ConfigException {
+    protected void initConfig(String[] args) throws ConfigException {
         if (args.length == 1) {
             config.parse(args[0]);
         }

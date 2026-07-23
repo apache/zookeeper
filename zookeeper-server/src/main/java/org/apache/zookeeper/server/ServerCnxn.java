@@ -98,7 +98,8 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
         AUTH_PROVIDER_NOT_FOUND("auth provider not found"),
         FAILED_HANDSHAKE("Unsuccessful handshake"),
         CLIENT_RATE_LIMIT("Client hits rate limiting threshold"),
-        CLIENT_CNX_LIMIT("Client hits connection limiting threshold");
+        CLIENT_CNX_LIMIT("Client hits connection limiting threshold"),
+        SHED_CONNECTIONS_COMMAND("shed_connections_command");
 
         String disconnectReason;
 

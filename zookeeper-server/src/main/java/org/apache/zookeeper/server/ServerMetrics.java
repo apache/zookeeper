@@ -271,6 +271,33 @@ public final class ServerMetrics {
         QUOTA_EXCEEDED_ERROR_PER_NAMESPACE = metricsContext.getCounterSet(QuotaMetricsUtils.QUOTA_EXCEEDED_ERROR_PER_NAMESPACE);
 
         TTL_NODE_DELETED_COUNT = metricsContext.getCounter("ttl_node_deleted_count");
+        TTL_NODE_CREATED_COUNT = metricsContext.getCounter("ttl_node_created_count");
+
+        // Operation count metrics
+        OP_COUNT_TOTAL = metricsContext.getCounter("op_count_total");
+        OP_COUNT_ADD_WATCH = metricsContext.getCounter("op_count_add_watch");
+        OP_COUNT_CHECK = metricsContext.getCounter("op_count_check");
+        OP_COUNT_CHECK_WATCHES = metricsContext.getCounter("op_count_check_watches");
+        OP_COUNT_CLOSE_SESSION = metricsContext.getCounter("op_count_close_session");
+        OP_COUNT_CREATE = metricsContext.getCounter("op_count_create");
+        OP_COUNT_CREATE_SESSION = metricsContext.getCounter("op_count_create_session");
+        OP_COUNT_DELETE = metricsContext.getCounter("op_count_delete");
+        OP_COUNT_EXISTS = metricsContext.getCounter("op_count_exists");
+        OP_COUNT_GET_ACL = metricsContext.getCounter("op_count_get_acl");
+        OP_COUNT_GET_ALL_CHILDREN_NUMBER = metricsContext.getCounter("op_count_get_all_children_number");
+        OP_COUNT_GET_CHILDREN = metricsContext.getCounter("op_count_get_children");
+        OP_COUNT_GET_DATA = metricsContext.getCounter("op_count_get_data");
+        OP_COUNT_GET_EPHEMERALS = metricsContext.getCounter("op_count_get_ephemerals");
+        OP_COUNT_MULTI = metricsContext.getCounter("op_count_multi");
+        OP_COUNT_MULTI_READ = metricsContext.getCounter("op_count_multi_read");
+        OP_COUNT_PING = metricsContext.getCounter("op_count_ping");
+        OP_COUNT_RECONFIG = metricsContext.getCounter("op_count_reconfig");
+        OP_COUNT_REMOVE_WATCHES = metricsContext.getCounter("op_count_remove_watches");
+        OP_COUNT_SET_ACL = metricsContext.getCounter("op_count_set_acl");
+        OP_COUNT_SET_DATA = metricsContext.getCounter("op_count_set_data");
+        OP_COUNT_SET_WATCHES = metricsContext.getCounter("op_count_set_watches");
+        OP_COUNT_SYNC = metricsContext.getCounter("op_count_sync");
+        OP_COUNT_WHO_AM_I = metricsContext.getCounter("op_count_who_am_i");
     }
 
     /**
@@ -550,9 +577,37 @@ public final class ServerMetrics {
     public final CounterSet QUOTA_EXCEEDED_ERROR_PER_NAMESPACE;
 
     /**
-     * Count of deleted TTL nodes
+     * Count of created and deleted TTL nodes
      */
     public final Counter TTL_NODE_DELETED_COUNT;
+    public final Counter TTL_NODE_CREATED_COUNT;
+
+    // Operation count metrics
+    public final Counter OP_COUNT_TOTAL;
+    public final Counter OP_COUNT_ADD_WATCH;
+    public final Counter OP_COUNT_CHECK;
+    public final Counter OP_COUNT_CHECK_WATCHES;
+    public final Counter OP_COUNT_CLOSE_SESSION;
+    public final Counter OP_COUNT_CREATE;
+    public final Counter OP_COUNT_CREATE_SESSION;
+    public final Counter OP_COUNT_DELETE;
+    public final Counter OP_COUNT_EXISTS;
+    public final Counter OP_COUNT_GET_ACL;
+    public final Counter OP_COUNT_GET_ALL_CHILDREN_NUMBER;
+    public final Counter OP_COUNT_GET_CHILDREN;
+    public final Counter OP_COUNT_GET_DATA;
+    public final Counter OP_COUNT_GET_EPHEMERALS;
+    public final Counter OP_COUNT_MULTI;
+    public final Counter OP_COUNT_MULTI_READ;
+    public final Counter OP_COUNT_PING;
+    public final Counter OP_COUNT_RECONFIG;
+    public final Counter OP_COUNT_REMOVE_WATCHES;
+    public final Counter OP_COUNT_SET_ACL;
+    public final Counter OP_COUNT_SET_DATA;
+    public final Counter OP_COUNT_SET_WATCHES;
+    public final Counter OP_COUNT_SYNC;
+    public final Counter OP_COUNT_WHO_AM_I;
+
 
     private final MetricsProvider metricsProvider;
 

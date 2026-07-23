@@ -23,6 +23,7 @@ import javax.management.JMException;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.ZKAuditProvider;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -37,7 +38,6 @@ import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
@@ -52,8 +52,8 @@ import org.slf4j.LoggerFactory;
  * configuration information. This file is a Properties file, so keys and
  * values are separated by equals (=) and the key/value pairs are separated
  * by new lines. The following is a general summary of keys used in the
- * configuration file. For full details on this see the documentation in
- * docs/index.html
+ * configuration file. For full details see the
+ * <a href="https://zookeeper.apache.org/doc/current/admin-ops/administrators-guide/configuration-parameters">Administrator's Guide</a>.
  * <ol>
  * <li>dataDir - The directory where the ZooKeeper data is stored.</li>
  * <li>dataLogDir - The directory where the ZooKeeper transaction log is stored.</li>

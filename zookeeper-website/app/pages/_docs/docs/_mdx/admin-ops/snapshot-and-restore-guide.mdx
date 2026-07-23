@@ -1,0 +1,65 @@
+---
+title: "Snapshot and Restore Guide"
+description: "How to use ZooKeeper's snapshot and restore APIs to recover a cluster from quorum loss or catastrophic failure."
+---
+
+ZooKeeper is designed to withstand machine failures. A ZooKeeper cluster can automatically recover
+from temporary failures such as machine reboots, and can tolerate up to (N-1)/2 permanent failures
+for a cluster of N members due to hardware failures or disk corruption. When a member permanently
+fails, it loses access to the cluster. If the cluster permanently loses more than (N-1)/2 members,
+it disastrously fails and loses quorum. Once quorum is lost, the cluster cannot reach consensus and
+therefore cannot continue to accept updates.
+
+To recover from such disastrous failures, ZooKeeper provides snapshot and restore functionalities to
+restore a cluster from a snapshot.
+
+Key characteristics of snapshot and restore:
+
+1. They operate on the connected server via Admin Server APIs.
+2. They are rate-limited to protect the server from being overloaded.
+3. They require authentication and authorization on the root path with ALL permission. The supported
+   auth schemes are digest, x509, and IP.
+
+## Snapshot
+
+Recovering a cluster needs a snapshot from a ZooKeeper cluster. Users can periodically take
+snapshots from a live server which has the highest zxid and stream out data to local or external
+storage/file system (e.g., S3).
+
+```bash
+# Takes a snapshot from the connected server. Rate-limited to once every 5 minutes by default.
+curl -H 'Authorization: digest root:root_passwd' \
+  http://hostname:adminPort/commands/snapshot?streaming=true \
+  --output snapshotFileName
+```
+
+## Restore
+
+Restoring a cluster needs a single snapshot as input stream. Restore can be used for recovering a
+cluster after quorum loss or for building a brand-new cluster with seed data.
+
+All members should restore using the same snapshot. The recommended steps are:
+
+<Steps>
+  <Step>Block traffic on the client port or client secure port before restore starts.</Step>
+  <Step>
+    Take a snapshot of the latest database state using the snapshot admin server command, if
+    applicable.
+  </Step>
+  <Step>
+    For each server:
+    - Move the files in `dataDir` and `dataLogDir` to a different location to prevent the restored
+      database from being overwritten when the server restarts after restore.
+    - Restore the server using the restore admin server command:
+
+```bash
+# Restores the db of the connected server from a snapshot input stream. Rate-limited to once every 5 minutes by default.
+curl -H 'Content-Type: application/octet-stream' \
+  -H 'Authorization: digest root:root_passwd' \
+  -X POST http://hostname:adminPort/commands/restore \
+  --data-binary "@snapshotFileName"
+```
+
+  </Step>
+  <Step>Unblock traffic on the client port or client secure port after restore completes.</Step>
+</Steps>

@@ -23,8 +23,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests about Prometheus Metrics Provider. Please note that we are not testing
- * Prometheus but our integration.
+ * Tests about Prometheus Metrics Provider. Please note that we are not testing Prometheus but our integration.
  */
 public class ExportJvmInfoTest extends PrometheusMetricsTestBase {
 
@@ -46,7 +45,7 @@ public class ExportJvmInfoTest extends PrometheusMetricsTestBase {
             configuration.setProperty("exportJvmInfo", exportJvmInfo + "");
             provider.configure(configuration);
             provider.start();
-            boolean[] found = {false};
+            boolean[] found = { false };
             provider.dump((k, v) -> {
                 found[0] = found[0] || k.contains("heap");
             });

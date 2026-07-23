@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.InetSocketAddress;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

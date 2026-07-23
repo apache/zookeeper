@@ -25,15 +25,15 @@ jobs:
   compatibility:
     strategy:
       matrix:
-        jdk: [8, 11]
-        zk: [3.5.9, 3.6.3, 3.7.0, nightly]
+        jdk: [17, 25]
+        zk: [3.7.2, 3.8.6, 3.9.5, nightly]
       fail-fast: false
     timeout-minutes: 360
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
         with:
           java-version: ${{ matrix.jdk }}
           distribution: temurin
@@ -51,7 +51,7 @@ jobs:
       - name: Cache ZooKeeper ${{ matrix.zk }}
         id: dist-cache
         if: matrix.zk != 'nightly'
-        uses: actions/cache@v4
+        uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
         with:
           key: apache-zookeeper-${{ matrix.zk }}-bin.tar.gz
           path: apache-zookeeper-${{ matrix.zk }}-bin.tar.gz

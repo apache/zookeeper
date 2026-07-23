@@ -47,6 +47,8 @@ github:
     rebase:  false
   autolink_jira:
     - ZOOKEEPER
+  dependabot_alerts:  true
+  dependabot_updates: false
 
 notifications:
   jira_options: link label worklog
