@@ -19,15 +19,20 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.StringReader;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -37,6 +42,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.data.Stat;
@@ -48,6 +54,9 @@ import org.slf4j.LoggerFactory;
 public class WatcherTest extends ClientBase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(WatcherTest.class);
+
+    private static final long SLOW_CALLBACK_THRESHOLD_MS = 50;
+    private static final long SLOW_CALLBACK_BLOCK_MS = 250;
 
     private long timeOfLastWatcherInvocation;
 
@@ -77,6 +86,92 @@ public class WatcherTest extends ClientBase {
             }
         }
 
+    }
+
+    private static final class BlockingWatcher implements Watcher {
+
+        private final CountDownLatch entered = new CountDownLatch(1);
+        private final CountDownLatch completed = new CountDownLatch(1);
+        private final CountDownLatch release;
+
+        private BlockingWatcher(CountDownLatch release) {
+            this.release = release;
+        }
+
+        @Override
+        public void process(WatchedEvent event) {
+            if (event.getType() == Event.EventType.None) {
+                return;
+            }
+            entered.countDown();
+            try {
+                release.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                completed.countDown();
+            }
+        }
+
+    }
+
+    private static final class BlockingStringCallback implements StringCallback {
+
+        private final CountDownLatch entered = new CountDownLatch(1);
+        private final CountDownLatch completed = new CountDownLatch(1);
+        private final CountDownLatch release;
+
+        private BlockingStringCallback(CountDownLatch release) {
+            this.release = release;
+        }
+
+        @Override
+        public void processResult(int rc, String path, Object ctx, String name) {
+            entered.countDown();
+            try {
+                release.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                completed.countDown();
+            }
+        }
+
+    }
+
+    private ZooKeeper createClient(ZKClientConfig clientConfig) throws IOException, InterruptedException {
+        CountdownWatcher watcher = new CountdownWatcher();
+        watcher.reset();
+        ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher, clientConfig);
+        if (!watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+            zk.close();
+            fail("Unable to connect to server");
+        }
+        return zk;
+    }
+
+    private static ZKClientConfig clientConfigWithSlowCallbackThreshold(long thresholdMs) {
+        ZKClientConfig clientConfig = new ZKClientConfig();
+        clientConfig.setProperty(
+            ZKClientConfig.ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS,
+            Long.toString(thresholdMs));
+        return clientConfig;
+    }
+
+    private static String waitForLogLine(LoggerTestTool loggerTestTool, String search) throws IOException {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(CONNECTION_TIMEOUT);
+        while (System.nanoTime() < deadline) {
+            String log = loggerTestTool.getOutputStream().toString();
+            LineNumberReader reader = new LineNumberReader(new StringReader(log));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(search)) {
+                    return line;
+                }
+            }
+            Thread.onSpinWait();
+        }
+        return null;
     }
 
     @BeforeEach
@@ -217,6 +312,111 @@ public class WatcherTest extends ClientBase {
             }
         }
 
+    }
+
+    @Test
+    public void testSlowCallbackLogDisabled() throws Exception {
+        CountDownLatch releaseSlowWatcher = new CountDownLatch(1);
+        BlockingWatcher slowWatcher = new BlockingWatcher(releaseSlowWatcher);
+        ZooKeeper zk = null;
+
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
+            try {
+                zk = createClient(clientConfigWithSlowCallbackThreshold(0));
+                zk.create("/slow-callback-disabled", "slow".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.getData("/slow-callback-disabled", slowWatcher, new Stat());
+                zk.setData("/slow-callback-disabled", "slow-1".getBytes(), -1);
+
+                assertTrue(slowWatcher.entered.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+                assertFalse(slowWatcher.completed.await(SLOW_CALLBACK_BLOCK_MS, TimeUnit.MILLISECONDS));
+                releaseSlowWatcher.countDown();
+                assertTrue(slowWatcher.completed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+                assertFalse(loggerTestTool.getOutputStream().toString().contains("Slow ZooKeeper client callback"));
+            } finally {
+                releaseSlowWatcher.countDown();
+                if (zk != null) {
+                    zk.close();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testSlowWatcherCallbackWarnLog() throws Exception {
+        CountDownLatch releaseSlowWatcher = new CountDownLatch(1);
+        BlockingWatcher slowWatcher = new BlockingWatcher(releaseSlowWatcher);
+        ZooKeeper zk = null;
+
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
+            try {
+                zk = createClient(clientConfigWithSlowCallbackThreshold(SLOW_CALLBACK_THRESHOLD_MS));
+                zk.create("/slow-callback-watch", "slow".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.getData("/slow-callback-watch", slowWatcher, new Stat());
+                zk.setData("/slow-callback-watch", "slow-1".getBytes(), -1);
+
+                assertTrue(slowWatcher.entered.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+                assertFalse(slowWatcher.completed.await(SLOW_CALLBACK_BLOCK_MS, TimeUnit.MILLISECONDS));
+                releaseSlowWatcher.countDown();
+                assertTrue(slowWatcher.completed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+                String logLine = waitForLogLine(loggerTestTool, "Slow ZooKeeper client callback");
+                assertNotNull(logLine);
+                assertTrue(logLine.contains("kind=watcher"), logLine);
+                assertTrue(logLine.contains("callbackClass=" + BlockingWatcher.class.getName()), logLine);
+                assertTrue(logLine.contains("path=/slow-callback-watch"), logLine);
+                assertTrue(logLine.contains("eventType=NodeDataChanged"), logLine);
+                assertTrue(logLine.contains("state=SyncConnected"), logLine);
+                assertTrue(logLine.contains("callbackDurationMs="), logLine);
+                assertTrue(logLine.contains("queuedEvents="), logLine);
+                assertTrue(logLine.contains("session=0x"), logLine);
+            } finally {
+                releaseSlowWatcher.countDown();
+                if (zk != null) {
+                    zk.close();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testSlowAsyncCallbackWarnLog() throws Exception {
+        CountDownLatch releaseAsyncCallback = new CountDownLatch(1);
+        BlockingStringCallback slowCallback = new BlockingStringCallback(releaseAsyncCallback);
+        ZooKeeper zk = null;
+
+        try (LoggerTestTool loggerTestTool = new LoggerTestTool("org.apache.zookeeper")) {
+            try {
+                zk = createClient(clientConfigWithSlowCallbackThreshold(SLOW_CALLBACK_THRESHOLD_MS));
+                zk.create(
+                    "/slow-async-callback",
+                    "slow".getBytes(),
+                    Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    slowCallback,
+                    null);
+
+                assertTrue(slowCallback.entered.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+                assertFalse(slowCallback.completed.await(SLOW_CALLBACK_BLOCK_MS, TimeUnit.MILLISECONDS));
+                releaseAsyncCallback.countDown();
+                assertTrue(slowCallback.completed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+                String logLine = waitForLogLine(loggerTestTool, "Slow ZooKeeper client callback");
+                assertNotNull(logLine);
+                assertTrue(logLine.contains("kind=async callback"), logLine);
+                assertTrue(logLine.contains("callbackClass=" + BlockingStringCallback.class.getName()), logLine);
+                assertTrue(logLine.contains("path=/slow-async-callback"), logLine);
+                assertTrue(logLine.contains("opCode=" + OpCode.create), logLine);
+                assertTrue(logLine.contains("callbackDurationMs="), logLine);
+                assertTrue(logLine.contains("queuedEvents="), logLine);
+                assertTrue(logLine.contains("session=0x"), logLine);
+            } finally {
+                releaseAsyncCallback.countDown();
+                if (zk != null) {
+                    zk.close();
+                }
+            }
+        }
     }
 
     static final int COUNT = 100;
