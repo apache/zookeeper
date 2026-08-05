@@ -2111,30 +2111,64 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param data
      *            the data to be set, or {@code null} for none
      * @param type
-     *            currently, create and setData need to check quota
+     *            currently, create and setData need to check quota; delete
+     *            only records the released count and bytes
+     * @param pendingChanges
+     *            accumulates, per quota prefix, the count and byte changes
+     *            made by the operations of the current request that were
+     *            already validated; a multi transaction is validated before
+     *            any of it is applied, so the stat nodes alone do not
+     *            reflect the earlier operations of the transaction
      */
-    public void checkQuota(String path, byte[] lastData, byte[] data, int type) throws KeeperException.QuotaExceededException {
+    public void checkQuota(String path, byte[] lastData, byte[] data, int type,
+            Map<String, StatsTrack> pendingChanges) throws KeeperException.QuotaExceededException {
         if (!enforceQuota) {
             return;
         }
         long dataBytes = (data == null) ? 0 : data.length;
+        long lastDataBytes = (lastData == null) ? 0 : lastData.length;
         ZKDatabase zkDatabase = getZKDatabase();
         String lastPrefix = zkDatabase.getDataTree().getMaxPrefixWithQuota(path);
         if (StringUtils.isEmpty(lastPrefix)) {
             return;
         }
 
-        final String namespace = PathUtils.getTopNamespace(path);
+        long bytesDiff;
+        long countDiff;
         switch (type) {
             case OpCode.create:
-                checkQuota(lastPrefix, dataBytes, 1, namespace);
+                bytesDiff = dataBytes;
+                countDiff = 1;
                 break;
             case OpCode.setData:
-                checkQuota(lastPrefix, dataBytes - (lastData == null ? 0 : lastData.length), 0, namespace);
+                bytesDiff = dataBytes - lastDataBytes;
+                countDiff = 0;
+                break;
+            case OpCode.delete:
+                // a delete cannot exceed a quota, but the released count and
+                // bytes have to be remembered so that later operations in the
+                // same transaction are checked against the correct usage
+                bytesDiff = -lastDataBytes;
+                countDiff = -1;
                 break;
              default:
                  throw new IllegalArgumentException("Unsupported OpCode for checkQuota: " + type);
         }
+
+        if (type != OpCode.delete) {
+            final String namespace = PathUtils.getTopNamespace(path);
+            checkQuota(lastPrefix, bytesDiff, countDiff, namespace, pendingChanges);
+        }
+
+        StatsTrack pending = pendingChanges.get(lastPrefix);
+        if (pending == null) {
+            pending = new StatsTrack();
+            pending.setCount(0);
+            pending.setBytes(0);
+            pendingChanges.put(lastPrefix, pending);
+        }
+        pending.setCount(pending.getCount() + countDiff);
+        pending.setBytes(pending.getBytes() + bytesDiff);
     }
 
     /**
@@ -2148,9 +2182,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *            the diff to be added to the count
      * @param namespace
       *           the namespace for collecting quota exceeded errors
+     * @param pendingChanges
+     *            the count and byte changes made by operations that were
+     *            already validated as part of the current request but are
+     *            not yet reflected in the quota stat node
      */
-    private void checkQuota(String lastPrefix, long bytesDiff, long countDiff, String namespace)
-            throws KeeperException.QuotaExceededException {
+    private void checkQuota(String lastPrefix, long bytesDiff, long countDiff, String namespace,
+            Map<String, StatsTrack> pendingChanges) throws KeeperException.QuotaExceededException {
         LOG.debug("checkQuota: lastPrefix={}, bytesDiff={}, countDiff={}", lastPrefix, bytesDiff, countDiff);
 
         // now check the quota we set
@@ -2187,9 +2225,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             currentStats = new StatsTrack(node.data);
         }
 
+        long pendingCount = 0;
+        long pendingBytes = 0;
+        StatsTrack pending = pendingChanges.get(lastPrefix);
+        if (pending != null) {
+            pendingCount = pending.getCount();
+            pendingBytes = pending.getBytes();
+        }
+
         //check the Count Quota
         if (checkCountQuota) {
-            long newCount = currentStats.getCount() + countDiff;
+            long newCount = currentStats.getCount() + pendingCount + countDiff;
             boolean isCountHardLimit = limitStats.getCountHardLimit() > -1;
             long countLimit = isCountHardLimit ? limitStats.getCountHardLimit() : limitStats.getCount();
 
@@ -2205,7 +2251,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         //check the Byte Quota
         if (checkByteQuota) {
-            long newBytes = currentStats.getBytes() + bytesDiff;
+            long newBytes = currentStats.getBytes() + pendingBytes + bytesDiff;
             boolean isByteHardLimit = limitStats.getByteHardLimit() > -1;
             long byteLimit = isByteHardLimit ? limitStats.getByteHardLimit() : limitStats.getBytes();
             if (newBytes > byteLimit) {
