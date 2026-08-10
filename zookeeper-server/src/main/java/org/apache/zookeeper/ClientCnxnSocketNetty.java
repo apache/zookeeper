@@ -443,7 +443,8 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // The synchronized is to prevent the race on shared variable "sslContext".
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline)
-            throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+            throws X509Exception.SSLContextException, X509Exception.KeyManagerException,
+                   X509Exception.TrustManagerException, SSLException {
             if (sslContext == null) {
                 try (ClientX509Util x509Util = new ClientX509Util()) {
                     sslContext = x509Util.createNettySslContextForClient(clientConfig);
