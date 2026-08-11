@@ -364,30 +364,47 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
-        final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
-        if (supplierContextClassName != null) {
-            LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+        final SSLContext suppliedSSLContext = loadSuppliedSSLContext(config);
+        if (suppliedSSLContext != null) {
+            return new SSLContextAndOptions(this, config, suppliedSSLContext);
+        }
+        return createSSLContextAndOptionsFromConfig(config);
+    }
 
-            try {
-                Class<?> sslContextClass = Class.forName(supplierContextClassName);
-                Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
-                return new SSLContextAndOptions(this, config, sslContextSupplier.get());
-            } catch (ClassNotFoundException
-                | ClassCastException
-                | NoSuchMethodException
-                | InvocationTargetException
-                | InstantiationException
-                | IllegalAccessException e) {
-                throw new SSLContextException("Could not retrieve the SSLContext from supplier source '"
-                                              + supplierContextClassName
-                                              + "' provided in the property '"
-                                              + sslContextSupplierClassProperty
-                                              + "'", e);
-            }
-        } else {
-            return createSSLContextAndOptionsFromConfig(config);
+    /**
+     * Loads an {@link SSLContext} from the {@link Supplier} implementation named by the
+     * {@link #getSslContextSupplierClassProperty()} property. This allows a user to take full control over
+     * the construction of the SSLContext, for example to use a hardware key store or an SSLContext obtained
+     * from a container, rather than having ZooKeeper load key material from files.
+     *
+     * @param config the configuration to read the supplier class name from.
+     * @return the supplied SSLContext, or {@code null} if the property is not set.
+     * @throws SSLContextException if the supplier class cannot be loaded, instantiated or invoked.
+     */
+    @SuppressWarnings("unchecked")
+    protected SSLContext loadSuppliedSSLContext(ZKConfig config) throws SSLContextException {
+        final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
+        if (supplierContextClassName == null) {
+            return null;
+        }
+        LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+
+        try {
+            Class<?> sslContextClass = Class.forName(supplierContextClassName);
+            Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
+            return sslContextSupplier.get();
+        } catch (ClassNotFoundException
+            | ClassCastException
+            | NoSuchMethodException
+            | InvocationTargetException
+            | InstantiationException
+            | IllegalAccessException e) {
+            throw new SSLContextException("Could not retrieve the SSLContext from supplier source '"
+                                          + supplierContextClassName
+                                          + "' provided in the property '"
+                                          + sslContextSupplierClassProperty
+                                          + "'", e);
         }
     }
 
