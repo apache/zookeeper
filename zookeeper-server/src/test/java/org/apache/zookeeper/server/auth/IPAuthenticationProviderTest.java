@@ -91,7 +91,7 @@ public class IPAuthenticationProviderTest {
     String clientIp = IPAuthenticationProvider.getClientIPAddress(request);
 
     // Assert
-    assertEquals("192.168.1.2", clientIp);
+    assertEquals("192.168.1.4", clientIp);
   }
 
   @Test

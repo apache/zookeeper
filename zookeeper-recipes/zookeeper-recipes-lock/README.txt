@@ -16,7 +16,7 @@
 -->
 
 1) This lock interface recipe implements the lock recipe
-mentioned in ../../docs/recipes.[html,pdf].
+documented at https://zookeeper.apache.org/doc/current/developer/recipes
 
 2) To compile the lock java recipe you can just run ant jar from 
 this directory. For compiling the c library go to zookeeper-client/zookeeper-client-c and read

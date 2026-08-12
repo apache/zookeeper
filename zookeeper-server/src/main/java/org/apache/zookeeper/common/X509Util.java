@@ -35,7 +35,6 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.X509CertSelector;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -87,27 +86,38 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    public static final String DEFAULT_PROTOCOL = defaultTlsProtocol();
+    private static final AtomicReference<String> defaultProtocol = new AtomicReference<>();
 
     /**
-     * Return TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
+     * Return TLSv1.2 when FIPS mode is enabled.
+     * Otherwise, returns TLSv1.3 or TLSv1.2 depending on Java runtime version being used.
      * TLSv1.3 was first introduced in JDK11 and back-ported to OpenJDK 8u272.
      */
-    private static String defaultTlsProtocol() {
-        String defaultProtocol = TLS_1_2;
-        List<String> supported = new ArrayList<>();
+    public static String defaultTlsProtocol(ZKConfig config) {
+        if (getFipsMode(config)) {
+            return TLS_1_2;
+        }
+
+        String proto = defaultProtocol.get();
+        if (proto != null) {
+            return proto;
+        }
+
+        proto = TLS_1_2;
         try {
-            supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
-            // We cannot use the default protocols directly, because the SSLContext factory methods
-            // only accept a single protocol
+            List<String> supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
             if (supported.contains(TLS_1_3)) {
-                defaultProtocol = TLS_1_3;
+                proto = TLS_1_3;
+            }
+            if (defaultProtocol.compareAndSet(null, proto)) {
+                LOG.info("Supported TLS protocols are {}, default TLS protocol is {}", supported, proto);
+            } else {
+                proto = defaultProtocol.get();
             }
         } catch (NoSuchAlgorithmException e) {
             // Ignore.
         }
-        LOG.info("Default TLS protocol is {}, supported TLS protocols are {}", defaultProtocol, supported);
-        return defaultProtocol;
+        return proto;
     }
 
     public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
@@ -340,30 +350,47 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
-        final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
-        if (supplierContextClassName != null) {
-            LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+        final SSLContext suppliedSSLContext = loadSuppliedSSLContext(config);
+        if (suppliedSSLContext != null) {
+            return new SSLContextAndOptions(this, config, suppliedSSLContext);
+        }
+        return createSSLContextAndOptionsFromConfig(config);
+    }
 
-            try {
-                Class<?> sslContextClass = Class.forName(supplierContextClassName);
-                Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
-                return new SSLContextAndOptions(this, config, sslContextSupplier.get());
-            } catch (ClassNotFoundException
-                | ClassCastException
-                | NoSuchMethodException
-                | InvocationTargetException
-                | InstantiationException
-                | IllegalAccessException e) {
-                throw new SSLContextException("Could not retrieve the SSLContext from supplier source '"
-                                              + supplierContextClassName
-                                              + "' provided in the property '"
-                                              + sslContextSupplierClassProperty
-                                              + "'", e);
-            }
-        } else {
-            return createSSLContextAndOptionsFromConfig(config);
+    /**
+     * Loads an {@link SSLContext} from the {@link Supplier} implementation named by the
+     * {@link #getSslContextSupplierClassProperty()} property. This allows a user to take full control over
+     * the construction of the SSLContext, for example to use a hardware key store or an SSLContext obtained
+     * from a container, rather than having ZooKeeper load key material from files.
+     *
+     * @param config the configuration to read the supplier class name from.
+     * @return the supplied SSLContext, or {@code null} if the property is not set.
+     * @throws SSLContextException if the supplier class cannot be loaded, instantiated or invoked.
+     */
+    @SuppressWarnings("unchecked")
+    protected SSLContext loadSuppliedSSLContext(ZKConfig config) throws SSLContextException {
+        final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
+        if (supplierContextClassName == null) {
+            return null;
+        }
+        LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+
+        try {
+            Class<?> sslContextClass = Class.forName(supplierContextClassName);
+            Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
+            return sslContextSupplier.get();
+        } catch (ClassNotFoundException
+            | ClassCastException
+            | NoSuchMethodException
+            | InvocationTargetException
+            | InstantiationException
+            | IllegalAccessException e) {
+            throw new SSLContextException("Could not retrieve the SSLContext from supplier source '"
+                                          + supplierContextClassName
+                                          + "' provided in the property '"
+                                          + sslContextSupplierClassProperty
+                                          + "'", e);
         }
     }
 
@@ -400,8 +427,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                     + ": "
                     + trustStoreTypeProp, e);
         }
-
-        String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        String defaultTlsProtocol = defaultTlsProtocol(config);
+        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);

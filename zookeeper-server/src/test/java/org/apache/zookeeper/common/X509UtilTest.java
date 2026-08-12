@@ -18,11 +18,15 @@
 
 package org.apache.zookeeper.common;
 
+import static org.apache.zookeeper.common.X509Util.FIPS_MODE_PROPERTY;
+import static org.apache.zookeeper.common.X509Util.TLS_1_2;
+import static org.apache.zookeeper.common.X509Util.TLS_1_3;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -88,8 +92,11 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         System.clearProperty(x509Util.getCipherSuitesProperty());
         System.clearProperty(x509Util.getSslProtocolProperty());
         System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
+        System.clearProperty(x509Util.getSslHostnameVerificationEnabledProperty());
+        System.clearProperty(x509Util.getSslClientHostnameVerificationEnabledProperty());
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        System.clearProperty(FIPS_MODE_PROPERTY);
         x509Util.close();
     }
 
@@ -100,22 +107,37 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(FIPS_MODE_PROPERTY, Boolean.FALSE.toString());
         SSLContext sslContext = x509Util.getDefaultSSLContext();
-        assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
+        String defaultTlsProtocol = X509Util.defaultTlsProtocol(new ZKConfig());
+        assertEquals(defaultTlsProtocol, sslContext.getProtocol());
 
         // Check that TLSv1.3 is selected in JDKs that support it (OpenJDK 8u272 and later).
         List<String> supported = Arrays.asList(SSLContext.getDefault().getSupportedSSLParameters().getProtocols());
-        if (supported.contains(X509Util.TLS_1_3)) {
+        if (supported.contains(TLS_1_3)) {
             // SSLContext protocol.
-            assertEquals(X509Util.TLS_1_3, sslContext.getProtocol());
+            assertEquals(TLS_1_3, sslContext.getProtocol());
             // Enabled protocols.
             List<String> protos = Arrays.asList(sslContext.getDefaultSSLParameters().getProtocols());
-            assertTrue(protos.contains(X509Util.TLS_1_2));
-            assertTrue(protos.contains(X509Util.TLS_1_3));
+            assertTrue(protos.contains(TLS_1_2));
+            assertTrue(protos.contains(TLS_1_3));
         } else {
-            assertEquals(X509Util.TLS_1_2, sslContext.getProtocol());
-            assertArrayEquals(new String[]{X509Util.TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
+            assertEquals(TLS_1_2, sslContext.getProtocol());
+            assertArrayEquals(new String[]{TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testCreateSSLContextFIPSModeEnabled(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        System.setProperty(FIPS_MODE_PROPERTY, Boolean.TRUE.toString());
+        SSLContext sslContext = x509Util.getDefaultSSLContext();
+        assertEquals(TLS_1_2, sslContext.getProtocol());
+        assertArrayEquals(new String[]{TLS_1_2}, sslContext.getDefaultSSLParameters().getProtocols());
     }
 
     @ParameterizedTest
@@ -704,6 +726,64 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
         assertEquals(SSLContext.getDefault(), sslContext);
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateNettySslContextForClient_customSSLContextClass(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            ZKConfig zkConfig = new ZKConfig();
+            zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
+            // Disable hostname verification so the JdkSslContext is not wrapped in a DelegatingSslContext.
+            zkConfig.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), "false");
+
+            SslContext sslContext = clientX509Util.createNettySslContextForClient(zkConfig);
+
+            assertTrue(sslContext instanceof JdkSslContext);
+            assertEquals(SSLContext.getDefault(), ((JdkSslContext) sslContext).context());
+            assertTrue(sslContext.isClient());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateNettySslContextForServer_customSSLContextClass(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            ZKConfig zkConfig = new ZKConfig();
+            zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
+            // A supplied SSLContext carries its own key material, so no key store must be required.
+            zkConfig.setProperty(clientX509Util.getSslKeystoreLocationProperty(), "");
+            // Disable hostname verification so the JdkSslContext is not wrapped in a DelegatingSslContext.
+            zkConfig.setProperty(clientX509Util.getSslHostnameVerificationEnabledProperty(), "false");
+
+            SslContext sslContext = clientX509Util.createNettySslContextForServer(zkConfig);
+
+            assertTrue(sslContext instanceof JdkSslContext);
+            assertEquals(SSLContext.getDefault(), ((JdkSslContext) sslContext).context());
+            assertTrue(sslContext.isServer());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testCreateNettySslContext_customSSLContextClassRejectsNonJdkProvider(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            ZKConfig zkConfig = new ZKConfig();
+            zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
+            zkConfig.setProperty(clientX509Util.getSslProviderProperty(), "OPENSSL");
+
+            assertThrows(X509Exception.SSLContextException.class,
+                () -> clientX509Util.createNettySslContextForClient(zkConfig));
+        }
     }
 
     @ParameterizedTest

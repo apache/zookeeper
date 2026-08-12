@@ -16,7 +16,7 @@
 -->
 
 1) This queue interface recipe implements the queue recipe
-mentioned in ../../../docs/recipes.[html,pdf].
+documented at https://zookeeper.apache.org/doc/current/developer/recipes
 A more detailed explanation is at http://www.cloudera.com/blog/2009/05/28/building-a-distributed-concurrent-queue-with-apache-zookeeper/
 
 2) This recipe does not handle KeeperException.ConnectionLossException or ZCONNECTIONLOSS. It will only work correctly once ZOOKEEPER-22 https://issues.apache.org/jira/browse/ZOOKEEPER-22 is resolved.

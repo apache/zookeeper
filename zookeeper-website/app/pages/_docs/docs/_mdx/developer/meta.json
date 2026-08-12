@@ -1,0 +1,11 @@
+{
+  "title": "Developer",
+  "pages": [
+    "programmers-guide",
+    "use-cases",
+    "java-example",
+    "basic-tutorial",
+    "recipes",
+    "external:[API Docs](/apidocs/zookeeper-server/index.html)"
+  ]
+}

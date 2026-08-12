@@ -52,8 +52,8 @@ import org.slf4j.LoggerFactory;
  * configuration information. This file is a Properties file, so keys and
  * values are separated by equals (=) and the key/value pairs are separated
  * by new lines. The following is a general summary of keys used in the
- * configuration file. For full details on this see the documentation in
- * docs/index.html
+ * configuration file. For full details see the
+ * <a href="https://zookeeper.apache.org/doc/current/admin-ops/administrators-guide/configuration-parameters">Administrator's Guide</a>.
  * <ol>
  * <li>dataDir - The directory where the ZooKeeper data is stored.</li>
  * <li>dataLogDir - The directory where the ZooKeeper transaction log is stored.</li>

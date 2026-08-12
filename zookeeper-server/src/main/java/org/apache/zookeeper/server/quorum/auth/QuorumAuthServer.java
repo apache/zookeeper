@@ -38,4 +38,8 @@ public interface QuorumAuthServer {
      */
     void authenticate(Socket sock, DataInputStream din) throws IOException;
 
+    /**
+     * Shut down the server and release resources.
+     */
+    void shutdown();
 }

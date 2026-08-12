@@ -33,108 +33,108 @@ import org.slf4j.LoggerFactory;
 public class FourLetterCommands {
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int confCmd = ByteBuffer.wrap("conf".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int consCmd = ByteBuffer.wrap("cons".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int crstCmd = ByteBuffer.wrap("crst".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int dirsCmd = ByteBuffer.wrap("dirs".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int dumpCmd = ByteBuffer.wrap("dump".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int enviCmd = ByteBuffer.wrap("envi".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int getTraceMaskCmd = ByteBuffer.wrap("gtmk".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int ruokCmd = ByteBuffer.wrap("ruok".getBytes()).getInt();
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int setTraceMaskCmd = ByteBuffer.wrap("stmk".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int srvrCmd = ByteBuffer.wrap("srvr".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int srstCmd = ByteBuffer.wrap("srst".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int statCmd = ByteBuffer.wrap("stat".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int wchcCmd = ByteBuffer.wrap("wchc".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int wchpCmd = ByteBuffer.wrap("wchp".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int wchsCmd = ByteBuffer.wrap("wchs".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int mntrCmd = ByteBuffer.wrap("mntr".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     public static final int isroCmd = ByteBuffer.wrap("isro".getBytes()).getInt();
 
     /*
-     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * See <a href="{@docRoot}/../../admin-ops/administrators-guide/commands#the-four-letter-words">
      * Zk Admin</a>. this link is for all the commands.
      */
     protected static final int hashCmd = ByteBuffer.wrap("hash".getBytes()).getInt();

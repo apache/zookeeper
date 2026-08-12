@@ -113,7 +113,8 @@ read_only=
 PROPERTIES=($EXTRA_JVM_ARGS "-Dzookeeper.extendedTypesEnabled=true" "-Dznode.container.checkIntervalMs=100")
 if [[ $1 == "startRequireSASLAuth" ]]; then
   PROPERTIES=("-Dzookeeper.sessionRequireClientSASLAuth=true" "${PROPERTIES[@]}"
-    "-Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider")
+    "-Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
+    "-Dzookeeper.fips-mode=false")
   if [[ -n $2 ]]; then
     PROPERTIES=("${PROPERTIES[@]}" "-Djava.security.auth.login.config=$2")
   fi

@@ -18,20 +18,29 @@
 
 package org.apache.zookeeper.metrics.prometheus;
 
+import static org.apache.zookeeper.common.LogRedactor.redactSensitiveValues;
 import io.prometheus.metrics.core.metrics.GaugeWithCallback;
 import io.prometheus.metrics.exporter.servlet.javax.PrometheusMetricsServlet;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.CounterSet;
 import org.apache.zookeeper.metrics.Gauge;
@@ -41,10 +50,16 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.server.admin.UnifiedConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.KeyStoreScanner;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -71,6 +86,9 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     private Server server;
     private int numWorkerThreads;
+    private long workerShutdownTimeoutMs = 1000;
+    private int summaryRotateSeconds = 60;
+    private ScheduledExecutorService summaryRotateExecutor;
     private String host;
 
     // SSL Configuration fields
@@ -84,13 +102,34 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     private boolean wantClientAuth = true; // Secure default
     private String enabledProtocols;
     private String cipherSuites;
+    private int httpVersion;
 
     // Constants for configuration
     public static final String HTTP_HOST = "httpHost";
     public static final String HTTP_PORT = "httpPort";
     public static final String EXPORT_JVM_INFO = "exportJvmInfo";
     public static final String HTTPS_PORT = "httpsPort";
+    /**
+     * @deprecated DataSketches-based summaries are lock-free per-thread and no longer require
+     *     worker threads. This property is ignored. See ZOOKEEPER-4741.
+     */
+    @Deprecated
     public static final String NUM_WORKER_THREADS = "numWorkerThreads";
+    /**
+     * @deprecated DataSketches-based summaries no longer use a bounded worker queue. This property
+     *     is ignored. See ZOOKEEPER-4741.
+     */
+    @Deprecated
+    public static final String MAX_QUEUE_SIZE = "maxQueueSize";
+    /** Timeout in ms for shutting down the summary rotation executor. */
+    public static final String WORKER_SHUTDOWN_TIMEOUT_MS = "workerShutdownTimeoutMs";
+    /**
+     * Interval in seconds for rotating per-thread DataSketches into the aggregated result that is
+     * exposed via {@code /metrics}. Quantiles from observations in the current interval become
+     * visible after the next rotation. Default is 60 seconds.
+     */
+    public static final String PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS =
+            "prometheusMetricsSummaryRotateIntervalSeconds";
     public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
     public static final String SSL_KEYSTORE_PASSWORD = "ssl.keyStore.password";
     public static final String SSL_KEYSTORE_TYPE = "ssl.keyStore.type";
@@ -101,7 +140,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     public static final String SSL_WANT_CLIENT_AUTH = "ssl.want.client.auth";
     public static final String SSL_ENABLED_PROTOCOLS = "ssl.enabledProtocols";
     public static final String SSL_ENABLED_CIPHERS = "ssl.ciphersuites";
+    public static final String HTTP_VERSION = "httpVersion";
     public static final int SCAN_INTERVAL = 60 * 10; // 10 minutes
+    public static final int DEFAULT_HTTP_VERSION = 11;  // based on HttpVersion.java in jetty
+    /**
+     * The time, in seconds, that the browser should remember that a host is only to be accessed using HTTPS.
+     * Seconds in a day.
+     */
+    public static final int DEFAULT_STS_MAX_AGE = 1 * 24 * 60 * 60;
 
     /**
      * Custom servlet to disable the TRACE method for security reasons.
@@ -119,26 +165,35 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
-        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", configuration);
+        LOG.info("Initializing Prometheus metrics with Jetty, configuration: {}", redactSensitiveValues(configuration));
 
         this.host = configuration.getProperty(HTTP_HOST, "0.0.0.0");
         this.httpPort = Integer.parseInt(configuration.getProperty(HTTP_PORT, "-1"));
         this.httpsPort = Integer.parseInt(configuration.getProperty(HTTPS_PORT, "-1"));
         this.exportJvmInfo = Boolean.parseBoolean(configuration.getProperty(EXPORT_JVM_INFO, "true"));
         this.numWorkerThreads = Integer.parseInt(configuration.getProperty(NUM_WORKER_THREADS, "10"));
+        if (configuration.containsKey(NUM_WORKER_THREADS) || configuration.containsKey(MAX_QUEUE_SIZE)) {
+            LOG.warn("The configuration {} and {} are deprecated and ignored. See ZOOKEEPER-4741.",
+                    NUM_WORKER_THREADS, MAX_QUEUE_SIZE);
+        }
+        this.workerShutdownTimeoutMs =
+                Long.parseLong(configuration.getProperty(WORKER_SHUTDOWN_TIMEOUT_MS, "1000"));
+        this.summaryRotateSeconds =
+                Integer.parseInt(configuration.getProperty(PROMETHEUS_SUMMARY_ROTATE_INTERVAL_SECONDS, "60"));
 
         // If httpsPort is specified, parse all SSL properties
         if (this.httpsPort != -1) {
             this.keyStorePath = configuration.getProperty(SSL_KEYSTORE_LOCATION);
             this.keyStorePassword = configuration.getProperty(SSL_KEYSTORE_PASSWORD);
-            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE, "PKCS12");
+            this.keyStoreType = configuration.getProperty(SSL_KEYSTORE_TYPE);
             this.trustStorePath = configuration.getProperty(SSL_TRUSTSTORE_LOCATION);
             this.trustStorePassword = configuration.getProperty(SSL_TRUSTSTORE_PASSWORD);
-            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE, "PKCS12");
+            this.trustStoreType = configuration.getProperty(SSL_TRUSTSTORE_TYPE);
             this.needClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_NEED_CLIENT_AUTH, "true"));
             this.wantClientAuth = Boolean.parseBoolean(configuration.getProperty(SSL_WANT_CLIENT_AUTH, "true"));
             this.enabledProtocols = configuration.getProperty(SSL_ENABLED_PROTOCOLS);
             this.cipherSuites = configuration.getProperty(SSL_ENABLED_CIPHERS);
+            this.httpVersion = Integer.getInteger(HTTP_VERSION, DEFAULT_HTTP_VERSION);
         }
 
         // Validate that at least one port is configured.
@@ -171,22 +226,48 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             int acceptors = 1;
             int selectors = 1;
 
-            // Configure HTTP connector if enabled
-            if (this.httpPort != -1) {
-                ServerConnector httpConnector = new ServerConnector(server, acceptors, selectors);
-                httpConnector.setPort(this.httpPort);
-                httpConnector.setHost(this.host);
-                server.addConnector(httpConnector);
+            ServerConnector connector = null;
+
+            if (this.httpPort != -1 && this.httpsPort != -1 && this.httpPort == this.httpsPort) {
+                // Set Strict-Transport-Security HTTP response header.
+                SecureRequestCustomizer customizer = new SecureRequestCustomizer();
+                customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
+                // Strict-Transport-Security HTTP header should apply to all subdomains of the host's domain as well.
+                customizer.setStsIncludeSubDomains(true);
+
+                HttpConfiguration config = new HttpConfiguration();
+                config.setSecureScheme("https");
+                config.addCustomizer(customizer);
+
+                SslContextFactory.Server sslContextFactory = createSslContextFactory();
+                setKeyStoreScanner(sslContextFactory);
+
+                String nextProtocol = HttpVersion.fromVersion(httpVersion).asString();
+                connector = new ServerConnector(server,
+                        new UnifiedConnectionFactory(sslContextFactory, nextProtocol),
+                        new HttpConnectionFactory(config));
+                connector.setPort(this.httpPort);
+                connector.setHost(this.host);
+                LOG.info("Created unified ServerConnector for host: {}, httpPort: {}", host, httpPort);
+            } else {
+                // Configure HTTP connector if enabled
+                if (this.httpPort != -1) {
+                    connector = new ServerConnector(server, acceptors, selectors);
+                    connector.setPort(this.httpPort);
+                    connector.setHost(this.host);
+                    LOG.info("Created HTTP ServerConnector for host: {}, httpPort: {}", host, httpPort);
+                }
+
+                // Configure HTTPS connector if enabled
+                if (this.httpsPort != -1) {
+                    SslContextFactory.Server sslContextFactory = createSslContextFactory();
+                    setKeyStoreScanner(sslContextFactory);
+                    connector = createSslConnector(server, acceptors, selectors, sslContextFactory);
+                    LOG.info("Created HTTPS ServerConnector for host: {}, httpsPort: {}", host, httpsPort);
+                }
             }
 
-            // Configure HTTPS connector if enabled
-            if (this.httpsPort != -1) {
-                SslContextFactory.Server sslContextFactory = createSslContextFactory();
-                KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslContextFactory);
-                keystoreScanner.setScanInterval(SCAN_INTERVAL);
-                server.addBean(keystoreScanner);
-                server.addConnector(createSslConnector(server, acceptors, selectors, sslContextFactory));
-            }
+            server.addConnector(connector);
 
             // Set up the servlet context handler
             ServletContextHandler context = new ServletContextHandler();
@@ -199,6 +280,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             LOG.info("Prometheus metrics provider with Jetty started. HTTP port: {}, HTTPS port: {}",
                     httpPort != -1 ? httpPort : "disabled", httpsPort != -1 ? httpsPort : "disabled");
 
+            startSummaryRotateTask();
         } catch (Exception e) {
             LOG.error("Failed to start Prometheus Jetty server", e);
             // Ensure server is stopped on startup failure
@@ -207,23 +289,74 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
+    private void startSummaryRotateTask() {
+        summaryRotateExecutor = new ScheduledThreadPoolExecutor(1, new SummaryRotateThreadFactory());
+        summaryRotateExecutor.scheduleAtFixedRate(() -> {
+            try {
+                rootContext.rotateAllSummaries();
+            } catch (Exception err) {
+                LOG.error("Cannot rotate Prometheus summaries", err);
+            }
+        }, summaryRotateSeconds, summaryRotateSeconds, TimeUnit.SECONDS);
+    }
+
+    private void shutdownSummaryRotateExecutor() {
+        if (summaryRotateExecutor == null) {
+            return;
+        }
+        LOG.info("Shutting down Prometheus summary rotate executor with timeout {}ms", workerShutdownTimeoutMs);
+        summaryRotateExecutor.shutdown();
+        try {
+            if (!summaryRotateExecutor.awaitTermination(workerShutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
+                LOG.warn("Summary rotate executor did not terminate in {}ms; forcing shutdown",
+                        workerShutdownTimeoutMs);
+                summaryRotateExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            summaryRotateExecutor.shutdownNow();
+        } finally {
+            summaryRotateExecutor = null;
+        }
+    }
+
+    private static class SummaryRotateThreadFactory implements ThreadFactory {
+        private static final AtomicInteger counter = new AtomicInteger(1);
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            Thread thread = new Thread(runnable, "PrometheusSummaryRotate-" + counter.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        }
+    }
+
+    private void setKeyStoreScanner(SslContextFactory.Server sslContextFactory) {
+        KeyStoreScanner keystoreScanner = new KeyStoreScanner(sslContextFactory);
+        keystoreScanner.setScanInterval(SCAN_INTERVAL);
+        server.addBean(keystoreScanner);
+    }
+
     /**
      * Creates and configures the SslContextFactory for the server.
      *
      * @return A configured SslContextFactory.Server instance.
      */
-    private SslContextFactory.Server createSslContextFactory() {
+    private SslContextFactory.Server createSslContextFactory() throws GeneralSecurityException, IOException {
         SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
 
         // Validate and set KeyStore properties
         if (this.keyStorePath == null || this.keyStorePath.isEmpty()) {
             throw new IllegalArgumentException("SSL/TLS is enabled, but '" + SSL_KEYSTORE_LOCATION + "' is not set.");
         }
-        sslContextFactory.setKeyStorePath(this.keyStorePath);
+        KeyStore keyStore = X509Util.loadKeyStore(this.keyStorePath, this.keyStorePassword, this.keyStoreType);
+        LOG.debug("Successfully loaded private key from {}", this.keyStorePath);
+
+        sslContextFactory.setKeyStore(keyStore);
         sslContextFactory.setKeyStorePassword(this.keyStorePassword);
-        if (this.keyStoreType != null) {
-            sslContextFactory.setKeyStoreType(this.keyStoreType);
-        }
+
+        // This is needed for KeyStoreScanner to work.
+        sslContextFactory.setKeyStoreResource(Resource.newResource(this.keyStorePath));
 
         // Validate and set TrustStore properties (often needed for client auth)
         if (this.needClientAuth && (this.trustStorePath == null || this.trustStorePath.isEmpty())) {
@@ -231,11 +364,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     "'" + SSL_NEED_CLIENT_AUTH + "' is true, but '" + SSL_TRUSTSTORE_LOCATION + "' is not set.");
         }
         if (this.trustStorePath != null) {
-            sslContextFactory.setTrustStorePath(this.trustStorePath);
+            KeyStore trustStore = X509Util.loadTrustStore(this.trustStorePath, this.trustStorePassword,
+                    this.trustStoreType);
+            LOG.debug("Successfully loaded certificate authority from {}", this.trustStorePath);
+
+            sslContextFactory.setTrustStore(trustStore);
             sslContextFactory.setTrustStorePassword(this.trustStorePassword);
-            if (this.trustStoreType != null) {
-                sslContextFactory.setTrustStoreType(this.trustStoreType);
-            }
         }
 
         sslContextFactory.setNeedClientAuth(this.needClientAuth);
@@ -280,6 +414,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     @Override
     public void stop() {
+        shutdownSummaryRotateExecutor();
         if (server != null) {
             try {
                 LOG.info("Stopping Prometheus Jetty server.");
@@ -427,16 +562,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             unregisterGauge(name);
         }
 
-        private io.prometheus.metrics.core.metrics.Summary createPrometheusSummary(String name, DetailLevel detailLevel,
-                String... labelNames) {
-            io.prometheus.metrics.core.metrics.Summary.Builder builder = io.prometheus.metrics.core.metrics.Summary
-                    .builder().name(name).help(name + " summary").quantile(0.5, 0.05); // Median
-
+        private SketchesSummary createSketchesSummary(String name, DetailLevel detailLevel, String... labelNames) {
+            SketchesSummary.Builder builder = SketchesSummary.build(name, name + " summary")
+                    .quantile(0.5); // Median
             if (detailLevel == DetailLevel.ADVANCED) {
-                builder.quantile(0.95, 0.05)   // 95th percentile
-                        .quantile(0.99, 0.05); // 99th percentile
+                builder.quantile(0.95).quantile(0.99); // 95th and 99th percentile
             }
-
             if (labelNames.length > 0) {
                 builder.labelNames(labelNames);
             }
@@ -453,9 +584,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     throw new IllegalArgumentException(
                             "Already registered a summary as " + key + " with a different detail level");
                 }
-                io.prometheus.metrics.core.metrics.Summary prometheusSummary = createPrometheusSummary(key,
-                        detailLevel);
-                return new PrometheusSummaryWrapper(prometheusSummary);
+                return new PrometheusSummaryWrapper(createSketchesSummary(key, detailLevel), key);
             });
         }
 
@@ -469,10 +598,15 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     throw new IllegalArgumentException(
                             "Already registered a summary set as " + key + " with a different detail level");
                 }
-                io.prometheus.metrics.core.metrics.Summary prometheusSummary = createPrometheusSummary(key, detailLevel,
-                        LABEL);
-                return new PrometheusLabelledSummaryWrapper(prometheusSummary);
+                return new PrometheusLabelledSummaryWrapper(createSketchesSummary(key, detailLevel, LABEL), key);
             });
+        }
+
+        void rotateAllSummaries() {
+            basicSummaries.values().forEach(s -> s.inner.rotate());
+            advancedSummaries.values().forEach(s -> s.inner.rotate());
+            basicSummarySets.values().forEach(s -> s.inner.rotate());
+            advancedSummarySets.values().forEach(s -> s.inner.rotate());
         }
     }
 
@@ -523,29 +657,43 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
     }
 
-    private static class PrometheusSummaryWrapper implements Summary {
-        private final io.prometheus.metrics.core.metrics.Summary prometheusSummary;
+    static class PrometheusSummaryWrapper implements Summary {
+        // VisibleForTesting
+        final SketchesSummary inner;
+        private final String name;
 
-        public PrometheusSummaryWrapper(io.prometheus.metrics.core.metrics.Summary prometheusSummary) {
-            this.prometheusSummary = prometheusSummary;
+        PrometheusSummaryWrapper(SketchesSummary inner, String name) {
+            this.inner = inner;
+            this.name = name;
         }
 
         @Override
         public void add(long value) {
-            this.prometheusSummary.observe(value);
+            try {
+                inner.observe(value);
+            } catch (IllegalArgumentException err) {
+                LOG.error("invalid delta {} for metric {}", value, name, err);
+            }
         }
     }
 
-    private static class PrometheusLabelledSummaryWrapper implements SummarySet {
-        private final io.prometheus.metrics.core.metrics.Summary prometheusSummary;
+    static class PrometheusLabelledSummaryWrapper implements SummarySet {
+        // VisibleForTesting
+        final SketchesSummary inner;
+        private final String name;
 
-        public PrometheusLabelledSummaryWrapper(io.prometheus.metrics.core.metrics.Summary prometheusSummary) {
-            this.prometheusSummary = prometheusSummary;
+        PrometheusLabelledSummaryWrapper(SketchesSummary inner, String name) {
+            this.inner = inner;
+            this.name = name;
         }
 
         @Override
         public void add(String key, long value) {
-            this.prometheusSummary.labelValues(key).observe(value);
+            try {
+                inner.labels(key).observe(value);
+            } catch (IllegalArgumentException err) {
+                LOG.error("invalid value {} for metric {} with key {}", value, name, key, err);
+            }
         }
     }
 }

@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 public class AdminServerFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminServerFactory.class);
+    static final String ENABLE_ADMIN_SERVER_PROPERTY = "zookeeper.admin.enableServer";
 
     /**
      * This method encapsulates the logic for whether we should use a
@@ -38,21 +39,17 @@ public class AdminServerFactory {
      * to pull in Jetty with ZooKeeper.
      */
     public static AdminServer createAdminServer() {
-        if (!"false".equals(System.getProperty("zookeeper.admin.enableServer"))) {
+        if (Boolean.getBoolean(ENABLE_ADMIN_SERVER_PROPERTY)) {
             try {
                 Class<?> jettyAdminServerC = Class.forName("org.apache.zookeeper.server.admin.JettyAdminServer");
                 Object adminServer = jettyAdminServerC.getConstructor().newInstance();
                 return (AdminServer) adminServer;
 
-            } catch (ClassNotFoundException e) {
-                LOG.warn("Unable to start JettyAdminServer", e);
-            } catch (InstantiationException e) {
-                LOG.warn("Unable to start JettyAdminServer", e);
-            } catch (IllegalAccessException e) {
-                LOG.warn("Unable to start JettyAdminServer", e);
-            } catch (InvocationTargetException e) {
-                LOG.warn("Unable to start JettyAdminServer", e);
-            } catch (NoSuchMethodException e) {
+            } catch (ClassNotFoundException
+                     | InstantiationException
+                     | IllegalAccessException
+                     | InvocationTargetException
+                     | NoSuchMethodException e) {
                 LOG.warn("Unable to start JettyAdminServer", e);
             } catch (NoClassDefFoundError e) {
                 LOG.warn("Unable to load jetty, not starting JettyAdminServer", e);

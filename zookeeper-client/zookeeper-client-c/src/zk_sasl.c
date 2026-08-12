@@ -104,6 +104,7 @@ zoo_sasl_client_t *zoo_sasl_client_create(zoo_sasl_params_t *sasl_params)
 
     if (rc != ZOK) {
         zoo_sasl_client_destroy(sc);
+        free(sc);
         return NULL;
     }
 

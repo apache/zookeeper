@@ -7,5 +7,23 @@
     <!-- this problem is to be addressed in ZOOKEEPER-3227 -->
     <Bug pattern="DM_DEFAULT_ENCODING"/>
 
+    <!-- newly detected by SpotBugs 4.9.3; pre-existing code, not regressions -->
+    <Bug pattern="EI_EXPOSE_REP"/>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+    <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    <Bug pattern="AT_STALE_THREAD_WRITE_OF_PRIMITIVE"/>
+    <Bug pattern="AT_NONATOMIC_64BIT_PRIMITIVE"/>
+    <Bug pattern="AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE"/>
+    <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
+    <Bug pattern="DCN_NULLPOINTER_EXCEPTION"/>
+    <Bug pattern="US_USELESS_SUPPRESSION_ON_METHOD"/>
+    <Bug pattern="US_USELESS_SUPPRESSION_ON_CLASS"/>
+    <Bug pattern="US_USELESS_SUPPRESSION_ON_FIELD"/>
+    <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    <Bug pattern="SS_SHOULD_BE_STATIC"/>
+    <Bug pattern="NP_UNWRITTEN_FIELD"/>
+    <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
+    <Bug pattern="MS_EXPOSE_REP"/>
+
 </FindBugsFilter>
 

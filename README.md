@@ -2,7 +2,7 @@
 
 <p align="left">
   <a href="https://zookeeper.apache.org/">
-    <img src="https://zookeeper.apache.org/images/zookeeper_small.gif"" alt="https://zookeeper.apache.org/"><br/>
+    <img src="https://zookeeper.apache.org/images/zookeeper_small.gif" alt="https://zookeeper.apache.org/"><br/>
   </a>
 </p>
 
@@ -38,11 +38,6 @@ are deployed to the central repository after the release
 is voted on and approved by the Apache ZooKeeper PMC:
 
   https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper
-
-## Java 8
-
-If you are going to compile with Java 1.8, you should use a
-recent release at u211 or above.
 
 # Contributing
 We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patches as pull requests and other aspects of our contribution workflow.

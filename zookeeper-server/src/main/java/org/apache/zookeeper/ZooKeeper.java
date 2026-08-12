@@ -1718,7 +1718,7 @@ public class ZooKeeper implements AutoCloseable {
      * Note: The maximum allowable size of all of the data arrays in all of
      * the setData operations in this single request is typically 1 MB
      * (1,048,576 bytes). This limit is specified on the server via
-     * <a href="http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#Unsafe+Options">jute.maxbuffer</a>.
+     * <a href="https://zookeeper.apache.org/doc/current/admin-ops/administrators-guide/configuration-parameters#unsafe-options">jute.maxbuffer</a>.
      * Requests larger than this will cause a KeeperException to be
      * thrown.
      *

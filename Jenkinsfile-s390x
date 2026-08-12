@@ -34,35 +34,42 @@ pipeline {
 
     stages {
         stage('Prepare') {
-
-            agent {
-                label 's390x'
-            }
-
-            tools {
-                maven "maven_latest"
-                jdk "jdk_11_latest"
-            }
-
-            stages {
-                stage('BuildAndTest') {
-                    steps {
-                        sh "git clean -fxd"
-                        sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
+            matrix {
+                agent {
+                    label 's390x'
+                }
+                axes {
+                    axis {
+                        name 'JAVA_VERSION'
+                        values 'jdk_17_latest', 'jdk_25_latest'
                     }
-                    post {
-                        always {
-                            junit '**/target/surefire-reports/TEST-*.xml'
-                            archiveArtifacts '**/target/*.jar'
+                }
+				
+				tools {
+                    maven "maven_latest"
+                    jdk "${JAVA_VERSION}"
+                }
+
+                stages {
+                    stage('BuildAndTest') {
+                        steps {
+                            sh "git clean -fxd"
+                            sh "mvn verify spotbugs:check checkstyle:check -Pfull-build -Dsurefire-forkcount=4"
                         }
-                        // Jenkins pipeline jobs fill slaves on PRs without this :(
-                        cleanup() {
-                            script {
-                                sh label: 'Cleanup workspace', script: '''
-                                    # See HADOOP-13951
-                                    chmod -R u+rxw "${WORKSPACE}"
-                                    '''
-                                deleteDir()
+                        post {
+                            always {
+                               junit '**/target/surefire-reports/TEST-*.xml'
+                               archiveArtifacts '**/target/*.jar'
+                            }
+                            // Jenkins pipeline jobs fill slaves on PRs without this :(
+                            cleanup() {
+                                script {
+                                    sh label: 'Cleanup workspace', script: '''
+                                        # See HADOOP-13951
+                                        chmod -R u+rxw "${WORKSPACE}"
+                                        '''
+                                    deleteDir()
+                                }
                             }
                         }
                     }

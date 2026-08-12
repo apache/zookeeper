@@ -1,0 +1,283 @@
+---
+title: "Access Control using ACLs"
+description: "Explains ZooKeeper's ACL-based access control for znodes, including permission types, built-in ACL schemes (world, auth, digest, host, IP), and the C client API."
+---
+
+ZooKeeper uses ACLs to control access to its znodes (the
+data nodes of a ZooKeeper data tree). The ACL implementation is
+quite similar to UNIX file access permissions: it employs
+permission bits to allow/disallow various operations against a
+node and the scope to which the bits apply. Unlike standard UNIX
+permissions, a ZooKeeper node is not limited by the three standard
+scopes for user (owner of the file), group, and world
+(other). ZooKeeper does not have a notion of an owner of a
+znode. Instead, an ACL specifies sets of ids and permissions that
+are associated with those ids.
+
+Note also that an ACL pertains only to a specific znode. In
+particular it does not apply to children. For example, if
+_/app_ is only readable by ip:172.16.16.1 and
+_/app/status_ is world readable, anyone will
+be able to read _/app/status_; ACLs are not
+recursive.
+
+ZooKeeper supports pluggable authentication schemes. Ids are
+specified using the form _scheme:expression_,
+where _scheme_ is the authentication scheme
+that the id corresponds to. The set of valid expressions are defined
+by the scheme. For example, _ip:172.16.16.1_ is
+an id for a host with the address _172.16.16.1_
+using the _ip_ scheme, whereas _digest:bob:password_
+is an id for the user with the name of _bob_ using
+the _digest_ scheme.
+
+When a client connects to ZooKeeper and authenticates
+itself, ZooKeeper associates all the ids that correspond to a
+client with the clients connection. These ids are checked against
+the ACLs of znodes when a client tries to access a node. ACLs are
+made up of pairs of _(scheme:expression,
+perms)_. The format of
+the _expression_ is specific to the scheme. For
+example, the pair _(ip:19.22.0.0/16, READ)_
+gives the _READ_ permission to any clients with
+an IP address that starts with 19.22.
+
+## ACL Permissions
+
+ZooKeeper supports the following permissions:
+
+- **CREATE**: you can create a child node
+- **READ**: you can get data from a node and list its children.
+- **WRITE**: you can set data for a node
+- **DELETE**: you can delete a child node
+- **ADMIN**: you can set permissions
+
+The _CREATE_
+and _DELETE_ permissions have been broken out
+of the _WRITE_ permission for finer grained
+access controls. The cases for _CREATE_
+and _DELETE_ are the following:
+
+You want A to be able to do a set on a ZooKeeper node, but
+not be able to _CREATE_
+or _DELETE_ children.
+
+_CREATE_
+without _DELETE_: clients create requests by
+creating ZooKeeper nodes in a parent directory. You want all
+clients to be able to add, but only request processor can
+delete. (This is kind of like the APPEND permission for
+files.)
+
+Also, the _ADMIN_ permission is there
+since ZooKeeper doesn’t have a notion of file owner. In some
+sense the _ADMIN_ permission designates the
+entity as the owner. ZooKeeper doesn’t support the LOOKUP
+permission (execute permission bit on directories to allow you
+to LOOKUP even though you can't list the directory). Everyone
+implicitly has LOOKUP permission. This allows you to stat a
+node, but nothing more. (The problem is, if you want to call
+zoo_exists() on a node that doesn't exist, there is no
+permission to check.)
+
+_ADMIN_ permission also has a special role in terms of ACLs:
+in order to retrieve ACLs of a znode user has to have _READ_ or _ADMIN_
+permission, but without _ADMIN_ permission, digest hash values will be
+masked out.
+
+As of versions **3.9.2 / 3.8.4 / 3.7.3** the exists() call will now verify ACLs
+on nodes that exist and the client must have READ permission otherwise
+'Insufficient permission' error will be raised.
+
+### Builtin ACL Schemes
+
+ZooKeeper has the following built in schemes:
+
+- **world** has a
+  single id, _anyone_, that represents
+  anyone.
+- **auth** is a special
+  scheme which ignores any provided expression and instead uses the current user,
+  credentials, and scheme. Any expression (whether _user_ like with SASL
+  authentication or _user:password_ like with DIGEST authentication) provided is ignored
+  by the ZooKeeper server when persisting the ACL. However, the expression must still be
+  provided in the ACL because the ACL must match the form _scheme:expression:perms_.
+  This scheme is provided as a convenience as it is a common use-case for
+  a user to create a znode and then restrict access to that znode to only that user.
+  If there is no authenticated user, setting an ACL with the auth scheme will fail.
+- **digest** uses
+  a _username:password_ string to generate
+  MD5 hash which is then used as an ACL ID
+  identity. Authentication is done by sending
+  the _username:password_ in clear text. When
+  used in the ACL the expression will be
+  the _username:base64_
+  encoded _SHA1_
+  password _digest_.
+- **ip** uses the
+  client host IP as an ACL ID identity. The ACL expression is of
+  the form _addr/bits_ where the most
+  significant _bits_
+  of _addr_ are matched against the most
+  significant _bits_ of the client host
+  IP.
+- **x509** uses the client
+  X500 Principal as an ACL ID identity. The ACL expression is the exact
+  X500 Principal name of a client. When using the secure port, clients
+  are automatically authenticated and their auth info for the x509 scheme
+  is set.
+
+### ZooKeeper C client API
+
+The following constants are provided by the ZooKeeper C
+library:
+
+- _const_ _int_ ZOO_PERM_READ; //can read node’s value and list its children
+- _const_ _int_ ZOO_PERM_WRITE;// can set the node’s value
+- _const_ _int_ ZOO_PERM_CREATE; //can create children
+- _const_ _int_ ZOO_PERM_DELETE;// can delete children
+- _const_ _int_ ZOO_PERM_ADMIN; //can execute set_acl()
+- _const_ _int_ ZOO_PERM_ALL;// all of the above flags OR’d together
+
+The following are the standard ACL IDs:
+
+- _struct_ Id ZOO_ANYONE_ID_UNSAFE; //(‘world’,’anyone’)
+- _struct_ Id ZOO_AUTH_IDS;// (‘auth’,’’)
+
+ZOO_AUTH_IDS empty identity string should be interpreted as “the identity of the creator”.
+
+ZooKeeper client comes with three standard ACLs:
+
+- _struct_ ACL_vector ZOO_OPEN_ACL_UNSAFE; //(ZOO_PERM_ALL,ZOO_ANYONE_ID_UNSAFE)
+- _struct_ ACL_vector ZOO_READ_ACL_UNSAFE;// (ZOO_PERM_READ, ZOO_ANYONE_ID_UNSAFE)
+- _struct_ ACL_vector ZOO_CREATOR_ALL_ACL; //(ZOO_PERM_ALL,ZOO_AUTH_IDS)
+
+The ZOO*OPEN_ACL_UNSAFE is completely open free for all
+ACL: any application can execute any operation on the node and
+can create, list and delete its children. The
+ZOO_READ_ACL_UNSAFE is read-only access for any
+application. CREATE_ALL_ACL grants all permissions to the
+creator of the node. The creator must have been authenticated by
+the server (for example, using “\_digest*”
+scheme) before it can create nodes with this ACL.
+
+The following ZooKeeper operations deal with ACLs:
+
+- _int_ _zoo_add_auth_
+  (zhandle*t \*zh,\_const* _char\_\_
+  scheme,*const* *char*_
+  cert, _int_ certLen, void*completion_t
+  completion, \_const* _void_
+  \*data);
+
+  The application uses the zoo_add_auth function to
+  authenticate itself to the server. The function can be called
+  multiple times if the application wants to authenticate using
+  different schemes and/or identities.
+
+- _int_ _zoo_create_
+  (zhandle*t \*zh, \_const* _char_
+  \*path, _const_ _char_
+  \*value,_int_
+  valuelen, _const_ _struct_
+  ACL*vector \*acl, \_int*
+  flags,_char_
+  \*realpath, _int_
+  max_realpath_len);
+
+  zoo_create(...) operation creates a new node. The acl
+  parameter is a list of ACLs associated with the node. The parent
+  node must have the CREATE permission bit set.
+
+- _int_ _zoo_get_acl_
+  (zhandle*t \*zh, \_const* _char_
+  \*path,_struct_ ACL*vector
+  \*acl, \_struct* Stat \*stat);
+
+  This operation returns a node’s ACL info. The node must have READ or ADMIN
+  permission set. Without ADMIN permission, the digest hash values will be masked out.
+
+- _int_ _zoo_set_acl_
+  (zhandle*t \*zh, \_const* _char_
+  \*path, _int_
+  version,_const_ _struct_
+  ACL_vector \*acl);
+
+  This function replaces node’s ACL list with a new one. The
+  node must have the ADMIN permission set.
+
+Here is a sample code that makes use of the above APIs to
+authenticate itself using the “_foo_” scheme
+and create an ephemeral node “/xyz” with create-only
+permissions.
+
+<Callout type="info">
+  This is a very simple example which is intended to show how to interact with
+  ZooKeeper ACLs specifically. See
+  _.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c_ for an example of a
+  C client implementation
+</Callout>
+
+```c
+#include <string.h>
+#include <errno.h>
+
+#include "zookeeper.h"
+
+static zhandle_t *zh;
+
+/**
+ * In this example this method gets the cert for your
+ *   environment -- you must provide
+ */
+char *foo_get_cert_once(char* id) { return 0; }
+
+/** Watcher function -- empty for this example, not something you should
+ * do in real code */
+void watcher(zhandle_t *zzh, int type, int state, const char *path,
+         void *watcherCtx) {}
+
+int main(int argc, char argv) {
+  char buffer[512];
+  char p[2048];
+  char *cert=0;
+  char appId[64];
+
+  strcpy(appId, "example.foo_test");
+  cert = foo_get_cert_once(appId);
+  if(cert!=0) {
+    fprintf(stderr,
+        "Certificate for appid [%s] is [%s]\n",appId,cert);
+    strncpy(p,cert, sizeof(p)-1);
+    free(cert);
+  } else {
+    fprintf(stderr, "Certificate for appid [%s] not found\n",appId);
+    strcpy(p, "dummy");
+  }
+
+  zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+
+  zh = zookeeper_init("localhost:3181", watcher, 10000, 0, 0, 0);
+  if (!zh) {
+    return errno;
+  }
+  if(zoo_add_auth(zh,"foo",p,strlen(p),0,0)!=ZOK)
+    return 2;
+
+  struct ACL CREATE_ONLY_ACL[] = {{ZOO_PERM_CREATE, ZOO_AUTH_IDS}};
+  struct ACL_vector CREATE_ONLY = {1, CREATE_ONLY_ACL};
+  int rc = zoo_create(zh,"/xyz","value", 5, &CREATE_ONLY, ZOO_EPHEMERAL,
+                  buffer, sizeof(buffer)-1);
+
+  /** this operation will fail with a ZNOAUTH error */
+  int buflen= sizeof(buffer);
+  struct Stat stat;
+  rc = zoo_get(zh, "/xyz", 0, buffer, &buflen, &stat);
+  if (rc) {
+    fprintf(stderr, "Error %d for %s\n", rc, __LINE__);
+  }
+
+  zookeeper_close(zh);
+  return 0;
+}
+```

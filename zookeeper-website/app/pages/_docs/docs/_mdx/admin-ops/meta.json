@@ -1,0 +1,15 @@
+{
+  "title": "Admin & Ops",
+  "pages": [
+    "administrators-guide",
+    "quota-guide",
+    "snapshot-and-restore-guide",
+    "jmx",
+    "quorums",
+    "observers-guide",
+    "dynamic-reconfiguration",
+    "cli",
+    "tools",
+    "monitor-and-audit-logs"
+  ]
+}

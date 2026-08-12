@@ -31,4 +31,9 @@ public class NullQuorumAuthLearner implements QuorumAuthLearner {
         return; // simply return don't require auth
     }
 
+    @Override
+    public void shutdown() {
+        // no-op
+    }
+
 }

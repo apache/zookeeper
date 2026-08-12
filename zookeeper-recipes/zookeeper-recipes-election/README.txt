@@ -16,7 +16,7 @@
 -->
 
 1) This election interface recipe implements the leader election recipe
-mentioned in ../../docs/recipes.[html,pdf].
+documented at https://zookeeper.apache.org/doc/current/developer/recipes
 
 2) To compile the leader election java recipe you can just run ant jar from
 this directory.

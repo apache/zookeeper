@@ -17,7 +17,7 @@
 # under the License.
 #
 
-FROM maven:3.8.4-jdk-11
+FROM maven:3.8.8-eclipse-temurin-17
 
 RUN apt-get update
 RUN apt-get install -y \
@@ -31,4 +31,5 @@ RUN apt-get install -y \
   libssl-dev \
   libsasl2-modules-gssapi-mit \
   libsasl2-modules \
-  libsasl2-dev
+  libsasl2-dev \
+  gnupg

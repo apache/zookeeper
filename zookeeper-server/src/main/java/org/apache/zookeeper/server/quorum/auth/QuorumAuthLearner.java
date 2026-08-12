@@ -38,4 +38,8 @@ public interface QuorumAuthLearner {
      */
     void authenticate(Socket sock, String hostname) throws IOException;
 
+    /**
+     * Shutdown the learner and release resources.
+     */
+    void shutdown();
 }
