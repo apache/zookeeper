@@ -547,7 +547,9 @@
     <hamcrest.version>2.2</hamcrest.version>
     <commons-cli.version>1.5.0</commons-cli.version>
     <netty.version>4.1.136.Final</netty.version>
-    <jetty.version>9.4.58.v20250814</jetty.version>
+    <jetty.version>12.1.12</jetty.version>
+    <!-- Servlet API version required by Jetty EE10 (see ee10.jakarta.servlet.api.version in jetty-ee10) -->
+    <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
     <jackson.version>2.18.8</jackson.version>
     <jline.version>3.25.1</jline.version>
     <snappy.version>1.1.10.5</snappy.version>
@@ -702,18 +704,23 @@
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-server</artifactId>
+        <artifactId>jetty-bom</artifactId>
         <version>${jetty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-bom</artifactId>
         <version>${jetty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
+      <!-- Not managed by the Jetty BOMs, so it has to be pinned explicitly -->
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-client</artifactId>
-        <version>${jetty.version}</version>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta.servlet.version}</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
