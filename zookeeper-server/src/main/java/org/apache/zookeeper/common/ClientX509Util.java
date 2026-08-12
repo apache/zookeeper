@@ -19,12 +19,15 @@
 package org.apache.zookeeper.common;
 
 import io.netty.handler.ssl.DelegatingSslContext;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import java.util.Arrays;
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
@@ -66,7 +69,13 @@ public class ClientX509Util extends X509Util {
     }
 
     public SslContext createNettySslContextForClient(ZKConfig config)
-        throws X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+        throws X509Exception.SSLContextException, X509Exception.KeyManagerException,
+               X509Exception.TrustManagerException, SSLException {
+        SSLContext suppliedSSLContext = loadSuppliedSSLContext(config);
+        if (suppliedSSLContext != null) {
+            return createNettyJdkSslContext(config, suppliedSSLContext, true);
+        }
+
         String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
         String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
             getSslKeystorePasswdPathProperty());
@@ -107,6 +116,11 @@ public class ClientX509Util extends X509Util {
 
     public SslContext createNettySslContextForServer(ZKConfig config)
         throws X509Exception.SSLContextException, X509Exception.KeyManagerException, X509Exception.TrustManagerException, SSLException {
+        SSLContext suppliedSSLContext = loadSuppliedSSLContext(config);
+        if (suppliedSSLContext != null) {
+            return createNettyJdkSslContext(config, suppliedSSLContext, false);
+        }
+
         String keyStoreLocation = config.getProperty(getSslKeystoreLocationProperty(), "");
         String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
             getSslKeystorePasswdPathProperty());
@@ -148,6 +162,54 @@ public class ClientX509Util extends X509Util {
         } else {
             return sslContext1;
         }
+    }
+
+    /**
+     * Wraps a user supplied {@link SSLContext} in a Netty {@link SslContext}, applying the configured
+     * protocols, cipher suites, client auth mode and hostname verification on top of it.
+     *
+     * <p>A supplied SSLContext carries its own key and trust managers, so it can only be used with the
+     * JDK SSL provider: the OpenSSL providers build their own native context and cannot delegate to it.
+     *
+     * <p>Unlike the file based path, hostname verification is applied whenever it is enabled. The file
+     * based path relies on {@link ZKTrustManager} to verify hostnames and only falls back to endpoint
+     * identification when no trust manager is available, which is never the case for a supplied context.
+     *
+     * @param config     the configuration to read the SSL options from.
+     * @param sslContext the user supplied SSLContext.
+     * @param isClient   {@code true} to create a client side context, {@code false} for server side.
+     * @return the Netty SslContext.
+     * @throws X509Exception.SSLContextException if a non JDK SSL provider is configured.
+     */
+    private SslContext createNettyJdkSslContext(ZKConfig config, SSLContext sslContext, boolean isClient)
+        throws X509Exception.SSLContextException {
+        SslProvider sslProvider = getSslProvider(config);
+        if (sslProvider != SslProvider.JDK) {
+            throw new X509Exception.SSLContextException("An SSLContext supplied through "
+                                                       + getSslContextSupplierClassProperty()
+                                                       + " can only be used with the JDK SSL provider, but "
+                                                       + getSslProviderProperty()
+                                                       + " is set to "
+                                                       + sslProvider);
+        }
+
+        SslContext nettySslContext = new JdkSslContext(
+            sslContext,
+            isClient,
+            getCipherSuites(config),
+            IdentityCipherSuiteFilter.INSTANCE,
+            null,
+            isClient ? X509Util.ClientAuth.NONE.toNettyClientAuth() : getClientAuth(config).toNettyClientAuth(),
+            getEnabledProtocols(config),
+            false);
+
+        boolean hostnameVerificationEnabled = isClient
+            ? isServerHostnameVerificationEnabled(config)
+            : isClientHostnameVerificationEnabled(config);
+        if (hostnameVerificationEnabled) {
+            return addHostnameVerification(nettySslContext, isClient ? "Server" : "Client");
+        }
+        return nettySslContext;
     }
 
     private SslContextBuilder handleTcnativeOcspStapling(SslContextBuilder builder, ZKConfig config) {
