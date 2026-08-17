@@ -1604,6 +1604,8 @@ void zoo_cycle_next_server(zhandle_t *zh)
         zh->reconfig = 0;
     }
 
+    // Delay the next attempt when this selection wraps the server list.
+    zh->delay = addrvec_atend(&zh->addrs);
     addrvec_next(&zh->addrs, &zh->addr_cur);
 
     unlock_reconfig(zh);
@@ -2030,11 +2032,6 @@ static void cleanup(zhandle_t *zh,int rc)
 static void handle_error(zhandle_t *zh,int rc)
 {
     cleanup(zh, rc);
-    // NOTE: If we're at the end of the list of addresses to connect to, then
-    // we want to delay the next connection attempt to avoid spinning.
-    // Then increment what host we'll connect to since we failed to connect to current
-    zh->delay = addrvec_atend(&zh->addrs);
-    addrvec_next(&zh->addrs, &zh->addr_cur);
 }
 
 static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, int rc,
@@ -2694,7 +2691,11 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                              format_endpoint_info(&addr));
                     cleanup(zh, ZOK);
                 } else {
-                    addrvec_next(&zh->addrs, NULL);
+                    lock_reconfig(zh);
+                    if (!zh->reconfig) {
+                        addrvec_next(&zh->addrs, NULL);
+                    }
+                    unlock_reconfig(zh);
                 }
             }
             send_to = min(send_to, zh->ping_rw_timeout - idle_ping_rw);
