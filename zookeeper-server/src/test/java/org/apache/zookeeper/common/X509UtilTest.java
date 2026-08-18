@@ -1090,46 +1090,6 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     @ParameterizedTest
     @MethodSource("data")
     @Timeout(value = 5)
-    public void testSeparateClientKeyStore_clientServerKeyManagerUsed(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-        // Generate a separate client keystore
-        KeyPair clientKeyPair = X509TestHelpers.generateKeyPair(certKeyType);
-        X509Certificate clientCert = X509TestHelpers.newClientOnlyCert(
-                x509TestContext.getTrustStoreCertificates().get(0),
-                x509TestContext.getTrustStoreKeyPair(),
-                "client", clientKeyPair.getPublic());
-
-        File clientKsFile = File.createTempFile("client_ks", ".jks", x509TestContext.getTempDir());
-        clientKsFile.deleteOnExit();
-        try (FileOutputStream fos = new FileOutputStream(clientKsFile)) {
-            fos.write(X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
-                    clientCert, clientKeyPair.getPrivate(), keyPassword));
-        }
-
-        System.setProperty(x509Util.getSslClientKeystoreLocationProperty(), clientKsFile.getAbsolutePath());
-        System.setProperty(x509Util.getSslClientKeystorePasswdProperty(), keyPassword);
-        System.setProperty(x509Util.getSslClientKeystoreTypeProperty(), "JKS");
-
-        x509Util.close();
-        x509Util = new ClientX509Util();
-
-        try {
-            SSLContextAndOptions ctxAndOpts = x509Util.getDefaultSSLContextAndOptions();
-            assertNotNull(ctxAndOpts);
-            // The SSLContext should be functional
-            assertNotNull(ctxAndOpts.getSSLContext());
-        } finally {
-            System.clearProperty(x509Util.getSslClientKeystoreLocationProperty());
-            System.clearProperty(x509Util.getSslClientKeystorePasswdProperty());
-            System.clearProperty(x509Util.getSslClientKeystoreTypeProperty());
-        }
-    }
-
-    @ParameterizedTest
-    @MethodSource("data")
-    @Timeout(value = 5)
     public void testSeparateServerTrustStore_backwardCompat(
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
@@ -1270,43 +1230,4 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         }
     }
 
-    @ParameterizedTest
-    @MethodSource("data")
-    @Timeout(value = 5)
-    public void testSeparateServerTrustStore_clientServerTrustManagerUsed(
-            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
-            throws Exception {
-        init(caKeyType, certKeyType, keyPassword, paramIndex);
-
-        // Create a separate truststore for server role
-        KeyPair serverCaKeyPair = X509TestHelpers.generateKeyPair(caKeyType);
-        X509Certificate serverCaCert = X509TestHelpers.newSelfSignedCACert(
-                new org.bouncycastle.asn1.x500.X500NameBuilder(org.bouncycastle.asn1.x500.style.BCStyle.INSTANCE)
-                        .addRDN(org.bouncycastle.asn1.x500.style.BCStyle.CN, "Server Trust CA")
-                        .build(),
-                serverCaKeyPair, 86400000L);
-
-        File serverTsFile = File.createTempFile("server_ts", ".jks", x509TestContext.getTempDir());
-        serverTsFile.deleteOnExit();
-        try (FileOutputStream fos = new FileOutputStream(serverTsFile)) {
-            fos.write(X509TestHelpers.certToJavaTrustStoreBytes(serverCaCert, keyPassword));
-        }
-
-        System.setProperty(x509Util.getSslServerTruststoreLocationProperty(), serverTsFile.getAbsolutePath());
-        System.setProperty(x509Util.getSslServerTruststorePasswdProperty(), keyPassword);
-        System.setProperty(x509Util.getSslServerTruststoreTypeProperty(), "JKS");
-
-        x509Util.close();
-        x509Util = new ClientX509Util();
-
-        try {
-            SSLContextAndOptions ctxAndOpts = x509Util.getDefaultSSLContextAndOptions();
-            assertNotNull(ctxAndOpts);
-            assertNotNull(ctxAndOpts.getSSLContext());
-        } finally {
-            System.clearProperty(x509Util.getSslServerTruststoreLocationProperty());
-            System.clearProperty(x509Util.getSslServerTruststorePasswdProperty());
-            System.clearProperty(x509Util.getSslServerTruststoreTypeProperty());
-        }
-    }
 }

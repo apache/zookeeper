@@ -348,11 +348,11 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
-        return getDefaultSSLContextAndOptions().getSSLContext();
+        return getDefaultSSLContextAndOptions().getClientSSLContext();
     }
 
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        return createSSLContextAndOptions(config).getSSLContext();
+        return createSSLContextAndOptions(config).getClientSSLContext();
     }
 
     public SSLContextAndOptions getDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
@@ -453,11 +453,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         // There are legal states in some use cases for null KeyManager or TrustManager.
         // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
         // specified by the user.
-        KeyManager[] keyManagers = null;
-        TrustManager[] trustManagers = null;
+        String defaultTlsProtocol = defaultTlsProtocol(config);
+        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
+
+        // Client context — used for outgoing connections (client role)
+        KeyManager[] clientKeyManagers = null;
+        TrustManager[] clientTrustManagers = null;
 
         try {
-            keyManagers = buildKeyManagers(config, keyManagers);
+            X509KeyManager clientKm = buildClientKeyManager(config);
+            if (clientKm != null) {
+                clientKeyManagers = new KeyManager[]{clientKm};
+            }
         } catch (KeyManagerException keyManagerException) {
             throw new SSLContextException("Failed to create KeyManager", keyManagerException);
         } catch (IllegalArgumentException e) {
@@ -466,44 +473,60 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
 
         try {
-            trustManagers = buildTrustManagers(config);
+            X509TrustManager clientTm = buildTrustManager(config);
+            if (clientTm != null) {
+                clientTrustManagers = new TrustManager[]{clientTm};
+            }
         } catch (TrustManagerException trustManagerException) {
             throw new SSLContextException("Failed to create TrustManager", trustManagerException);
         } catch (IllegalArgumentException e) {
             String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
             throw new SSLContextException("Bad value for "
-                    + sslTruststoreTypeProperty
-                    + ": "
-                    + trustStoreTypeProp, e);
+                    + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
         }
-        String defaultTlsProtocol = defaultTlsProtocol(config);
-        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
+
+        // Server context — used for incoming connections (server role)
+        KeyManager[] serverKeyManagers = null;
+        TrustManager[] serverTrustManagers = null;
+
         try {
-            SSLContext sslContext = SSLContext.getInstance(protocol);
-            sslContext.init(keyManagers, trustManagers, null);
-            return new SSLContextAndOptions(this, config, sslContext);
+            X509KeyManager serverKm = buildKeyManager(config);
+            if (serverKm != null) {
+                serverKeyManagers = new KeyManager[]{serverKm};
+            }
+        } catch (KeyManagerException keyManagerException) {
+            throw new SSLContextException("Failed to create KeyManager", keyManagerException);
+        } catch (IllegalArgumentException e) {
+            String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
+            throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
+        }
+
+        try {
+            X509TrustManager serverTm = buildServerTrustManager(config);
+            if (serverTm != null) {
+                serverTrustManagers = new TrustManager[]{serverTm};
+            }
+        } catch (TrustManagerException trustManagerException) {
+            throw new SSLContextException("Failed to create TrustManager", trustManagerException);
+        } catch (IllegalArgumentException e) {
+            String trustStoreTypeProp = config.getProperty(sslServerTruststoreTypeProperty);
+            throw new SSLContextException("Bad value for "
+                    + sslServerTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
+        }
+
+        try {
+            SSLContext clientCtx = SSLContext.getInstance(protocol);
+            clientCtx.init(clientKeyManagers, clientTrustManagers, null);
+
+            SSLContext serverCtx = SSLContext.getInstance(protocol);
+            serverCtx.init(serverKeyManagers, serverTrustManagers, null);
+
+            return new SSLContextAndOptions(this, config, clientCtx, serverCtx);
         } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
             throw new SSLContextException(sslContextInitException);
         }
     }
 
-    private KeyManager[] buildKeyManagers(ZKConfig config, KeyManager[] keyManagers) throws KeyManagerException {
-        String clientKeyStoreLocation = config.getProperty(sslClientKeystoreLocationProperty, "");
-        X509KeyManager serverKm = buildKeyManager(config);
-        if (!clientKeyStoreLocation.isEmpty()) {
-            X509KeyManager clientKm = buildClientKeyManager(config);
-            if (serverKm != null && clientKm != null) {
-                keyManagers = new KeyManager[]{new ClientServerX509KeyManager(clientKm, serverKm)};
-            } else if (clientKm != null) {
-                keyManagers = new KeyManager[]{clientKm};
-            } else if (serverKm != null) {
-                keyManagers = new KeyManager[]{serverKm};
-            }
-        } else if (serverKm != null) {
-            keyManagers = new KeyManager[]{serverKm};
-        }
-        return keyManagers;
-    }
 
     public static KeyStore loadKeyStore(
         String keyStoreLocation,
@@ -660,24 +683,6 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 fipsMode);
     }
 
-    private TrustManager[] buildTrustManagers(ZKConfig config) throws TrustManagerException {
-        String serverTrustStoreLocation = config.getProperty(sslServerTruststoreLocationProperty, "");
-        X509TrustManager clientTm = buildTrustManager(config);
-        if (!serverTrustStoreLocation.isEmpty()) {
-            X509TrustManager serverTm = buildServerTrustManager(config);
-            if (clientTm != null && serverTm != null) {
-                return new TrustManager[]{new ClientServerX509TrustManager(
-                        (X509ExtendedTrustManager) clientTm, (X509ExtendedTrustManager) serverTm)};
-            } else if (serverTm != null) {
-                return new TrustManager[]{serverTm};
-            } else if (clientTm != null) {
-                return new TrustManager[]{clientTm};
-            }
-        } else if (clientTm != null) {
-            return new TrustManager[]{clientTm};
-        }
-        return null;
-    }
 
     // @VisibleForTesting
     protected X509TrustManager createTrustManagerInternal(
