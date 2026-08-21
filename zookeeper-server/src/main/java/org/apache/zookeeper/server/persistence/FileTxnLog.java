@@ -271,6 +271,7 @@ public class FileTxnLog implements TxnLog, Closeable {
             } catch (IOException e) {
                 exception = e;
             }
+            logStream = null;
         }
         for (FileOutputStream log : streamsToFlush) {
             try {
@@ -278,11 +279,12 @@ public class FileTxnLog implements TxnLog, Closeable {
             } catch (IOException e) {
                 if (exception == null) {
                     exception = e;
-                } else if (exception != e) {
+                } else {
                     exception.addSuppressed(e);
                 }
             }
         }
+        streamsToFlush.clear();
         if (exception != null) {
             throw exception;
         }
