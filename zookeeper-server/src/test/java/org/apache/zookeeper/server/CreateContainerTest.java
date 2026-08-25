@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,13 +37,19 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
+import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -337,6 +345,37 @@ public class CreateContainerTest extends ClientBase {
         assertEquals(0, stat.getEphemeralOwner());
         assertEquals(name.length(), stat.getDataLength());
         assertEquals(0, stat.getNumChildren());
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testDeleteContainerShouldBeRejected() throws Exception {
+        zk.create("/some", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/some/child", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        TestableZooKeeper zk = createClient();
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.deleteContainer);
+        Record request = new Record() {
+            private String path = "/some/child";
+
+            @Override
+            public void serialize(OutputArchive archive, String tag) throws IOException {
+                archive.writeBuffer(path.getBytes(StandardCharsets.UTF_8), "path");
+            }
+
+            @Override
+            public void deserialize(InputArchive archive, String tag) throws IOException {
+                byte[] bytes = archive.readBuffer("path");
+                path = new String(bytes, StandardCharsets.UTF_8);
+            }
+        };
+        ReplyHeader reply = zk.submitRequest(h, request, null, null);
+        assertEquals(KeeperException.Code.CONNECTIONLOSS.intValue(), reply.getErr(),
+                "deleteContainer opcode should be rejected from client connections");
+
+        zk.close();
     }
 
 }

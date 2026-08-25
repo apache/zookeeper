@@ -1680,6 +1680,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 // Already sent response to user about failure and closed the session, lets return
                 return;
             } else {
+                // Internal opcodes should not be submitted via client connections
+                if (h.getType() == OpCode.deleteContainer) {
+                    LOG.warn("Received deleteContainer opcode from client session 0x{}, rejecting.",
+                        Long.toHexString(cnxn.getSessionId()));
+                    // close connection
+                    cnxn.sendBuffer(ServerCnxnFactory.closeConn);
+                    cnxn.disableRecv();
+                    return;
+                }
+
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 int length = incomingBuffer.limit();
                 if (isLargeRequest(length)) {
