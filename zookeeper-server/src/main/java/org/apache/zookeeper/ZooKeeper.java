@@ -1319,7 +1319,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws InterruptedException
      */
     public synchronized void close() throws InterruptedException {
-        if (!cnxn.getState().isAlive()) {
+        if (cnxn.getState() == States.CLOSED) {
             LOG.debug("Close called on already closed client");
             return;
         }
