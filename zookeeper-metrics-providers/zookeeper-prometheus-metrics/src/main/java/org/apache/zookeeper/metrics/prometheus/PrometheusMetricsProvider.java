@@ -20,9 +20,12 @@ package org.apache.zookeeper.metrics.prometheus;
 
 import static org.apache.zookeeper.common.LogRedactor.redactSensitiveValues;
 import io.prometheus.metrics.core.metrics.GaugeWithCallback;
-import io.prometheus.metrics.exporter.servlet.javax.PrometheusMetricsServlet;
+import io.prometheus.metrics.exporter.servlet.jakarta.PrometheusMetricsServlet;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -37,9 +40,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.CounterSet;
@@ -51,15 +51,16 @@ import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.admin.UnifiedConnectionFactory;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.KeyStoreScanner;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -234,6 +235,10 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                 customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
                 // Strict-Transport-Security HTTP header should apply to all subdomains of the host's domain as well.
                 customizer.setStsIncludeSubDomains(true);
+                // The metrics port does not multiplex virtual hosts, so there is no
+                // SNI name to match against. Jetty 10+ defaults this check to true,
+                // which rejects connections made to a bare IP address or to localhost.
+                customizer.setSniHostCheck(false);
 
                 HttpConfiguration config = new HttpConfiguration();
                 config.setSecureScheme("https");
@@ -356,7 +361,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         sslContextFactory.setKeyStorePassword(this.keyStorePassword);
 
         // This is needed for KeyStoreScanner to work.
-        sslContextFactory.setKeyStoreResource(Resource.newResource(this.keyStorePath));
+        sslContextFactory.setKeyStoreResource(ResourceFactory.of(this.server).newResource(this.keyStorePath));
 
         // Validate and set TrustStore properties (often needed for client auth)
         if (this.needClientAuth && (this.trustStorePath == null || this.trustStorePath.isEmpty())) {
@@ -406,7 +411,23 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      */
     private ServerConnector createSslConnector(Server server, int acceptors, int selectors,
             SslContextFactory.Server sslContextFactory) {
-        ServerConnector sslConnector = new ServerConnector(server, acceptors, selectors, sslContextFactory);
+        // Spelled out rather than left to the implicit HttpConfiguration, whose
+        // SecureRequestCustomizer defaults to sniHostCheck=true and would reject
+        // requests to a bare IP address or to localhost. Setting it up here also
+        // gives this connector the same Strict-Transport-Security header as the
+        // unified one.
+        SecureRequestCustomizer customizer = new SecureRequestCustomizer();
+        customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
+        customizer.setStsIncludeSubDomains(true);
+        customizer.setSniHostCheck(false);
+
+        HttpConfiguration config = new HttpConfiguration();
+        config.setSecureScheme("https");
+        config.addCustomizer(customizer);
+
+        ServerConnector sslConnector = new ServerConnector(server, acceptors, selectors,
+                new SslConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
+                new HttpConnectionFactory(config));
         sslConnector.setPort(this.httpsPort);
         sslConnector.setHost(this.host);
         return sslConnector;

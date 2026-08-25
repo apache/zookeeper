@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.server.admin;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -25,28 +29,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.SecretUtils;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.IPAuthenticationProvider;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpVersion;
-import org.eclipse.jetty.security.ConstraintMapping;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.Constraint;
+import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,6 +118,10 @@ public class JettyAdminServer implements AdminServer {
             SecureRequestCustomizer customizer = new SecureRequestCustomizer();
             customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
             customizer.setStsIncludeSubDomains(true);
+            // The admin port does not multiplex virtual hosts, so there is no SNI
+            // name to match against. Jetty 10+ defaults this check to true, which
+            // rejects connections made to a bare IP address or to localhost.
+            customizer.setSniHostCheck(false);
 
             HttpConfiguration config = new HttpConfiguration();
             config.setSecureScheme("https");
@@ -188,7 +192,7 @@ public class JettyAdminServer implements AdminServer {
         server.addConnector(connector);
 
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/*");
+        context.setContextPath("/");
         constrainTraceMethod(context);
         server.setHandler(context);
 
@@ -369,16 +373,8 @@ public class JettyAdminServer implements AdminServer {
      * @param ctxHandler the context to modify
      */
     private void constrainTraceMethod(ServletContextHandler ctxHandler) {
-        Constraint c = new Constraint();
-        c.setAuthenticate(true);
-
-        ConstraintMapping cmt = new ConstraintMapping();
-        cmt.setConstraint(c);
-        cmt.setMethod("TRACE");
-        cmt.setPathSpec("/*");
-
-        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
-        securityHandler.setConstraintMappings(new ConstraintMapping[] {cmt});
+        SecurityHandler.PathMethodMapped securityHandler = new SecurityHandler.PathMethodMapped();
+        securityHandler.put("/*", HttpMethod.TRACE.asString(), Constraint.FORBIDDEN);
 
         ctxHandler.setSecurityHandler(securityHandler);
     }

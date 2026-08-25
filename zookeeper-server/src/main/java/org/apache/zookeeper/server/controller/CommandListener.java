@@ -18,14 +18,16 @@
 
 package org.apache.zookeeper.server.controller;
 
-import java.io.IOException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.util.ServiceUtils;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.io.Content;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,30 +69,31 @@ public class CommandListener {
         }
     }
 
-    private class CommandHandler extends AbstractHandler {
+    private class CommandHandler extends Handler.Abstract {
         @Override
-        public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-                throws IOException {
+        public boolean handle(Request request, Response response, Callback callback) throws Exception {
             // Extract command string from request path. Remove leading '/'.
-            String commandStr = request.getPathInfo().substring(1);
+            String path = Request.getPathInContext(request);
+            String commandStr = path.startsWith("/") ? path.substring(1) : path;
             int responseCode;
-            response.setContentType("text/html;charset=utf-8");
+            response.getHeaders().put(HttpHeader.CONTENT_TYPE, "text/html;charset=utf-8");
 
             try {
                 ControlCommand command = ControlCommand.parseUri(commandStr);
                 controller.processCommand(command);
-                baseRequest.setHandled(true);
-                responseCode = HttpServletResponse.SC_OK;
+                responseCode = HttpStatus.OK_200;
             } catch (IllegalArgumentException ex) {
                 LOG.error("Bad argument or command", ex);
-                responseCode = HttpServletResponse.SC_BAD_REQUEST;
+                responseCode = HttpStatus.BAD_REQUEST_400;
             } catch (Exception ex) {
                 LOG.error("Failed processing the request", ex);
-                throw ex;
+                Response.writeError(request, response, callback, ex);
+                return true;
             }
             response.setStatus(responseCode);
-            response.getWriter().println(commandStr);
+            Content.Sink.write(response, true, commandStr + "\n", callback);
             LOG.info("CommandListener processed command {} with response code {}", commandStr, responseCode);
+            return true;
         }
     }
 }

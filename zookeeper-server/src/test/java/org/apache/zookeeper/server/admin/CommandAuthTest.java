@@ -25,6 +25,7 @@ import static org.apache.zookeeper.server.admin.JettyAdminServerTest.HTTPS_URL_F
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -39,7 +40,6 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
