@@ -395,14 +395,14 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(0, (long) metrics.get("snapshot_error_count"));
         assertEquals(0, (long) metrics.get("snapshot_rate_limited_count"));
-        assertTrue((Double) metrics.get("avg_snapshottime") > 0.0);
+        assertEquals(1L, (long) metrics.get("cnt_snapshottime"));
     }
 
     private void validateRestoreMetrics() {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(0, (long) metrics.get("restore_error_count"));
         assertEquals(0, (long) metrics.get("restore_rate_limited_count"));
-        assertTrue((Double) metrics.get("avg_restore_time") > 0.0);
+        assertEquals(1L, (long) metrics.get("cnt_restore_time"));
     }
 
     public static  File takeSnapshotAndValidate(final int jettyAdminPort, final File dataDir) throws Exception {
