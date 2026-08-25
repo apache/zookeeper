@@ -41,9 +41,12 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DeleteContainerRequest;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -339,6 +342,24 @@ public class CreateContainerTest extends ClientBase {
         assertEquals(0, stat.getEphemeralOwner());
         assertEquals(name.length(), stat.getDataLength());
         assertEquals(0, stat.getNumChildren());
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testDeleteContainerShouldBeRejected() throws Exception {
+        zk.create("/some", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/some/child", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        TestableZooKeeper zk = createClient();
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.deleteContainer);
+        DeleteContainerRequest request = new DeleteContainerRequest("/some/child");
+        ReplyHeader reply = zk.submitRequest(h, request, null, null);
+        assertEquals(KeeperException.Code.CONNECTIONLOSS.intValue(), reply.getErr(),
+                "deleteContainer opcode should be rejected from client connections");
+
+        zk.close();
     }
 
 }
