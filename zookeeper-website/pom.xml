@@ -39,6 +39,7 @@
     <node.version>v22.20.0</node.version>
     <npm.version>11.6.2</npm.version>
     <website.ci.command>ci</website.ci.command>
+    <dependency-check.skip>true</dependency-check.skip>
   </properties>
 
   <build>
