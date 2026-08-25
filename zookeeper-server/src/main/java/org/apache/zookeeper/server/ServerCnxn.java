@@ -132,7 +132,12 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
      */
     private volatile boolean invalid = false;
 
-    abstract int getSessionTimeout();
+    /**
+     * Returns the negotiated session timeout in milliseconds.
+     *
+     * @return session timeout in milliseconds
+     */
+    public abstract int getSessionTimeout();
 
     public void incrOutstandingAndCheckThrottle(RequestHeader h) {
         if (h.getXid() <= 0) {

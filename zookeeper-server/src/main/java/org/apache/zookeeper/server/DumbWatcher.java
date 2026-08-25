@@ -73,7 +73,7 @@ public class DumbWatcher extends ServerCnxn {
 
 
     @Override
-    int getSessionTimeout() {
+    public int getSessionTimeout() {
         return 0;
     }
 
