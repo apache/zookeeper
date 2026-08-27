@@ -551,7 +551,7 @@
     <!-- Servlet API version required by Jetty EE10 (see ee10.jakarta.servlet.api.version in jetty-ee10) -->
     <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
     <jackson.version>2.18.8</jackson.version>
-    <jline.version>3.25.1</jline.version>
+    <jline.version>3.30.14</jline.version>
     <snappy.version>1.1.10.5</snappy.version>
     <kerby.version>2.0.0</kerby.version>
     <bouncycastle.version>1.78</bouncycastle.version>
