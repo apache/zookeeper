@@ -69,8 +69,14 @@ public class Login {
     private static final long MIN_TIME_BEFORE_RELOGIN = Long.getLong(
       MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY, DEFAULT_MIN_TIME_BEFORE_RELOGIN);
 
+    private static final long DEFAULT_SHUTDOWN_TIMEOUT = 5 * 1000L;
+    public static final String SHUTDOWN_TIMEOUT_CONFIG_KEY = "zookeeper.kerberos.shutdownTimeoutMs";
+    private static final long SHUTDOWN_TIMEOUT = Math.max(1L,
+            Long.getLong(SHUTDOWN_TIMEOUT_CONFIG_KEY, DEFAULT_SHUTDOWN_TIMEOUT));
+
     private Subject subject = null;
     private Thread t = null;
+    private volatile boolean shutdownRequested = false;
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
 
@@ -132,7 +138,7 @@ public class Login {
         t = new Thread(new Runnable() {
             public void run() {
                 LOG.info("TGT refresh thread started.");
-                while (true) {  // renewal thread's main loop. if it exits from here, thread will exit.
+                while (!shutdownRequested) {  // renewal thread's main loop. if it exits from here, thread will exit.
                     KerberosTicket tgt = getTGT();
                     long now = Time.currentWallTime();
                     long nextRefresh;
@@ -219,6 +225,9 @@ public class Login {
                         int retry = 1;
                         while (retry >= 0) {
                             try {
+                                if (Thread.currentThread().isInterrupted() || shutdownRequested) {
+                                    return;
+                                }
                                 LOG.debug("running ticket cache refresh command: {} {}", cmd, kinitArgs);
                                 Shell.execCommand(cmd, kinitArgs);
                                 break;
@@ -232,6 +241,9 @@ public class Login {
                                         LOG.error("Interrupted while renewing TGT, exiting Login thread");
                                         return;
                                     }
+                                } else if (Thread.currentThread().isInterrupted() || shutdownRequested) {
+                                    LOG.info("Shutdown requested while renewing TGT, exiting Login thread");
+                                    return;
                                 } else {
                                     LOG.warn(
                                         "Could not renew TGT due to problem running shell command: '{} {}'."
@@ -243,6 +255,10 @@ public class Login {
                                 }
                             }
                         }
+                    }
+                    // reLogin() is not interruptible, do not enter it while shutting down
+                    if (shutdownRequested) {
+                        break;
                     }
                     try {
                         int retry = 1;
@@ -294,12 +310,17 @@ public class Login {
     }
 
     public void shutdown() {
+        shutdownRequested = true;
         if ((t != null) && (t.isAlive())) {
             t.interrupt();
             try {
-                t.join();
+                t.join(SHUTDOWN_TIMEOUT);
+                if (t.isAlive()) {
+                    LOG.warn("TGT renewal thread did not exit within {} ms and is being abandoned.", SHUTDOWN_TIMEOUT);
+                }
             } catch (InterruptedException e) {
                 LOG.warn("error while waiting for Login thread to shutdown.", e);
+                Thread.currentThread().interrupt();
             }
         }
     }
