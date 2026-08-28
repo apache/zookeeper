@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.FileWriter;
@@ -34,11 +35,13 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.auth.KerberosTestUtils;
 import org.apache.zookeeper.server.quorum.auth.MiniKdc;
@@ -72,6 +75,7 @@ public class KerberosTicketRenewalTest {
     // by default, we should wait at least 1 minute between subsequent TGT renewals.
     // changing it to 500ms.
     System.setProperty(Login.MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY, "500");
+    System.setProperty(Login.SHUTDOWN_TIMEOUT_CONFIG_KEY, "200");
 
     testTempDir = ClientBase.createTmpDir();
     startMiniKdcAndAddPrincipal();
@@ -99,6 +103,7 @@ public class KerberosTicketRenewalTest {
   @AfterAll
   public static void tearDownClass() {
     System.clearProperty(Login.MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY);
+    System.clearProperty(Login.SHUTDOWN_TIMEOUT_CONFIG_KEY);
     System.clearProperty("java.security.auth.login.config");
     stopMiniKdc();
     if (testTempDir != null) {
@@ -125,6 +130,12 @@ public class KerberosTicketRenewalTest {
 
     private AtomicBoolean refreshFailed = new AtomicBoolean(false);
     private CountDownLatch continueRefreshThread = new CountDownLatch(1);
+    private volatile boolean hangUninterruptibly = false;
+    private final CountDownLatch hungThreadLatch = new CountDownLatch(1);
+    private volatile boolean attemptEveryReLogin = false;
+    private final CountDownLatch retrySleeps = new CountDownLatch(2);
+    private final AtomicInteger reLoginAttempts = new AtomicInteger();
+    private volatile int attemptsAtSecondRetrySleep;
 
     public TestableKerberosLogin() throws LoginException {
       super(JAAS_CONFIG_SECTION, () -> {
@@ -136,8 +147,50 @@ public class KerberosTicketRenewalTest {
     protected void sleepBeforeRetryFailedRefresh() throws InterruptedException {
       LOG.info("sleep started due to failed refresh");
       refreshFailed.set(true);
-      continueRefreshThread.await(20, TimeUnit.SECONDS);
+      if (retrySleeps.getCount() == 1) {
+        attemptsAtSecondRetrySleep = reLoginAttempts.get();
+      }
+      retrySleeps.countDown();
+      if (hangUninterruptibly) {
+        while (hungThreadLatch.getCount() > 0) {
+          try {
+            hungThreadLatch.await();
+          } catch (InterruptedException ignored) {
+          }
+        }
+      } else if (!attemptEveryReLogin) {
+        continueRefreshThread.await(20, TimeUnit.SECONDS);
+      }
       LOG.info("sleep due to failed refresh finished");
+    }
+
+    @Override
+    protected synchronized void logout() throws LoginException {
+      reLoginAttempts.incrementAndGet();
+      super.logout();
+    }
+
+    @Override
+    public long getLastLogin() {
+      return attemptEveryReLogin ? Time.currentElapsedTime() - TimeUnit.HOURS.toMillis(1) : super.getLastLogin();
+    }
+
+    public void attemptEveryReLogin() {
+      attemptEveryReLogin = true;
+    }
+
+    public void assertRenewalLoopCameRoundAgain(Duration timeout) throws InterruptedException {
+      assertTrue(retrySleeps.await(timeout.toMillis(), TimeUnit.MILLISECONDS),
+          "renewal thread never left the reLogin retry loop");
+      assertTrue(attemptsAtSecondRetrySleep >= 3, "some reLogin attempts were skipped");
+    }
+
+    public void hangUninterruptiblyOnFailedRefresh() {
+      hangUninterruptibly = true;
+    }
+
+    public void releaseHungThread() {
+      hungThreadLatch.countDown();
     }
 
     public void assertRefreshFailsEventually(Duration timeout) {
@@ -197,6 +250,39 @@ public class KerberosTicketRenewalTest {
     assertTicketRefreshHappenedUntil(Duration.ofSeconds(15));
 
     assertPrincipalLoggedIn();
+  }
+
+
+  @Test
+  public void shouldNotBlockForeverWhenRenewalThreadDoesNotExit() throws Exception {
+    login = new TestableKerberosLogin();
+    login.hangUninterruptiblyOnFailedRefresh();
+    login.startThreadIfNeeded();
+
+    stopMiniKdc();
+    login.assertRefreshFailsEventually(Duration.ofSeconds(15));
+
+    try {
+      assertTimeoutPreemptively(Duration.ofSeconds(10), () -> login.shutdown());
+    } finally {
+      startMiniKdcAndAddPrincipal();
+      login.releaseHungThread();
+    }
+  }
+
+
+  @Test
+  public void shouldLeaveRetryLoopWhenReLoginKeepsFailing() throws Exception {
+    login = new TestableKerberosLogin();
+    login.attemptEveryReLogin();
+    login.startThreadIfNeeded();
+
+    stopMiniKdc();
+    try {
+      login.assertRenewalLoopCameRoundAgain(Duration.ofSeconds(15));
+    } finally {
+      startMiniKdcAndAddPrincipal();
+    }
   }
 
 
