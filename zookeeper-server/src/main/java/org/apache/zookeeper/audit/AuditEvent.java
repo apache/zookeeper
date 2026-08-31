@@ -75,7 +75,7 @@ public final class AuditEvent {
                     buffer.append(PAIR_SEPARATOR);
                 }
                 buffer.append(key).append(KEY_VAL_SEPARATOR)
-                        .append(value);
+                        .append(sanitize(value));
             }
         }
         //add result field
@@ -93,6 +93,10 @@ public final class AuditEvent {
 
     public enum Result {
         SUCCESS, FAILURE, INVOKED
+    }
+
+    private String sanitize(String input) {
+        return input.replaceAll("[\\t\\n\\r]", "");
     }
 }
 
