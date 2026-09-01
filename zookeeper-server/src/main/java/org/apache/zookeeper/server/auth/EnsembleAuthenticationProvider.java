@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.slf4j.Logger;
@@ -92,7 +93,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
         long currentTime = System.currentTimeMillis();
         if (lastFailureLogged + MIN_LOGGING_INTERVAL_MS < currentTime) {
             String id = cnxn.getRemoteSocketAddress().getAddress().getHostAddress();
-            String logEnsembleName = receivedEnsembleName.replaceAll("[\\x00-\\x1F]", "");
+            String logEnsembleName = StringUtils.sanitizeForLog(receivedEnsembleName);
             LOG.warn("Unexpected ensemble name: ensemble name: {} client ip: {}", logEnsembleName, id);
             lastFailureLogged = currentTime;
         }

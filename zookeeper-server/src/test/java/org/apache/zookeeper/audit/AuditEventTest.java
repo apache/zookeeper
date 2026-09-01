@@ -42,4 +42,14 @@ public class AuditEventTest {
         String expected = "operation=Value2\tresult=success";
         assertEquals(expected, actual);
     }
+
+    @Test
+    public void testSanitizeInvalidOutput() {
+        AuditEvent auditEvent = new AuditEvent(Result.SUCCESS);
+        auditEvent.addEntry(AuditEvent.FieldName.USER, "Value1");
+        auditEvent.addEntry(AuditEvent.FieldName.OPERATION, "\nfake\toperation=delete\rznode=/forged:pw");
+        String actual = auditEvent.toString();
+        String expected = "user=Value1\toperation=fakeoperation=deleteznode=/forged:pw\tresult=success";
+        assertEquals(expected, actual);
+    }
 }
