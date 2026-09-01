@@ -20,6 +20,7 @@ package org.apache.zookeeper.audit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.zookeeper.common.StringUtils;
 
 public final class AuditEvent {
     private static final char PAIR_SEPARATOR = '\t';
@@ -75,7 +76,7 @@ public final class AuditEvent {
                     buffer.append(PAIR_SEPARATOR);
                 }
                 buffer.append(key).append(KEY_VAL_SEPARATOR)
-                        .append(value);
+                        .append(StringUtils.sanitizeForLog(value));
             }
         }
         //add result field
