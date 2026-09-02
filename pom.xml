@@ -745,6 +745,7 @@
         <groupId>org.jline</groupId>
         <artifactId>jline</artifactId>
         <version>${jline.version}</version>
+        <classifier>jdk8</classifier>
       </dependency>
       <dependency>
         <groupId>com.github.spotbugs</groupId>
