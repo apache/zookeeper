@@ -119,6 +119,7 @@
       <groupId>org.jline</groupId>
       <artifactId>jline</artifactId>
       <scope>provided</scope>
+      <classifier>jdk8</classifier>
     </dependency>
     <dependency>
        <groupId>io.dropwizard.metrics</groupId>
