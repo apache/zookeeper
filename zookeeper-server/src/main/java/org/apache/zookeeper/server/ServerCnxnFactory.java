@@ -251,7 +251,8 @@ public abstract class ServerCnxnFactory {
         String serverCnxnFactoryName = System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);
         if (serverCnxnFactoryName == null) {
             if (secure) {
-                serverCnxnFactoryName = "org.apache.zookeeper.server.NettyServerCnxnFactory";
+                // Derived from a same-package class rather than a string literal so the shade plugin relocates it.
+                serverCnxnFactoryName = NIOServerCnxnFactory.class.getPackageName() + ".NettyServerCnxnFactory";
             } else {
                 serverCnxnFactoryName = NIOServerCnxnFactory.class.getName();
             }

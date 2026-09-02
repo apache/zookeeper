@@ -3141,18 +3141,20 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     private ClientCnxnSocket getClientCnxnSocket() throws IOException {
+        // Derived from a same-package class rather than a string literal so the shade plugin relocates it.
+        final String nettyClientCnxnSocketName = ClientCnxnSocketNIO.class.getPackageName() + ".ClientCnxnSocketNetty";
         String clientCnxnSocketName = getClientConfig().getProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         if (clientCnxnSocketName == null) {
             boolean secureClient = getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT);
             if (secureClient) {
-                clientCnxnSocketName = "org.apache.zookeeper.ClientCnxnSocketNetty";
+                clientCnxnSocketName = nettyClientCnxnSocketName;
             } else {
                 clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
             }
         } else if (clientCnxnSocketName.equals(ClientCnxnSocketNIO.class.getSimpleName())) {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         } else if (clientCnxnSocketName.equals("ClientCnxnSocketNetty")) {
-            clientCnxnSocketName = "org.apache.zookeeper.ClientCnxnSocketNetty";
+            clientCnxnSocketName = nettyClientCnxnSocketName;
         }
 
         try {
