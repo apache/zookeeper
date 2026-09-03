@@ -29,6 +29,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.quorum.ObserverZooKeeperServer;
+import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,7 +208,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     // iff this is a read or a throttled request(which doesn't need to be written to the disk),
                     // and there are no pending flushes (writes), then just pass this to the next processor
                     if (nextProcessor != null) {
-                        nextProcessor.processRequest(si);
+                        handover(si);
                         if (nextProcessor instanceof Flushable) {
                             ((Flushable) nextProcessor).flush();
                         }
@@ -213,7 +216,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     continue;
                 }
                 toFlush.add(si);
-                if (shouldFlush()) {
+                if (si.isRollover() || shouldFlush()) {
                     flush();
                 }
                 ServerMetrics.getMetrics().SYNC_PROCESS_TIME.add(Time.currentElapsedTime() - startProcessTime);
@@ -222,6 +225,19 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             handleException(this.getName(), t);
         }
         LOG.info("SyncRequestProcessor exited!");
+    }
+
+    private void handover(Request request) throws IOException, RequestProcessorException {
+        if (request.isRollover() && zks instanceof QuorumZooKeeperServer) {
+            long nextEpoch = ZxidUtils.getEpochFromZxid(request.zxid) + 1;
+            // Fences upcoming epoch in leader election. So there will be no chance for other peer
+            // to lead next epoch if this request is considered committed.
+            ((QuorumZooKeeperServer) zks).fenceRolloverEpoch(nextEpoch);
+            if (zks instanceof ObserverZooKeeperServer) {
+                ((ObserverZooKeeperServer) zks).confirmRolloverEpoch(nextEpoch);
+            }
+        }
+        nextProcessor.processRequest(request);
     }
 
     private void flush() throws IOException, RequestProcessorException {
@@ -242,7 +258,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 final Request i = this.toFlush.remove();
                 long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
-                this.nextProcessor.processRequest(i);
+                handover(i);
             }
             if (this.nextProcessor instanceof Flushable) {
                 ((Flushable) this.nextProcessor).flush();
