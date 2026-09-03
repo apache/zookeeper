@@ -14,6 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+# Release Notes - ZooKeeper - Version 3.8.7
+
+## Bug
+
+* [ZOOKEEPER-5056](https://issues.apache.org/jira/browse/ZOOKEEPER-5056) - Netty CVE vulnerabilities in zookeeper 3.9.5
+* [ZOOKEEPER-5059](https://issues.apache.org/jira/browse/ZOOKEEPER-5059) - Kerberos SASL leaks Login refresh threads across QuorumPeer.shutdown()
+* [ZOOKEEPER-5077](https://issues.apache.org/jira/browse/ZOOKEEPER-5077) - Upgrade Netty to 4.1.136.Final
+* [ZOOKEEPER-5082](https://issues.apache.org/jira/browse/ZOOKEEPER-5082) - Remove special characters from audit logs
+
+## Improvement
+
+* [ZOOKEEPER-5058](https://issues.apache.org/jira/browse/ZOOKEEPER-5058) - Remove special characters from ensemble name before logging in EnsembleAuthenticationProvider
+* [ZOOKEEPER-5060](https://issues.apache.org/jira/browse/ZOOKEEPER-5060) - Update GitHub Actions versions
+* [ZOOKEEPER-5075](https://issues.apache.org/jira/browse/ZOOKEEPER-5075) - Upgrade jline jar to 3.30.14 or higher to fix CVE-2026-56740
+
+## Task
+
+* [ZOOKEEPER-5027](https://issues.apache.org/jira/browse/ZOOKEEPER-5027) - Upgrade deprecated GitHub Actions versions
+* [ZOOKEEPER-5086](https://issues.apache.org/jira/browse/ZOOKEEPER-5086) - Upgrade Netty to 4.1.137.Final 
+
+
+&nbsp;
+
 
 # Release Notes - ZooKeeper - Version 3.8.6
 
