@@ -1039,11 +1039,14 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
             serverFuture.get(5, TimeUnit.SECONDS);
         } finally {
-            serverSocket.close();
             executor.shutdownNow();
+            System.clearProperty(x509Util.getSslKeystoreLocationProperty());
+            System.clearProperty(x509Util.getSslKeystorePasswdProperty());
+            System.clearProperty(x509Util.getSslKeystoreTypeProperty());
             System.clearProperty(x509Util.getSslClientKeystoreLocationProperty());
             System.clearProperty(x509Util.getSslClientKeystorePasswdProperty());
             System.clearProperty(x509Util.getSslClientKeystoreTypeProperty());
+            serverSocket.close();
         }
     }
 
