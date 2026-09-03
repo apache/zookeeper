@@ -162,7 +162,7 @@ public class ZooKeeperServerMain {
                 needStartZKServer = false;
             }
             if (config.getSecureClientPortAddress() != null) {
-                secureCnxnFactory = ServerCnxnFactory.createFactory();
+                secureCnxnFactory = ServerCnxnFactory.createFactory(true);
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }

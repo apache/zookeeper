@@ -18,17 +18,45 @@
 
 package org.apache.zookeeper.cli;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
-
 public class HexDumpOutputFormatter implements OutputFormatter {
 
     public static final HexDumpOutputFormatter INSTANCE = new HexDumpOutputFormatter();
 
+    private static final int BYTES_PER_ROW = 16;
+    private static final int ASCII_PRINTABLE_MIN = 0x20; // space
+    private static final int ASCII_PRINTABLE_MAX = 0x7f; // DEL (exclusive)
+    private static final String LINE_SEPARATOR = System.lineSeparator();
+    private static final String HEADER_LINE =
+        "         +-------------------------------------------------+" + LINE_SEPARATOR
+        + "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |" + LINE_SEPARATOR
+        + "+--------+-------------------------------------------------+----------------+";
+    private static final String FOOTER_LINE =
+        "+--------+-------------------------------------------------+----------------+";
+
     @Override
     public String format(byte[] data) {
-        ByteBuf buf = Unpooled.wrappedBuffer(data);
-        return ByteBufUtil.prettyHexDump(buf);
+        if (data == null || data.length == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(HEADER_LINE).append(LINE_SEPARATOR);
+        for (int offset = 0; offset < data.length; offset += BYTES_PER_ROW) {
+            sb.append(String.format("|%08x|", offset));
+            StringBuilder charPart = new StringBuilder();
+            for (int i = 0; i < BYTES_PER_ROW; i++) {
+                if (offset + i < data.length) {
+                    int b = data[offset + i] & 0xFF;
+                    sb.append(String.format(" %02x", b));
+                    char c = (char) b;
+                    charPart.append(c >= ASCII_PRINTABLE_MIN && c < ASCII_PRINTABLE_MAX ? c : '.');
+                } else {
+                    sb.append("   ");
+                    charPart.append(' ');
+                }
+            }
+            sb.append(" |").append(charPart).append("|").append(LINE_SEPARATOR);
+        }
+        sb.append(FOOTER_LINE);
+        return sb.toString();
     }
 }

@@ -734,7 +734,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+        try (ClientNettyX509Util clientX509Util = new ClientNettyX509Util()) {
             ZKConfig zkConfig = new ZKConfig();
             zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
             // Disable hostname verification so the JdkSslContext is not wrapped in a DelegatingSslContext.
@@ -754,7 +754,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+        try (ClientNettyX509Util clientX509Util = new ClientNettyX509Util()) {
             ZKConfig zkConfig = new ZKConfig();
             zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
             // A supplied SSLContext carries its own key material, so no key store must be required.
@@ -776,7 +776,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
-        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+        try (ClientNettyX509Util clientX509Util = new ClientNettyX509Util()) {
             ZKConfig zkConfig = new ZKConfig();
             zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
             zkConfig.setProperty(clientX509Util.getSslProviderProperty(), "OPENSSL");
@@ -810,7 +810,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         // Verify client hostname too
         System.setProperty(x509Util.getSslClientHostnameVerificationEnabledProperty(), "true");
         ZKConfig zkConfig = new ZKConfig();
-        try (ClientX509Util clientX509Util = new ClientX509Util();) {
+        try (ClientNettyX509Util clientX509Util = new ClientNettyX509Util();) {
             UnpooledByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false);
             SslContext clientContext = clientX509Util.createNettySslContextForClient(zkConfig);
             SSLEngine clientEngine = clientContext.newEngine(byteBufAllocator);

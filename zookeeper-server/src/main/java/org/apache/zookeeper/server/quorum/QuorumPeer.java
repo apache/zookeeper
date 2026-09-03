@@ -2429,7 +2429,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         // start secureCnxnFactory first
                         try {
                             configureSSLAuth();
-                            secureCnxnFactory = ServerCnxnFactory.createFactory();
+                            secureCnxnFactory = ServerCnxnFactory.createFactory(true);
                             secureCnxnFactory.configure(myNewQS.secureClientAddr, getMaxClientCnxns(), getClientPortListenBacklog(), true);
                             secureCnxnFactory.start();
 
