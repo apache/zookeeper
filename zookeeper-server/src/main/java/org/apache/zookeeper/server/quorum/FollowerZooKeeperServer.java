@@ -77,7 +77,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<>();
 
     public void logRequest(Request request) {
-        if ((request.zxid & 0xffffffffL) != 0) {
+        if (self.getZxidLayoutState().current().getCounterFromZxid(request.zxid) != 0) {
             pendingTxns.add(request);
         }
         syncProcessor.processRequest(request);
