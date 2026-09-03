@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <asm-generic/errno-base.h>
 #if !defined(DLL_EXPORT) && !defined(USE_STATIC_LIB)
 #  define USE_STATIC_LIB
 #endif
@@ -718,7 +719,9 @@ static void setup_random()
     int seed;
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd == -1) {
-        seed = getpid();
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        seed = getpid() ^ tv.tv_sec ^ tv.tv_usec;
     } else {
         int seed_len = 0;
 
@@ -731,12 +734,22 @@ static void setup_random()
              * signal (errno == EINTR) in which case we need to retry.
              */
             int rc = read(fd, (char *)&seed + seed_len, sizeof(seed) - seed_len);
-            assert(rc > 0 || errno == EINTR);
-            if (rc > 0) {
-                seed_len += rc;
+            if (rc <= 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                break;
             }
+            seed_len += rc;
         }
         close(fd);
+
+        /* If not enough bytes are read, use a backup random source. */
+        if (seed_len < sizeof(seed)) {
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            seed ^= getpid() ^ tv.tv_sec ^ tv.tv_usec;
+        }
     }
     srandom(seed);
     srand48(seed);
