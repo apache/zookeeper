@@ -654,7 +654,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     public X509TrustManager buildServerTrustManager(ZKConfig config) throws TrustManagerException {
         String serverTrustStoreLocation = config.getProperty(sslServerTruststoreLocationProperty, "");
         if (serverTrustStoreLocation.isEmpty()) {
-            LOG.debug("{} not specified for X509KeyManager, falling back to common property", sslServerTruststoreLocationProperty);
+            LOG.debug("{} not specified for X509TrustManager, falling back to common property", sslServerTruststoreLocationProperty);
             return buildTrustManager(config);
         }
         LOG.debug("Using SSL server trust store {}", serverTrustStoreLocation);
