@@ -89,7 +89,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             }
 
             try {
-                tm = x509Util.buildTrustManager(config);
+                tm = x509Util.buildServerTrustManager(config);
             } catch (TrustManagerException e) {
                 LOG.error("Failed to create trust manager", e);
             }

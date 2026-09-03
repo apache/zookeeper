@@ -583,6 +583,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
                 getSslKeystorePasswdPathProperty());
         String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
+        LOG.debug("Using SSL keystore {}", keyStoreLocation);
         return createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
     }
 
@@ -597,8 +598,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             String clientKeyStorePassword = getPasswordFromConfigPropertyOrFile(config,
                     getSslClientKeystorePasswdProperty(), getSslClientKeystorePasswdPathProperty());
             String clientKeyStoreType = config.getProperty(getSslClientKeystoreTypeProperty());
+            LOG.debug("Using SSL client keystore {}", clientKeyStoreLocation);
             return createKeyManager(clientKeyStoreLocation, clientKeyStorePassword, clientKeyStoreType);
         }
+        LOG.debug("{} not specified for X509KeyManager, falling back to common property", getSslClientKeystoreLocationProperty());
         return buildKeyManager(config);
     }
 
@@ -644,15 +647,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             return null;
         }
 
+        LOG.debug("Using SSL trust store {}", trustStoreLocationProp);
         return buildX509TrustManager(config, trustStoreLocationProp, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty, sslTruststoreTypeProperty);
     }
 
     public X509TrustManager buildServerTrustManager(ZKConfig config) throws TrustManagerException {
         String serverTrustStoreLocation = config.getProperty(sslServerTruststoreLocationProperty, "");
         if (serverTrustStoreLocation.isEmpty()) {
+            LOG.debug("{} not specified for X509KeyManager, falling back to common property", sslServerTruststoreLocationProperty);
             return buildTrustManager(config);
         }
-
+        LOG.debug("Using SSL server trust store {}", serverTrustStoreLocation);
         return buildX509TrustManager(config, serverTrustStoreLocation, sslServerTruststorePasswdProperty, sslServerTruststorePasswdPathProperty, sslServerTruststoreTypeProperty);
     }
 
