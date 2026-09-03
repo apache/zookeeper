@@ -169,10 +169,18 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
     private final String sslKeystorePasswdPathProperty = getConfigPrefix() + "keyStore.passwordPath";
     private final String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
+    private final String sslClientKeystoreLocationProperty = getConfigPrefix() + "client.keyStore.location";
+    private final String sslClientKeystorePasswdProperty = getConfigPrefix() + "client.keyStore.password";
+    private final String sslClientKeystorePasswdPathProperty = getConfigPrefix() + "client.keyStore.passwordPath";
+    private final String sslClientKeystoreTypeProperty = getConfigPrefix() + "client.keyStore.type";
     private final String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private final String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
     private final String sslTruststorePasswdPathProperty = getConfigPrefix() + "trustStore.passwordPath";
     private final String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
+    private final String sslServerTruststoreLocationProperty = getConfigPrefix() + "server.trustStore.location";
+    private final String sslServerTruststorePasswdProperty = getConfigPrefix() + "server.trustStore.password";
+    private final String sslServerTruststorePasswdPathProperty = getConfigPrefix() + "server.trustStore.passwordPath";
+    private final String sslServerTruststoreTypeProperty = getConfigPrefix() + "server.trustStore.type";
     private final String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
     private final String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private final String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
@@ -185,10 +193,15 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private final AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
 
     private FileChangeWatcher keyStoreFileWatcher;
+    private FileChangeWatcher clientKeyStoreFileWatcher;
     private FileChangeWatcher trustStoreFileWatcher;
+    private FileChangeWatcher serverTrustStoreFileWatcher;
 
     public X509Util() {
-        keyStoreFileWatcher = trustStoreFileWatcher = null;
+        keyStoreFileWatcher = null;
+        clientKeyStoreFileWatcher = null;
+        trustStoreFileWatcher = null;
+        serverTrustStoreFileWatcher = null;
     }
 
     protected abstract String getConfigPrefix();
@@ -227,6 +240,22 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslKeystoreTypeProperty;
     }
 
+    public String getSslClientKeystoreLocationProperty() {
+        return sslClientKeystoreLocationProperty;
+    }
+
+    public String getSslClientKeystorePasswdProperty() {
+        return sslClientKeystorePasswdProperty;
+    }
+
+    public String getSslClientKeystorePasswdPathProperty() {
+        return sslClientKeystorePasswdPathProperty;
+    }
+
+    public String getSslClientKeystoreTypeProperty() {
+        return sslClientKeystoreTypeProperty;
+    }
+
     public String getSslTruststoreLocationProperty() {
         return sslTruststoreLocationProperty;
     }
@@ -241,6 +270,22 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslTruststoreTypeProperty() {
         return sslTruststoreTypeProperty;
+    }
+
+    public String getSslServerTruststoreLocationProperty() {
+        return sslServerTruststoreLocationProperty;
+    }
+
+    public String getSslServerTruststorePasswdProperty() {
+        return sslServerTruststorePasswdProperty;
+    }
+
+    public String getSslServerTruststorePasswdPathProperty() {
+        return sslServerTruststorePasswdPathProperty;
+    }
+
+    public String getSslServerTruststoreTypeProperty() {
+        return sslServerTruststoreTypeProperty;
     }
 
     public String getSslContextSupplierClassProperty() {
@@ -303,11 +348,11 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
-        return getDefaultSSLContextAndOptions().getSSLContext();
+        return getDefaultSSLContextAndOptions().getClientSSLContext();
     }
 
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        return createSSLContextAndOptions(config).getSSLContext();
+        return createSSLContextAndOptions(config).getClientSSLContext();
     }
 
     public SSLContextAndOptions getDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
@@ -408,14 +453,16 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         // There are legal states in some use cases for null KeyManager or TrustManager.
         // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
         // specified by the user.
-        KeyManager[] keyManagers = null;
-        TrustManager[] trustManagers = null;
+        String defaultTlsProtocol = defaultTlsProtocol(config);
+        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
+
+        // Shared (common) key and trust managers — built once and reused as
+        // the fallback when no dedicated client/server stores are configured.
+        X509KeyManager sharedKeyManager;
+        X509TrustManager sharedTrustManager;
 
         try {
-            KeyManager km = buildKeyManager(config);
-            if (km != null) {
-                keyManagers = new KeyManager[]{km};
-            }
+            sharedKeyManager = buildKeyManager(config);
         } catch (KeyManagerException keyManagerException) {
             throw new SSLContextException("Failed to create KeyManager", keyManagerException);
         } catch (IllegalArgumentException e) {
@@ -424,29 +471,69 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
 
         try {
-            TrustManager tm = buildTrustManager(config);
-            if (tm != null) {
-                trustManagers = new TrustManager[]{tm};
-            }
+            sharedTrustManager = buildTrustManager(config);
         } catch (TrustManagerException trustManagerException) {
             throw new SSLContextException("Failed to create TrustManager", trustManagerException);
         } catch (IllegalArgumentException e) {
             String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
             throw new SSLContextException("Bad value for "
-                    + sslTruststoreTypeProperty
-                    + ": "
-                    + trustStoreTypeProp, e);
+                    + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
         }
-        String defaultTlsProtocol = defaultTlsProtocol(config);
-        String protocol = config.getProperty(sslProtocolProperty, defaultTlsProtocol);
+
+        // Client context - used for outgoing connections (client role)
+        KeyManager[] clientKeyManagers = null;
+        TrustManager[] clientTrustManagers = null;
+
         try {
-            SSLContext sslContext = SSLContext.getInstance(protocol);
-            sslContext.init(keyManagers, trustManagers, null);
-            return new SSLContextAndOptions(this, config, sslContext);
+            X509KeyManager clientKm = buildClientKeyManager(config, sharedKeyManager);
+            if (clientKm != null) {
+                clientKeyManagers = new KeyManager[]{clientKm};
+            }
+        } catch (KeyManagerException keyManagerException) {
+            throw new SSLContextException("Failed to create KeyManager", keyManagerException);
+        } catch (IllegalArgumentException e) {
+            String keyStoreTypeProp = config.getProperty(sslClientKeystoreTypeProperty);
+            throw new SSLContextException("Bad value for " + sslClientKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
+        }
+
+        if (sharedTrustManager != null) {
+            clientTrustManagers = new TrustManager[]{sharedTrustManager};
+        }
+
+        // Server context - used for incoming connections (server role)
+        KeyManager[] serverKeyManagers = null;
+        TrustManager[] serverTrustManagers = null;
+
+        if (sharedKeyManager != null) {
+            serverKeyManagers = new KeyManager[]{sharedKeyManager};
+        }
+
+        try {
+            X509TrustManager serverTm = buildServerTrustManager(config, sharedTrustManager);
+            if (serverTm != null) {
+                serverTrustManagers = new TrustManager[]{serverTm};
+            }
+        } catch (TrustManagerException trustManagerException) {
+            throw new SSLContextException("Failed to create TrustManager", trustManagerException);
+        } catch (IllegalArgumentException e) {
+            String trustStoreTypeProp = config.getProperty(sslServerTruststoreTypeProperty);
+            throw new SSLContextException("Bad value for "
+                    + sslServerTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
+        }
+
+        try {
+            SSLContext clientCtx = SSLContext.getInstance(protocol);
+            clientCtx.init(clientKeyManagers, clientTrustManagers, null);
+
+            SSLContext serverCtx = SSLContext.getInstance(protocol);
+            serverCtx.init(serverKeyManagers, serverTrustManagers, null);
+
+            return new SSLContextAndOptions(this, config, clientCtx, serverCtx);
         } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
             throw new SSLContextException(sslContextInitException);
         }
     }
+
 
     public static KeyStore loadKeyStore(
         String keyStoreLocation,
@@ -503,7 +590,36 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         String keyStorePassword = getPasswordFromConfigPropertyOrFile(config, getSslKeystorePasswdProperty(),
                 getSslKeystorePasswdPathProperty());
         String keyStoreType = config.getProperty(getSslKeystoreTypeProperty());
+        LOG.debug("Using SSL keystore {}", keyStoreLocation);
         return createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
+    }
+
+    /**
+     * Builds a key manager for the client role. If a dedicated client keystore
+     * is configured ({@code client.keyStore.location}), it is loaded and returned.
+     * Otherwise, falls back to the shared keystore via {@link #buildKeyManager(ZKConfig)}.
+     */
+    public X509KeyManager buildClientKeyManager(ZKConfig config) throws KeyManagerException {
+        return buildClientKeyManager(config, null);
+    }
+
+    /**
+     * Builds a key manager for the client role. If a dedicated client keystore
+     * is configured ({@code client.keyStore.location}), it is loaded and returned.
+     * Otherwise, returns the pre-built {@code sharedKeyManager} (or falls back
+     * to {@link #buildKeyManager(ZKConfig)} when {@code sharedKeyManager} is null).
+     */
+    public X509KeyManager buildClientKeyManager(ZKConfig config, X509KeyManager sharedKeyManager) throws KeyManagerException {
+        String clientKeyStoreLocation = config.getProperty(getSslClientKeystoreLocationProperty(), "");
+        if (!clientKeyStoreLocation.isEmpty()) {
+            String clientKeyStorePassword = getPasswordFromConfigPropertyOrFile(config,
+                    getSslClientKeystorePasswdProperty(), getSslClientKeystorePasswdPathProperty());
+            String clientKeyStoreType = config.getProperty(getSslClientKeystoreTypeProperty());
+            LOG.debug("Using SSL client keystore {}", clientKeyStoreLocation);
+            return createKeyManager(clientKeyStoreLocation, clientKeyStorePassword, clientKeyStoreType);
+        }
+        LOG.debug("{} not specified for X509KeyManager, falling back to common property", getSslClientKeystoreLocationProperty());
+        return sharedKeyManager != null ? sharedKeyManager : buildKeyManager(config);
     }
 
     /**
@@ -548,6 +664,28 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             return null;
         }
 
+        LOG.debug("Using SSL trust store {}", trustStoreLocationProp);
+        return buildX509TrustManager(config, trustStoreLocationProp, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty, sslTruststoreTypeProperty);
+    }
+
+    public X509TrustManager buildServerTrustManager(ZKConfig config) throws TrustManagerException {
+        return buildServerTrustManager(config, null);
+    }
+
+    public X509TrustManager buildServerTrustManager(ZKConfig config, X509TrustManager sharedTrustManager) throws TrustManagerException {
+        String serverTrustStoreLocation = config.getProperty(sslServerTruststoreLocationProperty, "");
+        if (serverTrustStoreLocation.isEmpty()) {
+            LOG.debug("{} not specified for X509TrustManager, falling back to common property", sslServerTruststoreLocationProperty);
+            return sharedTrustManager != null ? sharedTrustManager : buildTrustManager(config);
+        }
+        LOG.debug("Using SSL server trust store {}", serverTrustStoreLocation);
+        return buildX509TrustManager(config, serverTrustStoreLocation, sslServerTruststorePasswdProperty, sslServerTruststorePasswdPathProperty, sslServerTruststoreTypeProperty);
+    }
+
+    private X509TrustManager buildX509TrustManager(ZKConfig config, String trustStoreLocationProp,
+                                                   String sslTruststorePasswdProperty,
+                                                   String sslTruststorePasswdPathProperty,
+                                                   String sslTruststoreTypeProperty) throws TrustManagerException {
         String trustStorePasswordProp = getPasswordFromConfigPropertyOrFile(config, sslTruststorePasswdProperty, sslTruststorePasswdPathProperty);
         String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
 
@@ -570,6 +708,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 allowReverseDnsLookup,
                 fipsMode);
     }
+
 
     // @VisibleForTesting
     protected X509TrustManager createTrustManagerInternal(
@@ -743,6 +882,15 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             keyStoreFileWatcher = newKeyStoreFileWatcher;
             keyStoreFileWatcher.start();
         }
+        FileChangeWatcher newClientKeyStoreFileWatcher = newFileChangeWatcher(config.getProperty(sslClientKeystoreLocationProperty));
+        if (newClientKeyStoreFileWatcher != null) {
+            // stop old watcher if there is one
+            if (clientKeyStoreFileWatcher != null) {
+                clientKeyStoreFileWatcher.stop();
+            }
+            clientKeyStoreFileWatcher = newClientKeyStoreFileWatcher;
+            clientKeyStoreFileWatcher.start();
+        }
         FileChangeWatcher newTrustStoreFileWatcher = newFileChangeWatcher(config.getProperty(sslTruststoreLocationProperty));
         if (newTrustStoreFileWatcher != null) {
             // stop old watcher if there is one
@@ -751,6 +899,15 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             }
             trustStoreFileWatcher = newTrustStoreFileWatcher;
             trustStoreFileWatcher.start();
+        }
+        FileChangeWatcher newServerTrustStoreFileWatcher = newFileChangeWatcher(config.getProperty(sslServerTruststoreLocationProperty));
+        if (newServerTrustStoreFileWatcher != null) {
+            // stop old watcher if there is one
+            if (serverTrustStoreFileWatcher != null) {
+                serverTrustStoreFileWatcher.stop();
+            }
+            serverTrustStoreFileWatcher = newServerTrustStoreFileWatcher;
+            serverTrustStoreFileWatcher.start();
         }
     }
 
@@ -765,9 +922,17 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             keyStoreFileWatcher.stop();
             keyStoreFileWatcher = null;
         }
+        if (clientKeyStoreFileWatcher != null) {
+            clientKeyStoreFileWatcher.stop();
+            clientKeyStoreFileWatcher = null;
+        }
         if (trustStoreFileWatcher != null) {
             trustStoreFileWatcher.stop();
             trustStoreFileWatcher = null;
+        }
+        if (serverTrustStoreFileWatcher != null) {
+            serverTrustStoreFileWatcher.stop();
+            serverTrustStoreFileWatcher = null;
         }
     }
 

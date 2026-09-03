@@ -393,10 +393,18 @@ public class X509TestContext {
         System.clearProperty(x509Util.getSslKeystorePasswdProperty());
         System.clearProperty(x509Util.getSslKeystorePasswdPathProperty());
         System.clearProperty(x509Util.getSslKeystoreTypeProperty());
+        System.clearProperty(x509Util.getSslClientKeystoreLocationProperty());
+        System.clearProperty(x509Util.getSslClientKeystorePasswdProperty());
+        System.clearProperty(x509Util.getSslClientKeystorePasswdPathProperty());
+        System.clearProperty(x509Util.getSslClientKeystoreTypeProperty());
         System.clearProperty(x509Util.getSslTruststoreLocationProperty());
         System.clearProperty(x509Util.getSslTruststorePasswdProperty());
         System.clearProperty(x509Util.getSslTruststorePasswdPathProperty());
         System.clearProperty(x509Util.getSslTruststoreTypeProperty());
+        System.clearProperty(x509Util.getSslServerTruststoreLocationProperty());
+        System.clearProperty(x509Util.getSslServerTruststorePasswdProperty());
+        System.clearProperty(x509Util.getSslServerTruststorePasswdPathProperty());
+        System.clearProperty(x509Util.getSslServerTruststoreTypeProperty());
         System.clearProperty(x509Util.getSslHostnameVerificationEnabledProperty());
     }
 

@@ -165,6 +165,13 @@ public class X509TestHelpers {
 
     public static X509Certificate newCert(
             X509Certificate caCert, KeyPair caKeyPair, X500Name certSubject, PublicKey certPublicKey, long expirationMillis, CertificateCustomization customization) throws Exception {
+        return newCert(caCert, caKeyPair, certSubject, certPublicKey, expirationMillis,
+                new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}, customization);
+    }
+
+    public static X509Certificate newCert(
+            X509Certificate caCert, KeyPair caKeyPair, X500Name certSubject, PublicKey certPublicKey,
+            long expirationMillis, KeyPurposeId[] keyPurposes, CertificateCustomization customization) throws Exception {
         if (!caKeyPair.getPublic().equals(caCert.getPublicKey())) {
             throw new IllegalArgumentException("CA private key does not match the public key in the CA cert");
         }
@@ -175,13 +182,32 @@ public class X509TestHelpers {
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false)); // not a CA
         builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature
                                                                             | KeyUsage.keyEncipherment));
-        builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(new KeyPurposeId[]{KeyPurposeId.id_kp_serverAuth, KeyPurposeId.id_kp_clientAuth}));
+        builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(keyPurposes));
 
         builder.addExtension(Extension.subjectAlternativeName, false, getLocalhostSubjectAltNames());
         if (customization != null) {
             customization.customize(builder);
         }
         return buildAndSignCertificate(caKeyPair.getPrivate(), builder);
+    }
+
+    public static X509Certificate newServerOnlyCert(X509Certificate caCert, KeyPair caKeyPair,
+            String name, PublicKey certPublicKey) throws Exception {
+        return createSinglePurposeCert(name, caCert, caKeyPair, certPublicKey, KeyPurposeId.id_kp_serverAuth);
+    }
+
+    public static X509Certificate newClientOnlyCert(X509Certificate caCert, KeyPair caKeyPair,
+            String name, PublicKey certPublicKey) throws Exception {
+        return createSinglePurposeCert(name, caCert, caKeyPair, certPublicKey, KeyPurposeId.id_kp_clientAuth);
+    }
+
+    private static X509Certificate createSinglePurposeCert(
+            String name, X509Certificate caCert, KeyPair caKeyPair, PublicKey certPublicKey, KeyPurposeId keyPurposeId)
+            throws Exception {
+        X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
+        nameBuilder.addRDN(BCStyle.CN, name);
+        return newCert(caCert, caKeyPair, nameBuilder.build(), certPublicKey, Duration.ofDays(1).toMillis(),
+                new KeyPurposeId[]{keyPurposeId}, null);
     }
 
     /**

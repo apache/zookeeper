@@ -23,18 +23,23 @@ import static org.apache.zookeeper.common.X509Util.TLS_1_2;
 import static org.apache.zookeeper.common.X509Util.TLS_1_3;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -953,4 +958,279 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             x509Util.getDefaultSSLContext();
         });
     }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testSeparateClientKeyStore_backwardCompat(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        // No clientKeyStore properties set — should behave identically to existing code
+        SSLContext ctx = x509Util.getDefaultSSLContext();
+        assertNotNull(ctx);
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 15)
+    public void testSeparateClientKeyStore_singleEkuCertsHandshake(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        // Generate separate server-only and client-only certs
+        KeyPair serverKeyPair = X509TestHelpers.generateKeyPair(certKeyType);
+        X509Certificate serverCert = X509TestHelpers.newServerOnlyCert(
+                x509TestContext.getTrustStoreCertificates().get(0),
+                x509TestContext.getTrustStoreKeyPair(),
+                "server", serverKeyPair.getPublic());
+
+        KeyPair clientKeyPair = X509TestHelpers.generateKeyPair(certKeyType);
+        X509Certificate clientCert = X509TestHelpers.newClientOnlyCert(
+                x509TestContext.getTrustStoreCertificates().get(0),
+                x509TestContext.getTrustStoreKeyPair(),
+                "client", clientKeyPair.getPublic());
+
+        // Write server keystore
+        File serverKsFile = File.createTempFile("server_ks", ".jks", x509TestContext.getTempDir());
+        serverKsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(serverKsFile)) {
+            fos.write(X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
+                    serverCert, serverKeyPair.getPrivate(), keyPassword));
+        }
+
+        // Write client keystore
+        File clientKsFile = File.createTempFile("client_ks", ".jks", x509TestContext.getTempDir());
+        clientKsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(clientKsFile)) {
+            fos.write(X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
+                    clientCert, clientKeyPair.getPrivate(), keyPassword));
+        }
+
+        // Set properties: server keystore as keyStore, client keystore as clientKeyStore
+        System.setProperty(x509Util.getSslKeystoreLocationProperty(), serverKsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslKeystorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslKeystoreTypeProperty(), "JKS");
+        System.setProperty(x509Util.getSslClientKeystoreLocationProperty(), clientKsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslClientKeystorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslClientKeystoreTypeProperty(), "JKS");
+
+        x509Util.close(); // reset cached context
+        x509Util = new ClientX509Util();
+
+        // Create server socket and client socket, perform handshake
+        int port = PortAssignment.unique();
+        SSLServerSocket serverSocket = x509Util.createSSLServerSocket(port);
+        serverSocket.setSoTimeout(5000);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Void> serverFuture = executor.submit(() -> {
+                try (SSLSocket accepted = (SSLSocket) serverSocket.accept()) {
+                    accepted.startHandshake();
+                }
+                return null;
+            });
+
+            SSLSocket clientSocket = x509Util.createSSLSocket();
+            clientSocket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 3000);
+            clientSocket.startHandshake();
+            clientSocket.close();
+
+            serverFuture.get(5, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
+            System.clearProperty(x509Util.getSslKeystoreLocationProperty());
+            System.clearProperty(x509Util.getSslKeystorePasswdProperty());
+            System.clearProperty(x509Util.getSslKeystoreTypeProperty());
+            System.clearProperty(x509Util.getSslClientKeystoreLocationProperty());
+            System.clearProperty(x509Util.getSslClientKeystorePasswdProperty());
+            System.clearProperty(x509Util.getSslClientKeystoreTypeProperty());
+            serverSocket.close();
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testSeparateClientKeyStore_nettyClientUsesClientKeyStore(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        // Generate separate keystores
+        KeyPair clientKeyPair = X509TestHelpers.generateKeyPair(certKeyType);
+        X509Certificate clientCert = X509TestHelpers.newClientOnlyCert(
+                x509TestContext.getTrustStoreCertificates().get(0),
+                x509TestContext.getTrustStoreKeyPair(),
+                "client", clientKeyPair.getPublic());
+
+        File clientKsFile = File.createTempFile("client_ks", ".jks", x509TestContext.getTempDir());
+        clientKsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(clientKsFile)) {
+            fos.write(X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
+                    clientCert, clientKeyPair.getPrivate(), keyPassword));
+        }
+
+        System.setProperty(x509Util.getSslClientKeystoreLocationProperty(), clientKsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslClientKeystorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslClientKeystoreTypeProperty(), "JKS");
+
+        try {
+            // Netty client context should load from clientKeyStore
+            SslContext clientCtx = ((ClientX509Util) x509Util).createNettySslContextForClient(new ZKConfig());
+            assertNotNull(clientCtx);
+
+            // Netty server context should still load from keyStore (the main one)
+            SslContext serverCtx = ((ClientX509Util) x509Util).createNettySslContextForServer(new ZKConfig());
+            assertNotNull(serverCtx);
+        } finally {
+            System.clearProperty(x509Util.getSslClientKeystoreLocationProperty());
+            System.clearProperty(x509Util.getSslClientKeystorePasswdProperty());
+            System.clearProperty(x509Util.getSslClientKeystoreTypeProperty());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testSeparateServerTrustStore_backwardCompat(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+        // Without server.trustStore configured, existing trustStore is used for both roles
+        x509Util.close();
+        x509Util = new ClientX509Util();
+
+        int port = PortAssignment.unique();
+        SSLServerSocket serverSocket = x509Util.createSSLServerSocket(port);
+        serverSocket.setSoTimeout(5000);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Void> serverFuture = executor.submit(() -> {
+                try (SSLSocket accepted = (SSLSocket) serverSocket.accept()) {
+                    accepted.startHandshake();
+                }
+                return null;
+            });
+
+            SSLSocket clientSocket = x509Util.createSSLSocket();
+            clientSocket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 3000);
+            clientSocket.startHandshake();
+            clientSocket.close();
+
+            serverFuture.get(5, TimeUnit.SECONDS);
+        } finally {
+            serverSocket.close();
+            executor.shutdownNow();
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    @Timeout(value = 5)
+    public void testSeparateServerTrustStore_separateCAs(
+            X509KeyType caKeyType, X509KeyType certKeyType, String keyPassword, Integer paramIndex)
+            throws Exception {
+        init(caKeyType, certKeyType, keyPassword, paramIndex);
+
+        // Create a separate CA for client certs
+        KeyPair clientCaKeyPair = X509TestHelpers.generateKeyPair(caKeyType);
+        X509Certificate clientCaCert = X509TestHelpers.newSelfSignedCACert(
+                new org.bouncycastle.asn1.x500.X500NameBuilder(org.bouncycastle.asn1.x500.style.BCStyle.INSTANCE)
+                        .addRDN(org.bouncycastle.asn1.x500.style.BCStyle.CN, "Client CA")
+                        .build(),
+                clientCaKeyPair, 86400000L);
+
+        // The existing CA is used for server certs
+        KeyPair serverCaKeyPair = x509TestContext.getTrustStoreKeyPair();
+        X509Certificate serverCaCert = x509TestContext.getTrustStoreCertificates().get(0);
+
+        // Generate server cert signed by server CA
+        KeyPair serverKeyPair = X509TestHelpers.generateKeyPair(certKeyType);
+        X509Certificate serverCert = X509TestHelpers.newServerOnlyCert(
+                serverCaCert, serverCaKeyPair, "server", serverKeyPair.getPublic());
+
+        // Generate client cert signed by client CA
+        KeyPair clientKeyPair = X509TestHelpers.generateKeyPair(certKeyType);
+        X509Certificate clientCert = X509TestHelpers.newClientOnlyCert(
+                clientCaCert, clientCaKeyPair, "client", clientKeyPair.getPublic());
+
+        // Server keystore with server cert
+        File serverKsFile = File.createTempFile("server_ks", ".jks", x509TestContext.getTempDir());
+        serverKsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(serverKsFile)) {
+            fos.write(X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
+                    serverCert, serverKeyPair.getPrivate(), keyPassword));
+        }
+
+        // Client keystore with client cert
+        File clientKsFile = File.createTempFile("client_ks", ".jks", x509TestContext.getTempDir());
+        clientKsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(clientKsFile)) {
+            fos.write(X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
+                    clientCert, clientKeyPair.getPrivate(), keyPassword));
+        }
+
+        // Client truststore: trusts server CA (validates servers we connect to)
+        File clientTsFile = File.createTempFile("client_ts", ".jks", x509TestContext.getTempDir());
+        clientTsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(clientTsFile)) {
+            fos.write(X509TestHelpers.certToJavaTrustStoreBytes(serverCaCert, keyPassword));
+        }
+
+        // Server truststore: trusts client CA (validates clients connecting to us)
+        File serverTsFile = File.createTempFile("server_ts", ".jks", x509TestContext.getTempDir());
+        serverTsFile.deleteOnExit();
+        try (FileOutputStream fos = new FileOutputStream(serverTsFile)) {
+            fos.write(X509TestHelpers.certToJavaTrustStoreBytes(clientCaCert, keyPassword));
+        }
+
+        System.setProperty(x509Util.getSslKeystoreLocationProperty(), serverKsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslKeystorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslKeystoreTypeProperty(), "JKS");
+        System.setProperty(x509Util.getSslClientKeystoreLocationProperty(), clientKsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslClientKeystorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslClientKeystoreTypeProperty(), "JKS");
+        System.setProperty(x509Util.getSslTruststoreLocationProperty(), clientTsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslTruststorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslTruststoreTypeProperty(), "JKS");
+        System.setProperty(x509Util.getSslServerTruststoreLocationProperty(), serverTsFile.getAbsolutePath());
+        System.setProperty(x509Util.getSslServerTruststorePasswdProperty(), keyPassword);
+        System.setProperty(x509Util.getSslServerTruststoreTypeProperty(), "JKS");
+
+        x509Util.close();
+        x509Util = new ClientX509Util();
+
+        int port = PortAssignment.unique();
+        SSLServerSocket serverSocket = x509Util.createSSLServerSocket(port);
+        serverSocket.setSoTimeout(5000);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Void> serverFuture = executor.submit(() -> {
+                try (SSLSocket accepted = (SSLSocket) serverSocket.accept()) {
+                    accepted.startHandshake();
+                }
+                return null;
+            });
+
+            SSLSocket clientSocket = x509Util.createSSLSocket();
+            clientSocket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 3000);
+            clientSocket.startHandshake();
+            clientSocket.close();
+
+            serverFuture.get(5, TimeUnit.SECONDS);
+        } finally {
+            serverSocket.close();
+            executor.shutdownNow();
+            System.clearProperty(x509Util.getSslClientKeystoreLocationProperty());
+            System.clearProperty(x509Util.getSslClientKeystorePasswdProperty());
+            System.clearProperty(x509Util.getSslClientKeystoreTypeProperty());
+            System.clearProperty(x509Util.getSslServerTruststoreLocationProperty());
+            System.clearProperty(x509Util.getSslServerTruststorePasswdProperty());
+            System.clearProperty(x509Util.getSslServerTruststoreTypeProperty());
+        }
+    }
+
 }

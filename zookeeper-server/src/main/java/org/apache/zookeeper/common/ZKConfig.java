@@ -146,10 +146,18 @@ public class ZKConfig {
         properties.put(x509Util.getSslKeystorePasswdProperty(), System.getProperty(x509Util.getSslKeystorePasswdProperty()));
         properties.put(x509Util.getSslKeystorePasswdPathProperty(), System.getProperty(x509Util.getSslKeystorePasswdPathProperty()));
         properties.put(x509Util.getSslKeystoreTypeProperty(), System.getProperty(x509Util.getSslKeystoreTypeProperty()));
+        properties.put(x509Util.getSslClientKeystoreLocationProperty(), System.getProperty(x509Util.getSslClientKeystoreLocationProperty()));
+        properties.put(x509Util.getSslClientKeystorePasswdProperty(), System.getProperty(x509Util.getSslClientKeystorePasswdProperty()));
+        properties.put(x509Util.getSslClientKeystorePasswdPathProperty(), System.getProperty(x509Util.getSslClientKeystorePasswdPathProperty()));
+        properties.put(x509Util.getSslClientKeystoreTypeProperty(), System.getProperty(x509Util.getSslClientKeystoreTypeProperty()));
         properties.put(x509Util.getSslTruststoreLocationProperty(), System.getProperty(x509Util.getSslTruststoreLocationProperty()));
         properties.put(x509Util.getSslTruststorePasswdProperty(), System.getProperty(x509Util.getSslTruststorePasswdProperty()));
         properties.put(x509Util.getSslTruststorePasswdPathProperty(), System.getProperty(x509Util.getSslTruststorePasswdPathProperty()));
         properties.put(x509Util.getSslTruststoreTypeProperty(), System.getProperty(x509Util.getSslTruststoreTypeProperty()));
+        properties.put(x509Util.getSslServerTruststoreLocationProperty(), System.getProperty(x509Util.getSslServerTruststoreLocationProperty()));
+        properties.put(x509Util.getSslServerTruststorePasswdProperty(), System.getProperty(x509Util.getSslServerTruststorePasswdProperty()));
+        properties.put(x509Util.getSslServerTruststorePasswdPathProperty(), System.getProperty(x509Util.getSslServerTruststorePasswdPathProperty()));
+        properties.put(x509Util.getSslServerTruststoreTypeProperty(), System.getProperty(x509Util.getSslServerTruststoreTypeProperty()));
         properties.put(x509Util.getSslContextSupplierClassProperty(), System.getProperty(x509Util.getSslContextSupplierClassProperty()));
         properties.put(x509Util.getSslClientHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslClientHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(), System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));

@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Wrapper class for an SSLContext + some config options that can't be set on the context when it is created but
+ * Wrapper class for SSLContexts and config options that can't be set on the context when it is created but
  * must be set on a secure socket created by the context after the socket creation. By wrapping the options in this
  * class we avoid reading from global system properties during socket configuration. This makes testing easier
  * since we can create different X509Util instances with different configurations in a single test process, and
@@ -45,11 +45,34 @@ public class SSLContextAndOptions {
     private final String[] enabledProtocols;
     private final String[] cipherSuites;
     private final X509Util.ClientAuth clientAuth;
-    private final SSLContext sslContext;
+    private final SSLContext clientSSLContext;
+    private final SSLContext serverSSLContext;
     private final int handshakeDetectionTimeoutMillis;
     private final ZKConfig zkConfig;
 
     /**
+     * Creates an SSLContextAndOptions with separate client and server contexts.
+     * Note: constructor is intentionally package-private, only the X509Util class should be creating instances of this
+     * class.
+     * @param x509Util the X509Util that created this object.
+     * @param config a ZKConfig that holds config properties.
+     * @param clientSSLContext the SSLContext for connecting as a client.
+     * @param serverSSLContext the SSLContext for accepting connections as a server.
+     */
+    SSLContextAndOptions(final X509Util x509Util, final ZKConfig config,
+                         final SSLContext clientSSLContext, final SSLContext serverSSLContext) {
+        this.x509Util = requireNonNull(x509Util);
+        this.clientSSLContext = requireNonNull(clientSSLContext);
+        this.serverSSLContext = requireNonNull(serverSSLContext);
+        this.zkConfig = requireNonNull(config);
+        this.enabledProtocols = getEnabledProtocols(zkConfig, clientSSLContext);
+        this.cipherSuites = getCipherSuites(zkConfig);
+        this.clientAuth = getClientAuth(zkConfig);
+        this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(zkConfig);
+    }
+
+    /**
+     * Creates an SSLContextAndOptions with a single context used for both roles.
      * Note: constructor is intentionally package-private, only the X509Util class should be creating instances of this
      * class.
      * @param x509Util the X509Util that created this object.
@@ -57,41 +80,35 @@ public class SSLContextAndOptions {
      * @param sslContext the SSLContext.
      */
     SSLContextAndOptions(final X509Util x509Util, final ZKConfig config, final SSLContext sslContext) {
-        this.x509Util = requireNonNull(x509Util);
-        this.sslContext = requireNonNull(sslContext);
-        this.zkConfig = requireNonNull(config);
-        this.enabledProtocols = getEnabledProtocols(zkConfig, sslContext);
-        this.cipherSuites = getCipherSuites(zkConfig);
-        this.clientAuth = getClientAuth(zkConfig);
-        this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(zkConfig);
+        this(x509Util, config, sslContext, sslContext);
     }
 
-    public SSLContext getSSLContext() {
-        return sslContext;
+    public SSLContext getClientSSLContext() {
+        return clientSSLContext;
     }
 
     public SSLSocket createSSLSocket() throws IOException {
-        return configureSSLSocket((SSLSocket) sslContext.getSocketFactory().createSocket(), true);
+        return configureSSLSocket((SSLSocket) clientSSLContext.getSocketFactory().createSocket(), true);
     }
 
     public SSLSocket createSSLSocket(Socket socket, byte[] pushbackBytes) throws IOException {
         SSLSocket sslSocket;
         if (pushbackBytes != null && pushbackBytes.length > 0) {
-            sslSocket = (SSLSocket) sslContext.getSocketFactory()
+            sslSocket = (SSLSocket) serverSSLContext.getSocketFactory()
                                               .createSocket(socket, new ByteArrayInputStream(pushbackBytes), true);
         } else {
-            sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(socket, null, socket.getPort(), true);
+            sslSocket = (SSLSocket) serverSSLContext.getSocketFactory().createSocket(socket, null, socket.getPort(), true);
         }
         return configureSSLSocket(sslSocket, false);
     }
 
     public SSLServerSocket createSSLServerSocket() throws IOException {
-        SSLServerSocket sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket();
+        SSLServerSocket sslServerSocket = (SSLServerSocket) serverSSLContext.getServerSocketFactory().createServerSocket();
         return configureSSLServerSocket(sslServerSocket);
     }
 
     public SSLServerSocket createSSLServerSocket(int port) throws IOException {
-        SSLServerSocket sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
+        SSLServerSocket sslServerSocket = (SSLServerSocket) serverSSLContext.getServerSocketFactory().createServerSocket(port);
         return configureSSLServerSocket(sslServerSocket);
     }
 
