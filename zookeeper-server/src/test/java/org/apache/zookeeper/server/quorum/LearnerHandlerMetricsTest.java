@@ -35,6 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,8 @@ public class LearnerHandlerMetricsTest {
 
     @BeforeEach
     public void setup() throws IOException {
+        ServerMetrics.metricsProviderInitialized(new DefaultMetricsProvider());
+
         Leader leader = mock(Leader.class);
         when(leader.getQuorumAuthServer()).thenReturn(null);
 
