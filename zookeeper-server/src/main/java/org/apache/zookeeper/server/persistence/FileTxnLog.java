@@ -264,11 +264,29 @@ public class FileTxnLog implements TxnLog, Closeable {
      * @throws IOException
      */
     public synchronized void close() throws IOException {
+        IOException exception = null;
         if (logStream != null) {
-            logStream.close();
+            try {
+                logStream.close();
+            } catch (IOException e) {
+                exception = e;
+            }
+            logStream = null;
         }
         for (FileOutputStream log : streamsToFlush) {
-            log.close();
+            try {
+                log.close();
+            } catch (IOException e) {
+                if (exception == null) {
+                    exception = e;
+                } else {
+                    exception.addSuppressed(e);
+                }
+            }
+        }
+        streamsToFlush.clear();
+        if (exception != null) {
+            throw exception;
         }
     }
 
