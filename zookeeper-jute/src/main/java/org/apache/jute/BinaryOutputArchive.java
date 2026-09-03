@@ -78,11 +78,16 @@ public class BinaryOutputArchive implements OutputArchive {
     }
 
     /**
-     * create our own char encoder to utf8. This is faster
-     * then string.getbytes(UTF8).
+     * Encodes the characters of {@code s} into an UTF-8-like byte
+     * sequence.  This method reuses a local {@code ByteBuffer} and
+     * should seldom allocate.
      *
-     * @param s the string to encode into utf8
-     * @return utf8 byte sequence.
+     * <p>Note that this is not a full-blown UTF-8 implementation;
+     * notably, it does not decode UTF-16 surrogate pairs, and rather
+     * encodes each {@code char} individually.
+     *
+     * @param s the string to encode
+     * @return the resulting byte sequence
      */
     private ByteBuffer stringToByteBuffer(CharSequence s) {
         bb.clear();
@@ -110,6 +115,35 @@ public class BinaryOutputArchive implements OutputArchive {
         return bb;
     }
 
+    /**
+     * Computes the exact payload size of a character sequence as
+     * encoded by the {@link #stringToByteBuffer(CharSequence)
+     * stringToByteBuffer} method, without any "length descriptor".
+     *
+     * <p>Note that the algorithm used by {@code stringToByteBuffer}
+     * does not match {@code StandardCharsets.UTF_8}; this method
+     * "emulates" the former.
+     *
+     * @param s the string to encode
+     * @return the serialized payload size in bytes
+     * @throws ArithmeticException if the result overflows an int
+     */
+    private static int serializedStringPayloadSize(CharSequence s) {
+        int size = 0;
+        final int len = s.length();
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            if (c < 0x80) {
+                size = Math.addExact(size, 1);
+            } else if (c < 0x800) {
+                size = Math.addExact(size, 2);
+            } else {
+                size = Math.addExact(size, 3);
+            }
+        }
+        return size;
+    }
+
     public void writeString(String s, String tag) throws IOException {
         if (s == null) {
             writeInt(-1, "len");
@@ -120,6 +154,22 @@ public class BinaryOutputArchive implements OutputArchive {
         writeInt(strLen, "len");
         out.write(bb.array(), bb.position(), bb.limit());
         dataSize += strLen;
+    }
+
+    /**
+     * Computes the exact serialization size of a string.
+     *
+     * @param s the string to encode, potentially {@code null}
+     * @return the serialization size in bytes
+     * @throws ArithmeticException if the result overflows an int
+     *
+     * @see #serializedStringPayloadSize(CharSequence)
+     */
+    public static int serializedStringSize(String s) {
+        int payloadSize = s == null ? 0 : serializedStringPayloadSize(s);
+
+        // length descriptor + payload.
+        return Math.addExact(4, payloadSize);
     }
 
     public void writeBuffer(byte[] barr, String tag)

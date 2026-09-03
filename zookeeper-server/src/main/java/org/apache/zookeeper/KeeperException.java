@@ -151,6 +151,8 @@ public abstract class KeeperException extends Exception {
             return new QuotaExceededException();
         case THROTTLEDOP:
             return new ThrottledOpException();
+        case TOOMANYEPHEMERALS:
+            return new TooManyEphemeralsException();
         case OK:
         default:
             throw new IllegalArgumentException("Invalid exception code:" + code.code);
@@ -415,7 +417,9 @@ public abstract class KeeperException extends Exception {
         /** Operation was throttled and not executed at all. This error code indicates that zookeeper server
          *  is under heavy load and can't process incoming requests at full speed; please retry with back off.
          */
-        THROTTLEDOP (-127);
+        THROTTLEDOP (-127),
+        /** Adding an ephemeral with the requested path could overflow transaction size. */
+        TOOMANYEPHEMERALS(-128);
 
         private static final Map<Integer, Code> lookup = new HashMap<>();
 
@@ -514,6 +518,8 @@ public abstract class KeeperException extends Exception {
             return "Quota has exceeded";
         case THROTTLEDOP:
             return "Op throttled due to high load";
+        case TOOMANYEPHEMERALS:
+            return "Adding an ephemeral with the requested path could overflow transaction size";
         default:
             return "Unknown error " + code;
         }
@@ -978,6 +984,19 @@ public abstract class KeeperException extends Exception {
     public static class ThrottledOpException extends KeeperException {
         public ThrottledOpException() {
             super(Code.THROTTLEDOP);
+        }
+    }
+
+    /**
+     * @see Code#TOOMANYEPHEMERALS
+     */
+    @InterfaceAudience.Public
+    public static class TooManyEphemeralsException extends KeeperException {
+        public TooManyEphemeralsException() {
+            super(Code.TOOMANYEPHEMERALS);
+        }
+        public TooManyEphemeralsException(String path) {
+            super(Code.TOOMANYEPHEMERALS, path);
         }
     }
 }

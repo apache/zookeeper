@@ -56,6 +56,8 @@ public class CliWrapperException extends CliException {
                        + "new servers are connected and synced";
             } else if (keeperException instanceof KeeperException.QuotaExceededException) {
                 return "Quota has exceeded : " + keeperException.getPath();
+            } else if (keeperException instanceof KeeperException.TooManyEphemeralsException) {
+                return "Adding ephemeral could overflow transaction size : " + keeperException.getPath();
             }
         }
         return cause.getMessage();
