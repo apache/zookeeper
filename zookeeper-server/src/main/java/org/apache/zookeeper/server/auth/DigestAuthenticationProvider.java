@@ -35,7 +35,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(DigestAuthenticationProvider.class);
 
-    private static final String DEFAULT_DIGEST_ALGORITHM = "SHA1";
+    private static final String DEFAULT_DIGEST_ALGORITHM = "SHA-256";
 
     public static final String DIGEST_ALGORITHM_KEY = "zookeeper.DigestAuthenticationProvider.digestAlg";
 
