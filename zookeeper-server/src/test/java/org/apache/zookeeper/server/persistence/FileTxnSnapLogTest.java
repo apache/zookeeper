@@ -30,6 +30,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jute.BinaryInputArchive;
@@ -37,14 +39,19 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.AddWatchMode;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ServerWatcher;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -304,6 +311,86 @@ public class FileTxnSnapLogTest {
         });
     }
 
+    private static final byte[] TEST_DATA = "foo".getBytes();
+
+    private static final class ReplayTxn {
+
+        private final TxnHeader header;
+        private final Record record;
+
+        ReplayTxn(long zxid, int type, Record record) {
+            this.header = new TxnHeader(1, 2, zxid, 2, type);
+            this.record = record;
+        }
+
+        void applyTo(DataTree dataTree) {
+            dataTree.processTxn(header, record);
+        }
+    }
+
+    private static ReplayTxn createTxn(long zxid, String path, List<ACL> acl) {
+        return new ReplayTxn(zxid, ZooDefs.OpCode.create, new CreateTxn(path, TEST_DATA, acl, false, -1));
+    }
+
+    private static ReplayTxn deleteTxn(long zxid, String path) {
+        return new ReplayTxn(zxid, ZooDefs.OpCode.delete, new DeleteTxn(path));
+    }
+
+    private static ReplayTxn setDataTxn(long zxid, String path) {
+        return new ReplayTxn(zxid, ZooDefs.OpCode.setData, new SetDataTxn(path, TEST_DATA, 1));
+    }
+
+    /**
+     * Simulates a fuzzy snapshot: the ACL cache is serialized when the
+     * snapshot starts, and the nodes are serialized when it finishes, so
+     * transactions applied in between can leave nodes referencing ACL ids
+     * which are absent from the serialized cache.
+     */
+    private static final class FuzzySnapshot {
+
+        private final DataTree dataTree;
+        private final File file;
+        private final FileOutputStream outputStream;
+        private final OutputArchive outputArchive;
+
+        private FuzzySnapshot(DataTree dataTree) throws IOException {
+            this.dataTree = dataTree;
+            this.file = File.createTempFile("snapshot", "zk");
+            this.outputStream = new FileOutputStream(file);
+            this.outputArchive = BinaryOutputArchive.getArchive(outputStream);
+        }
+
+        static FuzzySnapshot start(DataTree dataTree) throws IOException {
+            FuzzySnapshot snapshot = new FuzzySnapshot(dataTree);
+            dataTree.serializeAcls(snapshot.outputArchive);
+            return snapshot;
+        }
+
+        DataTree finishAndRestore() throws IOException {
+            dataTree.serializeNodes(outputArchive);
+            outputStream.close();
+
+            DataTree restored = new DataTree();
+            try (FileInputStream inputStream = new FileInputStream(file)) {
+                InputArchive inputArchive = BinaryInputArchive.getArchive(inputStream);
+                restored.deserialize(inputArchive, "tree");
+            }
+            return restored;
+        }
+    }
+
+    private static List<ACL> concatAcl(List<ACL> first, List<ACL> second) {
+        List<ACL> result = new ArrayList<>(first);
+        result.addAll(second);
+        return result;
+    }
+
+    private static void assertAcl(DataTree dataTree, String path, List<ACL> expected) {
+        DataNode node = dataTree.getNode(path);
+        assertNotNull(node);
+        assertEquals(expected, dataTree.getACL(node));
+    }
+
     /**
      * Make sure the ACL is exist in the ACL map after SNAP syncing.
      *
@@ -332,35 +419,290 @@ public class FileTxnSnapLogTest {
      */
     @Test
     public void testACLCreatedDuringFuzzySnapshotSync() throws IOException {
-        DataTree leaderDataTree = new DataTree();
+        DataTree leader = new DataTree();
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
 
-        // Start the simulated snap-sync by serializing ACL cache.
-        File file = File.createTempFile("snapshot", "zk");
-        FileOutputStream os = new FileOutputStream(file);
-        OutputArchive oa = BinaryOutputArchive.getArchive(os);
-        leaderDataTree.serializeAcls(oa);
+        ReplayTxn create = createTxn(2, "/a1", ZooDefs.Ids.CREATOR_ALL_ACL);
+        create.applyTo(leader);
 
-        // Add couple of transaction in-between.
-        TxnHeader hdr1 = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
-        Record txn1 = new CreateTxn("/a1", "foo".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
-        leaderDataTree.processTxn(hdr1, txn1);
+        DataTree restored = snapshot.finishAndRestore();
+        create.applyTo(restored);
 
-        // Finish the snapshot.
-        leaderDataTree.serializeNodes(oa);
-        os.close();
+        assertAcl(leader, "/a1", ZooDefs.Ids.CREATOR_ALL_ACL);
+        // ACL ids are server-local, so resolve the restored tree's own node.
+        assertAcl(restored, "/a1", ZooDefs.Ids.CREATOR_ALL_ACL);
+    }
 
-        // Simulate restore on follower and replay.
-        FileInputStream is = new FileInputStream(file);
-        InputArchive ia = BinaryInputArchive.getArchive(is);
-        DataTree followerDataTree = new DataTree();
-        followerDataTree.deserialize(ia, "tree");
-        followerDataTree.processTxn(hdr1, txn1);
+    /**
+     * ACL ids referenced by a fuzzy snapshot must not be re-issued to other
+     * ACL lists while the transactions of the fuzzy range are replayed.
+     *
+     * A node can be serialized with a reference to an ACL id which was
+     * interned only after the ACL cache had been serialized. Such an id is
+     * missing from the deserialized cache, so it is not accounted for in
+     * aclIndex. If the id is re-issued to a different ACL list during replay,
+     * a replayed delete txn of an unrelated node still referencing the id
+     * decrements a reference count that node never contributed to, and the
+     * entry is garbage collected while live nodes still point to it.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testAclIdsReferencedBySnapshotAreNotReissuedDuringReplay() throws IOException {
+        DataTree leader = new DataTree();
 
-        DataNode a1 = leaderDataTree.getNode("/a1");
-        assertNotNull(a1);
-        assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, leaderDataTree.getACL(a1));
+        // Leave a gap between aclIndex and the highest live ACL id.
+        createTxn(2, "/m", ZooDefs.Ids.CREATOR_ALL_ACL).applyTo(leader);
+        List<ACL> discardedAcl = concatAcl(ZooDefs.Ids.CREATOR_ALL_ACL, ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        createTxn(3, "/gone", discardedAcl).applyTo(leader);
+        deleteTxn(4, "/gone").applyTo(leader);
 
-        assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, followerDataTree.getACL(a1));
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        // These ACL ids are absent from the serialized cache but referenced by
+        // the serialized nodes. Before the fix, replay re-issued /m's stale id
+        // to /b; deleting /m then garbage-collected /b's live ACL entry.
+        List<ACL> aclB = concatAcl(ZooDefs.Ids.READ_ACL_UNSAFE, ZooDefs.Ids.CREATOR_ALL_ACL);
+        ReplayTxn createA = createTxn(5, "/a", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        ReplayTxn createB = createTxn(6, "/b", aclB);
+        ReplayTxn deleteM = deleteTxn(7, "/m");
+        ReplayTxn recreateM = createTxn(8, "/m", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        createA.applyTo(leader);
+        createB.applyTo(leader);
+        deleteM.applyTo(leader);
+        recreateM.applyTo(leader);
+
+        DataTree restored = snapshot.finishAndRestore();
+        createA.applyTo(restored);
+        createB.applyTo(restored);
+        deleteM.applyTo(restored);
+        recreateM.applyTo(restored);
+
+        for (DataTree dataTree : new DataTree[]{leader, restored}) {
+            assertAcl(dataTree, "/a", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+            assertAcl(dataTree, "/b", aclB);
+            assertAcl(dataTree, "/m", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        }
+        assertEquals(leader.aclCacheSize(), restored.aclCacheSize());
+    }
+
+    /**
+     * Replaying a delete txn on top of a fuzzy snapshot which contains the
+     * re-created node with a dangling ACL reference must not crash the
+     * restore.
+     *
+     * The eager ACL fetch for watch triggering (ZOOKEEPER-4799) made such
+     * dangling references fatal in deleteNode; the reference is repaired only
+     * when the re-creating txn is replayed later (ZOOKEEPER-4846), so the
+     * delete has to tolerate it.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testDeleteTxnReplayOnDanglingAclDoesNotCrash() throws IOException {
+        DataTree leader = new DataTree();
+        createTxn(2, "/x", ZooDefs.Ids.CREATOR_ALL_ACL).applyTo(leader);
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        ReplayTxn delete = deleteTxn(3, "/x");
+        ReplayTxn recreate = createTxn(4, "/x", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        delete.applyTo(leader);
+        recreate.applyTo(leader);
+
+        // The snapshot contains the re-created /x but not its ACL. Replay
+        // first applies the old incarnation's delete to that dangling node.
+        DataTree restored = snapshot.finishAndRestore();
+        delete.applyTo(restored);
+        recreate.applyTo(restored);
+
+        assertAcl(restored, "/x", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+    }
+
+    /**
+     * Replaying a setData txn of an earlier incarnation on top of a fuzzy
+     * snapshot which contains the re-created node with a dangling ACL
+     * reference must not crash the restore.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testSetDataTxnReplayOnDanglingAclDoesNotCrash() throws IOException {
+        DataTree leader = new DataTree();
+        createTxn(2, "/x", ZooDefs.Ids.CREATOR_ALL_ACL).applyTo(leader);
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        ReplayTxn setData = setDataTxn(3, "/x");
+        ReplayTxn delete = deleteTxn(4, "/x");
+        ReplayTxn recreate = createTxn(5, "/x", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        setData.applyTo(leader);
+        delete.applyTo(leader);
+        recreate.applyTo(leader);
+
+        // Replay first applies the old incarnation's setData to the re-created
+        // /x whose ACL is absent from the serialized cache.
+        DataTree restored = snapshot.finishAndRestore();
+        setData.applyTo(restored);
+        delete.applyTo(restored);
+        recreate.applyTo(restored);
+
+        assertAcl(restored, "/x", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+    }
+
+    /**
+     * Watch events for a node whose ACL reference is missing from the ACL
+     * cache are filtered as unreadable (fail closed), not delivered without
+     * an ACL check: delivering them without a check would reintroduce
+     * CVE-2024-23944 (see ZOOKEEPER-4799) for such nodes.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testWatchEventsForDanglingAclFailClosed() throws IOException {
+        DataTree leader = new DataTree();
+        createTxn(2, "/x", ZooDefs.Ids.CREATOR_ALL_ACL).applyTo(leader);
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        ReplayTxn delete = deleteTxn(3, "/x");
+        ReplayTxn recreate = createTxn(4, "/x", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        delete.applyTo(leader);
+        recreate.applyTo(leader);
+        DataTree restored = snapshot.finishAndRestore();
+
+        List<List<ACL>> deliveredAcls = new ArrayList<>();
+        ServerWatcher watcher = new ServerWatcher() {
+            @Override
+            public void process(WatchedEvent event) {
+            }
+
+            @Override
+            public void process(WatchedEvent event, List<ACL> znodeAcl) {
+                deliveredAcls.add(znodeAcl);
+            }
+        };
+        restored.addWatch("/x", watcher, AddWatchMode.PERSISTENT.getMode());
+
+        // Replaying the old incarnation's delete fires a watch event while
+        // the snapshot node's ACL is still unknown.
+        delete.applyTo(restored);
+
+        assertFalse(deliveredAcls.isEmpty());
+        for (List<ACL> acl : deliveredAcls) {
+            assertNotNull(acl, "null ACLs pass checkACL");
+            assertFalse(acl.isEmpty(), "empty ACLs pass checkACL");
+            for (ACL entry : acl) {
+                assertEquals(0, entry.getPerms() & ZooDefs.Perms.READ,
+                    "watch events with an unknown ACL must fail closed: " + acl);
+            }
+        }
+    }
+
+    /**
+     * Replaying a create txn whose parent has a dangling ACL reference must
+     * not crash the restore.
+     *
+     * Same as above, but for the eager parent ACL fetch in createNode: the
+     * parent is repaired only when its own re-creating txn is replayed, which
+     * happens after the replay of create txns of an earlier incarnation's
+     * children.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testCreateTxnReplayUnderDanglingAclParentDoesNotCrash() throws IOException {
+        DataTree leader = new DataTree();
+        createTxn(2, "/p", ZooDefs.Ids.CREATOR_ALL_ACL).applyTo(leader);
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        ReplayTxn createChild = createTxn(3, "/p/c", ZooDefs.Ids.CREATOR_ALL_ACL);
+        ReplayTxn deleteChild = deleteTxn(4, "/p/c");
+        ReplayTxn deleteParent = deleteTxn(5, "/p");
+        ReplayTxn recreateParent = createTxn(6, "/p", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        createChild.applyTo(leader);
+        deleteChild.applyTo(leader);
+        deleteParent.applyTo(leader);
+        recreateParent.applyTo(leader);
+
+        // The snapshot contains the re-created /p with a dangling ACL. Replay
+        // first creates an old incarnation's child beneath that parent.
+        DataTree restored = snapshot.finishAndRestore();
+        createChild.applyTo(restored);
+        deleteChild.applyTo(restored);
+        deleteParent.applyTo(restored);
+        recreateParent.applyTo(restored);
+
+        assertAcl(restored, "/p", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        assertNull(restored.getNode("/p/c"));
+    }
+
+    /**
+     * Reference counting of ACLs interned during the fuzzy range works
+     * correctly and entries are not removed prematurely.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testAclRefCountDuringFuzzySnapshotSync() throws IOException {
+        DataTree leader = new DataTree();
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        ReplayTxn createA1 = createTxn(2, "/a1", ZooDefs.Ids.CREATOR_ALL_ACL);
+        ReplayTxn createA2 = createTxn(3, "/a2", ZooDefs.Ids.CREATOR_ALL_ACL);
+        ReplayTxn deleteA1 = deleteTxn(4, "/a1");
+        createA1.applyTo(leader);
+        createA2.applyTo(leader);
+        deleteA1.applyTo(leader);
+
+        DataTree restored = snapshot.finishAndRestore();
+        createA1.applyTo(restored);
+        createA2.applyTo(restored);
+        deleteA1.applyTo(restored);
+
+        assertAcl(leader, "/a2", ZooDefs.Ids.CREATOR_ALL_ACL);
+        assertAcl(restored, "/a2", ZooDefs.Ids.CREATOR_ALL_ACL);
+        assertEquals(leader.aclCacheSize(), restored.aclCacheSize());
+    }
+
+    /**
+     * Nodes repaired during replay end up with the ACL values carried by
+     * their create txns, also when the ids assigned during replay differ from
+     * the ids recorded in the snapshot.
+     *
+     * The repair must be keyed by the ACL value in the txn, never by the
+     * stale id recorded in the snapshot. Without id reservation, replay
+     * assigns /a4's stale id to /a3's ACL, so a repair keyed on whether that
+     * id exists in the cache (the approach of the original PR for this
+     * issue) silently gives /a4 the ACL of /a3.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testAclValuesMatchAfterFuzzySnapshotSyncReplay() throws IOException {
+        DataTree leader = new DataTree();
+
+        // Leave a gap between aclIndex and the serialized cache.
+        createTxn(2, "/gone", ZooDefs.Ids.OPEN_ACL_UNSAFE).applyTo(leader);
+        deleteTxn(3, "/gone").applyTo(leader);
+        FuzzySnapshot snapshot = FuzzySnapshot.start(leader);
+
+        List<ACL> otherAcl = concatAcl(ZooDefs.Ids.CREATOR_ALL_ACL, ZooDefs.Ids.READ_ACL_UNSAFE);
+        ReplayTxn createA2 = createTxn(4, "/a2", ZooDefs.Ids.CREATOR_ALL_ACL);
+        ReplayTxn createA3 = createTxn(5, "/a3", otherAcl);
+        ReplayTxn createA4 = createTxn(6, "/a4", ZooDefs.Ids.CREATOR_ALL_ACL);
+        createA2.applyTo(leader);
+        createA3.applyTo(leader);
+        createA4.applyTo(leader);
+
+        DataTree restored = snapshot.finishAndRestore();
+        createA2.applyTo(restored);
+        createA3.applyTo(restored);
+        createA4.applyTo(restored);
+
+        for (DataTree dataTree : new DataTree[]{leader, restored}) {
+            assertAcl(dataTree, "/a2", ZooDefs.Ids.CREATOR_ALL_ACL);
+            assertAcl(dataTree, "/a3", otherAcl);
+            assertAcl(dataTree, "/a4", ZooDefs.Ids.CREATOR_ALL_ACL);
+        }
+        assertEquals(leader.aclCacheSize(), restored.aclCacheSize());
     }
 
     @Test

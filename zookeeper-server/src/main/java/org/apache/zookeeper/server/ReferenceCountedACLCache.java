@@ -95,6 +95,24 @@ public class ReferenceCountedACLCache {
         return acls;
     }
 
+    /**
+     * Converts a long to a list of ACLs without throwing if it is absent from
+     * the cache. A node in a fuzzy snapshot can temporarily reference such an
+     * absent id until transaction replay repairs it (ZOOKEEPER-4689).
+     *
+     * @param longVal ACL id
+     * @return the corresponding ACLs, or null if the id is not cached
+     */
+    synchronized List<ACL> convertLongIfCached(Long longVal) {
+        if (longVal == null) {
+            return null;
+        }
+        if (longVal == OPEN_UNSAFE_ACL_ID) {
+            return ZooDefs.Ids.OPEN_ACL_UNSAFE;
+        }
+        return longKeyMap.get(longVal);
+    }
+
     private long incrementIndex() {
         return ++aclIndex;
     }
@@ -168,6 +186,15 @@ public class ReferenceCountedACLCache {
     public synchronized void addUsage(Long acl) {
         if (acl == OPEN_UNSAFE_ACL_ID) {
             return;
+        }
+
+        if (acl > aclIndex) {
+            // The ACL cache is serialized before the nodes in a fuzzy snapshot.
+            // A node can therefore reference an id absent from the serialized
+            // cache. Reserve every id mentioned by the loaded tree so replay
+            // cannot assign it to a different ACL before repairing the node.
+            LOG.info("Advancing aclIndex from {} to {} based on a node reference in the snapshot", aclIndex, acl);
+            aclIndex = acl;
         }
 
         if (!longKeyMap.containsKey(acl)) {
