@@ -201,6 +201,8 @@ public class QuorumPeerMain {
             quorumPeer.setSecureCnxnFactory(secureCnxnFactory);
             quorumPeer.setSslQuorum(config.isSslQuorum());
             quorumPeer.setUsePortUnification(config.shouldUsePortUnification());
+            quorumPeer.setSslAuthServerProvider(config.getSslAuthServerProvider());
+            quorumPeer.setSslAuthLearnerProvider(config.getSslAuthLearnerProvider());
             quorumPeer.setLearnerType(config.getPeerType());
             quorumPeer.setSyncEnabled(config.getSyncEnabled());
             quorumPeer.setQuorumListenOnAllIPs(config.getQuorumListenOnAllIPs());
