@@ -21,6 +21,11 @@
 #endif
 
 #include "zookeeper_log.h"
+
+#ifdef WIN32
+#include "winport.h"
+#endif
+
 #ifndef WIN32
 #include <unistd.h>
 #else
@@ -37,8 +42,6 @@ typedef DWORD pid_t;
 #ifdef THREADED
 #ifndef WIN32
 #include <pthread.h>
-#else 
-#include "winport.h"
 #endif
 
 static pthread_key_t time_now_buffer;
