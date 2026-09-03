@@ -15,6 +15,45 @@ limitations under the License.
 //-->
 
 
+# Release Notes - ZooKeeper - Version 3.9.6
+
+## Bug
+
+* [ZOOKEEPER-4828](https://issues.apache.org/jira/browse/ZOOKEEPER-4828) - Minor 3.9 broke custom TLS setup with ssl.context.supplier.class
+* [ZOOKEEPER-5009](https://issues.apache.org/jira/browse/ZOOKEEPER-5009) - Memory Leak in zoo_sasl_client_create
+* [ZOOKEEPER-5021](https://issues.apache.org/jira/browse/ZOOKEEPER-5021) - zkCli.sh needs &quot;Ctrl-D&quot; twice to exit
+* [ZOOKEEPER-5044](https://issues.apache.org/jira/browse/ZOOKEEPER-5044) - NettyServerCxnxFactory.shutdown must explicitly shut down DefaultEventExecutor
+* [ZOOKEEPER-5045](https://issues.apache.org/jira/browse/ZOOKEEPER-5045) - Unable to start in FIPS mode if Java common truststore is not specified
+* [ZOOKEEPER-5049](https://issues.apache.org/jira/browse/ZOOKEEPER-5049) - PrometheusMetricsProvider logs KeyStore and TrustStore passwords in clear text on INFO level
+* [ZOOKEEPER-5052](https://issues.apache.org/jira/browse/ZOOKEEPER-5052) - Fix stale thread write of primitive in JvmPauseMonitor
+* [ZOOKEEPER-5056](https://issues.apache.org/jira/browse/ZOOKEEPER-5056) - Netty CVE vulnerabilities in zookeeper 3.9.5
+* [ZOOKEEPER-5059](https://issues.apache.org/jira/browse/ZOOKEEPER-5059) - Kerberos SASL leaks Login refresh threads across QuorumPeer.shutdown()
+* [ZOOKEEPER-5077](https://issues.apache.org/jira/browse/ZOOKEEPER-5077) - Upgrade Netty to 4.1.136.Final
+* [ZOOKEEPER-5080](https://issues.apache.org/jira/browse/ZOOKEEPER-5080) - Flaky test: SnapshotAndRestoreCommandTest.testSnapshotAndRestoreCommand_streaming
+* [ZOOKEEPER-5082](https://issues.apache.org/jira/browse/ZOOKEEPER-5082) - Remove special characters from audit logs
+
+## Improvement
+
+* [ZOOKEEPER-4299](https://issues.apache.org/jira/browse/ZOOKEEPER-4299) - Use non lock completion list in zoo_amulti since it is not multithreaded
+* [ZOOKEEPER-4912](https://issues.apache.org/jira/browse/ZOOKEEPER-4912) - Remove default TLS cipher overrides
+* [ZOOKEEPER-5023](https://issues.apache.org/jira/browse/ZOOKEEPER-5023) - Allow to set TLS version and ciphers for AdminServer
+* [ZOOKEEPER-5041](https://issues.apache.org/jira/browse/ZOOKEEPER-5041) - Upgrade Netty to fix CVE-2026-33870
+* [ZOOKEEPER-5042](https://issues.apache.org/jira/browse/ZOOKEEPER-5042) - Enhance X-Forwarded-For setting in IPAuthenticationProvider
+* [ZOOKEEPER-5043](https://issues.apache.org/jira/browse/ZOOKEEPER-5043) - Disable fallback to DIGEST-MD5 in SaslServer when Fips mode is set
+* [ZOOKEEPER-5058](https://issues.apache.org/jira/browse/ZOOKEEPER-5058) - Remove special characters from ensemble name before logging in EnsembleAuthenticationProvider
+* [ZOOKEEPER-5060](https://issues.apache.org/jira/browse/ZOOKEEPER-5060) - Update GitHub Actions versions
+* [ZOOKEEPER-5075](https://issues.apache.org/jira/browse/ZOOKEEPER-5075) - Upgrade jline jar to 3.30.14 or higher to fix CVE-2026-56740
+
+## Task
+
+* [ZOOKEEPER-5027](https://issues.apache.org/jira/browse/ZOOKEEPER-5027) - Upgrade deprecated GitHub Actions versions
+* [ZOOKEEPER-5048](https://issues.apache.org/jira/browse/ZOOKEEPER-5048) - Backport ZOOKEEPER-4912: Remove default TLS cipher overrides to branch-3.9
+* [ZOOKEEPER-5086](https://issues.apache.org/jira/browse/ZOOKEEPER-5086) - Upgrade Netty to 4.1.137.Final 
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.9.5
 
 ## Sub-task
