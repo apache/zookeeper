@@ -29,7 +29,7 @@ class ACLTest(zktestbase.TestBase):
       try:
         zookeeper.delete(self.handle, "/zk-python-acltest")
         zookeeper.delete(self.handle, "/zk-python-aacltest")
-      except:
+      except Exception:
         pass
 
     def test_sync_acl(self):
