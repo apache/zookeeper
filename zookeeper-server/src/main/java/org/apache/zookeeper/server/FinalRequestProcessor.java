@@ -341,6 +341,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(UTF_8),
                         rc.stat);
                 err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.setACL: {
@@ -440,6 +441,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 AddWatchRequest addWatcherRequest = request.readRequestRecord(AddWatchRequest::new);
                 zks.getZKDatabase().addWatch(addWatcherRequest.getPath(), cnxn, addWatcherRequest.getMode());
                 rsp = new ErrorResponse(0);
+                requestPathMetricsCollector.registerRequest(request.type, addWatcherRequest.getPath());
                 break;
             }
             case OpCode.getACL: {
@@ -512,6 +514,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     null);
                 int number = zks.getZKDatabase().getAllChildrenNumber(path);
                 rsp = new GetAllChildrenNumberResponse(number);
+                requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
             }
             case OpCode.getChildren2: {
@@ -587,6 +590,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     }
                 }
                 rsp = new GetEphemeralsResponse(ephemerals);
+                requestPathMetricsCollector.registerRequest(request.type, prefixPath);
                 break;
             }
             }

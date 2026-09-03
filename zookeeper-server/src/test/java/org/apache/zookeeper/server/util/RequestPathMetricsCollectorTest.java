@@ -18,21 +18,57 @@
 
 package org.apache.zookeeper.server.util;
 
+import static org.apache.zookeeper.ZooDefs.OpCode.addWatch;
+import static org.apache.zookeeper.ZooDefs.OpCode.auth;
+import static org.apache.zookeeper.ZooDefs.OpCode.check;
+import static org.apache.zookeeper.ZooDefs.OpCode.checkWatches;
+import static org.apache.zookeeper.ZooDefs.OpCode.closeSession;
 import static org.apache.zookeeper.ZooDefs.OpCode.create;
 import static org.apache.zookeeper.ZooDefs.OpCode.create2;
+import static org.apache.zookeeper.ZooDefs.OpCode.createContainer;
+import static org.apache.zookeeper.ZooDefs.OpCode.createSession;
+import static org.apache.zookeeper.ZooDefs.OpCode.createTTL;
 import static org.apache.zookeeper.ZooDefs.OpCode.delete;
+import static org.apache.zookeeper.ZooDefs.OpCode.deleteContainer;
+import static org.apache.zookeeper.ZooDefs.OpCode.error;
 import static org.apache.zookeeper.ZooDefs.OpCode.exists;
+import static org.apache.zookeeper.ZooDefs.OpCode.getACL;
+import static org.apache.zookeeper.ZooDefs.OpCode.getAllChildrenNumber;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren2;
 import static org.apache.zookeeper.ZooDefs.OpCode.getData;
+import static org.apache.zookeeper.ZooDefs.OpCode.getEphemerals;
+import static org.apache.zookeeper.ZooDefs.OpCode.multi;
+import static org.apache.zookeeper.ZooDefs.OpCode.multiRead;
+import static org.apache.zookeeper.ZooDefs.OpCode.notification;
+import static org.apache.zookeeper.ZooDefs.OpCode.ping;
+import static org.apache.zookeeper.ZooDefs.OpCode.reconfig;
+import static org.apache.zookeeper.ZooDefs.OpCode.removeWatches;
+import static org.apache.zookeeper.ZooDefs.OpCode.sasl;
+import static org.apache.zookeeper.ZooDefs.OpCode.setACL;
 import static org.apache.zookeeper.ZooDefs.OpCode.setData;
+import static org.apache.zookeeper.ZooDefs.OpCode.setWatches;
+import static org.apache.zookeeper.ZooDefs.OpCode.setWatches2;
+import static org.apache.zookeeper.ZooDefs.OpCode.sync;
+import static org.apache.zookeeper.ZooDefs.OpCode.whoAmI;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.server.Request;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -448,4 +484,93 @@ public class RequestPathMetricsCollectorTest {
         assertTrue(TimeUnit.MILLISECONDS.toSeconds(endTime - startTime) < 3);
     }
 
+    static class OpCodeCharacters {
+        private final int opcode;
+        private final boolean path;
+
+        OpCodeCharacters(int opcode, boolean path) {
+            this.opcode = opcode;
+            this.path = path;
+        }
+
+        public int getOpcode() {
+            return opcode;
+        }
+
+        public boolean isPath() {
+            return path;
+        }
+    }
+
+    static OpCodeCharacters[] OPCODES = new OpCodeCharacters[] {
+        new OpCodeCharacters(notification, false),
+        new OpCodeCharacters(create, true),
+        new OpCodeCharacters(delete, true),
+        new OpCodeCharacters(exists, true),
+        new OpCodeCharacters(getData, true),
+        new OpCodeCharacters(setData, true),
+        new OpCodeCharacters(getACL, true),
+        new OpCodeCharacters(setACL, true),
+        new OpCodeCharacters(getChildren, true),
+        new OpCodeCharacters(sync, true),
+        new OpCodeCharacters(ping, false),
+        new OpCodeCharacters(getChildren2, true),
+        new OpCodeCharacters(check, true),
+        new OpCodeCharacters(multi, false),
+        new OpCodeCharacters(create2, true),
+        new OpCodeCharacters(reconfig, true),
+        new OpCodeCharacters(checkWatches, true),
+        new OpCodeCharacters(removeWatches, true),
+        new OpCodeCharacters(createContainer, true),
+        new OpCodeCharacters(deleteContainer, true),
+        new OpCodeCharacters(createTTL, true),
+        new OpCodeCharacters(multiRead, false),
+        new OpCodeCharacters(auth, false),
+        new OpCodeCharacters(setWatches, false),
+        new OpCodeCharacters(sasl, false),
+        new OpCodeCharacters(getEphemerals, true),
+        new OpCodeCharacters(getAllChildrenNumber, true),
+        new OpCodeCharacters(setWatches2, false),
+        new OpCodeCharacters(addWatch, true),
+        new OpCodeCharacters(whoAmI, false),
+        new OpCodeCharacters(createSession, false),
+        new OpCodeCharacters(closeSession, false),
+        new OpCodeCharacters(error, false),
+    };
+
+    @Test
+    public void testOpCodeRequestPath() throws Exception {
+        RequestPathMetricsCollector requestPathMetricsCollector = new RequestPathMetricsCollector();
+        Map<Integer, OpCodeCharacters> opcodes = Arrays.stream(OPCODES).collect(HashMap::new, (map, opcode) -> map.put(opcode.getOpcode(), opcode), HashMap::putAll);
+
+        Class<?> clazz = ZooDefs.OpCode.class;
+        Field[] fields = clazz.getFields();
+
+        int n = 0;
+        for (Field field : fields) {
+            int opCode = field.getInt(null);
+            String opString = Request.op2String(opCode);
+
+            OpCodeCharacters opCodeCharacters = opcodes.get(opCode);
+            // Fails missing opcode to gain attention.
+            assertNotNull(opCodeCharacters, String.format("no characters for opcode %s", opString));
+
+            if (!opCodeCharacters.isPath()) {
+                continue;
+            }
+
+            n += 1;
+
+            String path = "/path/" + opString;
+            IntStream.range(0, n).forEach(ignored -> {
+                requestPathMetricsCollector.registerRequest(opCode, path);
+            });
+
+            StringWriter output = new StringWriter();
+            requestPathMetricsCollector.dumpTopPaths(new PrintWriter(output, true), 10);
+
+            String counts = String.format("%s : %d", path, n);
+            assertThat(output.toString(), containsString(counts));
+        }
+    }
 }
