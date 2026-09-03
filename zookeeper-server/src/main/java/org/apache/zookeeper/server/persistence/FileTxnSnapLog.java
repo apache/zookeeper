@@ -457,9 +457,10 @@ public class FileTxnSnapLog {
      * the last logged zxid on the transaction logs
      * @return the last logged zxid
      */
-    public long getLastLoggedZxid() {
-        FileTxnLog txnLog = new FileTxnLog(dataDir);
-        return txnLog.getLastLoggedZxid();
+    public long getLastLoggedZxid() throws IOException {
+        SnapshotInfo snapshotInfo = snapLog.getLastSnapshotInfo();
+        long lastSnapZxid = snapshotInfo == null ? -1 : snapshotInfo.zxid;
+        return Long.max(lastSnapZxid, txnLog.getLastLoggedZxid());
     }
 
     /**
