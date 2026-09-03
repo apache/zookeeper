@@ -59,6 +59,11 @@ public class ZKClientConfig extends ZKConfig {
      * Feature is disabled by default.
      */
     public static final long ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT = 0;
+    public static final String ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS = "zookeeper.client.slowCallbackThresholdMs";
+    /**
+     * Slow callback logging is disabled by default.
+     */
+    public static final long ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS_DEFAULT = 0;
     public static final String ZK_SASL_CLIENT_ALLOW_REVERSE_DNS = "zookeeper.sasl.client.allowReverseDnsLookup";
     public static final boolean ZK_SASL_CLIENT_ALLOW_REVERSE_DNS_DEFAULT = false;
     /**
@@ -113,6 +118,7 @@ public class ZKClientConfig extends ZKConfig {
      */
     private void initFromJavaSystemProperties() {
         setProperty(ZOOKEEPER_REQUEST_TIMEOUT, System.getProperty(ZOOKEEPER_REQUEST_TIMEOUT));
+        setProperty(ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS, System.getProperty(ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS));
         setProperty(ZOOKEEPER_SERVER_PRINCIPAL, System.getProperty(ZOOKEEPER_SERVER_PRINCIPAL));
     }
 
