@@ -20,6 +20,7 @@ limitations under the License.
 ## Bug
 
 * [ZOOKEEPER-4828](https://issues.apache.org/jira/browse/ZOOKEEPER-4828) - Minor 3.9 broke custom TLS setup with ssl.context.supplier.class
+* [ZOOKEEPER-4992](https://issues.apache.org/jira/browse/ZOOKEEPER-4992) - Loading multiple trusted certificates with identical subject names from a PEM bundle fails
 * [ZOOKEEPER-5009](https://issues.apache.org/jira/browse/ZOOKEEPER-5009) - Memory Leak in zoo_sasl_client_create
 * [ZOOKEEPER-5021](https://issues.apache.org/jira/browse/ZOOKEEPER-5021) - zkCli.sh needs &quot;Ctrl-D&quot; twice to exit
 * [ZOOKEEPER-5044](https://issues.apache.org/jira/browse/ZOOKEEPER-5044) - NettyServerCxnxFactory.shutdown must explicitly shut down DefaultEventExecutor
@@ -37,9 +38,9 @@ limitations under the License.
 * [ZOOKEEPER-4299](https://issues.apache.org/jira/browse/ZOOKEEPER-4299) - Use non lock completion list in zoo_amulti since it is not multithreaded
 * [ZOOKEEPER-4912](https://issues.apache.org/jira/browse/ZOOKEEPER-4912) - Remove default TLS cipher overrides
 * [ZOOKEEPER-5023](https://issues.apache.org/jira/browse/ZOOKEEPER-5023) - Allow to set TLS version and ciphers for AdminServer
-* [ZOOKEEPER-5041](https://issues.apache.org/jira/browse/ZOOKEEPER-5041) - Upgrade Netty to fix CVE-2026-33870
 * [ZOOKEEPER-5042](https://issues.apache.org/jira/browse/ZOOKEEPER-5042) - Enhance X-Forwarded-For setting in IPAuthenticationProvider
 * [ZOOKEEPER-5043](https://issues.apache.org/jira/browse/ZOOKEEPER-5043) - Disable fallback to DIGEST-MD5 in SaslServer when Fips mode is set
+* [ZOOKEEPER-5050](https://issues.apache.org/jira/browse/ZOOKEEPER-5050) - Disable AdminServer and enhance documentation to highlight security considerations
 * [ZOOKEEPER-5058](https://issues.apache.org/jira/browse/ZOOKEEPER-5058) - Remove special characters from ensemble name before logging in EnsembleAuthenticationProvider
 * [ZOOKEEPER-5060](https://issues.apache.org/jira/browse/ZOOKEEPER-5060) - Update GitHub Actions versions
 * [ZOOKEEPER-5075](https://issues.apache.org/jira/browse/ZOOKEEPER-5075) - Upgrade jline jar to 3.30.14 or higher to fix CVE-2026-56740
@@ -47,7 +48,10 @@ limitations under the License.
 ## Task
 
 * [ZOOKEEPER-5027](https://issues.apache.org/jira/browse/ZOOKEEPER-5027) - Upgrade deprecated GitHub Actions versions
+* [ZOOKEEPER-5035](https://issues.apache.org/jira/browse/ZOOKEEPER-5035) - remove loggraph from contrib
 * [ZOOKEEPER-5048](https://issues.apache.org/jira/browse/ZOOKEEPER-5048) - Backport ZOOKEEPER-4912: Remove default TLS cipher overrides to branch-3.9
+* [ZOOKEEPER-5083](https://issues.apache.org/jira/browse/ZOOKEEPER-5083) - Upgrade Jackson-databind to 2.22.2 to fix known security vulnerabilities
+* [ZOOKEEPER-5085](https://issues.apache.org/jira/browse/ZOOKEEPER-5085) - Remove unused vulnerable prototype.js from branch-3.9 and branch-3.8
 * [ZOOKEEPER-5086](https://issues.apache.org/jira/browse/ZOOKEEPER-5086) - Upgrade Netty to 4.1.137.Final 
 
 
