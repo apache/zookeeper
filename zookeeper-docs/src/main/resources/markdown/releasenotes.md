@@ -32,6 +32,9 @@ limitations under the License.
 ## Task
 
 * [ZOOKEEPER-5027](https://issues.apache.org/jira/browse/ZOOKEEPER-5027) - Upgrade deprecated GitHub Actions versions
+* [ZOOKEEPER-5035](https://issues.apache.org/jira/browse/ZOOKEEPER-5035) - remove loggraph from contrib
+* [ZOOKEEPER-5083](https://issues.apache.org/jira/browse/ZOOKEEPER-5083) - Upgrade Jackson-databind to 2.22.2 to fix known security vulnerabilities
+* [ZOOKEEPER-5085](https://issues.apache.org/jira/browse/ZOOKEEPER-5085) - Remove unused vulnerable prototype.js from branch-3.9 and branch-3.8
 * [ZOOKEEPER-5086](https://issues.apache.org/jira/browse/ZOOKEEPER-5086) - Upgrade Netty to 4.1.137.Final 
 
 
