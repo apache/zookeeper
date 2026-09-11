@@ -170,7 +170,7 @@ public class QuorumPeerMain {
             }
 
             if (config.getSecureClientPortAddress() != null) {
-                secureCnxnFactory = ServerCnxnFactory.createFactory();
+                secureCnxnFactory = ServerCnxnFactory.createFactory(true);
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
             }
 
