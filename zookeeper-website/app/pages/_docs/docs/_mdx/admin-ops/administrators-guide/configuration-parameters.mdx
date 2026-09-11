@@ -1178,12 +1178,17 @@ server if this feature is enabled with sasl as authentication scheme.
   Enables encrypted quorum communication. Default is `false`. When enabling this feature, please also consider enabling _leader.closeSocketAsync_
   and _learner.closeSocketAsync_ to avoid issues associated with the potentially long socket closing time when shutting down an SSL connection.
 
-- _ssl.keyStore.location and ssl.keyStore.password_ and _ssl.quorum.keyStore.location_ and _ssl.quorum.keyStore.password_ :
-  (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
+- _ssl.keyStore.location_ and _ssl.keyStore.password_ and _ssl.quorum.keyStore.location_ and _ssl.quorum.keyStore.password_ :
+  (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and
+  **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
   **New in 3.5.5:**
   Specifies the file path to a Java keystore containing the local
-  credentials to be used for client and quorum TLS connections, and the
-  password to unlock the file.
+  credentials to be used for client-server and quorum TLS connections, and the
+  password to unlock the file. This keystore is used for both the server role
+  (accepting incoming connections) and the client role (initiating outgoing
+  connections). When separate `client.keyStore` properties are configured (see
+  below), this keystore is used only for the server role and the client role
+  uses the dedicated client keystore instead.
 
 - _ssl.keyStore.passwordPath_ and _ssl.quorum.keyStore.passwordPath_ :
   (Java system properties: **zookeeper.ssl.keyStore.passwordPath** and **zookeeper.ssl.quorum.keyStore.passwordPath**)
@@ -1194,17 +1199,46 @@ server if this feature is enabled with sasl as authentication scheme.
 - _ssl.keyStore.type_ and _ssl.quorum.keyStore.type_ :
   (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
   **New in 3.5.5:**
-  Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+  Specifies the file format of client-server and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).
   Default: null.
   **New in 3.5.10, 3.6.3, 3.7.0:**
   The format BCFKS was added.
+
+- _ssl.client.keyStore.location_ and _ssl.client.keyStore.password_ and _ssl.quorum.client.keyStore.location_ and _ssl.quorum.client.keyStore.password_ :
+  (Java system properties: **zookeeper.ssl.client.keyStore.location** and **zookeeper.ssl.client.keyStore.password** and
+  **zookeeper.ssl.quorum.client.keyStore.location** and **zookeeper.ssl.quorum.client.keyStore.password**)
+  **New in 3.10.0:**
+  Specifies the file path to a Java keystore containing the credentials to
+  be used when initiating outgoing connections (i.e. the client role in
+  client-server and quorum TLS connections), and the password to unlock the
+  file. This is only needed when using certificates with a single Extended Key
+  Usage (EKU): configure a `clientAuth`-only certificate here and a
+  `serverAuth`-only certificate in `ssl.keyStore.location`. When this property
+  is not set, the shared `ssl.keyStore.location` keystore is used for both
+  roles. See [Single EKU certificate support](#single-eku-certificate-support).
+
+- _ssl.client.keyStore.passwordPath_ and _ssl.quorum.client.keyStore.passwordPath_ :
+  (Java system properties: **zookeeper.ssl.client.keyStore.passwordPath** and **zookeeper.ssl.quorum.client.keyStore.passwordPath**)
+  **New in 3.10.0:**
+  Specifies the file path that contains the client keystore password. Reading the password from a file takes precedence over
+  the explicit password property. See [Single EKU certificate support](#single-eku-certificate-support).
+
+- _ssl.client.keyStore.type_ and _ssl.quorum.client.keyStore.type_ :
+  (Java system properties: **zookeeper.ssl.client.keyStore.type** and **zookeeper.ssl.quorum.client.keyStore.type**)
+  **New in 3.10.0:**
+  Specifies the file format of the client keystores. Values: JKS, PEM, PKCS12, BCFKS or null (detect by filename).
+  Default: null. See [Single EKU certificate support](#single-eku-certificate-support).
 
 - _ssl.trustStore.location_ and _ssl.trustStore.password_ and _ssl.quorum.trustStore.location_ and _ssl.quorum.trustStore.password_ :
   (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password** and **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
   **New in 3.5.5:**
   Specifies the file path to a Java truststore containing the remote
-  credentials to be used for client and quorum TLS connections, and the
-  password to unlock the file.
+  credentials to be used for client-server and quorum TLS connections, and the
+  password to unlock the file. This truststore is used for both the client
+  role (verifying servers) and the server role (verifying clients during
+  mTLS). When separate `server.trustStore` properties are configured (see
+  below), this truststore is used only for the client role and the server role
+  uses the dedicated server truststore instead.
 
 - _ssl.trustStore.passwordPath_ and _ssl.quorum.trustStore.passwordPath_ :
   (Java system properties: **zookeeper.ssl.trustStore.passwordPath** and **zookeeper.ssl.quorum.trustStore.passwordPath**)
@@ -1215,10 +1249,37 @@ server if this feature is enabled with sasl as authentication scheme.
 - _ssl.trustStore.type_ and _ssl.quorum.trustStore.type_ :
   (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
   **New in 3.5.5:**
-  Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
+  Specifies the file format of client-server and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).
   Default: null.
   **New in 3.5.10, 3.6.3, 3.7.0:**
   The format BCFKS was added.
+
+- _ssl.server.trustStore.location_ and _ssl.server.trustStore.password_ and _ssl.quorum.server.trustStore.location_ and _ssl.quorum.server.trustStore.password_ :
+  (Java system properties: **zookeeper.ssl.server.trustStore.location** and **zookeeper.ssl.server.trustStore.password**
+  and **zookeeper.ssl.quorum.server.trustStore.location** and **zookeeper.ssl.quorum.server.trustStore.password**)
+  **New in 3.10.0:**
+  Specifies the file path to a Java truststore containing the credentials to
+  be used when accepting incoming connections (i.e. the server role in
+  client-server and quorum TLS connections), and the password to unlock the
+  file. This is only needed when using certificates with a single Extended Key
+  Usage (EKU): configure a truststore containing `serverAuth`-only CA
+  certificates here and a truststore containing `clientAuth`-only CA
+  certificates in `ssl.trustStore.location`. When this property is not set,
+  the shared `ssl.trustStore.location` truststore is used for both roles.
+  See [Single EKU certificate support](#single-eku-certificate-support).
+
+- _ssl.server.trustStore.passwordPath_ and _ssl.quorum.server.trustStore.passwordPath_ :
+  (Java system properties: **zookeeper.ssl.server.trustStore.passwordPath** and **zookeeper.ssl.quorum.server.trustStore.passwordPath**)
+  **New in 3.10.0:**
+  Specifies the file path that contains the server truststore password. Reading the password from a file takes precedence over
+  the explicit password property. See [Single EKU certificate support](#single-eku-certificate-support).
+
+- _ssl.server.trustStore.type_ and _ssl.quorum.server.trustStore.type_ :
+  (Java system properties: **zookeeper.ssl.server.trustStore.type** and **zookeeper.ssl.quorum.server.trustStore.type**)
+  **New in 3.10.0:**
+  Specifies the file format of the server truststores. Values: JKS, PEM, PKCS12, BCFKS or null (detect by filename).
+  Default: null.
+  See [Single EKU certificate support](#single-eku-certificate-support).
 
 - _ssl.protocol_ and _ssl.quorum.protocol_ :
   (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)
@@ -1386,6 +1447,36 @@ server if this feature is enabled with sasl as authentication scheme.
     can be used.
 
   Default: **true** (3.9.0+), **false** (3.8.x)
+
+## Single EKU certificate support
+
+**New in 3.10.0.**
+When TLS is configured, by default, ZooKeeper uses a single keystore and a single truststore for
+both sides of every TLS connection. This works when each certificate carries
+both the `clientAuth` and `serverAuth` Extended Key Usage (EKU) extensions
+(or no EKU restriction at all).
+
+In order to support **single EKU** certificates: one certificate for the client role
+(`clientAuth` only) and a separate certificate for the server role
+(`serverAuth` only), ZooKeeper allows configuring dedicated stores for each role.
+
+**Client-server TLS** (`ssl.` prefix):
+
+| Role                                | KeyStore property              | TrustStore property              | Certificate EKU |
+| ----------------------------------- | ------------------------------ | -------------------------------- | --------------- |
+| **Server** (accepting connections)  | `ssl.keyStore.location`        | `ssl.server.trustStore.location` | `serverAuth`    |
+| **Client** (initiating connections) | `ssl.client.keyStore.location` | `ssl.trustStore.location`        | `clientAuth`    |
+
+**Quorum TLS** (`ssl.quorum.` prefix):
+
+| Role                                | KeyStore property                     | TrustStore property                     | Certificate EKU |
+| ----------------------------------- | ------------------------------------- | --------------------------------------- | --------------- |
+| **Server** (accepting connections)  | `ssl.quorum.keyStore.location`        | `ssl.quorum.server.trustStore.location` | `serverAuth`    |
+| **Client** (initiating connections) | `ssl.quorum.client.keyStore.location` | `ssl.quorum.trustStore.location`        | `clientAuth`    |
+
+When the dedicated `client.keyStore` or `server.trustStore` properties are
+not set, ZooKeeper falls back to the shared `keyStore` and `trustStore`
+for both roles, which is the pre-3.10.0 behavior.
 
 ## TLS Cipher Suites
 

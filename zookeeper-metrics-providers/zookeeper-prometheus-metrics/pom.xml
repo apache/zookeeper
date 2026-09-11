@@ -33,7 +33,6 @@
 
   <properties>
       <prometheus.version>1.3.10</prometheus.version>
-      <jetty.version>9.4.58.v20250814</jetty.version>
       <datasketches.version>7.0.1</datasketches.version>
   </properties>
   <dependencies>
@@ -58,7 +57,7 @@
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>prometheus-metrics-exporter-servlet-javax</artifactId>
+      <artifactId>prometheus-metrics-exporter-servlet-jakarta</artifactId>
       <version>${prometheus.version}</version>
     </dependency>
     <dependency>
@@ -84,24 +83,19 @@
     <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>${jetty.version}</version>
     </dependency>
     <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
-        <version>${jetty.version}</version>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-servlet</artifactId>
     </dependency>
-    <!-- You likely don't need this, but if you do, here's the correct syntax -->
+    <!-- jetty-util provides KeyStoreScanner, used for hot-reloading the keystore -->
     <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-util</artifactId>
-        <version>${jetty.version}</version>
-        <!-- You could add a scope here if needed, e.g., <scope>provided</scope> -->
     </dependency>
     <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>3.1.0</version>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
         <scope>provided</scope>
     </dependency>
     <dependency>

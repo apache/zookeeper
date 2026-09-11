@@ -30,6 +30,7 @@ import static org.apache.zookeeper.server.admin.JettyAdminServerTest.URL_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -50,7 +51,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.CheckedInputStream;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -395,14 +395,14 @@ public class SnapshotAndRestoreCommandTest extends ZKTestCase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(0, (long) metrics.get("snapshot_error_count"));
         assertEquals(0, (long) metrics.get("snapshot_rate_limited_count"));
-        assertTrue((Double) metrics.get("avg_snapshottime") > 0.0);
+        assertEquals(1L, (long) metrics.get("cnt_snapshottime"));
     }
 
     private void validateRestoreMetrics() {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         assertEquals(0, (long) metrics.get("restore_error_count"));
         assertEquals(0, (long) metrics.get("restore_rate_limited_count"));
-        assertTrue((Double) metrics.get("avg_restore_time") > 0.0);
+        assertEquals(1L, (long) metrics.get("cnt_restore_time"));
     }
 
     public static  File takeSnapshotAndValidate(final int jettyAdminPort, final File dataDir) throws Exception {

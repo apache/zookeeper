@@ -201,7 +201,9 @@ Administrators are strongly encouraged to restrict network access and configure 
 authentication before exposing the AdminServer in production environments.
 
 Make sure that Jetty is available on the classpath, because the AdminServer will automatically remain disabled if Jetty
-cannot be found. This behavior can be useful when overriding ZooKeeper's Jetty dependency.
+cannot be found. As of 3.10.0 that means `jetty-server`, `jetty-ee10-servlet` and `jakarta.servlet-api`; earlier
+releases used `jetty-servlet` and `javax.servlet-api` instead. This behavior can be useful when overriding
+ZooKeeper's Jetty dependency.
 
 Note that the TCP four-letter word interface is still available for monitoring purposes if
 the AdminServer is disabled.
@@ -324,9 +326,9 @@ Always protect the AdminServer with **network-level controls** and, preferably, 
 - Verify that the following entries in the logs can be seen:
 
   ```
-  2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@123] - Successfully loaded private key from /data/software/cert/keystore.jks
-  2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer@124] - Successfully loaded certificate authority from /data/software/cert/truststore.jks
-  2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer@170] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
+  2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer] - Successfully loaded private key from /data/software/cert/keystore.jks
+  2019-08-03 15:44:55,213 [myid:] - INFO  [main:JettyAdminServer] - Successfully loaded certificate authority from /data/software/cert/truststore.jks
+  2019-08-03 15:44:55,403 [myid:] - INFO  [main:JettyAdminServer] - Started AdminServer on address 0.0.0.0, port 8080 and command URL /commands
   ```
 
 ### Restricting TLS protocols and cipher suites for AdminServer

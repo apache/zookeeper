@@ -56,7 +56,7 @@ public class ClientNettyX509Util extends ClientX509Util {
 
         SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
 
-        KeyManager km = buildKeyManager(config);
+        KeyManager km = buildClientKeyManager(config);
         if (km != null) {
             sslContextBuilder.keyManager(km);
         }
@@ -98,7 +98,7 @@ public class ClientNettyX509Util extends ClientX509Util {
             throw new X509Exception.SSLContextException(
                 "Keystore is required for SSL server: " + getSslKeystoreLocationProperty());
         }
-        return createNettySslContextForServer(config, km, buildTrustManager(config));
+        return createNettySslContextForServer(config, km, buildServerTrustManager(config));
     }
 
     public SslContext createNettySslContextForServer(ZKConfig config, KeyManager keyManager, TrustManager trustManager) throws SSLException {
