@@ -25,7 +25,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #else
-#include <WinSock2.h>
+#include <winsock2.h>
 #include <stdint.h>
 #endif
 
@@ -133,6 +133,5 @@ void addrvec_peek(addrvec_t *avec, struct sockaddr_storage *next);
 int addrvec_eq(const addrvec_t *a1, const addrvec_t *a2);
 
 #endif // ADDRVEC_H
-
 
 
