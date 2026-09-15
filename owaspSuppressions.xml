@@ -19,6 +19,24 @@
 
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
    <suppress>
+      <notes>False positive: it affects only opentelemetry-js: the OpenTelemetry JavaScript Client</notes>
+      <cve>CVE-2026-54285</cve>
+   </suppress>
+   <suppress>
+      <notes>False positive: it affects only OpenTelemetry dotnet library</notes>
+      <cve>CVE-2026-41078</cve>
+      <cve>CVE-2026-40894</cve>
+   </suppress>
+   <suppress>
+      <notes>False positive: it affects only OpenTelemetry-Go: the Go implementation of OpenTelemetry</notes>
+      <cve>CVE-2026-39882</cve>
+      <cve>CVE-2026-41178</cve>
+   </suppress>
+   <suppress>
+      <notes>False positive: it affects only OpenTelemetry-cpp: the C++ implementation of OpenTelemetry</notes>
+      <cve>CVE-2026-44967</cve>
+   </suppress>
+   <suppress>
       <!-- ZOOKEEPER-3217 -->
       <cve>CVE-2018-8088</cve>
    </suppress>
