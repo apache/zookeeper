@@ -54,6 +54,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.MessageTracker;
+import org.apache.zookeeper.server.util.ZxidLayout;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,6 +108,15 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     protected int version = 0x1;
+
+    /**
+     * The learner protocol version that understands the wide-counter zxid
+     * layout (ZOOKEEPER-2789): the LEADERINFO payload may carry the layout
+     * switch epoch, and every zxid from the switch epoch on is composed of
+     * a 24-bit epoch and a 40-bit counter. Learners below this version are
+     * refused once the ensemble has switched.
+     */
+    public static final int WIDE_COUNTER_PROTOCOL_VERSION = 0x11000;
 
     int getVersion() {
         return version;
@@ -517,24 +528,63 @@ public class LearnerHandler extends ZooKeeperThread {
 
             learnerMaster.registerLearnerHandlerBean(this, sock);
 
+            // The zxid of a FOLLOWERINFO / OBSERVERINFO packet is only a
+            // carrier for the accepted epoch and stays in the legacy layout
+            // on the wire, whatever layout the data uses.
             long lastAcceptedEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
 
             long peerLastZxid;
             StateSummary ss = null;
             long zxid = qp.getZxid();
             long newEpoch = learnerMaster.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
-            long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
+            // The layout switch, if any, happened inside getEpochToPropose(),
+            // so the layout is settled by now.
+            ZxidLayoutState layoutState = learnerMaster.getZxidLayoutState();
+            long newLeaderZxid = layoutState.current().makeZxid(newEpoch, 0);
+
+            // Once the ensemble has switched to the wide-counter zxid layout,
+            // every zxid from the switch epoch on is composed of a 24-bit
+            // epoch and a 40-bit counter. A learner announcing a protocol
+            // version below WIDE_COUNTER_PROTOCOL_VERSION cannot decode those
+            // zxids and must be refused before it is advanced through
+            // syncFollower / NEWLEADER — checked here, above the handshake
+            // branch split, so it also covers the pre-0x10000 legacy branch
+            // (which never receives a LEADERINFO carrying the switch epoch).
+            if (layoutState.isSwitched() && this.getVersion() < WIDE_COUNTER_PROTOCOL_VERSION) {
+                LOG.error(
+                    "Refusing learner sid: {} with protocol version 0x{}: this ensemble switched to the {} zxid"
+                        + " layout at epoch 0x{}, which needs protocol version 0x{} or above. Upgrade that member.",
+                    this.sid,
+                    Integer.toHexString(this.getVersion()),
+                    ZxidLayout.WIDE_COUNTER,
+                    Long.toHexString(layoutState.getSwitchEpoch()),
+                    Integer.toHexString(WIDE_COUNTER_PROTOCOL_VERSION));
+                return;
+            }
 
             if (this.getVersion() < 0x10000) {
                 // we are going to have to extrapolate the epoch information
-                long epoch = ZxidUtils.getEpochFromZxid(zxid);
+                long epoch = layoutState.layoutFor(zxid).getEpochFromZxid(zxid);
                 ss = new StateSummary(epoch, zxid);
                 // fake the message
                 learnerMaster.waitForEpochAck(this.getSid(), ss);
             } else {
-                byte[] ver = new byte[4];
-                ByteBuffer.wrap(ver).putInt(0x10000);
-                QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
+                // Like the FOLLOWERINFO zxid, the LEADERINFO zxid is only an
+                // epoch carrier and stays in the legacy layout on the wire.
+                long epochCarrierZxid = ZxidUtils.makeZxid(newEpoch, 0);
+                byte[] ver;
+                if (layoutState.isSwitched()) {
+                    // Announce the switch epoch so the learner parses the
+                    // synced data and every future zxid with the right layouts.
+                    ver = new byte[12];
+                    ByteBuffer verBuffer = ByteBuffer.wrap(ver);
+                    verBuffer.putInt(WIDE_COUNTER_PROTOCOL_VERSION);
+                    verBuffer.putLong(layoutState.getSwitchEpoch());
+                } else {
+                    ver = new byte[4];
+                    ByteBuffer.wrap(ver).putInt(WIDE_COUNTER_PROTOCOL_VERSION);
+                }
+                QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, epochCarrierZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
                 messageTracker.trackSent(Leader.LEADERINFO);
                 bufferedOutput.flush();
@@ -789,7 +839,8 @@ public class LearnerHandler extends ZooKeeperThread {
          * zxid in our history. In this case, we will ignore TRUNC logic and
          * always send DIFF if we have old enough history
          */
-        boolean isPeerNewEpochZxid = (peerLastZxid & 0xffffffffL) == 0;
+        ZxidLayoutState layoutState = learnerMaster.getZxidLayoutState();
+        boolean isPeerNewEpochZxid = layoutState.layoutFor(peerLastZxid).getCounterFromZxid(peerLastZxid) == 0;
         // Keep track of the latest zxid which already queued
         long currentZxid = peerLastZxid;
         boolean needSnap = true;
@@ -949,7 +1000,8 @@ public class LearnerHandler extends ZooKeeperThread {
      * @return last zxid of the queued proposal
      */
     protected long queueCommittedProposals(Iterator<Proposal> itr, long peerLastZxid, Long maxZxid, Long lastCommittedZxid) {
-        boolean isPeerNewEpochZxid = (peerLastZxid & 0xffffffffL) == 0;
+        ZxidLayoutState layoutState = learnerMaster.getZxidLayoutState();
+        boolean isPeerNewEpochZxid = layoutState.layoutFor(peerLastZxid).getCounterFromZxid(peerLastZxid) == 0;
         long queuedZxid = peerLastZxid;
         // as we look through proposals, this variable keeps track of previous
         // proposal Id.
@@ -995,7 +1047,8 @@ public class LearnerHandler extends ZooKeeperThread {
                 } else if (packetZxid > peerLastZxid) {
                     // Peer have some proposals that the learnerMaster hasn't seen yet
                     // it may used to be a leader
-                    if (ZxidUtils.getEpochFromZxid(packetZxid) != ZxidUtils.getEpochFromZxid(peerLastZxid)) {
+                    if (layoutState.layoutFor(packetZxid).getEpochFromZxid(packetZxid)
+                            != layoutState.layoutFor(peerLastZxid).getEpochFromZxid(peerLastZxid)) {
                         // We cannot send TRUNC that cross epoch boundary.
                         // The learner will crash if it is asked to do so.
                         // We will send snapshot this those cases.

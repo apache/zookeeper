@@ -71,6 +71,7 @@ import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.RateLimiter;
+import org.apache.zookeeper.server.util.ZxidLayout;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
@@ -1211,8 +1212,9 @@ public class Commands {
                 response.put("voting", voting);
                 long lastProcessedZxid = zkServer.getZKDatabase().getDataTreeLastProcessedZxid();
                 response.put("last_zxid", "0x" + ZxidUtils.zxidToString(lastProcessedZxid));
-                response.put("zab_epoch", ZxidUtils.getEpochFromZxid(lastProcessedZxid));
-                response.put("zab_counter", ZxidUtils.getCounterFromZxid(lastProcessedZxid));
+                ZxidLayout layout = peer.getZxidLayoutState().layoutFor(lastProcessedZxid);
+                response.put("zab_epoch", layout.getEpochFromZxid(lastProcessedZxid));
+                response.put("zab_counter", layout.getCounterFromZxid(lastProcessedZxid));
                 response.put("zabstate", zabState.name().toLowerCase());
             } else {
                 response.put("voting", false);

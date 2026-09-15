@@ -59,6 +59,7 @@ import org.apache.zookeeper.server.RequestRecord;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.util.ZxidLayout;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
@@ -524,7 +525,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(2, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                 assertEquals(2, l.self.getAcceptedEpoch());
                 assertEquals(1, l.self.getCurrentEpoch());
 
@@ -594,7 +595,7 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
@@ -728,7 +729,7 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
@@ -835,7 +836,7 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
@@ -959,7 +960,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                 assertEquals(1, l.self.getAcceptedEpoch());
                 assertEquals(0, l.self.getCurrentEpoch());
 
@@ -985,6 +986,162 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     @Test
+    public void testInitialZxidTestingOnlyOverride(@TempDir File testData) throws Exception {
+        // The zookeeper.testingonly.initialZxid property makes the new leader
+        // replace the counter part of its zxid, so QA can start near the
+        // counter rollover without issuing billions of writes first.
+        System.setProperty("zookeeper.testingonly.initialZxid", "1000");
+        try {
+            testLeaderConversation(new LeaderConversation() {
+                public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException {
+                    /* same handshake as testNormalRun */
+                    LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                    byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
+                    QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
+                    oa.writeRecord(qp, null);
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.LEADERINFO, qp.getType());
+                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+
+                    qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
+                    oa.writeRecord(qp, null);
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.DIFF, qp.getType());
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.NEWLEADER, qp.getType());
+                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+                    assertCurrentEpochGotUpdated(1, l.self, ClientBase.CONNECTION_TIMEOUT);
+
+                    qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
+                    oa.writeRecord(qp, null);
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.UPTODATE, qp.getType());
+
+                    // lead() applies the override right after startZkServer(),
+                    // possibly after the UPTODATE packet is queued, so poll
+                    // briefly instead of asserting immediately.
+                    long deadline = System.currentTimeMillis() + ClientBase.CONNECTION_TIMEOUT;
+                    while (ZxidUtils.getCounterFromZxid(l.zk.getZxid()) != 1000L && System.currentTimeMillis() < deadline) {
+                        Thread.sleep(20);
+                    }
+                    // The counter part is replaced while the epoch part is kept.
+                    assertEquals(ZxidUtils.makeZxid(1, 1000), l.zk.getZxid());
+                }
+            }, testData);
+        } finally {
+            System.clearProperty("zookeeper.testingonly.initialZxid");
+        }
+    }
+
+    @Test
+    public void testWideCounterZxidSwitchHandshake(@TempDir File testData) throws Exception {
+        System.setProperty(QuorumPeer.WIDE_COUNTER_ZXID_ENABLED, "true");
+        try {
+            testLeaderConversation(new LeaderConversation() {
+                public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
+                    LearnerInfo li = new LearnerInfo(1, LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION, 0);
+                    byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
+                    QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
+                    oa.writeRecord(qp, null);
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.LEADERINFO, qp.getType());
+                    // The LEADERINFO zxid stays an epoch carrier in the
+                    // legacy layout on the wire, whatever layout the data uses.
+                    assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
+                    // The leader switched at its new epoch and announces the
+                    // switch epoch after the protocol version.
+                    assertEquals(12, qp.getData().length);
+                    ByteBuffer leaderInfoData = ByteBuffer.wrap(qp.getData());
+                    assertEquals(LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION, leaderInfoData.getInt());
+                    assertEquals(1, leaderInfoData.getLong());
+                    assertTrue(l.self.getZxidLayoutState().isSwitched());
+
+                    qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
+                    oa.writeRecord(qp, null);
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.DIFF, qp.getType());
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.NEWLEADER, qp.getType());
+                    // The NEWLEADER zxid is a real zxid, composed with the
+                    // wide-counter layout from the switch epoch on.
+                    assertEquals(ZxidLayout.WIDE_COUNTER.makeZxid(1, 0), qp.getZxid());
+                    assertCurrentEpochGotUpdated(1, l.self, ClientBase.CONNECTION_TIMEOUT);
+
+                    qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
+                    oa.writeRecord(qp, null);
+
+                    readPacketSkippingPing(ia, qp);
+                    assertEquals(Leader.UPTODATE, qp.getType());
+                }
+            }, testData);
+        } finally {
+            System.clearProperty(QuorumPeer.WIDE_COUNTER_ZXID_ENABLED);
+        }
+    }
+
+    @Test
+    public void testRefuseOldProtocolLearnerAfterWideCounterSwitch(@TempDir File testData) throws Exception {
+        System.setProperty(QuorumPeer.WIDE_COUNTER_ZXID_ENABLED, "true");
+        try {
+            testLeaderConversation(new LeaderConversation() {
+                public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
+                    // A learner announcing a protocol version below
+                    // WIDE_COUNTER_PROTOCOL_VERSION cannot understand the
+                    // switched layout and must be refused.
+                    LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                    byte[] liBytes = RequestRecord.fromRecord(li).readBytes();
+                    QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, liBytes, null);
+                    oa.writeRecord(qp, null);
+                    try {
+                        readPacketSkippingPing(ia, qp);
+                        fail("expected the leader to drop an old-protocol learner after the layout switch");
+                    } catch (IOException expected) {
+                        // connection closed by the leader
+                    }
+                }
+            }, testData);
+        } finally {
+            System.clearProperty(QuorumPeer.WIDE_COUNTER_ZXID_ENABLED);
+        }
+    }
+
+    @Test
+    public void testRefusePre0x10000LearnerAfterWideCounterSwitch(@TempDir File testData) throws Exception {
+        System.setProperty(QuorumPeer.WIDE_COUNTER_ZXID_ENABLED, "true");
+        try {
+            testLeaderConversation(new LeaderConversation() {
+                public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException {
+                    // A pre-3.4.6 learner sends an 8-byte sid-only FOLLOWERINFO
+                    // payload (no protocol-version int), so its version stays at
+                    // the default 0x1, i.e. below 0x10000. Once the ensemble has
+                    // switched to the wide-counter layout it still cannot decode
+                    // the wide zxids and must be refused, not advanced through
+                    // the legacy extrapolation branch.
+                    byte[] sidOnly = new byte[8];
+                    ByteBuffer.wrap(sidOnly).putLong(1L);
+                    QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0, sidOnly, null);
+                    oa.writeRecord(qp, null);
+                    try {
+                        readPacketSkippingPing(ia, qp);
+                        fail("expected the leader to drop a pre-0x10000 learner after the layout switch");
+                    } catch (IOException expected) {
+                        // connection closed by the leader
+                    }
+                }
+            }, testData);
+        } finally {
+            System.clearProperty(QuorumPeer.WIDE_COUNTER_ZXID_ENABLED);
+        }
+    }
+
+    @Test
     public void testTxnTimeout(@TempDir File testData) throws Exception {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws IOException, InterruptedException, org.apache.zookeeper.server.quorum.Leader.XidRolloverException {
@@ -999,7 +1156,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                 assertEquals(1, l.self.getAcceptedEpoch());
                 assertEquals(0, l.self.getCurrentEpoch());
 
@@ -1081,7 +1238,7 @@ public class Zab1_0Test extends ZKTestCase {
                     assertEquals(qp.getZxid(), 0);
                     LearnerInfo learnInfo = new LearnerInfo();
                     ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(qp.getData()), learnInfo);
-                    assertEquals(learnInfo.getProtocolVersion(), 0x10000);
+                    assertEquals(learnInfo.getProtocolVersion(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                     assertEquals(learnInfo.getServerid(), 0);
 
                     // We are simulating an established leader, so the epoch is 1
@@ -1201,7 +1358,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(21, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                 qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
                 oa.writeRecord(qp, null);
                 readPacketSkippingPing(ia, qp);
@@ -1237,7 +1394,7 @@ public class Zab1_0Test extends ZKTestCase {
                 readPacketSkippingPing(ia, qp);
                 assertEquals(Leader.LEADERINFO, qp.getType());
                 assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
-                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), 0x10000);
+                assertEquals(ByteBuffer.wrap(qp.getData()).getInt(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION);
                 Thread.sleep(l.self.getInitLimit() * l.self.getTickTime() + 5000);
 
                 // The leader didn't get a quorum of acks - make sure that leader's current epoch is not advanced
@@ -1300,7 +1457,9 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     private String readContentsOfFile(File f) throws IOException {
-        return new BufferedReader(new FileReader(f)).readLine();
+        try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
+            return reader.readLine();
+        }
     }
 
     @Test
@@ -1308,8 +1467,9 @@ public class Zab1_0Test extends ZKTestCase {
         File tmpDir = File.createTempFile("test", ".dir", testData);
         tmpDir.delete();
         tmpDir.mkdir();
+        FileTxnSnapLog logFactory = null;
         try {
-            FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
+            logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
             File version2 = new File(tmpDir, "version-2");
             version2.mkdir();
             logFactory.save(new DataTree(), new ConcurrentHashMap<>(), false);
@@ -1326,6 +1486,11 @@ public class Zab1_0Test extends ZKTestCase {
             assertEquals(3, Integer.parseInt(readContentsOfFile(new File(version2, QuorumPeer.CURRENT_EPOCH_FILENAME))));
             assertEquals(3, Integer.parseInt(readContentsOfFile(new File(version2, QuorumPeer.ACCEPTED_EPOCH_FILENAME))));
         } finally {
+            if (logFactory != null) {
+                // release the txn log file handles, otherwise the temp
+                // directory cannot be deleted on Windows
+                logFactory.close();
+            }
             TestUtils.deleteFileRecursively(tmpDir);
         }
     }
