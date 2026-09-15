@@ -97,7 +97,7 @@ determine for your system.)
 | 2. Set watch: **exists(_b_ + ‘‘/ready’’, true)**        | 2. if no children, exit                                                      |
 | 3. Create child: **create(_n_, EPHEMERAL)**             | 3. if _p_ is only process node in L, delete(n) and exit                      |
 | 4. **L = getChildren(b, false)**                        | 4. if _p_ is the lowest process node in L, wait on highest process node in L |
-| 5. if fewer children in L than*x*, wait for watch event | 5. else **delete(_n_)**if still exists and wait on lowest process node in L  |
+| 5. if fewer children in L than*x*, wait for watch event | 5. else **delete(*n*)**if still exists and wait on lowest process node in L  |
 | 6. else **create(b + ‘‘/ready’’, REGULAR)**             | 6. goto 1                                                                    |
 
 On entering, all processes watch on a ready node and

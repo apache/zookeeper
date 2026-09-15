@@ -24,8 +24,8 @@ import {
   createSearchAPI
 } from "fumadocs-core/search/server";
 import { PathUtils } from "fumadocs-core/source";
-import type { Language } from "@orama/orama";
-import type { LoaderConfig, LoaderOutput, Page } from "fumadocs-core/source";
+import type { Language } from "zbsearch";
+import type { LoaderConfig, LoaderOutput } from "fumadocs-core/source";
 import type { I18nConfig } from "fumadocs-core/i18n";
 import { findPath } from "fumadocs-core/page-tree";
 import type { StructuredData } from "fumadocs-core/mdx-plugins";
@@ -35,12 +35,12 @@ type Awaitable<T> = T | Promise<T>;
 function defaultBuildIndex<C extends LoaderConfig>(
   source: LoaderOutput<C>,
   tag?: (pageUrl: string) => string
-) {
+): (page: C["page"]) => Promise<AdvancedIndex> {
   function isBreadcrumbItem(item: unknown): item is string {
     return typeof item === "string" && item.length > 0;
   }
 
-  return async (page: Page): Promise<AdvancedIndex> => {
+  return async (page) => {
     let breadcrumbs: string[] | undefined;
     let structuredData: StructuredData | undefined;
 
@@ -89,16 +89,15 @@ function defaultBuildIndex<C extends LoaderConfig>(
   };
 }
 
-interface Options<C extends LoaderConfig>
-  extends Omit<AdvancedOptions, "indexes"> {
+interface Options<C extends LoaderConfig> extends Omit<
+  AdvancedOptions,
+  "indexes"
+> {
   localeMap?: {
     [K in C["i18n"] extends I18nConfig<infer Languages> ? Languages : string]?:
-      | Partial<AdvancedOptions>
-      | Language;
+      Partial<AdvancedOptions> | Language;
   };
-  buildIndex?: (
-    page: Page<C["source"]["pageData"]>
-  ) => Awaitable<AdvancedIndex>;
+  buildIndex?: (page: C["page"]) => Awaitable<AdvancedIndex>;
   tag?: (pageUrl: string) => string;
 }
 

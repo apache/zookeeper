@@ -17,14 +17,14 @@
 //
 
 import {
-  type AnyOrama,
+  type AnyZBSearch,
   create,
   load,
-  type Orama,
   type SearchParams,
-  search as searchOrama,
-  getByID
-} from "@orama/orama";
+  search as searchZb,
+  getByID,
+  type ZBSearch
+} from "zbsearch";
 import { type AdvancedDocument, type advancedSchema } from "./create-db";
 import {
   createContentHighlighter,
@@ -41,7 +41,7 @@ export interface StaticOptions {
    */
   from?: string;
 
-  initOrama?: (locale?: string) => AnyOrama | Promise<AnyOrama>;
+  initDB?: (locale?: string) => AnyZBSearch | Promise<AnyZBSearch>;
 
   /**
    * Filter results with specific tag(s).
@@ -60,13 +60,13 @@ const cache = new Map<string, Promise<Database>>();
 type Database = Map<
   string,
   {
-    db: AnyOrama;
+    db: AnyZBSearch;
   }
 >;
 
 async function loadDB({
   from = "/api/search",
-  initOrama = (locale) => create({ schema: { _: "string" }, language: locale })
+  initDB = (locale) => create({ schema: { _: "string" }, language: locale })
 }: StaticOptions): Promise<Database> {
   const cacheKey = from;
   const cached = cache.get(cacheKey);
@@ -86,7 +86,7 @@ async function loadDB({
     if (data.type === "i18n") {
       await Promise.all(
         Object.entries(data.data).map(async ([k, v]) => {
-          const db = await initOrama(k);
+          const db = await initDB(k);
 
           load(db, v);
           dbs.set(k, {
@@ -98,7 +98,7 @@ async function loadDB({
       return dbs;
     }
 
-    const db = await initOrama();
+    const db = await initDB();
     load(db, data);
     dbs.set("", {
       db
@@ -118,17 +118,19 @@ export async function search(query: string, options: StaticOptions) {
 
   if (!db) return [];
 
-  return searchAdvanced(db.db as Orama<typeof advancedSchema>, query, tag);
+  return searchAdvanced(db.db as ZBSearch<typeof advancedSchema>, query, tag);
 }
 
 export async function searchAdvanced(
-  db: Orama<typeof advancedSchema>,
+  db: ZBSearch<typeof advancedSchema>,
   query: string,
   tag: string | string[] = [],
   {
     mode = "fulltext",
     ...override
-  }: Partial<SearchParams<Orama<typeof advancedSchema>, AdvancedDocument>> = {}
+  }: Partial<
+    SearchParams<ZBSearch<typeof advancedSchema>, AdvancedDocument>
+  > = {}
 ): Promise<SortedResult[]> {
   if (typeof tag === "string") tag = [tag];
 
@@ -160,7 +162,7 @@ export async function searchAdvanced(
   }
 
   const highlighter = createContentHighlighter(query);
-  const result = await searchOrama(db, params);
+  const result = await searchZb(db, params);
 
   // Helper to detect phrase matches (3+ consecutive words)
   const getPhraseMatchBoost = (content: string, searchTerm: string): number => {
@@ -225,7 +227,7 @@ export async function searchAdvanced(
     const page = getByID(db, pageId);
     if (!page) continue;
 
-    // Find the page hit to get its Orama score
+    // Find the page hit to get its search engine score
     const pageHit = item.result.find(
       (hit: any) => hit.document.type === "page"
     );
@@ -261,13 +263,13 @@ export async function searchAdvanced(
     });
   }
 
-  // Sort groups: phrase matches + exact matches first, then by Orama score
+  // Sort groups: phrase matches + exact matches first, then by search score
   groupsWithScores.sort((a, b) => {
     // Prioritize results with phrase matches and exact matches
     if (a.totalScore !== b.totalScore) {
       return b.totalScore - a.totalScore;
     }
-    // Then by Orama relevance
+    // Then by search relevance
     return b.pageScore - a.pageScore;
   });
 
@@ -285,7 +287,7 @@ export async function searchAdvanced(
       url: page.url
     });
 
-    // Sort hits within this group: by phrase match + match quality, then type, then Orama score
+    // Sort hits within this group: by phrase match + match quality, then type, then search score
     const sortedHits = [...hits]
       .filter((hit: any) => hit.document.type !== "page")
       .map((hit: any) => {
@@ -307,7 +309,7 @@ export async function searchAdvanced(
         if (a.totalScore !== b.totalScore) return b.totalScore - a.totalScore;
         // Then by type (heading > text)
         if (a.typeScore !== b.typeScore) return b.typeScore - a.typeScore;
-        // Then by Orama relevance
+        // Then by search relevance
         return b.hit.score - a.hit.score;
       })
       .map((item) => item.hit);
