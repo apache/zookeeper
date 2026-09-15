@@ -24,34 +24,34 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 
 The Apache ZooKeeper community supports two release branches at a time: **stable** and **current**.
 
-- The **current** version is **3.9.x**
-- The **stable** version is **3.8.x**
+- The **current** version is **3.9.6**
+- The **stable** version is **3.8.7**
 
 Once a new minor version is released, the previous stable version is expected to be decommissioned within approximately six months, during which only security and critical fixes are provided. After End-of-Life is announced, no further patches are provided by the community. All ZooKeeper releases remain accessible from the [official Apache Archives](https://archive.apache.org/dist/zookeeper/).
 
 ## Download
 
-Apache ZooKeeper **3.9.5** is our current release, and **3.8.6** our latest stable release.
+Apache ZooKeeper **3.9.6** is our current release, and **3.8.7** our latest stable release.
 
 The keys used to sign releases can be found in our published [KEYS](https://downloads.apache.org/zookeeper/KEYS) file. See [Verifying Apache Software Foundation Releases](https://www.apache.org/info/verification.html) for how to verify your downloads.
 
-### Apache ZooKeeper 3.9.5 (Current)
+### Apache ZooKeeper 3.9.6 (Current)
 
-- [apache-zookeeper-3.9.5-bin.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5-bin.tar.gz)
-  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5-bin.tar.gz.asc),
-  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5-bin.tar.gz.sha512))
-- [apache-zookeeper-3.9.5.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5.tar.gz) _(source)_
-  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5.tar.gz.asc),
-  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.5/apache-zookeeper-3.9.5.tar.gz.sha512))
+- [apache-zookeeper-3.9.6-bin.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.6/apache-zookeeper-3.9.6-bin.tar.gz)
+  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.6/apache-zookeeper-3.9.6-bin.tar.gz.asc),
+  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.6/apache-zookeeper-3.9.6-bin.tar.gz.sha512))
+- [apache-zookeeper-3.9.6.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.9.6/apache-zookeeper-3.9.6.tar.gz) _(source)_
+  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.9.6/apache-zookeeper-3.9.6.tar.gz.asc),
+  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.9.6/apache-zookeeper-3.9.6.tar.gz.sha512))
 
-### Apache ZooKeeper 3.8.6 (Latest Stable)
+### Apache ZooKeeper 3.8.7 (Latest Stable)
 
-- [apache-zookeeper-3.8.6-bin.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.6/apache-zookeeper-3.8.6-bin.tar.gz)
-  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.6/apache-zookeeper-3.8.6-bin.tar.gz.asc),
-  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.6/apache-zookeeper-3.8.6-bin.tar.gz.sha512))
-- [apache-zookeeper-3.8.6.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.6/apache-zookeeper-3.8.6.tar.gz) _(source)_
-  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.6/apache-zookeeper-3.8.6.tar.gz.asc),
-  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.6/apache-zookeeper-3.8.6.tar.gz.sha512))
+- [apache-zookeeper-3.8.7-bin.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.7/apache-zookeeper-3.8.7-bin.tar.gz)
+  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.7/apache-zookeeper-3.8.7-bin.tar.gz.asc),
+  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.7/apache-zookeeper-3.8.7-bin.tar.gz.sha512))
+- [apache-zookeeper-3.8.7.tar.gz](https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.7/apache-zookeeper-3.8.7.tar.gz) _(source)_
+  ([asc](https://downloads.apache.org/zookeeper/zookeeper-3.8.7/apache-zookeeper-3.8.7.tar.gz.asc),
+  [sha512](https://downloads.apache.org/zookeeper/zookeeper-3.8.7/apache-zookeeper-3.8.7.tar.gz.sha512))
 
 ### Apache ZooKeeper 3.7.2 (End-of-Life since 2 Feb 2024)
 

@@ -97,6 +97,7 @@ const RAW_RELEASED_DOC_VERSIONS_LIST = [
   "3.8.4",
   "3.8.5",
   "3.8.6",
+  "3.8.7",
   "3.9.0",
   "3.9.1",
   "3.9.2",
@@ -115,8 +116,8 @@ export const RAW_RELEASED_DOC_VERSIONS = new Set<ReleasedDocVersion>(
 
 export const LTS_VERSIONS: ReleasedDocVersion[] = [
   CURRENT_VERSION,
-  "3.9.5",
-  "3.8.6"
+  "3.8.7",
+  "3.7.2"
 ];
 
 export function sortVersionsDesc(versions: string[]): string[] {
