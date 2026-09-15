@@ -28,12 +28,12 @@ import {
   type SharedProps
 } from "fumadocs-ui/components/dialog/search";
 import { useDocsSearch } from "./use-docs-search";
-import { create } from "@orama/orama";
+import { create } from "zbsearch";
 import { useI18n } from "fumadocs-ui/contexts/i18n";
 
 const docsSearchUrl = `${import.meta.env.BASE_URL}api/search`;
 
-function initOrama() {
+function initDB() {
   return create({
     schema: { _: "string" },
     language: "english"
@@ -46,7 +46,7 @@ export function SearchDialog(props: SharedProps) {
   const { search, setSearch, query } = useDocsSearch({
     type: "static",
     from: docsSearchUrl,
-    initOrama,
+    initDB,
     locale
   });
 

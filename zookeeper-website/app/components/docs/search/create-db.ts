@@ -18,14 +18,14 @@
 
 import {
   create,
-  insertMultiple,
-  type Orama,
+  insertMultipleAsync,
   type PartialSchemaDeep,
-  type TypedDocument
-} from "@orama/orama";
+  type TypedDocument,
+  type ZBSearch
+} from "zbsearch";
 import type { AdvancedOptions } from "fumadocs-core/search/server";
 
-export type AdvancedDocument = TypedDocument<Orama<typeof advancedSchema>>;
+export type AdvancedDocument = TypedDocument<ZBSearch<typeof advancedSchema>>;
 export const advancedSchema = {
   content: "string",
   page_id: "string",
@@ -33,24 +33,36 @@ export const advancedSchema = {
   breadcrumbs: "string[]",
   tags: "enum[]",
   url: "string",
+  locale: "enum",
   embeddings: "vector[512]"
 } as const;
 
-export async function createDB({
-  indexes,
-  tokenizer,
-  ...rest
-}: AdvancedOptions): Promise<Orama<typeof advancedSchema>> {
+const DefaultLanguage = "multilingual";
+
+export async function createDB(
+  options: AdvancedOptions
+): Promise<ZBSearch<typeof advancedSchema>> {
+  const {
+    indexes,
+    tokenizer,
+    language = DefaultLanguage,
+    sort,
+    plugins,
+    components
+  } = options;
   const items = typeof indexes === "function" ? await indexes() : indexes;
+  const resolvedTokenizer = tokenizer ?? components?.tokenizer;
 
   const db = create({
     schema: advancedSchema,
-    ...rest,
+    language: resolvedTokenizer ? undefined : language,
+    sort,
+    plugins,
     components: {
-      ...rest.components,
-      tokenizer: tokenizer ?? rest.components?.tokenizer
+      ...components,
+      tokenizer: resolvedTokenizer
     }
-  }) as Orama<typeof advancedSchema>;
+  });
 
   const mapTo: PartialSchemaDeep<AdvancedDocument>[] = [];
   items.forEach((page) => {
@@ -66,7 +78,8 @@ export async function createDB({
       content: page.title,
       breadcrumbs: page.breadcrumbs,
       tags,
-      url: page.url
+      url: page.url,
+      locale: page.locale
     });
 
     const nextId = () => `${page.id}-${id++}`;
@@ -78,7 +91,8 @@ export async function createDB({
         tags,
         type: "text",
         url: page.url,
-        content: page.description
+        content: page.description,
+        locale: page.locale
       });
     }
 
@@ -89,7 +103,8 @@ export async function createDB({
         type: "heading",
         tags,
         url: `${page.url}#${heading.id}`,
-        content: heading.content
+        content: heading.content,
+        locale: page.locale
       });
     }
 
@@ -100,11 +115,12 @@ export async function createDB({
         tags,
         type: "text",
         url: content.heading ? `${page.url}#${content.heading}` : page.url,
-        content: content.content
+        content: content.content,
+        locale: page.locale
       });
     }
   });
 
-  await insertMultiple(db, mapTo);
-  return db;
+  await insertMultipleAsync(db, mapTo);
+  return db as ZBSearch<typeof advancedSchema>;
 }

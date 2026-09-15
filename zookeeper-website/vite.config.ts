@@ -19,7 +19,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, createLogger } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { resolve } from "path";
 import mdx from "fumadocs-mdx/vite";
 import * as MdxConfig from "./source.config";
@@ -49,7 +48,10 @@ logger.warn = (msg, options) => {
 
 export default defineConfig({
   base: docsArchiveBase || "/",
-  plugins: [mdx(MdxConfig), tailwindcss(), reactRouter(), tsconfigPaths()],
+  plugins: [mdx(MdxConfig), tailwindcss(), reactRouter()],
+  optimizeDeps: {
+    include: ["zbsearch", "debug"]
+  },
   resolve: {
     alias: {
       "@/.source": resolve(__dirname, ".source"),
@@ -59,5 +61,8 @@ export default defineConfig({
   define: {
     __CURRENT_VERSION__: JSON.stringify(CURRENT_VERSION)
   },
-  customLogger: logger
+  customLogger: logger,
+  preview: {
+    host: "127.0.0.1"
+  }
 });

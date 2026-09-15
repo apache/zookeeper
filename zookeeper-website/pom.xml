@@ -36,7 +36,7 @@
   <description>Apache ZooKeeper Website built with React and TypeScript</description>
 
   <properties>
-    <node.version>v22.20.0</node.version>
+    <node.version>v24.18.1</node.version>
     <npm.version>11.6.2</npm.version>
     <website.ci.command>ci</website.ci.command>
     <dependency-check.skip>true</dependency-check.skip>

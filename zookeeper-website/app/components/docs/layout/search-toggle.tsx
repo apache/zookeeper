@@ -19,13 +19,12 @@
 import type { ComponentProps } from "react";
 import { Search } from "lucide-react";
 import { useSearchContext } from "fumadocs-ui/contexts/search";
-import { useI18n } from "fumadocs-ui/contexts/i18n";
+import { T } from "@fuma-translate/react";
 import { type ButtonProps, buttonVariants } from "../../../ui/button";
 import { cn } from "@/lib/utils";
 
 interface SearchToggleProps
-  extends Omit<ComponentProps<"button">, "color">,
-    ButtonProps {
+  extends Omit<ComponentProps<"button">, "color">, ButtonProps {
   hideIfDisabled?: boolean;
 }
 
@@ -66,7 +65,6 @@ export function LargeSearchToggle({
   hideIfDisabled?: boolean;
 }) {
   const { enabled, hotKey, setOpenSearch } = useSearchContext();
-  const { text } = useI18n();
   if (hideIfDisabled && !enabled) return null;
 
   return (
@@ -83,7 +81,7 @@ export function LargeSearchToggle({
       }}
     >
       <Search className="size-4" />
-      {text.search}
+      <T text="Search" note="search trigger" />
       <div className="ms-auto inline-flex gap-0.5">
         {hotKey.map((k, i) => (
           <kbd key={i} className="bg-fd-background rounded-md border px-1.5">
