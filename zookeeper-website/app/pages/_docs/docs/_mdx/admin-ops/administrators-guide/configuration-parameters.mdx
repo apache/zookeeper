@@ -1411,6 +1411,14 @@ server if this feature is enabled with sasl as authentication scheme.
   It is essentially the quorum equivalent of the _zookeeper.sasl.client.canonicalize.hostname_ property for clients.
   The default value is **false** for backwards compatibility.
 
+- _kerberos.shutdownTimeoutMs_
+  (Java system property: **zookeeper.kerberos.shutdownTimeoutMs**)
+  **New in 3.10.0:**
+  The time in milliseconds ZooKeeper waits for the Kerberos TGT renewal thread to exit while shutting down.
+  If the thread is still alive after that, ZooKeeper logs a warning and completes the shutdown.
+  Values below 1 are treated as 1.
+  Default: 5000
+
 - _multiAddress.enabled_ :
   (Java system property: **zookeeper.multiAddress.enabled**)
   **New in 3.6.0:**
