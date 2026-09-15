@@ -39,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslException;
@@ -222,6 +223,8 @@ public class ClientCnxn {
      * then it is assumed that the response packet is lost.
      */
     private long requestTimeout;
+
+    private long slowCallbackThresholdMs;
 
     ZKWatchManager getWatcherManager() {
         return watchManager;
@@ -450,6 +453,7 @@ public class ClientCnxn {
         this.sendThread = new SendThread(clientCnxnSocket);
         this.eventThread = new EventThread();
         initRequestTimeout();
+        initSlowCallbackThreshold();
     }
 
     public void start() {
@@ -587,157 +591,244 @@ public class ClientCnxn {
                     // each watcher will process the event
                     WatcherSetEventPair pair = (WatcherSetEventPair) event;
                     for (Watcher watcher : pair.watchers) {
+                        long callbackStartNanos = startCallbackTimer();
                         try {
                             watcher.process(pair.event);
                         } catch (Throwable t) {
                             LOG.error("Error while calling watcher.", t);
+                        } finally {
+                            maybeLogSlowWatcherCallback(watcher, pair.event, callbackStartNanos);
                         }
                     }
                 } else if (event instanceof LocalCallback) {
                     LocalCallback lcb = (LocalCallback) event;
-                    if (lcb.cb instanceof StatCallback) {
-                        ((StatCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null);
-                    } else if (lcb.cb instanceof DataCallback) {
-                        ((DataCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null, null);
-                    } else if (lcb.cb instanceof ACLCallback) {
-                        ((ACLCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null, null);
-                    } else if (lcb.cb instanceof ChildrenCallback) {
-                        ((ChildrenCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null);
-                    } else if (lcb.cb instanceof Children2Callback) {
-                        ((Children2Callback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null, null);
-                    } else if (lcb.cb instanceof StringCallback) {
-                        ((StringCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null);
-                    } else if (lcb.cb instanceof AsyncCallback.EphemeralsCallback) {
-                        ((AsyncCallback.EphemeralsCallback) lcb.cb).processResult(lcb.rc, lcb.ctx, null);
-                    } else if (lcb.cb instanceof AsyncCallback.AllChildrenNumberCallback) {
-                        ((AsyncCallback.AllChildrenNumberCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, -1);
-                    } else if (lcb.cb instanceof AsyncCallback.MultiCallback) {
-                        ((AsyncCallback.MultiCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, Collections.emptyList());
-                    } else {
-                        ((VoidCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx);
+                    long callbackStartNanos = startCallbackTimer();
+                    try {
+                        if (lcb.cb instanceof StatCallback) {
+                            ((StatCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null);
+                        } else if (lcb.cb instanceof DataCallback) {
+                            ((DataCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null, null);
+                        } else if (lcb.cb instanceof ACLCallback) {
+                            ((ACLCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null, null);
+                        } else if (lcb.cb instanceof ChildrenCallback) {
+                            ((ChildrenCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null);
+                        } else if (lcb.cb instanceof Children2Callback) {
+                            ((Children2Callback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null, null);
+                        } else if (lcb.cb instanceof StringCallback) {
+                            ((StringCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, null);
+                        } else if (lcb.cb instanceof AsyncCallback.EphemeralsCallback) {
+                            ((AsyncCallback.EphemeralsCallback) lcb.cb).processResult(lcb.rc, lcb.ctx, null);
+                        } else if (lcb.cb instanceof AsyncCallback.AllChildrenNumberCallback) {
+                            ((AsyncCallback.AllChildrenNumberCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, -1);
+                        } else if (lcb.cb instanceof AsyncCallback.MultiCallback) {
+                            ((AsyncCallback.MultiCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx, Collections.emptyList());
+                        } else {
+                            ((VoidCallback) lcb.cb).processResult(lcb.rc, lcb.path, lcb.ctx);
+                        }
+                    } finally {
+                        maybeLogSlowLocalCallback(lcb, callbackStartNanos);
                     }
                 } else {
                     Packet p = (Packet) event;
-                    int rc = 0;
-                    String clientPath = p.clientPath;
-                    if (p.replyHeader.getErr() != 0) {
-                        rc = p.replyHeader.getErr();
-                    }
-                    if (p.cb == null) {
-                        LOG.warn("Somehow a null cb got to EventThread!");
-                    } else if (p.response instanceof ExistsResponse
+                    long callbackStartNanos = p.cb == null ? 0 : startCallbackTimer();
+                    try {
+                        int rc = 0;
+                        String clientPath = p.clientPath;
+                        if (p.replyHeader.getErr() != 0) {
+                            rc = p.replyHeader.getErr();
+                        }
+                        if (p.cb == null) {
+                            LOG.warn("Somehow a null cb got to EventThread!");
+                        } else if (p.response instanceof ExistsResponse
                                || p.response instanceof SetDataResponse
                                || p.response instanceof SetACLResponse) {
-                        StatCallback cb = (StatCallback) p.cb;
-                        if (rc == Code.OK.intValue()) {
-                            if (p.response instanceof ExistsResponse) {
-                                cb.processResult(rc, clientPath, p.ctx, ((ExistsResponse) p.response).getStat());
-                            } else if (p.response instanceof SetDataResponse) {
-                                cb.processResult(rc, clientPath, p.ctx, ((SetDataResponse) p.response).getStat());
-                            } else if (p.response instanceof SetACLResponse) {
-                                cb.processResult(rc, clientPath, p.ctx, ((SetACLResponse) p.response).getStat());
+                            StatCallback cb = (StatCallback) p.cb;
+                            if (rc == Code.OK.intValue()) {
+                                if (p.response instanceof ExistsResponse) {
+                                    cb.processResult(rc, clientPath, p.ctx, ((ExistsResponse) p.response).getStat());
+                                } else if (p.response instanceof SetDataResponse) {
+                                    cb.processResult(rc, clientPath, p.ctx, ((SetDataResponse) p.response).getStat());
+                                } else if (p.response instanceof SetACLResponse) {
+                                    cb.processResult(rc, clientPath, p.ctx, ((SetACLResponse) p.response).getStat());
+                                }
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null);
                             }
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null);
-                        }
-                    } else if (p.response instanceof GetDataResponse) {
-                        DataCallback cb = (DataCallback) p.cb;
-                        GetDataResponse rsp = (GetDataResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(rc, clientPath, p.ctx, rsp.getData(), rsp.getStat());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null, null);
-                        }
-                    } else if (p.response instanceof GetACLResponse) {
-                        ACLCallback cb = (ACLCallback) p.cb;
-                        GetACLResponse rsp = (GetACLResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(rc, clientPath, p.ctx, rsp.getAcl(), rsp.getStat());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null, null);
-                        }
-                    } else if (p.response instanceof GetChildrenResponse) {
-                        ChildrenCallback cb = (ChildrenCallback) p.cb;
-                        GetChildrenResponse rsp = (GetChildrenResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(rc, clientPath, p.ctx, rsp.getChildren());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null);
-                        }
-                    } else if (p.response instanceof GetAllChildrenNumberResponse) {
-                        AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
-                        GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(rc, clientPath, p.ctx, rsp.getTotalNumber());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, -1);
-                        }
-                    } else if (p.response instanceof GetChildren2Response) {
-                        Children2Callback cb = (Children2Callback) p.cb;
-                        GetChildren2Response rsp = (GetChildren2Response) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(rc, clientPath, p.ctx, rsp.getChildren(), rsp.getStat());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null, null);
-                        }
-                    } else if (p.response instanceof CreateResponse) {
-                        StringCallback cb = (StringCallback) p.cb;
-                        CreateResponse rsp = (CreateResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(
-                                rc,
-                                clientPath,
-                                p.ctx,
-                                rsp.getPath());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null);
-                        }
-                    } else if (p.response instanceof Create2Response) {
-                        Create2Callback cb = (Create2Callback) p.cb;
-                        Create2Response rsp = (Create2Response) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(
+                        } else if (p.response instanceof GetDataResponse) {
+                            DataCallback cb = (DataCallback) p.cb;
+                            GetDataResponse rsp = (GetDataResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(rc, clientPath, p.ctx, rsp.getData(), rsp.getStat());
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null, null);
+                            }
+                        } else if (p.response instanceof GetACLResponse) {
+                            ACLCallback cb = (ACLCallback) p.cb;
+                            GetACLResponse rsp = (GetACLResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(rc, clientPath, p.ctx, rsp.getAcl(), rsp.getStat());
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null, null);
+                            }
+                        } else if (p.response instanceof GetChildrenResponse) {
+                            ChildrenCallback cb = (ChildrenCallback) p.cb;
+                            GetChildrenResponse rsp = (GetChildrenResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(rc, clientPath, p.ctx, rsp.getChildren());
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null);
+                            }
+                        } else if (p.response instanceof GetAllChildrenNumberResponse) {
+                            AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
+                            GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(rc, clientPath, p.ctx, rsp.getTotalNumber());
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, -1);
+                            }
+                        } else if (p.response instanceof GetChildren2Response) {
+                            Children2Callback cb = (Children2Callback) p.cb;
+                            GetChildren2Response rsp = (GetChildren2Response) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(rc, clientPath, p.ctx, rsp.getChildren(), rsp.getStat());
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null, null);
+                            }
+                        } else if (p.response instanceof CreateResponse) {
+                            StringCallback cb = (StringCallback) p.cb;
+                            CreateResponse rsp = (CreateResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(
+                                    rc,
+                                    clientPath,
+                                    p.ctx,
+                                    rsp.getPath());
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null);
+                            }
+                        } else if (p.response instanceof Create2Response) {
+                            Create2Callback cb = (Create2Callback) p.cb;
+                            Create2Response rsp = (Create2Response) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(
                                     rc,
                                     clientPath,
                                     p.ctx,
                                     rsp.getPath(),
                                     rsp.getStat());
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null, null);
-                        }
-                    } else if (p.response instanceof MultiResponse) {
-                        MultiCallback cb = (MultiCallback) p.cb;
-                        MultiResponse rsp = (MultiResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            List<OpResult> results = rsp.getResultList();
-                            int newRc = rc;
-                            for (OpResult result : results) {
-                                if (result instanceof ErrorResult
-                                    && KeeperException.Code.OK.intValue()
-                                       != (newRc = ((ErrorResult) result).getErr())) {
-                                    break;
-                                }
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null, null);
                             }
-                            cb.processResult(newRc, clientPath, p.ctx, results);
-                        } else {
-                            cb.processResult(rc, clientPath, p.ctx, null);
+                        } else if (p.response instanceof MultiResponse) {
+                            MultiCallback cb = (MultiCallback) p.cb;
+                            MultiResponse rsp = (MultiResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                List<OpResult> results = rsp.getResultList();
+                                int newRc = rc;
+                                for (OpResult result : results) {
+                                    if (result instanceof ErrorResult
+                                        && KeeperException.Code.OK.intValue()
+                                           != (newRc = ((ErrorResult) result).getErr())) {
+                                        break;
+                                    }
+                                }
+                                cb.processResult(newRc, clientPath, p.ctx, results);
+                            } else {
+                                cb.processResult(rc, clientPath, p.ctx, null);
+                            }
+                        } else if (p.response instanceof GetEphemeralsResponse) {
+                            EphemeralsCallback cb = (EphemeralsCallback) p.cb;
+                            GetEphemeralsResponse rsp = (GetEphemeralsResponse) p.response;
+                            if (rc == Code.OK.intValue()) {
+                                cb.processResult(rc, p.ctx, rsp.getEphemerals());
+                            } else {
+                                cb.processResult(rc, p.ctx, null);
+                            }
+                        } else if (p.cb instanceof VoidCallback) {
+                            VoidCallback cb = (VoidCallback) p.cb;
+                            cb.processResult(rc, clientPath, p.ctx);
                         }
-                    } else if (p.response instanceof GetEphemeralsResponse) {
-                        EphemeralsCallback cb = (EphemeralsCallback) p.cb;
-                        GetEphemeralsResponse rsp = (GetEphemeralsResponse) p.response;
-                        if (rc == Code.OK.intValue()) {
-                            cb.processResult(rc, p.ctx, rsp.getEphemerals());
-                        } else {
-                            cb.processResult(rc, p.ctx, null);
-                        }
-                    } else if (p.cb instanceof VoidCallback) {
-                        VoidCallback cb = (VoidCallback) p.cb;
-                        cb.processResult(rc, clientPath, p.ctx);
+                    } finally {
+                        maybeLogSlowAsyncCallback(p, callbackStartNanos);
                     }
                 }
             } catch (Throwable t) {
                 LOG.error("Unexpected throwable", t);
             }
+        }
+
+        private long startCallbackTimer() {
+            return slowCallbackThresholdMs > 0 ? System.nanoTime() : 0;
+        }
+
+        private void maybeLogSlowWatcherCallback(Watcher watcher, WatchedEvent event, long startTimeNanos) {
+            if (startTimeNanos == 0) {
+                return;
+            }
+            long durationMs = slowCallbackDurationMs(startTimeNanos);
+            if (durationMs <= slowCallbackThresholdMs) {
+                return;
+            }
+
+            LOG.warn(
+                "Slow ZooKeeper client callback: session=0x{}, kind=watcher, callbackClass={}, path={}, "
+                    + "eventType={}, state={}, callbackDurationMs={}, queuedEvents={}",
+                Long.toHexString(getSessionId()),
+                callbackClassName(watcher),
+                event.getPath(),
+                event.getType(),
+                event.getState(),
+                durationMs,
+                waitingEvents.size());
+        }
+
+        private void maybeLogSlowLocalCallback(LocalCallback lcb, long startTimeNanos) {
+            if (startTimeNanos == 0) {
+                return;
+            }
+            long durationMs = slowCallbackDurationMs(startTimeNanos);
+            if (durationMs <= slowCallbackThresholdMs) {
+                return;
+            }
+
+            LOG.warn(
+                "Slow ZooKeeper client callback: session=0x{}, kind=local callback, callbackClass={}, "
+                    + "path={}, callbackDurationMs={}, queuedEvents={}",
+                Long.toHexString(getSessionId()),
+                callbackClassName(lcb.cb),
+                lcb.path,
+                durationMs,
+                waitingEvents.size());
+        }
+
+        private void maybeLogSlowAsyncCallback(Packet p, long startTimeNanos) {
+            if (startTimeNanos == 0) {
+                return;
+            }
+            long durationMs = slowCallbackDurationMs(startTimeNanos);
+            if (durationMs <= slowCallbackThresholdMs) {
+                return;
+            }
+
+            Integer opCode = p.requestHeader == null ? null : p.requestHeader.getType();
+
+            LOG.warn(
+                "Slow ZooKeeper client callback: session=0x{}, kind=async callback, callbackClass={}, "
+                    + "path={}, opCode={}, callbackDurationMs={}, queuedEvents={}",
+                Long.toHexString(getSessionId()),
+                callbackClassName(p.cb),
+                p.clientPath,
+                opCode,
+                durationMs,
+                waitingEvents.size());
+        }
+
+        private String callbackClassName(Object callback) {
+            return callback == null ? null : callback.getClass().getName();
+        }
+
+        private long slowCallbackDurationMs(long startTimeNanos) {
+            return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos);
         }
 
     }
@@ -1730,6 +1821,25 @@ public class ClientCnxn {
                 "Configured value {} for property {} can not be parsed to long.",
                 clientConfig.getProperty(ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT),
                 ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
+            throw e;
+        }
+    }
+
+    private void initSlowCallbackThreshold() {
+        try {
+            slowCallbackThresholdMs = clientConfig.getLong(
+                ZKClientConfig.ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS,
+                ZKClientConfig.ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS_DEFAULT);
+            LOG.info(
+                "{} value is {}. feature enabled={}",
+                ZKClientConfig.ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS,
+                slowCallbackThresholdMs,
+                slowCallbackThresholdMs > 0);
+        } catch (NumberFormatException e) {
+            LOG.error(
+                "Configured value {} for property {} can not be parsed to long.",
+                clientConfig.getProperty(ZKClientConfig.ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS),
+                ZKClientConfig.ZOOKEEPER_SLOW_CALLBACK_THRESHOLD_MS);
             throw e;
         }
     }
