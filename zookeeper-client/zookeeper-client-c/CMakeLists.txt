@@ -23,10 +23,12 @@ set(description "zookeeper C client")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../tools/cmake/Modules")
 
 # general options
-if(UNIX)
-  add_compile_options(-Wall -fPIC)
-elseif(WIN32)
+if(MSVC)
   add_compile_options(/W3)
+elseif(MINGW)
+  add_compile_options(-Wall)
+else()
+  add_compile_options(-Wall -fPIC)
 endif()
 add_definitions(-DUSE_STATIC_LIB)
 
@@ -130,6 +132,11 @@ endforeach()
 
 # function checks
 include(CheckFunctionExists)
+set(ZOOKEEPER_SAVED_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+if(WIN32)
+  # Winsock functions cannot be detected unless the probe links ws2_32.
+  list(APPEND CMAKE_REQUIRED_LIBRARIES ws2_32)
+endif()
 set(check_functions
   getcwd
   gethostbyname
@@ -147,10 +154,20 @@ set(check_functions
   strerror
   strtol)
 
+# CheckFunctionExists cannot detect 32-bit stdcall Winsock symbols because it
+# does not include their declarations, so record the known Windows APIs.
+if(WIN32)
+  set(HAVE_GETHOSTBYNAME 1)
+  set(HAVE_GETHOSTNAME 1)
+  set(HAVE_SOCKET 1)
+endif()
+
 foreach(fn ${check_functions})
   to_have(${fn} name)
   check_function_exists(${fn} ${name})
 endforeach()
+set(CMAKE_REQUIRED_LIBRARIES ${ZOOKEEPER_SAVED_REQUIRED_LIBRARIES})
+unset(ZOOKEEPER_SAVED_REQUIRED_LIBRARIES)
 
 # library checks
 set(check_libraries rt m pthread)
@@ -161,7 +178,13 @@ endforeach()
 
 # IPv6 check
 include(CheckStructHasMember)
-check_struct_has_member("struct sockaddr_in6" sin6_addr "netinet/in.h" ZOO_IPV6_ENABLED)
+if(WIN32)
+  check_struct_has_member("struct sockaddr_in6" sin6_addr
+    "winsock2.h;ws2tcpip.h" ZOO_IPV6_ENABLED)
+else()
+  check_struct_has_member("struct sockaddr_in6" sin6_addr
+    "netinet/in.h" ZOO_IPV6_ENABLED)
+endif()
 
 # configure
 configure_file(cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
@@ -206,7 +229,7 @@ option(WITH_OPENSSL "turn ON/OFF SSL support, or define openssl library location
 message("-- using WITH_OPENSSL=${WITH_OPENSSL}")
 if(NOT WITH_OPENSSL STREQUAL "OFF")
   if(NOT WITH_OPENSSL STREQUAL "ON")
-    set(OPENSSL_ROOT_DIR,${WITH_OPENSSL})
+    set(OPENSSL_ROOT_DIR ${WITH_OPENSSL})
   endif()
   find_package(OpenSSL)
   if(OPENSSL_FOUND)
