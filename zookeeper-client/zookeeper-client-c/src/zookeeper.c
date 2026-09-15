@@ -29,6 +29,11 @@
 #include <zookeeper.jute.h>
 #include <proto.h>
 #include "zk_adaptor.h"
+
+#ifdef WIN32
+#include "winport.h"
+#endif
+
 #include "zookeeper_log.h"
 #include "zk_hashtable.h"
 
