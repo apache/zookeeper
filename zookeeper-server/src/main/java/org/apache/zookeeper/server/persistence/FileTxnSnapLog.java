@@ -621,16 +621,32 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void close() throws IOException {
+        IOException firstEx = null;
         TxnLog txnLogToClose = txnLog;
-        if (txnLogToClose != null) {
-            txnLogToClose.close();
-        }
         txnLog = null;
-        SnapShot snapSlogToClose = snapLog;
-        if (snapSlogToClose != null) {
-            snapSlogToClose.close();
+        if (txnLogToClose != null) {
+            try {
+                txnLogToClose.close();
+            } catch (IOException e) {
+                firstEx = e;
+            }
         }
+        SnapShot snapSlogToClose = snapLog;
         snapLog = null;
+        if (snapSlogToClose != null) {
+            try {
+                snapSlogToClose.close();
+            } catch (IOException e) {
+                if (firstEx != null) {
+                    firstEx.addSuppressed(e);
+                } else {
+                    firstEx = e;
+                }
+            }
+        }
+        if (firstEx != null) {
+            throw firstEx;
+        }
     }
 
     @SuppressWarnings("serial")
