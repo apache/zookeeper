@@ -25,7 +25,6 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -38,6 +37,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
+import org.apache.commons.io.input.CountingInputStream;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -480,13 +480,13 @@ public class FileTxnLog implements TxnLog, Closeable {
      */
     public boolean truncate(long zxid) throws IOException {
         try (FileTxnIterator itr = new FileTxnIterator(this.logDir, zxid)) {
-            PositionInputStream input = itr.inputStream;
+            CountingInputStream input = itr.inputStream;
             if (input == null) {
                 throw new IOException("No log files found to truncate! This could "
                                       + "happen if you still have snapshots from an old setup or "
                                       + "log files were deleted accidentally or dataLogDir was changed in zoo.cfg.");
             }
-            long pos = input.getPosition();
+            long pos = input.getByteCount();
             // now, truncate at the current position
             RandomAccessFile raf = new RandomAccessFile(itr.logFile, "rw");
             raf.setLength(pos);
@@ -548,76 +548,6 @@ public class FileTxnLog implements TxnLog, Closeable {
     }
 
     /**
-     * a class that keeps track of the position
-     * in the input stream. The position points to offset
-     * that has been consumed by the applications. It can
-     * wrap buffered input streams to provide the right offset
-     * for the application.
-     */
-    static class PositionInputStream extends FilterInputStream {
-
-        long position;
-        protected PositionInputStream(InputStream in) {
-            super(in);
-            position = 0;
-        }
-
-        @Override
-        public int read() throws IOException {
-            int rc = super.read();
-            if (rc > -1) {
-                position++;
-            }
-            return rc;
-        }
-
-        public int read(byte[] b) throws IOException {
-            int rc = super.read(b);
-            if (rc > 0) {
-                position += rc;
-            }
-            return rc;
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            int rc = super.read(b, off, len);
-            if (rc > 0) {
-                position += rc;
-            }
-            return rc;
-        }
-
-        @Override
-        public long skip(long n) throws IOException {
-            long rc = super.skip(n);
-            if (rc > 0) {
-                position += rc;
-            }
-            return rc;
-        }
-        public long getPosition() {
-            return position;
-        }
-
-        @Override
-        public boolean markSupported() {
-            return false;
-        }
-
-        @Override
-        public void mark(int readLimit) {
-            throw new UnsupportedOperationException("mark");
-        }
-
-        @Override
-        public void reset() {
-            throw new UnsupportedOperationException("reset");
-        }
-
-    }
-
-    /**
      * this class implements the txnlog iterator interface
      * which is used for reading the transaction logs
      */
@@ -632,7 +562,7 @@ public class FileTxnLog implements TxnLog, Closeable {
         InputArchive ia;
         static final String CRC_ERROR = "CRC check failed";
 
-        PositionInputStream inputStream = null;
+        CountingInputStream inputStream = null;
         //stored files is the list of files greater than
         //the zxid we are looking for.
         private ArrayList<File> storedFiles;
@@ -759,7 +689,7 @@ public class FileTxnLog implements TxnLog, Closeable {
          **/
         protected InputArchive createInputArchive(File logFile) throws IOException {
             if (inputStream == null) {
-                inputStream = new PositionInputStream(new BufferedInputStream(new FileInputStream(logFile)));
+                inputStream = new CountingInputStream(new BufferedInputStream(new FileInputStream(logFile)));
                 LOG.debug("Created new input stream: {}", logFile);
                 ia = BinaryInputArchive.getArchive(inputStream);
                 inStreamCreated(ia, inputStream);
