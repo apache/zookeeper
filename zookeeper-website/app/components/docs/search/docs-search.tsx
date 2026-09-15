@@ -24,6 +24,7 @@ import {
   SearchDialogIcon,
   SearchDialogInput,
   SearchDialogList,
+  SearchDialogListItem,
   SearchDialogOverlay,
   type SharedProps
 } from "fumadocs-ui/components/dialog/search";
@@ -65,6 +66,9 @@ export function SearchDialog(props: SharedProps) {
           <SearchDialogClose />
         </SearchDialogHeader>
         <SearchDialogList
+          Item={(props) => (
+            <SearchDialogListItem {...props} className="cursor-pointer" />
+          )}
           items={
             query.data !== "empty"
               ? query.data?.map((i) => ({
