@@ -1,4 +1,4 @@
-import{w as s}from"./chunk-6CSD65Y2-DdXLjHPL.js";import{j as e}from"./jsx-runtime-u17CrQMm.js";import{M as t}from"./mdx-components-DzdEM0Pp.js";import"./index-BES0CLPa.js";import"./index-ByRO6HJY.js";import"./index-CUfaML0k.js";e.jsx(e.Fragment,{children:"ZooKeeper Security"}),e.jsx(e.Fragment,{children:"Security model"}),e.jsx(e.Fragment,{children:"Security is opt-in"}),e.jsx(e.Fragment,{children:"In scope for security reports"}),e.jsx(e.Fragment,{children:"Out of scope for security reports"}),e.jsx(e.Fragment,{children:"Vulnerability reports"}),e.jsx(e.Fragment,{children:"CVE-2026-24308"}),e.jsx(e.Fragment,{children:"CVE-2026-24281"}),e.jsx(e.Fragment,{children:"CVE-2025-58457"}),e.jsx(e.Fragment,{children:"CVE-2024-51504"}),e.jsx(e.Fragment,{children:"CVE-2024-23944"}),e.jsx(e.Fragment,{children:"CVE-2023-44981"}),e.jsx(e.Fragment,{children:"CVE-2019-0201"}),e.jsx(e.Fragment,{children:"CVE-2018-8012"}),e.jsx(e.Fragment,{children:"CVE-2017-5637"}),e.jsx(e.Fragment,{children:"CVE-2016-5017"});function i(n){const r={a:"a",code:"code",h1:"h1",h2:"h2",h3:"h3",hr:"hr",li:"li",p:"p",strong:"strong",ul:"ul",...n.components};return e.jsxs(e.Fragment,{children:[e.jsx(r.h1,{id:"zookeeper-security",children:"ZooKeeper Security"}),`
+import{w as s}from"./chunk-6CSD65Y2-DdXLjHPL.js";import{j as e}from"./jsx-runtime-u17CrQMm.js";import{M as t}from"./mdx-components-DzdEM0Pp.js";import"./index-BES0CLPa.js";import"./index-ByRO6HJY.js";import"./index-CUfaML0k.js";e.jsx(e.Fragment,{children:"ZooKeeper Security"}),e.jsx(e.Fragment,{children:"Security model"}),e.jsx(e.Fragment,{children:"Security is opt-in"}),e.jsx(e.Fragment,{children:"In scope for security reports"}),e.jsx(e.Fragment,{children:"Out of scope for security reports"}),e.jsx(e.Fragment,{children:"Vulnerability reports"}),e.jsx(e.Fragment,{children:"CVE-2026-84501"}),e.jsx(e.Fragment,{children:"CVE-2026-84439"}),e.jsx(e.Fragment,{children:"CVE-2026-79993"}),e.jsx(e.Fragment,{children:"CVE-2026-59969"}),e.jsx(e.Fragment,{children:"CVE-2026-59739"}),e.jsx(e.Fragment,{children:"CVE-2026-24308"}),e.jsx(e.Fragment,{children:"CVE-2026-24281"}),e.jsx(e.Fragment,{children:"CVE-2025-58457"}),e.jsx(e.Fragment,{children:"CVE-2024-51504"}),e.jsx(e.Fragment,{children:"CVE-2024-23944"}),e.jsx(e.Fragment,{children:"CVE-2023-44981"}),e.jsx(e.Fragment,{children:"CVE-2019-0201"}),e.jsx(e.Fragment,{children:"CVE-2018-8012"}),e.jsx(e.Fragment,{children:"CVE-2017-5637"}),e.jsx(e.Fragment,{children:"CVE-2016-5017"});function i(n){const r={a:"a",code:"code",h1:"h1",h2:"h2",h3:"h3",hr:"hr",li:"li",p:"p",strong:"strong",ul:"ul",...n.components};return e.jsxs(e.Fragment,{children:[e.jsx(r.h1,{id:"zookeeper-security",children:"ZooKeeper Security"}),`
 `,e.jsxs(r.p,{children:["The Apache Software Foundation takes security issues very seriously. Due to the infrastructure nature of the Apache ZooKeeper project specifically, we haven't had many reports over time, but it doesn't mean that we haven't had concerns over some bugs and vulnerabilities. If you have any concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the e-mail address ",e.jsx(r.a,{href:"mailto:security@zookeeper.apache.org?Subject=%5BSECURITY%5D%20My%20security%20issue",children:"security@zookeeper.apache.org"}),". In the message, try to provide a description of the issue and ideally a way of reproducing it. Note that this security address should be used only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly via jira and the mailing lists. ",e.jsx(r.strong,{children:"Please report any security problems to the project security address before disclosing it publicly."})]}),`
 `,e.jsxs(r.p,{children:["The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their ",e.jsx(r.a,{href:"https://security.apache.org/report/",children:"Web page"})," for more information."]}),`
 `,e.jsx(r.h2,{id:"security-model",children:"Security model"}),`
@@ -34,6 +34,11 @@ import{w as s}from"./chunk-6CSD65Y2-DdXLjHPL.js";import{j as e}from"./jsx-runtim
 `]}),`
 `,e.jsx(r.h2,{id:"vulnerability-reports",children:"Vulnerability reports"}),`
 `,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-84501",children:"CVE-2026-84501"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-84439",children:"CVE-2026-84439"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-79993",children:"CVE-2026-79993"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-59969",children:"CVE-2026-59969"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-59739",children:"CVE-2026-59739"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-24308",children:"CVE-2026-24308"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-24281",children:"CVE-2026-24281"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2025-58457",children:"CVE-2025-58457"})}),`
@@ -45,6 +50,77 @@ import{w as s}from"./chunk-6CSD65Y2-DdXLjHPL.js";import{j as e}from"./jsx-runtim
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2017-5637",children:"CVE-2017-5637"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2016-5017",children:"CVE-2016-5017"})}),`
 `]}),`
+`,e.jsx(r.p,{children:"--"}),`
+`,e.jsx(r.h3,{id:"cve-2026-84501",children:"CVE-2026-84501"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Operational log forgery via newline injection in EnsembleAuthenticationProvider"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"})," moderate"]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.5"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.6"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:`An unauthenticated attacker can inject arbitrary fake log lines into Apache ZooKeeper's operational log by sending a crafted add_auth("ensemble", ...) request containing newline characters (\\n). When the ensemble name doesn't match, EnsembleAuthenticationProvider.handleAuthentication() logs the raw, unsanitized name via LOG.warn(). Because SLF4J's {} placeholder preserves embedded newlines, the attacker can forge complete log entries — with arbitrary timestamps, log levels, class names, and messages — that are visually indistinguishable from genuine ZooKeeper log output.`}),`
+`,e.jsx(r.p,{children:"Users are recommended to upgrade to version 3.8.7 or 3.9.6, which fixes the issue."}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," Youlong Chen Institute of Computing Technology ",e.jsx(r.a,{href:"mailto:chenyoulong20g@ict.ac.cn",children:"chenyoulong20g@ict.ac.cn"})," (finder)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-84501",children:"https://www.cve.org/CVERecord?id=CVE-2026-84501"})]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-84439",children:"CVE-2026-84439"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Audit log injection via unsanitized output from multiple sources"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"})," important"]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.5"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.6"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:"When audit logging is enabled (zookeeper.audit.enable=true), an unauthenticated attacker can inject arbitrary fields into Apache ZooKeeper's audit log by sending a digest authentication request with tab characters (\\t) embedded in the username. Because the audit log uses tab-separated key=value format, the injected tabs are parsed as legitimate field separators, allowing the attacker to spoof audit results (e.g., injecting result=success), forge operation types, and corrupt forensic evidence."}),`
+`,e.jsx(r.p,{children:"A log injection vulnerability in Apache ZooKeeper allows a client that can call setACL to inject forged key-value fields into zookeeper_audit.log. When audit logging is enabled, the server serializes attacker-controlled digest ACL ids into the acl= audit field without escaping tab characters. Because audit events are emitted as tab-separated key=value records, a crafted ACL id can make one successful setAcl event appear to contain forged fields such as operation=delete and znode=/forged. This undermines the integrity of downstream audit parsing, alerting, and incident response."}),`
+`,e.jsx(r.p,{children:"Users are recommended to upgrade to version 3.9.6 or 3.8.7, which fixes the issue."}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," Youlong Chen Institute of Computing Technology ",e.jsx(r.a,{href:"mailto:chenyoulong20g@ict.ac.cn",children:"chenyoulong20g@ict.ac.cn"})," (reporter)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-84439",children:"https://www.cve.org/CVERecord?id=CVE-2026-84439"})]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-79993",children:"CVE-2026-79993"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Missing ACL check on deleteContainer opcode allows unauthorized deletion of any empty persistent/container znode"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"})," critical"]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.5"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.6"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsxs(r.p,{children:["The ",e.jsx(r.code,{children:"deleteContainer"})," opcode (0x14/20) is processed without verifying the caller's ACL permissions, allowing any authenticated client to delete specific znodes in the data tree regardless of the ACL restrictions on the znode or its parent. This opcode is considered internal-only and the official client doesn't have API for it, but a client that can open a plain TCP session on the ZooKeeper client port (2181 by default) - with NO authentication and NO ACL permissions - can delete any empty persistent znode (including regular persistent nodes, container nodes, and TTL nodes) by issuing the raw protocol OpCode deleteContainer (20). The deleteContainer request path completely skips both the session check and the DELETE ACL check that are enforced by the regular delete (OpCode 2) path. This is an authorization bypass / ACL enforcement bug."]}),`
+`,e.jsx(r.p,{children:"Users are recommended to upgrade to version 3.9.6 or 3.8.7, which fixes the issue."}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," K ",e.jsx(r.a,{href:"mailto:sec-reports@outlook.com",children:"sec-reports@outlook.com"})," (reporter), z f ",e.jsx(r.a,{href:"mailto:tinkerzf@gmail.com",children:"tinkerzf@gmail.com"})," (reporter), 布豪 ",e.jsx(r.a,{href:"mailto:1958304602@qq.com",children:"1958304602@qq.com"})," (finder)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-79993",children:"https://www.cve.org/CVERecord?id=CVE-2026-79993"})]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-59969",children:"CVE-2026-59969"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Improper validation of certificate with host mismatch in FIPS mode"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"})," important"]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.5"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.6"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:"Apache ZooKeeper quorum TLS fails to enforce peer hostname verification in FIPS-mode deployments. When sslQuorum=true, zookeeper.fips-mode=true, ssl.quorum.hostnameVerification=true, and ssl.quorum.clientHostnameVerification=true are enabled, the Java SSLSocket quorum path accepts a CA-trusted peer certificate whose SAN does not match the connected host. A malicious or misissued peer certificate can therefore join quorum traffic, participate in leader election, and enter replication flows."}),`
+`,e.jsx(r.p,{children:"Users are recommended to upgrade to version 3.8.7 or 3.9.6, which fixes the issue."}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," Erichen ",e.jsx(r.a,{href:"mailto:chenyoulong20g@ict.ac.cn",children:"chenyoulong20g@ict.ac.cn"})," (reporter)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-59969",children:"https://www.cve.org/CVERecord?id=CVE-2026-59969"})]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-59739",children:"CVE-2026-59739"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Information disclosure via SetWatches reconnect replay"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"})," critical"]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.9.0 through 3.9.5"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper (org.apache.zookeeper:zookeeper) 3.8.0 through 3.8.6"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:"Information disclosure via SetWatches reconnect replay in Apache ZooKeeper due to missing ACL check. An attacker can discover ACL-restricted paths by registering exists-watches on non-existent paths, then reconnecting after the paths are created with restricted ACLs. Issue is caused by incomplete fix for CVE-2024-23944 (ZOOKEEPER-4799). The fix added ACL checking to WatchManager.triggerWatch(). However, DataTree.setWatches() — the SetWatches/SetWatches2 reconnect replay handler — still calls watcher.process(event) with null ACL, bypassing the check entirely. It's important to note that only the path is exposed by this vulnerability, not the data of znode, but since znode path can contain sensitive information like user name or login ID, this issue is potentially critical."}),`
+`,e.jsx(r.p,{children:"Users are recommended to upgrade to version 3.9.6, 3.8.7 which fixes the issue."}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," NGUYEN HONG QUAN ",e.jsx(r.a,{href:"mailto:hongquanvp11@gmail.com",children:"hongquanvp11@gmail.com"})," (reporter), n0mi1k ",e.jsx(r.a,{href:"mailto:nomilksec@gmail.com",children:"nomilksec@gmail.com"})," (reporter)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-59739",children:"https://www.cve.org/CVERecord?id=CVE-2026-59739"})]}),`
 `,e.jsx(r.hr,{}),`
 `,e.jsx(r.h3,{id:"cve-2026-24308",children:"CVE-2026-24308"}),`
 `,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Sensitive information disclosure in client configuration handling"})}),`
