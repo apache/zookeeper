@@ -77,9 +77,14 @@ int32_t inc_ref_counter(zhandle_t* zh,int i)
 
 int32_t get_xid()
 {
-    static int32_t xid = -1;
-    if (xid == -1) {
-        xid = time(0);
+    static int32_t xid = 1;
+
+    // The XID returned should not be negative to avoid collisions
+    // with reserved XIDs, such as AUTH_XID or SET_WATCHES_XID.
+    // If xid is currently negative, then the previous increment
+    // caused an overflow and we reset it.
+    if (xid < 0) {
+        xid = 1;
     }
     return xid++;
 }
