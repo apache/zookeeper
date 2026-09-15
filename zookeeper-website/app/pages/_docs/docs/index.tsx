@@ -44,7 +44,6 @@ import { CURRENT_VERSION } from "@/lib/current-version";
 const baseMdxComponents: MDXComponents = {
   ...defaultMdxComponents,
   p: (props) => <p className="wrap-anywhere" {...props} />,
-  h1: (props) => <h1 className="font-bold" {...props} />,
   Callout,
   Step,
   Steps
