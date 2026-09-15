@@ -53,6 +53,7 @@ export default defineConfig({
     include: ["zbsearch", "debug"]
   },
   resolve: {
+    dedupe: ["lucide-react"],
     alias: {
       "@/.source": resolve(__dirname, ".source"),
       "@": resolve(__dirname, "app")

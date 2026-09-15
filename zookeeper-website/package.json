@@ -58,7 +58,7 @@
     "fumadocs-ui": "^16.13.0",
     "isbot": "^5.1.31",
     "katex": "^0.16.27",
-    "lucide-react": "^0.454.0",
+    "lucide-react": "^1.46.0",
     "next-themes": "^0.4.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -119,5 +119,8 @@
     "esbuild": true,
     "fsevents": true,
     "unrs-resolver": true
+  },
+  "overrides": {
+    "lucide-react": "$lucide-react"
   }
 }
