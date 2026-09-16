@@ -44,6 +44,34 @@ public class IOUtils {
     }
 
     /**
+     * Closes every non-null object, preserving any {@link IOException} thrown.
+     *
+     * @param closeables
+     *            the objects to close, in order
+     * @throws IOException the first exception thrown while closing, with later
+     *            exceptions added as suppressed exceptions
+     */
+    public static void closeAll(Closeable... closeables) throws IOException {
+        IOException firstException = null;
+        for (Closeable closeable : closeables) {
+            if (closeable != null) {
+                try {
+                    closeable.close();
+                } catch (IOException e) {
+                    if (firstException == null) {
+                        firstException = e;
+                    } else if (firstException != e) {
+                        firstException.addSuppressed(e);
+                    }
+                }
+            }
+        }
+        if (firstException != null) {
+            throw firstException;
+        }
+    }
+
+    /**
      * Close the Closeable objects and <b>ignore</b> any {@link IOException} or
      * null pointers. Must only be used for cleanup in exception handlers.
      *

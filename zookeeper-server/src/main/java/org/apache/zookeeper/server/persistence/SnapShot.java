@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -28,7 +29,7 @@ import org.apache.zookeeper.server.DataTree;
  * implement this interface for implementing
  * snapshots.
  */
-public interface SnapShot {
+public interface SnapShot extends Closeable {
 
     /**
      * deserialize a data tree from the last valid snapshot and
@@ -67,6 +68,7 @@ public interface SnapShot {
      * free resources from this snapshot immediately
      * @throws IOException
      */
+    @Override
     void close() throws IOException;
 
 }

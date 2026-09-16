@@ -18,14 +18,20 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -63,6 +69,31 @@ public class FileTxnSnapLogTest {
     private File logVersionDir;
 
     private File snapVersionDir;
+
+    @Test
+    public void testCloseAttemptsBothLogsAndPreservesExceptions() throws IOException {
+        FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
+        fileTxnSnapLog.close();
+        TxnLog txnLog = mock(TxnLog.class);
+        SnapShot snapLog = mock(SnapShot.class);
+        IOException txnFailure = new IOException("transaction log close failed");
+        IOException snapFailure = new IOException("snapshot close failed");
+        doThrow(txnFailure).when(txnLog).close();
+        doThrow(snapFailure).when(snapLog).close();
+        fileTxnSnapLog.txnLog = txnLog;
+        fileTxnSnapLog.snapLog = snapLog;
+
+        IOException failure = assertThrows(IOException.class, fileTxnSnapLog::close);
+
+        verify(txnLog).close();
+        verify(snapLog).close();
+        assertSame(txnFailure, failure);
+        assertArrayEquals(new Throwable[]{snapFailure}, failure.getSuppressed());
+        assertNull(fileTxnSnapLog.txnLog);
+        assertNull(fileTxnSnapLog.snapLog);
+        fileTxnSnapLog.close();
+        verifyNoMoreInteractions(txnLog, snapLog);
+    }
 
     @BeforeEach
     public void setUp() throws Exception {

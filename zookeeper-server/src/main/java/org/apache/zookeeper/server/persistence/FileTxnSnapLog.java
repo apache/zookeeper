@@ -29,6 +29,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
@@ -621,32 +622,11 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public void close() throws IOException {
-        IOException firstEx = null;
         TxnLog txnLogToClose = txnLog;
+        SnapShot snapLogToClose = snapLog;
         txnLog = null;
-        if (txnLogToClose != null) {
-            try {
-                txnLogToClose.close();
-            } catch (IOException e) {
-                firstEx = e;
-            }
-        }
-        SnapShot snapSlogToClose = snapLog;
         snapLog = null;
-        if (snapSlogToClose != null) {
-            try {
-                snapSlogToClose.close();
-            } catch (IOException e) {
-                if (firstEx != null) {
-                    firstEx.addSuppressed(e);
-                } else {
-                    firstEx = e;
-                }
-            }
-        }
-        if (firstEx != null) {
-            throw firstEx;
-        }
+        IOUtils.closeAll(txnLogToClose, snapLogToClose);
     }
 
     @SuppressWarnings("serial")
