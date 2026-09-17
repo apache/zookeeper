@@ -24,6 +24,8 @@ import java.io.File;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.hamcrest.CustomMatcher;
 import org.hamcrest.Description;
@@ -93,6 +95,8 @@ public class ZKTestCase {
 
     @BeforeEach
     public void starting(TestInfo testInfo) {
+        ServerMetrics.metricsProviderInitialized(new DefaultMetricsProvider());
+
         // By default, disable starting a JettyAdminServer in tests to avoid
         // accidentally attempting to start multiple admin servers on the
         // same port.
