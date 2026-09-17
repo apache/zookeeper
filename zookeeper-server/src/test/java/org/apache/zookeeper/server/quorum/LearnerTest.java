@@ -24,6 +24,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -48,6 +51,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -355,5 +359,59 @@ public class LearnerTest extends ZKTestCase {
         sl.zk.shutdown();
 
         assertThat("System.exit() should have been called", exitProcCalled[0], is(true));
+    }
+
+    @Test
+    public void incompleteTruncSyncClearsInMemoryDatabase(@TempDir File tmpDir) throws Exception {
+        FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
+        SimpleLearner learner = new SimpleLearner(txnSnapLog);
+        ZKDatabase zkDb = learner.zk.getZKDatabase();
+
+        txnSnapLog.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), false);
+        appendCreate(txnSnapLog, 1, "/retained");
+        appendCreate(txnSnapLog, 2, "/discarded");
+        txnSnapLog.commit();
+        assertEquals(2, zkDb.loadDataBase());
+
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        BinaryOutputArchive leaderOutput = BinaryOutputArchive.getArchive(bytes);
+        leaderOutput.writeRecord(new QuorumPacket(Leader.TRUNC, 1, null, null), null);
+
+        TxnHeader replacementHeader = new TxnHeader(1, 3, 2, 3, ZooDefs.OpCode.create);
+        CreateTxn replacementTxn = new CreateTxn(
+            "/replacement",
+            new byte[0],
+            ZooDefs.Ids.OPEN_ACL_UNSAFE,
+            false,
+            2);
+        ByteArrayOutputStream proposalBytes = new ByteArrayOutputStream();
+        BinaryOutputArchive proposalOutput = BinaryOutputArchive.getArchive(proposalBytes);
+        replacementHeader.serialize(proposalOutput, "hdr");
+        replacementTxn.serialize(proposalOutput, "txn");
+        leaderOutput.writeRecord(new QuorumPacket(Leader.PROPOSAL, 2, proposalBytes.toByteArray(), null), null);
+        leaderOutput.writeRecord(new QuorumPacket(Leader.COMMIT, 2, null, null), null);
+
+        learner.leaderIs = BinaryInputArchive.getArchive(new ByteArrayInputStream(bytes.toByteArray()));
+        learner.leaderOs = BinaryOutputArchive.getArchive(new ByteArrayOutputStream());
+        learner.bufferedOutput = new BufferedOutputStream(new ByteArrayOutputStream());
+        learner.sock = new Socket();
+
+        assertThrows(EOFException.class, () -> learner.syncWithLeader(3));
+        assertEquals(QuorumPeer.SyncMode.TRUNC, learner.self.getSyncMode());
+        assertNotNull(zkDb.getNode("/replacement"));
+        assertNull(zkDb.getNode("/discarded"));
+
+        learner.shutdown();
+
+        assertFalse(zkDb.isInitialized());
+        assertEquals(1, zkDb.loadDataBase());
+        assertNotNull(zkDb.getNode("/retained"));
+        assertNull(zkDb.getNode("/replacement"));
+    }
+
+    private static void appendCreate(FileTxnSnapLog txnSnapLog, long zxid, String path) throws IOException {
+        TxnHeader header = new TxnHeader(1, (int) zxid, zxid, zxid, ZooDefs.OpCode.create);
+        CreateTxn txn = new CreateTxn(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, false, (int) zxid);
+        txnSnapLog.append(new Request(header, txn, null));
     }
 }
