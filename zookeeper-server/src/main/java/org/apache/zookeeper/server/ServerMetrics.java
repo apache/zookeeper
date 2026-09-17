@@ -25,6 +25,7 @@ import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.slf4j.Logger;
@@ -40,10 +41,15 @@ public final class ServerMetrics {
     public static final ServerMetrics NULL_METRICS = new ServerMetrics(NullMetricsProvider.INSTANCE);
 
     /**
+     * Dummy instance useful for tests.
+     */
+    public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS = new ServerMetrics(new DefaultMetricsProvider());
+
+    /**
      * Real instance used for tracking server side metrics. The final value is
      * assigned after the {@link MetricsProvider} bootstrap.
      */
-    private static volatile ServerMetrics CURRENT = NULL_METRICS;
+    private static volatile ServerMetrics CURRENT = DEFAULT_METRICS_FOR_TESTS;
 
     /**
      * Access current ServerMetrics.
