@@ -30,11 +30,11 @@ elseif(MINGW)
 else()
   add_compile_options(-Wall -fPIC)
 endif()
-add_definitions(-DUSE_STATIC_LIB)
+
+option(BUILD_SHARED_LIBS "Build the ZooKeeper client as a shared library" OFF)
 
 # TODO: Enable /WX and /W4 on Windows. Currently there are ~1000 warnings.
 # TODO: Add Solaris support.
-# TODO: Add a shared library option.
 # TODO: Specify symbols to export.
 # TODO: Generate doxygen documentation.
 
@@ -218,8 +218,21 @@ if(WIN32)
   list(APPEND zookeeper_sources src/winport.c)
 endif()
 
-add_library(zookeeper STATIC ${zookeeper_sources})
+add_library(zookeeper ${zookeeper_sources})
 target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
+if(BUILD_SHARED_LIBS)
+  # ZOOAPI expands to dllexport while compiling the DLL and dllimport for its
+  # consumers. Export the remaining public generated/Jute entry points too.
+  target_compile_definitions(zookeeper PRIVATE DLL_EXPORT)
+  set_target_properties(zookeeper PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  if(WANT_SYNCAPI)
+    set_target_properties(zookeeper PROPERTIES OUTPUT_NAME zookeeper_mt)
+  else()
+    set_target_properties(zookeeper PROPERTIES OUTPUT_NAME zookeeper_st)
+  endif()
+else()
+  target_compile_definitions(zookeeper PUBLIC USE_STATIC_LIB)
+endif()
 target_link_libraries(zookeeper PUBLIC
   hashtable
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
