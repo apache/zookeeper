@@ -56,9 +56,31 @@ See [ZooKeeper CLI](/admin-ops/cli).
 
 ### zkEnv.sh
 
-Sets environment variables for the ZooKeeper server. Key variables:
+Sets environment variables for ZooKeeper scripts. Values can be provided in
+the environment or in `conf/java.env`. Key variables:
 
 - `ZOO_LOG_DIR` — the directory where logs are stored.
+- `ZK_SERVER_HEAP` — the server maximum heap in MiB, or `auto` to omit `-Xmx`.
+- `SERVER_JVMFLAGS` — additional JVM options for the server.
+- `ZK_CLIENT_HEAP` — the client maximum heap in MiB, or `auto` to omit `-Xmx`.
+- `CLIENT_JVMFLAGS` — additional JVM options for clients.
+
+Heap settings produce the following JVM options:
+
+| Heap setting     | Server result       | Client result       |
+|------------------|---------------------|---------------------|
+| Unset            | `-Xmx1000m`         | `-Xmx256m`          |
+| Positive integer | `-Xmx<number>m`     | `-Xmx<number>m`     |
+| `auto`           | No generated `-Xmx` | No generated `-Xmx` |
+
+Use `auto` when JVM memory sizing should be configured with other options. For
+example, a containerized server can use a percentage of the available memory:
+
+```bash
+ZK_SERVER_HEAP=auto \
+SERVER_JVMFLAGS="-XX:InitialRAMPercentage=25 -XX:MaxRAMPercentage=75" \
+./zkServer.sh start
+```
 
 ### zkCleanup.sh
 
