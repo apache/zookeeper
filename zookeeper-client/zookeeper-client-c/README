@@ -50,12 +50,17 @@ cross-build from Linux is:
     -DCMAKE_SYSTEM_NAME=Windows \
     -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
     -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+    -DBUILD_SHARED_LIBS=ON \
     -DWITH_OPENSSL=OFF -DWITH_CYRUS_SASL=OFF
   cmake --build build-mingw64
 
 Use i686-w64-mingw32-gcc and i686-w64-mingw32-g++ for a 32-bit build. OpenSSL
 and Cyrus SASL can be enabled when MinGW-built versions of those dependencies
-are available to CMake.
+are available to CMake. CMake always builds the single-threaded zookeeper_st
+library and, unless `-DWANT_SYNCAPI=OFF` is used, also builds the multithreaded
+zookeeper_mt library. Set `-DBUILD_STATIC_LIBS=ON` alongside
+`-DBUILD_SHARED_LIBS=ON` to produce both static and shared libraries in one
+build directory.
 
 EXAMPLE/SAMPLE C CLIENT SHELL
 
