@@ -843,9 +843,9 @@ ZOOAPI int zoo_set_servers_resolution_delay(zhandle_t *zh, int delay_ms);
  *
  * This method allows a client to cycle through the list of servers in it's
  * connection pool to be used on the next connection attempt. This function does
- * not actually trigger a connection or state change in any way. Its purpose is
- * to allow testing changing servers on the fly and the probabilistic load
- * balancing algorithm.
+ * not actually trigger a connection, but it updates the handle with the address
+ * of the next server to connect to. Its purpose is to allow testing changing
+ * servers on the fly and the probabilistic load balancing algorithm.
  */
 ZOOAPI void zoo_cycle_next_server(zhandle_t *zh);
 

@@ -345,11 +345,26 @@ public:
     /** ZOOKEEPER-1057 This checks that the client connects to the second server when the first is not reachable **/
     void testFirstServerDown() {
         watchctx_t ctx;
+        const char *hosts = "127.0.0.1:22182,127.0.0.1:22181";
+        const char *server = "127.0.0.1:22181";
+        char cmd[1024];
 
         zoo_deterministic_conn_order(true);
 
-        zhandle_t* zk = createClient("127.0.0.1:22182,127.0.0.1:22181", &ctx);
-        CPPUNIT_ASSERT(zk != 0);
+        // ZOOKEEPER-2466: exhaust the server list before making the second
+        // server available, so reconnecting must not skip it.
+        snprintf(cmd, sizeof(cmd), "%s stop %s", ZKSERVER_CMD, server);
+        CPPUNIT_ASSERT(system(cmd) == 0);
+
+        zhandle_t* zk = createClient(hosts, &ctx);
+        bool clientCreated = zk != 0;
+        bool connectedWhileStopped = clientCreated && ctx.waitForConnected(zk);
+
+        snprintf(cmd, sizeof(cmd), "%s startClean %s", ZKSERVER_CMD, server);
+        CPPUNIT_ASSERT(system(cmd) == 0);
+
+        CPPUNIT_ASSERT(clientCreated);
+        CPPUNIT_ASSERT(!connectedWhileStopped);
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
     }
 
