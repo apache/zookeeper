@@ -136,14 +136,14 @@ export CLASSPATH
 
 # default heap for zookeeper server
 ZK_SERVER_HEAP="${ZK_SERVER_HEAP:-1000}"
-if [[ $ZK_SERVER_HEAP != auto ]]; then
+if [[ $ZK_SERVER_HEAP != omit ]]; then
   SERVER_JVMFLAGS="-Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"
 fi
 export SERVER_JVMFLAGS
 
 # default heap for zookeeper client
 ZK_CLIENT_HEAP="${ZK_CLIENT_HEAP:-256}"
-if [[ $ZK_CLIENT_HEAP != auto ]]; then
+if [[ $ZK_CLIENT_HEAP != omit ]]; then
   CLIENT_JVMFLAGS="-Xmx${ZK_CLIENT_HEAP}m $CLIENT_JVMFLAGS"
 fi
 export CLIENT_JVMFLAGS
