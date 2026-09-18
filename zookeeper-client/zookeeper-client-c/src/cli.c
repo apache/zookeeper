@@ -1054,13 +1054,21 @@ int main(int argc, char **argv) {
     FD_ZERO(&wfds);
     FD_ZERO(&efds);
     while (!shutdownThisThing) {
+#ifdef WIN32
+        SOCKET fd;
+#else
         int fd;
+#endif
         int interest;
         int events;
         struct timeval tv;
         int rc;
         zookeeper_interest(zh, &fd, &interest, &tv);
+#ifdef WIN32
+        if (fd != INVALID_SOCKET) {
+#else
         if (fd != -1) {
+#endif
             if (interest&ZOOKEEPER_READ) {
                 FD_SET(fd, &rfds);
             } else {

@@ -39,6 +39,29 @@ Please refer to the "Installation" item under "C Binding" in the
 Programmer's Guide:
    https://zookeeper.apache.org/doc/current/developer/programmers-guide/bindings#installation
 
+MINGW-W64
+
+The CMake build supports both 32-bit and 64-bit MinGW-w64 toolchains. Before
+configuring, run `mvn -pl zookeeper-jute generate-sources -DskipTests` from the
+ZooKeeper top-level directory to generate the Jute C sources. A typical 64-bit
+cross-build from Linux is:
+
+  cmake -S . -B build-mingw64 \
+    -DCMAKE_SYSTEM_NAME=Windows \
+    -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+    -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+    -DBUILD_SHARED_LIBS=ON \
+    -DWITH_OPENSSL=OFF -DWITH_CYRUS_SASL=OFF
+  cmake --build build-mingw64
+
+Use i686-w64-mingw32-gcc and i686-w64-mingw32-g++ for a 32-bit build. OpenSSL
+and Cyrus SASL can be enabled when MinGW-built versions of those dependencies
+are available to CMake. CMake always builds the single-threaded zookeeper_st
+library and, unless `-DWANT_SYNCAPI=OFF` is used, also builds the multithreaded
+zookeeper_mt library. Set `-DBUILD_STATIC_LIBS=ON` alongside
+`-DBUILD_SHARED_LIBS=ON` to produce both static and shared libraries in one
+build directory.
+
 EXAMPLE/SAMPLE C CLIENT SHELL
 
 NOTE: the ZooKeeper C client shell (cli_st and cli_mt) is meant as a

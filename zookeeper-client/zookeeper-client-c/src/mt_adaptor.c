@@ -316,8 +316,13 @@ void adaptor_destroy(zhandle_t *zh)
 
     pthread_mutex_destroy(&zh->auth_h.lock);
 
+#ifdef WIN32
+    closesocket(adaptor->self_pipe[0]);
+    closesocket(adaptor->self_pipe[1]);
+#else
     close(adaptor->self_pipe[0]);
     close(adaptor->self_pipe[1]);
+#endif
     free(adaptor);
     zh->adaptor_priv=0;
 }
@@ -443,7 +448,7 @@ void *do_io(void *v)
             }
         }
         else if (rc < 0) {
-            LOG_ERROR(LOGCALLBACK(zh), ("select() failed %d [%d].", rc, WSAGetLastError()));
+            LOG_ERROR(LOGCALLBACK(zh), "select() failed %d [%d].", rc, WSAGetLastError());
 
             // Clear interest events for zookeeper_process if select() fails.
             interest = 0;
@@ -503,7 +508,7 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr)
 #ifndef WIN32
     return __sync_fetch_and_add(operand, incr);
 #else
-    return InterlockedExchangeAdd(operand, incr);
+    return InterlockedExchangeAdd((volatile LONG *)operand, incr);
 #endif
 }
 
