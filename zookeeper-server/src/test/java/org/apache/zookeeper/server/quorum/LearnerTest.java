@@ -23,8 +23,8 @@ import static java.util.Collections.emptySet;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -362,7 +362,7 @@ public class LearnerTest extends ZKTestCase {
     }
 
     @Test
-    public void incompleteTruncSyncClearsInMemoryDatabase(@TempDir File tmpDir) throws Exception {
+    public void incompleteTruncSyncDoesNotCreateTxnLogGapOnReconnect(@TempDir File tmpDir) throws Exception {
         FileTxnSnapLog txnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
         SimpleLearner learner = new SimpleLearner(txnSnapLog);
         ZKDatabase zkDb = learner.zk.getZKDatabase();
@@ -403,10 +403,29 @@ public class LearnerTest extends ZKTestCase {
 
         learner.shutdown();
 
-        assertFalse(zkDb.isInitialized());
-        assertEquals(1, zkDb.loadDataBase());
-        assertNotNull(zkDb.getNode("/retained"));
-        assertNull(zkDb.getNode("/replacement"));
+        // Mirror the lazy reload performed by QuorumPeer.getLastLoggedZxid() on
+        // the next connection without depending on how shutdown invalidates the database.
+        if (!zkDb.isInitialized()) {
+            zkDb.loadDataBase();
+        }
+        long nextZxid = zkDb.getDataTreeLastProcessedZxid() + 1;
+
+        // Persist the transaction the leader would send next. If the incomplete
+        // in-memory state was reused, nextZxid is 3 and the on-disk log has a gap.
+        appendCreate(txnSnapLog, nextZxid, "/continued");
+        txnSnapLog.commit();
+        zkDb.close();
+
+        // Simulate a process restart. Replaying the log must not detect a zxid gap.
+        FileTxnSnapLog restartedTxnSnapLog = new FileTxnSnapLog(tmpDir, tmpDir);
+        ZKDatabase restartedDb = new ZKDatabase(restartedTxnSnapLog);
+        long restoredZxid = assertDoesNotThrow(restartedDb::loadDataBase);
+        assertEquals(2, restoredZxid);
+        assertNotNull(restartedDb.getNode("/retained"));
+        assertNotNull(restartedDb.getNode("/continued"));
+        assertNull(restartedDb.getNode("/discarded"));
+        assertNull(restartedDb.getNode("/replacement"));
+        restartedDb.close();
     }
 
     private static void appendCreate(FileTxnSnapLog txnSnapLog, long zxid, String path) throws IOException {
