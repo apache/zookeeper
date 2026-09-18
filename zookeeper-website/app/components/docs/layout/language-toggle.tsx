@@ -18,6 +18,7 @@
 
 import type { ComponentProps } from "react";
 import { useI18n } from "fumadocs-ui/contexts/i18n";
+import { T, useTranslations } from "@fuma-translate/react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover";
 import { buttonVariants } from "../../../ui/button";
 import { cn } from "@/lib/utils";
@@ -26,12 +27,13 @@ export type LanguageSelectProps = ComponentProps<"button">;
 
 export function LanguageToggle(props: LanguageSelectProps): React.ReactElement {
   const context = useI18n();
+  const t = useTranslations();
   if (!context.locales) throw new Error("Missing `<I18nProvider />`");
 
   return (
     <Popover>
       <PopoverTrigger
-        aria-label={context.text.chooseLanguage}
+        aria-label={t("Choose a language", { note: "language switcher" })}
         {...props}
         className={cn(
           buttonVariants({
@@ -45,7 +47,7 @@ export function LanguageToggle(props: LanguageSelectProps): React.ReactElement {
       </PopoverTrigger>
       <PopoverContent className="flex flex-col overflow-x-hidden p-0">
         <p className="text-fd-muted-foreground mb-1 p-2 text-xs font-medium">
-          {context.text.chooseLanguage}
+          <T text="Choose a language" note="language switcher" />
         </p>
         {context.locales.map((item) => (
           <button

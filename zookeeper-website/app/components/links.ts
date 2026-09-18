@@ -61,12 +61,10 @@ export const projectLinks: LinkType[] = [
 ];
 
 export const documentationLinks: (LinkType | NestedLinkType)[] = [
-  ...LTS_VERSIONS.map(
-    (version): LinkType => ({
-      label: `${version} Documentation`,
-      to: getReleasedDocUrl(version)
-    })
-  ),
+  ...LTS_VERSIONS.map((version): LinkType => ({
+    label: `${version} Documentation`,
+    to: getReleasedDocUrl(version)
+  })),
   {
     label: "Issue Tracking",
     to: "https://issues.apache.org/jira/browse/ZOOKEEPER",

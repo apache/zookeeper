@@ -126,7 +126,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center px-4 py-16">
+    <main
+      data-testid="route-error-boundary"
+      className="grid min-h-screen place-items-center px-4 py-16"
+    >
       <section
         className="mx-auto flex max-w-2xl flex-col items-center text-center"
         aria-labelledby="error-title"

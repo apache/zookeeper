@@ -27,14 +27,13 @@ import {
 } from "@/components/docs/layout/docs/page";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type * as PageTree from "fumadocs-core/page-tree";
-import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import type { BaseLayoutProps } from "@/components/docs/layout/shared";
 import { useParams } from "react-router";
 import { getPageTreePeers } from "fumadocs-core/page-tree";
 import { Card, Cards } from "fumadocs-ui/components/card";
 import { Callout } from "fumadocs-ui/components/callout";
 import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Link } from "@/components/link";
-import { OlderDocsPicker } from "@/components/docs/older-docs-picker";
 import type { MDXComponents } from "mdx/types";
 import { getDocsBasePath, resolveDocsHref } from "@/lib/docs-paths";
 import { SITE_URL } from "@/lib/site";
@@ -45,7 +44,6 @@ import { CURRENT_VERSION } from "@/lib/current-version";
 const baseMdxComponents: MDXComponents = {
   ...defaultMdxComponents,
   p: (props) => <p className="wrap-anywhere" {...props} />,
-  h1: (props) => <h1 className="font-bold" {...props} />,
   Callout,
   Step,
   Steps

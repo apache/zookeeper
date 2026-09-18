@@ -169,14 +169,11 @@ test.describe("Documentation Page - Search Functionality", () => {
     await expect(searchDialog).not.toBeVisible();
   });
 
-  test("keyboard shortcut Cmd+K opens search", async ({ page }) => {
+  test("keyboard shortcut ControlOrMeta+K opens search", async ({ page }) => {
     await page.goto(DOCS_ROOT);
     await page.waitForLoadState("networkidle");
 
-    // Press Cmd+K (or Ctrl+K)
-    await page.keyboard.press(
-      process.platform === "darwin" ? "Meta+k" : "Control+k"
-    );
+    await page.keyboard.press("ControlOrMeta+k");
     await page.waitForTimeout(500);
 
     // Verify dialog opened

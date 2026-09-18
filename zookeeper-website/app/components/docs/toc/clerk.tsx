@@ -19,13 +19,12 @@
 import * as Primitive from "fumadocs-core/toc";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { TocThumb, useTOCItems } from "./index";
-import { useI18n } from "fumadocs-ui/contexts/i18n";
+import { T } from "@fuma-translate/react";
 import { cn, mergeRefs } from "@/lib/utils";
 
 export function TOCItems({ ref, className, ...props }: ComponentProps<"div">) {
   const containerRef = useRef<HTMLDivElement>(null);
   const items = useTOCItems();
-  const { text } = useI18n();
 
   const [svg, setSvg] = useState<{
     path: string;
@@ -82,7 +81,7 @@ export function TOCItems({ ref, className, ...props }: ComponentProps<"div">) {
   if (items.length === 0)
     return (
       <div className="bg-fd-card text-fd-muted-foreground rounded-lg border p-3 text-xs">
-        {text.tocNoHeadings}
+        <T text="No Headings" note="table of contents" />
       </div>
     );
 
