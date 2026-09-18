@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ public class IOUtilsTest extends ZKTestCase {
 
         IOUtils.closeAll(null, () -> closed.add(1), null, () -> closed.add(2));
 
-        assertEquals(List.of(1, 2), closed);
+        assertEquals(Arrays.asList(1, 2), closed);
     }
 
     @Test
@@ -68,7 +69,7 @@ public class IOUtilsTest extends ZKTestCase {
 
         assertSame(first, failure);
         assertArrayEquals(new Throwable[]{second, third}, failure.getSuppressed());
-        assertEquals(List.of(1, 2, 3, 4), closed);
+        assertEquals(Arrays.asList(1, 2, 3, 4), closed);
     }
 
     @Test
@@ -85,7 +86,7 @@ public class IOUtilsTest extends ZKTestCase {
 
         assertSame(expected, failure);
         assertEquals(0, failure.getSuppressed().length);
-        assertEquals(List.of(1, 2), closed);
+        assertEquals(Arrays.asList(1, 2), closed);
     }
 
     @Test
@@ -104,7 +105,7 @@ public class IOUtilsTest extends ZKTestCase {
 
         assertSame(expected, failure);
         assertEquals(0, failure.getSuppressed().length);
-        assertEquals(List.of(3), closed);
+        assertEquals(Arrays.asList(3), closed);
     }
 
 }
