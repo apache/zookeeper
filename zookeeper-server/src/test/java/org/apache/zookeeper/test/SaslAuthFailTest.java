@@ -18,11 +18,14 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -88,9 +91,12 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
 
     @Test
     public void testBadSaslAuthNotifiesWatch() throws Exception {
-        try (ZooKeeper ignored = createClient(new MyWatcher(), hostPort)) {
+        try (ZooKeeper zk = createClient(new MyWatcher(), hostPort)) {
             // wait for authFailed event from client's EventThread.
-            authFailed.await();
+            assertTrue(authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+            zk.close();
+            assertEquals(ZooKeeper.States.CLOSED, zk.getState());
+            assertTrue(zk.close(CONNECTION_TIMEOUT));
         }
     }
 
