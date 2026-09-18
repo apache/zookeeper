@@ -571,6 +571,14 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             request.setTxn(new SetACLTxn(path, listACL, newVersion));
             nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
             nodeRecord.stat.setAversion(newVersion);
+            // Publish the new ACL onto the outstanding ChangeRecord. getRecordForPath()
+            // serves this record (in preference to the committed tree) to every request
+            // prepped before this setACL commits, so without this line those requests are
+            // authorized against the stale, pre-revocation ACL and their writes linearize
+            // after the revocation (TOCTOU). Mirrors the create path, which already sets
+            // the ACL on its ChangeRecord. ACL is not part of the node digest, so this
+            // does not affect digest calculation.
+            nodeRecord.acl = listACL;
             nodeRecord.precalculatedDigest = precalculateDigest(
                     DigestOpCode.UPDATE, path, nodeRecord.data, nodeRecord.stat);
             setTxnDigest(request, nodeRecord.precalculatedDigest);
