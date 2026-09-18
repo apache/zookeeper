@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
@@ -36,11 +37,14 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 import org.apache.commons.io.FileUtils;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.server.util.ZxidLayout;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
@@ -51,6 +55,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,10 +89,10 @@ public class TxnLogToolkitTest {
     public void testDumpMode() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.274");
-        TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true);
-
-        // Act
-        lt.dump(null);
+        try (TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true)) {
+            // Act
+            lt.dump(null);
+        }
 
         // Assert
         // no exception thrown
@@ -146,10 +151,10 @@ public class TxnLogToolkitTest {
     public void testDumpWithCrcError() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
-        TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true);
-
-        // Act
-        lt.dump(null);
+        try (TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true)) {
+            // Act
+            lt.dump(null);
+        }
 
         // Assert
         String output = outContent.toString();
@@ -162,10 +167,10 @@ public class TxnLogToolkitTest {
     public void testRecoveryFixBrokenFile() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
-        TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), true);
-
-        // Act
-        lt.dump(null);
+        try (TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), true)) {
+            // Act
+            lt.dump(null);
+        }
 
         // Assert
         String output = outContent.toString();
@@ -174,8 +179,9 @@ public class TxnLogToolkitTest {
         // Should be able to dump the recovered logfile with no CRC error
         outContent.reset();
         logfile = new File(new File(mySnapDir, "version-2"), "log.42.fixed");
-        lt = new TxnLogToolkit(false, false, logfile.toString(), true);
-        lt.dump(null);
+        try (TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true)) {
+            lt.dump(null);
+        }
         output = outContent.toString();
         assertThat(output, not(containsString("CRC ERROR")));
     }
@@ -184,10 +190,10 @@ public class TxnLogToolkitTest {
     public void testRecoveryInteractiveMode() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
-        TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), false);
-
-        // Act
-        lt.dump(new Scanner("y\n"));
+        try (TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), false)) {
+            // Act
+            lt.dump(new Scanner("y\n"));
+        }
 
         // Assert
         String output = outContent.toString();
@@ -196,10 +202,59 @@ public class TxnLogToolkitTest {
         // Should be able to dump the recovered logfile with no CRC error
         outContent.reset();
         logfile = new File(new File(mySnapDir, "version-2"), "log.42.fixed");
-        lt = new TxnLogToolkit(false, false, logfile.toString(), true);
-        lt.dump(null);
+        try (TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true)) {
+            lt.dump(null);
+        }
         output = outContent.toString();
         assertThat(output, not(containsString("CRC ERROR")));
+    }
+
+    /**
+     * Chopping a txnlog that spans the legacy -> wide-counter layout boundary:
+     * the chop result is layout-independent (the boundary is a numeric
+     * comparison), but the gap diagnostics decompose zxids into epoch/counter,
+     * so they need the switch epoch to classify a gap correctly. Without it a
+     * within-epoch wide-counter gap is misread as an inter-epoch gap.
+     */
+    @Test
+    public void testChopWithWideCounterSwitchEpoch() throws Exception {
+        // Two wide-counter zxids of epoch 6, straddling a 32-bit boundary, with
+        // an intra-epoch gap between them. Legacy 32/32 math would read them as
+        // epochs 1536 and 1537 (an inter-epoch gap); wide 24/40 math reads both
+        // as epoch 6 (an intra-epoch gap).
+        long wideA = ZxidLayout.WIDE_COUNTER.makeZxid(6, 0xFF000000L);
+        long wideB = ZxidLayout.WIDE_COUNTER.makeZxid(6, 0x100000005L);
+        File logFile = new File(mySnapDir, "log.wide");
+        writeTxnLog(logFile, wideA, wideB);
+
+        // With the switch epoch, the gap is correctly classified intra-epoch.
+        outContent.reset();
+        new TxnLogToolkit(logFile.toString(), "0x" + Long.toHexString(wideA), "6").chop();
+        String withEpoch = outContent.toString();
+        assertThat(withEpoch, containsString("intra-epoch gap"));
+        assertThat(withEpoch, not(containsString("inter-epoch gap")));
+        assertTrue(new File(mySnapDir, "log.wide.chopped" + wideA).exists());
+
+        // Without it (legacy-only), the same gap is misreported as inter-epoch.
+        outContent.reset();
+        new TxnLogToolkit(logFile.toString(), "0x" + Long.toHexString(wideA)).chop();
+        assertThat(outContent.toString(), containsString("inter-epoch gap"));
+    }
+
+    private void writeTxnLog(File logFile, long... zxids) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(logFile)) {
+            BinaryOutputArchive oa = BinaryOutputArchive.getArchive(fos);
+            new FileHeader(FileTxnLog.TXNLOG_MAGIC, 2, 1).serialize(oa, "fileheader");
+            for (long zxid : zxids) {
+                TxnHeader hdr = new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error);
+                byte[] bytes = Util.marshallTxnEntry(hdr, new ErrorTxn(1), null);
+                Checksum crc = new Adler32();
+                crc.update(bytes, 0, bytes.length);
+                oa.writeLong(crc.getValue(), "crcvalue");
+                oa.writeBuffer(bytes, "txnEntry");
+                oa.writeByte((byte) 'B', "EOR");
+            }
+        }
     }
 
 }

@@ -55,6 +55,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.util.LogChopper;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
@@ -117,6 +118,12 @@ public class TxnLogToolkit implements Closeable {
 
     // chop mode
     private long zxid = -1L;
+    // chop mode: the epoch from which the ensemble uses the wide-counter zxid
+    // layout (the content of the zxidLayoutSwitchEpoch file), or -1 when the
+    // log is entirely in the legacy layout. Only affects the gap diagnostics,
+    // which decompose zxids into epoch/counter; the chop boundary itself is a
+    // purely numeric comparison and is layout-independent.
+    private long zxidLayoutSwitchEpoch = -1L;
 
     /**
      * @param args Command line arguments
@@ -164,8 +171,15 @@ public class TxnLogToolkit implements Closeable {
     }
 
     public TxnLogToolkit(String txnLogFileName, String zxidName) throws TxnLogToolkitException {
+        this(txnLogFileName, zxidName, null);
+    }
+
+    public TxnLogToolkit(String txnLogFileName, String zxidName, String switchEpochName) throws TxnLogToolkitException {
         txnLogFile = loadTxnFile(txnLogFileName);
         zxid = Long.decode(zxidName);
+        if (switchEpochName != null) {
+            zxidLayoutSwitchEpoch = Long.decode(switchEpochName);
+        }
     }
 
     private File loadTxnFile(String txnLogFileName) throws TxnLogToolkitException {
@@ -253,9 +267,14 @@ public class TxnLogToolkit implements Closeable {
 
     public void chop() {
         File targetFile = new File(txnLogFile.getParentFile(), txnLogFile.getName() + ".chopped" + zxid);
+        ZxidLayoutState layoutState = ZxidLayoutState.legacyOnly();
+        if (zxidLayoutSwitchEpoch >= 0) {
+            layoutState = new ZxidLayoutState();
+            layoutState.switchAt(zxidLayoutSwitchEpoch);
+        }
         try (InputStream is = new BufferedInputStream(new FileInputStream(txnLogFile));
              OutputStream os = new BufferedOutputStream(new FileOutputStream(targetFile))) {
-            if (!LogChopper.chop(is, os, zxid)) {
+            if (!LogChopper.chop(is, os, zxid, layoutState)) {
                 throw new TxnLogToolkitException(
                     ExitCode.INVALID_INVOCATION.getValue(),
                     "Failed to chop %s",
@@ -457,8 +476,13 @@ public class TxnLogToolkit implements Closeable {
         // Chop mode options
         Option chopOpt = new Option("c", "chop", false, "Chop mode. Chop txn file to a zxid.");
         Option zxidOpt = new Option("z", "zxid", true, "Used with chop. Zxid to which to chop.");
+        Option switchEpochOpt = new Option("s", "switch-epoch", true,
+            "Used with chop. The wide-counter zxid layout switch epoch (content of the zxidLayoutSwitchEpoch "
+                + "file) when the log spans the layout switch, so gap diagnostics decode zxids correctly. "
+                + "Optional; the chop result is the same with or without it.");
         options.addOption(chopOpt);
         options.addOption(zxidOpt);
+        options.addOption(switchEpochOpt);
 
         try {
             CommandLine cli = parser.parse(options, args);
@@ -469,7 +493,7 @@ public class TxnLogToolkit implements Closeable {
                 printHelpAndExit(1, options);
             }
             if (cli.hasOption("chop") && cli.hasOption("zxid")) {
-                return new TxnLogToolkit(cli.getArgs()[0], cli.getOptionValue("zxid"));
+                return new TxnLogToolkit(cli.getArgs()[0], cli.getOptionValue("zxid"), cli.getOptionValue("switch-epoch"));
             }
             return new TxnLogToolkit(cli.hasOption("recover"), cli.hasOption("verbose"), cli.getArgs()[0], cli.hasOption("yes"));
         } catch (ParseException e) {
@@ -479,7 +503,7 @@ public class TxnLogToolkit implements Closeable {
 
     private static void printHelpAndExit(int exitCode, Options options) {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp(120, "TxnLogToolkit [-dhrvc] <txn_log_file_name> (-z <zxid>)", "", options, "");
+        help.printHelp(120, "TxnLogToolkit [-dhrvc] <txn_log_file_name> (-z <zxid>) [-s <switch_epoch>]", "", options, "");
         ServiceUtils.requestSystemExit(exitCode);
     }
 
