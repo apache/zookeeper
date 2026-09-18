@@ -49,6 +49,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -290,6 +291,70 @@ public class PrepRequestProcessorTest extends ClientBase {
         pLatch.await();
         assertEquals(outcome.getHdr().getType(), OpCode.error);
         assertEquals(outcome.getException().code(), KeeperException.Code.BADARGUMENTS);
+    }
+
+    /**
+     * A setACL that is prepped but not yet committed must publish the NEW ACL onto
+     * its outstanding ChangeRecord. getRecordForPath() serves that record to every
+     * request prepped before the setACL commits, so if it still carries the old ACL
+     * those requests are authorized against the pre-revocation ACL (TOCTOU).
+     *
+     * This is the direct regression test for the missing
+     * {@code nodeRecord.acl = listACL;} in the setACL case: before the fix the
+     * outstanding record keeps the old OPEN_ACL_UNSAFE; after the fix it carries the
+     * new read-only ACL.
+     */
+    @Test
+    public void testSetACLPublishesNewAclOnOutstandingChangeRecord() throws Exception {
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+        assertNull(zks.outstandingChangesForPath.get("/foo"));
+
+        pLatch = new CountDownLatch(1);
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+        SetACLRequest setAcl = new SetACLRequest("/foo", Ids.READ_ACL_UNSAFE, -1);
+        // admin identity so the ADMIN permission check is not what is under test here
+        processor.pRequest(createRequest(setAcl, OpCode.setACL, true));
+        assertTrue(pLatch.await(5, TimeUnit.SECONDS), "request hasn't been processed in chain");
+
+        ChangeRecord cr = zks.outstandingChangesForPath.get("/foo");
+        assertNotNull(cr, "Change record wasn't set");
+        assertEquals(Ids.READ_ACL_UNSAFE, cr.acl,
+                "Outstanding ChangeRecord must carry the new ACL so later preps are checked against it");
+    }
+
+    /**
+     * End-to-end (at the prep layer) version of the above: a client's write that is
+     * prepped while an ACL revocation is still outstanding must be checked against the
+     * NEW ACL and denied. Before the fix the write is authorized against the stale ACL
+     * and would commit after the revocation.
+     */
+    @Test
+    public void testRacingWriteAfterAclRevocationIsDenied() throws Exception {
+        // Node is world-writable to start with (OPEN_ACL_UNSAFE grants ALL to world:anyone).
+        zks.getZKDatabase().dataTree.createNode("/foo", new byte[0], Ids.OPEN_ACL_UNSAFE, 0, 0, 0, 0);
+
+        processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
+
+        // 1. A world client revokes write access: setACL -> read-only. This is prepped and
+        //    left in outstandingChangesForPath (not yet committed). OPEN_ACL_UNSAFE grants
+        //    ADMIN, so the world client is allowed to perform the setACL.
+        pLatch = new CountDownLatch(1);
+        SetACLRequest setAcl = new SetACLRequest("/foo", Ids.READ_ACL_UNSAFE, -1);
+        processor.pRequest(createRequest(setAcl, OpCode.setACL, false));
+        assertTrue(pLatch.await(5, TimeUnit.SECONDS), "setACL hasn't been processed in chain");
+        assertNull(outcome.getException(), "setACL revocation should succeed");
+
+        // 2. The same world client now tries to write while the revocation is still
+        //    outstanding. It must be checked against the new read-only ACL and denied.
+        pLatch = new CountDownLatch(1);
+        SetDataRequest setData = new SetDataRequest("/foo", "evil".getBytes(), -1);
+        processor.pRequest(createRequest(setData, OpCode.setData, false));
+        assertTrue(pLatch.await(5, TimeUnit.SECONDS), "setData hasn't been processed in chain");
+
+        assertEquals(OpCode.error, outcome.getHdr().getType(),
+                "write racing an outstanding ACL revocation must fail");
+        assertEquals(KeeperException.Code.NOAUTH, outcome.getException().code(),
+                "write racing an outstanding ACL revocation must be denied against the new ACL");
     }
 
     private class MyRequestProcessor implements RequestProcessor {
