@@ -82,6 +82,14 @@ SERVER_JVMFLAGS="-XX:InitialRAMPercentage=25 -XX:MaxRAMPercentage=75" \
 ./zkServer.sh start
 ```
 
+It can also be used to provide an `-Xmx` value directly:
+
+```bash
+ZK_SERVER_HEAP=omit \
+SERVER_JVMFLAGS="-Xmx2g" \
+./zkServer.sh start
+```
+
 ### zkCleanup.sh
 
 Clean up old snapshots and transaction logs.
