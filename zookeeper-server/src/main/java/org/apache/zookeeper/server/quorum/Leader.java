@@ -1025,14 +1025,13 @@ public class Leader extends LearnerMaster {
             // we're sending the designated leader, and if the leader is changing the followers are
             // responsible for closing the connection - this way we are sure that at least a majority of them
             // receive the commit message.
-            commitAndActivate(zxid, designatedLeader);
+            commitAndActivate(p, designatedLeader);
             informAndActivate(p, designatedLeader);
         } else {
             p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
-            commit(zxid);
+            commit(p);
             inform(p);
         }
-        zk.commitProcessor.commit(p.request);
         if (pendingSyncs.containsKey(zxid)) {
             for (LearnerSyncRequest r : pendingSyncs.remove(zxid)) {
                 sendSync(r);
@@ -1065,16 +1064,7 @@ public class Leader extends LearnerMaster {
             LOG.trace("outstanding proposals all");
         }
 
-        if ((zxid & 0xffffffffL) == 0) {
-            /*
-             * We no longer process NEWLEADER ack with this method. However,
-             * the learner sends an ack back to the leader after it gets
-             * UPTODATE, so we just ignore the message.
-             */
-            return;
-        }
-
-        if (outstandingProposals.size() == 0) {
+        if (outstandingProposals.isEmpty()) {
             LOG.debug("outstanding is 0");
             return;
         }
@@ -1212,24 +1202,29 @@ public class Leader extends LearnerMaster {
     long lastCommitted = -1;
 
     /**
-     * Create a commit packet and send it to all the members of the quorum
-     *
-     * @param zxid
+     * Commit proposal to all connected followers including itself.
      */
-    public void commit(long zxid) {
+    public void commit(Proposal p) {
+        long zxid = p.getZxid();
         synchronized (this) {
             lastCommitted = zxid;
         }
+
+        zk.commit(p.request);
+
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
         ServerMetrics.getMetrics().COMMIT_COUNT.add(1);
     }
 
     //commit and send some info
-    public void commitAndActivate(long zxid, long designatedLeader) {
+    public void commitAndActivate(Proposal p, long designatedLeader) {
+        long zxid = p.getZxid();
         synchronized (this) {
             lastCommitted = zxid;
         }
+
+        zk.commit(p.request);
 
         byte[] data = new byte[8];
         ByteBuffer buffer = ByteBuffer.wrap(data);
@@ -1277,34 +1272,16 @@ public class Leader extends LearnerMaster {
         return ZxidUtils.getEpochFromZxid(lastProposed);
     }
 
-    @SuppressWarnings("serial")
-    public static class XidRolloverException extends Exception {
-
-        public XidRolloverException(String message) {
-            super(message);
-        }
-
-    }
-
     /**
      * create a proposal and send it out to all the members
      *
      * @param request
      * @return the proposal that is queued to send to all the members
      */
-    public Proposal propose(Request request) throws XidRolloverException {
+    public Proposal propose(Request request) {
         if (request.isThrottled()) {
             LOG.error("Throttled request send as proposal: {}. Exiting.", request);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
-        }
-        /**
-         * Address the rollover issue. All lower 32bits set indicate a new leader
-         * election. Force a re-election instead. See ZOOKEEPER-1277
-         */
-        if ((request.zxid & 0xffffffffL) == 0xffffffffL) {
-            String msg = "zxid lower 32 bits have rolled over, forcing re-election, and therefore new epoch start";
-            shutdown(msg);
-            throw new XidRolloverException(msg);
         }
 
         byte[] data = request.getSerializeData();
@@ -1331,6 +1308,7 @@ public class Leader extends LearnerMaster {
             sendPacket(pp);
         }
         ServerMetrics.getMetrics().PROPOSAL_COUNT.add(1);
+        zk.logRequest(request);
         return p;
     }
 
@@ -1462,6 +1440,22 @@ public class Leader extends LearnerMaster {
         }
         if (Time.currentElapsedTime() - timeStartWaitForEpoch > maxTimeToWaitForEpoch) {
             quitLeading();
+        }
+    }
+
+    /**
+     * Comparing to {@link #getEpochToPropose(long, long)}, this method does not bump `acceptedEpoch`
+     * as the rollover txn may not be persisted yet.
+     */
+    public void rolloverLeaderEpoch(long newEpoch) {
+        synchronized (connectingFollowers) {
+            if (waitingForNewEpoch) {
+                throw new IllegalStateException("ZAB is still waiting new epoch");
+            } else if (newEpoch != epoch + 1) {
+                String msg = String.format("can not rollover leader epoch to %s, current epoch is %s", newEpoch, epoch);
+                throw new IllegalArgumentException(msg);
+            }
+            epoch = newEpoch;
         }
     }
 
