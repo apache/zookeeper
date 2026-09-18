@@ -358,6 +358,7 @@ public class ZooKeeperSaslClient {
         try {
             cnxn.sendPacket(request, response, cb, ZooDefs.OpCode.sasl);
         } catch (IOException e) {
+            saslState = SaslState.FAILED;
             throw new SaslException("Failed to send SASL packet to server.", e);
         }
     }
@@ -372,6 +373,7 @@ public class ZooKeeperSaslClient {
         try {
             cnxn.sendPacket(request, response, cb, ZooDefs.OpCode.sasl);
         } catch (IOException e) {
+            saslState = SaslState.FAILED;
             throw new SaslException("Failed to send SASL packet to server due " + "to IOException:", e);
         }
     }
