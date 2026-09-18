@@ -378,6 +378,27 @@ public class FileTxnSnapLogTest {
     }
 
     @Test
+    public void testSaveAfterCloseThrowsIllegalStateException() throws IOException {
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
+        DataTree dataTree = new DataTree();
+        ConcurrentHashMap<Long, Integer> sessions = new ConcurrentHashMap<>();
+
+        snaplog.close();
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+            () -> snaplog.save(dataTree, sessions, true));
+        assertTrue(error.getMessage().contains("FileTxnSnapLog has been closed"));
+    }
+
+    @Test
+    public void testCloseIsIdempotent() throws IOException {
+        FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpDir, tmpDir);
+
+        snaplog.close();
+        snaplog.close();
+    }
+
+    @Test
     public void testSnapshotSerializationCompatibility() throws IOException {
         testSnapshotSerializationCompatibility(true, false);
         testSnapshotSerializationCompatibility(false, false);
