@@ -480,6 +480,60 @@ public class LearnerHandlerTest extends ZKTestCase {
     }
 
     /**
+     * Test cases when learner has new-epcoh zxid
+     * (zxid & 0xffffffffffL) == 0;
+     */
+    @Test
+    public void testNewEpochZxidWithTxnlogOnly() throws Exception {
+        long peerZxid;
+        db.txnLog.add(createProposal(getZxid(1, 1)));
+        db.txnLog.add(createProposal(getZxid(2, 1)));
+        db.txnLog.add(createProposal(getZxid(2, 2)));
+        db.txnLog.add(createProposal(getZxid(4, 1)));
+
+        // After leader election, lastProcessedZxid will point to new epoch
+        db.lastProcessedZxid = getZxid(6, 0);
+
+        // Peer has zxid of epoch 3
+        peerZxid = getZxid(3, 0);
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        // We send DIFF to (6,0) and forward any packet starting at (4,1)
+        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(4, 1));
+        // DIFF + 1 proposals + 1 commit
+        assertEquals(3, learnerHandler.getQueuedPackets().size());
+        queuedPacketMatches(new long[] { getZxid(4, 1)});
+        reset();
+
+        // Peer has zxid of epoch 4
+        peerZxid = getZxid(4, 0);
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        // We send DIFF to (6,0) and forward any packet starting at (4,1)
+        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(4, 1));
+        // DIFF + 1 proposals + 1 commit
+        assertEquals(3, learnerHandler.getQueuedPackets().size());
+        queuedPacketMatches(new long[] { getZxid(4, 1)});
+        reset();
+
+        // Peer has zxid of epoch 5
+        peerZxid = getZxid(5, 0);
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        // We send DIFF to (6,0) and forward any packet starting at (5,0)
+        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(5, 0));
+        // DIFF only
+        assertEquals(1, learnerHandler.getQueuedPackets().size());
+        reset();
+
+        // Peer has zxid of epoch 6
+        peerZxid = getZxid(6, 0);
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        // We send DIFF to (6,0) and forward any packet starting at (6, 0)
+        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(6, 0));
+        // DIFF only
+        assertEquals(1, learnerHandler.getQueuedPackets().size());
+        reset();
+    }
+
+    /**
      * Test cases when there is a duplicate txn in the committedLog. This
      * should never happen unless there is a bug in initialization code
      * but the learner should never see duplicate packets
