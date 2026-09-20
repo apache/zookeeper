@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 #  Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -19,7 +19,7 @@
 Generic monitoring script that could be used with multiple platforms (Ganglia, Nagios, Cacti).
 
 It requires ZooKeeper 3.4.0 or greater. The script needs the 'mntr' 4letter word 
-command (patch ZOOKEEPER-744) that was now committed to the trunk.
+command (patch ZOOKEEPER-744) that was now commited to the trunk.
 The script also works with ZooKeeper 3.3.x but in a limited way.
 """
 
@@ -29,7 +29,7 @@ import logging
 import re
 import subprocess
 
-from io import StringIO
+from StringIO import StringIO
 from optparse import OptionParser, OptionGroup
 
 __version__ = (0, 1, 0)
@@ -54,15 +54,15 @@ class NagiosHandler(object):
             critical = int(opts.critical)
 
         except (TypeError, ValueError):
-            print('Invalid values for "warning" and "critical".', file=sys.stderr)
+            print >>sys.stderr, 'Invalid values for "warning" and "critical".'
             return 2
 
         if opts.key is None:
-            print('You should specify a key name.', file=sys.stderr)
+            print >>sys.stderr, 'You should specify a key name.'
             return 2
 
         warning_state, critical_state, values = [], [], []
-        for host, stats in list(cluster_stats.items()):
+        for host, stats in cluster_stats.items():
             if opts.key in stats:
 
                 value = stats[opts.key]
@@ -76,20 +76,20 @@ class NagiosHandler(object):
 
         if not values:
             # Zookeeper may be down, not serving requests or we may have a bad configuration
-            print('Critical, %s not found' % opts.key)
+            print 'Critical, %s not found' % opts.key
             return 2
 
         values = ' '.join(values)
         if critical_state:
-            print('Critical "%s" %s!|%s' % (opts.key, ', '.join(critical_state), values))
+            print 'Critical "%s" %s!|%s' % (opts.key, ', '.join(critical_state), values)
             return 2
         
         elif warning_state:
-            print('Warning "%s" %s!|%s' % (opts.key, ', '.join(warning_state), values))
+            print 'Warning "%s" %s!|%s' % (opts.key, ', '.join(warning_state), values)
             return 1
 
         else:
-            print('Ok "%s"!|%s' % (opts.key, values))
+            print 'Ok "%s"!|%s' % (opts.key, values)
             return 0
 
 class CactiHandler(object):
@@ -105,32 +105,32 @@ class CactiHandler(object):
 
     def analyze(self, opts, cluster_stats):
         if opts.key is None:
-            print('The key name is mandatory.', file=sys.stderr)
+            print >>sys.stderr, 'The key name is mandatory.'
             return 1
 
         if opts.leader is True:
             try:
-                leader = [x for x in list(cluster_stats.values()) \
+                leader = [x for x in cluster_stats.values() \
                     if x.get('zk_server_state', '') == 'leader'][0] 
 
             except IndexError:
-                print('No leader found.', file=sys.stderr)
+                print >>sys.stderr, 'No leader found.'
                 return 3
 
             if opts.key in leader:
-                print(leader[opts.key])
+                print leader[opts.key]
                 return 0
 
             else:
-                print('Unknown key: "%s"' % opts.key, file=sys.stderr)
+                print >>sys.stderr, 'Unknown key: "%s"' % opts.key
                 return 2
         else:
-            for host, stats in list(cluster_stats.items()):
+            for host, stats in cluster_stats.items():
                 if opts.key not in stats: 
                     continue
 
                 host = host.replace(':', '_')
-                print('%s:%s' % (host, stats[opts.key]), end=' ')
+                print '%s:%s' % (host, stats[opts.key]),
 
 
 class GangliaHandler(object):
@@ -150,11 +150,11 @@ class GangliaHandler(object):
 
     def analyze(self, opts, cluster_stats):
         if len(cluster_stats) != 1:
-            print('Only allowed to monitor a single node.', file=sys.stderr)
+            print >>sys.stderr, 'Only allowed to monitor a single node.'
             return 1
 
-        for host, stats in list(cluster_stats.items()):
-            for k, v in list(stats.items()):
+        for host, stats in cluster_stats.items():
+            for k, v in stats.items():
                 try:
                     self.call([opts.gmetric, '-n', k, '-v', str(int(v)), '-t', 'uint32'])
                 except (TypeError, ValueError):
@@ -169,11 +169,16 @@ class ZooKeeperServer(object):
     def get_stats(self):
         """ Get ZooKeeper server stats as a map """
         data = self._send_cmd('mntr')
+        stat = self._parse_stat(self._send_cmd('stat'))
         if data:
-            return self._parse(data)
+            mntr = self._parse(data)
+            missing = ['zk_zxid', 'zk_zxid_counter', 'zk_zxid_epoch']
+            for m in missing:
+                if m in stat:
+                    mntr[m] = stat[m]
+            return mntr
         else:
-            data = self._send_cmd('stat')
-            return self._parse_stat(data)
+            return stat
 
     def _create_socket(self):
         return socket.socket()
@@ -184,17 +189,12 @@ class ZooKeeperServer(object):
         s.settimeout(self._timeout)
 
         s.connect(self._address)
-        s.send(cmd.encode('ascii'))
+        s.send(cmd)
 
-        data_all = ''
-        while(True):
-            data = s.recv(2048).decode('ascii')
-            data_all = data_all + data
-            if len(data) == 0:
-                break
+        data = s.recv(2048)
         s.close()
 
-        return data_all
+        return data
 
     def _parse(self, data):
         """ Parse the output from the 'mntr' 4letter word command """
@@ -241,6 +241,11 @@ class ZooKeeperServer(object):
                 result['zk_packets_sent'] = int(m.group(1))
                 continue
 
+            m = re.match('Alive connections: (\d+)', line)
+            if m is not None:
+                result['zk_num_alive_connections'] = int(m.group(1))
+                continue
+
             m = re.match('Outstanding: (\d+)', line)
             if m is not None:
                 result['zk_outstanding_requests'] = int(m.group(1))
@@ -256,21 +261,62 @@ class ZooKeeperServer(object):
                 result['zk_znode_count'] = int(m.group(1))
                 continue
 
-        return result 
+            m = re.match('Watch count: (\d+)', line)
+            if m is not None:
+                result['zk_watch_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Ephemerals count: (\d+)', line)
+            if m is not None:
+                result['zk_ephemerals_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Approximate data size: (\d+)', line)
+            if m is not None:
+                result['zk_approximate_data_size'] = int(m.group(1))
+                continue
+
+            m = re.match('Open file descriptor count: (\d+)', line)
+            if m is not None:
+                result['zk_open_file_descriptor_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Max file descriptor count: (\d+)', line)
+            if m is not None:
+                result['zk_max_file_descriptor_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Zxid: (0x[0-9a-fA-F]+)', line)
+            if m is not None:
+                result['zk_zxid']         = m.group(1)
+                result['zk_zxid_counter'] = int(m.group(1), 16) & int('0xffffffff', 16) # lower 32 bits
+                result['zk_zxid_epoch']   = int(m.group(1), 16) >>32 # high 32 bits
+                continue
+
+            m = re.match('Proposal sizes last/min/max: (\d+)/(\d+)/(\d+)', line)
+            if m is not None:
+                result['zk_last_proposal_size'] = int(m.group(1))
+                result['zk_min_proposal_size'] = int(m.group(2))
+                result['zk_max_proposal_size'] = int(m.group(3))
+                continue
+
+        return result
 
     def _parse_line(self, line):
         try:
-            key, value = list(map(str.strip, line.split('\t')))
+            key, value = map(str.strip, line.split('\t'))
         except ValueError:
             raise ValueError('Found invalid line: %s' % line)
 
         if not key:
             raise ValueError('The key is mandatory and should not be empty')
 
-        try:
-            value = int(value)
-        except (TypeError, ValueError):
-            pass
+        for typ in [int, float]:
+            try:
+                value = typ(value)
+                break
+            except (TypeError, ValueError):
+                pass
 
         return key, value
 
@@ -302,12 +348,12 @@ def get_all_handlers():
 
 def dump_stats(cluster_stats):
     """ Dump cluster statistics in an user friendly format """
-    for server, stats in list(cluster_stats.items()):
-        print('Server:', server)
+    for server, stats in cluster_stats.items():
+        print 'Server:', server
 
-        for key, value in list(stats.items()):
-            print("%30s" % key, ' ', value)
-        print()
+        for key, value in stats.items():
+            print "%30s" % key, ' ', value
+        print
 
 def get_cluster_stats(servers):
     """ Get stats for all the servers in the cluster """
@@ -317,7 +363,7 @@ def get_cluster_stats(servers):
             zk = ZooKeeperServer(host, port)
             stats["%s:%s" % (host, port)] = zk.get_stats()
 
-        except socket.error as e:
+        except socket.error, e:
             # ignore because the cluster can still work even 
             # if some servers fail completely
 
