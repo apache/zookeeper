@@ -19,7 +19,9 @@
 #include <zookeeper.h>
 #include "zookeeper_log.h"
 #include <errno.h>
-#ifdef THREADED 
+#ifdef WIN32
+#include "winport.h"
+#else
 #include <pthread.h>
 #endif
 #include <string.h>
@@ -29,11 +31,11 @@ static zhandle_t *zh;
 
 // *****************************************************************************
 //
-static pthread_cond_t cond=PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cond;
+static pthread_mutex_t lock;
 
-static pthread_cond_t counterCond=PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t counterLock=PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t counterCond;
+static pthread_mutex_t counterLock;
 static int counter; 
 
 
@@ -230,6 +232,12 @@ void usage(char *argv[]){
 int main(int argc, char **argv) {
     int nodeCount;
     int cleaning=0;
+
+    pthread_mutex_init(&lock, 0);
+    pthread_cond_init(&cond, 0);
+    pthread_mutex_init(&counterLock, 0);
+    pthread_cond_init(&counterCond, 0);
+
     if (argc < 4) {
         usage(argv);
     }

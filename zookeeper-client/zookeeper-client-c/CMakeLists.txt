@@ -23,24 +23,24 @@ set(description "zookeeper C client")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../tools/cmake/Modules")
 
 # general options
-if(UNIX)
-  add_compile_options(-Wall -fPIC)
-elseif(WIN32)
+if(MSVC)
   add_compile_options(/W3)
+elseif(MINGW)
+  add_compile_options(-Wall)
+else()
+  add_compile_options(-Wall -fPIC)
 endif()
-add_definitions(-DUSE_STATIC_LIB)
+
+option(BUILD_SHARED_LIBS "Build ZooKeeper client shared libraries" OFF)
+option(BUILD_STATIC_LIBS "Also build ZooKeeper client static libraries" OFF)
 
 # TODO: Enable /WX and /W4 on Windows. Currently there are ~1000 warnings.
 # TODO: Add Solaris support.
-# TODO: Add a shared library option.
 # TODO: Specify symbols to export.
 # TODO: Generate doxygen documentation.
 
 # Sync API option
 option(WANT_SYNCAPI "Enables Sync API support" ON)
-if(WANT_SYNCAPI)
-  add_definitions(-DTHREADED)
-endif()
 
 # CppUnit option
 if(WIN32 OR APPLE)
@@ -130,6 +130,11 @@ endforeach()
 
 # function checks
 include(CheckFunctionExists)
+set(ZOOKEEPER_SAVED_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+if(WIN32)
+  # Winsock functions cannot be detected unless the probe links ws2_32.
+  list(APPEND CMAKE_REQUIRED_LIBRARIES ws2_32)
+endif()
 set(check_functions
   getcwd
   gethostbyname
@@ -147,10 +152,20 @@ set(check_functions
   strerror
   strtol)
 
+# CheckFunctionExists cannot detect 32-bit stdcall Winsock symbols because it
+# does not include their declarations, so record the known Windows APIs.
+if(WIN32)
+  set(HAVE_GETHOSTBYNAME 1)
+  set(HAVE_GETHOSTNAME 1)
+  set(HAVE_SOCKET 1)
+endif()
+
 foreach(fn ${check_functions})
   to_have(${fn} name)
   check_function_exists(${fn} ${name})
 endforeach()
+set(CMAKE_REQUIRED_LIBRARIES ${ZOOKEEPER_SAVED_REQUIRED_LIBRARIES})
+unset(ZOOKEEPER_SAVED_REQUIRED_LIBRARIES)
 
 # library checks
 set(check_libraries rt m pthread)
@@ -161,7 +176,13 @@ endforeach()
 
 # IPv6 check
 include(CheckStructHasMember)
-check_struct_has_member("struct sockaddr_in6" sin6_addr "netinet/in.h" ZOO_IPV6_ENABLED)
+if(WIN32)
+  check_struct_has_member("struct sockaddr_in6" sin6_addr
+    "winsock2.h;ws2tcpip.h" ZOO_IPV6_ENABLED)
+else()
+  check_struct_has_member("struct sockaddr_in6" sin6_addr
+    "netinet/in.h" ZOO_IPV6_ENABLED)
+endif()
 
 # configure
 configure_file(cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
@@ -172,8 +193,8 @@ add_library(hashtable STATIC ${hashtable_sources})
 target_include_directories(hashtable PUBLIC include)
 target_link_libraries(hashtable PUBLIC $<$<OR:$<PLATFORM_ID:Linux>,$<PLATFORM_ID:FreeBSD>>:m>)
 
-# zookeeper library
-set(zookeeper_sources
+# ZooKeeper client libraries
+set(zookeeper_common_sources
   src/zookeeper.c
   src/recordio.c
   generated/zookeeper.jute.c
@@ -181,37 +202,72 @@ set(zookeeper_sources
   src/zk_hashtable.c
   src/addrvec.c)
 
-if(WANT_SYNCAPI)
-  list(APPEND zookeeper_sources src/mt_adaptor.c)
-else()
-  list(APPEND zookeeper_sources src/st_adaptor.c)
-endif()
-
 if(CYRUS_SASL_FOUND)
-  list(APPEND zookeeper_sources src/zk_sasl.c)
+  list(APPEND zookeeper_common_sources src/zk_sasl.c)
 endif()
 
 if(WIN32)
-  list(APPEND zookeeper_sources src/winport.c)
+  list(APPEND zookeeper_common_sources src/winport.c)
 endif()
 
-add_library(zookeeper STATIC ${zookeeper_sources})
-target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
-target_link_libraries(zookeeper PUBLIC
-  hashtable
-  $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
-  $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
+function(add_zookeeper_library target variant library_type adaptor)
+  add_library(${target} ${library_type}
+    ${zookeeper_common_sources} ${adaptor})
+  target_include_directories(${target} PUBLIC
+    include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
+  target_link_libraries(${target} PUBLIC
+    hashtable
+    $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
+    $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
+  set_target_properties(${target} PROPERTIES OUTPUT_NAME zookeeper_${variant})
+
+  if("${library_type}" STREQUAL "SHARED")
+    if(WIN32)
+      # ZOOAPI expands to dllexport while compiling the DLL and dllimport for
+      # consumers. Export the remaining public generated/Jute entry points too.
+      target_compile_definitions(${target} PRIVATE DLL_EXPORT)
+      set_target_properties(${target} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
+  else()
+    target_compile_definitions(${target} PUBLIC USE_STATIC_LIB)
+  endif()
+
+  if("${variant}" STREQUAL "mt")
+    target_compile_definitions(${target} PUBLIC THREADED)
+  endif()
+
+  set(zookeeper_library_targets ${zookeeper_library_targets} ${target} PARENT_SCOPE)
+endfunction()
+
+# Keep the historical CMake default (static only).  Turning on both options
+# produces static and shared artifacts in one build tree.
+set(zookeeper_library_targets)
+if(BUILD_SHARED_LIBS)
+  add_zookeeper_library(zookeeper_st_shared st SHARED src/st_adaptor.c)
+  if(WANT_SYNCAPI)
+    add_zookeeper_library(zookeeper_mt_shared mt SHARED src/mt_adaptor.c)
+  endif()
+endif()
+
+if(NOT BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS)
+  add_zookeeper_library(zookeeper_st_static st STATIC src/st_adaptor.c)
+  if(WANT_SYNCAPI)
+    add_zookeeper_library(zookeeper_mt_static mt STATIC src/mt_adaptor.c)
+  endif()
+endif()
 
 option(WITH_OPENSSL "turn ON/OFF SSL support, or define openssl library location (default: ON)" ON)
 message("-- using WITH_OPENSSL=${WITH_OPENSSL}")
 if(NOT WITH_OPENSSL STREQUAL "OFF")
   if(NOT WITH_OPENSSL STREQUAL "ON")
-    set(OPENSSL_ROOT_DIR,${WITH_OPENSSL})
+    set(OPENSSL_ROOT_DIR ${WITH_OPENSSL})
   endif()
   find_package(OpenSSL)
   if(OPENSSL_FOUND)
-    target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
-    target_link_libraries(zookeeper PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    foreach(target ${zookeeper_library_targets})
+      target_compile_definitions(${target} PUBLIC HAVE_OPENSSL_H)
+      target_link_libraries(${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    endforeach()
     message("-- OpenSSL libraries found! will build with SSL support.")
   else()
     message("-- WARNING: unable to find OpenSSL libraries! will build without SSL support.")
@@ -220,22 +276,47 @@ endif()
 
 if(WANT_SYNCAPI AND NOT WIN32)
   find_package(Threads REQUIRED)
-  target_link_libraries(zookeeper PUBLIC Threads::Threads)
+  foreach(target zookeeper_mt_shared zookeeper_mt_static)
+    if(TARGET ${target})
+      target_link_libraries(${target} PUBLIC Threads::Threads)
+    endif()
+  endforeach()
 endif()
 
 if(CYRUS_SASL_FOUND)
-  target_compile_definitions(zookeeper PUBLIC HAVE_CYRUS_SASL_H)
-  target_link_libraries(zookeeper PUBLIC CyrusSASL)
+  foreach(target ${zookeeper_library_targets})
+    target_compile_definitions(${target} PUBLIC HAVE_CYRUS_SASL_H)
+    target_link_libraries(${target} PUBLIC CyrusSASL)
+  endforeach()
 endif()
 
-# cli executable
-add_executable(cli src/cli.c)
-target_link_libraries(cli zookeeper)
+# Command-line clients follow the Autotools layout.  When both library kinds
+# are requested, link the samples against the shared libraries.
+if(TARGET zookeeper_st_shared)
+  set(zookeeper_st_cli_target zookeeper_st_shared)
+else()
+  set(zookeeper_st_cli_target zookeeper_st_static)
+endif()
+add_executable(cli_st src/cli.c)
+target_link_libraries(cli_st ${zookeeper_st_cli_target})
 
-# load_gen executable
-if(WANT_SYNCAPI AND NOT WIN32)
+# Multithreaded client and load generator are only available with Sync API.
+if(WANT_SYNCAPI)
+  if(TARGET zookeeper_mt_shared)
+    set(zookeeper_mt_cli_target zookeeper_mt_shared)
+  else()
+    set(zookeeper_mt_cli_target zookeeper_mt_static)
+  endif()
+  add_executable(cli_mt src/cli.c)
+  target_link_libraries(cli_mt ${zookeeper_mt_cli_target})
+
   add_executable(load_gen src/load_gen.c)
-  target_link_libraries(load_gen zookeeper)
+  target_link_libraries(load_gen ${zookeeper_mt_cli_target})
+  if(WIN32)
+    # winport is an internal part of the client DLL, while load_gen uses its
+    # pthread compatibility helpers directly.
+    target_sources(load_gen PRIVATE src/winport.c)
+  endif()
 endif()
 
 # tests
@@ -273,7 +354,11 @@ if(WANT_CPPUNIT)
   target_compile_definitions(zktest
     PRIVATE -DZKSERVER_CMD="${CMAKE_CURRENT_SOURCE_DIR}/tests/zkServer.sh")
   # TODO: Use `find_library()` for `cppunit`.
-  target_link_libraries(zktest zookeeper cppunit dl)
+  if(WANT_SYNCAPI)
+    target_link_libraries(zktest ${zookeeper_mt_cli_target} cppunit dl)
+  else()
+    target_link_libraries(zktest ${zookeeper_st_cli_target} cppunit dl)
+  endif()
 
   # This reads the link flags from the file `tests/wrappers.opt` into
   # the variable `symbol_wrappers` for use in `target_link_libraries`.
