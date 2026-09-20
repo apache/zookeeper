@@ -130,6 +130,6 @@ public class IOUtilsTest extends ZKTestCase {
 
         assertSame(first, failure);
         assertArrayEquals(new Throwable[]{second}, failure.getSuppressed());
-        assertEquals(List.of(1, 2, 3), closed);
+        assertEquals(Arrays.asList(1, 2, 3), closed);
     }
 }
