@@ -23,17 +23,24 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import java.io.BufferedOutputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Random;
 import java.util.stream.Collectors;
 import org.apache.jute.Record;
@@ -63,6 +70,33 @@ public class FileTxnLogTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FileTxnLogTest.class);
 
     private static final int KB = 1024;
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testCloseAttemptsEveryStream(@TempDir File tmpDir) throws Exception {
+        FileTxnLog txnLog = new FileTxnLog(tmpDir);
+        BufferedOutputStream logStream = mock(BufferedOutputStream.class);
+        FileOutputStream firstStream = mock(FileOutputStream.class);
+        FileOutputStream secondStream = mock(FileOutputStream.class);
+        IOException logStreamFailure = new IOException("log stream");
+        IOException queuedStreamFailure = new IOException("queued stream");
+        doThrow(logStreamFailure).when(logStream).close();
+        doThrow(queuedStreamFailure).when(firstStream).close();
+        txnLog.logStream = logStream;
+
+        // Inject close failures directly because streamsToFlush is private.
+        Field streamsField = FileTxnLog.class.getDeclaredField("streamsToFlush");
+        streamsField.setAccessible(true);
+        Queue<FileOutputStream> streams = (Queue<FileOutputStream>) streamsField.get(txnLog);
+        streams.add(firstStream);
+        streams.add(secondStream);
+
+        IOException thrown = assertThrows(IOException.class, txnLog::close);
+
+        assertEquals(logStreamFailure, thrown);
+        assertArrayEquals(new Throwable[]{queuedStreamFailure}, thrown.getSuppressed());
+        verify(secondStream).close();
+    }
 
     @Test
     public void testInvalidPreallocSize() {

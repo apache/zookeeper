@@ -43,6 +43,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
@@ -264,12 +265,10 @@ public class FileTxnLog implements TxnLog, Closeable {
      * @throws IOException
      */
     public synchronized void close() throws IOException {
-        if (logStream != null) {
-            logStream.close();
-        }
-        for (FileOutputStream log : streamsToFlush) {
-            log.close();
-        }
+        List<Closeable> toClose = new ArrayList<>(streamsToFlush.size() + 1);
+        toClose.add(logStream);
+        toClose.addAll(streamsToFlush);
+        IOUtils.closeAll(toClose);
     }
 
     @Override
