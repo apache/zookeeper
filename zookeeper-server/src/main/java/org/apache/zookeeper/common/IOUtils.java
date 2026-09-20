@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collection;
 import org.slf4j.Logger;
 
@@ -53,6 +54,18 @@ public class IOUtils {
      *            exceptions added as suppressed exceptions
      */
     public static void closeAll(Closeable... closeables) throws IOException {
+        closeAll(Arrays.asList(closeables));
+    }
+
+    /**
+     * Closes every non-null object, preserving any {@link IOException} thrown.
+     *
+     * @param closeables
+     *            the objects to close, in iteration order
+     * @throws IOException the first exception thrown while closing, with later
+     *            exceptions added as suppressed exceptions
+     */
+    public static void closeAll(Collection<? extends Closeable> closeables) throws IOException {
         IOException firstException = null;
         for (Closeable closeable : closeables) {
             if (closeable != null) {
@@ -70,19 +83,6 @@ public class IOUtils {
         if (firstException != null) {
             throw firstException;
         }
-    }
-
-    /**
-     * Closes every non-null object, preserving any {@link IOException} thrown.
-     *
-     * @param closeables
-     *            the objects to close, in iteration order
-     * @throws IOException the first exception thrown while closing, with later
-     *            exceptions added as suppressed exceptions
-     * @see #closeAll(Closeable...)
-     */
-    public static void closeAll(Collection<? extends Closeable> closeables) throws IOException {
-        closeAll(closeables.toArray(new Closeable[0]));
     }
 
     /**
