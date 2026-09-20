@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,4 +108,27 @@ public class IOUtilsTest extends ZKTestCase {
         assertEquals(List.of(3), closed);
     }
 
+    @Test
+    public void testCloseAllCollectionPreservesFirstFailureAndSuppressesLaterFailures() {
+        IOException first = new IOException("first");
+        IOException second = new IOException("second");
+        List<Integer> closed = new ArrayList<>();
+        List<Closeable> closeables = new ArrayList<>();
+        closeables.add(null);
+        closeables.add(() -> {
+            closed.add(1);
+            throw first;
+        });
+        closeables.add(() -> {
+            closed.add(2);
+            throw second;
+        });
+        closeables.add(() -> closed.add(3));
+
+        IOException failure = assertThrows(IOException.class, () -> IOUtils.closeAll(closeables));
+
+        assertSame(first, failure);
+        assertArrayEquals(new Throwable[]{second}, failure.getSuppressed());
+        assertEquals(List.of(1, 2, 3), closed);
+    }
 }
