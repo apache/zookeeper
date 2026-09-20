@@ -474,6 +474,90 @@ public class ZooKeeperQuotaTest extends ClientBase {
     }
 
     @Test
+    public void testMultiCreatesExceedingCountHardQuotaShouldFail() throws Exception {
+        final String path = "/c";
+
+        zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        final StatsTrack st = new StatsTrack();
+        st.setCountHardLimit(3);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        // each create on its own stays within the limit; only the
+        // transaction as a whole exceeds it
+        final List<Op> ops = Arrays.asList(
+            Op.create(path + "/1", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.create(path + "/2", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.create(path + "/3", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+        try {
+            zk.multi(ops);
+            fail("should fail transaction when the creates together exceed the count hard quota");
+        } catch (QuotaExceededException e) {
+            //expected
+        }
+
+        assertNull(zk.exists(path + "/1", null));
+        assertNull(zk.exists(path + "/2", null));
+        assertNull(zk.exists(path + "/3", null));
+    }
+
+    @Test
+    public void testMultiCreatesExceedingBytesHardQuotaShouldFail() throws Exception {
+        final String path = "/b";
+
+        zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        final byte[] data5b = "Hello".getBytes(StandardCharsets.UTF_8);
+
+        final StatsTrack st = new StatsTrack();
+        st.setByteHardLimit(3 * data5b.length - 1);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        final List<Op> ops = Arrays.asList(
+            Op.create(path + "/1", data5b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.create(path + "/2", data5b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
+            Op.create(path + "/3", data5b, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+        try {
+            zk.multi(ops);
+            fail("should fail transaction when the creates together exceed the byte hard quota");
+        } catch (QuotaExceededException e) {
+            //expected
+        }
+
+        assertNull(zk.exists(path + "/1", null));
+        assertNull(zk.exists(path + "/2", null));
+        assertNull(zk.exists(path + "/3", null));
+    }
+
+    @Test
+    public void testMultiDeleteThenCreateWithinCountHardQuotaShouldWork() throws Exception {
+        final String path = "/replace";
+        final String oldChild = path + "/old";
+        final String newChild = path + "/new";
+
+        zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        final StatsTrack st = new StatsTrack();
+        st.setCountHardLimit(2);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        zk.create(oldChild, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // the node count is at the hard limit, but the transaction deletes
+        // as much as it creates, so it should be allowed
+        final List<Op> ops = Arrays.asList(
+            Op.delete(oldChild, -1),
+            Op.create(newChild, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+
+        zk.multi(ops);
+
+        assertNull(zk.exists(oldChild, null));
+        assertNotNull(zk.exists(newChild, null));
+    }
+
+    @Test
     public void testDeleteBytesQuota() throws Exception {
 
         final String namespace = UUID.randomUUID().toString();
