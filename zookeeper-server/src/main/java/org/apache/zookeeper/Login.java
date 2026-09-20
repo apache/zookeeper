@@ -423,6 +423,44 @@ public class Login {
     }
 
     /**
+     * Force a re-login, bypassing the minimum time check and the Kerberos ticket check.
+     * This is used when authentication fails and fresh credentials are needed immediately,
+     * regardless of the authentication mechanism (Kerberos or DIGEST-MD5).
+     *
+     * <p>Unlike {@link #reLogin()}, this method:
+     * <ul>
+     *   <li>Does not check {@code isKrbTicket} — works for all SASL mechanisms</li>
+     *   <li>Does not check {@code hasSufficientTimeElapsed} — allows immediate retry</li>
+     *   <li>Clears stale credentials from the Subject before re-login</li>
+     * </ul>
+     *
+     * @throws javax.security.auth.login.LoginException on a failure
+     */
+    public synchronized void forceReLogin() throws LoginException {
+        LoginContext lc = getLogin();
+        if (lc == null) {
+            throw new LoginException("login must be done first");
+        }
+        LOG.info("Forcing re-login for {}", getUserName());
+        synchronized (Login.class) {
+            // First try the regular logout to clean up mechanism-specific state
+            logout();
+            // Clear any remaining credentials that logout may not have handled.
+            // For DIGEST-MD5, DigestLoginModule.logout() is a no-op and does not
+            // remove credentials from the Subject. We must clear them explicitly
+            // to avoid stale credentials being picked up on the next authentication
+            // attempt (SecurityUtils.createSaslClient uses toArray()[0]).
+            subject.getPrivateCredentials().clear();
+            subject.getPublicCredentials().clear();
+            // Re-login to get fresh credentials
+            lc = new LoginContext(loginContextName, subject, newCallbackHandler());
+            lc.login();
+            setLogin(lc);
+        }
+        setLastLogin(Time.currentElapsedTime());
+    }
+
+    /**
      * Re-login a principal. This method assumes that {@link #login(String)} has happened already.
      * @throws javax.security.auth.login.LoginException on a failure
      */
