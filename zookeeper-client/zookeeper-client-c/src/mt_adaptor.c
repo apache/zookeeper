@@ -199,7 +199,8 @@ void notify_thread_ready(zhandle_t* zh)
 {
     struct adaptor_threads* adaptor=zh->adaptor_priv;
     pthread_mutex_lock(&adaptor->lock);
-    adaptor->threadsToWait--;
+    if(adaptor->threadsToWait>0)
+        adaptor->threadsToWait--;
     pthread_cond_broadcast(&adaptor->cond);
     while(adaptor->threadsToWait>0) 
         pthread_cond_wait(&adaptor->cond,&adaptor->lock);
@@ -207,9 +208,10 @@ void notify_thread_ready(zhandle_t* zh)
 }
 
 
-void start_threads(zhandle_t* zh)
+int start_threads(zhandle_t* zh)
 {
     int rc = 0;
+    int io_started = 0;
     struct adaptor_threads* adaptor=zh->adaptor_priv;
     pthread_cond_init(&adaptor->cond,0);
     pthread_mutex_init(&adaptor->lock,0);
@@ -220,15 +222,34 @@ void start_threads(zhandle_t* zh)
     api_prolog(zh);
     LOG_DEBUG(LOGCALLBACK(zh), "starting threads...");
     rc=pthread_create(&adaptor->io, 0, do_io, zh);
-    assert("pthread_create() failed for the IO thread"&&!rc);
+    if(rc)
+        goto fail;
+    io_started=1;
     rc=pthread_create(&adaptor->completion, 0, do_completion, zh);
-    assert("pthread_create() failed for the completion thread"&&!rc);
+    if(rc)
+        goto fail;
     wait_for_others(zh);
-    api_epilog(zh, 0);    
+    api_epilog(zh, 0);
+    return 0;
+
+fail:
+    LOG_ERROR(LOGCALLBACK(zh), "pthread_create() failed: %d", rc);
+    if(io_started) {
+        zh->close_requested=1;
+        pthread_mutex_lock(&adaptor->lock);
+        adaptor->threadsToWait=0;
+        pthread_cond_broadcast(&adaptor->cond);
+        pthread_mutex_unlock(&adaptor->lock);
+        pthread_join(adaptor->io, 0);
+        zh->close_requested=0;
+    }
+    api_epilog(zh, 0);
+    return rc;
 }
 
 int adaptor_init(zhandle_t *zh)
 {
+    int rc;
     pthread_mutexattr_t recursive_mx_attr;
     struct adaptor_threads *adaptor_threads = calloc(1, sizeof(*adaptor_threads));
     if (!adaptor_threads) {
@@ -267,7 +288,12 @@ int adaptor_init(zhandle_t *zh)
     pthread_cond_init(&zh->sent_requests.cond,0);
     pthread_mutex_init(&zh->completions_to_process.lock,0);
     pthread_cond_init(&zh->completions_to_process.cond,0);
-    start_threads(zh);
+    rc=start_threads(zh);
+    if(rc) {
+        adaptor_destroy(zh);
+        errno=rc;
+        return -1;
+    }
     return 0;
 }
 
@@ -313,6 +339,8 @@ void adaptor_destroy(zhandle_t *zh)
     pthread_mutex_destroy(&zh->completions_to_process.lock);
     pthread_cond_destroy(&zh->completions_to_process.cond);
     pthread_mutex_destroy(&adaptor->zh_lock);
+    pthread_mutex_destroy(&adaptor->reconfig_lock);
+    pthread_mutex_destroy(&adaptor->watchers_lock);
 
     pthread_mutex_destroy(&zh->auth_h.lock);
 
