@@ -919,9 +919,11 @@ public class Learner {
         closeSocket();
         // shutdown previous zookeeper
         if (zk != null) {
-            // If we haven't finished SNAP sync, force fully shutdown
-            // to avoid potential inconsistency
-            zk.shutdown(self.getSyncMode().equals(QuorumPeer.SyncMode.SNAP));
+            QuorumPeer.SyncMode syncMode = self.getSyncMode();
+            // SNAP and TRUNC sync can apply transactions directly to the in-memory
+            // database before the state is persisted in a snapshot. If sync fails,
+            // discard that database so the next attempt reloads the state on disk.
+            zk.shutdown(syncMode == QuorumPeer.SyncMode.SNAP || syncMode == QuorumPeer.SyncMode.TRUNC);
         }
     }
 
