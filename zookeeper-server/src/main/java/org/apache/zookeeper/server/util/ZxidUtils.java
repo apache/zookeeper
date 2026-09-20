@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.util;
 
 public class ZxidUtils {
+    public static final long MAX_COUNTER = 0x00000000ffffffffL;
 
     public static long getEpochFromZxid(long zxid) {
         return zxid >> 32L;
@@ -33,4 +34,7 @@ public class ZxidUtils {
         return Long.toHexString(zxid);
     }
 
+    public static boolean isLastEpochZxid(long zxid) {
+        return getCounterFromZxid(zxid) == MAX_COUNTER;
+    }
 }
