@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
@@ -27,6 +28,8 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -91,9 +94,12 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
 
     @Test
     public void testBadSaslAuthNotifiesWatch() throws Exception {
-        try (ZooKeeper zk = createClient(new MyWatcher(), hostPort)) {
+        try (TestableZooKeeper zk = createClient(new MyWatcher(), hostPort)) {
             // wait for authFailed event from client's EventThread.
             assertTrue(authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+            assertTrue(zk.testableWaitForShutdown(1000), "Client threads should stop after SASL authentication fails");
+            assertEquals(ZooKeeper.States.AUTH_FAILED, zk.getState());
+            assertThrows(KeeperException.AuthFailedException.class, () -> zk.exists("/", false));
             zk.close();
             assertEquals(ZooKeeper.States.CLOSED, zk.getState());
             assertTrue(zk.close(CONNECTION_TIMEOUT));
