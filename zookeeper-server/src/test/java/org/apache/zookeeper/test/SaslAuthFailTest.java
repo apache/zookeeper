@@ -97,7 +97,10 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
         try (TestableZooKeeper zk = createClient(new MyWatcher(), hostPort)) {
             // wait for authFailed event from client's EventThread.
             assertTrue(authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
-            assertTrue(zk.testableWaitForShutdown(1000), "Client threads should stop after SASL authentication fails");
+            boolean threadsStopped = zk.testableWaitForShutdown(1000);
+            LOG.info("SASL failure shutdown without close: threadsStopped={}, state={}",
+                     threadsStopped, zk.getState());
+            assertTrue(threadsStopped, "Client threads should stop after SASL authentication fails");
             assertEquals(ZooKeeper.States.AUTH_FAILED, zk.getState());
             assertThrows(KeeperException.AuthFailedException.class, () -> zk.exists("/", false));
             zk.close();
