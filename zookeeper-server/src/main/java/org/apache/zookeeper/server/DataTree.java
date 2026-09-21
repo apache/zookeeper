@@ -499,14 +499,25 @@ public class DataTree {
         }
         // now check if its one of the zookeeper node child
         if (parentName.startsWith(quotaZookeeper)) {
-            // now check if it's the limit node
-            if (Quotas.limitNode.equals(childName)) {
-                // this is the limit node
-                // get the parent and add it to the trie
-                pTrie.addPath(Quotas.trimQuotaPath(parentName));
-            }
-            if (Quotas.statNode.equals(childName)) {
-                updateQuotaForPath(Quotas.trimQuotaPath(parentName));
+            boolean isLimitNode = Quotas.limitNode.equals(childName);
+            boolean isStatNode = Quotas.statNode.equals(childName);
+            if (isLimitNode || isStatNode) {
+                // The quota namespace between /zookeeper/quota and the
+                // limit/stat node must be non-empty. A limit/stat node created
+                // directly under /zookeeper/quota trims to "", and
+                // PathTrie.addPath("") throws, killing the SyncRequestProcessor
+                // critical thread on the apply path (and unbootable on replay).
+                String quotaPrefix = Quotas.trimQuotaPath(parentName);
+                if (quotaPrefix.isEmpty()) {
+                    LOG.warn("Ignoring quota {} node with empty namespace under {}",
+                            isLimitNode ? "limit" : "stat", parentName);
+                } else if (isLimitNode) {
+                    // this is the limit node
+                    // get the parent and add it to the trie
+                    pTrie.addPath(quotaPrefix);
+                } else {
+                    updateQuotaForPath(quotaPrefix);
+                }
             }
         }
 
@@ -590,10 +601,19 @@ public class DataTree {
             }
         }
 
-        if (parentName.startsWith(procZookeeper) && Quotas.limitNode.equals(childName)) {
-            // delete the node in the trie.
-            // we need to update the trie as well
-            pTrie.deletePath(Quotas.trimQuotaPath(parentName));
+        // Only limit nodes actually under /zookeeper/quota are ever registered
+        // in the path trie (createNode uses the same prefix). Mirror that prefix
+        // here — using the wider /zookeeper prefix let a stray zookeeper_limits
+        // node elsewhere under /zookeeper reach trimQuotaPath and throw
+        // StringIndexOutOfBoundsException on the apply path. The empty-namespace
+        // case (node directly under /zookeeper/quota) is skipped too, since
+        // deletePath("") would likewise throw.
+        if (parentName.startsWith(quotaZookeeper) && Quotas.limitNode.equals(childName)) {
+            String quotaPrefix = Quotas.trimQuotaPath(parentName);
+            if (!quotaPrefix.isEmpty()) {
+                // delete the node in the trie; we need to update the trie as well
+                pTrie.deletePath(quotaPrefix);
+            }
         }
 
         // also check to update the quotas for this node
@@ -1260,8 +1280,15 @@ public class DataTree {
                 // get the real node and update
                 // the count and the bytes
                 String realPath = path.substring(Quotas.quotaZookeeper.length(), path.indexOf(endString));
-                updateQuotaForPath(realPath);
-                this.pTrie.addPath(realPath);
+                // A limit node directly under /zookeeper/quota yields an empty
+                // realPath; pTrie.addPath("") throws and aborts startup while
+                // rebuilding the trie from a snapshot. Skip such stray nodes.
+                if (!realPath.isEmpty()) {
+                    updateQuotaForPath(realPath);
+                    this.pTrie.addPath(realPath);
+                } else {
+                    LOG.warn("Ignoring quota limit node with empty namespace: {}", path);
+                }
             }
             return;
         }

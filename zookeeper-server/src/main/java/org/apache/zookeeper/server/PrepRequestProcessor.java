@@ -38,6 +38,8 @@ import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
+import org.apache.zookeeper.Quotas;
+import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.ConfigException;
@@ -381,6 +383,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
             zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
+            validateQuotaData(path, setDataRequest.getData());
             zks.checkQuota(path, nodeRecord.data, setDataRequest.getData(), OpCode.setData);
             int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
             request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));
@@ -687,6 +690,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             throw new KeeperException.NoChildrenForEphemeralsException(path);
         }
         int newCversion = parentRecord.stat.getCversion() + 1;
+        validateQuotaData(path, data);
         zks.checkQuota(path, null, data, OpCode.create);
         if (type == OpCode.createContainer) {
             request.setTxn(new CreateContainerTxn(path, data, listACL, newCversion));
@@ -727,6 +731,48 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             PathUtils.validatePath(path);
         } catch (IllegalArgumentException ie) {
             LOG.info("Invalid path {} with session 0x{}, reason: {}", path, Long.toHexString(sessionId), ie.getMessage());
+            throw new BadArgumentsException(path);
+        }
+    }
+
+    /**
+     * Reject a create/setData whose target is a quota {@code zookeeper_stats} or
+     * {@code zookeeper_limits} node when either the node is placed directly under
+     * {@code /zookeeper/quota} (an empty namespace) or its data is not well-formed
+     * StatsTrack content. These nodes live under the world-writable
+     * {@code /zookeeper/quota} subtree and are consumed on the transaction-apply
+     * path ({@link org.apache.zookeeper.server.DataTree#updateQuotaStat} and the
+     * path-trie registration); rejecting bad writes here stops them from ever
+     * being committed. The apply path is additionally hardened in
+     * {@link StatsTrack} and {@link DataTree}, so this is defense-in-depth rather
+     * than the sole guard.
+     *
+     * @param path the target node path
+     * @param data the proposed node data
+     * @throws BadArgumentsException if the path is a quota stat/limit node with
+     *                               an empty namespace or malformed {@code data}
+     */
+    private void validateQuotaData(String path, byte[] data) throws BadArgumentsException {
+        if (path == null || !path.startsWith(Quotas.quotaZookeeper + "/")) {
+            return;
+        }
+        boolean isStatNode = path.endsWith("/" + Quotas.statNode);
+        boolean isLimitNode = path.endsWith("/" + Quotas.limitNode);
+        if (!isStatNode && !isLimitNode) {
+            return;
+        }
+        // A stat/limit node must sit under a non-empty namespace, i.e.
+        // /zookeeper/quota/<ns>/zookeeper_{stats,limits}. Placed directly under
+        // /zookeeper/quota it trims to an empty prefix and crashes the apply
+        // path (PathTrie.addPath("")).
+        String parent = path.substring(0, path.lastIndexOf('/'));
+        if (Quotas.trimQuotaPath(parent).isEmpty()) {
+            LOG.warn("Rejecting quota {} node with empty namespace: {}",
+                    isLimitNode ? "limit" : "stat", path);
+            throw new BadArgumentsException(path);
+        }
+        if (!StatsTrack.isValidStatsData(data)) {
+            LOG.warn("Rejecting malformed quota data write to {}", path);
             throw new BadArgumentsException(path);
         }
     }

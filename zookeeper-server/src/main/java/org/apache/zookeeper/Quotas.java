@@ -78,9 +78,18 @@ public class Quotas {
      * return the real path associated with this
      * quotaPath.
      * @param quotaPath the quotaPath which's started with /zookeeper/quota
-     * @return the real path associated with this quotaPath.
+     * @return the real path associated with this quotaPath, or an empty string
+     *         if the given path is not actually under /zookeeper/quota. Returning
+     *         "" rather than throwing keeps a stray {@code zookeeper_limits} node
+     *         elsewhere under /zookeeper (or the /zookeeper/quota root itself)
+     *         from raising StringIndexOutOfBoundsException on the
+     *         transaction-apply path, which would kill the SyncRequestProcessor
+     *         critical thread and leave the dataDir unbootable on replay.
      */
     public static String trimQuotaPath(String quotaPath) {
+        if (quotaPath == null || !quotaPath.startsWith(quotaZookeeper)) {
+            return "";
+        }
         return quotaPath.substring(quotaZookeeper.length());
     }
 }

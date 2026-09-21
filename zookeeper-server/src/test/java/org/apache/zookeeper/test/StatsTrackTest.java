@@ -132,4 +132,90 @@ public class StatsTrackTest {
         Assert.assertEquals(-1, st.getByteHardLimit());
         Assert.assertEquals(-1, st.getCountHardLimit());
     }
+
+    // ------------------------------------------------------------------
+    // Hardening against malformed quota-stats data (ZOOKEEPER quota-poison):
+    // a StatsTrack parsed on the transaction-apply path must never throw, or
+    // it kills the SyncRequestProcessor critical thread and, since the trigger
+    // txn is durable, the dataDir becomes unbootable on replay.
+    // ------------------------------------------------------------------
+
+    @Test
+    public void testMalformedValueNoDelimiterDoesNotThrow() {
+        // "x" has no '=' -> previously ArrayIndexOutOfBoundsException at kv[1]
+        StatsTrack st = new StatsTrack("x");
+        Assert.assertEquals(-1, st.getCount());
+        Assert.assertEquals(-1, st.getBytes());
+    }
+
+    @Test
+    public void testMalformedNonNumericValueDoesNotThrow() {
+        // "count=abc" -> previously NumberFormatException
+        StatsTrack st = new StatsTrack("count=abc");
+        Assert.assertEquals(-1, st.getCount());
+    }
+
+    @Test
+    public void testMalformedFromBytesDoesNotThrow() {
+        StatsTrack st = new StatsTrack("x".getBytes());
+        Assert.assertEquals(-1, st.getCount());
+        Assert.assertEquals(-1, st.getBytes());
+    }
+
+    @Test
+    public void testNullBytesDoesNotThrow() {
+        // null payload (jute length -1) must not NPE new String(null, ...)
+        StatsTrack st = new StatsTrack((byte[]) null);
+        Assert.assertEquals(-1, st.getCount());
+        Assert.assertEquals(-1, st.getBytes());
+    }
+
+    @Test
+    public void testPartiallyMalformedKeepsGoodEntries() {
+        // good entries survive, only the bad pair is skipped
+        StatsTrack st = new StatsTrack("count=5,bytes=zzz");
+        Assert.assertEquals(5, st.getCount());
+        Assert.assertEquals(-1, st.getBytes());
+    }
+
+    @Test
+    public void testEmptyAndNullDoNotThrow() {
+        Assert.assertEquals(-1, new StatsTrack("").getCount());
+        Assert.assertEquals(-1, new StatsTrack((String) null).getCount());
+    }
+
+    @Test
+    public void testHardLimitRoundTripStillWorks() {
+        // Guards the compatibility sentinel trailing '=' produced by toString():
+        // parsing must recover every field, including the hard limits.
+        StatsTrack quota = new StatsTrack();
+        quota.setCount(4);
+        quota.setCountHardLimit(4);
+        quota.setBytes(9L);
+        quota.setByteHardLimit(15L);
+        String serialized = quota.toString();
+        Assert.assertEquals("count=4,bytes=9=;byteHardLimit=15;countHardLimit=4", serialized);
+
+        StatsTrack reparsed = new StatsTrack(serialized);
+        Assert.assertEquals(4, reparsed.getCount());
+        Assert.assertEquals(9L, reparsed.getBytes());
+        Assert.assertEquals(15L, reparsed.getByteHardLimit());
+        Assert.assertEquals(4, reparsed.getCountHardLimit());
+    }
+
+    @Test
+    public void testIsValidStatsData() {
+        // well-formed, including the compatibility sentinel format
+        Assert.assertTrue(StatsTrack.isValidStatsData(new byte[0]));
+        Assert.assertTrue(StatsTrack.isValidStatsData("count=5,bytes=10".getBytes()));
+        Assert.assertTrue(StatsTrack.isValidStatsData(
+                "count=4,bytes=9=;byteHardLimit=15;countHardLimit=4".getBytes()));
+
+        // malformed -> rejected at prep time
+        Assert.assertFalse(StatsTrack.isValidStatsData(null));
+        Assert.assertFalse(StatsTrack.isValidStatsData("x".getBytes()));
+        Assert.assertFalse(StatsTrack.isValidStatsData("count=abc".getBytes()));
+        Assert.assertFalse(StatsTrack.isValidStatsData("=5".getBytes()));
+        Assert.assertFalse(StatsTrack.isValidStatsData("count=5,x".getBytes()));
+    }
 }

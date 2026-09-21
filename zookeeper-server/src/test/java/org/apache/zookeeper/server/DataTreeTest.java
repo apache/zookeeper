@@ -45,6 +45,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Quotas;
+import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
@@ -685,6 +686,123 @@ public class DataTreeTest extends ZKTestCase {
         } finally {
             ZooKeeperServer.setSerializeLastProcessedZxidEnabled(true);
         }
+    }
+
+    /**
+     * Regression test for the quota-stats poisoning crash: malformed data
+     * committed to a {@code zookeeper_stats} node must not throw on the
+     * transaction-apply path (updateQuotaStat), which previously killed the
+     * SyncRequestProcessor critical thread and left the dataDir unbootable.
+     * The node must additionally self-heal into a well-formed value.
+     */
+    @Test
+    @Timeout(value = 60)
+    public void testUpdateQuotaStatSurvivesMalformedStatsData() throws Exception {
+        DataTree dt = new DataTree();
+
+        // register /ns as a quota namespace (limit node create adds it to the trie)
+        dt.createNode("/ns", new byte[0], null, -1, 1, 1, 1);
+        dt.createNode(Quotas.quotaPath("/ns"), null, null, -1, 1, 1, 1);
+        dt.createNode(Quotas.limitPath("/ns"),
+                new StatsTrack("count=10,bytes=1000").getStatsBytes(), null, -1, 1, 1, 1);
+        dt.createNode(Quotas.statPath("/ns"),
+                new StatsTrack().getStatsBytes(), null, -1, 1, 1, 1);
+
+        // poison: commit malformed data to the stats node (as an unauthenticated
+        // setData would). This write is not itself under the quota prefix, so it
+        // stores silently without triggering updateQuotaStat.
+        dt.setData(Quotas.statPath("/ns"), "x".getBytes(), 1, 2, 1);
+        assertEquals("x", new String(dt.getNode(Quotas.statPath("/ns")).data));
+
+        // detonating write: an ordinary create under the namespace re-parses the
+        // poisoned stats node in updateQuotaStat. Must NOT throw.
+        dt.createNode("/ns/child", new byte[3], null, -1, 2, 3, 1);
+
+        // the stats node self-healed into a well-formed StatsTrack value
+        byte[] healed = dt.getNode(Quotas.statPath("/ns")).data;
+        assertTrue(StatsTrack.isValidStatsData(healed),
+                "stats node should be well-formed after recovery, was: " + new String(healed));
+
+        // a further write still succeeds (no lingering poison)
+        dt.setData("/ns/child", new byte[5], 1, 4, 1);
+        assertTrue(StatsTrack.isValidStatsData(dt.getNode(Quotas.statPath("/ns")).data));
+    }
+
+    /**
+     * Companion to the above for a null stats payload (jute length -1): the
+     * byte[] StatsTrack constructor must not NPE on the apply/replay path.
+     */
+    @Test
+    @Timeout(value = 60)
+    public void testUpdateQuotaStatSurvivesNullStatsData() throws Exception {
+        DataTree dt = new DataTree();
+        dt.createNode("/ns", new byte[0], null, -1, 1, 1, 1);
+        dt.createNode(Quotas.quotaPath("/ns"), null, null, -1, 1, 1, 1);
+        dt.createNode(Quotas.limitPath("/ns"),
+                new StatsTrack("count=10,bytes=1000").getStatsBytes(), null, -1, 1, 1, 1);
+        dt.createNode(Quotas.statPath("/ns"),
+                new StatsTrack().getStatsBytes(), null, -1, 1, 1, 1);
+
+        // poison the stats node with a null payload
+        dt.setData(Quotas.statPath("/ns"), null, 1, 2, 1);
+        assertNull(dt.getNode(Quotas.statPath("/ns")).data);
+
+        // detonating write must not NPE in StatsTrack(byte[])
+        dt.createNode("/ns/child", new byte[3], null, -1, 2, 3, 1);
+        assertTrue(StatsTrack.isValidStatsData(dt.getNode(Quotas.statPath("/ns")).data));
+    }
+
+    /**
+     * A quota limit/stat node created directly under /zookeeper/quota trims to
+     * an empty namespace; previously PathTrie.addPath("") (and, on reload,
+     * traverseNode) threw and bricked the server. Creating them must now be a
+     * no-op registration rather than a crash.
+     */
+    @Test
+    @Timeout(value = 60)
+    public void testCreateQuotaNodeWithEmptyNamespaceDoesNotCrash() throws Exception {
+        DataTree dt = new DataTree();
+
+        // limit node directly under /zookeeper/quota (empty namespace)
+        dt.createNode(Quotas.quotaZookeeper + "/" + Quotas.limitNode,
+                new StatsTrack("count=10").getStatsBytes(), null, -1, 1, 1, 1);
+        // stat node variant (updateQuotaForPath(""))
+        dt.createNode(Quotas.quotaZookeeper + "/" + Quotas.statNode,
+                new StatsTrack().getStatsBytes(), null, -1, 1, 2, 1);
+
+        // no bogus empty prefix registered -> ordinary writes keep working
+        dt.createNode("/ok", new byte[1], null, -1, 1, 3, 1);
+        assertNotNull(dt.getNode("/ok"));
+
+        // and the stray limit node can be deleted without crashing the trie
+        dt.deleteNode(Quotas.quotaZookeeper + "/" + Quotas.limitNode, 4);
+        assertNull(dt.getNode(Quotas.quotaZookeeper + "/" + Quotas.limitNode));
+    }
+
+    /**
+     * A {@code zookeeper_limits} node created directly under /zookeeper (a
+     * sibling of /zookeeper/quota, not under it) passes the create-side quota
+     * guard silently, but deleting it previously reached
+     * Quotas.trimQuotaPath("/zookeeper") — substring(16) on a 10-char string —
+     * and threw StringIndexOutOfBoundsException on the apply path, permanently
+     * bricking the dataDir. Neither create nor delete may crash. Empty data.
+     */
+    @Test
+    @Timeout(value = 60)
+    public void testLimitNodeDirectlyUnderZookeeperDoesNotCrash() throws Exception {
+        DataTree dt = new DataTree();
+
+        String strayLimit = Quotas.procZookeeper + "/" + Quotas.limitNode; // /zookeeper/zookeeper_limits
+        dt.createNode(strayLimit, new byte[0], null, -1, 1, 1, 1);
+        assertNotNull(dt.getNode(strayLimit));
+
+        // the detonating delete must not throw
+        dt.deleteNode(strayLimit, 2);
+        assertNull(dt.getNode(strayLimit));
+
+        // server still healthy for ordinary writes
+        dt.createNode("/ok", new byte[1], null, -1, 1, 3, 1);
+        assertNotNull(dt.getNode("/ok"));
     }
 
 }
