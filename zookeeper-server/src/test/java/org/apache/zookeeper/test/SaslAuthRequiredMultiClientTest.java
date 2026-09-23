@@ -19,10 +19,15 @@
 package org.apache.zookeeper.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javax.security.auth.login.Configuration;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.jupiter.api.AfterAll;
@@ -55,12 +60,7 @@ public class SaslAuthRequiredMultiClientTest extends SaslAuthDigestTestBase {
         }
 
         resetJaasConfiguration("jaas.conf", "super_wrong", "test");
-        try  (ZooKeeper wrongUserZk = createClient()) {
-            wrongUserZk.create("/bar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            fail("Client with wrong SASL config should not pass SASL authentication.");
-        } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.AUTHFAILED, e.code());
-        }
+        assertClientAuthFailed();
     }
 
     @Test
@@ -73,11 +73,21 @@ public class SaslAuthRequiredMultiClientTest extends SaslAuthDigestTestBase {
         }
 
         resetJaasConfiguration("jaas.conf", "super", "test_wrongong");
-        try (ZooKeeper wrongPasswordZk = createClient()) {
-            wrongPasswordZk.create("/bar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            fail("Client with wrong SASL config should not pass SASL authentication.");
-        } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.AUTHFAILED, e.code());
+        assertClientAuthFailed();
+    }
+
+    private void assertClientAuthFailed() throws Exception {
+        CountDownLatch authFailed = new CountDownLatch(1);
+        // A rejected connection may disappear before createClient's JMX check.
+        try (ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, event -> {
+            if (event.getState() == KeeperState.AuthFailed) {
+                authFailed.countDown();
+            }
+        })) {
+            assertTrue(authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+            assertEquals(ZooKeeper.States.AUTH_FAILED, zk.getState());
+            assertThrows(KeeperException.AuthFailedException.class,
+                         () -> zk.create("/bar", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT));
         }
     }
 
