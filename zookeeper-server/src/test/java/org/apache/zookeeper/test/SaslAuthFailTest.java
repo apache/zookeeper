@@ -83,7 +83,7 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
 
     @Test
     public void testAuthFail() {
-        try (ZooKeeper zk = createClient()) {
+        try (ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, new CountdownWatcher())) {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             fail("Should have gotten exception.");
         } catch (Exception e) {
@@ -94,7 +94,7 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
 
     @Test
     public void testBadSaslAuthNotifiesWatch() throws Exception {
-        try (TestableZooKeeper zk = createClient(new MyWatcher(), hostPort)) {
+        try (TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, new MyWatcher())) {
             // wait for authFailed event from client's EventThread.
             assertTrue(authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
             boolean threadsStopped = zk.testableWaitForShutdown(1000);
