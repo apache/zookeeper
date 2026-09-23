@@ -430,8 +430,9 @@ property, when available, is noted below.
   the number of requests that will be queued server-side to be processed
   by the ZooKeeper server. Connections that exceed this length will receive
   a network timeout (30s) which may cause ZooKeeper session expiry issues.
-  By default, this value is unset (`-1`) which, on Linux, uses a backlog of
-  `50`. This value must be a positive number.
+  By default, this value is unset (`-1`) which, on Linux, is
+  net.core.somaxconn that defaults to 4096 since Linux 5.4. This value
+  must be a positive number.
 
 - _serverCnxnFactory_ :
   (Java system property: **zookeeper.serverCnxnFactory**)
