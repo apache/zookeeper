@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
@@ -60,7 +61,9 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -958,6 +961,118 @@ public class MultiOperationTest extends ClientBase {
         assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
         assertEquals(5, stat.getDataLength());
         assertEquals(0, stat.getNumChildren());
+    }
+
+    /**
+     * A multiRead whose operation count exceeds multiRead.maxOps must be rejected
+     * outright (BADARGUMENTS) rather than executed. This is the operation-count
+     * dimension of the multiRead response-amplification DoS guard.
+     */
+    @Test
+    public void testMultiReadOpCountLimitRejected() throws Exception {
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setMultiReadMaxOps(5);
+
+        zk.create("/rlimit", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        List<Op> ops = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            ops.add(Op.getData("/rlimit"));
+        }
+        assertThrows(KeeperException.BadArgumentsException.class, () -> multi(zk, ops, false));
+    }
+
+    /**
+     * A multiRead at exactly multiRead.maxOps operations is allowed.
+     */
+    @Test
+    public void testMultiReadOpCountLimitAtBoundaryAllowed() throws Exception {
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setMultiReadMaxOps(5);
+
+        zk.create("/rlimit", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        List<Op> ops = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            ops.add(Op.getData("/rlimit"));
+        }
+        List<OpResult> results = multi(zk, ops, false);
+        assertEquals(5, results.size());
+    }
+
+    /**
+     * Setting both limits to 0 disables the guards and restores the historical
+     * (unbounded) behaviour, confirming the checks are the only thing gating it.
+     */
+    @Test
+    public void testMultiReadLimitsDisabled() throws Exception {
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setMultiReadMaxOps(0);
+        zks.setMultiReadMaxResponseBytes(0);
+
+        zk.create("/rlimit", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        List<Op> ops = new ArrayList<>();
+        for (int i = 0; i < 2000; i++) { // well over the default cap of 1000
+            ops.add(Op.getData("/rlimit"));
+        }
+        List<OpResult> results = multi(zk, ops, false);
+        assertEquals(2000, results.size());
+    }
+
+    /**
+     * A multiRead with a small operation count whose cumulative response size
+     * exceeds multiRead.maxResponseBytes must be rejected. This is the byte
+     * dimension of the guard and is the shape of the reported DoS (a few ops that
+     * each pull a large znode).
+     */
+    @Test
+    public void testMultiReadResponseByteLimitRejected() throws Exception {
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setMultiReadMaxOps(0); // isolate the byte cap
+        zks.setMultiReadMaxResponseBytes(100_000);
+
+        byte[] data = new byte[40_000];
+        Arrays.fill(data, (byte) 'x');
+        zk.create("/big", data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // 3 * 40_000 = 120_000 > 100_000 -> rejected while processing the third op
+        List<Op> ops = Arrays.asList(Op.getData("/big"), Op.getData("/big"), Op.getData("/big"));
+        assertThrows(KeeperException.BadArgumentsException.class, () -> multi(zk, ops, false));
+    }
+
+    /**
+     * A multiRead whose cumulative response size stays under
+     * multiRead.maxResponseBytes is served normally.
+     */
+    @Test
+    public void testMultiReadResponseByteLimitUnderBudgetAllowed() throws Exception {
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
+        zks.setMultiReadMaxOps(0);
+        zks.setMultiReadMaxResponseBytes(100_000);
+
+        byte[] data = new byte[40_000];
+        Arrays.fill(data, (byte) 'x');
+        zk.create("/big", data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // 2 * 40_000 = 80_000 < 100_000 -> allowed
+        List<Op> ops = Arrays.asList(Op.getData("/big"), Op.getData("/big"));
+        List<OpResult> results = multi(zk, ops, false);
+        assertEquals(2, results.size());
+        assertArrayEquals(data, ((OpResult.GetDataResult) results.get(0)).getData());
+    }
+
+    /**
+     * A normal, small multiRead must not be affected by the new guards under
+     * their default limits (no false positives).
+     */
+    @Test
+    public void testMultiReadWithinDefaultLimitsSucceeds() throws Exception {
+        zk.create("/n1", "d1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/n2", "d2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        List<OpResult> results = multi(zk, Arrays.asList(
+                Op.getData("/n1"), Op.getChildren("/n1"), Op.getData("/n2")), false);
+        assertEquals(3, results.size());
     }
 
     @ParameterizedTest

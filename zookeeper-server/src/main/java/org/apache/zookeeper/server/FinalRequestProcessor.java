@@ -275,26 +275,55 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "MLTR";
                 incrementOpCount(ServerMetrics.getMetrics().OP_COUNT_MULTI_READ);
                 MultiOperationRecord multiReadRecord = request.readRequestRecord(MultiOperationRecord::new);
+
+                // Guard against multiRead response-amplification DoS. A multiRead request
+                // can be tiny on the wire (and thus pass jute.maxbuffer and the large-request
+                // throttle, which only bound the inbound request) yet force the server to
+                // materialize an unbounded response in heap: every sub-op result is copied and
+                // held in the MultiResponse before serialization. Cap the operation count and
+                // the cumulative response size so the response stays bounded.
+                final int maxOps = zks.getMultiReadMaxOps();
+                if (maxOps > 0 && multiReadRecord.size() > maxOps) {
+                    throw new KeeperException.BadArgumentsException(
+                        "multiRead operation count " + multiReadRecord.size()
+                        + " exceeds the configured maximum of " + maxOps);
+                }
+                final long maxResponseBytes = zks.getMultiReadMaxResponseBytes();
+                long responseBytes = 0;
+
                 rsp = new MultiResponse();
                 OpResult subResult;
                 for (Op readOp : multiReadRecord) {
+                    long opBytes = 0;
                     try {
                         Record rec;
                         switch (readOp.getType()) {
                         case OpCode.getChildren:
                             rec = handleGetChildrenRequest(readOp.toRequestRecord(), cnxn, request.authInfo);
-                            subResult = new GetChildrenResult(((GetChildrenResponse) rec).getChildren());
+                            List<String> children = ((GetChildrenResponse) rec).getChildren();
+                            opBytes = childrenSizeInBytes(children);
+                            subResult = new GetChildrenResult(children);
                             break;
                         case OpCode.getData:
                             rec = handleGetDataRequest(readOp.toRequestRecord(), cnxn, request.authInfo);
                             GetDataResponse gdr = (GetDataResponse) rec;
-                            subResult = new GetDataResult(gdr.getData(), gdr.getStat());
+                            byte[] data = gdr.getData();
+                            opBytes = data == null ? 0 : data.length;
+                            subResult = new GetDataResult(data, gdr.getStat());
                             break;
                         default:
                             throw new IOException("Invalid type of readOp");
                         }
                     } catch (KeeperException e) {
                         subResult = new ErrorResult(e.code().intValue());
+                    }
+                    if (maxResponseBytes > 0) {
+                        responseBytes += opBytes;
+                        if (responseBytes > maxResponseBytes) {
+                            throw new KeeperException.BadArgumentsException(
+                                "multiRead response size exceeds the configured maximum of "
+                                + maxResponseBytes + " bytes");
+                        }
                     }
                     ((MultiResponse) rsp).add(subResult);
                 }
@@ -651,6 +680,22 @@ public class FinalRequestProcessor implements RequestProcessor {
         } finally {
             ServerMetrics.getMetrics().RESPONSE_BYTES.add(responseSize);
         }
+    }
+
+    /**
+     * Estimates the serialized size of a getChildren result so that multiRead can bound
+     * its cumulative response size. Each child name is counted as its length in bytes
+     * (chars are a safe lower bound) plus the 4-byte length prefix jute writes per string.
+     */
+    private static long childrenSizeInBytes(List<String> children) {
+        if (children == null) {
+            return 0;
+        }
+        long bytes = 0;
+        for (String child : children) {
+            bytes += 4L + (child == null ? 0 : child.length());
+        }
+        return bytes;
     }
 
     private Record handleGetChildrenRequest(Record request, ServerCnxn cnxn, List<Id> authInfo) throws KeeperException, IOException {
