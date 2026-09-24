@@ -156,6 +156,34 @@ public class DataTreeTest extends ZKTestCase {
         }
     }
 
+    /**
+     * ZOOKEEPER-5092: the next cversion after {@link Integer#MAX_VALUE} is the
+     * signed wrap {@link Integer#MIN_VALUE}. Fuzzy replay must not treat that
+     * wrap as a backwards update.
+     */
+    @Test
+    public void testCversionOverflowAdvances() throws Exception {
+        DataTree dt = new DataTree();
+        dt.createNode("/test", new byte[0], null, 0, 1, 1, 1);
+        dt.setCversionPzxid("/test", Integer.MAX_VALUE, 2);
+        assertEquals(Integer.MAX_VALUE, dt.getNode("/test").stat.getCversion());
+        dt.setCversionPzxid("/test", 1, 9);
+        assertEquals(Integer.MAX_VALUE, dt.getNode("/test").stat.getCversion(),
+            "a smaller cversion must not rewind the counter");
+
+        dt.createNode("/test/child_2147483647", new byte[0], null, 0, Integer.MIN_VALUE, 3, 3);
+
+        assertEquals(Integer.MIN_VALUE, dt.getNode("/test").stat.getCversion());
+        assertEquals(3L, dt.getNode("/test").stat.getPzxid());
+
+        DataTree replay = new DataTree();
+        replay.createNode("/parent", new byte[0], null, 0, 1, 1, 1);
+        replay.setCversionPzxid("/parent", Integer.MAX_VALUE, 2);
+        replay.setCversionPzxid("/parent", Integer.MIN_VALUE, 4);
+        assertEquals(Integer.MIN_VALUE, replay.getNode("/parent").stat.getCversion());
+        assertEquals(4L, replay.getNode("/parent").stat.getPzxid());
+    }
+
     @Test
     public void testNoCversionRevert() throws Exception {
         DataTree dt = new DataTree();

@@ -467,12 +467,11 @@ public class DataTree {
                 parentCVersion = parent.stat.getCversion();
                 parentCVersion++;
             }
-            // There is possibility that we'll replay txns for a node which
-            // was created and then deleted in the fuzzy range, and it's not
-            // exist in the snapshot, so replay the creation might revert the
-            // cversion and pzxid, need to check and only update when it's
-            // larger.
-            if (parentCVersion > parent.stat.getCversion()) {
+            // Fuzzy snapshot replay can apply an older create after a newer one.
+            // Only move cversion forward. The signed counter wrapping from
+            // Integer.MAX_VALUE to Integer.MIN_VALUE is a forward step
+            // (ZOOKEEPER-5092), not a replay of an older value.
+            if (isCversionAdvance(parent.stat.getCversion(), parentCVersion)) {
                 parent.stat.setCversion(parentCVersion);
                 parent.stat.setPzxid(zxid);
             }
@@ -1563,13 +1562,23 @@ public class DataTree {
             if (newCversion == -1) {
                 newCversion = node.stat.getCversion() + 1;
             }
-            if (newCversion > node.stat.getCversion()) {
+            if (isCversionAdvance(node.stat.getCversion(), newCversion)) {
                 nodes.preChange(path, node);
                 node.stat.setCversion(newCversion);
                 node.stat.setPzxid(zxid);
                 nodes.postChange(path, node);
             }
         }
+    }
+
+    /**
+     * True when {@code proposed} is a later cversion than {@code current}.
+     * The signed 32-bit wrap from {@link Integer#MAX_VALUE} to
+     * {@link Integer#MIN_VALUE} is an advance. Any other smaller value is not:
+     * fuzzy snapshot replay must not move the counter backwards.
+     */
+    static boolean isCversionAdvance(int current, int proposed) {
+        return proposed > current || (current == Integer.MAX_VALUE && proposed == Integer.MIN_VALUE);
     }
 
     public boolean containsWatcher(String path, WatcherType type, Watcher watcher) {
