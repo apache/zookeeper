@@ -231,6 +231,7 @@ public class QuorumPeerMain {
             ZKAuditProvider.addZKStartStopAuditLog();
             quorumPeer.join();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             // warn, but generally this is ok
             LOG.warn("Quorum Peer interrupted", e);
         } finally {

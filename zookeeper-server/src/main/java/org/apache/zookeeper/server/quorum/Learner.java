@@ -332,6 +332,7 @@ public class Learner {
         try {
             latch.await();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             LOG.warn("Interrupted while trying to connect to Leader", e);
         } finally {
             executor.shutdown();
@@ -340,6 +341,7 @@ public class Learner {
                     LOG.error("not all the LeaderConnector terminated properly");
                 }
             } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
                 LOG.error("Interrupted while terminating LeaderConnector executor.", ie);
             }
         }
