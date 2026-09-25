@@ -819,6 +819,7 @@ public class QuorumCnxManager {
         try {
             listener.join();
         } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
             LOG.warn("Got interrupted before joining the listener", ex);
         }
         softHalt();
@@ -1106,6 +1107,7 @@ public class QuorumCnxManager {
                         } catch (IOException ie) {
                             LOG.error("Error closing server socket", ie);
                         } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
                             LOG.error("Interrupted while sleeping. Ignoring exception", ie);
                         }
                         closeSocket(client);
@@ -1282,6 +1284,7 @@ public class QuorumCnxManager {
                             send(b);
                         }
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                         LOG.warn("Interrupted while waiting for message on queue", e);
                     }
                 }
