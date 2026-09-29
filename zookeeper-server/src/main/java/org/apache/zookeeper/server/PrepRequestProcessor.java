@@ -38,6 +38,7 @@ import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
+import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.ConfigException;
@@ -103,6 +104,17 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     private final RequestProcessor nextProcessor;
     private final boolean digestEnabled;
     private DigestCalculator digestCalculator;
+
+    /**
+     * The quota-relevant changes (node count and data bytes, per quota
+     * prefix) of the operations that were already validated as part of the
+     * request currently being processed. The operations of a multi
+     * transaction are validated one by one before any of them is applied to
+     * the data tree, so the quota stat nodes do not yet account for the
+     * earlier operations of the same transaction. Only accessed from the
+     * request processing thread.
+     */
+    private final Map<String, StatsTrack> pendingQuotaChanges = new HashMap<>();
 
     ZooKeeperServer zks;
 
@@ -361,6 +373,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (nodeRecord.childCount > 0) {
                 throw new KeeperException.NotEmptyException(path);
             }
+            zks.checkQuota(path, nodeRecord.data, null, OpCode.delete, pendingQuotaChanges);
             request.setTxn(new DeleteTxn(path));
             parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
             parentRecord.childCount--;
@@ -381,7 +394,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             validatePath(path, request.sessionId);
             nodeRecord = getRecordForPath(path);
             zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
-            zks.checkQuota(path, nodeRecord.data, setDataRequest.getData(), OpCode.setData);
+            zks.checkQuota(path, nodeRecord.data, setDataRequest.getData(), OpCode.setData, pendingQuotaChanges);
             int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
             request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));
             nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
@@ -679,7 +692,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             throw new KeeperException.NoChildrenForEphemeralsException(path);
         }
         int newCversion = parentRecord.stat.getCversion() + 1;
-        zks.checkQuota(path, null, data, OpCode.create);
+        zks.checkQuota(path, null, data, OpCode.create, pendingQuotaChanges);
         if (type == OpCode.createContainer) {
             request.setTxn(new CreateContainerTxn(path, data, listACL, newCversion));
         } else if (type == OpCode.createTTL) {
@@ -758,6 +771,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     protected void pRequest(Request request) throws RequestProcessorException {
         request.setHdr(null);
         request.setTxn(null);
+        pendingQuotaChanges.clear();
 
         if (!request.isThrottled()) {
           pRequestHelper(request);
