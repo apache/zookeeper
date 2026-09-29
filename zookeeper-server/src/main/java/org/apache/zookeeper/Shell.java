@@ -235,6 +235,7 @@ public abstract class Shell {
                 errThread.join();
             } catch (InterruptedException ie) {
                 LOG.warn("Interrupted while reading the error stream", ie);
+                Thread.currentThread().interrupt();
             }
             completed.set(true);
             //the timeout thread handling
@@ -243,6 +244,7 @@ public abstract class Shell {
                 throw new ExitCodeException(exitCode, errMsg.toString());
             }
         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             throw new IOException(ie.toString());
         } finally {
             if ((timeOutTimer != null) && !timedOut.get()) {
