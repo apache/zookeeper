@@ -18,12 +18,18 @@
 
 package org.apache.zookeeper.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -77,7 +83,7 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
 
     @Test
     public void testAuthFail() {
-        try (ZooKeeper zk = createClient()) {
+        try (ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, new CountdownWatcher())) {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             fail("Should have gotten exception.");
         } catch (Exception e) {
@@ -88,9 +94,18 @@ public class SaslAuthFailTest extends SaslAuthDigestTestBase {
 
     @Test
     public void testBadSaslAuthNotifiesWatch() throws Exception {
-        try (ZooKeeper ignored = createClient(new MyWatcher(), hostPort)) {
+        try (TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, new MyWatcher())) {
             // wait for authFailed event from client's EventThread.
-            authFailed.await();
+            assertTrue(authFailed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+            boolean threadsStopped = zk.testableWaitForShutdown(1000);
+            LOG.info("SASL failure shutdown without close: threadsStopped={}, state={}",
+                     threadsStopped, zk.getState());
+            assertTrue(threadsStopped, "Client threads should stop after SASL authentication fails");
+            assertEquals(ZooKeeper.States.AUTH_FAILED, zk.getState());
+            assertThrows(KeeperException.AuthFailedException.class, () -> zk.exists("/", false));
+            zk.close();
+            assertEquals(ZooKeeper.States.CLOSED, zk.getState());
+            assertTrue(zk.close(CONNECTION_TIMEOUT));
         }
     }
 
