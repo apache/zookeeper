@@ -1233,6 +1233,7 @@ public class ClientCnxn {
                                 eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, authState, null));
                                 if (state == States.AUTH_FAILED) {
                                     eventThread.queueEventOfDeath();
+                                    break;
                                 }
                             }
                         }
