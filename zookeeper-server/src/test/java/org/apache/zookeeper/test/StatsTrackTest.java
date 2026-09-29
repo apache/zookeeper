@@ -18,7 +18,9 @@
 
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
+import org.apache.zookeeper.server.DataTree;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -131,5 +133,30 @@ public class StatsTrackTest {
         Assert.assertEquals(2, st.getCount());
         Assert.assertEquals(-1, st.getByteHardLimit());
         Assert.assertEquals(-1, st.getCountHardLimit());
+    }
+
+    @org.junit.jupiter.api.Test
+    public void testCreateNodeWhenQuotaStatDataIsNull() throws Exception {
+        final DataTree tree = new DataTree();
+        final String path = "/bug";
+        final String childPath = path + "/child";
+        final String quotaPath = Quotas.quotaPath(path);
+        final String limitPath = Quotas.limitPath(path);
+        final String statPath = Quotas.statPath(path);
+
+        tree.createNode(path, new byte[0], null, -1, tree.getNode("/").stat.getCversion() + 1, 1, 1);
+        tree.createNode(quotaPath, null, null, -1, 1, 1, 1);
+
+        StatsTrack limit = new StatsTrack();
+        limit.setCountHardLimit(10);
+        tree.createNode(limitPath, limit.getStatsBytes(), null, -1, 1, 1, 1);
+
+        tree.createNode(statPath, new StatsTrack().getStatsBytes(), null, -1, 1, 1, 1);
+        tree.setData(statPath, null, -1, 2, 2);
+
+        tree.createNode(childPath, new byte[] { 1 }, null, -1, tree.getNode(path).stat.getCversion() + 1, 3, 3);
+
+        Assert.assertNotNull(tree.getNode(childPath));
+        Assert.assertNotNull(tree.getNode(statPath).getData());
     }
 }
