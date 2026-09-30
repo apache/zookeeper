@@ -69,6 +69,11 @@ public class Login {
     private static final long MIN_TIME_BEFORE_RELOGIN = Long.getLong(
       MIN_TIME_BEFORE_RELOGIN_CONFIG_KEY, DEFAULT_MIN_TIME_BEFORE_RELOGIN);
 
+    private static final long DEFAULT_SHUTDOWN_TIMEOUT = 5 * 1000L;
+    public static final String SHUTDOWN_TIMEOUT_CONFIG_KEY = "zookeeper.kerberos.shutdownTimeoutMs";
+    private static final long SHUTDOWN_TIMEOUT = Math.max(0L,
+            Long.getLong(SHUTDOWN_TIMEOUT_CONFIG_KEY, DEFAULT_SHUTDOWN_TIMEOUT));
+
     private Subject subject = null;
     private Thread t = null;
     private boolean isKrbTicket = false;
@@ -132,7 +137,7 @@ public class Login {
         t = new Thread(new Runnable() {
             public void run() {
                 LOG.info("TGT refresh thread started.");
-                while (true) {  // renewal thread's main loop. if it exits from here, thread will exit.
+                while (!Thread.currentThread().isInterrupted()) {  // renewal thread's main loop. if it exits from here, thread will exit.
                     KerberosTicket tgt = getTGT();
                     long now = Time.currentWallTime();
                     long nextRefresh;
@@ -262,6 +267,7 @@ public class Login {
                                     }
                                 } else {
                                     LOG.error("Could not refresh TGT for principal: {}.", principal, le);
+                                    break;
                                 }
                             }
                         }
@@ -297,9 +303,13 @@ public class Login {
         if ((t != null) && (t.isAlive())) {
             t.interrupt();
             try {
-                t.join();
+                t.join(SHUTDOWN_TIMEOUT);
+                if (t.isAlive()) {
+                    LOG.warn("TGT renewal thread did not exit within {} ms", SHUTDOWN_TIMEOUT);
+                }
             } catch (InterruptedException e) {
                 LOG.warn("error while waiting for Login thread to shutdown.", e);
+                Thread.currentThread().interrupt();
             }
         }
     }
