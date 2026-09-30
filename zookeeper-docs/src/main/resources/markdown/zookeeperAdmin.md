@@ -1904,6 +1904,14 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     It is essentially the quorum equivalent of the *zookeeper.sasl.client.canonicalize.hostname* property for clients.
     The default value is **false** for backwards compatibility.
 
+* *kerberos.shutdownTimeoutMs*
+    (Java system property: **zookeeper.kerberos.shutdownTimeoutMs**)
+    **New in 3.9.7:**
+    The time in milliseconds ZooKeeper waits for the Kerberos TGT renewal thread to exit while shutting down.
+    If the thread is still alive after that, ZooKeeper logs a warning and completes the shutdown.
+    Set it to 0 to wait without a timeout, which is how ZooKeeper behaved before this setting existed.
+    Default: 5000
+
 * *multiAddress.enabled* :
     (Java system property: **zookeeper.multiAddress.enabled**)
     **New in 3.6.0:**

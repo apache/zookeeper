@@ -1318,6 +1318,13 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
 * *zookeeper.server.realm* :
     Realm part of the server principal. By default it is the client principal realm.
 
+* *zookeeper.kerberos.shutdownTimeoutMs* :
+    **New in 3.9.7:**
+    The time in milliseconds a client waits for the Kerberos TGT renewal thread to exit while closing.
+    If the thread is still alive after that, the client logs a warning and completes the close.
+    Set it to 0 to wait without a timeout, which is how the client behaved before this setting existed.
+    Default: 5000
+
 * *zookeeper.disableAutoWatchReset* :
     This switch controls whether automatic watch resetting is enabled. Clients automatically
     reset watches during session reconnect by default, this option allows the client to turn off
