@@ -17,7 +17,18 @@ limitations under the License.
 
 # Release Notes - ZooKeeper - Version 3.8.8
 
+**Important Note**
+
+Added two configurable multiRead limits: `zookeeper.multiRead.maxOps` (maximum read operations per multiRead request, default 1000) and `zookeeper.multiRead.maxResponseBytes` (maximum cumulative response size per multiRead request, default 64 MB).
+
+## Bug
+
 * Various undisclosed CVE fixes - please check security page for details
+
+## Improvement
+
+* [ZOOKEEPER-5098](https://issues.apache.org/jira/browse/ZOOKEEPER-5098) - Upgrade netty to 4.1.138 or latest to fix CVE-2026-89044
+* [ZOOKEEPER-5099](https://issues.apache.org/jira/browse/ZOOKEEPER-5099) - Upgrade jackson jars to 2.22.3 or latest to address CVE-2026-91776, CVE-2026-91777
 
 
 &nbsp;

@@ -1155,7 +1155,7 @@ property, when available, is noted below.
 
 * *multiRead.maxOps* :
     (Java system property: **zookeeper.multiRead.maxOps**)
-    **New in 3.8.5:**
+    **New in 3.8.8:**
     The maximum number of read operations (getData / getChildren) permitted in a single
     multiRead request. A multiRead can amplify a request that is small on the wire into a
     very large in-memory response, because every sub-operation result is materialized and
@@ -1168,7 +1168,7 @@ property, when available, is noted below.
 
 * *multiRead.maxResponseBytes* :
     (Java system property: **zookeeper.multiRead.maxResponseBytes**)
-    **New in 3.8.5:**
+    **New in 3.8.8:**
     The maximum cumulative size, in bytes, of the data materialized while serving a single
     multiRead request. This is the primary guard against a multiRead response-amplification
     denial of service. The server accumulates the size of each sub-operation result as the
