@@ -26,11 +26,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.common.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * a class that represents the stats associated with quotas
  */
 public class StatsTrack {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StatsTrack.class);
 
     private static final String countStr = "count";
     private static final String countHardLimitStr = "countHardLimit";
@@ -54,7 +58,11 @@ public class StatsTrack {
      * @param stat the byte[] stat to be initialized with
      */
     public StatsTrack(byte[] stat) {
-        this(new String(stat, StandardCharsets.UTF_8));
+        // A null payload (jute length -1) must be tolerated here: this is on the
+        // transaction-apply/replay path, and new String(null, ...) would NPE,
+        // killing the SyncRequestProcessor critical thread and bricking the
+        // dataDir just like a malformed value. Treat null as empty/uninitialized.
+        this(stat == null ? null : new String(stat, StandardCharsets.UTF_8));
     }
 
     /**
@@ -70,9 +78,71 @@ public class StatsTrack {
         }
         String[] keyValuePairs = PAIRS_SEPARATOR.split(stat);
         for (String keyValuePair : keyValuePairs) {
+            // NOTE: split with the default (limit 0) is intentional and must be
+            // kept: toString() emits a compatibility sentinel trailing '=' (e.g.
+            // "bytes=5=") that the default split silently drops, recovering "5".
+            // Changing the limit would break the round-trip of hard-limit values.
             String[] kv = keyValuePair.split("=");
-            this.stats.put(kv[0], Long.parseLong(StringUtils.isEmpty(kv[1]) ? "-1" : kv[1]));
+            if (kv.length < 2 || StringUtils.isEmpty(kv[0])) {
+                // Malformed entry (e.g. "x", or "count=" with no value). This
+                // data is applied from an already-committed transaction, so
+                // throwing here would kill the SyncRequestProcessor critical
+                // thread and, because the transaction is durable, make the
+                // dataDir unbootable on replay. Skip the entry defensively
+                // instead (treated as uninitialized, i.e. -1); updateQuotaStat
+                // rewrites the node with a well-formed value, so it self-heals.
+                LOG.warn("Ignoring malformed quota stat entry: '{}'", keyValuePair);
+                continue;
+            }
+            String value = StringUtils.isEmpty(kv[1]) ? "-1" : kv[1];
+            try {
+                this.stats.put(kv[0], Long.parseLong(value));
+            } catch (NumberFormatException e) {
+                LOG.warn("Ignoring quota stat entry with non-numeric value: '{}'", keyValuePair);
+            }
         }
+    }
+
+    /**
+     * Strictly validate that {@code data} is a well-formed stats/limits value,
+     * i.e. a (possibly empty) list of {@code key=long} pairs separated by
+     * {@code ,} or {@code ;}. Unlike the constructor, this performs no repair —
+     * it is used at request-preparation time to reject malformed writes to the
+     * quota {@code zookeeper_stats}/{@code zookeeper_limits} nodes before they
+     * are ever committed, so clients get a clear error and the quota bookkeeping
+     * never ingests garbage.
+     *
+     * @param data the candidate node data (UTF-8 encoded); empty is accepted
+     *             (treated as uninitialized), null is rejected
+     * @return true if the data parses cleanly as StatsTrack content
+     */
+    public static boolean isValidStatsData(byte[] data) {
+        if (data == null) {
+            // null is never legitimate for a stats/limits node and NPEs the
+            // byte[] constructor on the apply path — reject it at prep time.
+            return false;
+        }
+        if (data.length == 0) {
+            return true;
+        }
+        String stat = new String(data, StandardCharsets.UTF_8);
+        String[] keyValuePairs = PAIRS_SEPARATOR.split(stat);
+        for (String keyValuePair : keyValuePairs) {
+            // Same tokenization as the constructor so the compatibility sentinel
+            // trailing '=' (e.g. "bytes=5=") is accepted, not rejected.
+            String[] kv = keyValuePair.split("=");
+            if (kv.length < 2 || StringUtils.isEmpty(kv[0])) {
+                return false;
+            }
+            if (!StringUtils.isEmpty(kv[1])) {
+                try {
+                    Long.parseLong(kv[1]);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 
