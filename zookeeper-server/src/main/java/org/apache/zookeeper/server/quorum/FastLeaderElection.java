@@ -301,47 +301,31 @@ public class FastLeaderElection implements Election {
                                 byte[] b = new byte[configLength];
                                 response.buffer.get(b);
 
-                                /*
-                                 * Only adopt a QuorumVerifier carried in a notification if
-                                 * the sender is a voting member of our current (or next)
-                                 * configuration. The election port accepts connections from
-                                 * any sid, so without this gate an unauthenticated peer could
-                                 * push an arbitrary config into processReconfig(), which
-                                 * persists it to the dynamic config file and restarts
-                                 * leader election. Non-voters (observers, joining servers)
-                                 * still get the reply notification below, which carries our
-                                 * own config, so they can learn the current membership.
-                                 */
-                                if (!validVoter(response.sid)) {
-                                    LOG.info("Ignoring config section in notification from non-voter sid={} (config length: {})",
-                                             response.sid, configLength);
-                                } else {
-                                    synchronized (self) {
-                                        try {
-                                            rqv = self.configFromString(new String(b, UTF_8));
-                                            QuorumVerifier curQV = self.getQuorumVerifier();
-                                            if (rqv.getVersion() > curQV.getVersion()) {
-                                                LOG.info("{} Received version: {} my version: {}",
-                                                         self.getMyId(),
-                                                         Long.toHexString(rqv.getVersion()),
-                                                         Long.toHexString(self.getQuorumVerifier().getVersion()));
-                                                if (self.getPeerState() == ServerState.LOOKING) {
-                                                    LOG.debug("Invoking processReconfig(), state: {}", self.getServerState());
-                                                    self.processReconfig(rqv, null, null, false);
-                                                    if (!rqv.equals(curQV)) {
-                                                        LOG.info("restarting leader election");
-                                                        self.shuttingDownLE = true;
-                                                        self.getElectionAlg().shutdown();
+                                synchronized (self) {
+                                    try {
+                                        rqv = self.configFromString(new String(b, UTF_8));
+                                        QuorumVerifier curQV = self.getQuorumVerifier();
+                                        if (rqv.getVersion() > curQV.getVersion()) {
+                                            LOG.info("{} Received version: {} my version: {}",
+                                                     self.getMyId(),
+                                                     Long.toHexString(rqv.getVersion()),
+                                                     Long.toHexString(self.getQuorumVerifier().getVersion()));
+                                            if (self.getPeerState() == ServerState.LOOKING) {
+                                                LOG.debug("Invoking processReconfig(), state: {}", self.getServerState());
+                                                self.processReconfig(rqv, null, null, false);
+                                                if (!rqv.equals(curQV)) {
+                                                    LOG.info("restarting leader election");
+                                                    self.shuttingDownLE = true;
+                                                    self.getElectionAlg().shutdown();
 
-                                                        break;
-                                                    }
-                                                } else {
-                                                    LOG.debug("Skip processReconfig(), state: {}", self.getServerState());
+                                                    break;
                                                 }
+                                            } else {
+                                                LOG.debug("Skip processReconfig(), state: {}", self.getServerState());
                                             }
-                                        } catch (IOException | ConfigException e) {
-                                            LOG.error("Something went wrong while processing config received from {}", response.sid);
                                         }
+                                    } catch (IOException | ConfigException e) {
+                                        LOG.error("Something went wrong while processing config received from {}", response.sid);
                                     }
                                 }
                             } else {
