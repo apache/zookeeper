@@ -313,6 +313,25 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final AtomicInteger currentLargeRequestBytes = new AtomicInteger(0);
 
+    /**
+     * Maximum number of read operations allowed in a single multiRead request.
+     * A multiRead can amplify a tiny request into a very large in-memory response
+     * (each sub-op result is fully materialized and held in the MultiResponse before
+     * serialization), so this bounds the operation fan-out. A value of 0 or less
+     * disables the check.
+     */
+    private volatile int multiReadMaxOps = 1000;
+
+    /**
+     * Maximum cumulative size, in bytes, of the data materialized while serving a
+     * single multiRead request. This is the primary guard against a response-
+     * amplification denial of service: without it, a request that is small on the wire
+     * (and therefore not caught by jute.maxbuffer or the large-request throttle, both
+     * of which only bound the inbound request) can force the server to allocate
+     * arbitrarily large amounts of heap. A value of 0 or less disables the check.
+     */
+    private volatile long multiReadMaxResponseBytes = 64L * 1024 * 1024;
+
     private AuthenticationHelper authHelper;
 
     void removeCnxn(ServerCnxn cnxn) {
@@ -370,6 +389,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.requestPathMetricsCollector = new RequestPathMetricsCollector();
 
         this.initLargeRequestThrottlingSettings();
+
+        this.initMultiReadThrottlingSettings();
 
         this.authHelper = new AuthenticationHelper();
 
@@ -1532,6 +1553,30 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private void initLargeRequestThrottlingSettings() {
         setLargeRequestMaxBytes(Integer.getInteger("zookeeper.largeRequestMaxBytes", largeRequestMaxBytes));
         setLargeRequestThreshold(Integer.getInteger("zookeeper.largeRequestThreshold", -1));
+    }
+
+    private void initMultiReadThrottlingSettings() {
+        multiReadMaxOps = Integer.getInteger("zookeeper.multiRead.maxOps", multiReadMaxOps);
+        multiReadMaxResponseBytes = Long.getLong("zookeeper.multiRead.maxResponseBytes", multiReadMaxResponseBytes);
+        LOG.info("multiRead limits: maxOps={}, maxResponseBytes={}", multiReadMaxOps, multiReadMaxResponseBytes);
+    }
+
+    public int getMultiReadMaxOps() {
+        return multiReadMaxOps;
+    }
+
+    public void setMultiReadMaxOps(int maxOps) {
+        this.multiReadMaxOps = maxOps;
+        LOG.info("multiRead maxOps set to {}", maxOps);
+    }
+
+    public long getMultiReadMaxResponseBytes() {
+        return multiReadMaxResponseBytes;
+    }
+
+    public void setMultiReadMaxResponseBytes(long maxBytes) {
+        this.multiReadMaxResponseBytes = maxBytes;
+        LOG.info("multiRead maxResponseBytes set to {}", maxBytes);
     }
 
     public int getLargeRequestMaxBytes() {
