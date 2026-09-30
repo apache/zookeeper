@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -61,7 +60,6 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
