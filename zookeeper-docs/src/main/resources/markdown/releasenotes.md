@@ -14,6 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+
+# Release Notes - ZooKeeper - Version 3.8.8
+
+* Various undisclosed CVE fixes - please check security page for details
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.8.7
 
 ## Bug
