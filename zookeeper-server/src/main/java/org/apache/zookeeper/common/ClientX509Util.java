@@ -100,7 +100,9 @@ public class ClientX509Util extends X509Util {
             sslContextBuilder.protocols(enabledProtocols);
         }
         Iterable<String> enabledCiphers = getCipherSuites(config);
-        if (enabledCiphers != null) {
+        if (enabledCiphers == null) {
+            sslContextBuilder.ciphers(null, IdentityCipherSuiteFilter.INSTANCE_DEFAULTING_TO_SUPPORTED_CIPHERS);
+        } else {
             sslContextBuilder.ciphers(enabledCiphers);
         }
         sslContextBuilder.sslProvider(getSslProvider(config));
