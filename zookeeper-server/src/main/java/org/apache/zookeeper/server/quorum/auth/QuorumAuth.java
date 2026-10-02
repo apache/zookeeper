@@ -42,6 +42,11 @@ public class QuorumAuth {
     public static final String QUORUM_SERVER_SASL_LOGIN_CONTEXT = "quorum.auth.server.saslLoginContext";
     public static final String QUORUM_SERVER_SASL_LOGIN_CONTEXT_DFAULT_VALUE = "QuorumServer";
 
+    /** Property key for custom SSL QuorumAuthServer provider (Class name) */
+    public static final String QUORUM_SSL_AUTHPROVIDER = "ssl.quorum.authProvider";
+    /** Property key for custom SSL QuorumAuthLearner provider (Class name) */
+    public static final String QUORUM_SSL_LEARNER_AUTHPROVIDER = "ssl.quorum.learner.authProvider";
+
     static final String QUORUM_SERVER_PROTOCOL_NAME = "zookeeper-quorum";
     static final String QUORUM_SERVER_SASL_DIGEST = "zk-quorum-sasl-md5";
     static final String QUORUM_AUTH_MESSAGE_TAG = "qpconnect";
