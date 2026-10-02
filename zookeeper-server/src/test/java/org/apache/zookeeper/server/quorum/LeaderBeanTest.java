@@ -44,6 +44,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -93,6 +94,7 @@ public class LeaderBeanTest {
         ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
 
         zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, zkDb);
+        zks.syncProcessor = mock(SyncRequestProcessor.class);
         leader = new Leader(qp, zks);
         leaderBean = new LeaderBean(leader, zks);
     }
@@ -135,7 +137,7 @@ public class LeaderBeanTest {
     }
 
     @Test
-    public void testGetProposalSize() throws IOException, Leader.XidRolloverException {
+    public void testGetProposalSize() throws IOException {
         // Arrange
         Request req = createMockRequest();
 
@@ -150,7 +152,7 @@ public class LeaderBeanTest {
     }
 
     @Test
-    public void testResetProposalStats() throws IOException, Leader.XidRolloverException {
+    public void testResetProposalStats() throws IOException {
         // Arrange
         int initialProposalSize = leaderBean.getLastProposalSize();
         Request req = createMockRequest();
