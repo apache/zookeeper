@@ -28,6 +28,7 @@ import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.util.ZxidLayout;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
@@ -211,7 +212,9 @@ public class ZxidRolloverTest extends ZKTestCase {
 
     /** Reset the next zxid to be near epoch end */
     private void adjustEpochNearEnd() {
-        zksLeader.setZxid((zksLeader.getZxid() & 0xffffffff00000000L) | 0xfffffffcL);
+        // This test never enables the wide-counter layout, so the zxid stays
+        // in the legacy 32/32 layout throughout.
+        zksLeader.setZxid(ZxidLayout.LEGACY.clearCounter(zksLeader.getZxid()) | (ZxidLayout.LEGACY.getMaxCounter() - 3));
     }
 
     @AfterEach
