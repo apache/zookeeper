@@ -293,7 +293,7 @@ public class DIFFSyncTest extends QuorumPeerTestBase {
     private void logEpochsAndLastLoggedTxnForAllServers() throws Exception {
         for (int  i = 0; i < SERVER_COUNT; i++) {
             final QuorumPeer qp = mt[i].getQuorumPeer();
-            if (qp != null) {
+            if (qp != null && qp.getZkDb().isInitialized()) {
                 LOG.info(String.format("server id=%d, acceptedEpoch=%d, currentEpoch=%d, lastLoggedTxn=%s",
                         qp.getMyId(), qp.getAcceptedEpoch(),
                         qp.getCurrentEpoch(), Long.toHexString(qp.getLastLoggedZxid())));
