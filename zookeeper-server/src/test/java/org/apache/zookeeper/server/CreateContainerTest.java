@@ -24,6 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
@@ -53,6 +57,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.slf4j.LoggerFactory;
 
 public class CreateContainerTest extends ClientBase {
 
@@ -148,6 +153,39 @@ public class CreateContainerTest extends ClientBase {
 
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
         assertNull(zk.exists("/foo", false), "Container should have been deleted");
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testCandidateContainerDeletionIsLoggedAtDebugLevel() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(ContainerManager.class);
+        Level originalLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+
+        try {
+            zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+            zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.delete("/foo/bar", -1);
+
+            ContainerManager containerManager = new ContainerManager(
+                    serverFactory.getZooKeeperServer().getZKDatabase(),
+                    serverFactory.getZooKeeperServer().firstProcessor,
+                    1,
+                    100);
+            containerManager.checkContainers();
+
+            assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
+            assertTrue(appender.list.stream().anyMatch(event ->
+                    event.getLevel() == Level.DEBUG
+                            && event.getFormattedMessage().equals("Attempting to delete candidate container: /foo")));
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(originalLevel);
+            appender.stop();
+        }
     }
 
     @Test
