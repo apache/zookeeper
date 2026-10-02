@@ -299,8 +299,8 @@ public class DataTree {
 
         nodeDataSize.set(approximateDataSize());
         try {
-            dataWatches = WatchManagerFactory.createWatchManager();
-            childWatches = WatchManagerFactory.createWatchManager();
+            dataWatches = WatchManagerFactory.createWatchManager("datawatches");
+            childWatches = WatchManagerFactory.createWatchManager("childwatches");
         } catch (Exception e) {
             LOG.error("Unexpected exception when creating WatchManager, exiting abnormally", e);
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
