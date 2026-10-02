@@ -254,6 +254,44 @@ to collect and store metrics from your ZooKeeper clusters. There is also an
 [Apache ZooKeeper InfluxDB template](https://www.influxdata.com/influxdb-templates/zookeeper-monitor/)
 that includes Telegraf configuration and a pre-built dashboard to get you started quickly.
 
+### Timeline Metrics
+
+**New in 3.10.0:** ZooKeeper supports integration with Timeline-based metrics collection systems
+such as Apache Ambari Metrics Collector.
+
+#### Pre-requisites
+
+- The Timeline Metrics Provider requires a sink implementation to connect to your metrics collector.
+  For Ambari Metrics, you'll need the Ambari Metrics Hadoop Sink library in the ZooKeeper classpath.
+
+- Enable the `Timeline MetricsProvider` by setting the following in `zoo.cfg`:
+  ```conf
+  metricsProvider.className=org.apache.zookeeper.metrics.timeline.TimelineMetricsProvider
+  metricsProvider.timeline.sink.class=org.apache.hadoop.metrics2.sink.timeline.ZooKeeperTimelineMetricsSink
+  ```
+
+- Configure the collection period (in seconds):
+  ```conf
+  metricsProvider.timeline.collection.period=60  # Default is 60 seconds
+  ```
+
+- Optionally configure hostname and application ID:
+  ```conf
+  metricsProvider.timeline.hostname=zk1.example.com  # Auto-detected if not specified
+  metricsProvider.timeline.appId=zookeeper           # Default is "zookeeper"
+  ```
+
+- Additional sink-specific configuration properties can be added with the `metricsProvider.timeline.` prefix.
+  These are passed directly to the sink implementation. For example, Ambari Metrics Sink supports:
+  ```conf
+  metricsProvider.timeline.collector.hosts=collector.example.com
+  metricsProvider.timeline.collector.protocol=http
+  metricsProvider.timeline.collector.port=6188
+  ```
+
+**Note:** Unlike Prometheus which uses a pull-based model, the Timeline Metrics Provider actively
+pushes metrics to the collector at the configured interval.
+
 ## JMX
 
 See the [JMX guide](/admin-ops/jmx) for details.
