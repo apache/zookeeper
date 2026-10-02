@@ -1,14 +1,14 @@
 #ifndef WINCONFIG_H_
 #define WINCONFIG_H_
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
+/* GCC-compatible attributes and C99 keywords are supported by MinGW. */
+#ifdef _MSC_VER
 #ifndef __cplusplus
 #define inline __inline
 #endif
-
 #define __attribute__(x)
 #define __func__ __FUNCTION__
+#endif
 
 #define ACL ZKACL /* Conflict with windows API */
 

@@ -31,18 +31,22 @@
 #include <winsock2.h> /* must always be included before ws2tcpip.h */
 #include <ws2tcpip.h> /* for struct sock_addr used in zookeeper.h */
 
-/* POSIX names are deprecated, use ISO conformant names instead. */
+/* POSIX names are deprecated by Microsoft's CRT.  MinGW provides them. */
+#ifdef _MSC_VER
 #define strdup _strdup
 #define getcwd _getcwd
 #define getpid _getpid
 
 /* Windows "secure" versions of POSIX reentrant functions */
 #define strtok_r strtok_s
-#define localtime_r(a,b) localtime_s(b,a)
+#endif
+
+/* MinGW's CRT also exposes localtime_s rather than localtime_r. */
+#define localtime_r(a,b) (localtime_s((b),(a)) == 0 ? (b) : NULL)
 
 /* After this version of MSVC, snprintf became a defined function,
    and so cannot be redefined, nor can #ifndef be used to guard it. */
-#if ((defined(_MSC_VER) && _MSC_VER < 1900) || !defined(_MSC_VER))
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
 
@@ -54,7 +58,9 @@
 #include <malloc.h>
 
 
+#ifdef _MSC_VER
 typedef int ssize_t;
+#endif
 typedef HANDLE pthread_mutex_t;
 
 struct pthread_t_
@@ -128,7 +134,6 @@ void *pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void *value);
 
 int gettimeofday(struct timeval *tp, void *tzp);
-int close(SOCKET fd);
 int Win32WSAStartup();
 void Win32WSACleanup();
 double drand48(void);
