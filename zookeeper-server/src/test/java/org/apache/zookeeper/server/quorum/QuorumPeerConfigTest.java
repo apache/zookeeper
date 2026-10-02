@@ -99,6 +99,8 @@ public class QuorumPeerConfigTest {
                 fail("ConfigException is expected");
             } catch (ConfigException e) {
                 assertNotNull(e.getMessage());
+            } finally {
+                System.clearProperty(x509Util.getSslAuthProviderProperty());
             }
         }
     }
@@ -195,6 +197,106 @@ public class QuorumPeerConfigTest {
         try {
             quorumPeerConfig.parseProperties(zkProp);
             fail("Must throw exception as 'yes' is not acceptable for parseBoolean!");
+        } catch (ConfigException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Test case for https://issues.apache.rog/jira/browse/ZOOKEEPER-4276
+     */
+    @Test
+    public void testSetupQuorumPeerConfig() throws IOException, ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("clientPort", "2181");
+        quorumPeerConfig.parseProperties(zkProp);
+        Properties dynamicZkProp = new Properties();
+        dynamicZkProp.setProperty("server.1", "localhost:2888:3888;2181");
+        quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
+    }
+
+    /**
+     * Test case for https://issues.apache.rog/jira/browse/ZOOKEEPER-4276
+     */
+    @Test
+    public void testSetupQuorumPeerConfigOnlyWithSecureClient() throws IOException, ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("secureClientPort", "12345");
+        quorumPeerConfig.parseProperties(zkProp);
+        Properties dynamicZkProp = new Properties();
+        dynamicZkProp.setProperty("server.1", "localhost:2888:3888;12345");
+        quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
+    }
+
+    /**
+     * Test case for https://issues.apache.rog/jira/browse/ZOOKEEPER-4276
+     */
+    @Test
+    public void testSetupQuorumPeerConfigWithBothClients() throws IOException, ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("clientPort", "2181");
+        zkProp.setProperty("secureClientPort", "12345");
+        quorumPeerConfig.parseProperties(zkProp);
+        Properties dynamicZkProp = new Properties();
+        dynamicZkProp.setProperty("server.1", "localhost:2888:3888;2181");
+        quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
+    }
+
+    /**
+     * Test case for https://issues.apache.rog/jira/browse/ZOOKEEPER-4276
+     */
+    @Test
+    public void testSetupQuorumPeerConfigWithBothClientsAndSecurePort() throws IOException, ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("clientPort", "2181");
+        zkProp.setProperty("secureClientPort", "12345");
+        quorumPeerConfig.parseProperties(zkProp);
+        Properties dynamicZkProp = new Properties();
+        dynamicZkProp.setProperty("server.1", "localhost:2888:3888;12345");
+        quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
+    }
+
+    /**
+     * Test case for https://issues.apache.rog/jira/browse/ZOOKEEPER-4276
+     */
+    @Test
+    public void testSetupQuorumPeerConfigFromStatic() throws IOException,
+        ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("clientPort", "2181");
+        quorumPeerConfig.parseProperties(zkProp);
+        Properties dynamicZkProp = new Properties();
+        dynamicZkProp.setProperty("server.1", "localhost:2888:3888");
+        quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
+        assertTrue(quorumPeerConfig.getQuorumVerifier().getAllMembers().get(serverId).isClientAddrFromStatic);
+    }
+
+    /**
+     * Test case for https://issues.apache.rog/jira/browse/ZOOKEEPER-4276
+     */
+    @Test
+    public void testSetupQuorumPeerConfigWithDifferentPorts() throws IOException, ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("clientPort", "2181");
+        zkProp.setProperty("secureClientPort", "12345");
+        quorumPeerConfig.parseProperties(zkProp);
+        Properties dynamicZkProp = new Properties();
+        dynamicZkProp.setProperty("server.1", "localhost:2888:3888;12181");
+        try {
+            quorumPeerConfig.setupQuorumPeerConfig(dynamicZkProp, false);
+            fail("Must throw exception with different QuorumPeerConfig Ports");
         } catch (ConfigException e) {
             // expected
         }
