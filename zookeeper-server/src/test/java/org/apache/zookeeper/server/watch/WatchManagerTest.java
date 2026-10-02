@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.watch;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -370,6 +372,91 @@ public class WatchManagerTest extends ZKTestCase {
         // then: contains or remove should fail on removed path and watcher pair
         assertFalse(manager.containsWatcher("/node1", watcher1));
         assertFalse(manager.removeWatcher("/node1", watcher1));
+    }
+
+    /**
+     * Test triggering the last standard watch removes the watcher from the watches summary.
+     */
+    @Test
+    public void testTriggerLastStandardWatchRemovesWatcherFromSummary() {
+        WatchManager manager = new WatchManager();
+        DumbWatcher watcher = new DumbWatcher(0x40L);
+
+        // given: add a standard watch to "/node1"
+        assertTrue(manager.addWatch("/node1", watcher, WatcherMode.STANDARD));
+
+        // when: trigger the standard watch
+        WatcherOrBitSet triggered = manager.triggerWatch("/node1", EventType.NodeDataChanged, 1L, null, null);
+
+        // then: the standard watch should be triggered and consumed
+        assertNotNull(triggered);
+        assertTrue(triggered.contains(watcher));
+        checkMostRecentWatchedEvent(watcher, "/node1", EventType.NodeDataChanged, 1L);
+        assertFalse(manager.containsWatcher("/node1", watcher, WatcherMode.STANDARD));
+        assertEquals(0, manager.size());
+
+        // then: the watches summary should not retain the watcher
+        WatchesSummary summary = manager.getWatchesSummary();
+        assertEquals(0, summary.getNumConnections());
+        assertEquals(0, summary.getNumPaths());
+        assertEquals(0, summary.getTotalWatches());
+    }
+
+    /**
+     * Test triggering the last standard watch removes the watcher from the watches report.
+     */
+    @Test
+    public void testTriggerLastStandardWatchRemovesWatcherFromWatchesReport() {
+        WatchManager manager = new WatchManager();
+        DumbWatcher watcher = new DumbWatcher(0x40L);
+
+        // given: add a standard watch to "/node1"
+        assertTrue(manager.addWatch("/node1", watcher, WatcherMode.STANDARD));
+
+        // when: trigger the standard watch
+        WatcherOrBitSet triggered = manager.triggerWatch("/node1", EventType.NodeDataChanged, 1L, null, null);
+
+        // then: the standard watch should be triggered and consumed
+        assertNotNull(triggered);
+        assertTrue(triggered.contains(watcher));
+        assertFalse(manager.containsWatcher("/node1", watcher, WatcherMode.STANDARD));
+        assertEquals(0, manager.size());
+
+        // then: the watches report should not retain the watcher
+        WatchesReport report = manager.getWatches();
+        assertNull(report.getPaths(0x40L));
+    }
+
+    /**
+     * Test triggering a standard watch preserves other registrations
+     * belonging to the same watcher.
+     */
+    @Test
+    public void testTriggerStandardWatchPreservesOtherWatcherRegistration() {
+        WatchManager manager = new WatchManager();
+        DumbWatcher watcher = new DumbWatcher(0x40L);
+
+        // given: add a standard watch and a persistent watch on different paths
+        assertTrue(manager.addWatch("/node1", watcher, WatcherMode.STANDARD));
+        assertTrue(manager.addWatch("/node2", watcher, WatcherMode.PERSISTENT));
+
+        // when: trigger the standard watch
+        WatcherOrBitSet triggered = manager.triggerWatch("/node1", EventType.NodeDataChanged, 1L, null, null);
+
+        // then: the standard watch should be triggered and consumed
+        assertNotNull(triggered);
+        assertTrue(triggered.contains(watcher));
+        assertFalse(manager.containsWatcher("/node1", watcher, WatcherMode.STANDARD));
+
+        // then: the persistent registration on the other path should remain
+        assertTrue(manager.containsWatcher("/node2", watcher, WatcherMode.PERSISTENT));
+
+        WatchesSummary summary = manager.getWatchesSummary();
+        assertEquals(1, summary.getNumConnections());
+        assertEquals(1, summary.getNumPaths());
+        assertEquals(1, summary.getTotalWatches());
+
+        assertEquals(Set.of("/node2"), manager.getWatches().getPaths(0x40L));
     }
 
     /**
