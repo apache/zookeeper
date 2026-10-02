@@ -113,6 +113,12 @@ public class Follower extends Learner {
                     LOG.info("Starting ObserverMaster");
 
                     om = new ObserverMaster(self, fzk, self.getObserverMasterPort());
+                    // Proposals received during synchronization are added directly to
+                    // pendingTxns and do not pass through processPacket(). Seed the
+                    // ObserverMaster before it starts accepting observers.
+                    for (Request request : fzk.pendingTxns) {
+                        om.proposalReceived(request);
+                    }
                     om.start();
                 } else {
                     om = null;

@@ -356,6 +356,10 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
         proposedPkts.add(new QuorumPacket(Leader.INFORM, qp.getZxid(), qp.getData(), null));
     }
 
+    void proposalReceived(Request request) {
+        proposedPkts.add(new QuorumPacket(Leader.INFORM, request.zxid, request.getSerializeData(), null));
+    }
+
     private synchronized QuorumPacket removeProposedPacket(long zxid) {
         QuorumPacket pkt = proposedPkts.peek();
         if (pkt == null || pkt.getZxid() > zxid) {
