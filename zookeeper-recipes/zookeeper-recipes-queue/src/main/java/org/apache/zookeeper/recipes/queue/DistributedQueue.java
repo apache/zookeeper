@@ -68,6 +68,10 @@ public class DistributedQueue {
         List<String> childNames;
         childNames = zookeeper.getChildren(dir, watcher);
 
+        if (childNames == null) {
+            return orderedChildren;
+        }
+
         for (String childName : childNames) {
             try {
                 //Check format
@@ -94,12 +98,16 @@ public class DistributedQueue {
         long minId = Long.MAX_VALUE;
         String minName = "";
 
-        List<String> childNames;
+        List<String> childNames = null;
 
         try {
             childNames = zookeeper.getChildren(dir, false);
         } catch (KeeperException.NoNodeException e) {
             LOG.warn("Unexpected exception", e);
+            return null;
+        }
+        
+        if (childNames == null) {
             return null;
         }
 
