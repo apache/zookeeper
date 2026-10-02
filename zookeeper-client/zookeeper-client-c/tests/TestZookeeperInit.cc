@@ -33,11 +33,63 @@ class MockPthreadsNull;
 
 using namespace std;
 
+#ifdef THREADED
+class CheckedPthreadCreateFailure : public CheckedPthread
+{
+public:
+    explicit CheckedPthreadCreateFailure(int failOnCall):
+        pthreadCreateCounter(0),pthreadJoinCounter(0),
+        pthreadCondDestroyCounter(0),pthreadMutexDestroyCounter(0),
+        threadCreated(false),failOnCall_(failOnCall){}
+
+    int pthread_create(pthread_t *t, const pthread_attr_t *a,
+            void *(*f)(void *), void *d) override {
+        if (pthreadCreateCounter++ == failOnCall_)
+            return EAGAIN;
+        int rc=CheckedPthread::pthread_create(t,a,f,d);
+        if(!rc) {
+            thread=*t;
+            threadCreated=true;
+        }
+        return rc;
+    }
+
+    int pthread_join(pthread_t t, void **r) override {
+        pthreadJoinCounter++;
+        return CheckedPthread::pthread_join(t,r);
+    }
+
+    int pthread_cond_destroy(pthread_cond_t *c) override {
+        pthreadCondDestroyCounter++;
+        return CheckedPthread::pthread_cond_destroy(c);
+    }
+
+    int pthread_mutex_destroy(pthread_mutex_t *m) override {
+        pthreadMutexDestroyCounter++;
+        return CheckedPthread::pthread_mutex_destroy(m);
+    }
+
+    int pthreadCreateCounter;
+    int pthreadJoinCounter;
+    int pthreadCondDestroyCounter;
+    int pthreadMutexDestroyCounter;
+    pthread_t thread;
+    bool threadCreated;
+
+private:
+    int failOnCall_;
+};
+#endif
+
 class Zookeeper_init : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_init);
     CPPUNIT_TEST(testVersion);
     CPPUNIT_TEST(testBasic);
+#ifdef THREADED
+    CPPUNIT_TEST(testFirstThreadCreateFailure);
+    CPPUNIT_TEST(testSecondThreadCreateFailure);
+#endif
     CPPUNIT_TEST(testAddressResolution);
     CPPUNIT_TEST(testMultipleAddressResolution);
     CPPUNIT_TEST(testNullAddressString);
@@ -139,6 +191,36 @@ public:
         CPPUNIT_ASSERT(MockPthreadsNull::isInitialized(&zh->completions_to_process.cond));
 #endif
     }
+#ifdef THREADED
+    void assertThreadCreateFailure(int failOnCall)
+    {
+        delete pthreadMock;
+        pthreadMock=0;
+        CheckedPthreadCreateFailure pthreadFailure(failOnCall);
+
+        errno=0;
+        zh=zookeeper_init("127.0.0.1:2121",watcher,10000,0,0,0);
+
+        CPPUNIT_ASSERT(zh==0);
+        CPPUNIT_ASSERT_EQUAL(EAGAIN,errno);
+        CPPUNIT_ASSERT_EQUAL(failOnCall+1,pthreadFailure.pthreadCreateCounter);
+        CPPUNIT_ASSERT_EQUAL(failOnCall,pthreadFailure.pthreadJoinCounter);
+        CPPUNIT_ASSERT_EQUAL(3,pthreadFailure.pthreadCondDestroyCounter);
+        CPPUNIT_ASSERT_EQUAL(9,pthreadFailure.pthreadMutexDestroyCounter);
+        if(pthreadFailure.threadCreated)
+            CPPUNIT_ASSERT(CheckedPthread::isDestroyed(pthreadFailure.thread));
+    }
+
+    void testFirstThreadCreateFailure()
+    {
+        assertThreadCreateFailure(0);
+    }
+
+    void testSecondThreadCreateFailure()
+    {
+        assertThreadCreateFailure(1);
+    }
+#endif
     void testAddressResolution()
     {
         const char EXPECTED_IPS[][4]={{127,0,0,1}};
