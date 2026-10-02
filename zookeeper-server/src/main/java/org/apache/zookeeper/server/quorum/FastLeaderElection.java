@@ -467,6 +467,7 @@ public class FastLeaderElection implements Election {
                             }
                         }
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                         LOG.warn("Interrupted Exception while waiting for new message", e);
                     }
                 }

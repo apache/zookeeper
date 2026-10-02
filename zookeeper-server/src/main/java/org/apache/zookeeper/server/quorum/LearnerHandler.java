@@ -1047,6 +1047,7 @@ public class LearnerHandler extends ZooKeeperThread {
             queuedPackets.clear();
             queuedPackets.put(proposalOfDeath);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             LOG.warn("Ignoring unexpected exception", e);
         }
 
