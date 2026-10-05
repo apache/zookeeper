@@ -162,6 +162,9 @@ public class WatchManager implements IWatchManager {
                         if (newStats == WatchStats.NONE) {
                             iterator.remove();
                             paths.remove(localPath);
+                            if (paths.isEmpty()) {
+                                watch2Paths.remove(watcher);
+                            }
                         } else if (newStats != stats) {
                             paths.put(localPath, newStats);
                         }
