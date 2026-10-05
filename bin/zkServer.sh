@@ -283,7 +283,7 @@ case $1 in
     fi
     echo "Client port found: $clientPort. Client address: $clientPortAddress. Client SSL: $isSSL."
     STAT=$("$JAVA" "-Dzookeeper.log.dir=$ZOO_LOG_DIR" "-Dzookeeper.log.file=$ZOO_LOG_FILE" \
-      "${clientflags[@]}" "${flags[@]}" org.apache.zookeeper.client.FourLetterWordMain \
+      "${clientflags[@]}" org.apache.zookeeper.client.FourLetterWordMain \
       "$clientPortAddress" "$clientPort" srvr "$isSSL" 2>/dev/null |
       $GREP Mode)
     if [[ -z $STAT ]]; then
