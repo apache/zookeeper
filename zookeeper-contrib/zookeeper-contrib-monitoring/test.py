@@ -164,7 +164,7 @@ class HandlerTestCase(unittest.TestCase):
     def setUp(self):
         try:
             sys._stdout
-        except:
+        except Exception:
             sys._stdout = sys.stdout
         
         sys.stdout = StringIO()
