@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Objects;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.Leader;
@@ -40,11 +41,9 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
 
     private static final Logger LOG = LoggerFactory.getLogger(TxnLogProposalIterator.class);
 
-    public static final TxnLogProposalIterator EMPTY_ITERATOR = new TxnLogProposalIterator();
-
     private boolean hasNext = false;
 
-    private TxnIterator itr;
+    private final TxnIterator itr;
 
     @Override
     public boolean hasNext() {
@@ -86,23 +85,16 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
      * transaction records
      */
     public void close() {
-        if (itr != null) {
-            try {
-                itr.close();
-            } catch (IOException ioe) {
-                LOG.warn("Error closing file iterator", ioe);
-            }
+        try {
+            itr.close();
+        } catch (IOException ioe) {
+            LOG.warn("Error closing file iterator", ioe);
         }
     }
 
-    private TxnLogProposalIterator() {
-    }
-
-    public TxnLogProposalIterator(TxnIterator itr) {
-        if (itr != null) {
-            this.itr = itr;
-            hasNext = (itr.getHeader() != null);
-        }
+    public TxnLogProposalIterator(final TxnIterator itr) {
+        this.itr = Objects.requireNonNull(itr);
+        this.hasNext = (itr.getHeader() != null);
     }
 
 }
