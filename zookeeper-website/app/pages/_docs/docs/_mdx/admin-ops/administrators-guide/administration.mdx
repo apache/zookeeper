@@ -214,3 +214,41 @@ Since 3.6.0 ZooKeeper binary package bundles an integration with [Prometheus.io]
   result exposed via `/metrics`. Quantiles from observations in the current
   interval become visible after the next rotation.
   Default value is 60 seconds.
+
+#### Timeline Metrics Provider
+
+ZooKeeper includes integration with Timeline-based metrics collection systems
+such as Apache Ambari Metrics Collector.
+
+The Timeline Metrics Provider uses a push-based model, actively sending metrics to a collector at
+regular intervals, unlike Prometheus which uses a pull-based model.
+
+- _metricsProvider.className_ :
+  **New in 3.10.0:**
+  Set to "org.apache.zookeeper.metrics.timeline.TimelineMetricsProvider" to
+  enable Timeline metrics exporter.
+- _metricsProvider.timeline.sink.class_ :
+  **New in 3.10.0:**
+  The fully qualified class name of the sink implementation that sends metrics
+  to your Timeline Metrics Collector. The class must implement the
+  `org.apache.zookeeper.metrics.timeline.TimelineMetricsSink` interface and
+  be available on the ZooKeeper classpath.
+  Default: "org.apache.hadoop.metrics2.sink.timeline.ZooKeeperTimelineMetricsSink"
+- _metricsProvider.timeline.collection.period_ :
+  **New in 3.10.0:**
+  The interval in seconds at which metrics are collected and sent to the collector.
+  Default value is 60 seconds.
+- _metricsProvider.timeline.hostname_ :
+  **New in 3.10.0:**
+  The hostname to be reported in the metrics. If not specified, the system hostname
+  will be automatically detected.
+- _metricsProvider.timeline.appId_ :
+  **New in 3.10.0:**
+  The application ID to identify this ZooKeeper instance in the metrics system.
+  Default value is "zookeeper".
+
+**Note:** Additional configuration properties with the `metricsProvider.timeline.` prefix
+(such as collector hosts, ports, protocols, SSL settings) are passed directly to the sink
+implementation. These properties are sink-specific and depend on your metrics collection
+system. Refer to your sink implementation documentation (e.g., Ambari Metrics Sink) for
+available configuration options.
