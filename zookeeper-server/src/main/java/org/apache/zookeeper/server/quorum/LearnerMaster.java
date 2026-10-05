@@ -24,6 +24,7 @@ import java.net.SocketAddress;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,6 +150,12 @@ public abstract class LearnerMaster {
      * @return last proposed zxid
      */
     abstract long getLastProposed();
+
+    /**
+     * the zxid layout state of the ensemble member backing this master
+     * @return the zxid layout state
+     */
+    abstract ZxidLayoutState getZxidLayoutState();
 
     /**
      * the current tick
