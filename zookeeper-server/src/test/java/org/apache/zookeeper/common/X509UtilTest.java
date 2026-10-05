@@ -42,6 +42,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -828,27 +830,33 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testCreateSSLContext_ChaCha20Cipher(X509KeyType caKeyType,
+    public void testCreateSSLContext_AllClientCiphers(X509KeyType caKeyType,
             X509KeyType certKeyType, String keyPassword, Integer paramIndex) throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
 
-        // TLS_CHACHA20_POLY1305_SHA256 cipher is a mandatory cipher suite on TLSv1.3,
-        // so a client with default configuration must support it.
+        // Netty has an own list of supported ciphers, which is a subset of
+        // JVM's available cipher suites. A client ssl engine must support every
+        // cipher which is supported by the JVM.
 
-        ZKConfig zkConfig = new ZKConfig();
-        zkConfig.setProperty(x509Util.getSslEnabledProtocolsProperty(), "TLSv1.3");
+        SSLContext defaultContext = SSLContext.getInstance("TLSv1.3");
+        defaultContext.init(null, null, null);
+
+        String[] defaultCipherArray = defaultContext.getSupportedSSLParameters().getCipherSuites();
+        Set<String> defaultCipherSet = new TreeSet<>(Arrays.asList(defaultCipherArray));
 
         try (ClientNettyX509Util clientX509Util = new ClientNettyX509Util()) {
-            SslContext context = clientX509Util.createNettySslContextForClient(zkConfig);
+            ZKConfig config = new ZKConfig();
+            config.setProperty(x509Util.getSslEnabledProtocolsProperty(), "TLSv1.3");
+
+            SslContext clientContext = clientX509Util.createNettySslContextForClient(config);
 
             UnpooledByteBufAllocator byteBufAllocator = new UnpooledByteBufAllocator(false);
-            SSLEngine engine = context.newEngine(byteBufAllocator);
+            SSLEngine engine = clientContext.newEngine(byteBufAllocator);
 
-            String[] enabledProtocols = engine.getEnabledProtocols();
-            assertArrayEquals(new String[] { "TLSv1.3" }, enabledProtocols);
+            String[] clientCipherArray = engine.getEnabledCipherSuites();
+            Set<String> clientCipherSet = new TreeSet<>(Arrays.asList(clientCipherArray));
 
-            List<String> enabledCipherSuites = Arrays.asList(engine.getEnabledCipherSuites());
-            assertTrue(enabledCipherSuites.contains("TLS_CHACHA20_POLY1305_SHA256"));
+            assertEquals(defaultCipherSet, clientCipherSet);
         }
     }
 
