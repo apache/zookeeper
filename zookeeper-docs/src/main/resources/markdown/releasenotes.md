@@ -15,6 +15,32 @@ limitations under the License.
 //-->
 
 
+# Release Notes - ZooKeeper - Version 3.9.7
+
+**Important Note**
+
+Added two configurable multiRead limits: `zookeeper.multiRead.maxOps` (maximum read operations per multiRead request, default 1000) and `zookeeper.multiRead.maxResponseBytes` (maximum cumulative response size per multiRead request, default 64 MB).
+
+## Bug
+
+* Various undisclosed CVE fixes - please check security page for details
+
+* [ZOOKEEPER-4946](https://issues.apache.org/jira/browse/ZOOKEEPER-4946) - Login thread failed to shutdown successfully, causing SendThead to be blocked
+* [ZOOKEEPER-4947](https://issues.apache.org/jira/browse/ZOOKEEPER-4947) - When ZooKeeper client enters AuthFailed state (e.g., due to SASL authentication failure),  calling `close()` method does not terminate internal SendThread and EventThread.
+* [ZOOKEEPER-5055](https://issues.apache.org/jira/browse/ZOOKEEPER-5055) - Ensure FileTxnLog.close() closes every stream
+* [ZOOKEEPER-5091](https://issues.apache.org/jira/browse/ZOOKEEPER-5091) - WatchManager reports connections with no active watches after consuming the last standard watch
+* [ZOOKEEPER-5093](https://issues.apache.org/jira/browse/ZOOKEEPER-5093) - Possible io resource leak in FileTxnSnapLog.close
+
+## Improvement
+
+* [ZOOKEEPER-5054](https://issues.apache.org/jira/browse/ZOOKEEPER-5054) - Netty client should allow every supported TLS ciphers
+* [ZOOKEEPER-5098](https://issues.apache.org/jira/browse/ZOOKEEPER-5098) - Upgrade netty to 4.1.138 or latest to fix CVE-2026-89044
+* [ZOOKEEPER-5099](https://issues.apache.org/jira/browse/ZOOKEEPER-5099) - Upgrade jackson jars to 2.22.3 or latest to address CVE-2026-91776, CVE-2026-91777
+
+
+&nbsp;
+
+
 # Release Notes - ZooKeeper - Version 3.9.6
 
 ## Bug
