@@ -40,8 +40,57 @@ import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.util.QuotaMetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ZooKeeperServerTest extends ZKTestCase {
+
+    private static final String MAX_SESSION_EPHEMERAL_PATH_BYTES = "max_session_ephemeral_path_bytes";
+
+    @Test
+    public void testMaxSessionEphemeralPathBytesGaugeLifecycle() throws Exception {
+        ZooKeeperServer server = new ZooKeeperServer();
+        ZKDatabase database = new ZKDatabase(mock(FileTxnSnapLog.class));
+        server.setZKDatabase(database);
+        server.sessionTracker = mock(SessionTracker.class);
+        server.registerMetrics();
+        try {
+            assertEquals(0L, MetricsUtils.currentServerMetrics().get(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+            database.getDataTree().createNode("/中", new byte[0], null, 1, -1, 1, 1);
+            assertEquals(4L, MetricsUtils.currentServerMetrics().get(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+            database.getDataTree().killSession(1, 2);
+            assertEquals(0L, MetricsUtils.currentServerMetrics().get(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+        } finally {
+            server.unregisterMetrics();
+        }
+        assertFalse(MetricsUtils.currentServerMetrics().containsKey(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+    }
+
+    @ParameterizedTest(name = "replaceDatabase={0}")
+    @ValueSource(booleans = {true, false})
+    public void testMaxSessionEphemeralPathBytesGaugeUsesCurrentDatabase(boolean replaceDatabase) throws Exception {
+        ZooKeeperServer server = new ZooKeeperServer();
+        ZKDatabase database = new ZKDatabase(mock(FileTxnSnapLog.class));
+        database.getDataTree().createNode("/old", new byte[0], null, 1, -1, 1, 1);
+        server.setZKDatabase(database);
+        server.sessionTracker = mock(SessionTracker.class);
+        server.registerMetrics();
+        try {
+            assertEquals(4L, MetricsUtils.currentServerMetrics().get(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+
+            if (replaceDatabase) {
+                database = new ZKDatabase(mock(FileTxnSnapLog.class));
+                server.setZKDatabase(database);
+            } else {
+                database.clear();
+            }
+            assertEquals(0L, MetricsUtils.currentServerMetrics().get(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+            database.getDataTree().createNode("/longer", new byte[0], null, 2, -1, 2, 1);
+            assertEquals(7L, MetricsUtils.currentServerMetrics().get(MAX_SESSION_EPHEMERAL_PATH_BYTES));
+        } finally {
+            server.unregisterMetrics();
+        }
+    }
 
     @Test
     public void testDirSize() throws Exception {
