@@ -25,29 +25,52 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZKAuditProvider {
-    static final String AUDIT_ENABLE = "zookeeper.audit.enable";
+    /**
+     * System property that enables audit logging.
+     */
+    public static final String AUDIT_ENABLE = "zookeeper.audit.enable";
     static final String AUDIT_IMPL_CLASS = "zookeeper.audit.impl.class";
     private static final Logger LOG = LoggerFactory.getLogger(ZKAuditProvider.class);
-    // By default audit logging is disabled
-    private static boolean auditEnabled;
-    private static AuditLogger auditLogger;
+    private static String selectedAuditLoggerClass;
 
-    static {
-        auditEnabled = Boolean.getBoolean(AUDIT_ENABLE);
-        if (auditEnabled) {
-            //initialise only when audit logging is enabled
-            auditLogger = getAuditLogger();
-            LOG.info("ZooKeeper audit is enabled.");
-        } else {
-            LOG.info("ZooKeeper audit is disabled.");
+    // Parsing server configuration must not initialize the audit logger.
+    private static class AuditState {
+        private static final boolean auditEnabled;
+        private static final AuditLogger auditLogger;
+
+        static {
+            String loggerClass = null;
+            synchronized (ZKAuditProvider.class) {
+                auditEnabled = Boolean.getBoolean(AUDIT_ENABLE);
+                if (auditEnabled) {
+                    loggerClass = System.getProperty(AUDIT_IMPL_CLASS, Slf4jAuditLogger.class.getName());
+                    selectedAuditLoggerClass = loggerClass;
+                }
+            }
+            if (auditEnabled) {
+                auditLogger = getAuditLogger(loggerClass);
+                LOG.info("ZooKeeper audit is enabled.");
+            } else {
+                auditLogger = null;
+                LOG.info("ZooKeeper audit is disabled.");
+            }
         }
     }
 
-    private static AuditLogger getAuditLogger() {
-        String auditLoggerClass = System.getProperty(AUDIT_IMPL_CLASS);
-        if (auditLoggerClass == null) {
-            auditLoggerClass = Slf4jAuditLogger.class.getName();
+    /**
+     * Configures the audit logger class without initializing the logger.
+     *
+     * @throws IllegalArgumentException if another audit logger class has already been selected
+     */
+    public static synchronized void configureAuditLogger(String loggerClass) {
+        if (selectedAuditLoggerClass != null && !selectedAuditLoggerClass.equals(loggerClass)) {
+            throw new IllegalArgumentException("Audit logger is already selected as " + selectedAuditLoggerClass
+                + "; cannot configure " + loggerClass + ". Set " + AUDIT_IMPL_CLASS + " before using the audit provider.");
         }
+        System.setProperty(AUDIT_IMPL_CLASS, loggerClass);
+    }
+
+    private static AuditLogger getAuditLogger(String auditLoggerClass) {
         try {
             Constructor<?> clientCxnConstructor = Class.forName(auditLoggerClass)
                     .getDeclaredConstructor();
@@ -63,12 +86,12 @@ public class ZKAuditProvider {
      * @return true if audit log is enabled
      */
     public static boolean isAuditEnabled() {
-        return auditEnabled;
+        return AuditState.auditEnabled;
     }
 
     public static void log(String user, String operation, String znode, String acl,
                            String createMode, String session, String ip, Result result) {
-        auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
+        AuditState.auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
     }
 
     /**
@@ -118,8 +141,13 @@ public class ZKAuditProvider {
         }
     }
 
-    private static void log(String user, String operation, Result result) {
-        auditLogger.logAuditEvent(createLogEvent(user, operation, result));
+    /**
+     * Logs an operation without session, IP, or znode fields when auditing is enabled.
+     */
+    public static void log(String user, String operation, Result result) {
+        if (isAuditEnabled()) {
+            AuditState.auditLogger.logAuditEvent(createLogEvent(user, operation, result));
+        }
     }
 
     /**
