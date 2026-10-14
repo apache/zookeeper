@@ -54,7 +54,7 @@ public class ClientNettyX509Util extends ClientX509Util {
             return createNettyJdkSslContext(config, suppliedSSLContext, true);
         }
 
-        SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
+        SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().endpointIdentificationAlgorithm(null);
 
         KeyManager km = buildClientKeyManager(config);
         if (km != null) {

@@ -93,14 +93,19 @@ public class SSLHostnameVerificationTest {
         return state;
     }
 
-    @ParameterizedTest(name = "{0}, fips-mode: {1}")
+    @ParameterizedTest(name = "{0}, fips-mode: {1}, hostname-verification: {2}")
     @CsvSource({
-            "localhost, true",
-            "localhost, false",
-            "127.0.0.1, true",
-            "127.0.0.1, false",
+            "localhost, true, true",
+            "localhost, false, true",
+            "127.0.0.1, true, true",
+            "127.0.0.1, false, true",
+            "localhost, true, false",
+            "localhost, false, false",
+            "127.0.0.1, true, false",
+            "127.0.0.1, false, false",
     })
-    public void testClientHostnameVerificationWithMismatchNames(String serverHost, boolean fipsEnabled, @TempDir Path tmpDir) throws Exception {
+    public void testClientHostnameVerificationWithMismatchNames(String serverHost, boolean fipsEnabled,
+            boolean hostnameVerification, @TempDir Path tmpDir) throws Exception {
         try (Ca ca = Ca.create(tmpDir)) {
             // given: server with cert mismatching cn/dns/ip
             Cert server1Cert = ca.signer("abc0").withDnsName("abc1").withIpAddress("192.168.0.10").sign();
@@ -123,12 +128,14 @@ public class SSLHostnameVerificationTest {
                 ZKClientConfig clientConfig = clientCert.buildClientConfig(ca);
                 clientConfig.setProperty("zookeeper.sasl.client", "false");
                 clientConfig.setProperty("zookeeper.fips-mode", Boolean.toString(fipsEnabled));
-                clientConfig.setProperty("zookeeper.ssl.hostnameVerification", "true");
+                clientConfig.setProperty("zookeeper.ssl.hostnameVerification", Boolean.toString(hostnameVerification));
 
                 // when: connect using mismatched dns/ip
                 String connectionString =  server.getSecureConnectionString();
-                // then: connection rejected by us as no matching name
-                assertEquals(Watcher.Event.KeeperState.Expired, checkConnectState(server.getSecureConnectionString(), clientConfig));
+                // then: reject the mismatched name only when hostname verification is enabled
+                Watcher.Event.KeeperState expected = hostnameVerification
+                        ? Watcher.Event.KeeperState.Expired : Watcher.Event.KeeperState.SyncConnected;
+                assertEquals(expected, checkConnectState(connectionString, clientConfig));
             }
         }
     }
