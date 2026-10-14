@@ -37,6 +37,7 @@ public class ZKAuditProvider {
     private static class AuditState {
         private static final boolean auditEnabled;
         private static final AuditLogger auditLogger;
+        private static final RuntimeException initializationFailure;
 
         static {
             String loggerClass = null;
@@ -47,13 +48,20 @@ public class ZKAuditProvider {
                     selectedAuditLoggerClass = loggerClass;
                 }
             }
+            AuditLogger logger = null;
+            RuntimeException failure = null;
             if (auditEnabled) {
-                auditLogger = getAuditLogger(loggerClass);
-                LOG.info("ZooKeeper audit is enabled.");
+                try {
+                    logger = getAuditLogger(loggerClass);
+                    LOG.info("ZooKeeper audit is enabled.");
+                } catch (RuntimeException | LinkageError e) {
+                    failure = new IllegalStateException("Couldn't initialize audit logger " + loggerClass, e);
+                }
             } else {
-                auditLogger = null;
                 LOG.info("ZooKeeper audit is disabled.");
             }
+            auditLogger = logger;
+            initializationFailure = failure;
         }
     }
 
@@ -84,14 +92,20 @@ public class ZKAuditProvider {
 
     /**
      * @return true if audit log is enabled
+     * @throws IllegalStateException if the audit logger could not be initialized
      */
     public static boolean isAuditEnabled() {
+        if (AuditState.initializationFailure != null) {
+            throw AuditState.initializationFailure;
+        }
         return AuditState.auditEnabled;
     }
 
     public static void log(String user, String operation, String znode, String acl,
                            String createMode, String session, String ip, Result result) {
-        AuditState.auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
+        if (isAuditEnabled()) {
+            AuditState.auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
+        }
     }
 
     /**

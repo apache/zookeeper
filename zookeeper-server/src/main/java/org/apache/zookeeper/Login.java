@@ -357,13 +357,21 @@ public class Login {
             AppConfigurationEntry entry = entries[0];
             isUsingTicketCache = "true".equals(entry.getOptions().get("useTicketCache"));
             Object principalOption = entry.getOptions().get("principal");
+            String configuredUser = null;
             // A Kerberos module can follow other modules in the JAAS chain.
             for (AppConfigurationEntry configuredEntry : entries) {
                 Object configuredValue = configuredEntry.getOptions().get("principal");
                 if (configuredValue instanceof String configuredPrincipal && !configuredPrincipal.isEmpty()) {
-                    auditPrincipal = configuredPrincipal;
+                    configuredUser = configuredPrincipal;
                     break;
                 }
+                Object username = configuredEntry.getOptions().get("username");
+                if (configuredUser == null && username instanceof String && !((String) username).isEmpty()) {
+                    configuredUser = (String) username;
+                }
+            }
+            if (configuredUser != null) {
+                auditPrincipal = configuredUser;
             }
             return principalOption instanceof String ? (String) principalOption : null;
         }
@@ -374,6 +382,12 @@ public class Login {
         if (loginSubject != null) {
             for (KerberosPrincipal kerberosPrincipal : loginSubject.getPrincipals(KerberosPrincipal.class)) {
                 return kerberosPrincipal.getName();
+            }
+            // SecurityUtils uses the public credential as the DIGEST-MD5 username.
+            for (String username : loginSubject.getPublicCredentials(String.class)) {
+                if (!username.isEmpty()) {
+                    return username;
+                }
             }
         }
         return auditPrincipal;
@@ -484,7 +498,7 @@ public class Login {
      * @throws javax.security.auth.login.LoginException on a failure
      */
     // c.f. HADOOP-6559
-    private synchronized void reLogin() throws LoginException {
+    synchronized void reLogin() throws LoginException {
         if (!isKrbTicket) {
             return;
         }

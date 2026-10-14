@@ -143,6 +143,8 @@ public class QuorumPeerMain {
     }
 
     public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
+        // Validate auditing before opening server resources, including after an earlier client login.
+        ZKAuditProvider.isAuditEnabled();
         try {
             ManagedUtil.registerLog4jMBeans();
         } catch (JMException e) {

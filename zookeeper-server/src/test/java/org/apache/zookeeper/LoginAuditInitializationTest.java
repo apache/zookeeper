@@ -71,7 +71,7 @@ public class LoginAuditInitializationTest extends ZKTestCase {
                 Login serverLogin = new Login("Server", () -> callbacks -> { }, new ZKConfig());
                 try {
                     assertTrue(logger.getOutputStream().toString(StandardCharsets.UTF_8)
-                        .contains("user=" + Login.SYSTEM_USER + "\toperation=login\tresult=success"));
+                        .contains("user=audit-test\toperation=login\tresult=success"));
                 } finally {
                     serverLogin.logout();
                 }

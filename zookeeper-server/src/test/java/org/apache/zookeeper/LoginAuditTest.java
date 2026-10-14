@@ -23,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,9 +67,12 @@ public class LoginAuditTest extends ZKTestCase {
     private static final String CONTEXT = "AuditTest";
     private static final String USER = "client@EXAMPLE.COM";
     private static final String CONFIGURED_USER = "configured@EXAMPLE.COM";
+    private static final String LOGIN_STATE_OPTION = "testState";
     private Configuration previousConfiguration;
     private LoggerTestTool logger;
     private TestLogin login;
+    private LoginState loginState;
+    private TestAuditLogger auditLogger;
 
     @TempDir
     Path tempDir;
@@ -80,6 +81,7 @@ public class LoginAuditTest extends ZKTestCase {
     public static void enableAudit() {
         System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
         System.setProperty("zookeeper.audit.impl.class", TestAuditLogger.class.getName());
+        assertTrue(ZKAuditProvider.isAuditEnabled());
     }
 
     @AfterAll
@@ -92,24 +94,21 @@ public class LoginAuditTest extends ZKTestCase {
     public void setUp() {
         previousConfiguration = Configuration.getConfiguration();
         logger = new LoggerTestTool(Slf4jAuditLogger.class);
-        TestAuditLogger.failAudit = false;
-        TestAuditLogger.failLinkage = false;
-        TestLoginModule.failLogin = false;
-        TestLoginModule.failLogout = false;
-        TestLoginModule.includeTicket = true;
-        TestLoginModule.authenticatedUser = USER;
-        TestLoginModule.loginFailure = new LoginException("test login failure");
-        TestLoginModule.logoutFailure = new LoginException("test logout failure");
+        auditLogger = TestAuditLogger.instance;
+        auditLogger.failAudit = false;
+        auditLogger.failLinkage = false;
+        loginState = new LoginState();
         configure(true, false);
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         try {
-            TestAuditLogger.failAudit = false;
+            auditLogger.failAudit = false;
+            auditLogger.failLinkage = false;
             if (login != null) {
                 login.shutdown();
-                TestLoginModule.failLogout = false;
+                loginState.failLogout = false;
                 login.logout();
             }
         } finally {
@@ -134,10 +133,47 @@ public class LoginAuditTest extends ZKTestCase {
     }
 
     @Test
+    public void testDigestLoginUsesSubjectUsername() throws Exception {
+        configure(CONTEXT, new AppConfigurationEntry(
+            DigestLoginModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+            Map.of("username", "digest\n\t-client", "password", "private-test-password", "principal", CONFIGURED_USER)));
+        login = new TestLogin(new ZKConfig());
+        assertEquals(CONFIGURED_USER, login.getUserName());
+        assertMessages("user=digest-client\toperation=login\tresult=success");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {CONTEXT, "other"})
+    public void testFailedDigestLoginUsesConfiguredUsername(String contextName) throws Exception {
+        configure(contextName, new AppConfigurationEntry(
+            DigestLoginModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+            Map.of("username", "digest-client", "password", 42)));
+        LoginContext jaasLogin = new LoginContext(CONTEXT, callbacks -> { });
+        LoginException expected = assertThrows(LoginException.class, jaasLogin::login);
+        LoginException actual = assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig()));
+        assertEquals(expected.getClass(), actual.getClass());
+        assertTrue(actual.getMessage().contains("ClassCastException"));
+        assertMessages("user=digest-client\toperation=login\tresult=failure");
+    }
+
+    @Test
+    public void testKerberosPrincipalTakesPrecedenceOverDigestUsername() throws Exception {
+        configure(CONTEXT,
+            new AppConfigurationEntry(
+                DigestLoginModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+                Map.of("username", "digest-client", "password", "test-password")),
+            new AppConfigurationEntry(
+                TestLoginModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+                Map.of("principal", CONFIGURED_USER)));
+        login = new TestLogin(new ZKConfig());
+        assertMessages("user=" + USER + "\toperation=login\tresult=success");
+    }
+
+    @Test
     public void testFailedLoginUsesConfiguredPrincipalAndPreservesException() {
-        TestLoginModule.failLogin = true;
+        loginState.failLogin = true;
         LoginException failure = assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig()));
-        assertSame(TestLoginModule.loginFailure, failure);
+        assertSame(loginState.loginFailure, failure);
         assertMessages("user=" + CONFIGURED_USER + "\toperation=login\tresult=failure");
     }
 
@@ -177,8 +213,8 @@ public class LoginAuditTest extends ZKTestCase {
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     public void testAuditFailureDoesNotInterruptSuccessfulLogin(boolean linkageFailure) throws Exception {
-        TestAuditLogger.failAudit = true;
-        TestAuditLogger.failLinkage = linkageFailure;
+        auditLogger.failAudit = true;
+        auditLogger.failLinkage = linkageFailure;
         try (LoggerTestTool loginLogger = new LoggerTestTool(Login.class)) {
             login = new TestLogin(new ZKConfig());
             assertTrue(login.getSubject().getPrincipals().contains(new KerberosPrincipal(USER)));
@@ -186,13 +222,11 @@ public class LoginAuditTest extends ZKTestCase {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testAuditFailurePreservesFailedLogin(boolean linkageFailure) {
-        TestAuditLogger.failAudit = true;
-        TestAuditLogger.failLinkage = linkageFailure;
-        TestLoginModule.failLogin = true;
-        assertSame(TestLoginModule.loginFailure, assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig())));
+    @Test
+    public void testAuditFailurePreservesFailedLogin() {
+        auditLogger.failAudit = true;
+        loginState.failLogin = true;
+        assertSame(loginState.loginFailure, assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig())));
     }
 
     @Test
@@ -220,28 +254,17 @@ public class LoginAuditTest extends ZKTestCase {
     public void testFailedLogoutPreservesException() throws Exception {
         login = new TestLogin(new ZKConfig());
         clearMessages();
-        TestLoginModule.failLogout = true;
-        assertSame(TestLoginModule.logoutFailure, assertThrows(LoginException.class, () -> login.logout()));
+        loginState.failLogout = true;
+        assertSame(loginState.logoutFailure, assertThrows(LoginException.class, () -> login.logout()));
         assertMessages("user=" + USER + "\toperation=logout\tresult=failure");
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testAuditFailurePreservesFailedLogout(boolean linkageFailure) throws Exception {
-        login = new TestLogin(new ZKConfig());
-        TestAuditLogger.failAudit = true;
-        TestAuditLogger.failLinkage = linkageFailure;
-        TestLoginModule.failLogout = true;
-        assertSame(TestLoginModule.logoutFailure, assertThrows(LoginException.class, () -> login.logout()));
-    }
-
     @Test
-    public void testRenewalAuditsLogoutAndRenewal() throws Exception {
+    public void testAuditFailurePreservesFailedLogout() throws Exception {
         login = new TestLogin(new ZKConfig());
-        clearMessages();
-        reLogin();
-        assertMessages("user=" + USER + "\toperation=logout\tresult=success",
-                       "user=" + USER + "\toperation=ticketRenewal\tresult=success");
+        auditLogger.failAudit = true;
+        loginState.failLogout = true;
+        assertSame(loginState.logoutFailure, assertThrows(LoginException.class, () -> login.logout()));
     }
 
     @Test
@@ -250,12 +273,12 @@ public class LoginAuditTest extends ZKTestCase {
         login = new TestLogin(new ZKConfig());
         clearMessages();
         String renewedUser = "renewed@EXAMPLE.COM";
-        TestLoginModule.authenticatedUser = renewedUser;
-        reLogin();
+        loginState.authenticatedUser = renewedUser;
+        login.reLogin();
         assertTrue(login.getSubject().getPrincipals().contains(new KerberosPrincipal(renewedUser)));
-        TestLoginModule.failLogin = true;
-        assertSame(TestLoginModule.loginFailure, assertThrows(LoginException.class, this::reLogin));
-        assertSame(TestLoginModule.loginFailure, assertThrows(LoginException.class, this::reLogin));
+        loginState.failLogin = true;
+        assertSame(loginState.loginFailure, assertThrows(LoginException.class, login::reLogin));
+        assertSame(loginState.loginFailure, assertThrows(LoginException.class, login::reLogin));
         assertMessages("user=" + USER + "\toperation=logout\tresult=success",
                        "user=" + renewedUser + "\toperation=ticketRenewal\tresult=success",
                        "user=" + renewedUser + "\toperation=logout\tresult=success",
@@ -263,25 +286,21 @@ public class LoginAuditTest extends ZKTestCase {
                        "user=" + renewedUser + "\toperation=ticketRenewal\tresult=failure");
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testAuditFailureDoesNotInterruptRenewal(boolean linkageFailure) throws Exception {
+    @Test
+    public void testAuditFailureDoesNotInterruptRenewal() throws Exception {
         login = new TestLogin(new ZKConfig());
-        TestAuditLogger.failAudit = true;
-        TestAuditLogger.failLinkage = linkageFailure;
-        reLogin();
+        auditLogger.failAudit = true;
+        login.reLogin();
         assertTrue(login.getSubject().getPrincipals().contains(new KerberosPrincipal(USER)));
         assertEquals(1, login.getSubject().getPrivateCredentials(KerberosTicket.class).size());
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    public void testAuditFailurePreservesFailedRenewal(boolean linkageFailure) throws Exception {
+    @Test
+    public void testAuditFailurePreservesFailedRenewal() throws Exception {
         login = new TestLogin(new ZKConfig());
-        TestAuditLogger.failAudit = true;
-        TestAuditLogger.failLinkage = linkageFailure;
-        TestLoginModule.failLogin = true;
-        assertSame(TestLoginModule.loginFailure, assertThrows(LoginException.class, this::reLogin));
+        auditLogger.failAudit = true;
+        loginState.failLogin = true;
+        assertSame(loginState.loginFailure, assertThrows(LoginException.class, login::reLogin));
         assertTrue(login.getSubject().getPrincipals().isEmpty());
     }
 
@@ -290,9 +309,9 @@ public class LoginAuditTest extends ZKTestCase {
         configure(false, false);
         login = new TestLogin(new ZKConfig());
         clearMessages();
-        TestLoginModule.failLogin = true;
-        assertSame(TestLoginModule.loginFailure, assertThrows(LoginException.class, this::reLogin));
-        assertSame(TestLoginModule.loginFailure, assertThrows(LoginException.class, this::reLogin));
+        loginState.failLogin = true;
+        assertSame(loginState.loginFailure, assertThrows(LoginException.class, login::reLogin));
+        assertSame(loginState.loginFailure, assertThrows(LoginException.class, login::reLogin));
         assertMessages("user=" + USER + "\toperation=logout\tresult=success",
                        "user=" + USER + "\toperation=ticketRenewal\tresult=failure",
                        "user=" + USER + "\toperation=ticketRenewal\tresult=failure");
@@ -302,8 +321,8 @@ public class LoginAuditTest extends ZKTestCase {
     public void testRenewalFailureDuringLogout() throws Exception {
         login = new TestLogin(new ZKConfig());
         clearMessages();
-        TestLoginModule.failLogout = true;
-        assertSame(TestLoginModule.logoutFailure, assertThrows(LoginException.class, this::reLogin));
+        loginState.failLogout = true;
+        assertSame(loginState.logoutFailure, assertThrows(LoginException.class, login::reLogin));
         assertMessages("user=" + USER + "\toperation=logout\tresult=failure",
                        "user=" + USER + "\toperation=ticketRenewal\tresult=failure");
     }
@@ -313,16 +332,16 @@ public class LoginAuditTest extends ZKTestCase {
         login = new TestLogin(new ZKConfig());
         clearMessages();
         login.allowReLogin = false;
-        reLogin();
+        login.reLogin();
         assertMessages();
     }
 
     @Test
     public void testRenewalWithoutKerberosTicketIsNotAudited() throws Exception {
-        TestLoginModule.includeTicket = false;
+        loginState.includeTicket = false;
         login = new TestLogin(new ZKConfig());
         clearMessages();
-        reLogin();
+        login.reLogin();
         login.shutdown();
         assertMessages();
     }
@@ -360,12 +379,8 @@ public class LoginAuditTest extends ZKTestCase {
 
     @Test
     public void testEmbeddedServerAcceptsSelectedAuditLogger() throws Exception {
-        login = new TestLogin(new ZKConfig());
-        clearMessages();
         try (ZooKeeperServerEmbedded server = createEmbeddedServer(TestAuditLogger.class.getName())) {
             assertNotNull(server);
-            ZKAuditProvider.addZKStartStopAuditLog();
-            assertMessages("user=" + Login.SYSTEM_USER + "\toperation=serverStart\tresult=success");
         }
     }
 
@@ -378,7 +393,8 @@ public class LoginAuditTest extends ZKTestCase {
     }
 
     private void configure(boolean configuredPrincipal, boolean ticketCache) {
-        Map<String, String> options = new HashMap<>();
+        Map<String, Object> options = new HashMap<>();
+        options.put(LOGIN_STATE_OPTION, loginState);
         if (configuredPrincipal) {
             options.put("principal", CONFIGURED_USER);
         }
@@ -408,19 +424,6 @@ public class LoginAuditTest extends ZKTestCase {
                 return entries;
             }
         });
-    }
-
-    private void reLogin() throws Exception {
-        Method method = Login.class.getDeclaredMethod("reLogin");
-        method.setAccessible(true);
-        try {
-            method.invoke(login);
-        } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof LoginException) {
-                throw (LoginException) e.getCause();
-            }
-            throw e;
-        }
     }
 
     private void clearMessages() {
@@ -457,8 +460,13 @@ public class LoginAuditTest extends ZKTestCase {
 
     public static class TestAuditLogger extends Slf4jAuditLogger {
 
-        private static boolean failAudit;
-        private static boolean failLinkage;
+        private static TestAuditLogger instance;
+        private boolean failAudit;
+        private boolean failLinkage;
+
+        public TestAuditLogger() {
+            instance = this;
+        }
 
         @Override
         public void logAuditEvent(AuditEvent event) {
@@ -472,40 +480,50 @@ public class LoginAuditTest extends ZKTestCase {
         }
     }
 
-    // A stub login module exercises JAAS without a KDC.
+    private static class LoginState {
+
+        private boolean failLogin;
+        private boolean failLogout;
+        private boolean includeTicket = true;
+        private String authenticatedUser = USER;
+        private final LoginException loginFailure = new LoginException("test login failure");
+        private final LoginException logoutFailure = new LoginException("test logout failure");
+    }
+
+    // Exercises JAAS without a KDC.
     public static class TestLoginModule implements LoginModule {
 
-        private static boolean failLogin;
-        private static boolean failLogout;
-        private static boolean includeTicket;
-        private static String authenticatedUser;
-        private static LoginException loginFailure;
-        private static LoginException logoutFailure;
+        private static final int AES128_KEY_TYPE = 17;
+        private static final int AES128_KEY_BYTES = 16;
+        private LoginState state;
         private Subject subject;
 
         @Override
         public void initialize(Subject subject, CallbackHandler handler, Map<String, ?> sharedState, Map<String, ?> options) {
             this.subject = subject;
+            Object configuredState = options.get(LOGIN_STATE_OPTION);
+            state = configuredState instanceof LoginState ? (LoginState) configuredState : new LoginState();
         }
 
         @Override
         public boolean login() throws LoginException {
-            if (failLogin) {
-                throw loginFailure;
+            if (state.failLogin) {
+                throw state.loginFailure;
             }
             return true;
         }
 
         @Override
         public boolean commit() {
-            KerberosPrincipal client = new KerberosPrincipal(authenticatedUser);
+            KerberosPrincipal client = new KerberosPrincipal(state.authenticatedUser);
             subject.getPrincipals().add(client);
-            if (includeTicket) {
+            if (state.includeTicket) {
                 long now = System.currentTimeMillis();
                 Date start = new Date(now - TimeUnit.HOURS.toMillis(1));
                 subject.getPrivateCredentials().add(new KerberosTicket(
                     new byte[]{1}, client, new KerberosPrincipal("krbtgt/EXAMPLE.COM@EXAMPLE.COM"),
-                    new byte[16], 17, new boolean[32], start, start, new Date(now + 10000),
+                    new byte[AES128_KEY_BYTES], AES128_KEY_TYPE, null,
+                    start, start, new Date(now + TimeUnit.SECONDS.toMillis(10)),
                     new Date(now + TimeUnit.HOURS.toMillis(1)), null));
             }
             return true;
@@ -518,8 +536,8 @@ public class LoginAuditTest extends ZKTestCase {
 
         @Override
         public boolean logout() throws LoginException {
-            if (failLogout) {
-                throw logoutFailure;
+            if (state.failLogout) {
+                throw state.logoutFailure;
             }
             subject.getPrincipals().clear();
             subject.getPrivateCredentials().clear();

@@ -90,7 +90,7 @@ public class LoginAuditConcurrentInitializationTest extends ZKTestCase {
             assertEquals(BlockingAuditLogger.class.getName(), System.getProperty("zookeeper.audit.impl.class"));
         } finally {
             BlockingAuditLogger.initializeRelease.countDown();
-            client.join(5000);
+            client.join(TimeUnit.SECONDS.toMillis(5));
             try {
                 if (clientLogin.get() != null) {
                     clientLogin.get().shutdown();

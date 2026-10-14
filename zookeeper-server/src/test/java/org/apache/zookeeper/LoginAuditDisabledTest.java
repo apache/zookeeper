@@ -87,8 +87,7 @@ public class LoginAuditDisabledTest extends ZKTestCase {
         try (LoggerTestTool logger = new LoggerTestTool(Slf4jAuditLogger.class)) {
             assertFalse(ZKAuditProvider.isAuditEnabled());
             ZKAuditProvider.log("user", AuditConstants.OP_LOGIN, Result.SUCCESS);
-            ZKAuditProvider.log("user", AuditConstants.OP_LOGOUT, Result.FAILURE);
-            ZKAuditProvider.log("user", AuditConstants.OP_TICKET_RENEWAL, Result.SUCCESS);
+            ZKAuditProvider.log("user", AuditConstants.OP_LOGIN, null, null, null, null, null, Result.SUCCESS);
             assertEquals("", logger.getOutputStream().toString(StandardCharsets.UTF_8));
         }
     }

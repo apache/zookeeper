@@ -119,6 +119,8 @@ public class ZooKeeperServerMain {
      * @throws AdminServerException
      */
     public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
+        // Validate auditing before opening server resources, including after an earlier client login.
+        ZKAuditProvider.isAuditEnabled();
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {
