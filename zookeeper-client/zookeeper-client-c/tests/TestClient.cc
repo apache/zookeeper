@@ -340,7 +340,11 @@ public:
         int zrc;
         struct String_vector str_vec = {0, NULL};
         zrc = zoo_wget_children(zzh, "/mytest", default_zoo_watcher, NULL, &str_vec);
-        CPPUNIT_ASSERT(zrc == ZOK || zrc == ZCLOSING);
+        // testHangingClient can close the handle while this watcher runs.
+        // A request queued before the close completes with ZCLOSING. A
+        // request made after the close starts is refused with
+        // ZINVALIDSTATE, which the API reports as ZMARSHALLINGERROR.
+        CPPUNIT_ASSERT(zrc == ZOK || zrc == ZCLOSING || zrc == ZMARSHALLINGERROR);
         deallocate_String_vector(&str_vec);
     }
 
