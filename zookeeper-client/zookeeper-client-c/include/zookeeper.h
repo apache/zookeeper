@@ -882,6 +882,12 @@ ZOOAPI const char* zoo_get_current_server(zhandle_t* zh);
  * twice will cause undefined (and probably undesirable behavior). Calling any other
  * zookeeper method after calling close is undefined behaviour and should be avoided.
  *
+ * In the multithreaded library, a callback that runs on the IO thread (for
+ * example an authentication completion) can call this function. In that case,
+ * completions and watcher events that are queued after the completion thread
+ * stops are released without being invoked, so their data is not handed back
+ * to the caller.
+ *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \return a result code. Regardless of the error code returned, the zhandle
  * will be destroyed and all resources freed.
@@ -998,6 +1004,8 @@ ZOOAPI int zookeeper_process(zhandle_t *zh, int events);
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*void_completion_t)(int rc, const void *data);
 
@@ -1022,6 +1030,8 @@ typedef void (*void_completion_t)(int rc, const void *data);
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*stat_completion_t)(int rc, const struct Stat *stat,
         const void *data);
@@ -1051,6 +1061,8 @@ typedef void (*stat_completion_t)(int rc, const struct Stat *stat,
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*data_completion_t)(int rc, const char *value, int value_len,
         const struct Stat *stat, const void *data);
@@ -1077,6 +1089,8 @@ typedef void (*data_completion_t)(int rc, const char *value, int value_len,
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*strings_completion_t)(int rc,
         const struct String_vector *strings, const void *data);
@@ -1104,6 +1118,8 @@ typedef void (*strings_completion_t)(int rc,
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*string_stat_completion_t)(int rc,
         const char *string, const struct Stat *stat, const void *data);
@@ -1134,6 +1150,8 @@ typedef void (*string_stat_completion_t)(int rc,
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*strings_stat_completion_t)(int rc,
         const struct String_vector *strings, const struct Stat *stat,
@@ -1158,6 +1176,8 @@ typedef void (*strings_stat_completion_t)(int rc,
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void
         (*string_completion_t)(int rc, const char *value, const void *data);
@@ -1186,6 +1206,8 @@ typedef void
  *   pointer. If an asynchronous call (zoo_a*) fails synchronously
  *   (returns non-ZOK), the completion callback will not be invoked
  *   and the caller retains ownership of this data (except for zoo_add_auth()).
+ *   Otherwise the completion is invoked, except when the handle is closed
+ *   from the IO thread (see \ref zookeeper_close).
  */
 typedef void (*acl_completion_t)(int rc, struct ACL_vector *acl,
         struct Stat *stat, const void *data);
