@@ -18,6 +18,7 @@
 
 #include "zk_hashtable.h"
 #include "zk_adaptor.h"
+#include "zookeeper_log.h"
 #include "hashtable/hashtable.h"
 #include "hashtable/hashtable_itr.h"
 #include <string.h>
@@ -177,7 +178,7 @@ static int add_to_list(watcher_object_list_t **wl, watcher_object_t *wo,
     return 0;
 }
 
-static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_object_t* wo)
+static int do_insert_watcher_object(zhandle_t *zh, zk_hashtable *ht, const char *path, watcher_object_t* wo)
 {
     int res=1;
     watcher_object_list_t* wl;
@@ -191,8 +192,10 @@ static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_
         if (!res) {
             /*
              * Release key and watcher list (including transferred watcher object)
-             * on insertion failure.
+             * on insertion failure. Log the failure, because the watch is lost
+             * and the caller is not told.
              */
+            LOG_ERROR(LOGCALLBACK(zh), "Out of memory: dropped the watcher for path %s", path);
             free(key);
             destroy_watcher_object_list(wl);
         }
@@ -225,11 +228,11 @@ char **collect_keys(zk_hashtable *ht, int *count)
     return list;
 }
 
-static int insert_watcher_object(zk_hashtable *ht, const char *path,
+static int insert_watcher_object(zhandle_t *zh, zk_hashtable *ht, const char *path,
                                  watcher_object_t* wo)
 {
     int res;
-    res=do_insert_watcher_object(ht,path,wo);
+    res=do_insert_watcher_object(zh,ht,path,wo);
     return res;
 }
 
@@ -344,7 +347,7 @@ void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc)
          * by the IO thread */
         zk_hashtable *ht = reg->checker(zh, rc);
         if(ht){
-            insert_watcher_object(ht,reg->path,
+            insert_watcher_object(zh,ht,reg->path,
                     create_watcher_object(reg->watcher, reg->context));
         }
     }    
