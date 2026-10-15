@@ -692,6 +692,13 @@ static void destroy(zhandle_t *zh)
          * zookeeper_close() can return to the caller before this point.
          * The caller can then free its contexts. Thus, do not call user
          * callbacks here. Only release the entries.
+         *
+         * No entry in this queue belongs to a synchronous call, so this
+         * loop does not need notify_sync_completion(). The IO thread
+         * completes synchronous calls itself, and free_completions()
+         * (also through cleanup_bufs() above) wakes the threads that
+         * still wait. A synchronous call that runs at the same time as
+         * zookeeper_close() is undefined behaviour.
          */
         completion_list_t *cptr;
         while ((cptr = dequeue_completion(&zh->completions_to_process)) != 0) {
