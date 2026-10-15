@@ -584,17 +584,36 @@ public:
         count--;
     }
 
+    static volatile int voidRc;
+    static volatile int voidExpected;
+
+    // zoo_add_auth() queues the auth packet but does not wake the IO
+    // thread. The packet goes out with the next ping, which can be up to
+    // recv_timeout/3 later (3.3 s for the 10 s sessions in these tests).
+    // Poll at a short interval against an exact deadline, and check the
+    // result here, on the test thread.
     static void waitForVoidCompletion(int seconds) {
-        time_t expires = time(0) + seconds;
-        while(count == 0 && time(0) < expires) {
-            sleep(1);
+        struct timeval now, deadline;
+        gettimeofday(&deadline, 0);
+        deadline.tv_sec += seconds;
+        while (count == 0) {
+            gettimeofday(&now, 0);
+            if (!timercmp(&now, &deadline, <))
+                break;
+            millisleep(10);
         }
+        if (count > 0)
+            CPPUNIT_ASSERT_EQUAL((int)voidExpected, (int)voidRc);
         count--;
     }
 
+    // This completion can run on the completion thread, or on the thread
+    // that calls zookeeper_close() (with ZCLOSING). A failed assertion
+    // there terminates the process and hides the cause, so record the
+    // result and let waitForVoidCompletion() check it.
     static void voidCompletion(int rc, const void *data) {
-        int tmp = (int) (long) data;
-        CPPUNIT_ASSERT_EQUAL(tmp, rc);
+        voidExpected = (int) (long) data;
+        voidRc = rc;
         count++;
     }
 
@@ -741,7 +760,7 @@ public:
         rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion,
                           (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        waitForVoidCompletion(3);
+        waitForVoidCompletion(10);
         CPPUNIT_ASSERT(count == 0);
 
         rc = zoo_create(zk, "/tauth1", "", 0, &ZOO_CREATOR_ALL_ACL, 0, 0, 0);
@@ -752,12 +771,12 @@ public:
             zk = createClient(&ctx4);
             rc = zoo_add_auth(zk, "digest", "", 0, voidCompletion, (void*)ZOK);
             CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-            waitForVoidCompletion(3);
+            waitForVoidCompletion(10);
             CPPUNIT_ASSERT(count == 0);
 
             rc = zoo_add_auth(zk, "digest", "", 0, voidCompletion, (void*)ZOK);
             CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-            waitForVoidCompletion(3);
+            waitForVoidCompletion(10);
             CPPUNIT_ASSERT(count == 0);
         }
 
@@ -767,7 +786,7 @@ public:
         rc = zoo_add_auth(zk, "digest", "pat:passwd2", 11, voidCompletion,
                           (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        waitForVoidCompletion(3);
+        waitForVoidCompletion(10);
         CPPUNIT_ASSERT(count == 0);
 
         char buf[1024];
@@ -782,16 +801,16 @@ public:
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
         rc = zoo_get(zk, "/tauth1", 0, buf, &blen, &stat);
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
-        waitForVoidCompletion(3);
+        waitForVoidCompletion(10);
         CPPUNIT_ASSERT(count == 0);
         //create a new client
         zk = createClient(&ctx3);
         rc = zoo_add_auth(zk, "digest", "pat:passwd", 10, voidCompletion, (void*) ZOK);
-        waitForVoidCompletion(3);
+        waitForVoidCompletion(10);
         CPPUNIT_ASSERT(count == 0);
         rc = zoo_add_auth(zk, "ip", "none", 4, voidCompletion, (void*)ZOK);
         //make the server forget the auths
-        waitForVoidCompletion(3);
+        waitForVoidCompletion(10);
         CPPUNIT_ASSERT(count == 0);
 
         stopServer();
@@ -821,9 +840,8 @@ public:
         zhandle_t *zk_auth = zookeeper_init(hostPorts, NULL, 10000, 0, NULL, 0);
         rc = zoo_add_auth(zk_auth, "digest", "pat:passwd", 10, voidCompletion, (void*)ZOK);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
-        sleep(2);
-        CPPUNIT_ASSERT(count == 1);
-        count  = 0;
+        waitForVoidCompletion(10);
+        CPPUNIT_ASSERT(count == 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, zookeeper_close(zk_auth));
 
         struct sockaddr addr;
@@ -1658,6 +1676,8 @@ public:
 };
 
 volatile int Zookeeper_simpleSystem::count;
+volatile int Zookeeper_simpleSystem::voidRc;
+volatile int Zookeeper_simpleSystem::voidExpected;
 zhandle_t *Zookeeper_simpleSystem::async_zk;
 const char Zookeeper_simpleSystem::hostPorts[] = "127.0.0.1:22181";
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_simpleSystem);
