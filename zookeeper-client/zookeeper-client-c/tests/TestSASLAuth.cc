@@ -144,6 +144,13 @@ public:
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+    // Declaration order ensures handle is closed before callbacks are freed.
+    struct SaslCallbacksGuard {
+        const sasl_callback_t *callbacks;
+        explicit SaslCallbacksGuard(const sasl_callback_t *cbs) : callbacks(cbs) {}
+        ~SaslCallbacksGuard() { free((void *)callbacks); }
+    };
+
     void testClientSASLHelper(const char *hostPorts, const char *path,
                               const sasl_callback_t *callbacks) {
         startServer();
@@ -194,9 +201,9 @@ public:
 
     void testClientSASLHelper(const char *hostPorts, const char *path,
                               const char *password_file) {
-        const sasl_callback_t *callbacks = zoo_sasl_make_basic_callbacks(
-            "myuser", NULL, password_file);
-        testClientSASLHelper(hostPorts, path, callbacks);
+        SaslCallbacksGuard callbacks(zoo_sasl_make_basic_callbacks(
+            "myuser", NULL, password_file));
+        testClientSASLHelper(hostPorts, path, callbacks.callbacks);
     }
 
     void testClientSASLHelper(const char *hostPorts, const char *path) {
@@ -205,9 +212,9 @@ public:
 
     void testClientSASLHelper(const char *hostPorts, const char *path,
                               zoo_sasl_password_t *password) {
-        const sasl_callback_t *callbacks = zoo_sasl_make_password_callbacks(
-            "myuser", NULL, password);
-        testClientSASLHelper(hostPorts, path, callbacks);
+        SaslCallbacksGuard callbacks(zoo_sasl_make_password_callbacks(
+            "myuser", NULL, password));
+        testClientSASLHelper(hostPorts, path, callbacks.callbacks);
     }
 
     void testClientSASL() {
@@ -319,8 +326,9 @@ public:
         sasl_params.service = "zookeeper";
         sasl_params.host = "zk-sasl-md5";
         sasl_params.mechlist = "DIGEST-MD5";
-        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(
-            "myuser", NULL, "Zookeeper_SASLAuth.password");
+        SaslCallbacksGuard callbacks(zoo_sasl_make_basic_callbacks(
+            "myuser", NULL, "Zookeeper_SASLAuth.password"));
+        sasl_params.callbacks = callbacks.callbacks;
 
         // Connect.
         watchctx_t ctx;
@@ -359,8 +367,9 @@ public:
         sasl_params.service = "zookeeper";
         sasl_params.host = "zk-sasl-md5";
         sasl_params.mechlist = "DIGEST-MD5";
-        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(
-            "myuser", NULL, "Zookeeper_SASLAuth.password");
+        SaslCallbacksGuard callbacks(zoo_sasl_make_basic_callbacks(
+            "myuser", NULL, "Zookeeper_SASLAuth.password"));
+        sasl_params.callbacks = callbacks.callbacks;
 
         // Connect.
         watchctx_t ctx;

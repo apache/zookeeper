@@ -184,10 +184,18 @@ static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_
 
     wl=hashtable_search(ht->ht,(void*)path);
     if(wl==0){
-        int res;
+        char *key = strdup(path);
         /* inserting a new path element */
-        res=hashtable_insert(ht->ht,strdup(path),create_watcher_object_list(wo));
-        assert(res);
+        wl = create_watcher_object_list(wo);
+        res = key != NULL && hashtable_insert(ht->ht, key, wl);
+        if (!res) {
+            /*
+             * Release key and watcher list (including transferred watcher object)
+             * on insertion failure.
+             */
+            free(key);
+            destroy_watcher_object_list(wl);
+        }
     }else{
         /*
          * Path already exists; check if the watcher already exists.
@@ -321,6 +329,12 @@ void deliverWatchers(zhandle_t *zh, int type,int state, char *path, watcher_obje
     do_foreach_watcher((*list)->head, zh, path, type, state);
     destroy_watcher_object_list(*list);
     *list = 0;
+}
+
+/* Release a collected watcher list. Do not call the watchers. */
+void free_watcher_object_list(watcher_object_list_t *list)
+{
+    destroy_watcher_object_list(list);
 }
 
 void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc)

@@ -285,8 +285,18 @@ void adaptor_finish(zhandle_t *zh)
     if(!pthread_equal(adaptor_threads->io,pthread_self())){
         wakeup_io_thread(zh);
         pthread_join(adaptor_threads->io, 0);
-    }else
+    }else{
         pthread_detach(adaptor_threads->io);
+        /*
+         * When closing from the IO thread (e.g., within an auth callback),
+         * mark IO completion before waiting for the completion thread to
+         * prevent shutdown deadlocks. destroy() releases any completions
+         * queued afterwards. It does not deliver them.
+         */
+        pthread_mutex_lock(&zh->completions_to_process.lock);
+        adaptor_threads->io_exited = 1;
+        pthread_mutex_unlock(&zh->completions_to_process.lock);
+    }
     
     if(!pthread_equal(adaptor_threads->completion,pthread_self())){
         pthread_mutex_lock(&zh->completions_to_process.lock);
@@ -457,6 +467,11 @@ void *do_io(void *v)
         if(is_unrecoverable(zh))
             break;
     }
+    /* Signal the completion thread that the IO thread has finished enqueuing events. */
+    pthread_mutex_lock(&zh->completions_to_process.lock);
+    adaptor_threads->io_exited = 1;
+    pthread_cond_broadcast(&zh->completions_to_process.cond);
+    pthread_mutex_unlock(&zh->completions_to_process.lock);
     log_fn = LOGCALLBACK(zh);
     api_epilog(zh, 0);
     LOG_DEBUG(log_fn, "IO thread terminated");
@@ -470,16 +485,28 @@ void *do_completion(void *v)
 #endif
 {
     zhandle_t *zh = v;
+    struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
     log_callback_fn fn;
     api_prolog(zh);
     notify_thread_ready(zh);
     LOG_DEBUG(LOGCALLBACK(zh), "started completion thread");
-    while(!zh->close_requested) {
+    /*
+     * Drain pending completions until close is requested and the IO thread
+     * has fully terminated, ensuring late completions are not abandoned
+     *(ZOOKEEPER-3868).
+     */
+    for (;;) {
+        int finished;
         pthread_mutex_lock(&zh->completions_to_process.lock);
-        while(!zh->completions_to_process.head && !zh->close_requested) {
+        while(!zh->completions_to_process.head &&
+              !(zh->close_requested && adaptor_threads->io_exited)) {
             pthread_cond_wait(&zh->completions_to_process.cond, &zh->completions_to_process.lock);
         }
+        finished = !zh->completions_to_process.head;
         pthread_mutex_unlock(&zh->completions_to_process.lock);
+        if (finished) {
+            break;
+        }
         process_completions(zh);
     }
     fn = LOGCALLBACK(zh);

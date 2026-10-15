@@ -18,6 +18,7 @@
 
 #include <arpa/inet.h>  // for htonl
 #include <memory>
+#include <set>
 
 #include <zookeeper.h>
 #include <proto.h>
@@ -275,6 +276,7 @@ public:
                 // this will also ensure that zookeeper_close() cleanups the
                 //  thread resources by calling finish_adaptor()
                 inc_ref_counter(zh,1);
+                pinZookeeperHandle(zh);
                 terminateZookeeperThreads(zh);
             }
             synchronized(mx_);
@@ -548,4 +550,19 @@ void forceConnected(zhandle_t* zh, const struct timeval *last_recv_send){
 void terminateZookeeperThreads(zhandle_t* zh){
     // this will cause the zookeeper threads to terminate
     zh->close_requested=1;
+}
+
+// Track handles retaining an extra reference from test mocks to allow
+// balanced release during CloseFinally cleanup.
+static Mutex pinnedHandlesLock __attribute__((unused));
+static std::set<zhandle_t*> pinnedHandles;
+
+void pinZookeeperHandle(zhandle_t* zh){
+    synchronized(pinnedHandlesLock);
+    pinnedHandles.insert(zh);
+}
+
+bool unpinZookeeperHandle(zhandle_t* zh){
+    synchronized(pinnedHandlesLock);
+    return pinnedHandles.erase(zh)>0;
 }

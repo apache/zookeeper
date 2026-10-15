@@ -168,6 +168,7 @@ struct adaptor_threads {
      pthread_mutex_t zh_lock;       // critical section lock
      pthread_mutex_t reconfig_lock; // lock for reconfiguring cluster's ensemble
      pthread_mutex_t watchers_lock; // lock for watcher operations
+     int io_exited;                 // flag indicating IO thread termination
 #ifdef WIN32
      SOCKET self_pipe[2];
 #else

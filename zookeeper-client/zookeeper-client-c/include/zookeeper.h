@@ -691,7 +691,8 @@ ZOOAPI zhandle_t *zookeeper_init_sasl(const char *host, watcher_fn fn,
  *   or NULL for none
  * \param realm the "canned" response to \c SASL_CB_GETREALM, or NULL for none
  * \param password_file the name of a file whose first line is read in
- *   response to \c SASL_CB_PASS, or NULL for none
+ *   response to \c SASL_CB_PASS, or NULL for none. Passwords (whether
+ *   read from file or prompted interactively) are limited to 1023 characters.
  * \return the freshly-malloc()ed callbacks array, or NULL if allocation
  *   failed.  Deallocate with free(), but only after the corresponding
  *   ZooKeeper handle is closed.
@@ -985,7 +986,9 @@ ZOOAPI int zookeeper_process(zhandle_t *zh, int events);
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*void_completion_t)(int rc, const void *data);
 
@@ -1007,7 +1010,9 @@ typedef void (*void_completion_t)(int rc, const void *data);
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*stat_completion_t)(int rc, const struct Stat *stat,
         const void *data);
@@ -1034,7 +1039,9 @@ typedef void (*stat_completion_t)(int rc, const struct Stat *stat,
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*data_completion_t)(int rc, const char *value, int value_len,
         const struct Stat *stat, const void *data);
@@ -1058,7 +1065,9 @@ typedef void (*data_completion_t)(int rc, const char *value, int value_len,
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*strings_completion_t)(int rc,
         const struct String_vector *strings, const void *data);
@@ -1083,7 +1092,9 @@ typedef void (*strings_completion_t)(int rc,
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*string_stat_completion_t)(int rc,
         const char *string, const struct Stat *stat, const void *data);
@@ -1111,7 +1122,9 @@ typedef void (*string_stat_completion_t)(int rc,
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*strings_stat_completion_t)(int rc,
         const struct String_vector *strings, const struct Stat *stat,
@@ -1133,7 +1146,9 @@ typedef void (*strings_stat_completion_t)(int rc,
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void
         (*string_completion_t)(int rc, const char *value, const void *data);
@@ -1159,7 +1174,9 @@ typedef void
  * \param data the pointer that was passed by the caller when the function
  *   that this completion corresponds to was invoked. The programmer
  *   is responsible for any memory freeing associated with the data
- *   pointer.
+ *   pointer. If an asynchronous call (zoo_a*) fails synchronously
+ *   (returns non-ZOK), the completion callback will not be invoked
+ *   and the caller retains ownership of this data (except for zoo_add_auth()).
  */
 typedef void (*acl_completion_t)(int rc, struct ACL_vector *acl,
         struct Stat *stat, const void *data);
