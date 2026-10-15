@@ -459,9 +459,16 @@ struct zsasl_secret_ctx {
  * ensures that free(), as documented in zookeeper.h, releases the entire
  * structure cleanly.
  *
- * The fixed-capacity secret buffer avoids runtime reallocations, ensuring
- * stable secret pointers across concurrent connections sharing the
- * callback block.
+ * The fixed capacity secret buffer provides a stable address across repeated
+ * calls to _zsasl_getsecret(). Cyrus SASL mechanisms do not copy the secret
+ * and may retain the pointer across authentication steps. The buffer remains
+ * valid until the block is freed after all associated handles are closed.
+ *
+ * _zsasl_getsecret() updates the secret in place without locking. Sharing
+ * this block across handles is benign only if credentials do not change.
+ * If credentials change concurrently, unsynchronized writes can corrupt the
+ * buffer and cause permanent authentication failure (ZOO_AUTH_FAILED_STATE).
+ * Handles with mutable credentials must use separate callback blocks.
  */
 struct zsasl_callbacks_block {
     sasl_callback_t callbacks[5];
@@ -581,9 +588,8 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
     }
 
     /*
-     * Update secret buffer in place and clear trailing bytes, preserving
-     * stability for concurrent connection reads when credentials are
-     * unchanged.
+     * Update secret in place and zero trailing bytes. This write is
+     * unsynchronized across handles sharing the callback block.
      */
     memcpy(x->data, password, len + 1);
     memset(x->data + len + 1, 0, MAX_PASSWORD_LEN - len);

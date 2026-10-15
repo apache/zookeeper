@@ -692,6 +692,10 @@ ZOOAPI zhandle_t *zookeeper_init_sasl(const char *host, watcher_fn fn,
  * or deallocate individual entries or contexts. Passwords are limited to
  * 1023 characters. Longer passwords will fail with \c SASL_BUFOVER.
  *
+ * Multiple handles may share a callback array provided credentials do not
+ * change while any handle is open. If credentials can change (e.g. password
+ * file rotation), allocate a separate callback array for each handle.
+ *
  * \param user the "canned" response to \c SASL_CB_USER and \c SASL_CB_AUTHNAME,
  *   or NULL for none
  * \param realm the "canned" response to \c SASL_CB_GETREALM, or NULL for none
