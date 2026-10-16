@@ -327,7 +327,8 @@ disconnection. Stopping only the refresh thread does not log a logout.
 If the audit logger throws `RuntimeException` or `LinkageError` during a JAAS operation,
 ZooKeeper writes the error to the regular log. These errors do not change the JAAS result.
 ZooKeeper retains logger initialization failures and reports the original cause on subsequent
-audit calls and server startup.
+audit calls and server startup. When recording a failed server start, these audit errors do not
+change the server's exit code.
 
 Each JVM uses one audit logger. For a custom logger, set `zookeeper.audit.impl.class` to its fully
 qualified class name before the audit provider is first used. An audited client login can select

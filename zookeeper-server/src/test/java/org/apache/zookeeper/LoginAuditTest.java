@@ -24,9 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.URIParameter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -50,9 +48,13 @@ import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.auth.DigestLoginModule;
 import org.apache.zookeeper.server.embedded.ZooKeeperServerEmbedded;
+import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.apache.zookeeper.test.LoggerTestTool;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -177,16 +179,10 @@ public class LoginAuditTest extends ZKTestCase {
         assertMessages("user=" + CONFIGURED_USER + "\toperation=login\tresult=failure");
     }
 
-    @Test
-    public void testFailedLoginUsesPrincipalFromLaterModule() throws Exception {
-        configureFailingKerberosChain(CONTEXT);
-        assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig()));
-        assertMessages("user=" + CONFIGURED_USER + "\toperation=login\tresult=failure");
-    }
-
-    @Test
-    public void testNonStringPrincipalPreservesJaasFailure() throws Exception {
-        configure(CONTEXT,
+    @ParameterizedTest
+    @ValueSource(strings = {CONTEXT, "other"})
+    public void testNonStringPrincipalPreservesJaasFailure(String contextName) throws Exception {
+        configure(contextName,
             new AppConfigurationEntry(
                 DigestLoginModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
                 Map.of("username", "audit-test", "password", "test-password", "principal", 42)),
@@ -200,13 +196,6 @@ public class LoginAuditTest extends ZKTestCase {
         LoginException actual = assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig()));
         assertEquals(expected.getClass(), actual.getClass());
         assertEquals(expected.getMessage(), actual.getMessage());
-        assertMessages("user=" + CONFIGURED_USER + "\toperation=login\tresult=failure");
-    }
-
-    @Test
-    public void testFailedLoginUsesOtherFallbackPrincipal() throws Exception {
-        configureFailingKerberosChain("other");
-        assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig()));
         assertMessages("user=" + CONFIGURED_USER + "\toperation=login\tresult=failure");
     }
 
@@ -227,6 +216,27 @@ public class LoginAuditTest extends ZKTestCase {
         auditLogger.failAudit = true;
         loginState.failLogin = true;
         assertSame(loginState.loginFailure, assertThrows(LoginException.class, () -> new TestLogin(new ZKConfig())));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testStartupAuditFailurePreservesExitCode(boolean linkageFailure) throws Exception {
+        auditLogger.failAudit = true;
+        auditLogger.failLinkage = linkageFailure;
+        RuntimeException exit = new RuntimeException("test system exit");
+        ServiceUtils.setSystemExitProcedure(code -> {
+            assertEquals(ExitCode.INVALID_INVOCATION.getValue(), code);
+            throw exit;
+        });
+        try (LoggerTestTool providerLogger = new LoggerTestTool(ZKAuditProvider.class)) {
+            String[] args = {tempDir.resolve("missing.cfg").toString()};
+            assertSame(exit, assertThrows(RuntimeException.class, () -> ZooKeeperServerMain.main(args)));
+            assertSame(exit, assertThrows(RuntimeException.class, () -> QuorumPeerMain.main(args)));
+            assertTrue(providerLogger.getOutputStream().toString(StandardCharsets.UTF_8)
+                .contains("Unable to audit server startup failure"));
+        } finally {
+            ServiceUtils.setSystemExitProcedure(ServiceUtils.LOG_ONLY);
+        }
     }
 
     @Test
@@ -401,17 +411,6 @@ public class LoginAuditTest extends ZKTestCase {
         options.put("useTicketCache", Boolean.toString(ticketCache));
         configure(CONTEXT, new AppConfigurationEntry(
             TestLoginModule.class.getName(), AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options));
-    }
-
-    private void configureFailingKerberosChain(String contextName) throws Exception {
-        Path jaasFile = tempDir.resolve("jaas.conf");
-        Files.writeString(jaasFile, contextName + " {\n"
-            + TestLoginModule.class.getName() + " required;\n"
-            + "com.sun.security.auth.module.Krb5LoginModule required\n"
-            + "principal=\"" + CONFIGURED_USER + "\" useTicketCache=true\n"
-            + "ticketCache=\"" + tempDir.resolve("missing-cache") + "\"\n"
-            + "useKeyTab=false doNotPrompt=true;\n};\n");
-        Configuration.setConfiguration(Configuration.getInstance("JavaLoginConfig", new URIParameter(jaasFile.toUri())));
     }
 
     private void configure(String contextName, AppConfigurationEntry... entries) {

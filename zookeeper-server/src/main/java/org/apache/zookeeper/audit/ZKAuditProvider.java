@@ -148,10 +148,15 @@ public class ZKAuditProvider {
 
     /**
      * Add audit log for server start fail.
+     * Audit errors must not prevent the server from exiting with its intended code.
      */
     public static void addServerStartFailureAuditLog() {
-        if (isAuditEnabled()) {
-            log(ZKAuditProvider.getZKUser(), AuditConstants.OP_START, Result.FAILURE);
+        try {
+            if (isAuditEnabled()) {
+                log(ZKAuditProvider.getZKUser(), AuditConstants.OP_START, Result.FAILURE);
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LOG.error("Unable to audit server startup failure", e);
         }
     }
 

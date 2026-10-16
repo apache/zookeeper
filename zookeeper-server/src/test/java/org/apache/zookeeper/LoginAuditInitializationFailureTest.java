@@ -23,11 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
@@ -37,12 +39,17 @@ import org.apache.zookeeper.audit.AuditEvent;
 import org.apache.zookeeper.audit.AuditLogger;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.server.DatadirCleanupManager;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.auth.DigestLoginModule;
+import org.apache.zookeeper.server.embedded.ExitHandler;
+import org.apache.zookeeper.server.embedded.ZooKeeperServerEmbedded;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.apache.zookeeper.test.LoggerTestTool;
+import org.apache.zookeeper.util.ServiceUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -99,6 +106,25 @@ public class LoginAuditInitializationFailureTest extends ZKTestCase {
                 assertTrue(distributedConfig.isDistributed());
                 assertInitializationFailure(assertThrows(IllegalStateException.class,
                     () -> new QuorumPeerMain().runFromConfig(distributedConfig)));
+                try (LoggerTestTool purgeLogger = new LoggerTestTool(DatadirCleanupManager.class)) {
+                    String[] args = {tempDir.resolve("missing.cfg").toString()};
+                    assertStartupExitCode(() -> ZooKeeperServerMain.main(args), ExitCode.INVALID_INVOCATION);
+                    assertStartupExitCode(() -> QuorumPeerMain.main(args), ExitCode.INVALID_INVOCATION);
+                    properties.setProperty("autopurge.purgeInterval", "1");
+                    Path configFile = tempDir.resolve("zoo.cfg");
+                    try (Writer writer = Files.newBufferedWriter(configFile)) {
+                        properties.store(writer, null);
+                    }
+                    assertStartupExitCode(() -> QuorumPeerMain.main(new String[]{configFile.toString()}),
+                        ExitCode.UNEXPECTED_ERROR);
+                    assertEquals("", purgeLogger.getOutputStream().toString(StandardCharsets.UTF_8));
+                    try (ZooKeeperServerEmbedded server = ZooKeeperServerEmbedded.builder()
+                            .baseDir(tempDir).configuration(properties).exitHandler(ExitHandler.LOG_ONLY).build()) {
+                        assertInitializationFailure(assertThrows(IllegalStateException.class,
+                            () -> server.start(TimeUnit.SECONDS.toMillis(5))));
+                    }
+                    assertEquals("", purgeLogger.getOutputStream().toString(StandardCharsets.UTF_8));
+                }
                 assertFalse(Files.exists(tempDir.resolve("version-2")));
                 assertEquals(1, FailingAuditLogger.initializations.get());
                 String messages = logger.getOutputStream().toString(StandardCharsets.UTF_8);
@@ -111,6 +137,19 @@ public class LoginAuditInitializationFailureTest extends ZKTestCase {
             Configuration.setConfiguration(previousConfiguration);
             System.clearProperty(ZKAuditProvider.AUDIT_ENABLE);
             System.clearProperty("zookeeper.audit.impl.class");
+        }
+    }
+
+    private void assertStartupExitCode(Runnable startup, ExitCode expectedExitCode) {
+        RuntimeException exit = new RuntimeException("test system exit");
+        ServiceUtils.setSystemExitProcedure(code -> {
+            assertEquals(expectedExitCode.getValue(), code);
+            throw exit;
+        });
+        try {
+            assertSame(exit, assertThrows(RuntimeException.class, startup::run));
+        } finally {
+            ServiceUtils.setSystemExitProcedure(ServiceUtils.LOG_ONLY);
         }
     }
 
