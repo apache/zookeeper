@@ -649,10 +649,10 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     /**
-     * Applying a create txn to an existing node (routine when txns overlap
-     * with the state restored from a fuzzy snapshot, e.g. on DIFF sync) must
-     * keep the ACL reference counts exact, so that unused ACLs are garbage
-     * collected and the cache does not grow until the next reload.
+     * Applying a create txn to an existing node (routine when replay overlaps
+     * a fuzzy snapshot, e.g. after a restart or SNAP sync) must keep the ACL
+     * reference counts exact, so that unused ACLs are garbage collected and
+     * the cache does not grow until the next reload.
      *
      * See ZOOKEEPER-4689.
      */

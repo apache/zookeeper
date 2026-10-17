@@ -96,9 +96,9 @@ public class DataTree {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
-    // An unknown ACL must fail closed when filtering watch events. In
-    // particular, null and an empty list are treated as unrestricted ACLs.
-    private static final List<ACL> NO_PERMISSIONS_ACL =
+    // Deny watch delivery to ordinary sessions when a node's ACL is unknown.
+    // checkACL treats null and empty ACLs as unrestricted. Public for tests.
+    public static final List<ACL> NO_PERMISSIONS_ACL =
         Collections.singletonList(new ACL(0, ZooDefs.Ids.ANYONE_ID_UNSAFE));
 
     private final RateLogger RATE_LOGGER = new RateLogger(LOG, 15 * 60 * 1000);
@@ -448,16 +448,15 @@ public class DataTree {
         synchronized (parent) {
             parentAcl = getACLForWatchTrigger(parent, parentName);
 
+            // Intern the ACL before checking whether the node exists: a fuzzy
+            // snapshot can contain the node but omit its ACL (ZOOKEEPER-3306).
             Long aclId = aclCache.convertAcls(acl);
 
             DataNode existingChild = nodes.get(path);
             if (existingChild != null) {
-                // A create txn can be replayed after its node was already
-                // serialized into a fuzzy snapshot. The txn carries the
-                // authoritative ACL value, whereas the id in the snapshot may
-                // be absent from the serialized ACL cache. Move the node to the
-                // locally interned id and release its previous reference. This
-                // also balances convertAcls above when both ids are equal.
+                // Use the ACL value from the txn; snapshot ids are server-local
+                // and may not resolve. Release the node's old reference to balance
+                // convertAcls, including when both ids are equal.
                 synchronized (existingChild) {
                     Long previousAcl = existingChild.acl;
                     existingChild.acl = aclId;
@@ -801,13 +800,10 @@ public class DataTree {
     }
 
     /**
-     * Returns the ACL used to filter watch events for a node. A fuzzy snapshot
-     * can temporarily contain a node whose ACL id is absent from the serialized
-     * ACL cache. Transaction replay repairs that reference; until then, use a
-     * no-permissions ACL instead of aborting replay. During normal restore the
-     * watch tables are empty, so the fallback has no watch-delivery effect. If
-     * the state is encountered while watches are present, it fails closed
-     * (ZOOKEEPER-4799).
+     * Returns the ACL for filtering a node's watch events. A node loaded from a
+     * fuzzy snapshot can reference an ACL id that is missing from the cache
+     * until replay repairs it. In that case this returns
+     * {@link #NO_PERMISSIONS_ACL} instead of throwing, so replay can continue.
      */
     private List<ACL> getACLForWatchTrigger(DataNode node, String path) {
         Long aclId;
