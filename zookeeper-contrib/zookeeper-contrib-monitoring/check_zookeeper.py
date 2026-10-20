@@ -28,6 +28,7 @@ import socket
 import logging
 import re
 import subprocess
+import time
 
 from StringIO import StringIO
 from optparse import OptionParser, OptionGroup
@@ -65,7 +66,7 @@ class NagiosHandler(object):
         for host, stats in cluster_stats.items():
             if opts.key in stats:
 
-                value = stats[opts.key]
+                value = float(stats[opts.key])
                 values.append('%s=%s;%s;%s' % (host, value, warning, critical))
 
                 if warning >= value > critical or warning <= value < critical:
@@ -189,12 +190,36 @@ class ZooKeeperServer(object):
         s.settimeout(self._timeout)
 
         s.connect(self._address)
+        s.setblocking(0)
         s.send(cmd)
 
-        data = s.recv(2048)
+        total_data=[];
+        data='';
+        begin=time.time()
+        while 1:
+            # If we got some data, then break after timeout
+            if total_data and time.time()-begin > self._timeout:
+                break
+
+            # If we got no data at all, wait a little longer, twice the timeout
+            elif time.time()-begin > self._timeout*2:
+                break
+
+            try:
+                data = s.recv(16384)
+                if data:
+                    total_data.append(data)
+                    # Change the beginning time for measurement
+                    begin=time.time()
+                else:
+                    # Sleep for sometime to indicate a gap
+                    time.sleep(0.1)
+            except:
+                pass
+
         s.close()
 
-        return data
+        return ''.join(total_data)
 
     def _parse(self, data):
         """ Parse the output from the 'mntr' 4letter word command """
