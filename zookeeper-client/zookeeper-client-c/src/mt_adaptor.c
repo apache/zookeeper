@@ -508,13 +508,13 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr)
 }
 
 // make sure the static xid is initialized before any threads started
-__attribute__((constructor)) int32_t get_xid()
+int32_t get_xid()
 {
-    static int32_t xid = -1;
-    if (xid == -1) {
-        xid = time(0);
-    }
-    return fetch_and_add(&xid,1);
+    static int32_t xid = 1;
+
+    // The XID returned should not be negative to avoid collisions
+    // with reserved XIDs, such as AUTH_XID or SET_WATCHES_XID.
+    return fetch_and_add(&xid,1) & ~(1<<31);
 }
 
 int lock_reconfig(struct _zhandle *zh)
