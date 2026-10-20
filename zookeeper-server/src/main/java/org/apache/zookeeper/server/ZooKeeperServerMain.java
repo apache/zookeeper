@@ -120,7 +120,7 @@ public class ZooKeeperServerMain {
      */
     public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
         // Validate auditing before starting metrics, transaction storage, or listeners.
-        ZKAuditProvider.isAuditEnabled();
+        ZKAuditProvider.checkAuditState();
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {

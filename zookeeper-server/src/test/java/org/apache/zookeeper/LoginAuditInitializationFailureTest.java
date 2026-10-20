@@ -78,7 +78,8 @@ public class LoginAuditInitializationFailureTest extends ZKTestCase {
                 LoginException failure = assertThrows(LoginException.class,
                     () -> new Login(null, () -> callbacks -> { }, new ZKConfig()));
                 assertTrue(failure.getMessage().contains("loginContext name"));
-                assertInitializationFailure(assertThrows(IllegalStateException.class, ZKAuditProvider::isAuditEnabled));
+                assertTrue(ZKAuditProvider.isAuditEnabled());
+                assertInitializationFailure(assertThrows(IllegalStateException.class, ZKAuditProvider::checkAuditState));
                 assertInitializationFailure(assertThrows(IllegalStateException.class,
                     () -> ZKAuditProvider.log("audit-test", AuditConstants.OP_LOGIN, AuditEvent.Result.SUCCESS)));
                 assertInitializationFailure(assertThrows(IllegalStateException.class,

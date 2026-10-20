@@ -66,6 +66,7 @@ public class LoginAuditInitializationTest extends ZKTestCase {
             try (ZooKeeperServerEmbedded server = ZooKeeperServerEmbedded.builder()
                     .baseDir(tempDir).configuration(config).build()) {
                 assertFalse(TestAuditLogger.initialized);
+                ZKAuditProvider.checkAuditState();
                 assertTrue(ZKAuditProvider.isAuditEnabled());
                 assertTrue(TestAuditLogger.initialized);
                 Login serverLogin = new Login("Server", () -> callbacks -> { }, new ZKConfig());

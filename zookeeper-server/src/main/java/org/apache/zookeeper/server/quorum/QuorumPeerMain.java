@@ -124,7 +124,7 @@ public class QuorumPeerMain {
         if (args.length == 1) {
             config.parse(args[0]);
             // The purge task can access server data before runFromConfig is called.
-            ZKAuditProvider.isAuditEnabled();
+            ZKAuditProvider.checkAuditState();
         }
 
         // Start and schedule the purge task
@@ -146,7 +146,7 @@ public class QuorumPeerMain {
 
     public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
         // Validate auditing before starting metrics, transaction storage, or listeners.
-        ZKAuditProvider.isAuditEnabled();
+        ZKAuditProvider.checkAuditState();
         try {
             ManagedUtil.registerLog4jMBeans();
         } catch (JMException e) {

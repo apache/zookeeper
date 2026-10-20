@@ -87,7 +87,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
     @Override
     public void start(long startupTimeout) throws Exception {
         // Validate before scheduling purge or starting the server thread.
-        ZKAuditProvider.isAuditEnabled();
+        ZKAuditProvider.checkAuditState();
         switch (exitHandler) {
             case EXIT:
                 ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);

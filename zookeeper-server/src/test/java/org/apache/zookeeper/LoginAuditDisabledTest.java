@@ -85,6 +85,7 @@ public class LoginAuditDisabledTest extends ZKTestCase {
     @Test
     public void testDisabledAuditProviderIgnoresEvents() throws Exception {
         try (LoggerTestTool logger = new LoggerTestTool(Slf4jAuditLogger.class)) {
+            ZKAuditProvider.checkAuditState();
             assertFalse(ZKAuditProvider.isAuditEnabled());
             ZKAuditProvider.log("user", AuditConstants.OP_LOGIN, Result.SUCCESS);
             ZKAuditProvider.log("user", AuditConstants.OP_LOGIN, null, null, null, null, null, Result.SUCCESS);

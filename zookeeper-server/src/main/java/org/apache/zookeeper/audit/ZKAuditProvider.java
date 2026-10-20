@@ -91,19 +91,27 @@ public class ZKAuditProvider {
     }
 
     /**
-     * @return true if audit log is enabled
+     * Initializes the audit state and reports any logger initialization failure.
+     *
      * @throws IllegalStateException if the audit logger could not be initialized
      */
-    public static boolean isAuditEnabled() {
+    public static void checkAuditState() {
         if (AuditState.initializationFailure != null) {
             throw AuditState.initializationFailure;
         }
+    }
+
+    /**
+     * @return true if audit logging is configured as enabled
+     */
+    public static boolean isAuditEnabled() {
         return AuditState.auditEnabled;
     }
 
     public static void log(String user, String operation, String znode, String acl,
                            String createMode, String session, String ip, Result result) {
         if (isAuditEnabled()) {
+            checkAuditState();
             AuditState.auditLogger.logAuditEvent(createLogEvent(user, operation, znode, acl, createMode, session, ip, result));
         }
     }
@@ -165,6 +173,7 @@ public class ZKAuditProvider {
      */
     public static void log(String user, String operation, Result result) {
         if (isAuditEnabled()) {
+            checkAuditState();
             AuditState.auditLogger.logAuditEvent(createLogEvent(user, operation, result));
         }
     }
