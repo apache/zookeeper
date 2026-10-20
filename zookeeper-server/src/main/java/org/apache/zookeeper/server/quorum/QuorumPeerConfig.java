@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
@@ -379,6 +380,8 @@ public class QuorumPeerConfig {
                 multiAddressReachabilityCheckEnabled = parseBoolean(key, value);
             } else if (key.equals("oraclePath")) {
                 oraclePath = value;
+            } else if (key.equals("audit.impl.class")) {
+                ZKAuditProvider.configureAuditLogger(value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }

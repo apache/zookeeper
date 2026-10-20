@@ -265,24 +265,23 @@ See the [Four Letter Words section](/admin-ops/administrators-guide/commands) in
 ## Audit Logs
 
 Apache ZooKeeper supports audit logging from version 3.6.0. By default audit logs are disabled.
-To enable them, set `audit.enable=true` in `conf/zoo.cfg`. Audit logs are not written on every
-ZooKeeper server — they are written only on the servers to which a client is connected, as
-illustrated below.
+To enable them, set `audit.enable=true` in `conf/zoo.cfg`. Audit logs for client znode operations
+are written only on the servers to which a client is connected, as illustrated below.
 
 ![Audit Logs](/docs-images/zkAuditLogs.jpg)
 
 The audit log captures detailed information for audited operations, written as `key=value` pairs:
 
-| Key          | Value                                                                                                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`    | Client session ID.                                                                                                                                                                          |
-| `user`       | Comma-separated list of users associated with the client session. See [Who is taken as user in audit logs?](#who-is-taken-as-user-in-audit-logs)                                            |
-| `ip`         | Client IP address.                                                                                                                                                                          |
-| `operation`  | The audited operation. Possible values: `serverStart`, `serverStop`, `create`, `delete`, `setData`, `setAcl`, `multiOperation`, `reconfig`, `ephemeralZNodeDeleteOnSessionClose`.           |
-| `znode`      | Path of the znode.                                                                                                                                                                          |
-| `znode type` | Type of the znode (only for `create` operations).                                                                                                                                           |
-| `acl`        | String representation of the znode ACL, e.g. `cdrwa` (create, delete, read, write, admin). Only logged for `setAcl`.                                                                        |
-| `result`     | Outcome of the operation: `success`, `failure`, or `invoked`. The `invoked` result is used for `serverStop` because the stop is logged before the server has confirmed it actually stopped. |
+| Key          | Value                                                                                                                                                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`    | Client session ID.                                                                                                                                                                                                    |
+| `user`       | User associated with the operation. Client znode operations list all authenticated identities, separated by commas. See [Who is taken as user in audit logs?](#who-is-taken-as-user-in-audit-logs)                    |
+| `ip`         | Client IP address.                                                                                                                                                                                                    |
+| `operation`  | The audited operation. Possible values: `serverStart`, `serverStop`, `login`, `logout`, `ticketRenewal`, `create`, `delete`, `setData`, `setAcl`, `multiOperation`, `reconfig`, `ephemeralZNodeDeleteOnSessionClose`. |
+| `znode`      | Path of the znode.                                                                                                                                                                                                    |
+| `znode type` | Type of the znode (only for `create` operations).                                                                                                                                                                     |
+| `acl`        | String representation of the znode ACL, e.g. `cdrwa` (create, delete, read, write, admin). Only logged for `setAcl`.                                                                                                  |
+| `result`     | Outcome of the operation: `success`, `failure`, or `invoked`. The `invoked` result is used for `serverStop` because the stop is logged before the server has confirmed it actually stopped.                           |
 
 Sample audit logs for all operations, where the client connected from `192.168.1.2`, client
 principal is `zkcli@HADOOP.COM`, and server principal is `zookeeper/192.168.1.3@HADOOP.COM`:
@@ -305,6 +304,42 @@ session=0x19344730001   user=192.168.1.2,zkcli@HADOOP.COM  ip=192.168.1.2    ope
 session=0x19344730001   user=zookeeper/192.168.1.3   operation=ephemeralZNodeDeletionOnSessionCloseOrExpire  znode=/ephemral result=success
 session=0x19344730000   user=192.168.1.2,zkcli@HADOOP.COM  ip=192.168.1.2    operation=reconfig  znode=/zookeeper/config result=success
 user=zookeeper/192.168.1.3 operation=serverStop    result=invoked
+```
+
+**New in 3.10.0:** ZooKeeper also logs JAAS `login`, `logout`, and Kerberos `ticketRenewal`
+events on clients and servers, including quorum members. These events describe the local
+process's JAAS credentials. They do not record incoming client or quorum learner SASL
+authentication failures. For DIGEST-MD5, a successful JAAS login loads the credentials;
+SASL authentication happens later. Each event contains `user`, `operation`, and `result`,
+without a session ID, IP address, or znode path. To enable client audit logs, set
+`-Dzookeeper.audit.enable=true` and configure the audit logger in the client JVM.
+
+The `user` field uses the authenticated Kerberos principal or the DIGEST-MD5 username from the
+JAAS subject. If neither is available, ZooKeeper uses the first configured `principal` in the
+JAAS module chain (including the `other` fallback), then the configured `username`, then the
+OS user. Renewal failures keep the identity from the last successful login.
+
+Each failed cache refresh command or JAAS re-login records a `ticketRenewal` failure event.
+A successful re-login records `success`; skipped attempts produce no event. The `logout`
+event also covers the logout performed during Kerberos re-login and does not indicate a client
+disconnection. Stopping only the refresh thread does not log a logout.
+
+If the audit logger throws `RuntimeException` or `LinkageError` during a JAAS operation,
+ZooKeeper writes the error to the regular log. These errors do not change the JAAS result.
+ZooKeeper retains logger initialization failures and reports the original cause on subsequent
+audit calls and server startup. When recording a failed server start, these audit errors do not
+change the server's exit code.
+
+Each JVM uses one audit logger. For a custom logger, set `zookeeper.audit.impl.class` to its fully
+qualified class name before the audit provider is first used. An audited client login can select
+the logger before an embedded server reads its configuration. A later server configuration
+that requests a different logger class fails; configuring the same class again is allowed.
+
+```
+user=zkcli@HADOOP.COM operation=login result=success
+user=zkcli@HADOOP.COM operation=logout result=success
+user=zkcli@HADOOP.COM operation=ticketRenewal result=success
+user=zkcli@HADOOP.COM operation=ticketRenewal result=failure
 ```
 
 ### Audit Log Configuration

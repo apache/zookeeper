@@ -37,6 +37,9 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.AuditEvent.Result;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
@@ -81,7 +84,8 @@ public class Login {
 
     private LoginContext login = null;
     private String loginContextName = null;
-    private String principal = null;
+    private final String principal;
+    private volatile String auditPrincipal = SYSTEM_USER;
 
     // Initialize 'lastLogin' to do a login at first time
     private long lastLogin = Time.currentElapsedTime() - MIN_TIME_BEFORE_RELOGIN;
@@ -106,24 +110,11 @@ public class Login {
     public Login(final String loginContextName, Supplier<CallbackHandler> callbackHandlerSupplier, final ZKConfig zkConfig) throws LoginException {
         this.zkConfig = zkConfig;
         this.callbackHandlerSupplier = callbackHandlerSupplier;
+        principal = readLoginConfiguration(loginContextName);
         login = login(loginContextName);
         this.loginContextName = loginContextName;
         subject = login.getSubject();
         isKrbTicket = !subject.getPrivateCredentials(KerberosTicket.class).isEmpty();
-        AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
-        for (AppConfigurationEntry entry : entries) {
-            // there will only be a single entry, so this for() loop will only be iterated through once.
-            if (entry.getOptions().get("useTicketCache") != null) {
-                String val = (String) entry.getOptions().get("useTicketCache");
-                if (val.equals("true")) {
-                    isUsingTicketCache = true;
-                }
-            }
-            if (entry.getOptions().get("principal") != null) {
-                principal = (String) entry.getOptions().get("principal");
-            }
-            break;
-        }
 
         if (!isKrbTicket) {
             // if no TGT, do not bother with ticket management.
@@ -228,6 +219,7 @@ public class Login {
                                 Shell.execCommand(cmd, kinitArgs);
                                 break;
                             } catch (Exception e) {
+                                audit(getAuditUser(subject), AuditConstants.OP_TICKET_RENEWAL, Result.FAILURE);
                                 if (retry > 0) {
                                     --retry;
                                     // sleep for 10 seconds
@@ -330,17 +322,86 @@ public class Login {
     }
 
     private synchronized LoginContext login(final String loginContextName) throws LoginException {
-        if (loginContextName == null) {
-            throw new LoginException("loginContext name (JAAS file section header) was null. "
-                                     + "Please check your java.security.login.auth.config (="
-                                     + System.getProperty("java.security.login.auth.config")
-                                     + ") and your "
-                                     + getLoginContextMessage());
+        try {
+            if (loginContextName == null) {
+                throw new LoginException("loginContext name (JAAS file section header) was null. "
+                                         + "Please check your java.security.login.auth.config (="
+                                         + System.getProperty("java.security.login.auth.config")
+                                         + ") and your "
+                                         + getLoginContextMessage());
+            }
+            LoginContext loginContext = new LoginContext(loginContextName, newCallbackHandler());
+            loginContext.login();
+            // Retain the authenticated identity even if a later logout clears the subject.
+            auditPrincipal = getAuditUser(loginContext.getSubject());
+            audit(auditPrincipal, AuditConstants.OP_LOGIN, Result.SUCCESS);
+            LOG.info("{} successfully logged in.", loginContextName);
+            return loginContext;
+        } catch (LoginException e) {
+            audit(auditPrincipal, AuditConstants.OP_LOGIN, Result.FAILURE);
+            throw e;
         }
-        LoginContext loginContext = new LoginContext(loginContextName, newCallbackHandler());
-        loginContext.login();
-        LOG.info("{} successfully logged in.", loginContextName);
-        return loginContext;
+    }
+
+    private String readLoginConfiguration(String loginContextName) {
+        if (loginContextName == null) {
+            return null;
+        }
+        // LoginContext falls back to "other" when the named configuration is absent.
+        Configuration configuration = Configuration.getConfiguration();
+        AppConfigurationEntry[] entries = configuration.getAppConfigurationEntry(loginContextName);
+        if (entries == null) {
+            entries = configuration.getAppConfigurationEntry("other");
+        }
+        if (entries != null && entries.length > 0) {
+            AppConfigurationEntry entry = entries[0];
+            isUsingTicketCache = "true".equals(entry.getOptions().get("useTicketCache"));
+            Object principalOption = entry.getOptions().get("principal");
+            String configuredUser = null;
+            // A Kerberos module can follow other modules in the JAAS chain.
+            for (AppConfigurationEntry configuredEntry : entries) {
+                Object configuredValue = configuredEntry.getOptions().get("principal");
+                if (configuredValue instanceof String configuredPrincipal && !configuredPrincipal.isEmpty()) {
+                    configuredUser = configuredPrincipal;
+                    break;
+                }
+                Object username = configuredEntry.getOptions().get("username");
+                if (configuredUser == null && username instanceof String && !((String) username).isEmpty()) {
+                    configuredUser = (String) username;
+                }
+            }
+            if (configuredUser != null) {
+                auditPrincipal = configuredUser;
+            }
+            return principalOption instanceof String ? (String) principalOption : null;
+        }
+        return null;
+    }
+
+    private String getAuditUser(Subject loginSubject) {
+        if (loginSubject != null) {
+            for (KerberosPrincipal kerberosPrincipal : loginSubject.getPrincipals(KerberosPrincipal.class)) {
+                return kerberosPrincipal.getName();
+            }
+            // SecurityUtils uses the public credential as the DIGEST-MD5 username.
+            for (String username : loginSubject.getPublicCredentials(String.class)) {
+                if (!username.isEmpty()) {
+                    return username;
+                }
+            }
+        }
+        return auditPrincipal;
+    }
+
+    private void audit(String user, String operation, Result result) {
+        try {
+            // An early client must not freeze audit configuration while auditing is disabled.
+            if (Boolean.getBoolean(ZKAuditProvider.AUDIT_ENABLE)) {
+                ZKAuditProvider.log(user, operation, result);
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LOG.error("Unable to audit {} ({}) for {}", operation, result, user, e);
+        }
     }
 
     private String getLoginContextMessage() {
@@ -387,7 +448,7 @@ public class Login {
         return null;
     }
 
-    private boolean hasSufficientTimeElapsed() {
+    private boolean tryBeginReLogin() {
         long now = Time.currentElapsedTime();
         if (now - getLastLogin() < MIN_TIME_BEFORE_RELOGIN) {
             LOG.warn("Not attempting to re-login since the last re-login was "
@@ -437,7 +498,7 @@ public class Login {
      * @throws javax.security.auth.login.LoginException on a failure
      */
     // c.f. HADOOP-6559
-    private synchronized void reLogin() throws LoginException {
+    synchronized void reLogin() throws LoginException {
         if (!isKrbTicket) {
             return;
         }
@@ -445,21 +506,24 @@ public class Login {
         if (login == null) {
             throw new LoginException("login must be done first");
         }
-        if (!hasSufficientTimeElapsed()) {
+        if (!tryBeginReLogin()) {
             return;
         }
+        String user = getAuditUser(subject);
         LOG.info("Initiating logout for {}", principal);
         synchronized (Login.class) {
-            //clear up the kerberos state. But the tokens are not cleared! As per
-            //the Java kerberos login module code, only the kerberos credentials
-            //are cleared
-            logout();
-            //login and also update the subject field of this instance to
-            //have the new credentials (pass it to the LoginContext constructor)
-            login = new LoginContext(loginContextName, getSubject());
-            LOG.info("Initiating re-login for {}", principal);
-            login.login();
-            setLogin(login);
+            try {
+                logout();
+                login = new LoginContext(loginContextName, getSubject());
+                LOG.info("Initiating re-login for {}", principal);
+                login.login();
+                setLogin(login);
+                auditPrincipal = getAuditUser(login.getSubject());
+                audit(auditPrincipal, AuditConstants.OP_TICKET_RENEWAL, Result.SUCCESS);
+            } catch (LoginException e) {
+                audit(user, AuditConstants.OP_TICKET_RENEWAL, Result.FAILURE);
+                throw e;
+            }
         }
     }
 
@@ -469,7 +533,14 @@ public class Login {
         // are not logged in. Since Java 9 this could result in an NPE.
         // See ZOOKEEPER-4477 for more details.
         if (subject != null && !subject.getPrincipals().isEmpty()) {
-            login.logout();
+            String user = getAuditUser(subject);
+            try {
+                login.logout();
+                audit(user, AuditConstants.OP_LOGOUT, Result.SUCCESS);
+            } catch (LoginException e) {
+                audit(user, AuditConstants.OP_LOGOUT, Result.FAILURE);
+                throw e;
+            }
         }
     }
 
