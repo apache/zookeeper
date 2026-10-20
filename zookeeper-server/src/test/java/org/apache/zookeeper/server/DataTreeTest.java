@@ -448,7 +448,7 @@ public class DataTreeTest extends ZKTestCase {
         serializer.start();
         serializer.join();
 
-        assertNull(failure[0], "serialize() must not fail on a deep tree, but threw: " + failure[0]);
+        assertNull(failure[0], "serialize() must not fail on a deep tree");
 
         // The produced bytes must load back into an equivalent tree.
         final DataTree restored = new DataTree();
