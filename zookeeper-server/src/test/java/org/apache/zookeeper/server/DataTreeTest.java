@@ -418,6 +418,47 @@ public class DataTreeTest extends ZKTestCase {
         assertTrue(ranTestCase.get(), "Didn't find the expected node");
     }
 
+    /**
+     * Snapshot serialization must not depend on tree depth. This builds a very
+     * deep znode chain and serializes it on a thread with a small (512 KiB)
+     * stack, so the test is independent of the runner's default -Xss, then
+     * checks the result round-trips back to an equivalent tree.
+     */
+    @Test
+    @Timeout(value = 120)
+    public void testSerializeDeepTree() throws Exception {
+        final int depth = 4000;
+        final DataTree tree = new DataTree();
+        final StringBuilder path = new StringBuilder();
+        for (int i = 0; i < depth; i++) {
+            path.append("/a");
+            tree.createNode(path.toString(), new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1L, i + 1, i + 1, 1);
+        }
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        final Throwable[] failure = new Throwable[1];
+        final Thread serializer = new Thread(null, () -> {
+            try {
+                tree.serialize(oa, "tree");
+            } catch (Throwable t) {
+                failure[0] = t;
+            }
+        }, "deep-tree-serializer", 512 * 1024L);
+        serializer.start();
+        serializer.join();
+
+        assertNull(failure[0], "serialize() must not fail on a deep tree");
+
+        // The produced bytes must load back into an equivalent tree.
+        final DataTree restored = new DataTree();
+        final BinaryInputArchive ia =
+            BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+        restored.deserialize(ia, "tree");
+        assertNotNull(restored.getNode(path.toString()),
+            "the deepest node must survive a serialize/deserialize round-trip");
+    }
+
     @Test
     @Timeout(value = 60)
     public void testReconfigACLClearOnDeserialize() throws Exception {
