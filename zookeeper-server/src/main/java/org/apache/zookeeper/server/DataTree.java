@@ -22,9 +22,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1319,29 +1321,44 @@ public class DataTree {
      * @throws IOException
      */
     void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
-        String pathString = path.toString();
-        DataNode node = getNode(pathString);
-        if (node == null) {
-            return;
-        }
-        String[] children;
-        DataNode nodeCopy;
-        synchronized (node) {
-            StatPersisted statCopy = new StatPersisted();
-            statCopy.copyFrom(node.stat);
-            //we do not need to make a copy of node.data because the contents
-            //are never changed
-            nodeCopy = new DataNode(node.data, node.acl, statCopy);
-            children = node.getChildren().toArray(new String[0]);
-        }
-        serializeNodeData(oa, pathString, nodeCopy);
-        path.append('/');
-        int off = path.length();
-        for (String child : children) {
-            // Since this is single buffer being reused, we need to truncate the previous bytes of string.
-            path.delete(off, Integer.MAX_VALUE);
-            path.append(child);
-            serializeNode(oa, path);
+        // Iterative, explicit-stack pre-order traversal of the subtree rooted
+        // at `path`. This was previously written as recursion with one frame
+        // per znode level, which does not scale to very deep trees; walking the
+        // tree with a heap-allocated stack removes the dependency on tree depth.
+        //
+        // The traversal order (pre-order, children in the same order as
+        // before), the per-node locking, and the emitted records are unchanged,
+        // so the produced snapshot bytes are identical and the on-disk format is
+        // unchanged. The explicit stack holds at most the unvisited frontier of
+        // the tree (a single entry for a chain), all of which the in-memory
+        // DataTree already holds.
+        Deque<String> pathStack = new ArrayDeque<>();
+        pathStack.push(path.toString());
+        while (!pathStack.isEmpty()) {
+            String pathString = pathStack.pop();
+            DataNode node = getNode(pathString);
+            if (node == null) {
+                continue;
+            }
+            String[] children;
+            DataNode nodeCopy;
+            synchronized (node) {
+                StatPersisted statCopy = new StatPersisted();
+                statCopy.copyFrom(node.stat);
+                //we do not need to make a copy of node.data because the contents
+                //are never changed
+                nodeCopy = new DataNode(node.data, node.acl, statCopy);
+                children = node.getChildren().toArray(new String[0]);
+            }
+            // Must be called outside the node lock: writeRecord can block for a
+            // long time and holding the lock would stall writers (ZOOKEEPER-2201).
+            serializeNodeData(oa, pathString, nodeCopy);
+            // Push children in reverse so that, popped from this LIFO stack,
+            // they are visited in the same order as the previous recursion.
+            String childPathPrefix = pathString + "/";
+            for (int i = children.length - 1; i >= 0; i--) {
+                pathStack.push(childPathPrefix + children[i]);
+            }
         }
     }
 
