@@ -18,21 +18,26 @@
 
 package org.apache.zookeeper.server.util;
 
+import static org.apache.zookeeper.ZooDefs.OpCode.addWatch;
+import static org.apache.zookeeper.ZooDefs.OpCode.check;
 import static org.apache.zookeeper.ZooDefs.OpCode.checkWatches;
 import static org.apache.zookeeper.ZooDefs.OpCode.create;
 import static org.apache.zookeeper.ZooDefs.OpCode.create2;
 import static org.apache.zookeeper.ZooDefs.OpCode.createContainer;
+import static org.apache.zookeeper.ZooDefs.OpCode.createTTL;
 import static org.apache.zookeeper.ZooDefs.OpCode.delete;
 import static org.apache.zookeeper.ZooDefs.OpCode.deleteContainer;
 import static org.apache.zookeeper.ZooDefs.OpCode.exists;
 import static org.apache.zookeeper.ZooDefs.OpCode.getACL;
+import static org.apache.zookeeper.ZooDefs.OpCode.getAllChildrenNumber;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren;
 import static org.apache.zookeeper.ZooDefs.OpCode.getChildren2;
 import static org.apache.zookeeper.ZooDefs.OpCode.getData;
+import static org.apache.zookeeper.ZooDefs.OpCode.getEphemerals;
+import static org.apache.zookeeper.ZooDefs.OpCode.reconfig;
 import static org.apache.zookeeper.ZooDefs.OpCode.removeWatches;
 import static org.apache.zookeeper.ZooDefs.OpCode.setACL;
 import static org.apache.zookeeper.ZooDefs.OpCode.setData;
-import static org.apache.zookeeper.ZooDefs.OpCode.setWatches2;
 import static org.apache.zookeeper.ZooDefs.OpCode.sync;
 import java.io.PrintWriter;
 import java.util.Arrays;
@@ -118,6 +123,7 @@ public class RequestPathMetricsCollector {
         scheduledExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
         requestsMap.put(Request.op2String(create), new PathStatsQueue(create));
         requestsMap.put(Request.op2String(create2), new PathStatsQueue(create2));
+        requestsMap.put(Request.op2String(createTTL), new PathStatsQueue(createTTL));
         requestsMap.put(Request.op2String(createContainer), new PathStatsQueue(createContainer));
         requestsMap.put(Request.op2String(deleteContainer), new PathStatsQueue(deleteContainer));
         requestsMap.put(Request.op2String(delete), new PathStatsQueue(delete));
@@ -128,10 +134,14 @@ public class RequestPathMetricsCollector {
         requestsMap.put(Request.op2String(setACL), new PathStatsQueue(setACL));
         requestsMap.put(Request.op2String(getChildren), new PathStatsQueue(getChildren));
         requestsMap.put(Request.op2String(getChildren2), new PathStatsQueue(getChildren2));
+        requestsMap.put(Request.op2String(getAllChildrenNumber), new PathStatsQueue(getAllChildrenNumber));
         requestsMap.put(Request.op2String(checkWatches), new PathStatsQueue(checkWatches));
         requestsMap.put(Request.op2String(removeWatches), new PathStatsQueue(removeWatches));
-        requestsMap.put(Request.op2String(setWatches2), new PathStatsQueue(setWatches2));
+        requestsMap.put(Request.op2String(addWatch), new PathStatsQueue(addWatch));
         requestsMap.put(Request.op2String(sync), new PathStatsQueue(sync));
+        requestsMap.put(Request.op2String(check), new PathStatsQueue(check));
+        requestsMap.put(Request.op2String(getEphemerals), new PathStatsQueue(getEphemerals));
+        requestsMap.put(Request.op2String(reconfig), new PathStatsQueue(reconfig));
         this.immutableRequestsMap = java.util.Collections.unmodifiableMap(requestsMap);
     }
 
@@ -140,6 +150,7 @@ public class RequestPathMetricsCollector {
         case ZooDefs.OpCode.sync:
         case ZooDefs.OpCode.create:
         case ZooDefs.OpCode.create2:
+        case ZooDefs.OpCode.createTTL:
         case ZooDefs.OpCode.createContainer:
         case ZooDefs.OpCode.delete:
         case ZooDefs.OpCode.deleteContainer:
