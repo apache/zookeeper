@@ -205,6 +205,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public MainThread(int myid, int clientPort, int adminServerPort, Integer secureClientPort, String quorumCfgSection, String configs, String peerType, boolean writeDynamicConfigFile, String version) throws IOException {
             tmpDir = ClientBase.createTmpDir();
+            this.myid = myid;
+            this.clientPort = clientPort;
+            this.quorumCfgSection = quorumCfgSection;
+            this.otherConfigs = null;
             LOG.info("id = {} tmpDir = {} clientPort = {} adminServerPort = {}", myid, tmpDir, clientPort, adminServerPort);
 
             File dataDir = new File(tmpDir, "data");
