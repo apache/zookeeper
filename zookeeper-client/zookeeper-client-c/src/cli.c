@@ -67,6 +67,30 @@ static int sent=0;
 static int recvd=0;
 
 static int shutdownThisThing=0;
+/*
+ * Set when the watcher closes the handle. The library then destroys the
+ * handle later on its completion thread, and that destroy still uses the
+ * SASL state.
+ */
+static int closedByWatcher=0;
+
+#ifdef HAVE_CYRUS_SASL_H
+/* SASL callbacks must remain valid for the lifetime of the zookeeper handle. */
+static sasl_callback_t *sasl_callbacks = NULL;
+
+static void release_sasl(void) {
+    free(sasl_callbacks);
+    sasl_callbacks = NULL;
+#ifdef __APPLE__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+    sasl_client_done();
+#ifdef __APPLE__
+#pragma GCC diagnostic pop
+#endif
+}
+#endif /* HAVE_CYRUS_SASL_H */
 
 static __attribute__ ((unused)) void
 printProfileInfo(struct timeval start, struct timeval end, int thres,
@@ -148,11 +172,13 @@ void watcher(zhandle_t *zzh, int type, int state, const char *path,
             }
         } else if (state == ZOO_AUTH_FAILED_STATE) {
             fprintf(stderr, "Authentication failure. Shutting down...\n");
+            closedByWatcher=1;
             zookeeper_close(zzh);
             shutdownThisThing=1;
             zh=0;
         } else if (state == ZOO_EXPIRED_SESSION_STATE) {
             fprintf(stderr, "Session expired. Shutting down...\n");
+            closedByWatcher=1;
             zookeeper_close(zzh);
             shutdownThisThing=1;
             zh=0;
@@ -300,10 +326,27 @@ void my_silent_stat_completion(int rc, const struct Stat *stat,
     free((void*)data);
 }
 
+/*
+ * Log asynchronous dispatch failure and free completion context data,
+ * as failed invocations will not trigger completion callbacks.
+ */
+static void async_failed(int rc, const char *line, void *data) {
+    fprintf(stderr, "Error %d for %s\n", rc, line);
+    free(data);
+}
+
 static void sendRequest(const char* data) {
-    zoo_aset(zh, "/od", data, strlen(data), -1, my_silent_stat_completion,
-            strdup("/od"));
-    zoo_aget(zh, "/od", 1, my_silent_data_completion, strdup("/od"));
+    char *ctx = strdup("/od");
+    int rc = zoo_aset(zh, "/od", data, strlen(data), -1,
+            my_silent_stat_completion, ctx);
+    if (rc) {
+        free(ctx);
+    }
+    ctx = strdup("/od");
+    rc = zoo_aget(zh, "/od", 1, my_silent_data_completion, ctx);
+    if (rc) {
+        free(ctx);
+    }
 }
 
 void od_completion(int rc, const struct Stat *stat, const void *data) {
@@ -332,6 +375,7 @@ static int verbose = 0;
 
 void processline(const char *line) {
     int rc;
+    char *data = NULL;
     int async = ((line[0] == 'a') && !(startsWith(line, "addauth ")));
     if (async) {
         line++;
@@ -375,19 +419,22 @@ void processline(const char *line) {
             return;
         }
 
-        rc = zoo_aget(zh, line, 1, my_data_completion, strdup(line));
+        data = strdup(line);
+        rc = zoo_aget(zh, line, 1, my_data_completion, data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (strcmp(line, "config") == 0) {
        gettimeofday(&startTime, 0);
-        rc = zoo_agetconfig(zh, 1, my_data_completion, strdup(ZOO_CONFIG_NODE));
+        data = strdup(ZOO_CONFIG_NODE);
+        rc = zoo_agetconfig(zh, 1, my_data_completion, data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
    } else if (startsWith(line, "reconfig ")) {
            int syntaxError = 0;
            char* p = NULL;
+           char* tokens = NULL;
            char* joining = NULL;
            char* leaving = NULL;
            char* members = NULL;
@@ -397,8 +444,14 @@ void processline(const char *line) {
            int64_t version = -1;
 
            line += 9;
-           p = strtok (strdup(line)," ");
+           tokens = strdup(line);
+           if (tokens == NULL) {
+               fprintf(stderr, "Insufficient memory to parse: %s\n", line);
+               return;
+           }
+           p = strtok (tokens," ");
            while (p != NULL) {
+               /* Overwrite duplicate options, releasing previously parsed values. */
                if (strcmp(p, "-add")==0) {
                    p = strtok (NULL," ");
                    if (mode == 2 || p == NULL) {
@@ -406,6 +459,7 @@ void processline(const char *line) {
                        break;
                    }
                    mode = 1;
+                   free(joining);
                    joining = strdup(p);
                } else if (strcmp(p, "-remove")==0){
                    p = strtok (NULL," ");
@@ -414,6 +468,7 @@ void processline(const char *line) {
                        break;
                    }
                    mode = 1;
+                   free(leaving);
                    leaving = strdup(p);
                } else if (strcmp(p, "-members")==0) {
                    p = strtok (NULL," ");
@@ -422,6 +477,7 @@ void processline(const char *line) {
                        break;
                    }
                    mode = 2;
+                   free(members);
                    members = strdup(p);
                } else if (strcmp(p, "-file")==0){
                    FILE *fp = NULL;
@@ -440,6 +496,7 @@ void processline(const char *line) {
                    fseek(fp, 0L, SEEK_END);  /* Position to end of file */
                    members_size = ftell(fp);     /* Get file length */
                    rewind(fp);               /* Back to start of file */
+                   free(members);
                    members = calloc(members_size + 1, sizeof(char));
                    if(members == NULL )
                    {
@@ -483,15 +540,17 @@ void processline(const char *line) {
                }
                p = strtok (NULL," ");
            }
-           if (syntaxError) return;
-
-           rc = zoo_areconfig(zh, joining, leaving, members, version, my_data_completion, strdup(line));
+           if (!syntaxError) {
+               data = strdup(line);
+               rc = zoo_areconfig(zh, joining, leaving, members, version, my_data_completion, data);
+               if (rc) {
+                   async_failed(rc, line, data);
+               }
+           }
+           free(tokens);
            free(joining);
            free(leaving);
            free(members);
-           if (rc) {
-               fprintf(stderr, "Error %d for %s\n", rc, line);
-           }
 
    } else if (startsWith(line, "set ")) {
         char *ptr;
@@ -507,10 +566,11 @@ void processline(const char *line) {
         }
         *ptr = '\0';
         ptr++;
+        data = strdup(line);
         rc = zoo_aset(zh, line, ptr, strlen(ptr), -1, my_stat_completion,
-                strdup(line));
+                data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "ls ")) {
         line += 3;
@@ -519,9 +579,10 @@ void processline(const char *line) {
             return;
         }
         gettimeofday(&startTime, 0);
-        rc= zoo_aget_children(zh, line, 1, my_strings_completion, strdup(line));
+        data = strdup(line);
+        rc= zoo_aget_children(zh, line, 1, my_strings_completion, data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "ls2 ")) {
         line += 4;
@@ -530,9 +591,10 @@ void processline(const char *line) {
             return;
         }
         gettimeofday(&startTime, 0);
-        rc= zoo_aget_children2(zh, line, 1, my_strings_stat_completion, strdup(line));
+        data = strdup(line);
+        rc= zoo_aget_children2(zh, line, 1, my_strings_stat_completion, data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "create ") || startsWith(line, "create2 ")) {
         int mode = 0;
@@ -623,15 +685,16 @@ void processline(const char *line) {
 //            rc = zoo_acreate(zh, line, "new", 3, &CREATE_ONLY_ACL, flags,
 //                    my_string_completion, strdup(line));
 //        }
+        data = strdup(line);
         if (is_create2) {
           rc = zoo_acreate2_ttl(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, mode, ttl_value,
-                my_string_stat_completion_free_data, strdup(line));
+                my_string_stat_completion_free_data, data);
         } else {
           rc = zoo_acreate_ttl(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, mode, ttl_value,
-                my_string_completion_free_data, strdup(line));
+                my_string_completion_free_data, data);
         }
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "delete ")) {
         line += 7;
@@ -639,9 +702,10 @@ void processline(const char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        rc = zoo_adelete(zh, line, -1, my_void_completion, strdup(line));
+        data = strdup(line);
+        rc = zoo_adelete(zh, line, -1, my_void_completion, data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "sync ")) {
         line += 5;
@@ -649,9 +713,10 @@ void processline(const char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        rc = zoo_async(zh, line, my_string_completion_free_data, strdup(line));
+        data = strdup(line);
+        rc = zoo_async(zh, line, my_string_completion_free_data, data);
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "wexists ")) {
 #ifdef THREADED
@@ -663,12 +728,13 @@ void processline(const char *line) {
             return;
         }
 #ifndef THREADED
-        rc = zoo_awexists(zh, line, watcher, (void*) 0, my_stat_completion, strdup(line));
+        data = strdup(line);
+        rc = zoo_awexists(zh, line, watcher, (void*) 0, my_stat_completion, data);
 #else
         rc = zoo_wexists(zh, line, watcher, (void*) 0, &stat);
 #endif
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (startsWith(line, "exists ")) {
 #ifdef THREADED
@@ -680,12 +746,13 @@ void processline(const char *line) {
             return;
         }
 #ifndef THREADED
-        rc = zoo_aexists(zh, line, 1, my_stat_completion, strdup(line));
+        data = strdup(line);
+        rc = zoo_aexists(zh, line, 1, my_stat_completion, data);
 #else
         rc = zoo_exists(zh, line, 1, &stat);
 #endif
         if (rc) {
-            fprintf(stderr, "Error %d for %s\n", rc, line);
+            async_failed(rc, line, data);
         }
     } else if (strcmp(line, "myid") == 0) {
         printf("session Id = %llx\n", _LL_CAST_ zoo_client_id(zh)->client_id);
@@ -978,14 +1045,22 @@ int main(int argc, char **argv) {
         sasl_params.service = service;
         sasl_params.host = serverFQDN;
         sasl_params.mechlist = mechlist;
-        sasl_params.callbacks = zoo_sasl_make_basic_callbacks(user, realm,
+        sasl_callbacks = zoo_sasl_make_basic_callbacks(user, realm,
             passwordFile);
+        if (!sasl_callbacks) {
+            fprintf(stderr, "Unable to allocate SASL callbacks\n");
+            release_sasl();
+            return 1;
+        }
+        sasl_params.callbacks = sasl_callbacks;
 
         zh = zookeeper_init_sasl(hostPort, watcher, 30000, &myid, NULL, flags,
             NULL, &sasl_params);
 
         if (!zh) {
-            return errno;
+            int err = errno;
+            release_sasl();
+            return err;
         }
     }
 
@@ -1119,5 +1194,15 @@ int main(int argc, char **argv) {
     if (to_send!=0)
         fprintf(stderr,"Recvd %d responses for %d requests sent\n",recvd,sent);
     zookeeper_close(zh);
+#ifdef HAVE_CYRUS_SASL_H
+    /*
+     * Release the SASL state only if this thread closed the handle. Then
+     * the close destroyed the handle before it returned. A handle that the
+     * watcher closed can still be in destruction on a library thread.
+     */
+    if (mechlist && !closedByWatcher) {
+        release_sasl();
+    }
+#endif
     return 0;
 }

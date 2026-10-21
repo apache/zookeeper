@@ -275,6 +275,7 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh,
         watcher_registration_t* wo, completion_head_t *clist,
         watcher_deregistration_t* wdo);
 static void destroy_completion_entry(completion_list_t* c);
+completion_list_t *dequeue_completion(completion_head_t *list);
 static void queue_completion_nolock(completion_head_t *list, completion_list_t *c,
         int add_to_front);
 static void queue_completion(completion_head_t *list, completion_list_t *c,
@@ -648,6 +649,14 @@ void close_zsock(zsock_t *fd)
 {
     if (fd->sock != -1) {
 #ifdef HAVE_OPENSSL_H
+        /*
+         * Release the SSL_CTX only together with its SSL object. A context
+         * without an SSL object exists only while init_ssl_for_socket()
+         * configures it on the IO thread. That function releases it on
+         * every failure path (ZOOKEEPER-5004). An application thread can
+         * call this function (for example through zoo_set_servers()), and
+         * a release here could free the context during its configuration.
+         */
         if (fd->ssl_sock) {
             SSL_free(fd->ssl_sock);
             fd->ssl_sock = NULL;
@@ -671,8 +680,37 @@ static void destroy(zhandle_t *zh)
     }
     /* call any outstanding completions with a special error code */
     cleanup_bufs(zh,1,ZCLOSING);
-    if (process_async(zh->outstanding_sync)) {
+    /*
+     * Drain remaining completions upon handle destruction. When closing
+     * from the IO thread, completions may be enqueued after the completion
+     * thread has exited. Checking head first avoids acquiring uninitialized
+     * mutexes if initialization aborted early.
+     */
+    if (zh->completions_to_process.head) {
+#ifdef THREADED
+        /*
+         * zookeeper_close() can return to the caller before this point.
+         * The caller can then free its contexts. Thus, do not call user
+         * callbacks here. Only release the entries.
+         *
+         * No entry in this queue belongs to a synchronous call, so this
+         * loop does not need notify_sync_completion(). The IO thread
+         * completes synchronous calls itself, and free_completions()
+         * (also through cleanup_bufs() above) wakes the threads that
+         * still wait. A synchronous call that runs at the same time as
+         * zookeeper_close() is undefined behaviour.
+         */
+        completion_list_t *cptr;
+        while ((cptr = dequeue_completion(&zh->completions_to_process)) != 0) {
+            if (cptr->xid == WATCHER_EVENT_XID) {
+                free_watcher_object_list(cptr->c.watcher_result);
+                cptr->c.watcher_result = 0;
+            }
+            destroy_completion_entry(cptr);
+        }
+#else
         process_completions(zh);
+#endif
     }
     if (zh->hostname != 0) {
         free(zh->hostname);
@@ -959,6 +997,7 @@ static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *a
                 rc = addrvec_grow_default(avec);
                 if (rc != 0) {
                     LOG_ERROR(LOGCALLBACK(zh), "out of memory");
+                    freeaddrinfo(res0);
                     errno=ENOMEM;
                     rc=ZSYSTEMERROR;
                     goto fail;
@@ -1314,10 +1353,15 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     zhandle_t *zh = NULL;
     char *index_chroot = NULL;
 
+    /*
+     * Transfer certstr ownership to handle on success (released by destroy()),
+     * or reclaim locally on initialization failure.
+     */
+
     // Create our handle
     zh = calloc(1, sizeof(*zh));
     if (!zh) {
-        return 0;
+        goto nomem;
     }
 
     // Set log callback before calling into log_env
@@ -1328,16 +1372,22 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     }
 
     zh->fd = calloc(1, sizeof(zsock_t));
+    if (!zh->fd) {
+        goto nomem;
+    }
     zh->fd->sock = -1;
     if (cert) {
         zh->fd->cert = calloc(1, sizeof(zcert_t));
+        if (!zh->fd->cert) {
+            goto nomem;
+        }
         memcpy(zh->fd->cert, cert, sizeof(zcert_t));
     }
 
 #ifdef _WIN32
     if (Win32WSAStartup()){
         LOG_ERROR(LOGCALLBACK(zh), "Error initializing ws2_32.dll");
-        return 0;
+        goto abort;
     }
 #endif
     LOG_INFO(LOGCALLBACK(zh), "Initiating client connection, host=%s sessionTimeout=%d watcher=%p"
@@ -1441,6 +1491,17 @@ abort:
     free(zh);
     errno=errnosave;
     return 0;
+nomem:
+    /* Clean up partial allocations prior to complete handle initialization. */
+    if (cert) {
+        free(cert->certstr);
+    }
+    if (zh) {
+        free(zh->fd);
+        free(zh);
+    }
+    errno=ENOMEM;
+    return 0;
 }
 
 zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
@@ -1462,6 +1523,10 @@ zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn wat
 {
     zcert_t zcert;
     zcert.certstr = strdup(cert);
+    if (!zcert.certstr) {
+        errno = ENOMEM;
+        return 0;
+    }
     zcert.ca = strtok(zcert.certstr, ",");
     zcert.cert = strtok(NULL, ",");
     zcert.key = strtok(NULL, ",");
@@ -1766,6 +1831,35 @@ static int queue_front_buffer_bytes(buffer_head_t *list, char *buff, int len)
     if (!b)
         return ZSYSTEMERROR;
     queue_buffer(list, b, 1);
+    return ZOK;
+}
+
+/*
+ * Pre-allocate send queue entry before registering completion callbacks.
+ * Pre-allocation guarantees that once a completion is registered, enqueuing
+ * cannot fail. If synchronous setup fails (rc != ZOK), no completion is
+ * registered and caller retains context ownership.
+ */
+static buffer_list_t *allocate_request_buffer(struct oarchive *oa, int *rc)
+{
+    buffer_list_t *b = allocate_buffer(get_buffer(oa), get_buffer_len(oa));
+    if (!b) {
+        *rc = ZSYSTEMERROR;
+    }
+    return b;
+}
+
+/*
+ * Enqueue pre-allocated request buffer on success, or deallocate it if
+ * an intermediate operation failed.
+ */
+static int queue_request_buffer(zhandle_t *zh, buffer_list_t *b, int rc)
+{
+    if (rc < 0) {
+        free(b);
+        return rc;
+    }
+    queue_buffer(&zh->to_send, b, 0);
     return ZOK;
 }
 
@@ -2108,8 +2202,8 @@ static int send_info_packet(zhandle_t *zh, auth_info* auth) {
     /* add this buffer to the head of the send queue */
     rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     return rc;
 }
@@ -2191,8 +2285,8 @@ static int send_set_watches(zhandle_t *zh)
     /* add this buffer to the head of the send queue */
     rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
     free_key_list(req.dataWatches.data, req.dataWatches.count);
     free_key_list(req.existWatches.data, req.existWatches.count);
     free_key_list(req.childWatches.data, req.childWatches.count);
@@ -2296,6 +2390,13 @@ static int prime_connection(zhandle_t *zh)
     }
     zh->state = ZOO_ASSOCIATING_STATE;
 
+    /*
+     * Discard any partial response buffer from a previous connection
+     * before resetting input_buffer to the handshake primer.
+     */
+    if (zh->input_buffer && zh->input_buffer != &zh->primer_buffer) {
+        free_buffer(zh->input_buffer);
+    }
     zh->input_buffer = &zh->primer_buffer;
     memset(zh->input_buffer->buffer, 0, zh->input_buffer->len);
 
@@ -2349,7 +2450,7 @@ static struct timeval get_timeval(int interval)
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    close_buffer_oarchive(&oa, 0);
+    close_buffer_oarchive(&oa, rc < 0);
     return rc<0 ? rc : adaptor_send_queue(zh, 0);
 }
 
@@ -2615,7 +2716,8 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 if (zh->fd->cert != NULL) {
                     // We do SSL_connect() here
                     if (init_ssl_for_handler(zh) != ZOK) {
-                        return ZSSLCONNECTIONERROR;
+                        /* Balance reference count incremented by api_prolog(). */
+                        return api_epilog(zh, ZSSLCONNECTIONERROR);
                     }
                 }
 #endif
@@ -2761,18 +2863,28 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
         method = TLS_client_method();
 #endif
         fd->ssl_ctx = SSL_CTX_new(method);
+        if (fd->ssl_ctx == NULL) {
+            LOG_ERROR(LOGCALLBACK(zh), "error creating ssl context");
+            if (fail_on_error) {
+                return handle_socket_error_msg(zh, __LINE__, __func__, ZSSLCONNECTIONERROR, "error creating ssl context");
+            }
+            return ZSSLCONNECTIONERROR;
+        }
         ctx = &fd->ssl_ctx;
 
+        /* Clear the SSL_CTX reference on error, so that no dangling pointer stays. */
         SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
         /*SERVER CA FILE*/
         if (SSL_CTX_load_verify_locations(*ctx, fd->cert->ca, 0) != 1) {
             SSL_CTX_free(*ctx);
+            *ctx = NULL;
             LOG_ERROR(LOGCALLBACK(zh), "Failed to load CA file %s", fd->cert->ca);
             errno = EINVAL;
             return ZBADARGUMENTS;
         }
         if (SSL_CTX_set_default_verify_paths(*ctx) != 1) {
             SSL_CTX_free(*ctx);
+            *ctx = NULL;
             LOG_ERROR(LOGCALLBACK(zh), "Call to SSL_CTX_set_default_verify_paths failed");
             errno = EINVAL;
             return ZBADARGUMENTS;
@@ -2782,6 +2894,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
             /*CLIENT CA FILE (With Certificate Chain)*/
             if (SSL_CTX_use_certificate_chain_file(*ctx, fd->cert->cert) != 1) {
                 SSL_CTX_free(*ctx);
+                *ctx = NULL;
                 LOG_ERROR(LOGCALLBACK(zh), "Failed to load client certificate chain from %s", fd->cert->cert);
                 errno = EINVAL;
                 return ZBADARGUMENTS;
@@ -2790,6 +2903,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
             SSL_CTX_set_default_passwd_cb_userdata(*ctx, fd->cert->passwd);
             if (SSL_CTX_use_PrivateKey_file(*ctx, fd->cert->key, SSL_FILETYPE_PEM) != 1) {
                 SSL_CTX_free(*ctx);
+                *ctx = NULL;
                 LOG_ERROR(LOGCALLBACK(zh), "Failed to load client private key from %s", fd->cert->key);
                 errno = EINVAL;
                 return ZBADARGUMENTS;
@@ -2797,6 +2911,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
             /*CHECK*/
             if (SSL_CTX_check_private_key(*ctx) != 1) {
                 SSL_CTX_free(*ctx);
+                *ctx = NULL;
                 LOG_ERROR(LOGCALLBACK(zh), "SSL_CTX_check_private_key failed");
                 errno = EINVAL;
                 return ZBADARGUMENTS;
@@ -2807,6 +2922,8 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error) {
 
         fd->ssl_sock = SSL_new(*ctx);
         if (fd->ssl_sock == NULL) {
+            SSL_CTX_free(*ctx);
+            *ctx = NULL;
             if (fail_on_error) {
                 return handle_socket_error_msg(zh, __LINE__, __func__, ZSSLCONNECTIONERROR, "error creating ssl context");
             } else {
@@ -2915,7 +3032,7 @@ int queue_sasl_request(zhandle_t *zh, const char *client_data, int client_data_l
     rc = rc < 0 ? rc : serialize_GetSASLRequest(oa, "req", &req);
     rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
          get_buffer_len(oa));
-    close_buffer_oarchive(&oa, 0);
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh),
         "SASL: Queued request len=%d rc=%d", client_data_len, rc);
@@ -3127,13 +3244,17 @@ static int queue_session_event(zhandle_t *zh, int state)
         goto error;
     }
     cptr = create_completion_entry(zh, WATCHER_EVENT_XID,-1,0,0,0,0);
+    if (!cptr) {
+        close_buffer_oarchive(&oa, 1);
+        goto error;
+    }
     cptr->buffer = allocate_buffer(get_buffer(oa), get_buffer_len(oa));
-    cptr->buffer->curr_offset = get_buffer_len(oa);
     if (!cptr->buffer) {
         free(cptr);
         close_buffer_oarchive(&oa, 1);
         goto error;
     }
+    cptr->buffer->curr_offset = get_buffer_len(oa);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
     lock_watchers(zh);
@@ -3659,12 +3780,25 @@ static completion_list_t* do_create_completion_entry(zhandle_t *zh, int xid,
     return c;
 }
 
+/* Deallocate completion list entries without invoking callbacks. */
+static void destroy_completion_list(completion_head_t *list)
+{
+    completion_list_t *entry;
+    while ((entry = dequeue_completion_nolock(list)) != NULL) {
+        destroy_completion_entry(entry);
+    }
+}
+
 static void destroy_completion_entry(completion_list_t* c){
     if(c!=0){
         destroy_watcher_registration(c->watcher);
         destroy_watcher_deregistration(c->watcher_deregistration);
         if(c->buffer!=0)
             free_buffer(c->buffer);
+        /* Release nested operation completion entries for multi-op requests. */
+        if (c->c.type == COMPLETION_MULTI) {
+            destroy_completion_list(&c->c.clist);
+        }
         free(c);
     }
 }
@@ -3702,12 +3836,23 @@ static void queue_completion(completion_head_t *list, completion_list_t *c,
     unlock_completion_list(list);
 }
 
+/*
+ * Registers completion entry and assumes ownership of watcher registrations,
+ * deregistrations, and sub-op lists, freeing them on registration failure.
+ */
 static int add_completion(zhandle_t *zh, int xid, int completion_type,
         const void *dc, const void *data, int add_to_front,
         watcher_registration_t* wo, completion_head_t *clist)
 {
     completion_list_t *c =create_completion_entry(zh, xid, completion_type, dc,
             data, wo, clist);
+    if (!c) {
+        destroy_watcher_registration(wo);
+        if (clist) {
+            destroy_completion_list(clist);
+        }
+        return ZSYSTEMERROR;
+    }
     return do_add_completion(zh, dc, c, add_to_front);
 }
 
@@ -3717,6 +3862,13 @@ static int add_completion_deregistration(zhandle_t *zh, int xid,
 {
     completion_list_t *c = create_completion_entry_deregistration(zh, xid,
            completion_type, dc, data, wdo, clist);
+    if (!c) {
+        destroy_watcher_deregistration(wdo);
+        if (clist) {
+            destroy_completion_list(clist);
+        }
+        return ZSYSTEMERROR;
+    }
     return do_add_completion(zh, dc, c, add_to_front);
 }
 
@@ -3734,7 +3886,8 @@ static int do_add_completion(zhandle_t *zh, const void *dc,
         }
         rc = ZOK;
     } else {
-        free(c);
+        /* Release completion entry along with associated watcher or multi metadata. */
+        destroy_completion_entry(c);
         rc = ZINVALIDSTATE;
     }
     unlock_completion_list(&zh->sent_requests);
@@ -3841,11 +3994,19 @@ int wait_for_session_to_be_closed(zhandle_t *zh, int timeout_ms)
 int zookeeper_close(zhandle_t *zh)
 {
     int rc=ZOK;
+    int refs;
     if (zh==0)
         return ZBADARGUMENTS;
 
+    /*
+     * Take the reference before the close becomes visible. When the
+     * adaptor threads see close_requested, they stop and release their
+     * references. If they release the last reference first, they free
+     * the handle while this function still uses it.
+     */
+    refs = inc_ref_counter(zh,1);
     zh->close_requested=1;
-    if (inc_ref_counter(zh,1)>1) {
+    if (refs>1) {
         /* We have incremented the ref counter to prevent the
          * completions from calling zookeeper_close before we have
          * completed the adaptor_finish call below. */
@@ -3871,8 +4032,8 @@ int zookeeper_close(zhandle_t *zh)
         oa = create_buffer_oarchive();
         rc = serialize_RequestHeader(oa, "header", &h);
         rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa), get_buffer_len(oa));
-        /* We queued the buffer, so don't free it */
-        close_buffer_oarchive(&oa, 0);
+        /* Free serialized buffer if not enqueued */
+        close_buffer_oarchive(&oa, rc < 0);
         if (rc < 0) {
             LOG_DEBUG(LOGCALLBACK(zh), "Error during closing zookeeper session, sessionId=%#llx to %s (error: %d)\n",
                 zh->client_id.client_id, zoo_get_current_server(zh), rc);
@@ -3954,12 +4115,18 @@ static int Request_path_init(zhandle_t *zh, int mode,
     assert(path_out);
 
     *path_out = prepend_string(zh, path);
+    /*
+     * Restore *path_out to caller's original path pointer on validation
+     * failure so caller-side free_duplicate_path() remains safe.
+     */
     if (zh == NULL || !isValidPath(*path_out, mode)) {
         free_duplicate_path(*path_out, path);
+        *path_out = (char *)path;
         return ZBADARGUMENTS;
     }
     if (is_unrecoverable(zh)) {
         free_duplicate_path(*path_out, path);
+        *path_out = (char *)path;
         return ZINVALIDSTATE;
     }
 
@@ -4004,6 +4171,7 @@ int zoo_awget(zhandle_t *zh, const char *path,
         watcher_fn watcher, void* watcherCtx,
         data_completion_t dc, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     char *server_path = prepend_string(zh, path);
     struct RequestHeader h = {get_xid(), ZOO_GETDATA_OP};
@@ -4021,15 +4189,15 @@ int zoo_awget(zhandle_t *zh, const char *path,
     oa=create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetDataRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data,
     create_watcher_registration(server_path,data_result_checker,watcher,watcherCtx));
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(server_path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4046,6 +4214,7 @@ int zoo_agetconfig(zhandle_t *zh, int watch, data_completion_t dc,
 int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
         data_completion_t dc, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     char *path = ZOO_CONFIG_NODE;
     char *server_path = ZOO_CONFIG_NODE;
@@ -4064,15 +4233,15 @@ int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
     oa=create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetDataRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data,
                                            create_watcher_registration(server_path,data_result_checker,watcher,watcherCtx));
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-                                          get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(server_path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
                zoo_get_current_server(zh));
@@ -4083,6 +4252,7 @@ int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
 int zoo_areconfig(zhandle_t *zh, const char *joining, const char *leaving,
        const char *members, int64_t version, data_completion_t dc, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = { get_xid(), ZOO_RECONFIG_OP };
     struct ReconfigRequest req;
@@ -4102,13 +4272,13 @@ int zoo_areconfig(zhandle_t *zh, const char *joining, const char *leaving,
    req.curConfigId = version;
     rc = serialize_RequestHeader(oa, "header", &h);
    rc = rc < 0 ? rc : serialize_ReconfigRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_data_completion(zh, h.xid, dc, data, NULL);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending Reconfig request xid=%#x to %s",h.xid, zoo_get_current_server(zh));
 
@@ -4134,6 +4304,7 @@ static int SetDataRequest_init(zhandle_t *zh, struct SetDataRequest *req,
 int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
         int version, stat_completion_t dc, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_SETDATA_OP};
     struct SetDataRequest req;
@@ -4144,14 +4315,14 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SetDataRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_stat_completion(zh, h.xid, dc, data,0);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4229,6 +4400,7 @@ int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl_entries, int mode, int64_t ttl,
         string_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), get_create_op_type(mode, ZOO_CREATE_OP)};
     int rc;
@@ -4270,14 +4442,14 @@ int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
         req_path = req.path;
     }
 
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req_path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4296,6 +4468,7 @@ int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
         int valuelen, const struct ACL_vector *acl_entries, int mode, int64_t ttl,
         string_stat_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = { get_xid(), get_create_op_type(mode, ZOO_CREATE2_OP) };
     int rc;
@@ -4336,14 +4509,14 @@ int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
         req_path = req.path;
     }
 
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_stat_completion(zh, h.xid, completion, data);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req_path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4365,6 +4538,7 @@ int DeleteRequest_init(zhandle_t *zh, struct DeleteRequest *req,
 int zoo_adelete(zhandle_t *zh, const char *path, int version,
         void_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_DELETE_OP};
     struct DeleteRequest req;
@@ -4375,14 +4549,14 @@ int zoo_adelete(zhandle_t *zh, const char *path, int version,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_void_completion(zh, h.xid, completion, data);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4400,6 +4574,7 @@ int zoo_awexists(zhandle_t *zh, const char *path,
         watcher_fn watcher, void* watcherCtx,
         stat_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_EXISTS_OP};
     struct ExistsRequest req;
@@ -4411,16 +4586,16 @@ int zoo_awexists(zhandle_t *zh, const char *path,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_ExistsRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_stat_completion(zh, h.xid, completion, data,
         create_watcher_registration(req.path,exists_result_checker,
                 watcher,watcherCtx));
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4433,6 +4608,7 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
          strings_completion_t sc,
          const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN_OP};
     struct GetChildrenRequest req ;
@@ -4444,15 +4620,15 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildrenRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_completion(zh, h.xid, sc, data,
             create_watcher_registration(req.path,child_result_checker,watcher,watcherCtx));
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4479,6 +4655,7 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
          strings_stat_completion_t ssc,
          const void *data)
 {
+    buffer_list_t *b;
     /* invariant: (sc == NULL) != (sc == NULL) */
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN2_OP};
@@ -4491,15 +4668,15 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetChildren2Request(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_strings_stat_completion(zh, h.xid, ssc, data,
             create_watcher_registration(req.path,child_result_checker,watcher,watcherCtx));
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4524,6 +4701,7 @@ int zoo_awget_children2(zhandle_t *zh, const char *path,
 int zoo_async(zhandle_t *zh, const char *path,
         string_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_SYNC_OP};
     struct SyncRequest req;
@@ -4534,14 +4712,14 @@ int zoo_async(zhandle_t *zh, const char *path,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SyncRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4553,6 +4731,7 @@ int zoo_async(zhandle_t *zh, const char *path,
 int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
         const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_GETACL_OP};
     struct GetACLRequest req;
@@ -4563,14 +4742,14 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_GetACLRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_acl_completion(zh, h.xid, completion, data);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4581,6 +4760,7 @@ int zoo_aget_acl(zhandle_t *zh, const char *path, acl_completion_t completion,
 int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
         struct ACL_vector *acl, void_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_SETACL_OP};
     struct SetACLRequest req;
@@ -4593,14 +4773,14 @@ int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
     req.version = version;
     rc = serialize_RequestHeader(oa, "header", &h);
     rc = rc < 0 ? rc : serialize_SetACLRequest(oa, "req", &req);
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
     enter_critical(zh);
     rc = rc < 0 ? rc : add_void_completion(zh, h.xid, completion, data);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
     free_duplicate_path(req.path, path);
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",h.xid,path,
             zoo_get_current_server(zh));
@@ -4666,6 +4846,7 @@ static int CheckVersionRequest_init(zhandle_t *zh, struct CheckVersionRequest *r
 int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         zoo_op_result_t *results, void_completion_t completion, const void *data)
 {
+    buffer_list_t *b;
     struct RequestHeader h = {get_xid(), ZOO_MULTI_OP};
     struct MultiHeader mh = {-1, 1, -1};
     struct oarchive *oa = create_buffer_oarchive();
@@ -4682,10 +4863,14 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         struct MultiHeader mh = {op->type, 0, -1};
         rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
 
+        /*
+         * Clear sub-requests so cleanup on validation error safely skips
+         * uninitialized pointers.
+         */
         switch(op->type) {
             case ZOO_CREATE_CONTAINER_OP:
             case ZOO_CREATE_OP: {
-                struct CreateRequest req;
+                struct CreateRequest req = { 0 };
 
                 rc = rc < 0 ? rc : CreateRequest_init(zh, &req,
                                         op->create_op.path, op->create_op.data,
@@ -4695,76 +4880,101 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
                 result->value = op->create_op.buf;
                 result->valuelen = op->create_op.buflen;
 
-                enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0);
-                leave_critical(zh);
+                if (rc >= 0) {
+                    enter_critical(zh);
+                    entry = create_completion_entry(zh, h.xid, COMPLETION_STRING, op_result_string_completion, result, 0, 0);
+                    leave_critical(zh);
+                }
                 free_duplicate_path(req.path, op->create_op.path);
                 break;
             }
 
             case ZOO_DELETE_OP: {
-                struct DeleteRequest req;
+                struct DeleteRequest req = { 0 };
                 rc = rc < 0 ? rc : DeleteRequest_init(zh, &req, op->delete_op.path, op->delete_op.version);
                 rc = rc < 0 ? rc : serialize_DeleteRequest(oa, "req", &req);
 
-                enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
-                leave_critical(zh);
+                if (rc >= 0) {
+                    enter_critical(zh);
+                    entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
+                    leave_critical(zh);
+                }
                 free_duplicate_path(req.path, op->delete_op.path);
                 break;
             }
 
             case ZOO_SETDATA_OP: {
-                struct SetDataRequest req;
+                struct SetDataRequest req = { 0 };
                 rc = rc < 0 ? rc : SetDataRequest_init(zh, &req,
                                         op->set_op.path, op->set_op.data,
                                         op->set_op.datalen, op->set_op.version);
                 rc = rc < 0 ? rc : serialize_SetDataRequest(oa, "req", &req);
                 result->stat = op->set_op.stat;
 
-                enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, 0);
-                leave_critical(zh);
+                if (rc >= 0) {
+                    enter_critical(zh);
+                    entry = create_completion_entry(zh, h.xid, COMPLETION_STAT, op_result_stat_completion, result, 0, 0);
+                    leave_critical(zh);
+                }
                 free_duplicate_path(req.path, op->set_op.path);
                 break;
             }
 
             case ZOO_CHECK_OP: {
-                struct CheckVersionRequest req;
+                struct CheckVersionRequest req = { 0 };
                 rc = rc < 0 ? rc : CheckVersionRequest_init(zh, &req,
                                         op->check_op.path, op->check_op.version);
                 rc = rc < 0 ? rc : serialize_CheckVersionRequest(oa, "req", &req);
 
-                enter_critical(zh);
-                entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
-                leave_critical(zh);
+                if (rc >= 0) {
+                    enter_critical(zh);
+                    entry = create_completion_entry(zh, h.xid, COMPLETION_VOID, op_result_void_completion, result, 0, 0);
+                    leave_critical(zh);
+                }
                 free_duplicate_path(req.path, op->check_op.path);
                 break;
             }
 
             default:
                 LOG_ERROR(LOGCALLBACK(zh), "Unimplemented sub-op type=%d in multi-op", op->type);
-                return ZUNIMPLEMENTED;
+                /* Break loop to release accumulated completions before returning. */
+                rc = ZUNIMPLEMENTED;
+                break;
+        }
+        if (rc == ZUNIMPLEMENTED) {
+            break;
         }
 
-        queue_completion_nolock(&clist, entry, 0);
+        if (rc >= 0 && entry == NULL) {
+            rc = ZSYSTEMERROR;
+        }
+        if (entry) {
+            queue_completion_nolock(&clist, entry, 0);
+        }
     }
 
     rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
 
     /* BEGIN: CRTICIAL SECTION */
+    b = rc < 0 ? NULL : allocate_request_buffer(oa, &rc);
+    if (rc < 0) {
+        /* Release completion entries if buffer allocation failed before registration. */
+        destroy_completion_list(&clist);
+    }
     enter_critical(zh);
     rc = rc < 0 ? rc : add_multi_completion(zh, h.xid, completion, data, &clist);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
 
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending multi request xid=%#x with %d subrequests to %s",
             h.xid, index, zoo_get_current_server(zh));
 
+    if (rc == ZUNIMPLEMENTED) {
+        return rc;
+    }
     return nonblocking_send(zh, rc);
 }
 
@@ -4780,9 +4990,10 @@ static int aremove_watches(
         watcher_fn watcher, void *watcherCtx, int local,
         void_completion_t *completion, const void *data, int all)
 {
+    buffer_list_t *b;
     char *server_path = prepend_string(zh, path);
     int rc;
-    struct oarchive *oa;
+    struct oarchive *oa = NULL;
     struct RequestHeader h = { 
         get_xid(), 
         all ? ZOO_REMOVE_WATCHES : ZOO_CHECK_WATCHES 
@@ -4843,15 +5054,21 @@ static int aremove_watches(
         goto done;
     }
 
+    b = allocate_request_buffer(oa, &rc);
+    if (!b) {
+        destroy_watcher_deregistration(wdo);
+        /* Match standard async failure error code on buffer allocation failure. */
+        rc = ZMARSHALLINGERROR;
+        goto done;
+    }
     enter_critical(zh);
     rc = add_completion_deregistration(
         zh, h.xid, COMPLETION_VOID, completion, data, 0, wdo, 0);
-    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    rc = queue_request_buffer(zh, b, rc);
     leave_critical(zh);
 
-    /* We queued the buffer, so don't free it */
-    close_buffer_oarchive(&oa, 0);
+    /* Free serialized buffer if not enqueued */
+    close_buffer_oarchive(&oa, rc < 0);
 
     LOG_DEBUG(LOGCALLBACK(zh), "Sending request xid=%#x for path [%s] to %s",
               h.xid, path, zoo_get_current_server(zh));
@@ -4859,6 +5076,9 @@ static int aremove_watches(
     rc = nonblocking_send(zh, rc);
 
 done:
+    if (oa) {
+        close_buffer_oarchive(&oa, 1);
+    }
     free_duplicate_path(server_path, path);
     return rc;
 }

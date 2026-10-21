@@ -92,7 +92,8 @@ endif
 # build and run unit tests
 
 EXTRA_DIST+=$(wildcard ${srcdir}/tests/*.cc) $(wildcard ${srcdir}/tests/*.h) \
-    ${srcdir}/tests/wrappers.opt ${srcdir}/tests/wrappers-mt.opt
+    ${srcdir}/tests/wrappers.opt ${srcdir}/tests/wrappers-mt.opt \
+    ${srcdir}/tests/lsan.supp
 
 # These tests are ordered in a logical manner such that each builds upon basic
 # functionality tested in prior tests. e.g. the most basic functionality is
@@ -130,8 +131,10 @@ else
 endif
 
 check_PROGRAMS = zktest-st
+# Suppressions and options for LeakSanitizer when built with --enable-asan.
 TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
-                    CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover*.jar
+                    CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover*.jar \
+                    LSAN_OPTIONS=suppressions=$(abs_srcdir)/tests/lsan.supp:print_suppressions=0
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS) $(OPENSSL_LIB_LDFLAGS) $(SASL_LIB_LDFLAGS) -ldl
 zktest_st_CXXFLAGS = $(AM_CXXFLAGS) -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(SOLARIS_CPPFLAGS)
