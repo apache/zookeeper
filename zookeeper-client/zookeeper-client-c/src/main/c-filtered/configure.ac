@@ -1,9 +1,11 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+# @filteredBuildComment@
+
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],3.10.0,[user@zookeeper.apache.org],[zookeeper])
+AC_INIT([zookeeper C client],@parsedVersion.majorVersion@.@parsedVersion.minorVersion@.@parsedVersion.incrementalVersion@,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 
 # Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
@@ -66,7 +68,7 @@ else
 fi
 AM_CONDITIONAL([WANT_OPENSSL],[test "x$with_openssl" != xno])
 
-if test "$CALLER" = "ANT" ; then
+if test "$CALLER" = "EXECMAVENPLUGIN" ; then
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/zookeeper-client/zookeeper-client-c/tests/zkServer.sh\\\"\""
 else
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"./tests/zkServer.sh\\\"\""

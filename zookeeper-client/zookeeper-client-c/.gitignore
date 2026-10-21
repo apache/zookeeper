@@ -1,0 +1,4 @@
+# Ignore generated files from the Maven build to patch the ZooKeeper version
+/CMakeLists.txt
+/configure.ac
+/include/zookeeper_version.h
