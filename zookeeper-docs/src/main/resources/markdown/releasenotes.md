@@ -23,13 +23,12 @@ Added two configurable multiRead limits: `zookeeper.multiRead.maxOps` (maximum r
 
 ## Bug
 
-* Various undisclosed CVE fixes - please check security page for details
-
 * [ZOOKEEPER-4946](https://issues.apache.org/jira/browse/ZOOKEEPER-4946) - Login thread failed to shutdown successfully, causing SendThead to be blocked
 * [ZOOKEEPER-4947](https://issues.apache.org/jira/browse/ZOOKEEPER-4947) - When ZooKeeper client enters AuthFailed state (e.g., due to SASL authentication failure),  calling `close()` method does not terminate internal SendThread and EventThread.
 * [ZOOKEEPER-5055](https://issues.apache.org/jira/browse/ZOOKEEPER-5055) - Ensure FileTxnLog.close() closes every stream
 * [ZOOKEEPER-5091](https://issues.apache.org/jira/browse/ZOOKEEPER-5091) - WatchManager reports connections with no active watches after consuming the last standard watch
 * [ZOOKEEPER-5093](https://issues.apache.org/jira/browse/ZOOKEEPER-5093) - Possible io resource leak in FileTxnSnapLog.close
+* [ZOOKEEPER-5097](https://issues.apache.org/jira/browse/ZOOKEEPER-5097) - Make DataTree snapshot serialization iterative
 
 ## Improvement
 
