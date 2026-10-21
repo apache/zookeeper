@@ -258,6 +258,7 @@ public class Observer extends Learner {
             try {
                 Thread.sleep(randomDelay);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 LOG.warn("Interrupted while waiting", e);
             }
         }
