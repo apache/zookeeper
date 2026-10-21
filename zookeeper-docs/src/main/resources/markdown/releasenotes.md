@@ -23,7 +23,7 @@ Added two configurable multiRead limits: `zookeeper.multiRead.maxOps` (maximum r
 
 ## Bug
 
-* Various undisclosed CVE fixes - please check security page for details
+* [ZOOKEEPER-5097](https://issues.apache.org/jira/browse/ZOOKEEPER-5097) - Make DataTree snapshot serialization iterative
 
 ## Improvement
 
