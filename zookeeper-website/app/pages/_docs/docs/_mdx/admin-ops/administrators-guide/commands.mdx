@@ -94,7 +94,7 @@ Moving forward, Four Letter Words will be deprecated, please use
 
   ```bash
   $ echo mntr | nc localhost 2185
-              zk_version  3.4.0
+              zk_version  3.10.0
               zk_avg_latency  0.7561              - be account to four decimal places
               zk_max_latency  0
               zk_min_latency  0
@@ -105,6 +105,7 @@ Moving forward, Four Letter Words will be deprecated, please use
               zk_znode_count   4
               zk_watch_count  0
               zk_ephemerals_count 0
+              zk_max_session_ephemeral_path_bytes 0
               zk_approximate_data_size    27
               zk_learners    4                    - only exposed by the Leader
               zk_synced_followers 4               - only exposed by the Leader
@@ -116,6 +117,11 @@ Moving forward, Four Letter Words will be deprecated, please use
   The output is compatible with java properties format and the content
   may change over time (new keys added). Your scripts should expect changes.
   ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader.
+
+  **New in 3.10.0:** `zk_max_session_ephemeral_path_bytes` reports the maximum
+  total size of a session's ephemeral paths, in UTF-8 bytes. See
+  [maximum ephemeral path size per session](/admin-ops/monitor-and-audit-logs#maximum-ephemeral-path-size-per-session).
+
   The output contains multiple lines with the following format:
 
   ```
@@ -419,6 +425,10 @@ Available commands include:
   Includes performance stats, information about internal queues, and
   summaries of the data tree (among other things).
   Returns each as its own field.
+
+  **New in 3.10.0:** Returns `max_session_ephemeral_path_bytes`, the maximum
+  total size of a session's ephemeral paths, in UTF-8 bytes. See
+  [maximum ephemeral path size per session](/admin-ops/monitor-and-audit-logs#maximum-ephemeral-path-size-per-session).
 
 - _observer_connection_stat_reset/orst_ :
   Reset all observer connection statistics. Companion command to _observers_.

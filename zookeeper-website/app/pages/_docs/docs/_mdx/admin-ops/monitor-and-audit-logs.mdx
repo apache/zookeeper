@@ -11,7 +11,33 @@ request processors, and more.
 
 ### Metrics
 
-All available metrics are defined in `ServerMetrics.java`.
+`ServerMetrics.java` defines counters and summaries. `ZooKeeperServer.java`
+registers server gauges.
+
+#### Maximum Ephemeral Path Size per Session
+
+**New in 3.10.0:** `max_session_ephemeral_path_bytes` is the maximum total size of
+full ephemeral znode paths owned by a single session on this server, in UTF-8
+bytes. It includes path separators and excludes znode data and persistent,
+container, and TTL nodes.
+
+For example, `/a` and `/中` occupy two and four bytes. A session that owns both
+has a total of six bytes. If another session owns only `/bbb` (four bytes), the
+metric is six.
+
+The value is zero when there are no ephemeral znodes. Deleting nodes or closing
+sessions can reduce it. After loading or restoring a snapshot, the metric reports
+the value for the restored tree. Concurrent updates can change session totals
+during collection, so the metric is not an atomic snapshot.
+
+Prometheus and the AdminServer `monitor` command expose
+`max_session_ephemeral_path_bytes`. The four-letter `mntr` command exposes
+`zk_max_session_ephemeral_path_bytes`. The metric uses the existing export
+configuration.
+
+The metric helps estimate `closeSession` transaction sizes relative to
+`jute.maxbuffer`. It excludes serialization overhead: a four-byte length prefix
+per path, the list length, and transaction headers.
 
 ### Configuring the Metrics Provider
 

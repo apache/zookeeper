@@ -33,11 +33,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -51,16 +55,199 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DataTreeTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
+
+    private static final int TEST_NODE_DATA_SIZE = 1024;
+    private static final int CONCURRENT_UPDATE_COUNT = 1000;
+    private static final int READER_TIMEOUT_SECONDS = 10;
+    private static final int CONCURRENT_TEST_TIMEOUT_SECONDS = 30;
+
+    @Test
+    public void testMaxSessionEphemeralPathBytes() throws Exception {
+        DataTree tree = new DataTree();
+        assertEquals(0L, tree.getMaxSessionEphemeralPathBytes());
+
+        tree.createNode("/a", new byte[TEST_NODE_DATA_SIZE], null, 1, -1, 1, 1);
+        tree.createNode("/bb", new byte[0], null, 1, -1, 2, 1);
+        tree.createNode("/cccc", new byte[0], null, 2, -1, 3, 1);
+        assertEquals(5L, tree.getMaxSessionEphemeralPathBytes());
+
+        assertThrows(NodeExistsException.class,
+                () -> tree.createNode("/a", new byte[0], null, 1, -1, 4, 1));
+        assertEquals(5L, tree.getMaxSessionEphemeralPathBytes());
+
+        tree.createNode("/ddd", new byte[0], null, 1, -1, 5, 1);
+        assertEquals(9L, tree.getMaxSessionEphemeralPathBytes());
+        tree.deleteNode("/ddd", 6);
+        assertEquals(5L, tree.getMaxSessionEphemeralPathBytes());
+        tree.deleteNode("/a", 7);
+        assertEquals(5L, tree.getMaxSessionEphemeralPathBytes());
+        tree.deleteNode("/cccc", 8);
+        assertEquals(3L, tree.getMaxSessionEphemeralPathBytes());
+        tree.deleteNode("/bb", 9);
+        assertEquals(0L, tree.getMaxSessionEphemeralPathBytes());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("ephemeralUtf8Paths")
+    public void testMaxSessionEphemeralPathBytesUsesUtf8(String description, String path) throws Exception {
+        DataTree tree = new DataTree();
+        tree.createNode(path, new byte[0], null, 1, -1, 1, 1);
+        assertEquals(path.getBytes(StandardCharsets.UTF_8).length, tree.getMaxSessionEphemeralPathBytes());
+        tree.deleteNode(path, 2);
+        assertEquals(0L, tree.getMaxSessionEphemeralPathBytes());
+    }
+
+    private static Stream<Arguments> ephemeralUtf8Paths() {
+        return Stream.of(
+                Arguments.of("ASCII", "/plain"),
+                Arguments.of("last printable ASCII character", "/~"),
+                Arguments.of("two-byte Latin character", "/é"),
+                Arguments.of("last two-byte character", "/߿"),
+                Arguments.of("first three-byte character", "/ࠀ"),
+                Arguments.of("three-byte CJK character", "/中"),
+                Arguments.of("mixed character widths", "/~é中"));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("nonSessionEphemeralOwners")
+    public void testMaxSessionEphemeralPathBytesIgnoresOtherNodeTypes(String description, long owner) throws Exception {
+        String previous = System.getProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
+        System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, Boolean.TRUE.toString());
+        try {
+            DataTree tree = new DataTree();
+            String ephemeralPath = "/é中";
+            tree.createNode(ephemeralPath, new byte[0], null, 1, -1, 1, 1);
+            long expected = ephemeralPath.getBytes(StandardCharsets.UTF_8).length;
+            assertEquals(expected, tree.getMaxSessionEphemeralPathBytes());
+
+            String ignoredPath = "/node-with-a-long-path";
+            tree.createNode(ignoredPath, new byte[TEST_NODE_DATA_SIZE], null, owner, -1, 2, 1);
+            assertEquals(expected, tree.getMaxSessionEphemeralPathBytes());
+            tree.deleteNode(ignoredPath, 3);
+            assertEquals(expected, tree.getMaxSessionEphemeralPathBytes());
+            tree.deleteNode(ephemeralPath, 4);
+            assertEquals(0L, tree.getMaxSessionEphemeralPathBytes());
+        } finally {
+            if (previous == null) {
+                System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
+            } else {
+                System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, previous);
+            }
+        }
+    }
+
+    private static Stream<Arguments> nonSessionEphemeralOwners() {
+        return Stream.of(
+                Arguments.of("persistent", 0L),
+                Arguments.of("container", EphemeralType.CONTAINER_EPHEMERAL_OWNER),
+                Arguments.of("TTL", EphemeralType.TTL.toEphemeralOwner(TimeUnit.SECONDS.toMillis(1))));
+    }
+
+    @ParameterizedTest(name = "includePaths={0}")
+    @ValueSource(booleans = {true, false})
+    public void testMaxSessionEphemeralPathBytesAfterClosingSessions(boolean includePaths) throws Exception {
+        DataTree tree = new DataTree();
+        tree.createNode("/first", new byte[0], null, 1, -1, 1, 1);
+        tree.createNode("/extra", new byte[0], null, 1, -1, 2, 1);
+        tree.createNode("/second", new byte[0], null, 2, -1, 3, 1);
+        tree.createNode("/another", new byte[0], null, 2, -1, 4, 1);
+        assertEquals(15L, tree.getMaxSessionEphemeralPathBytes());
+
+        tree.killSession(2, 5);
+        assertEquals(12L, tree.getMaxSessionEphemeralPathBytes());
+        assertFalse(tree.getEphemerals().containsKey(2L));
+
+        TxnHeader header = new TxnHeader(1, 0, 6, 1, ZooDefs.OpCode.closeSession);
+        CloseSessionTxn txn = includePaths ? new CloseSessionTxn(Arrays.asList("/first", "/extra")) : null;
+        assertEquals(0, tree.processTxn(header, txn).err);
+        assertEquals(0L, tree.getMaxSessionEphemeralPathBytes());
+        assertTrue(tree.getEphemerals().isEmpty());
+    }
+
+    @Test
+    public void testMaxSessionEphemeralPathBytesAfterDeserialize() throws Exception {
+        DataTree source = new DataTree();
+        source.createNode("/a", new byte[0], null, 1, -1, 1, 1);
+        source.createNode("/bb", new byte[0], null, 1, -1, 2, 1);
+        source.createNode("/中é", new byte[0], null, 2, -1, 3, 1);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        source.serialize(BinaryOutputArchive.getArchive(output), "test");
+        byte[] snapshot = output.toByteArray();
+
+        DataTree restored = new DataTree();
+        restored.createNode("/stale-node-with-a-long-path", new byte[0], null, 3, -1, 1, 1);
+        for (int i = 0; i < 2; i++) {
+            restored.deserialize(BinaryInputArchive.getArchive(new ByteArrayInputStream(snapshot)), "test");
+            assertEquals(6L, restored.getMaxSessionEphemeralPathBytes());
+            assertEquals(3, restored.getEphemeralsCount());
+            assertTrue(restored.getEphemerals(3).isEmpty());
+        }
+
+        restored.deleteNode("/中é", 4);
+        assertEquals(5L, restored.getMaxSessionEphemeralPathBytes());
+        restored.killSession(1, 5);
+        assertEquals(0L, restored.getMaxSessionEphemeralPathBytes());
+        assertEquals(6L, source.getMaxSessionEphemeralPathBytes());
+
+        restored.deserialize(BinaryInputArchive.getArchive(new ByteArrayInputStream(snapshot)), "test");
+        assertEquals(6L, restored.getMaxSessionEphemeralPathBytes());
+        output.reset();
+        new DataTree().serialize(BinaryOutputArchive.getArchive(output), "test");
+        restored.deserialize(BinaryInputArchive.getArchive(new ByteArrayInputStream(output.toByteArray())), "test");
+        assertEquals(0L, restored.getMaxSessionEphemeralPathBytes());
+        assertEquals(0, restored.getEphemeralsCount());
+    }
+
+    @Test
+    @Timeout(value = CONCURRENT_TEST_TIMEOUT_SECONDS)
+    public void testMaxSessionEphemeralPathBytesDuringConcurrentUpdates() throws Exception {
+        DataTree tree = new DataTree();
+        String basePath = "/base";
+        String temporaryPath = "/中";
+        long basePathBytes = basePath.getBytes(StandardCharsets.UTF_8).length;
+        long combinedPathBytes = basePathBytes + temporaryPath.getBytes(StandardCharsets.UTF_8).length;
+        tree.createNode(basePath, new byte[0], null, 1, -1, 1, 1);
+        AtomicBoolean running = new AtomicBoolean(true);
+        CountDownLatch nodeObserved = new CountDownLatch(1);
+        CompletableFuture<Void> reader = CompletableFuture.runAsync(() -> {
+            while (running.get()) {
+                long max = tree.getMaxSessionEphemeralPathBytes();
+                assertTrue(max == basePathBytes || max == combinedPathBytes, "Unexpected total path size: " + max);
+                if (max == combinedPathBytes) {
+                    nodeObserved.countDown();
+                }
+            }
+        });
+        try {
+            for (int i = 0; i < CONCURRENT_UPDATE_COUNT; i++) {
+                tree.createNode(temporaryPath, new byte[0], null, 1, -1, 2 + 2 * i, 1);
+                if (i == 0) {
+                    assertTrue(nodeObserved.await(READER_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                            "Reader did not observe the added node");
+                }
+                tree.deleteNode(temporaryPath, 3 + 2 * i);
+            }
+        } finally {
+            running.set(false);
+            reader.get(READER_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }
+        assertEquals(basePathBytes, tree.getMaxSessionEphemeralPathBytes());
+    }
 
     /**
      * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
