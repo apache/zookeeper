@@ -73,7 +73,11 @@ pthread_t pthread_self(){
 int pthread_join(pthread_t _thread, void** ignore)
 {
        int rc = WaitForSingleObject( _thread.thread_handle, INFINITE );
-       return ((rc == WAIT_OBJECT_0) ? 0: rc); 
+       if (rc == WAIT_OBJECT_0) {
+           CloseHandle(_thread.thread_handle);
+           return 0;
+       }
+       return rc;
 }
 
 int pthread_detach(pthread_t _thread)
@@ -163,6 +167,8 @@ pthread_cond_broadcast (pthread_cond_t *cv)
   }
   else
     LeaveCriticalSection (&cv->waiters_count_lock_);
+
+  return 0;
 }
 
 
@@ -202,43 +208,29 @@ pthread_cond_wait (pthread_cond_t *cv,
     // Always regain the external mutex since that's the guarantee we
     // give to our callers. 
     WaitForSingleObject (*external_mutex, INFINITE);
+
+  return 0;
 }
 
 int pthread_key_create(pthread_key_t *key, void (*destructor)(void *) )
 {
-  int result = 0;
-  pthread_key_t* newkey;
+  key->key = TlsAlloc();
+  if (key->key == TLS_OUT_OF_INDEXES)
+    return EAGAIN;
 
-  if ((newkey = (pthread_key_t*) calloc (1, sizeof (pthread_key_t))) == NULL)
-    {
-      result = ENOMEM;
-    }
-  else if ((newkey->key = TlsAlloc ()) == TLS_OUT_OF_INDEXES)
-    {
-      result = EAGAIN;
-      free (newkey);
-      newkey = NULL;
-    }
-  else if (destructor != NULL)
-    {
-      //--we have to store the function pointer for destructor, so that we can call it 
-         //--to free up the user allocated storage--       
-      newkey->destructor = destructor;
-    }
-  key = newkey;  
-  return (result);     
+  key->destructor = destructor;
+  return 0;
 }
 
 int pthread_key_delete(pthread_key_t key)
 {
-  int rc = 0;
+  int rc;
   LPVOID lpvData =  TlsGetValue(key.key);
-  rc = TlsFree (key.key);
-  rc = (rc != 0 ) ? 0 : GetLastError();
   if (key.destructor != NULL && lpvData != 0){
        key.destructor(lpvData);         //we take control of calling destructor, instead of calling it on thread exit.
   }
-  free (&key);
+  rc = TlsFree (key.key);
+  rc = (rc != 0 ) ? 0 : GetLastError();
   return (rc);
 }
 
@@ -253,7 +245,7 @@ void *pthread_getspecific(pthread_key_t key)
 
 int pthread_setspecific(pthread_key_t key, const void *value)
 {
-       int rc = TlsSetValue (key.key, value);
+       int rc = TlsSetValue (key.key, (LPVOID)value);
        return ((rc != 0 ) ? 0 : GetLastError());
 }
 
@@ -264,10 +256,6 @@ int gettimeofday(struct timeval *tp, void *tzp) {
         tp->tv_sec = (long)(now / 10000000 - 11644473600LL);
         tp->tv_usec = (now / 10) % 1000000;
         return 0;
-}
-
-int close(SOCKET fd) {
-        return closesocket(fd);
 }
 
 int Win32WSAStartup()
@@ -302,6 +290,3 @@ double drand48(void)
 }
 
 #endif //WIN32
-
-
-

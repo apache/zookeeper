@@ -24,8 +24,11 @@
 #ifndef WIN32
 #include <unistd.h>
 #else
+#ifdef _MSC_VER
 typedef DWORD pid_t;
+#endif
 #include <process.h> /* for getpid */
+#include "winport.h"
 #endif
 
 #include <stdarg.h>
@@ -200,4 +203,3 @@ void zoo_set_debug_level(ZooLogLevel level)
     if(level>ZOO_LOG_LEVEL_DEBUG)level=ZOO_LOG_LEVEL_DEBUG;
     logLevel=level;
 }
-

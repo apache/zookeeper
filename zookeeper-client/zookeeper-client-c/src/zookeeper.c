@@ -95,11 +95,15 @@
 #endif
 
 #ifdef WIN32
+#include "winport.h"
 #include <process.h> /* for getpid */
 #include <direct.h> /* for getcwd */
 #define EAI_ADDRFAMILY WSAEINVAL /* is this still needed? */
 #define EHOSTDOWN EPIPE
 #define ESTALE ENODEV
+#define ZOO_INVALID_SOCKET INVALID_SOCKET
+#else
+#define ZOO_INVALID_SOCKET -1
 #endif
 
 #define IF_DEBUG(x) if(logLevel==ZOO_LOG_LEVEL_DEBUG) {x;}
@@ -433,7 +437,19 @@ void get_system_time(struct timeval *tv)
 {
   int ret;
 
-#ifdef __MACH__ // OS X
+#ifdef _WIN32
+  LARGE_INTEGER counts, countsPerSecond, countsPerMicrosecond;
+  if (QueryPerformanceFrequency(&countsPerSecond) &&
+      QueryPerformanceCounter(&counts)) {
+    countsPerMicrosecond.QuadPart = countsPerSecond.QuadPart / 1000000;
+    tv->tv_sec = (long)(counts.QuadPart / countsPerSecond.QuadPart);
+    tv->tv_usec = (long)((counts.QuadPart % countsPerSecond.QuadPart) /
+        countsPerMicrosecond.QuadPart);
+    ret = 0;
+  } else {
+    ret = gettimeofday(tv, NULL);
+  }
+#elif defined(__MACH__) // OS X
   clock_serv_t cclock;
   mach_timespec_t mts;
   ret = host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
@@ -462,18 +478,6 @@ void get_system_time(struct timeval *tv)
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   tv->tv_sec = ts.tv_sec;
   tv->tv_usec = ts.tv_nsec / 1000;
-#elif _WIN32
-  LARGE_INTEGER counts, countsPerSecond, countsPerMicrosecond;
-  if (QueryPerformanceFrequency(&countsPerSecond) &&
-      QueryPerformanceCounter(&counts)) {
-    countsPerMicrosecond.QuadPart = countsPerSecond.QuadPart / 1000000;
-    tv->tv_sec = (long)(counts.QuadPart / countsPerSecond.QuadPart);
-    tv->tv_usec = (long)((counts.QuadPart % countsPerSecond.QuadPart) /
-        countsPerMicrosecond.QuadPart);
-    ret = 0;
-  } else {
-    ret = gettimeofday(tv, NULL);
-  }
 #else
   ret = gettimeofday(tv, NULL);
 #endif
@@ -646,7 +650,7 @@ zk_hashtable *child_result_checker(zhandle_t *zh, int rc)
 
 void close_zsock(zsock_t *fd)
 {
-    if (fd->sock != -1) {
+    if (fd->sock != ZOO_INVALID_SOCKET) {
 #ifdef HAVE_OPENSSL_H
         if (fd->ssl_sock) {
             SSL_free(fd->ssl_sock);
@@ -655,8 +659,12 @@ void close_zsock(zsock_t *fd)
             fd->ssl_ctx = NULL;
         }
 #endif
+#ifdef _WIN32
+        closesocket(fd->sock);
+#else
         close(fd->sock);
-        fd->sock = -1;
+#endif
+        fd->sock = ZOO_INVALID_SOCKET;
     }
 }
 
@@ -678,7 +686,7 @@ static void destroy(zhandle_t *zh)
         free(zh->hostname);
         zh->hostname = NULL;
     }
-    if (zh->fd->sock != -1) {
+    if (zh->fd->sock != ZOO_INVALID_SOCKET) {
         close_zsock(zh->fd);
         memset(&zh->addr_cur, 0, sizeof(zh->addr_cur));
         zh->state = 0;
@@ -1065,7 +1073,7 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
     // Check if we are due for a host name resolution.  (See
     // zoo_set_servers_resolution_delay.  The answer is always "yes"
     // if no reference is provided or the file descriptor is invalid.)
-    if (ref_time && zh->fd->sock != -1) {
+    if (ref_time && zh->fd->sock != ZOO_INVALID_SOCKET) {
         int do_resolve;
 
         if (zh->resolve_delay_ms <= 0) {
@@ -1180,7 +1188,7 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
     // If we need to do a reconfig and we're currently connected to a server,
     // then force close that connection so on next interest() call we'll make a
     // new connection
-    if (zh->reconfig == 1 && zh->fd->sock != -1)
+    if (zh->reconfig == 1 && zh->fd->sock != ZOO_INVALID_SOCKET)
     {
         close_zsock(zh->fd);
         zh->state = ZOO_NOTCONNECTED_STATE;
@@ -1267,8 +1275,14 @@ static void log_env(zhandle_t *zh) {
   LOG_INFO(LOGCALLBACK(zh), "Client environment:os.version=<not implemented>");
 #endif
 
-#ifdef HAVE_GETLOGIN
+#if defined(HAVE_GETLOGIN) && !defined(WIN32)
   LOG_INFO(LOGCALLBACK(zh), "Client environment:user.name=%s", getlogin());
+#elif defined(WIN32)
+  {
+    const char *username = getenv("USERNAME");
+    LOG_INFO(LOGCALLBACK(zh), "Client environment:user.name=%s",
+             username ? username : "<NA>");
+  }
 #else
   LOG_INFO(LOGCALLBACK(zh), "Client environment:user.name=<not implemented>");
 #endif
@@ -1328,7 +1342,7 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     }
 
     zh->fd = calloc(1, sizeof(zsock_t));
-    zh->fd->sock = -1;
+    zh->fd->sock = ZOO_INVALID_SOCKET;
     if (cert) {
         zh->fd->cert = calloc(1, sizeof(zcert_t));
         memcpy(zh->fd->cert, cert, sizeof(zcert_t));
@@ -2373,7 +2387,7 @@ static int ping_rw_server(zhandle_t* zh)
     sock_flags = SOCK_STREAM;
 #endif
     fd.sock = socket(zh->addr_rw_server.ss_family, sock_flags, 0);
-    if (fd.sock < 0) {
+    if (fd.sock == ZOO_INVALID_SOCKET) {
         return 0;
     }
 
@@ -2440,11 +2454,18 @@ static void zookeeper_set_sock_noblock(zhandle_t *zh, socket_t sock)
 
 static void zookeeper_set_sock_timeout(zhandle_t *zh, socket_t s, int timeout)
 {
+#ifdef _WIN32
+    DWORD timeout_ms = (DWORD)timeout * 1000;
+
+    setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout_ms, sizeof(timeout_ms));
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout_ms, sizeof(timeout_ms));
+#else
     struct timeval tv;
 
     tv.tv_sec = timeout;
     setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(struct timeval));
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval));
+#endif
 }
 
 static void zookeeper_set_sock_nodelay(zhandle_t *zh, socket_t sock)
@@ -2551,7 +2572,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
     tv->tv_sec = 0;
     tv->tv_usec = 0;
 
-    if (*fd == -1) {
+    if (*fd == ZOO_INVALID_SOCKET) {
         /*
          * If we previously failed to connect to server pool (zh->delay == 1)
          * then we need delay our connection on this iteration 1/60 of the
@@ -2578,7 +2599,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 zoo_cycle_next_server(zh);
             }
             zh->fd->sock  = socket(zh->addr_cur.ss_family, sock_flags, 0);
-            if (zh->fd->sock < 0) {
+            if (zh->fd->sock == ZOO_INVALID_SOCKET) {
               rc = handle_socket_error_msg(zh,
                                            __LINE__,
                                            __func__,
@@ -2638,7 +2659,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
         zh->ping_rw_timeout = MIN_RW_TIMEOUT;
     }
 
-    if (zh->fd->sock != -1) {
+    if (zh->fd->sock != ZOO_INVALID_SOCKET) {
         int idle_recv = calculate_interval(&zh->last_recv, &now);
         int idle_send = calculate_interval(&zh->last_send, &now);
         int recv_to = zh->recv_timeout*2/3 - idle_recv;
@@ -2955,14 +2976,20 @@ static int process_sasl_response(zhandle_t *zh, char *buffer, int len)
 
 static int check_events(zhandle_t *zh, int events)
 {
-    if (zh->fd->sock == -1)
+    if (zh->fd->sock == ZOO_INVALID_SOCKET)
         return ZINVALIDSTATE;
 
 #ifdef HAVE_OPENSSL_H
     if ((events&ZOOKEEPER_WRITE) && (zh->state == ZOO_SSL_CONNECTING_STATE) && zh->fd->cert != NULL) {
         int rc, error;
         socklen_t len = sizeof(error);
-        rc = getsockopt(zh->fd->sock, SOL_SOCKET, SO_ERROR, &error, &len);
+        rc = getsockopt(zh->fd->sock, SOL_SOCKET, SO_ERROR,
+#ifdef _WIN32
+                        (char *)&error,
+#else
+                        &error,
+#endif
+                        &len);
         /* the description in section 16.4 "Non-blocking connect"
          * in UNIX Network Programming vol 1, 3rd edition, points out
          * that sometimes the error is in errno and sometimes in error */
@@ -2982,7 +3009,13 @@ static int check_events(zhandle_t *zh, int events)
     if ((events&ZOOKEEPER_WRITE)&&(zh->state == ZOO_CONNECTING_STATE)) {
         int rc, error;
         socklen_t len = sizeof(error);
-        rc = getsockopt(zh->fd->sock, SOL_SOCKET, SO_ERROR, &error, &len);
+        rc = getsockopt(zh->fd->sock, SOL_SOCKET, SO_ERROR,
+#ifdef _WIN32
+                        (char *)&error,
+#else
+                        &error,
+#endif
+                        &len);
         /* the description in section 16.4 "Non-blocking connect"
          * in UNIX Network Programming vol 1, 3rd edition, points out
          * that sometimes the error is in errno and sometimes in error */
@@ -3379,7 +3412,7 @@ static void isSocketReadable(zhandle_t* zh)
     fd_set rfds;
     struct timeval waittime = {0, 0};
     FD_ZERO(&rfds);
-    FD_SET( zh->fd , &rfds);
+    FD_SET(zh->fd->sock, &rfds);
     if (select(0, &rfds, NULL, NULL, &waittime) <= 0){
         // socket not readable -- no more responses to process
         zh->socket_readable.tv_sec=zh->socket_readable.tv_usec=0;
@@ -3986,7 +4019,7 @@ static int Request_path_watch_init(zhandle_t *zh, int mode,
 static int nonblocking_send(zhandle_t *zh, int rc)
 {
     if (adaptor_send_queue(zh, 0) < 0) {
-        if (zh->fd->sock != -1) {
+        if (zh->fd->sock != ZOO_INVALID_SOCKET) {
             close_zsock(zh->fd);
             zh->state = ZOO_NOTCONNECTED_STATE;
         }
@@ -5136,7 +5169,9 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 #else
     static __thread char buf[134] = { 0 };
 #endif
+#ifndef _WIN32
     char addrstr[INET6_ADDRSTRLEN] = { 0 };
+#endif
     const char *fmtstring;
     void *inaddr;
     char is_inet6 = 0; // poor man's boolean
