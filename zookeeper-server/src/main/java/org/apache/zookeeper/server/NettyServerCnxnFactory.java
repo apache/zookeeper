@@ -580,7 +580,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             SSLContextAndOptions sslContextAndOptions = x509Util.getDefaultSSLContextAndOptions();
             nettySslContext = sslContextAndOptions.createNettyJdkSslContext(sslContextAndOptions.getSSLContext());
         } else {
-            SSLContext sslContext = SSLContext.getInstance(ClientX509Util.DEFAULT_PROTOCOL);
+            SSLContext sslContext = SSLContext.getInstance(ClientX509Util.DEFAULT_PROTOCOL_SERVER);
             X509AuthenticationProvider authProvider = (X509AuthenticationProvider) ProviderRegistry.getProvider(
                 System.getProperty(x509Util.getSslAuthProviderProperty(), "x509"));
 
