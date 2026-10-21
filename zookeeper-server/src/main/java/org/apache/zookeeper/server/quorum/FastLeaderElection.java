@@ -36,7 +36,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -284,7 +283,7 @@ public class FastLeaderElection implements Election {
                                 }
                             } else {
                                 LOG.info("Backward compatibility mode (28 bits), server id: {}", response.sid);
-                                rpeerepoch = ZxidUtils.getEpochFromZxid(rzxid);
+                                rpeerepoch = self.getZxidLayoutState().layoutFor(rzxid).getEpochFromZxid(rzxid);
                             }
 
                             // check if we have a version that includes config. If so extract config info from message.
