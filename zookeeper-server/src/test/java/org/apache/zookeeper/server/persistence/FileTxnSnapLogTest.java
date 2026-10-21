@@ -557,9 +557,11 @@ public class FileTxnSnapLogTest {
     }
 
     /**
-     * Missing ACLs must deny READ when filtering watch events. Null and empty
-     * ACLs would allow delivery, reintroducing CVE-2024-23944 (ZOOKEEPER-4799).
-     * Once replay repairs the node, its events carry the restored ACL again.
+     * Watch events for a node whose ACL is missing from the cache are filtered
+     * with {@link DataTree#NO_PERMISSIONS_ACL}, which denies READ. Null or an
+     * empty ACL would allow delivery, reintroducing CVE-2024-23944
+     * (ZOOKEEPER-4799). Once replay repairs the node, its events carry the
+     * restored ACL again.
      *
      * See ZOOKEEPER-4689.
      */
@@ -595,12 +597,6 @@ public class FileTxnSnapLogTest {
         assertFalse(deliveredAcls.isEmpty());
         for (List<ACL> acl : deliveredAcls) {
             assertEquals(DataTree.NO_PERMISSIONS_ACL, acl);
-        }
-        // checkACL treats null and empty ACLs as unrestricted, so the fallback
-        // must be a non-empty ACL that grants no READ.
-        assertFalse(DataTree.NO_PERMISSIONS_ACL.isEmpty());
-        for (ACL entry : DataTree.NO_PERMISSIONS_ACL) {
-            assertEquals(0, entry.getPerms() & ZooDefs.Perms.READ);
         }
 
         // Finish replay and check that the next watch event carries the restored ACL.

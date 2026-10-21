@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
@@ -42,12 +44,14 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException.NoAuthException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -674,6 +678,21 @@ public class DataTreeTest extends ZKTestCase {
         // The ACL is no longer referenced by any node, so it must have been
         // garbage collected.
         assertEquals(baseline, dt.aclCacheSize());
+    }
+
+    /**
+     * The ACL used to filter watch events of a node whose ACL is unknown must
+     * deny READ to ordinary sessions. Null or an empty ACL would not, because
+     * checkACL treats both as unrestricted.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testNoPermissionsAclDeniesRead() {
+        ZooKeeperServer zks = new ZooKeeperServer();
+        List<Id> authInfo = Collections.singletonList(new Id("ip", "127.0.0.1"));
+        assertThrows(NoAuthException.class, () ->
+            zks.checkACL(null, DataTree.NO_PERMISSIONS_ACL, ZooDefs.Perms.READ, authInfo, "/x", null));
     }
 
     private DataTree buildDataTreeForTest() {
