@@ -131,17 +131,18 @@ public final class DnsSrvHostProvider implements HostProvider {
         this.dnsSrvName = dnsSrvName;
         this.dnsResolver = dnsResolver;
         try {
+            final ZKClientConfig config = clientConfig == null ? new ZKClientConfig() : clientConfig;
             final List<InetSocketAddress> serverAddresses = lookupDnsSrvRecords();
             if (serverAddresses.isEmpty()) {
                 LOG.error("No SRV records found for DNS name: {}", dnsSrvName);
                 throw new IllegalArgumentException("No SRV records found for DNS name: " + dnsSrvName);
             }
 
-            this.connectionManager = new HostConnectionManager(serverAddresses, randomnessSeed, clientConfig);
+            this.connectionManager = new HostConnectionManager(serverAddresses, randomnessSeed, config);
             this.previousServerSet = new HashSet<>(serverAddresses);
 
 
-            final long refreshIntervalInSeconds = getRefreshInterval(clientConfig);
+            final long refreshIntervalInSeconds = getRefreshInterval(config);
             if (refreshIntervalInSeconds > 0) {
                 dnsRefreshTimer = new Timer("DnsSrvRefresh-" + dnsSrvName, true);
                 dnsRefreshTimer.scheduleAtFixedRate(new TimerTask() {
@@ -200,9 +201,8 @@ public final class DnsSrvHostProvider implements HostProvider {
     }
 
     private long getRefreshInterval(final ZKClientConfig clientConfig) {
-        final ZKClientConfig config = clientConfig == null ? new ZKClientConfig() : clientConfig;
         final long defaultInterval = ZKClientConfig.DNS_SRV_REFRESH_INTERVAL_SECONDS_DEFAULT;
-        final long interval = config.getLong(ZKClientConfig.DNS_SRV_REFRESH_INTERVAL_SECONDS, defaultInterval);
+        final long interval = clientConfig.getLong(ZKClientConfig.DNS_SRV_REFRESH_INTERVAL_SECONDS, defaultInterval);
         if (interval < 0) {
             LOG.error("Invalid DNS SRV refresh interval {} seconds", interval);
             throw new IllegalArgumentException("Invalid DNS SRV refresh interval: " + interval);

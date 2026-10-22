@@ -1143,7 +1143,7 @@ public class ZooKeeper implements AutoCloseable {
         if (options.getHostProvider() != null) {
             hostProvider = options.getHostProvider().apply(connectStringParser.getServerAddresses());
         } else {
-            hostProvider = HostProviderFactory.create(connectStringParser, clientConfig);
+            hostProvider = HostProviderFactory.create(connectStringParser, this.clientConfig);
         }
         this.hostProvider = hostProvider;
         chroot = Chroot.ofNullable(connectStringParser.getChrootPath());
