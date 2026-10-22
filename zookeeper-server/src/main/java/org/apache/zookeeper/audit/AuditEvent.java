@@ -18,6 +18,7 @@
 package org.apache.zookeeper.audit;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.apache.zookeeper.common.StringUtils;
@@ -44,12 +45,12 @@ public final class AuditEvent {
 
     void addEntry(FieldName fieldName, String value) {
         if (value != null) {
-            logEntries.put(fieldName.name().toLowerCase(), value);
+            logEntries.put(fieldName.name().toLowerCase(Locale.ROOT), value);
         }
     }
 
     public String getValue(FieldName fieldName) {
-        return logEntries.get(fieldName.name().toLowerCase());
+        return logEntries.get(fieldName.name().toLowerCase(Locale.ROOT));
     }
 
     public Result getResult() {
@@ -84,7 +85,7 @@ public final class AuditEvent {
             buffer.append(PAIR_SEPARATOR);
         }
         buffer.append("result").append(KEY_VAL_SEPARATOR)
-                .append(result.name().toLowerCase());
+                .append(result.name().toLowerCase(Locale.ROOT));
         return buffer.toString();
     }
 
