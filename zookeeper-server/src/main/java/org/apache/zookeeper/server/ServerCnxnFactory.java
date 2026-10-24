@@ -33,8 +33,10 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
@@ -64,7 +66,39 @@ public abstract class ServerCnxnFactory {
     // sessionMap is used by closeSession()
     final ConcurrentHashMap<Long, ServerCnxn> sessionMap = new ConcurrentHashMap<>();
 
-    private static String loginUser = Login.SYSTEM_USER;
+    private AuditContext auditContext;
+    private boolean auditContextBound;
+
+    /**
+     * Binds the bootstrap audit context before configuring SASL or starting listeners.
+     * An independently configured factory joins its owner's context when associated
+     * with a server or peer. An explicit binding cannot subsequently be replaced.
+     */
+    @InterfaceAudience.Private
+    public void setAuditContext(AuditContext context) {
+        auditContext = AuditContext.bind(auditContextBound ? auditContext : null, context);
+        auditContextBound = true;
+        if (login != null) {
+            login.setAuditContext(auditContext);
+            auditContext.setServerUser(login.getUserName());
+        }
+    }
+
+    /**
+     * Obtains the context for direct factory startup when no bootstrap supplied one.
+     */
+    @InterfaceAudience.Private
+    public AuditContext initializeAuditContext() {
+        if (auditContext == null) {
+            auditContext = AuditContext.fromSystemProperties();
+        }
+        return auditContext;
+    }
+
+    @InterfaceAudience.Private
+    public AuditContext getAuditContext() {
+        return auditContext == null ? AuditContext.disabled() : auditContext;
+    }
 
     public void addSession(long sessionId, ServerCnxn cnxn) {
         sessionMap.put(sessionId, cnxn);
@@ -149,6 +183,13 @@ public abstract class ServerCnxnFactory {
 
     protected ZooKeeperServer zkServer;
     public final void setZooKeeperServer(ZooKeeperServer zks) {
+        if (zks != null) {
+            if (auditContextBound) {
+                zks.setAuditContext(auditContext);
+            } else {
+                setAuditContext(zks.initializeAuditContext(auditContext));
+            }
+        }
         this.zkServer = zks;
         if (zks != null) {
             if (secure) {
@@ -372,8 +413,8 @@ public abstract class ServerCnxnFactory {
             Supplier<CallbackHandler> callbackHandlerSupplier = () -> {
                 return new SaslServerCallbackHandler(credentials);
             };
-            login = new Login(serverSection, callbackHandlerSupplier, new ZKConfig());
-            setLoginUser(login.getUserName());
+            login = new Login(serverSection, callbackHandlerSupplier, new ZKConfig(), initializeAuditContext());
+            auditContext.setServerUser(login.getUserName());
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
@@ -402,18 +443,6 @@ public abstract class ServerCnxnFactory {
             }
         }
         return credentials;
-    }
-
-    private static void setLoginUser(String name) {
-        //Created this method to avoid ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD find bug issue
-        loginUser = name;
-    }
-    /**
-     * User who has started the ZooKeeper server user, it will be the logged-in
-     * user. If no user logged-in then system user
-     */
-    public static String getUserName() {
-        return loginUser;
     }
 
     /**

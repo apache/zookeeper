@@ -21,6 +21,7 @@ package org.apache.zookeeper.client;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.security.auth.Subject;
@@ -30,12 +31,14 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.SaslClientCallbackHandler;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.SetSASLResponse;
@@ -114,7 +117,20 @@ public class ZooKeeperSaslClient {
         return null;
     }
 
-    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig, AtomicReference<Login> loginRef) throws LoginException {
+    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig,
+                              AtomicReference<Login> loginRef) throws LoginException {
+        this(null, serverPrincipal, clientConfig, loginRef);
+    }
+
+    /** Creates a SASL client using its connection runtime's lazily initialized audit context. */
+    @InterfaceAudience.Private
+    public ZooKeeperSaslClient(String serverPrincipal, ZKClientConfig clientConfig, AtomicReference<Login> loginRef,
+                              Supplier<AuditContext> auditContextSupplier) throws LoginException {
+        this(Objects.requireNonNull(auditContextSupplier), serverPrincipal, clientConfig, loginRef);
+    }
+
+    private ZooKeeperSaslClient(Supplier<AuditContext> auditContextSupplier, String serverPrincipal,
+                               ZKClientConfig clientConfig, AtomicReference<Login> loginRef) throws LoginException {
         /**
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
@@ -138,7 +154,7 @@ public class ZooKeeperSaslClient {
         }
         if (entries != null) {
             this.configStatus = "Will attempt to SASL-authenticate using Login Context section '" + clientSection + "'";
-            this.saslClient = createSaslClient(serverPrincipal, clientSection, loginRef);
+            this.saslClient = createSaslClient(serverPrincipal, clientSection, loginRef, auditContextSupplier);
             this.login = loginRef.get();
         } else {
             // Handle situation of clientSection's being null: it might simply because the client does not intend to
@@ -238,14 +254,17 @@ public class ZooKeeperSaslClient {
     private SaslClient createSaslClient(
         final String servicePrincipal,
         final String loginContext,
-        final AtomicReference<Login> loginRef) throws LoginException {
+        final AtomicReference<Login> loginRef,
+        final Supplier<AuditContext> auditContextSupplier) throws LoginException {
         try {
             if (loginRef.get() == null) {
                 LOG.debug("JAAS loginContext is: {}", loginContext);
                 Supplier<CallbackHandler> callbackHandlerSupplier = () -> {
                     return new SaslClientCallbackHandler(null, "Client");
                 };
-                Login l = new Login(loginContext, callbackHandlerSupplier, clientConfig);
+                Login l = auditContextSupplier == null
+                    ? new Login(loginContext, callbackHandlerSupplier, clientConfig)
+                    : new Login(loginContext, callbackHandlerSupplier, clientConfig, auditContextSupplier.get());
                 if (loginRef.compareAndSet(null, l)) {
                     l.startThreadIfNeeded();
                 }

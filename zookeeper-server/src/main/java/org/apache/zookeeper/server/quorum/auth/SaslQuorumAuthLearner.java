@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
 import java.util.function.Supplier;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
@@ -35,8 +36,10 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.SaslClientCallbackHandler;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumAuthPacket;
 import org.apache.zookeeper.util.SecurityUtils;
@@ -55,6 +58,13 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
         boolean quorumRequireSasl,
         String quorumServicePrincipal,
         String loginContext) throws SaslException {
+        this(quorumRequireSasl, quorumServicePrincipal, loginContext, AuditContext.fromSystemProperties());
+    }
+
+    @InterfaceAudience.Private
+    public SaslQuorumAuthLearner(boolean quorumRequireSasl, String quorumServicePrincipal,
+                                 String loginContext, AuditContext auditContext) throws SaslException {
+        Objects.requireNonNull(auditContext);
         this.quorumRequireSasl = quorumRequireSasl;
         this.quorumServicePrincipal = quorumServicePrincipal;
         try {
@@ -68,10 +78,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
             Supplier<CallbackHandler> callbackSupplier = () -> {
                 return new SaslClientCallbackHandler(null, "QuorumLearner");
             };
-            this.learnerLogin = new Login(
-                loginContext,
-                callbackSupplier,
-                new ZKConfig());
+            this.learnerLogin = new Login(loginContext, callbackSupplier, new ZKConfig(), auditContext);
             this.learnerLogin.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);

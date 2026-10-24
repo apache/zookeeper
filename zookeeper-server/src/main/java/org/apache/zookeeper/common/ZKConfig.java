@@ -54,6 +54,8 @@ public class ZKConfig {
      */
     public static final String KINIT_COMMAND = "zookeeper.kinit";
     public static final String JGSS_NATIVE = "sun.security.jgss.native";
+    public static final String AUDIT_ENABLE = "zookeeper.audit.enable";
+    public static final String AUDIT_IMPL_CLASS = "zookeeper.audit.impl.class";
 
     private final Map<String, String> properties = new HashMap<>();
 
@@ -126,6 +128,8 @@ public class ZKConfig {
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
+        properties.put(AUDIT_ENABLE, System.getProperty(AUDIT_ENABLE));
+        properties.put(AUDIT_IMPL_CLASS, System.getProperty(AUDIT_IMPL_CLASS));
 
         try (ClientX509Util clientX509Util = new ClientX509Util()) {
             putSSLProperties(clientX509Util);

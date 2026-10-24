@@ -52,6 +52,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb, self.getInitialConfig(),
               self.isReconfigEnabled());
         this.self = self;
+        setAuditContext(self.getAuditContext());
     }
 
     @Override
