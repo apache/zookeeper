@@ -44,6 +44,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.MockPacket;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -100,6 +101,7 @@ public class WatchLeakTest {
         ZKDatabase database = new ZKDatabase(mock(FileTxnSnapLog.class));
         database.setlastProcessedZxid(2L);
         QuorumPeer quorumPeer = mock(QuorumPeer.class);
+        when(quorumPeer.getAuditContext()).thenReturn(AuditContext.disabled());
         FileTxnSnapLog logfactory = mock(FileTxnSnapLog.class);
         // Directories are not used but we need it to avoid NPE
         when(logfactory.getDataLogDir()).thenReturn(new File(""));
