@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.security.sasl.SaslException;
-import org.apache.zookeeper.audit.ZKAuditProvider;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerConfig;
@@ -87,7 +87,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
     @Override
     public void start(long startupTimeout) throws Exception {
         // Validate before scheduling purge or starting the server thread.
-        ZKAuditProvider.checkAuditState();
+        final AuditContext auditContext = AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
         switch (exitHandler) {
             case EXIT:
                 ServiceUtils.setSystemExitProcedure(ServiceUtils.SYSTEM_EXIT);
@@ -104,7 +104,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
         if (config.getServers().size() > 1 || config.isDistributed()) {
             LOG.info("Running ZK Server in single Quorum MODE");
 
-            maincluster = new QuorumPeerMain() {
+            maincluster = new QuorumPeerMain(auditContext) {
                 protected QuorumPeer getQuorumPeer() throws SaslException {
                     return new QuorumPeer() {
                         @Override
@@ -147,7 +147,7 @@ class ZooKeeperServerEmbeddedImpl implements ZooKeeperServerEmbedded {
             thread.start();
         } else {
             LOG.info("Running ZK Server in single STANDALONE MODE");
-            mainsingle = new ZooKeeperServerMain() {
+            mainsingle = new ZooKeeperServerMain(auditContext) {
                 @Override
                 public void serverStarted() {
                     LOG.info("ZK Server started");

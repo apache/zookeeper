@@ -31,12 +31,14 @@ import java.util.List;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.Login;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.audit.AuditEvent.Result;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -62,7 +64,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
 
     @BeforeAll
     public static void setUpBeforeClass() throws Exception {
-        System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
+        System.setProperty(ZKConfig.AUDIT_ENABLE, "true");
         System.setProperty("zookeeper.extendedTypesEnabled", "true");
         // setup the logger to capture all logs
         LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
@@ -268,13 +270,12 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         // there are no IP user is zkServer user, not any client user
         verifyLogs(getAuditLog(AuditConstants.OP_DEL_EZNODE_EXP, ephemralPath,
                 Result.SUCCESS, null, null, session2,
-                ZKAuditProvider.getZKUser(), null), readAuditLog(os, SERVER_COUNT));
+                Login.SYSTEM_USER, null), readAuditLog(os, SERVER_COUNT));
     }
-
 
     private static String getStartLog() {
         // user=userName operation=ZooKeeperServer start  result=success
-        AuditEvent logEvent = ZKAuditProvider.createLogEvent(ZKAuditProvider.getZKUser(),
+        AuditEvent logEvent = AuditContext.createLogEvent(Login.SYSTEM_USER,
                 AuditConstants.OP_START, Result.SUCCESS);
         return logEvent.toString();
     }
@@ -303,7 +304,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
 
     private String getAuditLog(String operation, String znode, Result result,
                                String acl, String createMode, String session, String user, String ip) {
-        AuditEvent logEvent = ZKAuditProvider.createLogEvent(user, operation, znode, acl, createMode, session, ip,
+        AuditEvent logEvent = AuditContext.createLogEvent(user, operation, znode, acl, createMode, session, ip,
                 result);
         String auditLog = logEvent.toString();
         LOG.info("expected audit log for operation '" + operation + "' is '"
@@ -434,7 +435,7 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
     @AfterAll
     public static void tearDownAfterClass() {
         System.clearProperty("zookeeper.extendedTypesEnabled");
-        System.clearProperty(ZKAuditProvider.AUDIT_ENABLE);
+        System.clearProperty(ZKConfig.AUDIT_ENABLE);
         for (int i = 0; i < SERVER_COUNT; i++) {
             try {
                 if (mt[i] != null) {

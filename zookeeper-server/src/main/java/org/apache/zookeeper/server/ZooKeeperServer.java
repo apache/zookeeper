@@ -47,6 +47,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -57,6 +58,7 @@ import org.apache.zookeeper.Version;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZookeeperBanner;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.Time;
@@ -209,6 +211,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
+    private AuditContext auditContext;
+
     private ResponseCache readResponseCache;
     private ResponseCache getChildrenResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
@@ -347,6 +351,33 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private volatile long multiReadMaxResponseBytes = 64L * 1024 * 1024;
 
     private final AuthenticationHelper authHelper = new AuthenticationHelper();
+
+    @InterfaceAudience.Private
+    public AuditContext getAuditContext() {
+        return auditContext == null ? AuditContext.disabled() : auditContext;
+    }
+
+    private void initializeAuditContext() {
+        initializeAuditContext(null);
+    }
+
+    AuditContext initializeAuditContext(AuditContext listenerContext) {
+        if (auditContext == null) {
+            setAuditContext(listenerContext == null ? AuditContext.fromSystemProperties() : listenerContext);
+        }
+        return auditContext;
+    }
+
+    protected void setAuditContext(AuditContext context) {
+        if (auditContext == null && firstProcessor != null) {
+            throw new IllegalStateException("Server audit context must be set before request processors start");
+        }
+        context = AuditContext.bind(auditContext, context);
+        if (zkDb != null) {
+            zkDb.setAuditContext(context);
+        }
+        auditContext = context;
+    }
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -532,6 +563,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param zkDb
      */
     public void setZKDatabase(ZKDatabase zkDb) {
+        if (zkDb != null && auditContext != null) {
+            zkDb.setAuditContext(auditContext);
+        }
         this.zkDb = zkDb;
     }
 
@@ -631,6 +665,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         // restore to a new zkDatabase
         final ZKDatabase newZKDatabase = new ZKDatabase(this.txnLogFactory);
+        if (auditContext != null) {
+            newZKDatabase.setAuditContext(auditContext);
+        }
         final CheckedInputStream cis = new CheckedInputStream(new BufferedInputStream(inputStream), new Adler32());
         final InputArchive ia = BinaryInputArchive.getArchive(cis);
         newZKDatabase.deserializeSnapshot(ia, cis);
@@ -804,9 +841,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void startdata() throws IOException, InterruptedException {
+        initializeAuditContext();
         //check to see if zkDb is not null
         if (zkDb == null) {
-            zkDb = new ZKDatabase(this.txnLogFactory);
+            setZKDatabase(new ZKDatabase(this.txnLogFactory));
         }
         if (!zkDb.isInitialized()) {
             loadData();
@@ -814,6 +852,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public synchronized void startup() {
+        initializeAuditContext();
         if (sessionTracker == null) {
             createSessionTracker();
         }
@@ -1054,7 +1093,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             this.treeDigest = treeDigest;
         }
     }
-
 
     /**
      * This structure is used to facilitate information sharing between PrepRP

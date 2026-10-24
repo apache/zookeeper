@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,8 +56,8 @@ import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.audit.AuditEvent.Result;
-import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
@@ -190,6 +191,11 @@ public class DataTree {
     private final LinkedList<ZxidDigest> digestLog = new LinkedList<>();
 
     private final DigestCalculator digestCalculator;
+    private AuditContext auditContext = AuditContext.disabled();
+
+    void setAuditContext(AuditContext context) {
+        auditContext = Objects.requireNonNull(context);
+    }
 
     @SuppressWarnings("unchecked")
     public Set<String> getEphemerals(long sessionId) {
@@ -1189,17 +1195,9 @@ public class DataTree {
                     "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
                         path, sessionHex);
             }
-            if (ZKAuditProvider.isAuditEnabled()) {
-                if (deleted) {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.SUCCESS);
-                } else {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.FAILURE);
-                }
-            }
+            Result result = deleted ? Result.SUCCESS : Result.FAILURE;
+            auditContext.log(auditContext.getServerUser(),
+                AuditConstants.OP_DEL_EZNODE_EXP, path, null, null, sessionHex, null, result);
         }
     }
 

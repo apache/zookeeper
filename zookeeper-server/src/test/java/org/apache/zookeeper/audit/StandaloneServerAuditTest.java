@@ -30,6 +30,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.LoggerTestTool;
 import org.junit.jupiter.api.AfterAll;
@@ -41,14 +42,14 @@ public class StandaloneServerAuditTest extends ClientBase {
 
     @BeforeAll
     public static void setup() {
-        System.setProperty(ZKAuditProvider.AUDIT_ENABLE, "true");
+        System.setProperty(ZKConfig.AUDIT_ENABLE, "true");
         LoggerTestTool loggerTestTool = new LoggerTestTool(Slf4jAuditLogger.class);
         os = loggerTestTool.getOutputStream();
     }
 
     @AfterAll
     public static void teardown() {
-        System.clearProperty(ZKAuditProvider.AUDIT_ENABLE);
+        System.clearProperty(ZKConfig.AUDIT_ENABLE);
     }
 
     @Test

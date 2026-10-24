@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.controller;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -50,9 +51,11 @@ public class ZooKeeperServerController {
             throw new IllegalArgumentException("ZooKeeperServerController requires a valid config!");
         }
 
+        AuditContext auditContext = AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
         cnxnFactory = new ControllableConnectionFactory();
+        cnxnFactory.setAuditContext(auditContext);
         cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog());
-        quorumPeer = QuorumPeer.createFromConfig(config);
+        quorumPeer = QuorumPeer.createFromConfig(config, auditContext);
         quorumPeer.setCnxnFactory(cnxnFactory);
     }
 

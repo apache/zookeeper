@@ -40,11 +40,13 @@ import java.util.zip.CheckedInputStream;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -79,6 +81,8 @@ public class ZKDatabase {
      * all these members.
      */
     protected DataTree dataTree;
+    private AuditContext auditContext;
+
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected FileTxnSnapLog snapLog;
     protected long minCommittedLog, maxCommittedLog;
@@ -158,6 +162,16 @@ public class ZKDatabase {
     }
 
     /**
+     * Binds auditing before this database is used by a server.
+     */
+    @InterfaceAudience.Private
+    public void setAuditContext(AuditContext context) {
+        context = AuditContext.bind(auditContext, context);
+        dataTree.setAuditContext(context);
+        auditContext = context;
+    }
+
+    /**
      * checks to see if the zk database has been
      * initialized or not.
      * @return true if zk database is initialized and false if not
@@ -177,7 +191,11 @@ public class ZKDatabase {
          * datatree.
          */
         dataTree.shutdownWatcher();
-        dataTree = createDataTree();
+        DataTree newDataTree = createDataTree();
+        if (auditContext != null) {
+            newDataTree.setAuditContext(auditContext);
+        }
+        dataTree = newDataTree;
         sessionsWithTimeouts.clear();
         WriteLock lock = logLock.writeLock();
         try {
@@ -667,7 +685,6 @@ public class ZKDatabase {
 
         initialized = true;
     }
-
 
     /**
      * serialize the snapshot

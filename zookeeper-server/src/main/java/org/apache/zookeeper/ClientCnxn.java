@@ -64,6 +64,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.client.FourLetterWordMain;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -885,6 +886,7 @@ public class ClientCnxn {
         private boolean isFirstConnect = true;
         private volatile ZooKeeperSaslClient zooKeeperSaslClient;
         private final AtomicReference<Login> loginRef = new AtomicReference<>();
+        private AuditContext auditContext;
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
@@ -1131,7 +1133,10 @@ public class ClientCnxn {
             if (clientConfig.isSaslClientEnabled()) {
                 try {
                     zooKeeperSaslClient = new ZooKeeperSaslClient(
-                        SaslServerPrincipal.getServerPrincipal(addr, clientConfig), clientConfig, loginRef);
+                        SaslServerPrincipal.getServerPrincipal(addr, clientConfig),
+                        clientConfig,
+                        loginRef,
+                        this::getClientAuditContext);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1148,6 +1153,13 @@ public class ClientCnxn {
             logStartConnect(addr);
 
             clientCnxnSocket.connect(addr);
+        }
+
+        private AuditContext getClientAuditContext() {
+            if (auditContext == null) {
+                auditContext = Login.createClientAuditContext(clientConfig);
+            }
+            return auditContext;
         }
 
         private void logStartConnect(InetSocketAddress addr) {

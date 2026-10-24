@@ -53,6 +53,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.NettyUtils;
@@ -229,6 +230,7 @@ public class NettyServerCnxnTest extends ClientBase {
             when(channel.remoteAddress()).thenReturn(address);
             when(channel.id()).thenReturn(id);
             NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
+            factory.setAuditContext(AuditContext.disabled());
             factory.setSecure(secure);
             factory.setZooKeeperServer(zks);
             Attribute atr = mock(Attribute.class);
