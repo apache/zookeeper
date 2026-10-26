@@ -58,19 +58,9 @@ public class SaslServerPrincipal {
             ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
         String hostName = addr.getHostName();
 
-        boolean canonicalize = true;
-        String canonicalizeText = clientConfig.getProperty(
+        boolean canonicalize = clientConfig.getBoolean(
             ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME,
-            ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT);
-        try {
-            canonicalize = Boolean.parseBoolean(canonicalizeText);
-        } catch (IllegalArgumentException ea) {
-            LOG.warn(
-                "Could not parse config {} \"{}\" into a boolean using default {}",
-                ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME,
-                canonicalizeText,
-                canonicalize);
-        }
+            Boolean.parseBoolean(ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT));
 
         if (canonicalize) {
             WrapperInetAddress ia = addr.getAddress();
