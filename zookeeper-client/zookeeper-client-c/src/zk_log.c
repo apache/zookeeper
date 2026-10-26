@@ -60,7 +60,10 @@ char* getTSData(pthread_key_t key,int size){
         p=calloc(1,size);
         res=pthread_setspecific(key,p);
         if(res!=0){
+            /* Release allocated buffer if thread-specific storage association fails. */
             fprintf(stderr,"Failed to set TSD key: %d",res);
+            free(p);
+            p=0;
         }
     }
     return p;
@@ -140,7 +143,10 @@ void log_message(log_callback_fn callback, ZooLogLevel curLevel,
     char timebuf [TIME_NOW_BUF_SIZE];
     const char* time = time_now(timebuf);
 #else
-    const char* time = time_now(get_time_buffer());
+    /* Fall back to stack buffer if thread-specific storage is unavailable. */
+    char timebuf [TIME_NOW_BUF_SIZE];
+    char* tsdbuf = get_time_buffer();
+    const char* time = time_now(tsdbuf ? tsdbuf : timebuf);
 #endif
 
     char* buf = get_format_log_buffer();

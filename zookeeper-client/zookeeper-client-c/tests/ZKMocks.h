@@ -36,6 +36,10 @@ void forceConnected(zhandle_t* zh, const struct timeval *last_recv_send = NULL);
  * Gracefully terminates zookeeper I/O and completion threads. 
  */
 void terminateZookeeperThreads(zhandle_t* zh);
+// Record an extra reference held on zh by a test mock.
+void pinZookeeperHandle(zhandle_t* zh);
+// Remove tracking record and return true if zh held an extra mock reference.
+bool unpinZookeeperHandle(zhandle_t* zh);
 
 // *****************************************************************************
 // Abstract watcher action
@@ -149,7 +153,14 @@ struct CloseFinally{
         zhandle_t* lzh=*zh_;
         *zh_=0;
         disarm();
-        return zookeeper_close(lzh);
+        if(lzh==0)return ZOK;
+        // Balance artificial reference held by mock so that handle
+        // resources are completely freed within mock scope.
+        bool pinned=unpinZookeeperHandle(lzh);
+        int rc=zookeeper_close(lzh);
+        if(pinned)
+            api_epilog(lzh,0);
+        return rc;
     }
     void disarm(){zh_=0;}
     zhandle_t ** zh_;

@@ -124,6 +124,17 @@ AM_CONDITIONAL([ENABLEGCOV],[test "x${enable_gcov}" = "xyes"])
 
 CXXFLAGS="$CXXFLAGS -std=c++11"
 
+# AddressSanitizer and LeakSanitizer support. Compiler flags are appended to
+# preserve necessary defaults (e.g. -D_GNU_SOURCE).
+AC_ARG_ENABLE(asan, [AS_HELP_STRING([--enable-asan],[enable AddressSanitizer and LeakSanitizer (memory error and leak detection)])])
+AC_MSG_CHECKING([whether to enable AddressSanitizer])
+AS_IF([test "x${enable_asan}" = "xyes"],
+      [AC_MSG_RESULT([yes])
+       CFLAGS="$CFLAGS -fsanitize=address -fno-omit-frame-pointer"
+       CXXFLAGS="$CXXFLAGS -fsanitize=address -fno-omit-frame-pointer"
+       LDFLAGS="$LDFLAGS -fsanitize=address"],
+      [AC_MSG_RESULT([no])])
+
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],
  [],[with_syncapi=yes])

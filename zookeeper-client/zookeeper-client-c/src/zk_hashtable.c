@@ -18,6 +18,7 @@
 
 #include "zk_hashtable.h"
 #include "zk_adaptor.h"
+#include "zookeeper_log.h"
 #include "hashtable/hashtable.h"
 #include "hashtable/hashtable_itr.h"
 #include <string.h>
@@ -177,17 +178,27 @@ static int add_to_list(watcher_object_list_t **wl, watcher_object_t *wo,
     return 0;
 }
 
-static int do_insert_watcher_object(zk_hashtable *ht, const char *path, watcher_object_t* wo)
+static int do_insert_watcher_object(zhandle_t *zh, zk_hashtable *ht, const char *path, watcher_object_t* wo)
 {
     int res=1;
     watcher_object_list_t* wl;
 
     wl=hashtable_search(ht->ht,(void*)path);
     if(wl==0){
-        int res;
+        char *key = strdup(path);
         /* inserting a new path element */
-        res=hashtable_insert(ht->ht,strdup(path),create_watcher_object_list(wo));
-        assert(res);
+        wl = create_watcher_object_list(wo);
+        res = key != NULL && hashtable_insert(ht->ht, key, wl);
+        if (!res) {
+            /*
+             * Release key and watcher list (including transferred watcher object)
+             * on insertion failure. Log the failure, because the watch is lost
+             * and the caller is not told.
+             */
+            LOG_ERROR(LOGCALLBACK(zh), "Out of memory: dropped the watcher for path %s", path);
+            free(key);
+            destroy_watcher_object_list(wl);
+        }
     }else{
         /*
          * Path already exists; check if the watcher already exists.
@@ -217,11 +228,11 @@ char **collect_keys(zk_hashtable *ht, int *count)
     return list;
 }
 
-static int insert_watcher_object(zk_hashtable *ht, const char *path,
+static int insert_watcher_object(zhandle_t *zh, zk_hashtable *ht, const char *path,
                                  watcher_object_t* wo)
 {
     int res;
-    res=do_insert_watcher_object(ht,path,wo);
+    res=do_insert_watcher_object(zh,ht,path,wo);
     return res;
 }
 
@@ -323,6 +334,12 @@ void deliverWatchers(zhandle_t *zh, int type,int state, char *path, watcher_obje
     *list = 0;
 }
 
+/* Release a collected watcher list. Do not call the watchers. */
+void free_watcher_object_list(watcher_object_list_t *list)
+{
+    destroy_watcher_object_list(list);
+}
+
 void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc)
 {
     if(reg){
@@ -330,7 +347,7 @@ void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc)
          * by the IO thread */
         zk_hashtable *ht = reg->checker(zh, rc);
         if(ht){
-            insert_watcher_object(ht,reg->path,
+            insert_watcher_object(zh,ht,reg->path,
                     create_watcher_object(reg->watcher, reg->context));
         }
     }    

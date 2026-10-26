@@ -74,6 +74,7 @@ char **collect_keys(zk_hashtable *ht, int *count);
     void deactivateWatcher(zhandle_t *zh, watcher_deregistration_t *dereg, int rc);
     watcher_object_list_t *collectWatchers(zhandle_t *zh,int type, char *path);
     void deliverWatchers(zhandle_t *zh, int type, int state, char *path, struct watcher_object_list **list);
+    void free_watcher_object_list(watcher_object_list_t *list);
     void removeWatchers(zhandle_t *zh, const char* path, ZooWatcherType type,
                         watcher_fn watcher, void *watcherCtx);
     int pathHasWatcher(zhandle_t *zh, const char *path, int wtype,

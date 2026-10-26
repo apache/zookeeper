@@ -33,6 +33,7 @@
 
   <properties>
     <c-test-coverage-arg> </c-test-coverage-arg>
+    <c-test-asan-arg> </c-test-asan-arg>
   </properties>
 
   <build>
@@ -76,6 +77,7 @@
                 <argument>--with-sasl=${c-client-sasl}</argument>
                 <argument>--prefix=${project.build.directory}/c</argument>
                 <argument>${c-test-coverage-arg}</argument>
+                <argument>${c-test-asan-arg}</argument>
               </arguments>
             </configuration>
           </execution>
@@ -148,6 +150,13 @@
       <id>c-test-coverage</id>
       <properties>
         <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
+      </properties>
+    </profile>
+    <profile>
+      <!-- build the C client and its tests with AddressSanitizer and LeakSanitizer -->
+      <id>c-test-asan</id>
+      <properties>
+        <c-test-asan-arg>--enable-asan</c-test-asan-arg>
       </properties>
     </profile>
     <profile>

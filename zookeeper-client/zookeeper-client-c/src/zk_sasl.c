@@ -42,6 +42,8 @@
 #include <unistd.h>
 #endif
 
+#include <stddef.h>
+
 #include <zookeeper.h>
 #include "zk_sasl.h"
 #include "zk_adaptor.h"
@@ -441,11 +443,41 @@ getpassphrase(const char *prompt) {
 }
 #endif /* ! HAVE_GETPASSPHRASE */
 
+/* Maximum allowed password length in characters */
+#define ZSASL_MAX_PASSWORD_LEN 1023
+
 struct zsasl_secret_ctx {
     const char *password_file;
     void *context;
     zoo_sasl_password_callback_t callback;
     sasl_secret_t *secret;
+};
+
+/*
+ * Contiguous allocation for SASL callback table, context metadata, secret
+ * buffer, and strings. Placing the sasl_callback_t array at offset 0
+ * ensures that free(), as documented in zookeeper.h, releases the entire
+ * structure cleanly.
+ *
+ * The fixed capacity secret buffer provides a stable address across repeated
+ * calls to _zsasl_getsecret(). Cyrus SASL mechanisms do not copy the secret
+ * and may retain the pointer across authentication steps. The buffer remains
+ * valid until the block is freed after all associated handles are closed.
+ *
+ * _zsasl_getsecret() updates the secret in place without locking. Sharing
+ * this block across handles is benign only if credentials do not change.
+ * If credentials change concurrently, unsynchronized writes can corrupt the
+ * buffer and cause permanent authentication failure (ZOO_AUTH_FAILED_STATE).
+ * Handles with mutable credentials must use separate callback blocks.
+ */
+struct zsasl_callbacks_block {
+    sasl_callback_t callbacks[5];
+    struct zsasl_secret_ctx secret_ctx;
+    union {
+        sasl_secret_t secret;
+        char space[sizeof(sasl_secret_t) + ZSASL_MAX_PASSWORD_LEN];
+    } secret;
+    char strings[1];
 };
 
 /*
@@ -455,7 +487,7 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
                             sasl_secret_t **psecret)
 {
     /* Max allowed length of a password */
-    const size_t MAX_PASSWORD_LEN = 1023; 
+    const size_t MAX_PASSWORD_LEN = ZSASL_MAX_PASSWORD_LEN;
     struct zsasl_secret_ctx *secret_ctx = (struct zsasl_secret_ctx *)context;
     /* The extra 1 byte is reserved for storing the null terminator. */
     char buf[MAX_PASSWORD_LEN + 1]; 
@@ -548,17 +580,20 @@ static int _zsasl_getsecret(sasl_conn_t *conn, void *context, int id,
      */
     len = strlen(password);
 
-    x = secret_ctx->secret = (sasl_secret_t *)realloc(
-        secret_ctx->secret, sizeof(sasl_secret_t) + len);
-    if (!x) {
+    /* Copy password into pre-allocated secret buffer in zsasl_callbacks_block. */
+    x = secret_ctx->secret;
+    if (len > MAX_PASSWORD_LEN) {
         memset(password, 0, len);
-        return SASL_NOMEM;
+        return SASL_BUFOVER;
     }
 
-    x->len = len;
-
-    /* The extra 1 byte is the null terminator. */
+    /*
+     * Update secret in place and zero trailing bytes. This write is
+     * unsynchronized across handles sharing the callback block.
+     */
     memcpy(x->data, password, len + 1);
+    memset(x->data + len + 1, 0, MAX_PASSWORD_LEN - len);
+    x->len = len;
     memset(password, 0, len);
 
     *psecret = x;
@@ -571,47 +606,55 @@ sasl_callback_t *zoo_sasl_make_password_callbacks(const char *user,
                                                   const char *realm,
                                                   zoo_sasl_password_t *password)
 {
-    struct zsasl_secret_ctx *secret_ctx;
+    size_t user_len = user ? strlen(user) + 1 : 0;
+    size_t realm_len = realm ? strlen(realm) + 1 : 0;
+    size_t file_len = password->password_file ?
+        strlen(password->password_file) + 1 : 0;
+    struct zsasl_callbacks_block *b;
     const char *user_ctx = NULL;
     const char *realm_ctx = NULL;
-    int rc;
+    char *p;
 
-    secret_ctx = (struct zsasl_secret_ctx *)calloc(
-        1, sizeof(struct zsasl_secret_ctx));
-    rc = secret_ctx ? ZOK : ZSYSTEMERROR;
+    /* Allocate single contiguous block for callbacks, contexts, secret, and strings. */
+    b = (struct zsasl_callbacks_block *)calloc(1,
+        offsetof(struct zsasl_callbacks_block, strings) +
+        user_len + realm_len + file_len);
+    if (!b) {
+        return NULL;
+    }
 
-    rc = rc < 0 ? rc : _zsasl_strdup(&user_ctx, user);
-    rc = rc < 0 ? rc : _zsasl_strdup(&realm_ctx, realm);
-    rc = rc < 0 ? rc : _zsasl_strdup(&secret_ctx->password_file, password->password_file);
-    secret_ctx->context = password->context;
-    secret_ctx->callback = password->callback;
+    p = b->strings;
+    if (user) {
+        memcpy(p, user, user_len);
+        user_ctx = p;
+        p += user_len;
+    }
+    if (realm) {
+        memcpy(p, realm, realm_len);
+        realm_ctx = p;
+        p += realm_len;
+    }
+    if (password->password_file) {
+        memcpy(p, password->password_file, file_len);
+        b->secret_ctx.password_file = p;
+    }
+    b->secret_ctx.context = password->context;
+    b->secret_ctx.callback = password->callback;
+    b->secret_ctx.secret = &b->secret.secret;
 
     {
         sasl_callback_t callbacks[] = {
             { SASL_CB_GETREALM, (sasl_callback_fn_t)&_zsasl_getrealm, (void*)realm_ctx },
             { SASL_CB_USER, (sasl_callback_fn_t)&_zsasl_simple, (void*)user_ctx },
             { SASL_CB_AUTHNAME, (sasl_callback_fn_t)&_zsasl_simple, (void*)user_ctx },
-            { SASL_CB_PASS, (sasl_callback_fn_t)&_zsasl_getsecret, (void*)secret_ctx },
+            { SASL_CB_PASS, (sasl_callback_fn_t)&_zsasl_getsecret, (void*)&b->secret_ctx },
             { SASL_CB_LIST_END, NULL, NULL }
         };
 
-        sasl_callback_t *xcallbacks = rc < 0 ? NULL : malloc(sizeof(callbacks));
-
-        if (rc < 0 || !xcallbacks) {
-            if (secret_ctx) {
-                _zsasl_free(&secret_ctx->password_file);
-                free(secret_ctx);
-                secret_ctx = NULL;
-            }
-            _zsasl_free(&realm_ctx);
-            _zsasl_free(&user_ctx);
-            return NULL;
-        }
-
-        memcpy(xcallbacks, callbacks, sizeof(callbacks));
-
-        return xcallbacks;
+        memcpy(b->callbacks, callbacks, sizeof(b->callbacks));
     }
+
+    return b->callbacks;
 }
 
 sasl_callback_t *zoo_sasl_make_basic_callbacks(const char *user,
