@@ -28,11 +28,9 @@ import java.util.function.Function;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.admin.ZooKeeperAdmin;
 
 /**
- * Builder to construct {@link ZooKeeper} and {@link ZooKeeperAdmin}.
+ * Builder to construct instances of {@link ZooKeeper} and {@link ZooKeeperAdmin}.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
@@ -48,7 +46,9 @@ public class ZooKeeperBuilder {
     private ZKClientConfig clientConfig;
 
     /**
-     * This is private and export for internal usage. Use {@link ZooKeeper#builder(String, Duration)} instead.
+     * Use {@link ZooKeeper#builder(String, Duration)} instead.
+     *
+     * <p>This is private and export for internal usage.
      */
     @InterfaceAudience.Private
     public ZooKeeperBuilder(String connectString, Duration sessionTimeout) {
@@ -152,7 +152,7 @@ public class ZooKeeperBuilder {
      *
      * <p>This is private and export for internal usage.
      *
-     * @apiNote helper to delegate existing constructors to {@link ZooKeeper#ZooKeeper(ZooKeeperOptions)}
+     * @apiNote helper to delegate existing constructors to {@link org.apache.zookeeper.ZooKeeper#ZooKeeper(ZooKeeperOptions)}
      */
     @InterfaceAudience.Private
     public ZooKeeperOptions toOptions() {
@@ -176,7 +176,8 @@ public class ZooKeeperBuilder {
      * @throws IOException from constructor of {@link ZooKeeper}
      */
     public ZooKeeper build() throws IOException {
-        return new ZooKeeper(toOptions());
+        org.apache.zookeeper.ZooKeeper zk = new org.apache.zookeeper.ZooKeeper(toOptions());
+        return new ZooKeeperAdaptor(zk);
     }
 
     /**
@@ -186,6 +187,7 @@ public class ZooKeeperBuilder {
      * @throws IOException from constructor of {@link ZooKeeperAdmin}
      */
     public ZooKeeperAdmin buildAdmin() throws IOException {
-        return new ZooKeeperAdmin(toOptions());
+        org.apache.zookeeper.admin.ZooKeeperAdmin zk = new org.apache.zookeeper.admin.ZooKeeperAdmin(toOptions());
+        return new ZooKeeperAdminAdaptor(zk);
     }
 }
