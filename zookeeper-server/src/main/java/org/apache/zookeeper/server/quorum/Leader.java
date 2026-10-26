@@ -68,7 +68,8 @@ import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.server.util.ZxidLayout;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -654,7 +655,7 @@ public class Leader extends LearnerMaster {
 
             long epoch = getEpochToPropose(self.getMyId(), self.getAcceptedEpoch());
 
-            zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
+            zk.setZxid(self.getZxidLayoutState().current().makeZxid(epoch, 0));
 
             synchronized (this) {
                 lastProposed = zk.getZxid();
@@ -662,7 +663,7 @@ public class Leader extends LearnerMaster {
 
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(), null, null);
 
-            if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
+            if (self.getZxidLayoutState().current().getCounterFromZxid(newLeaderProposal.packet.getZxid()) != 0) {
                 LOG.info("NEWLEADER proposal has Zxid of {}", Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
 
@@ -755,7 +756,7 @@ public class Leader extends LearnerMaster {
             String initialZxid = System.getProperty("zookeeper.testingonly.initialZxid");
             if (initialZxid != null) {
                 long zxid = Long.parseLong(initialZxid);
-                zk.setZxid((zk.getZxid() & 0xffffffff00000000L) | zxid);
+                zk.setZxid(self.getZxidLayoutState().current().clearCounter(zk.getZxid()) | zxid);
             }
 
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
@@ -1065,7 +1066,7 @@ public class Leader extends LearnerMaster {
             LOG.trace("outstanding proposals all");
         }
 
-        if ((zxid & 0xffffffffL) == 0) {
+        if (self.getZxidLayoutState().current().getCounterFromZxid(zxid) == 0) {
             /*
              * We no longer process NEWLEADER ack with this method. However,
              * the learner sends an ack back to the leader after it gets
@@ -1274,7 +1275,15 @@ public class Leader extends LearnerMaster {
      * Returns the current epoch of the leader.
      */
     public long getEpoch() {
-        return ZxidUtils.getEpochFromZxid(lastProposed);
+        // Read lastProposed through the synchronized getter: everywhere else
+        // it is accessed under the Leader monitor, so reading it unsynchronized
+        // here would be an inconsistent-synchronization data race.
+        return self.getZxidLayoutState().current().getEpochFromZxid(getLastProposed());
+    }
+
+    @Override
+    public ZxidLayoutState getZxidLayoutState() {
+        return self.getZxidLayoutState();
     }
 
     @SuppressWarnings("serial")
@@ -1298,11 +1307,13 @@ public class Leader extends LearnerMaster {
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         /**
-         * Address the rollover issue. All lower 32bits set indicate a new leader
-         * election. Force a re-election instead. See ZOOKEEPER-1277
+         * Address the rollover issue. An exhausted counter part indicates a
+         * new leader election. Force a re-election instead. See ZOOKEEPER-1277
          */
-        if ((request.zxid & 0xffffffffL) == 0xffffffffL) {
-            String msg = "zxid lower 32 bits have rolled over, forcing re-election, and therefore new epoch start";
+        ZxidLayout layout = self.getZxidLayoutState().current();
+        if (layout.getCounterFromZxid(request.zxid) == layout.getMaxCounter()) {
+            String msg = "zxid counter (lower " + layout.getCounterBits()
+                + " bits) has rolled over, forcing re-election, and therefore new epoch start";
             shutdown(msg);
             throw new XidRolloverException(msg);
         }
@@ -1480,6 +1491,7 @@ public class Leader extends LearnerMaster {
             QuorumVerifier verifier = self.getQuorumVerifier();
             if (connectingFollowers.contains(self.getMyId()) && verifier.containsQuorum(connectingFollowers)) {
                 waitingForNewEpoch = false;
+                maybeSwitchZxidLayout(epoch);
                 self.setAcceptedEpoch(epoch);
                 connectingFollowers.notifyAll();
             } else {
@@ -1499,6 +1511,27 @@ public class Leader extends LearnerMaster {
             }
             return epoch;
         }
+    }
+
+    /**
+     * Switches the ensemble to the wide-counter zxid layout at the moment
+     * the new epoch is established, if enabled and not yet switched. Doing
+     * it inside the epoch decision point guarantees that every zxid of the
+     * new epoch — the leader's own as well as those handed to the
+     * LearnerHandlers — is composed with one consistent layout.
+     */
+    private void maybeSwitchZxidLayout(long newEpoch) throws IOException {
+        if (!self.isWideCounterZxidEnabled() || self.getZxidLayoutState().isSwitched()) {
+            return;
+        }
+        if (newEpoch > ZxidLayout.WIDE_COUNTER.getMaxEpoch()) {
+            LOG.warn("Cannot switch to the {} zxid layout: epoch 0x{} exceeds its largest representable epoch 0x{}",
+                ZxidLayout.WIDE_COUNTER,
+                Long.toHexString(newEpoch),
+                Long.toHexString(ZxidLayout.WIDE_COUNTER.getMaxEpoch()));
+            return;
+        }
+        self.recordZxidLayoutSwitch(newEpoch);
     }
 
     @Override

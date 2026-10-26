@@ -18,16 +18,19 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,6 +102,44 @@ public class FLEMalformedNotificationMessageTest extends ZKTestCase {
         requestBuffer.clear();
         requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
         requestBuffer.putLong(0);                              // leader
+        mockCnxManager.toSend(0L, requestBuffer);
+
+        /*
+         * Assert that the message receiver thread in leader election is still healthy:
+         * we are sending valid votes and waiting for the leader election to be finished.
+         */
+        sendValidNotifications(1, 0);
+        leaderElectionThread.join(5000);
+        if (leaderElectionThread.isAlive()) {
+            fail("Leader election thread didn't join, something went wrong.");
+        }
+    }
+
+
+    @Test
+    public void testLegacy28ByteNotificationMessage() throws Exception {
+
+        /*
+         * Start mock server 1, send a notification in the 28-byte format of
+         * releases before 3.4.6: state + leader + zxid + electionEpoch, with
+         * no peer epoch and no version. The receiver extrapolates the peer
+         * epoch from the zxid, decomposing it with the layout the zxid was
+         * generated with.
+         */
+        startMockServer(1);
+        // Wait for the election peer's own vote to reach us first: by then
+        // the connection pair is fully established. A message sent earlier
+        // can be swallowed while the initial connection is torn down and
+        // re-established the other way around, and this test needs the
+        // 28-byte vote to actually reach the receiver.
+        assertNotNull(mockCnxManager.pollRecvQueue(5000, TimeUnit.MILLISECONDS));
+        byte[] requestBytes = new byte[28];
+        ByteBuffer requestBuffer = ByteBuffer.wrap(requestBytes);
+        requestBuffer.clear();
+        requestBuffer.putInt(ServerState.LOOKING.ordinal());   // state
+        requestBuffer.putLong(0);                              // leader
+        requestBuffer.putLong(ZxidUtils.makeZxid(1, 42));      // zxid, carries the epoch
+        requestBuffer.putLong(0);                              // electionEpoch
         mockCnxManager.toSend(0L, requestBuffer);
 
         /*

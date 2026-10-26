@@ -37,6 +37,8 @@ import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.util.ZxidLayout;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -145,6 +147,7 @@ public class LearnerHandlerTest extends ZKTestCase {
             }
         });
         when(leader.getZKDatabase()).thenReturn(db);
+        when(leader.getZxidLayoutState()).thenReturn(new ZxidLayoutState());
 
         learnerHandler = new MockLearnerHandler(sock, leader);
     }
@@ -338,6 +341,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         db.txnLog.add(createProposal(2));
         db.txnLog.add(createProposal(3));
         when(leader.getZKDatabase()).thenReturn(db);
+        when(leader.getZxidLayoutState()).thenReturn(new ZxidLayoutState());
 
         // Peer zxid
         peerZxid = 4;
@@ -392,6 +396,65 @@ public class LearnerHandlerTest extends ZKTestCase {
 
     long getZxid(long epoch, long counter) {
         return ZxidUtils.makeZxid(epoch, counter);
+    }
+
+    /**
+     * Test the sync decisions when the ensemble has switched to the
+     * wide-counter zxid layout (ZOOKEEPER-2789) while the data — and the
+     * last zxid the follower hands in — still spans the legacy epochs.
+     * Zxids below the switch epoch must be decomposed with the legacy
+     * layout: parsed with the wide layout, a legacy new-epoch zxid like
+     * (5, 0) would read as having a non-zero counter and the sync logic
+     * would take the wrong branch.
+     */
+    @Test
+    public void testSyncAcrossZxidLayoutSwitch() throws Exception {
+        // The ensemble switched to the wide-counter layout at epoch 6.
+        ZxidLayoutState layoutState = new ZxidLayoutState();
+        layoutState.switchAt(6);
+        when(leader.getZxidLayoutState()).thenReturn(layoutState);
+
+        long legacy41 = getZxid(4, 1);
+        long legacy51 = getZxid(5, 1);
+        long legacy52 = getZxid(5, 2);
+        long wide61 = ZxidLayout.WIDE_COUNTER.makeZxid(6, 1);
+
+        db.txnLog.add(createProposal(legacy41));
+        db.txnLog.add(createProposal(legacy51));
+        db.txnLog.add(createProposal(legacy52));
+        db.txnLog.add(createProposal(wide61));
+        db.committedLog.add(createProposal(legacy51));
+        db.committedLog.add(createProposal(legacy52));
+        db.committedLog.add(createProposal(wide61));
+        db.lastProcessedZxid = wide61;
+
+        // A follower at a legacy new-epoch zxid (epoch 5, counter 0): the
+        // legacy decomposition marks it a new-epoch zxid, TRUNC logic is
+        // skipped, and it catches up with a DIFF across the layout boundary.
+        long peerZxid = getZxid(5, 0);
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        assertOpType(Leader.DIFF, wide61, wide61);
+        // DIFF + 3 proposals + 3 commits
+        assertEquals(7, learnerHandler.getQueuedPackets().size());
+        queuedPacketMatches(new long[]{legacy51, legacy52, wide61});
+        reset();
+
+        // A follower already at the last legacy zxid only syncs the
+        // wide-counter commits.
+        peerZxid = legacy52;
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        assertOpType(Leader.DIFF, wide61, wide61);
+        // DIFF + 1 proposal + 1 commit
+        assertEquals(3, learnerHandler.getQueuedPackets().size());
+        queuedPacketMatches(new long[]{wide61});
+        reset();
+
+        // A follower already in the wide layout is in sync.
+        peerZxid = wide61;
+        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
+        assertOpType(Leader.DIFF, wide61, wide61);
+        assertEquals(1, learnerHandler.getQueuedPackets().size());
+        reset();
     }
 
     /**

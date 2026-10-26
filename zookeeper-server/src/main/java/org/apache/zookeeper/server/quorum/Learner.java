@@ -61,6 +61,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.MessageTracker;
 import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnDigest;
@@ -490,12 +491,15 @@ public class Learner {
         long lastLoggedZxid = self.getLastLoggedZxid();
         QuorumPacket qp = new QuorumPacket();
         qp.setType(pktType);
+        // The zxid of this packet is only a carrier for the accepted epoch
+        // and stays in the legacy layout on the wire, whatever layout the
+        // data uses; so does the zxid of the LEADERINFO reply.
         qp.setZxid(ZxidUtils.makeZxid(self.getAcceptedEpoch(), 0));
 
         /*
          * Add sid to payload
          */
-        LearnerInfo li = new LearnerInfo(self.getMyId(), 0x10000, self.getQuorumVerifier().getVersion());
+        LearnerInfo li = new LearnerInfo(self.getMyId(), LearnerHandler.WIDE_COUNTER_PROTOCOL_VERSION, self.getQuorumVerifier().getVersion());
         ByteArrayOutputStream bsid = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(bsid);
         boa.writeRecord(li, "LearnerInfo");
@@ -506,7 +510,18 @@ public class Learner {
         final long newEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
         if (qp.getType() == Leader.LEADERINFO) {
             // we are connected to a 1.0 server so accept the new epoch and read the next packet
-            leaderProtocolVersion = ByteBuffer.wrap(qp.getData()).getInt();
+            ByteBuffer leaderInfoData = ByteBuffer.wrap(qp.getData());
+            leaderProtocolVersion = leaderInfoData.getInt();
+            if (leaderInfoData.remaining() >= 8) {
+                // The leader runs the ensemble in the wide-counter zxid
+                // layout from the announced epoch on; record it before
+                // parsing any zxid of the new epoch.
+                self.adoptZxidLayoutSwitch(leaderInfoData.getLong());
+            } else {
+                // The leader announced no layout switch; forget a recorded
+                // one if it never made it into any data (see there).
+                self.abandonUnusedZxidLayoutSwitch();
+            }
             byte[] epochBytes = new byte[4];
             final ByteBuffer wrappedEpochBytes = ByteBuffer.wrap(epochBytes);
             if (newEpoch > self.getAcceptedEpoch()) {
@@ -526,7 +541,10 @@ public class Learner {
             }
             QuorumPacket ackNewEpoch = new QuorumPacket(Leader.ACKEPOCH, lastLoggedZxid, epochBytes, null);
             writePacket(ackNewEpoch, true);
-            return ZxidUtils.makeZxid(newEpoch, 0);
+            // Unlike the epoch carrier zxids above, the returned zxid is a
+            // real one (the first zxid of the new epoch), composed with the
+            // layout just adopted from the leader.
+            return self.getZxidLayoutState().current().makeZxid(newEpoch, 0);
         } else {
             if (newEpoch > self.getAcceptedEpoch()) {
                 self.setAcceptedEpoch(newEpoch);
@@ -543,7 +561,10 @@ public class Learner {
         if (lastQueued == 0) {
             LOG.info("DIFF sync got first proposal 0x{}", Long.toHexString(pif.hdr.getZxid()));
         } else if (pif.hdr.getZxid() != lastQueued + 1) {
-            if (ZxidUtils.getEpochFromZxid(pif.hdr.getZxid()) <= ZxidUtils.getEpochFromZxid(lastQueued)) {
+            // A DIFF may span the layout switch epoch, so pick the layout per zxid.
+            ZxidLayoutState layoutState = self.getZxidLayoutState();
+            if (layoutState.layoutFor(pif.hdr.getZxid()).getEpochFromZxid(pif.hdr.getZxid())
+                    <= layoutState.layoutFor(lastQueued).getEpochFromZxid(lastQueued)) {
                 String msg = String.format(
                     "DIFF sync got proposal 0x%s, last queued 0x%s, expected 0x%s",
                     Long.toHexString(pif.hdr.getZxid()), Long.toHexString(lastQueued),
@@ -570,7 +591,7 @@ public class Learner {
     protected void syncWithLeader(long newLeaderZxid) throws Exception {
         QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
         QuorumPacket qp = new QuorumPacket();
-        long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
+        long newEpoch = self.getZxidLayoutState().current().getEpochFromZxid(newLeaderZxid);
 
         QuorumVerifier newLeaderQV = null;
 
@@ -822,7 +843,7 @@ public class Learner {
                 }
             }
         }
-        ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
+        ack.setZxid(self.getZxidLayoutState().current().makeZxid(newEpoch, 0));
         writePacket(ack, true);
         zk.startup();
         /*
