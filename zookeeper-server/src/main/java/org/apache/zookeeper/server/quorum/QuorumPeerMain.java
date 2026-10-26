@@ -19,10 +19,11 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.util.Objects;
 import javax.management.JMException;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.audit.ZKAuditProvider;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
@@ -31,6 +32,7 @@ import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
 import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -79,6 +81,18 @@ public class QuorumPeerMain {
     private static final String USAGE = "Usage: QuorumPeerMain configfile";
 
     protected QuorumPeer quorumPeer;
+    private AuditContext auditContext;
+    private boolean auditInitializationAttempted;
+    private QuorumPeerConfig config;
+
+    public QuorumPeerMain() {
+    }
+
+    @InterfaceAudience.Private
+    public QuorumPeerMain(AuditContext auditContext) {
+        this.auditContext = Objects.requireNonNull(auditContext);
+        auditInitializationAttempted = true;
+    }
 
     /**
      * To start the replicated server specify the configuration file name on
@@ -93,38 +107,60 @@ public class QuorumPeerMain {
             LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (ConfigException e) {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (DatadirException e) {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         } catch (AdminServerException e) {
             LOG.error("Unable to start AdminServer, exiting abnormally", e);
             System.err.println("Unable to start AdminServer, exiting abnormally");
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         LOG.info("Exiting normally");
         ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
+    private void auditStartupFailure() {
+        try {
+            if (auditContext == null && !auditInitializationAttempted) {
+                auditInitializationAttempted = true;
+                auditContext = config == null ? AuditContext.fromSystemProperties()
+                    : AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
+            }
+            if (auditContext != null) {
+                auditContext.logServerStartFailure();
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LOG.error("Unable to audit server startup failure", e);
+        }
+    }
+
+    private void prepareAuditContext(QuorumPeerConfig config) {
+        if (auditContext == null) {
+            auditInitializationAttempted = true;
+            auditContext = AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
+        }
+    }
+
     protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
-        QuorumPeerConfig config = new QuorumPeerConfig();
+        config = new QuorumPeerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
             // The purge task can access server data before runFromConfig is called.
-            ZKAuditProvider.checkAuditState();
+            prepareAuditContext(config);
         }
 
         // Start and schedule the purge task
@@ -140,13 +176,20 @@ public class QuorumPeerMain {
         } else {
             LOG.warn("Either no config or no quorum defined in config, running in standalone mode");
             // there is only server in the quorum -- run as standalone
-            ZooKeeperServerMain.main(args);
+            if (args.length != 1) {
+                ZooKeeperServerMain.main(args);
+            } else {
+                ServerConfig standaloneConfig = new ServerConfig();
+                standaloneConfig.readFrom(config);
+                new ZooKeeperServerMain(auditContext).runFromConfig(standaloneConfig);
+            }
         }
     }
 
     public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
+        this.config = config;
         // Validate auditing before starting metrics, transaction storage, or listeners.
-        ZKAuditProvider.checkAuditState();
+        prepareAuditContext(config);
         try {
             ManagedUtil.registerLog4jMBeans();
         } catch (JMException e) {
@@ -170,15 +213,18 @@ public class QuorumPeerMain {
 
             if (config.getClientPortAddress() != null) {
                 cnxnFactory = ServerCnxnFactory.createFactory();
+                cnxnFactory.setAuditContext(auditContext);
                 cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), false);
             }
 
             if (config.getSecureClientPortAddress() != null) {
                 secureCnxnFactory = ServerCnxnFactory.createFactory(true);
+                secureCnxnFactory.setAuditContext(auditContext);
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
             }
 
             quorumPeer = getQuorumPeer();
+            quorumPeer.setAuditContext(auditContext);
             quorumPeer.setTxnFactory(new FileTxnSnapLog(config.getDataLogDir(), config.getDataDir()));
             quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
             quorumPeer.enableLocalSessionsUpgrading(config.isLocalSessionsUpgradingEnabled());
@@ -232,7 +278,7 @@ public class QuorumPeerMain {
             }
 
             quorumPeer.start();
-            ZKAuditProvider.addZKStartStopAuditLog();
+            auditContext.logServerStart();
             quorumPeer.join();
         } catch (InterruptedException e) {
             // warn, but generally this is ok

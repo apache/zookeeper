@@ -1,6 +1,23 @@
 ---
 title: "Release Notes"
-description: "Release notes for ZooKeeper 3.9.x, including new features, bug fixes, improvements, and breaking changes."
+description: "Release notes for ZooKeeper, including new features, bug fixes, improvements, and breaking changes."
+---
+
+## Release Notes - ZooKeeper - Version 3.10.0 (Unreleased)
+
+### Breaking Changes
+
+The static `ZKAuditProvider` API, the `AuditHelper.addAuditLog` overloads without a context,
+and `ServerCnxnFactory.getUserName()` are removed. Code that calls these APIs must use the
+owning client or server runtime's `AuditContext` and be recompiled.
+
+The `AuditLogger` SPI, configuration keys, and event format remain unchanged. ZooKeeper
+initializes a separate logger for each runtime. Server configuration no longer modifies
+JVM audit properties.
+
+See [Audit API Migration in 3.10.0](/admin-ops/monitor-and-audit-logs#audit-api-migration-in-3100)
+for the replacement methods and custom bootstrap behavior.
+
 ---
 
 ## Release Notes - ZooKeeper - Version 3.9.5

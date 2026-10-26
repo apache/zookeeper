@@ -23,6 +23,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.security.auth.callback.CallbackHandler;
@@ -33,7 +34,9 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumAuthPacket;
 import org.apache.zookeeper.util.SecurityUtils;
@@ -49,7 +52,15 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
     private final boolean quorumRequireSasl;
     private final ZKConfig zkConfig;
 
-    public SaslQuorumAuthServer(boolean quorumRequireSasl, String loginContext, Set<String> authzHosts) throws SaslException {
+    public SaslQuorumAuthServer(boolean quorumRequireSasl, String loginContext,
+                               Set<String> authzHosts) throws SaslException {
+        this(quorumRequireSasl, loginContext, authzHosts, AuditContext.fromSystemProperties());
+    }
+
+    @InterfaceAudience.Private
+    public SaslQuorumAuthServer(boolean quorumRequireSasl, String loginContext,
+                               Set<String> authzHosts, AuditContext auditContext) throws SaslException {
+        Objects.requireNonNull(auditContext);
         this.quorumRequireSasl = quorumRequireSasl;
         try {
             AppConfigurationEntry[] entries = Configuration.getConfiguration().getAppConfigurationEntry(loginContext);
@@ -62,7 +73,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
                 return new SaslQuorumServerCallbackHandler(entries, authzHosts);
             };
             zkConfig = new ZKConfig();
-            serverLogin = new Login(loginContext, callbackSupplier, zkConfig);
+            serverLogin = new Login(loginContext, callbackSupplier, zkConfig, auditContext);
             serverLogin.startThreadIfNeeded();
         } catch (Throwable e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);

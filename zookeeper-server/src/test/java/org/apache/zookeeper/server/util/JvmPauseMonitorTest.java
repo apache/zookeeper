@@ -39,6 +39,7 @@ public class JvmPauseMonitorTest {
         QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
         when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
         when(qpConfig.getJvmPauseInfoThresholdMs()).thenReturn(infoTH);
+        when(qpConfig.getJvmPauseWarnThresholdMs()).thenReturn(Long.MAX_VALUE);
 
         pauseMonitor = new JvmPauseMonitor(qpConfig);
         pauseMonitor.serviceStart();
