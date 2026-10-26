@@ -98,6 +98,11 @@ public class DataTree {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
+    // Deny watch delivery to ordinary sessions when a node's ACL is unknown.
+    // checkACL treats null and empty ACLs as unrestricted. Public for tests.
+    public static final List<ACL> NO_PERMISSIONS_ACL =
+        Collections.singletonList(new ACL(0, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+
     private final RateLogger RATE_LOGGER = new RateLogger(LOG, 15 * 60 * 1000);
 
     /**
@@ -443,24 +448,26 @@ public class DataTree {
         }
         List<ACL> parentAcl;
         synchronized (parent) {
-            parentAcl = getACL(parent);
+            parentAcl = getACLForWatchTrigger(parent, parentName);
 
-            // Add the ACL to ACL cache first, to avoid the ACL not being
-            // created race condition during fuzzy snapshot sync.
-            //
-            // This is the simplest fix, which may add ACL reference count
-            // again if it's already counted in the ACL map of fuzzy
-            // snapshot, which might also happen for deleteNode txn, but
-            // at least it won't cause the ACL not exist issue.
-            //
-            // Later we can audit and delete all non-referenced ACLs from
-            // ACL map when loading the snapshot/txns from disk, like what
-            // we did for the global sessions.
-            Long acls = aclCache.convertAcls(acl);
+            // Intern the ACL before checking whether the node exists: a fuzzy
+            // snapshot can contain the node but omit its ACL (ZOOKEEPER-3306).
+            Long aclId = aclCache.convertAcls(acl);
 
             DataNode existingChild = nodes.get(path);
             if (existingChild != null) {
-                existingChild.acl = acls;
+                // Use the ACL value from the txn; snapshot ids are server-local
+                // and may not resolve. Release the node's old reference to balance
+                // convertAcls, including when both ids are equal.
+                synchronized (existingChild) {
+                    Long previousAcl = existingChild.acl;
+                    existingChild.acl = aclId;
+                    aclCache.removeUsage(previousAcl);
+                    if (!aclId.equals(previousAcl)) {
+                        LOG.info("ACL reference of existing node {} changed from {} to {} while applying a create txn",
+                            path, previousAcl, aclId);
+                    }
+                }
                 throw new NodeExistsException();
             }
 
@@ -478,7 +485,7 @@ public class DataTree {
                 parent.stat.setCversion(parentCVersion);
                 parent.stat.setPzxid(zxid);
             }
-            DataNode child = new DataNode(data, acls, stat);
+            DataNode child = new DataNode(data, aclId, stat);
             parent.addChild(childName);
             nodes.postChange(parentName, parent);
             nodeDataSize.addAndGet(getNodeSize(path, child.data));
@@ -575,7 +582,7 @@ public class DataTree {
         List<ACL> acl;
         nodes.remove(path);
         synchronized (node) {
-            acl = getACL(node);
+            acl = getACLForWatchTrigger(node, path);
             aclCache.removeUsage(node.acl);
             nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
@@ -585,7 +592,7 @@ public class DataTree {
         // separate patch.
         List<ACL> parentAcl;
         synchronized (parent) {
-            parentAcl = getACL(parent);
+            parentAcl = getACLForWatchTrigger(parent, parentName);
             long owner = node.stat.getEphemeralOwner();
             EphemeralType ephemeralType = EphemeralType.get(owner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -657,7 +664,7 @@ public class DataTree {
         List<ACL> acl;
         byte[] lastData;
         synchronized (n) {
-            acl = getACL(n);
+            acl = getACLForWatchTrigger(n, path);
             lastData = n.data;
             nodes.preChange(path, n);
             n.data = data;
@@ -812,6 +819,27 @@ public class DataTree {
         synchronized (node) {
             return aclCache.convertLong(node.acl);
         }
+    }
+
+    /**
+     * Returns the ACL for filtering a node's watch events. A node loaded from a
+     * fuzzy snapshot can reference an ACL id that is missing from the cache
+     * until replay repairs it. In that case this returns
+     * {@link #NO_PERMISSIONS_ACL} instead of throwing, so replay can continue.
+     */
+    private List<ACL> getACLForWatchTrigger(DataNode node, String path) {
+        Long aclId;
+        List<ACL> acls;
+        synchronized (node) {
+            aclId = node.acl;
+            acls = aclCache.convertLongIfCached(aclId);
+        }
+        if (acls != null) {
+            return acls;
+        }
+        LOG.info("ACL id {} of {} is not in the ACL cache; filtering its watch events as unreadable",
+            aclId, path);
+        return NO_PERMISSIONS_ACL;
     }
 
     public int aclCacheSize() {
