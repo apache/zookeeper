@@ -62,6 +62,22 @@ public class ClientCanonicalizeTest extends ZKTestCase {
     }
 
     @Test
+    public void testClientCanonicalizationWithTrailingWhitespace() {
+        SaslServerPrincipal.WrapperInetSocketAddress addr = mock(SaslServerPrincipal.WrapperInetSocketAddress.class);
+        SaslServerPrincipal.WrapperInetAddress ia = mock(SaslServerPrincipal.WrapperInetAddress.class);
+
+        when(addr.getHostName()).thenReturn("zookeeper.apache.org");
+        when(addr.getAddress()).thenReturn(ia);
+        when(ia.getCanonicalHostName()).thenReturn("zk1.apache.org");
+        when(ia.getHostAddress()).thenReturn("127.0.0.1");
+
+        ZKClientConfig conf = new ZKClientConfig();
+        conf.setProperty(ZKClientConfig.ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME, "true ");
+        String principal = SaslServerPrincipal.getServerPrincipal(addr, conf);
+        assertEquals("zookeeper/zk1.apache.org", principal, "The principal should be canonicalized");
+    }
+
+    @Test
     public void testClientCanonicalizationToIp() throws IOException, InterruptedException {
         SaslServerPrincipal.WrapperInetSocketAddress addr = mock(SaslServerPrincipal.WrapperInetSocketAddress.class);
         SaslServerPrincipal.WrapperInetAddress ia = mock(SaslServerPrincipal.WrapperInetAddress.class);

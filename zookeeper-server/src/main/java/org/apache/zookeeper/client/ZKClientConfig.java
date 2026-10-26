@@ -148,7 +148,7 @@ public class ZKClientConfig extends ZKConfig {
      * @return true if the SASL client is enabled.
      */
     public boolean isSaslClientEnabled() {
-        return Boolean.valueOf(getProperty(ENABLE_CLIENT_SASL_KEY, ENABLE_CLIENT_SASL_DEFAULT));
+        return getBoolean(ENABLE_CLIENT_SASL_KEY, Boolean.parseBoolean(ENABLE_CLIENT_SASL_DEFAULT));
     }
 
     /**
