@@ -133,6 +133,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     // Add a enable/disable option for now, we should remove this one when
     // this feature is confirmed to be stable
     public static final String CLOSE_SESSION_TXN_ENABLED = "zookeeper.closeSessionTxn.enabled";
+    private static final String MAX_SESSION_EPHEMERAL_PATH_BYTES = "max_session_ephemeral_path_bytes";
     private static boolean closeSessionTxnEnabled = true;
     private volatile CountDownLatch restoreLatch;
     // exclusive lock for taking snapshot and restore
@@ -2023,6 +2024,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         rootContext.registerGauge("watch_count", zkdb.getDataTree()::getWatchCount);
         rootContext.registerGauge("ephemerals_count", zkdb.getDataTree()::getEphemeralsCount);
+        rootContext.registerGauge(MAX_SESSION_EPHEMERAL_PATH_BYTES,
+                () -> getZKDatabase().getDataTree().getMaxSessionEphemeralPathBytes());
 
         rootContext.registerGauge("approximate_data_size", zkdb.getDataTree()::cachedApproximateDataSize);
 
@@ -2073,6 +2076,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         rootContext.unregisterGauge("watch_count");
         rootContext.unregisterGauge("ephemerals_count");
+        rootContext.unregisterGauge(MAX_SESSION_EPHEMERAL_PATH_BYTES);
         rootContext.unregisterGauge("approximate_data_size");
 
         rootContext.unregisterGauge("global_sessions");
