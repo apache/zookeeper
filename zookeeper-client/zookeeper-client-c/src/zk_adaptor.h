@@ -20,11 +20,14 @@
 #define ZK_ADAPTOR_H_
 
 #include <zookeeper.jute.h>
+
+#ifdef WIN32
+#include "winport.h"
+#endif
+
 #ifdef THREADED
 #ifndef WIN32
 #include <pthread.h>
-#else
-#include "winport.h"
 #endif
 #endif
 #include "zookeeper.h"
