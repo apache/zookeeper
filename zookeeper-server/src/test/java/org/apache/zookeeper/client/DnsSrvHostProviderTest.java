@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -190,6 +191,34 @@ public class DnsSrvHostProviderTest {
 
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> new DnsSrvHostProvider(TEST_DNS_NAME, TEST_SEED, mockDnsSrvResolver, null));
+
+        assertEquals("Invalid DNS SRV refresh interval: -1", exception.getMessage());
+    }
+
+    @Test
+    public void testRefreshIntervalFromClientConfig() throws Exception {
+        final ZKClientConfig clientConfig = new ZKClientConfig();
+        clientConfig.setProperty(ZKClientConfig.DNS_SRV_REFRESH_INTERVAL_SECONDS, "1");
+
+        final SRVRecord[] srvRecords = createMockSrvRecords();
+        when(mockDnsSrvResolver.lookupSrvRecords(TEST_DNS_NAME)).thenReturn(srvRecords);
+
+        try (final DnsSrvHostProvider hostProvider = new DnsSrvHostProvider(TEST_DNS_NAME, TEST_SEED, mockDnsSrvResolver, clientConfig)) {
+            // initial lookup plus at least one periodic refresh
+            verify(mockDnsSrvResolver, timeout(5000).atLeast(2)).lookupSrvRecords(TEST_DNS_NAME);
+        }
+    }
+
+    @Test
+    public void testRefreshIntervalNegativeInClientConfig() throws Exception {
+        final ZKClientConfig clientConfig = new ZKClientConfig();
+        clientConfig.setProperty(ZKClientConfig.DNS_SRV_REFRESH_INTERVAL_SECONDS, "-1");
+
+        final SRVRecord[] srvRecords = createMockSrvRecords();
+        when(mockDnsSrvResolver.lookupSrvRecords(TEST_DNS_NAME)).thenReturn(srvRecords);
+
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new DnsSrvHostProvider(TEST_DNS_NAME, TEST_SEED, mockDnsSrvResolver, clientConfig));
 
         assertEquals("Invalid DNS SRV refresh interval: -1", exception.getMessage());
     }
