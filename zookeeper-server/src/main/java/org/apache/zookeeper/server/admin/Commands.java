@@ -601,7 +601,9 @@ public class Commands {
         @Override
         public CommandResponse runGet(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
-            zkServer.dumpMonitorValues(response::put);
+            if (zkServer != null) {
+                zkServer.dumpMonitorValues(response::put);
+            }
             ServerMetrics.getMetrics().getMetricsProvider().dump(response::put);
             return response;
 
