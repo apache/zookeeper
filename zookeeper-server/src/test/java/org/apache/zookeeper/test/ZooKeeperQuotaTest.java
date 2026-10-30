@@ -41,6 +41,7 @@ import org.apache.zookeeper.cli.DelQuotaCommand;
 import org.apache.zookeeper.cli.ListQuotaCommand;
 import org.apache.zookeeper.cli.MalformedPathException;
 import org.apache.zookeeper.cli.SetQuotaCommand;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -527,6 +528,128 @@ public class ZooKeeperQuotaTest extends ClientBase {
 
         zk.create(path + "/c2" + "/c3", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         validateQuotaExceededMetrics(namespace);
+    }
+
+    @Test
+    public void testSetQuotaWhenStatNodeIsMissing() throws Exception {
+        final String namespace = UUID.randomUUID().toString();
+        final String path = "/" + namespace;
+        zk.create(path, "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(path + "/c1", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // a quota whose limit node was created but whose stat node was not
+        StatsTrack st = new StatsTrack();
+        st.setCountHardLimit(2);
+        zk.create(Quotas.quotaPath(path), null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(Quotas.limitPath(path), st.getStatsBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        // without a stat node the hard quota isn't enforced
+        zk.create(path + "/c2", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        assertEquals(2, new StatsTrack(zk.getData(Quotas.limitPath(path), false, null)).getCountHardLimit());
+        validateRepairedQuota(path, 3, 12L);
+    }
+
+    @Test
+    public void testSetQuotaWhenLimitNodeIsMissing() throws Exception {
+        final String namespace = UUID.randomUUID().toString();
+        final String path = "/" + namespace;
+        zk.create(path, "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        StatsTrack st = new StatsTrack();
+        st.setCountHardLimit(3);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        // a quota whose stat node is left without a limit node, so it is no longer kept up to date
+        zk.delete(Quotas.limitPath(path), -1);
+        zk.create(path + "/c1", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(path + "/c2", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        assertEquals(1, new StatsTrack(zk.getData(Quotas.statPath(path), false, null)).getCount());
+
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        assertEquals(3, new StatsTrack(zk.getData(Quotas.limitPath(path), false, null)).getCountHardLimit());
+        validateRepairedQuota(path, 3, 12L);
+    }
+
+    @Test
+    public void testDeleteQuotaWithLeftoverChildQuotaNode() throws Exception {
+        final String namespace = UUID.randomUUID().toString();
+        final String path = "/" + namespace;
+        zk.create(path, "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(path + "/c1", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // a stat node left behind by an earlier quota on a child path
+        zk.create(Quotas.quotaPath(path), null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(Quotas.quotaPath(path + "/c1"), null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create(Quotas.statPath(path + "/c1"), new StatsTrack().getStatsBytes(),
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        StatsTrack st = new StatsTrack();
+        st.setCountHardLimit(3);
+        SetQuotaCommand.createQuota(zk, path, st);
+
+        DelQuotaCommand.delQuota(zk, path, null);
+
+        assertNull(zk.exists(Quotas.limitPath(path), false));
+        assertNull(zk.exists(Quotas.statPath(path), false));
+    }
+
+    @Test
+    public void testSetAndDeleteQuotaDontWriteQuotaNodesOneByOne() throws Exception {
+        final String path = "/" + UUID.randomUUID();
+        zk.create(path, "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // a client that fails once the first of the two quota nodes has been written alone
+        try (ZooKeeper failingZk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, event -> { }) {
+            @Override
+            public String create(String p, byte[] data, List<ACL> acl, CreateMode mode)
+                    throws KeeperException, InterruptedException {
+                if (p.equals(Quotas.statPath(path))) {
+                    throw new KeeperException.ConnectionLossException();
+                }
+                return super.create(p, data, acl, mode);
+            }
+
+            @Override
+            public void delete(String p, int version) throws KeeperException, InterruptedException {
+                if (p.equals(Quotas.statPath(path)) || p.equals(Quotas.limitPath(path))) {
+                    throw new KeeperException.ConnectionLossException();
+                }
+                super.delete(p, version);
+            }
+        }) {
+            StatsTrack st = new StatsTrack();
+            st.setCountHardLimit(3);
+            SetQuotaCommand.createQuota(failingZk, path, st);
+            assertNotNull(zk.exists(Quotas.limitPath(path), false));
+            assertNotNull(zk.exists(Quotas.statPath(path), false));
+
+            DelQuotaCommand.delQuota(failingZk, path, null);
+            assertNull(zk.exists(Quotas.limitPath(path), false));
+            assertNull(zk.exists(Quotas.statPath(path), false));
+        }
+    }
+
+    private void validateRepairedQuota(String path, long count, long bytes) throws Exception {
+        StatsTrack stats = new StatsTrack(zk.getData(Quotas.statPath(path), false, null));
+        assertEquals(count, stats.getCount());
+        assertEquals(bytes, stats.getBytes());
+
+        // also after the server loads the quota from its snapshot and txn log
+        zk.close();
+        stopServer();
+        startServer();
+        zk = createClient();
+        stats = new StatsTrack(zk.getData(Quotas.statPath(path), false, null));
+        assertEquals(count, stats.getCount());
+        assertEquals(bytes, stats.getBytes());
+
+        try {
+            zk.create(path + "/over", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            fail("should not create a node when it exceeds the hard count quota");
+        } catch (QuotaExceededException e) {
+            //expected
+        }
     }
 
     @Test
