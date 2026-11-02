@@ -30,7 +30,7 @@ jobs:
   site:
     name: website-site
     timeout-minutes: 120
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - name: Set up JDK 25
