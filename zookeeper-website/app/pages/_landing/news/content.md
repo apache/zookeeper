@@ -20,6 +20,22 @@ limitations under the License.
 
 ---
 
+**2 Nov, 2026: release 3.9.7 available**
+
+This is a bugfix release for 3.9 branch.
+
+See [ZooKeeper 3.9.7 Release Notes](https://zookeeper.apache.org/doc/r3.9.7/releasenotes.html) for details.
+
+---
+
+**2 Nov, 2026: release 3.8.8 available**
+
+This is a bugfix release for 3.8 branch.
+
+See [ZooKeeper 3.8.8 Release Notes](https://zookeeper.apache.org/doc/r3.8.8/releasenotes.html) for details.
+
+---
+
 **15 Sept, 2026: release 3.9.6 available**
 
 This is a bugfix release for 3.9 branch.
