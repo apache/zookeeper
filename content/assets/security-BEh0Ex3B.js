@@ -1,4 +1,4 @@
-import{w as s}from"./components-hN-XBjdn.js";import{j as e}from"./jsx-runtime-u17CrQMm.js";import{M as t}from"./mdx-components-Cq8jJ2lR.js";import"./index-De6QeT-n.js";import"./lib-CHpWdEDE.js";import"./errorBoundaries-CQx5HP0z.js";import"./index-Dure4ddt.js";import"./index-B4nikCzj.js";e.jsx(e.Fragment,{children:"ZooKeeper Security"}),e.jsx(e.Fragment,{children:"Security model"}),e.jsx(e.Fragment,{children:"Security is opt-in"}),e.jsx(e.Fragment,{children:"In scope for security reports"}),e.jsx(e.Fragment,{children:"Out of scope for security reports"}),e.jsx(e.Fragment,{children:"Vulnerability reports"}),e.jsx(e.Fragment,{children:"CVE-2026-84501"}),e.jsx(e.Fragment,{children:"CVE-2026-84439"}),e.jsx(e.Fragment,{children:"CVE-2026-79993"}),e.jsx(e.Fragment,{children:"CVE-2026-59969"}),e.jsx(e.Fragment,{children:"CVE-2026-59739"}),e.jsx(e.Fragment,{children:"CVE-2026-24308"}),e.jsx(e.Fragment,{children:"CVE-2026-24281"}),e.jsx(e.Fragment,{children:"CVE-2025-58457"}),e.jsx(e.Fragment,{children:"CVE-2024-51504"}),e.jsx(e.Fragment,{children:"CVE-2024-23944"}),e.jsx(e.Fragment,{children:"CVE-2023-44981"}),e.jsx(e.Fragment,{children:"CVE-2019-0201"}),e.jsx(e.Fragment,{children:"CVE-2018-8012"}),e.jsx(e.Fragment,{children:"CVE-2017-5637"}),e.jsx(e.Fragment,{children:"CVE-2016-5017"});function i(n){const r={a:"a",code:"code",h1:"h1",h2:"h2",h3:"h3",hr:"hr",li:"li",p:"p",strong:"strong",ul:"ul",...n.components};return e.jsxs(e.Fragment,{children:[e.jsx(r.h1,{id:"zookeeper-security",children:"ZooKeeper Security"}),`
+import{w as s}from"./components-hN-XBjdn.js";import{j as e}from"./jsx-runtime-u17CrQMm.js";import{M as t}from"./mdx-components-Cq8jJ2lR.js";import"./index-De6QeT-n.js";import"./lib-CHpWdEDE.js";import"./errorBoundaries-CQx5HP0z.js";import"./index-Dure4ddt.js";import"./index-B4nikCzj.js";e.jsx(e.Fragment,{children:"ZooKeeper Security"}),e.jsx(e.Fragment,{children:"Security model"}),e.jsx(e.Fragment,{children:"Security is opt-in"}),e.jsx(e.Fragment,{children:"In scope for security reports"}),e.jsx(e.Fragment,{children:"Out of scope for security reports"}),e.jsx(e.Fragment,{children:"Vulnerability reports"}),e.jsx(e.Fragment,{children:"CVE-2026-115448"}),e.jsx(e.Fragment,{children:"CVE-2026-100300"}),e.jsx(e.Fragment,{children:"CVE-2026-100252"}),e.jsx(e.Fragment,{children:"CVE-2026-100235"}),e.jsx(e.Fragment,{children:"CVE-2026-84501"}),e.jsx(e.Fragment,{children:"CVE-2026-84439"}),e.jsx(e.Fragment,{children:"CVE-2026-79993"}),e.jsx(e.Fragment,{children:"CVE-2026-59969"}),e.jsx(e.Fragment,{children:"CVE-2026-59739"}),e.jsx(e.Fragment,{children:"CVE-2026-24308"}),e.jsx(e.Fragment,{children:"CVE-2026-24281"}),e.jsx(e.Fragment,{children:"CVE-2025-58457"}),e.jsx(e.Fragment,{children:"CVE-2024-51504"}),e.jsx(e.Fragment,{children:"CVE-2024-23944"}),e.jsx(e.Fragment,{children:"CVE-2023-44981"}),e.jsx(e.Fragment,{children:"CVE-2019-0201"}),e.jsx(e.Fragment,{children:"CVE-2018-8012"}),e.jsx(e.Fragment,{children:"CVE-2017-5637"}),e.jsx(e.Fragment,{children:"CVE-2016-5017"});function i(n){const r={a:"a",code:"code",h1:"h1",h2:"h2",h3:"h3",hr:"hr",li:"li",p:"p",strong:"strong",ul:"ul",...n.components};return e.jsxs(e.Fragment,{children:[e.jsx(r.h1,{id:"zookeeper-security",children:"ZooKeeper Security"}),`
 `,e.jsxs(r.p,{children:["The Apache Software Foundation takes security issues very seriously. Due to the infrastructure nature of the Apache ZooKeeper project specifically, we haven't had many reports over time, but it doesn't mean that we haven't had concerns over some bugs and vulnerabilities. If you have any concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the e-mail address ",e.jsx(r.a,{href:"mailto:security@zookeeper.apache.org?Subject=%5BSECURITY%5D%20My%20security%20issue",children:"security@zookeeper.apache.org"}),". In the message, try to provide a description of the issue and ideally a way of reproducing it. Note that this security address should be used only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly via jira and the mailing lists. ",e.jsx(r.strong,{children:"Please report any security problems to the project security address before disclosing it publicly."})]}),`
 `,e.jsxs(r.p,{children:["The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their ",e.jsx(r.a,{href:"https://security.apache.org/report/",children:"Web page"})," for more information."]}),`
 `,e.jsx(r.h2,{id:"security-model",children:"Security model"}),`
@@ -34,6 +34,10 @@ import{w as s}from"./components-hN-XBjdn.js";import{j as e}from"./jsx-runtime-u1
 `]}),`
 `,e.jsx(r.h2,{id:"vulnerability-reports",children:"Vulnerability reports"}),`
 `,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-115448",children:"CVE-2026-115448"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-100300",children:"CVE-2026-100300"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-100252",children:"CVE-2026-100252"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-100235",children:"CVE-2026-100235"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-84501",children:"CVE-2026-84501"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-84439",children:"CVE-2026-84439"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2026-79993",children:"CVE-2026-79993"})}),`
@@ -50,7 +54,109 @@ import{w as s}from"./components-hN-XBjdn.js";import{j as e}from"./jsx-runtime-u1
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2017-5637",children:"CVE-2017-5637"})}),`
 `,e.jsx(r.li,{children:e.jsx(r.a,{href:"#cve-2016-5017",children:"CVE-2016-5017"})}),`
 `]}),`
-`,e.jsx(r.p,{children:"--"}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-115448",children:"CVE-2026-115448"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Unbounded recursion in snapshot serialization allows a client to render the server unrecoverable"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"}),`
+CVSS 4.0: 8.7 (high) CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.9.0 through 3.9.7"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.8.0 through 3.8.8"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:`Uncontrolled recursion in Apache ZooKeeper. The server serializes its data tree to a snapshot by recursing one stack frame
+per znode level, with no depth bound. A client permitted to create znodes (the default root ACL is open) can build a
+chain of nested znodes deep enough that taking a snapshot exhausts the JVM stack and kills the snapshot thread; sizes
+stay within jute.maxbuffer, so existing limits do not prevent it. This is a denial of service that becomes persistent:
+on restart the server rebuilds the deep tree from its transaction log and fails again while taking the startup snapshot,
+so it does not return to service, and recovery can entail data loss. The same log affects a leader and its followers, so
+it can spread across an ensemble.`}),`
+`,e.jsx(r.p,{children:`This issue affects Apache ZooKeeper 3.8.0 through 3.8.7 and 3.9.0 through 3.9.6. Users are recommended to upgrade to 3.8.8
+or 3.9.7, which fix the issue. As a workaround, use ACLs and authentication to restrict znode creation rather than relying
+on the default open root ACL.`}),`
+`,e.jsx(r.p,{children:"This issue is being tracked as ZOOKEEPER-5097"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Credit:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsxs(r.li,{children:["Sai Sreewathsa Kovalluri, Shon Babu, and Kannan K of Innspark Solutions (",e.jsx(r.a,{href:"https://innspark.in/",children:"https://innspark.in/"}),") (reporter)"]}),`
+`,e.jsx(r.li,{children:"Prasath Jayasundar & PayPal Cyber Security Team (reporter)"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"References:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-115448",children:"https://www.cve.org/CVERecord?id=CVE-2026-115448"})}),`
+`,e.jsx(r.li,{children:e.jsx(r.a,{href:"https://issues.apache.org/jira/browse/ZOOKEEPER-5097",children:"https://issues.apache.org/jira/browse/ZOOKEEPER-5097"})}),`
+`]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-100300",children:"CVE-2026-100300"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Unauthenticated persistent denial of service via unvalidated quota-node data and paths crashing the transaction-apply thread"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"}),` important
+CVSS 4.0: 8.7 (high) CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.9.0 through 3.9.6"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.8.0 through 3.8.7"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:`Improper handling of exceptional conditions in the quota subsystem of Apache ZooKeeper allows an attacker able to write
+under the /zookeeper/quota subtree — unauthenticated on default deployments, where that subtree is world-writable — to
+crash the server's critical request-processing thread and render the on-disk data directory permanently unbootable.`}),`
+`,e.jsx(r.p,{children:`This issue affects Apache ZooKeeper up to and including 3.9.6. Users are recommended to upgrade to version 3.8.8 or 3.9.7,
+which fixes the issue.`}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," cunyi li ",e.jsx(r.a,{href:"mailto:xiaoheihei1107@gmail.com",children:"xiaoheihei1107@gmail.com"})," (reporter)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-100300",children:"https://www.cve.org/CVERecord?id=CVE-2026-100300"})]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-100252",children:"CVE-2026-100252"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"SASL authorization bypass on the client port through a client-supplied authorization ID"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"}),` important
+CVSS 4.0: 8.6 (high) CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.9.0 through 3.9.6"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.8.0 through 3.8.7"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:"Improper Authorization vulnerability in Apache ZooKeeper."}),`
+`,e.jsx(r.p,{children:`When SASL authentication is enabled on the client port, the server's SASL callback handler grants every authorization
+identity (authzid) that a client requests, without checking it against the principal the client authenticated as. The
+server then tries to replace the requested identity with a canonical form of the authenticated principal, derived from
+the zookeeper.security.auth_to_local rules. If no rule applies to the principal, canonicalization fails and the error is
+only logged. The client-requested authzid then becomes the session's SASL identity for all ACL checks.`}),`
+`,e.jsx(r.p,{children:`An authenticated client whose principal is not covered by the auth_to_local rules can therefore claim any SASL identity.
+With the default rules, this includes any Kerberos principal from a realm other than the server's default realm, such as
+a principal from a cross-realm trusted realm. The client then gets the permissions granted to that identity in sasl ACLs.
+If the requested identity matches a configured zookeeper.superUser, it gets superuser access to the whole data tree.`}),`
+`,e.jsx(r.p,{children:"Users are recommended to upgrade to version 3.8.8 or 3.9.7, which fixes the issue."}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Credit:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsxs(r.li,{children:["cunyi li ",e.jsx(r.a,{href:"mailto:xiaoheihei1107@gmail.com",children:"xiaoheihei1107@gmail.com"})," (reporter)"]}),`
+`,e.jsx(r.li,{children:"Prasath Jayasundar & PayPal Cyber Security Team (reporter)"}),`
+`]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-100252",children:"https://www.cve.org/CVERecord?id=CVE-2026-100252"})]}),`
+`,e.jsx(r.hr,{}),`
+`,e.jsx(r.h3,{id:"cve-2026-100235",children:"CVE-2026-100235"}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"ACL enforcement bypass allows unauthorized operations to commit after an ACL revocation"})}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"}),` moderate
+CVSS 4.0: 6.0 (medium) CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:N/VI:H/VA:N/SC:N/SI:N/SA:N`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Affected versions:"})}),`
+`,e.jsxs(r.ul,{children:[`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.9.0 through 3.9.6"}),`
+`,e.jsx(r.li,{children:"Apache ZooKeeper 3.8.0 through 3.8.7"}),`
+`]}),`
+`,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Description:"})}),`
+`,e.jsx(r.p,{children:`Incorrect authorization due to a time-of-check to time-of-use (TOCTOU) race condition in the setACL request handling of
+Apache ZooKeeper.`}),`
+`,e.jsx(r.p,{children:`When a node's ACL is changed via setACL, the pending change is not published to the server's outstanding change record
+for that node. Any request that is prepared (and authorized) after the setACL is submitted but before it commits is therefore
+checked against the previous, pre-revocation ACL, yet is applied to the data tree after the ACL change has taken effect.
+A client that currently holds a permission can use this window to perform operations requiring that permission through
+and after its revocation — for example, committing writes or deletes after losing write access, or re-granting itself full
+permissions, which persistently defeats the revocation. In deployments transitioning from the default OPEN_ACL_UNSAFE ACL
+to a restrictive ACL, any unauthenticated client can exploit this during the transition.`}),`
+`,e.jsx(r.p,{children:`This issue affects Apache ZooKeeper up to and including 3.9.6. Users are recommended to upgrade to version 3.8.8 or 3.9.7,
+which fixes the issue.`}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Credit:"})," cunyi li ",e.jsx(r.a,{href:"mailto:xiaoheihei1107@gmail.com",children:"xiaoheihei1107@gmail.com"})," (reporter)"]}),`
+`,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"References:"})," ",e.jsx(r.a,{href:"https://www.cve.org/CVERecord?id=CVE-2026-100235",children:"https://www.cve.org/CVERecord?id=CVE-2026-100235"})]}),`
+`,e.jsx(r.hr,{}),`
 `,e.jsx(r.h3,{id:"cve-2026-84501",children:"CVE-2026-84501"}),`
 `,e.jsx(r.p,{children:e.jsx(r.strong,{children:"Operational log forgery via newline injection in EnsembleAuthenticationProvider"})}),`
 `,e.jsxs(r.p,{children:[e.jsx(r.strong,{children:"Severity:"})," moderate"]}),`
