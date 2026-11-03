@@ -60,6 +60,10 @@ The following are **not** in scope for private disclosure:
 
 ## Vulnerability reports
 
+- [CVE-2026-115448](#cve-2026-115448)
+- [CVE-2026-100300](#cve-2026-100300)
+- [CVE-2026-100252](#cve-2026-100252)
+- [CVE-2026-100235](#cve-2026-100235)
 - [CVE-2026-84501](#cve-2026-84501)
 - [CVE-2026-84439](#cve-2026-84439)
 - [CVE-2026-79993](#cve-2026-79993)
@@ -76,7 +80,146 @@ The following are **not** in scope for private disclosure:
 - [CVE-2017-5637](#cve-2017-5637)
 - [CVE-2016-5017](#cve-2016-5017)
 
---
+---
+
+### CVE-2026-115448
+
+**Unbounded recursion in snapshot serialization allows a client to render the server unrecoverable**
+
+**Severity:**
+CVSS 4.0: 8.7 (high) CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N
+
+**Affected versions:**
+
+- Apache ZooKeeper 3.9.0 through 3.9.7
+- Apache ZooKeeper 3.8.0 through 3.8.8
+
+**Description:**
+
+Uncontrolled recursion in Apache ZooKeeper. The server serializes its data tree to a snapshot by recursing one stack frame 
+per znode level, with no depth bound. A client permitted to create znodes (the default root ACL is open) can build a 
+chain of nested znodes deep enough that taking a snapshot exhausts the JVM stack and kills the snapshot thread; sizes 
+stay within jute.maxbuffer, so existing limits do not prevent it. This is a denial of service that becomes persistent: 
+on restart the server rebuilds the deep tree from its transaction log and fails again while taking the startup snapshot, 
+so it does not return to service, and recovery can entail data loss. The same log affects a leader and its followers, so 
+it can spread across an ensemble.
+
+This issue affects Apache ZooKeeper 3.8.0 through 3.8.7 and 3.9.0 through 3.9.6. Users are recommended to upgrade to 3.8.8 
+or 3.9.7, which fix the issue. As a workaround, use ACLs and authentication to restrict znode creation rather than relying 
+on the default open root ACL.
+
+This issue is being tracked as ZOOKEEPER-5097
+
+**Credit:**
+
+- Sai Sreewathsa Kovalluri, Shon Babu, and Kannan K of Innspark Solutions (https://innspark.in/) (reporter)
+- Prasath Jayasundar & PayPal Cyber Security Team (reporter)
+
+**References:**
+
+- https://www.cve.org/CVERecord?id=CVE-2026-115448
+- https://issues.apache.org/jira/browse/ZOOKEEPER-5097
+
+---
+
+### CVE-2026-100300
+
+**Unauthenticated persistent denial of service via unvalidated quota-node data and paths crashing the transaction-apply thread**
+
+**Severity:** important
+CVSS 4.0: 8.7 (high) CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N
+
+**Affected versions:**
+
+- Apache ZooKeeper 3.9.0 through 3.9.6
+- Apache ZooKeeper 3.8.0 through 3.8.7
+
+**Description:**
+
+Improper handling of exceptional conditions in the quota subsystem of Apache ZooKeeper allows an attacker able to write 
+under the /zookeeper/quota subtree — unauthenticated on default deployments, where that subtree is world-writable — to 
+crash the server's critical request-processing thread and render the on-disk data directory permanently unbootable.
+
+This issue affects Apache ZooKeeper up to and including 3.9.6. Users are recommended to upgrade to version 3.8.8 or 3.9.7, 
+which fixes the issue.
+
+**Credit:** cunyi li <xiaoheihei1107@gmail.com> (reporter)
+
+**References:** https://www.cve.org/CVERecord?id=CVE-2026-100300
+
+---
+
+### CVE-2026-100252
+
+**SASL authorization bypass on the client port through a client-supplied authorization ID**
+
+**Severity:** important
+CVSS 4.0: 8.6 (high) CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N
+
+**Affected versions:**
+
+- Apache ZooKeeper 3.9.0 through 3.9.6
+- Apache ZooKeeper 3.8.0 through 3.8.7
+
+**Description:**
+
+Improper Authorization vulnerability in Apache ZooKeeper.
+
+When SASL authentication is enabled on the client port, the server's SASL callback handler grants every authorization 
+identity (authzid) that a client requests, without checking it against the principal the client authenticated as. The 
+server then tries to replace the requested identity with a canonical form of the authenticated principal, derived from 
+the zookeeper.security.auth_to_local rules. If no rule applies to the principal, canonicalization fails and the error is 
+only logged. The client-requested authzid then becomes the session's SASL identity for all ACL checks.
+
+An authenticated client whose principal is not covered by the auth_to_local rules can therefore claim any SASL identity. 
+With the default rules, this includes any Kerberos principal from a realm other than the server's default realm, such as 
+a principal from a cross-realm trusted realm. The client then gets the permissions granted to that identity in sasl ACLs. 
+If the requested identity matches a configured zookeeper.superUser, it gets superuser access to the whole data tree.
+
+Users are recommended to upgrade to version 3.8.8 or 3.9.7, which fixes the issue.
+
+**Credit:**
+
+- cunyi li <xiaoheihei1107@gmail.com> (reporter)
+- Prasath Jayasundar & PayPal Cyber Security Team (reporter)
+
+**References:** https://www.cve.org/CVERecord?id=CVE-2026-100252
+
+---
+
+### CVE-2026-100235
+
+**ACL enforcement bypass allows unauthorized operations to commit after an ACL revocation**
+
+**Severity:** moderate
+CVSS 4.0: 6.0 (medium) CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:N/VI:H/VA:N/SC:N/SI:N/SA:N
+
+**Affected versions:**
+
+- Apache ZooKeeper 3.9.0 through 3.9.6
+- Apache ZooKeeper 3.8.0 through 3.8.7
+
+**Description:**
+
+Incorrect authorization due to a time-of-check to time-of-use (TOCTOU) race condition in the setACL request handling of 
+Apache ZooKeeper.
+
+When a node's ACL is changed via setACL, the pending change is not published to the server's outstanding change record 
+for that node. Any request that is prepared (and authorized) after the setACL is submitted but before it commits is therefore 
+checked against the previous, pre-revocation ACL, yet is applied to the data tree after the ACL change has taken effect. 
+A client that currently holds a permission can use this window to perform operations requiring that permission through 
+and after its revocation — for example, committing writes or deletes after losing write access, or re-granting itself full 
+permissions, which persistently defeats the revocation. In deployments transitioning from the default OPEN_ACL_UNSAFE ACL 
+to a restrictive ACL, any unauthenticated client can exploit this during the transition.
+
+This issue affects Apache ZooKeeper up to and including 3.9.6. Users are recommended to upgrade to version 3.8.8 or 3.9.7, 
+which fixes the issue.
+
+**Credit:** cunyi li <xiaoheihei1107@gmail.com> (reporter)
+
+**References:** https://www.cve.org/CVERecord?id=CVE-2026-100235
+
+---
 
 ### CVE-2026-84501
 
