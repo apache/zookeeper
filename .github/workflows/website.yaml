@@ -30,6 +30,8 @@ jobs:
   site:
     name: website-site
     timeout-minutes: 120
+    # Playwright's bundled browsers are compiled against ICU 74 which is not available on  Ubuntu 26.04 (the current ubuntu-latest).
+    # TODO: Upgrade Playwright to version that supports the newer Ubuntu (and its ICU version) and switch back to ubuntu-latest.
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
