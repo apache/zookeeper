@@ -246,7 +246,10 @@ public class CreateContainerTest extends ClientBase {
 
     @Test
     @Timeout(value = 30)
-    public void testMaxPerMinute() throws InterruptedException {
+    public void testMaxPerMinute() throws KeeperException, InterruptedException {
+        for (String path : Arrays.asList("/one", "/two", "/three", "/four")) {
+            createEmptiedContainer(path);
+        }
         final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
         RequestProcessor processor = new RequestProcessor() {
             @Override
@@ -284,6 +287,132 @@ public class CreateContainerTest extends ClientBase {
         assertEquals(0, queue.size());
         assertEquals("/three", queue.poll(5, TimeUnit.SECONDS));
         assertEquals("/four", queue.poll(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testReplacementPersistentNodeIsNotDeleted() throws KeeperException, InterruptedException {
+        createEmptiedContainer("/foo");
+        long oldCzxid = zk.exists("/foo", false).getCzxid();
+
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
+                // the container is replaced by a persistent node after it was checked for deletion
+                replace("/foo", "data".getBytes(), CreateMode.PERSISTENT);
+                super.postDeleteRequest(request);
+            }
+        };
+        containerManager.checkContainers();
+
+        assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
+        Stat stat = zk.exists("/foo", false);
+        assertNotNull(stat, "Persistent node should not have been deleted");
+        assertNotEquals(oldCzxid, stat.getCzxid());
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testReplacementContainerIsNotDeleted() throws KeeperException, InterruptedException {
+        createEmptiedContainer("/foo");
+        long oldCzxid = zk.exists("/foo", false).getCzxid();
+
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
+                // the container is replaced by a new container after it was checked for deletion
+                replace("/foo", new byte[0], CreateMode.CONTAINER);
+                super.postDeleteRequest(request);
+            }
+        };
+        containerManager.checkContainers();
+
+        assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
+        Stat stat = zk.exists("/foo", false);
+        assertNotNull(stat, "New container should not have been deleted");
+        assertNotEquals(oldCzxid, stat.getCzxid());
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testReplacementContainerIsCheckedAgainBeforeDeletion() throws KeeperException, InterruptedException {
+        createEmptiedContainer("/foo");
+
+        AtomicInteger deletesQty = new AtomicInteger(0);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+            @Override protected Collection<String> getCandidates() {
+                Collection<String> candidates = super.getCandidates();
+                assertTrue(candidates.contains("/foo"));
+                // the container is replaced by a new container before its delete request is sent
+                replace("/foo", new byte[0], CreateMode.CONTAINER);
+                return candidates;
+            }
+
+            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
+                deletesQty.incrementAndGet();
+                super.postDeleteRequest(request);
+            }
+        };
+        containerManager.checkContainers();
+
+        assertEquals(0, deletesQty.get());
+        assertNotNull(zk.exists("/foo", false), "New container should not have been deleted");
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testDeletedCandidateIsNotSentForDeletion() throws KeeperException, InterruptedException {
+        createEmptiedContainer("/foo");
+
+        AtomicInteger deletesQty = new AtomicInteger(0);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+            @Override protected Collection<String> getCandidates() {
+                Collection<String> candidates = super.getCandidates();
+                assertTrue(candidates.contains("/foo"));
+                // the container is deleted before its delete request is sent
+                try {
+                    zk.delete("/foo", -1);
+                } catch (KeeperException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                return candidates;
+            }
+
+            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
+                deletesQty.incrementAndGet();
+                super.postDeleteRequest(request);
+            }
+        };
+        containerManager.checkContainers();
+
+        // there is no mzxid to send, and a request for any node at the path could delete a new one
+        assertEquals(0, deletesQty.get());
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testDeleteContainerRequestDoesNotDeletePersistentNode() throws Exception {
+        zk.create("/foo", "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        DeleteContainerRequest record = new DeleteContainerRequest("/foo");
+        Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
+        serverFactory.getZooKeeperServer().firstProcessor.processRequest(request);
+
+        assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
+        assertNotNull(zk.exists("/foo", false), "Persistent node should not have been deleted");
+    }
+
+    private void createEmptiedContainer(String path) throws KeeperException, InterruptedException {
+        zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
+        zk.create(path + "/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.delete(path + "/bar", -1);
+    }
+
+    private void replace(String path, byte[] data, CreateMode createMode) {
+        try {
+            zk.delete(path, -1);
+            zk.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
+        } catch (KeeperException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test

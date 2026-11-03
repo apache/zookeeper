@@ -333,7 +333,15 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (nodeRecord.childCount > 0) {
                 throw new KeeperException.NotEmptyException(path);
             }
-            if (EphemeralType.get(nodeRecord.stat.getEphemeralOwner()) == EphemeralType.NORMAL) {
+            // the node may have been replaced or modified after it was checked for deletion,
+            // so only delete a container or TTL node that is unchanged since then
+            EphemeralType ephemeralType = EphemeralType.get(nodeRecord.stat.getEphemeralOwner());
+            if (ephemeralType != EphemeralType.CONTAINER && ephemeralType != EphemeralType.TTL) {
+                LOG.info("Not deleting {}: it is not a container or TTL node", path);
+                throw new KeeperException.BadVersionException(path);
+            }
+            if (txn.getMzxid() != DeleteContainerRequest.ANY_MZXID && txn.getMzxid() != nodeRecord.stat.getMzxid()) {
+                LOG.info("Not deleting {}: it was replaced or modified after it was checked", path);
                 throw new KeeperException.BadVersionException(path);
             }
             ChangeRecord parentRecord = getRecordForPath(parentPath);
