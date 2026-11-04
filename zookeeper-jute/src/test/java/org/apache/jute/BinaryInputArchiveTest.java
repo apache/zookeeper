@@ -21,8 +21,8 @@ package org.apache.jute;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -43,13 +43,9 @@ public class BinaryInputArchiveTest {
                 Byte.MAX_VALUE, Byte.MAX_VALUE, Byte.MAX_VALUE, Byte.MAX_VALUE};
         ByteArrayInputStream is = new ByteArrayInputStream(buf);
         BinaryInputArchive ia = BinaryInputArchive.getArchive(is);
-        try {
-            ia.readString("");
-            fail("Should have thrown an IOException");
-        } catch (IOException e) {
-            assertTrue(e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH),
-                    () -> "Not 'Unreasonable length' exception: " + e);
-        }
+        IOException e = assertThrows(IOException.class, () -> ia.readString(""));
+        assertTrue(e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH),
+                () -> "Not 'Unreasonable length' exception: " + e);
     }
 
     private void checkWriterAndReader(TestWriter writer, TestReader reader) {
@@ -151,13 +147,9 @@ public class BinaryInputArchiveTest {
     int recordSize = maxBufferSize + extraMaxBufferSize + 100;
     BinaryInputArchive ia =
         getBinaryInputArchive(recordSize, maxBufferSize, extraMaxBufferSize);
-    try {
-      ia.readString("");
-      fail("Should have thrown an IOException");
-    } catch (IOException e) {
-      assertTrue(e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH),
-              () -> "Not 'Unreasonable length' exception: " + e);
-    }
+    IOException e = assertThrows(IOException.class, () -> ia.readString(""));
+    assertTrue(e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH),
+            () -> "Not 'Unreasonable length' exception: " + e);
   }
 
   /**
