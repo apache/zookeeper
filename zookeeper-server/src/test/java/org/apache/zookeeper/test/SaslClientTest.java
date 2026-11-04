@@ -49,7 +49,7 @@ public class SaslClientTest extends ZKTestCase {
         System.clearProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
         assertTrue(new ZKClientConfig().isSaslClientEnabled(), "SASL client disabled");
 
-        for (String value : Arrays.asList("true", "TRUE")) {
+        for (String value : Arrays.asList("true", "TRUE", "true ")) {
             System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY, value);
             assertTrue(new ZKClientConfig().isSaslClientEnabled(), "SASL client disabled");
         }
