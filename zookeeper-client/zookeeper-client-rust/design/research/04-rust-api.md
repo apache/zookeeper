@@ -1,0 +1,1627 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+
+# Native Rust public API (zk-client, package `apache-zookeeper`)
+
+## 1. Scope and design rules
+
+This document specifies the public Rust API for Rust applications. The C-compatible drop-in is out of scope, except for the barriers in §19.3 that keep native-only features out of it. The design follows these rules.
+
+1. **It is independent of C quirks.** The API runs on the same `zk-proto` state machine as the C shim, but always with `Compat::NATIVE` (02 §14, values from the ledger, CC-15, 00 §4). No legacy behavior reaches it unless it is also the best Java-equivalent behavior.
+2. **A request is submitted when the method is called, not when the future is first polled.** Call order is xid order, wire order and reply order (K21). The C client also builds and queues the request inside the call: the xid is drawn and the frame is appended to the send queue before `zoo_awget` returns (zookeeper.c:4177-4198).
+3. **No user code runs under a library lock, and no user callback runs on the IO thread or IO task.** Results and watch events arrive through futures and streams. There is no `watcher_fn`-style callback and no default watcher. This removes, by construction, the C deadlocks that come from calling sync APIs on the IO thread (zookeeper.c:3632-3651, mt_adaptor.c:81-89) and from completions invoked inside `enter_critical` (zookeeper.c:2081-2091). The few user trait objects that must run on the IO side (`Resolve`, `SaslMechanism`, `CredentialSource`, `Metrics`) run with every internal lock released, inside `catch_unwind` (§13).
+4. **Types encode the rules.** Paths are validated. `CreateMode` carries its TTL. ACL permissions are bitflags. `Version`, `Zxid` and `SessionId` are newtypes. Results are typed per operation.
+5. **No process-global mutable state.** Each client has its own xid counter, RNG and logging context. The library never reseeds libc `srandom`/`srand48` (C does, zookeeper.c:753-782) and has no global `logLevel`.
+6. **`#![forbid(unsafe_code)]`** in `zk-client` and in every workspace crate it depends on. The only `unsafe` in a native build is inside audited, pinned third-party crates from the allowlist (§18):
+   - always: `rustix` and its libc closure (zk-driver), and `zeroize` (zk-proto, CC-19, 00 §4);
+   - with `tls-rustls`: the same rustls/RustCrypto closure that the drop-in ships for the selected provider, `ring`, `aws-lc-rs` with `aws-lc-sys`, or `aws-lc-rs` `fips` with `aws-lc-fips-sys` (§18; K14, 00 §3; 06 §3);
+   - with `tls-platform-verifier`: `rustls-platform-verifier` and its per-platform closure (§16.1);
+   - with `tokio` (Unix targets only): tokio and its dependencies;
+   - with `sasl-gssapi`: `libgssapi`, which links the system GSSAPI library.
+7. **Minimum server version is 3.5.0.** Operations added in 3.6 and 3.9 are exposed. On older servers they fail with the server's error (§12).
+8. **Delivery.** The native API and its plaintext drivers are delivered at M0 (CC-26, 00 §4). `tls-rustls`, `tls-platform-verifier`, `sasl` and `sasl-gssapi` follow the shared TLS/SASL work at M3. On Windows the native API is delivered at M4 with the threaded driver only, after the Windows waker work (CC-33, 00 §4; §4). If the M4 Windows spike fails, Windows is not a supported native target in that release: the native API's Windows support, and NT-05, follow in the first release whose Windows build passes the M4 exit criteria of 08 §15.3, together with the drop-in (DV-BLD-7). The recipes crate (§22) is delivered after M5, as milestone M5R.
+
+---
+
+## 2. Crates and module layout
+
+### 2.1 Crate graph
+
+The crate graph is K1:
+
+```
+zk-jute  ←  zk-proto  ←  zk-driver  ←  zk-client (apache-zookeeper)  ←  zk-recipes     native applications
+                              ↑
+                            zk-ffi  ←  C shim                                         libzookeeper_{mt,st}
+```
+
+Every workspace crate has `publish = false` in its `Cargo.toml`. The crates ship only in the ASF source release.
+
+| Workspace crate | Package / lib name | Contents | `unsafe` | Normal deps (non-optional) |
+|---|---|---|---|---|
+| `zk-jute` | `apache-zookeeper-jute` / `zookeeper_jute` | Generated records and codec: generated by the Java `RustGenerator` in zookeeper-jute (`Rcc -l rust`, Maven execution `generate-Rust-Jute`) into `crates/zk-jute/src/generated/` (01 §8); output git-ignored and listed in `Cargo.toml` `include` | forbid | none |
+| `zk-proto` | `apache-zookeeper-proto` / `zookeeper_proto` | Sans-IO session machine, `Compat`, `DriverMode`, chroot policies, strict and legacy path functions, host-string parsers, `SecretBytes` | forbid | zk-jute, `zeroize` (`default-features = false`, `features = ["alloc"]`) |
+| `zk-driver` | `apache-zookeeper-driver` / `zookeeper_driver` | Threaded driver, caller-polled driver, tokio driver (feature `tokio`, Unix targets only), named std threads (feature `std-thread`). `TlsConn`/`TlsConnector` traits and their one implementation `RustlsConn`, plus the trust and identity loaders (feature `tls` with exactly one provider feature, `tls-ring`, `tls-aws-lc-rs` or `tls-aws-lc-rs-fips`; 06 §3.1). `Clock` seam. TCP over rustix sockets; poll plus the coalescing waker (a pipe on Unix, a loopback socket pair on Windows, 03 §5.3, §8.8) | forbid | zk-proto, zk-jute, `rustix` (`std,net,event,pipe,use-libc`) |
+| `zk-client` | **`apache-zookeeper` / `apache_zookeeper`** | The native public API only (this document) | forbid | zk-driver (feature `std-thread`), zk-proto, zk-jute, `bitflags`, `zeroize`, `rustix` (`process`, `use-libc`; for the set-uid check of §16.1, 01 §3.2) |
+| `zk-ffi` | `zk-ffi` / `zk_ffi` (staticlib) | Internal `zkrs_*` C ABI | `deny` at the root; unsafe operations only in `abi::raw` (01 §3.2) | zk-driver (`default-features = false`; features `tls,tls-<provider>` when the C build enables TLS), zk-proto, zk-jute, libc, windows-sys (Windows) (01 §3.2) |
+| `zk-recipes` | `apache-zookeeper-recipes` / `apache_zookeeper_recipes` | DistributedLock, LeaderLatch, TreeCache (§22) | forbid | zk-client (`default-features = false`) |
+
+zk-jute has no generator crate and no committed generated source. The Maven execution `generate-Rust-Jute` writes the generated file `crates/zk-jute/src/generated/zookeeper_jute.rs` at `generate-sources`, and git ignores it (01 §8). If it is missing, `zk-jute/build.rs` fails with a message that mirrors the jute check in configure.ac (01 §8). A Rust application therefore builds the native crates from a ZooKeeper source tree, such as the unpacked source release, in which that Maven step has run, and uses them as path dependencies.
+
+Why the split:
+
+- **Native-only features cannot reach the C libraries through the crate graph.** zk-ffi depends on zk-driver, never on zk-client. `PersistentWatcher`, `add_watch`, the native TLS options API, native SASL, `tracing`, `futures-core` and tokio therefore cannot be linked into `libzookeeper_{st,mt}`. CI enforces it with rules R1 (`cargo tree -p zk-ffi -e normal -i apache-zookeeper` is empty) and R4 (01 §3.3; `cargo tree -p zk-ffi -e normal,build --target <t> --features <f>` equals the golden for that configuration: `supply-chain/closure/zk-ffi-<target>-notls.txt`, `zk-ffi-<target>.txt` for `tls,tls-ring`, `zk-ffi-<target>-aws-lc-rs.txt` for `tls,tls-aws-lc-rs`, or `zk-ffi-<target>-aws-lc-rs-fips.txt` for `tls,tls-aws-lc-rs-fips`), plus the 08 §10 G2 graph check (`cargo tree -p zk-ffi -e normal` never lists `apache-zookeeper`, `apache-zookeeper-recipes`, `tokio`, `tracing`, `futures-core`, `rustls-platform-verifier` and the other crates that 08 §10 G2 names). cargo-deny bans `rustls-platform-verifier` from the zk-ffi closure.
+- **rustls is shared, not native-only.** `RustlsConn` and the loaders in `zk-driver/src/net/tls/` serve both profiles (06 §3.1). The drop-in enables zk-driver's `tls` and one provider feature (`tls-ring`, `tls-aws-lc-rs` or `tls-aws-lc-rs-fips`) through the zk-ffi features of the same names. The native API enables `tls` and the same provider feature through zk-client's `tls-rustls` and its provider feature of the same name (§18). What stays native-only is the zk-client configuration surface (`TlsOptions`, §16.1), the `WebPki` default, the platform verifier and the `DefaultRoots` check in `TlsOptionsBuilder::build`.
+- **Feature unification.** The staticlib is built with `cargo build --locked --profile capi -p zk-ffi --features <set>`, with no `--workspace` (01 §13). `<set>` is `tls,tls-${rust-tls-provider}` when the C build enables TLS, otherwise empty (01 §6.1, §13.2). zk-driver's `tokio` and `std-thread` features, which zk-client enables, then cannot unify into the C build. The native crates are built by a separate invocation, `cargo build --locked --workspace --release --exclude zk-ffi`.
+- **Semver.** Only `apache-zookeeper` and `apache-zookeeper-recipes` promise a stable API. jute, proto and driver are implementation crates. All native crates are versioned in lockstep with the ZooKeeper release, and the internal ones are pinned with `=x.y.z`. zk-client never re-exports proto or driver types.
+
+**Native threaded driver.** The native API uses zk-driver's threaded driver **with no dispatch thread**: one IO thread per client, `rustix::event::poll` over `[waker, socket]`, and the same coalescing waker as libzookeeper_mt: a pipe on Unix (03 §5.3) and a loopback socket pair on Windows (03 §8.8). The native API has no user callbacks. After it releases the core lock, the IO thread routes the outbox items itself, in order, into slots, per-watcher queues and the session state, under the bounded hand-off of 03 §7 (§4). The driver exposes the zk-driver type `DispatchMode::{Thread, IoThread}` (CC-16, 00 §4): mt uses `Thread`, native uses `IoThread`. mio is not used anywhere in the native or the drop-in driver. It appears only transitively inside tokio when the `tokio` feature is on.
+
+### 2.2 Crate name
+
+The package is `apache-zookeeper` and the lib is `apache_zookeeper`. The `apache-` prefix names the ASF project and follows `apache-avro`. The other packages use the same prefix (§2.1). Users typically write `use apache_zookeeper as zk;`.
+
+### 2.3 Module layout of `apache-zookeeper`
+
+```
+src/
+  lib.rs            #![forbid(unsafe_code)] #![deny(missing_docs)]; re-exports below
+  client.rs         Client, ResponseFuture, CloseFuture, ReadyFuture, ClientStats
+  builder.rs        ClientBuilder, ConnectFuture, Resolve, Runtime, ThreadOptions, ServerOrder, DnsRefresh
+  connect_string.rs connect-string front end over zk_proto::native::parse_connect_string
+  path.rs           ZPath<'a> (sized, Copy), ZPathBuf, PathArg (sealed), PathError
+  types.rs          Stat, Version, Zxid, SessionId, SessionPassword, Ttl, CreateMode, EphemeralKind
+  acl.rs            Perms (bitflags), Id, Acl, OPEN_ACL_UNSAFE / READ_ACL_UNSAFE / CREATOR_ALL_ACL
+  error.rs          Error, ConnectError, DisconnectCause, MultiError, WatchError
+  watch/            WatchedEvent, EventKind, WatcherKind, AddWatchMode, OneshotWatcher,
+                    PersistentWatcher, StateWatcher, SessionState, SessionInfo
+  multi.rs          MultiWriter, MultiReader, OpHandle<T>, MultiResults, OpResult, ReadResult, Created
+  config.rs         EnsembleConfig, ServerEntry, Reconfig
+  auth.rs           ClientInfo (whoAmI), Id::digest helper
+  secret.rs         SecretString: newtype over zeroize::Zeroizing<String>
+  tls.rs            [tls-rustls] TlsOptions, TlsOptionsBuilder, ReloadPolicy, TlsConfigError
+  sasl/             [sasl | sasl-gssapi] SaslConfig, CredentialSource, CredentialError, SaslMechanism,
+                    SaslMechanismFactory, SaslContext, SaslStep, SaslError, SaslErrorKind
+  blocking.rs       [blocking] blocking::Client; wait()/wait_timeout()/recv()
+  observe.rs        Metrics trait, OpKind; tracing/log rendering of zk-proto Log outputs
+  slot.rs           (private) Slot<T>: single-value cell, awaitable and waitable
+  tokens.rs         (private) NativeTokens: the zk_proto::Tokens implementation
+  rng.rs            (private) NativeRng: per-client SplitMix64, implements zk_proto::Rng
+  sync.rs           (private) non-poisoning lock helpers
+```
+
+Public types are separate from the `zk-jute` wire types and are converted with `From`, so codegen changes never reach the public API.
+
+---
+
+## 3. Client builder
+
+```rust
+pub struct ClientBuilder { /* private */ }
+
+impl Client {
+    /// Java grammar: "h1:2181,h2,[::1]:2182/chroot". Parsed in connect()/build().
+    pub fn builder(connect_string: impl Into<String>) -> ClientBuilder;
+}
+
+impl ClientBuilder {
+    // --- session ---
+    pub fn session_timeout(self, t: Duration) -> Self;            // default 30 s; server negotiates
+    pub fn chroot(self, chroot: impl PathArg) -> Self;            // overrides a "/chroot" suffix
+    pub fn allow_read_only(self, yes: bool) -> Self;              // default false
+    pub fn session(self, id: SessionId, password: SessionPassword) -> Self; // resume
+    pub fn auth(self, scheme: impl Into<String>, data: impl Into<Vec<u8>>) -> Self; // repeatable
+    pub fn restore_watches(self, yes: bool) -> Self;              // default true (Java auto watch reset)
+    // --- connection management ---
+    pub fn connect_timeout(self, t: Duration) -> Self;            // TCP connect phase, per attempt; default session_timeout / 3
+    pub fn reconnect_delay(self, t: Duration) -> Self;            // pause after a full host-list pass; default 1 s, ±25% jitter
+    pub fn server_order(self, o: ServerOrder) -> Self;            // Shuffled (default) | AsGiven
+    pub fn dns_refresh(self, p: DnsRefresh) -> Self;              // EachPass (default) | Interval(d) | Never
+    pub fn resolver(self, r: impl Resolve) -> Self;               // default: std ToSocketAddrs
+    pub fn runtime(self, rt: Runtime) -> Self;                    // §4
+    pub fn update_servers_from_config(self, yes: bool) -> Self;   // follow /zookeeper/config; default false
+    // --- limits / backpressure ---
+    pub fn max_pending_requests(self, n: usize) -> Self;          // default unbounded (Java); §14
+    pub fn max_frame_size(self, bytes: u32) -> Self;              // default 4 MiB (§14)
+    pub fn persistent_watch_buffer(self, events: usize) -> Self;  // default unbounded (Java); per watcher, §9.2
+    pub fn dispatch_queue_capacity(self, items: usize) -> Self;   // default 4_096 undelivered results, auth outcomes and one-shot events (§4)
+    pub fn close_timeout(self, t: Duration) -> Self;              // default 3 s
+    // --- security ---
+    #[cfg(feature = "tls-rustls")] pub fn tls(self, opts: TlsOptions) -> Self;
+    #[cfg(any(feature = "sasl", feature = "sasl-gssapi"))] pub fn sasl(self, cfg: SaslConfig) -> Self;
+    // --- observability ---
+    pub fn metrics(self, m: impl Metrics) -> Self;
+    pub fn name(self, label: impl Into<String>) -> Self;          // attached to every log record and span
+
+    /// Resolves once the session is established (Connected, or ConnectedReadOnly if allowed),
+    /// after SASL completes and after the builder's auth entries are acknowledged.
+    pub fn connect(self) -> ConnectFuture;   // named future; nothing happens until polled or wait()ed
+    /// Returns at once. Requests queue until the first connection (Java and C behavior).
+    pub fn build(self) -> Result<Client, ConnectError>;
+}
+
+pub enum ServerOrder { Shuffled, AsGiven }
+pub enum DnsRefresh { EachPass, Interval(Duration), Never }
+
+/// Synchronous; it can block. The thread driver calls it on its IO thread with no lock held.
+/// The tokio driver calls it through spawn_blocking. A panic counts as a resolve failure.
+pub trait Resolve: Send + Sync + 'static {
+    fn resolve(&self, host: &str, port: u16) -> std::io::Result<Vec<SocketAddr>>;
+}
+```
+
+Notes:
+
+- **Connect string.** Parsed by `zk_proto::native::parse_connect_string` (02 §11): Java grammar, `[v6]:port` accepted, default port 2181, chroot only at the end, validated as a `ZPath`, `/` means no chroot. The C parser splits the chroot at the first `/` anywhere and the port at the last `:` (zookeeper.c:832-1002, 1421-1446); the native one does not. Errors surface as `ConnectError` with `Error::InvalidArgument`.
+- **Session resumption.** `session(id, pw)` sends that id and password. If the server reports expiry, `connect()` fails with `Error::SessionExpired`. The native expiry rule (`Compat::expiry = Java`) adds a negotiated `timeOut <= 0` to C's id comparison: a non-zero requested session id that differs from the returned one is expiry. A non-zero `session(id, pw)` sets `seen_rw_before`; a client that has seen only read-only servers requests id 0 and adopts the new id (02 §7.3). C uses only the id comparison, gated on `seen_rw_server_before` (zookeeper.c:1410, 3160-3179).
+- **Builder `auth()`** entries are sent first on every connection, in the order given, ahead of SetWatches and user requests. A failure surfaces as `connect()` → `Error::AuthFailed`.
+- **`connect()` vs `build()`.** `connect()` is the recommended default: it reports bad credentials and expired resumed sessions up front. Against an unreachable ensemble the future stays pending while the client retries, and `SessionInfo::last_error` names the last failure, so applications bound the wait with their executor's timeout. `build()` matches Java and C for applications that queue work before the session exists. `ConnectFuture` has `wait()` under the `blocking` feature.
+- **Read-only.** With `allow_read_only(true)` a read-only server gives `ConnectedReadOnly`; writes fail with `Error::NotReadOnly`. zk-proto probes for a read/write server; the switch goes through a normal Connecting → Connected transition. Requests pending at the switch fail with `ConnectionLoss` (`Compat::rw_switch_rc = ConnectionLoss`, ledger NAT-10). C can deliver a fake `ZOK` there (zookeeper.c:2783-2797, `cleanup(zh, ZOK)`); the Rust-core drop-in also gives ZCONNECTIONLOSS there (ST-08, DV-FIX-9).
+- **Timeouts.** Each TCP-connect attempt is bounded by `connect_timeout`. Its default, T/3 (T = the requested session timeout), is the part of T that is left when the 2/3·T receive deadline detects a lost connection. An attempt to an unresponsive server therefore ends no later than the server can expire the session; a bound of 2/3·T would let one such attempt outlast the session. Handshake, TLS handshake and SASL are bounded by the 2/3·T receive deadline. For TLS the deadline starts when TCP connect completes. This is the same origin as the legacy profile (ledger ST-16, CC-15, 00 §4).
+- **Reconnect and DNS.** After every address of one pass over the host list has failed, the client pauses for `reconnect_delay` (±25%) before the next pass. The first pass of a new client, or the first pass after a server-list change that moves the client, has no pause (02 §9.2), so the first pause follows the pass after it. `DnsRefresh::EachPass` (the default) resolves the host list again once per pass, when that pause ends and before the next address is chosen. The address list thus stays fixed while a pass runs, so each address is tried once per pass, and a changed DNS record takes effect when the next pause ends. `EachPass` and `Never` do not resolve while connected. `Interval(d)` resolves when more than `d` has passed since the last successful resolution, while connected or not. `Never` resolves only at `build`/`connect` and in `update_servers` (§11). Every mode keeps the last good address list when a resolution fails (`dns_failure = UseLastGood`). The mapping to zk-proto inputs is in §19.1 and 02 §3.3.
+
+---
+
+## 4. Runtime and drivers
+
+```rust
+#[non_exhaustive]
+pub enum Runtime {
+    /// One IO thread for this client. Works with any executor, or with none.
+    Thread(ThreadOptions),
+    /// One task spawned on this tokio runtime. Unix targets only.
+    #[cfg(all(unix, feature = "tokio"))]
+    Tokio(tokio::runtime::Handle),
+}
+#[derive(Default)]
+pub struct ThreadOptions { pub name: Option<String>, pub stack_size: Option<usize> }
+```
+
+**Default:** with the `tokio` feature on a Unix target, if `tokio::runtime::Handle::try_current()` succeeds at `connect()`/`build()`, use `Runtime::Tokio(current)`. Otherwise use `Runtime::Thread(Default)`. `blocking::Client` always uses `Runtime::Thread`.
+
+**Windows.** The tokio driver is built on Unix targets only, because it uses `tokio::io::unix::AsyncFd` (03 §7). zk-client declares tokio as a `[target.'cfg(unix)'.dependencies]` entry, and the `tokio` feature compiles to nothing on other targets, so a Windows build with the default features succeeds and has no `Runtime::Tokio`. On Windows the native API runs on the threaded driver, from M4 (CC-33, 00 §4). It polls through zk-driver's default `RustixPoll` (rustix's WSAPoll) with the loopback socket-pair waker of 03 §8.8. It does not link zk-ffi, so it never uses the WSAPoll `Poll` implementation that zk-ffi can inject in the drop-in; a gap in rustix's WSAPoll coverage is fixed upstream in rustix, with no `unsafe` in zk-driver or zk-client (03 §8.8). If the M4 Windows spike fails, §1 rule 8 applies. Async applications on Windows, tokio applications included, use the threaded driver's async adapter: the same futures and streams, completed from its IO thread, which work on any executor. Synchronous applications use the blocking facade (§15).
+
+| Driver | Where the protocol runs | IO | Who wakes futures |
+|---|---|---|---|
+| `zk_driver::threaded` with `DispatchMode::IoThread` | One OS thread per client, created in `zk-driver/src/spawn_std.rs` (feature `std-thread`; the only allowed `std::thread` spawn, rule R6 (01 §3.3)), default name `zk-io` | `rustix::event::poll` over waker + socket; rustix non-blocking sockets | The IO thread, after it releases the core lock |
+| `zk_driver::tokio` (Unix only) | One `tokio::spawn`ed task per client | `tokio::io::unix::AsyncFd` over the rustix socket (03 §7); `sleep` for the interest timeout | The task |
+
+Both drivers use `DriverMode { interest: Precise, session_delivery: Dispatch }` (02 §14.2) and run the zk-proto loop with the names of 02 §4 and §5 (CC-17, 00 §4):
+
+1. `begin_interest(now)`, then `run_pending_teardown(now)` (02 §12.3), which is also called at the start of the process step (step 4), then `poll_action(now)` until `None`, executing each `Action`:
+   - `Resolve{gen, hosts, initial}` (`gen: u64`, the resolver generation, a counter separate from the SASL `gen`) → for each host entry in order, the `Resolve` adapter, then `handle_host_resolved(gen, HostResolution, now)` for that host (02 §9.4); after the last host, `handle_resolved(gen, shuffle, now)`, then `run_pending_teardown(now)`, because a rebalance is a forced close;
+   - `Connect{endpoint, tls}` → rustix connect to `endpoint.addr`, then `handle_connect_started`. On TCP-connect completion, when `tls` is `Some`, the driver first calls `TlsConnector::new_conn(&self, &Unlocked, purpose, &Endpoint)` and then `handle_tcp_connected`; without TLS it calls `handle_tcp_connected` directly. Then `handle_transport_ready` (after the TLS handshake when `tls` is `Some`), or `handle_transport_failed(TransportFailure)` with `TlsConfig{step, file}`, `TlsResource{at, errno}` or `TlsHandshake{errno}` for TLS failures (03 §8.2.1, 06 §3.3);
+   - `CloseTransport` → close the socket. A teardown yields no `Sasl(Dispose)`. It bumps the SASL generation, so a late result from the old mechanism session is stale and is ignored. On a reconnect, zk-proto yields `Sasl(Dispose)` for the old session immediately before the next `Sasl(Start)` in the same pass, as legacy disposes the old Cyrus connection at the top of the next SASL start (zk_sasl.c:215-217). If a `Start` or `Step` result of the old session is still outstanding (the tokio driver runs the mechanism through `spawn_blocking`), that `Dispose` and the `Start` behind it wait for the result, which the core then ignores as stale (02 §7.4). A native driver always delivers that result when the mechanism call returns, as an error when the mechanism fails or panics (§16.2), so the next connection's SASL phase does not stall. At `destroy` it yields `Sasl(Dispose)` after `CloseTransport`, as legacy destroy closes the socket before it destroys the SASL client (zookeeper.c:719-749; 02 §4.1, §13);
+   - `ProbeRw{endpoint, tls}` → bounded probe (03 §8.4), then `handle_rw_probe(ep: Endpoint, outcome: ProbeOutcome, now)`;
+   - `Sasl(SaslCall{gen: u32, kind})` → native mechanism (02 §7.4). For `Start`, the driver first reads the local and peer addresses for `SaslContext` with rustix `getsockname`/`getpeername` on the socket. If either call fails, it calls `handle_sasl_addr_failed(gen, SaslAddr::Local | SaslAddr::Peer, now)` and starts no mechanism; zk-proto logs the core "getsockname" or "getpeername" site. Otherwise it creates the mechanism and calls `handle_sasl_started(gen, ..)`. For `Step(token)` it calls the mechanism and then `handle_sasl_stepped(gen, ..)`. For `Dispose` it drops the mechanism instance.
+2. `finish_interest(now)` gives the read/write interest and `timeout_ms`.
+3. Wait for readiness, the waker or the timeout.
+4. Bytes in: `read_hint()` and `handle_read`. Bytes out: `poll_transmit` and `handle_transmitted`. TLS bytes pass through `TlsTransport` over `RustlsConn` (§16.1).
+5. Drain `poll_output()` (below).
+
+Time enters as `zk_proto::Millis`, derived by the driver from a per-client monotonic `Instant` origin. `Resolve`, `SaslMechanism`, `CredentialSource`, the RW probe and TLS file loading can block. The thread driver runs them on its IO thread with no lock held; the tokio driver runs them through `spawn_blocking`. Neither blocks the user's executor.
+
+**Native delivery (the delivery seam for `DispatchMode::IoThread`).** After each core call the IO side pops all `Output` items under the core lock, releases the lock and routes them itself, in order (03 §3.7, §7):
+
+| `Output` item | Native action |
+|---|---|
+| `Completion { token, route, result, delivery_logs }` | `slot.fill(result)`. zk-client always submits `Route::Queued`; `Route::Direct` exists only for the drop-in (CC-18, 00 §4) |
+| `Watch { event, watchers, delivery_logs }` | push to each watcher's sink (one-shot slot or persistent queue) |
+| `WatchTerminated { watchers, reason }` (02 §10.4) | push the terminal `WatchError` to each sink |
+| `Session { state, delivery_logs, .. }` | update the `StateCell`, bump `epoch` on Connected/ReadOnly, wake `StateWatcher`s. The watcher list is empty natively (`session_fanout_to_path_watchers = false`, 02 §14.1) |
+| `Auth { tokens, rc, .. }` | fill each auth slot |
+| `Log(record)` | render to `tracing` or `log` (§17) |
+| `ClientId(_)` | ignored; `Client::session()` reads `Connection::client_id()` under the core lock |
+| `DrainPoint` | ignored |
+
+Each `delivery_logs` record of a `Completion`, `Watch` or `Session` item (02 §5.1) is rendered as a `Log` (§17) before the item is routed. None of these runs user code. Wakers are called after every internal lock (core, sinks, slot) is released (§5.2). `Metrics` hooks run after routing, with no lock held (§17).
+
+**Routing.** The IO thread or IO task routes every item itself and never blocks. Wakers are called after the sink and slot locks are released (§5.2).
+
+**Bounded hand-off (`dispatch_queue_capacity`).** The driver counts undelivered items: results and auth outcomes in slots whose receiver is alive and has not taken them, and one-shot watch events not yet returned (03 §7). Persistent-watch events are not counted, and per-watcher queues are unbounded unless `persistent_watch_buffer` is set (§9.2). While the session is established and the count is at or above `dispatch_queue_capacity` (default 4096), the IO side stops reading frames (03 §7 read gate). It still sends queued requests and pings, and the receive timer keeps running. A receiver that takes or drops an item decrements the count and wakes the IO side. An application that holds many completed `ResponseFuture`s without awaiting them also counts against the capacity.
+
+A consumer that takes nothing for longer than about 2/3·T therefore ends the connection with `ConnectionLoss` (`last_error` = `DisconnectCause::ReceiveTimeout`, §8.2), as an unresponsive server does. Outcomes that the core produces without reading a frame (teardown failures, terminal errors, close leftovers) are routed even while the read gate is closed. The gate applies only to an established session: TLS handshake records, the ConnectResponse and SASL frames are read whatever the count is. The session therefore reconnects while the consumer is stalled, and watches are restored (§9.2). The gate closes again once the session is established and the count is still at the capacity, and reads of replies resume when a receiver takes or drops an item and wakes the IO side. Applications keep the code that consumes results and events fast, or hand slow work off to another thread or task.
+
+---
+
+## 5. Asynchronous API: ordering at call time
+
+### 5.1 Mechanism
+
+```rust
+#[derive(Clone)]
+pub struct Client { shared: Arc<Shared>, life: Arc<LifeGuard> }
+
+struct Shared {
+    driver: DriverHandle,       // zk_driver threaded Arc<Shared<NativeTokens>> or the tokio task's Arc<Mutex<Core>>;
+                                // owns the core lock, the waker and the clock
+    sinks: Mutex<WatchSinks>,   // WatchId -> OneshotSink | PersistentSink (leaf lock)
+    state: StateCell,           // latest SessionInfo + waiters (leaf lock)
+    next_watch_id: AtomicU64,
+    config: Arc<ClientConfig>,
+}
+// LifeGuard: its Drop runs when the last Client clone goes. It starts a background close (§13).
+// The driver holds a routing sink over `sinks` and `state`, never a `LifeGuard`. Watchers and futures hold a slot or Weak<Shared>.
+
+struct NativeTokens;
+impl zk_proto::Tokens for NativeTokens {
+    type Completion = NativeCompletion;   // Reply(Arc<Slot<RawResult>>) | Discard (drop-triggered RemoveWatches)
+    type Watcher    = WatchId;            // u64, unique per client; never deduplicated against another
+    type Auth       = Arc<Slot<i32>>;
+}
+```
+
+`DriverHandle` is a private zk-client enum over the two zk-driver handles (03 §5.1, §7), with the methods `lock_core()` (taken through `lock_unpoisoned()`), `now()` and `wake()`. zk-driver defines the routing-sink trait `RouteSink<T>` (03 §3.7) and zk-client implements it, because zk-client depends on zk-driver and never the reverse (§2.1).
+
+The chroot is not in `Shared`. It is part of the `zk_proto::Config` of the connection, and zk-proto applies it with `ChrootPolicy::Component` (§6.1; CC-21, 00 §4).
+
+Every request method is a plain `fn` that returns a named future. None is an `async fn`: the body of an `async fn` runs only on first poll, so poll order could reorder the wire.
+
+```rust
+impl Client {
+    pub fn get_data(&self, path: impl PathArg) -> ResponseFuture<(Vec<u8>, Stat)> {
+        self.submit(OpKind::GetData, path, None, decode::get_data)
+    }
+
+    fn submit<T: Send + 'static>(&self, kind: OpKind, path: impl PathArg, watch: Option<WatchKind>,
+                                 decode: Decoder<T>) -> ResponseFuture<T> {
+        // 1. Strict path check. It is pure, so it runs before the lock.
+        let path = match path.to_zpath() {
+            Ok(p) => p,
+            Err(e) => return ResponseFuture::ready(Err(e.into())),   // nothing sent
+        };
+        let slot = Slot::new();
+        let reg = watch.map(|k| self.shared.new_watch_sink(k));      // sink exists before arming
+        let req = Request {
+            op: kind.build(PathIn::Native(path.to_jstring()), reg),
+            token: NativeCompletion::Reply(slot.clone()),
+            route: Route::Queued,                                     // native never uses Direct
+            defect: InputDefect::default(),                           // native inputs have no raw-C defects
+        };
+        // 2. Under the core lock: terminal-state check, then proto submit.
+        //    Proto joins the chroot, takes the xid, encodes, appends to tx and FIFO, checks the limit.
+        {
+            let mut core = self.shared.driver.lock_core();
+            if let Some(e) = terminal_error(&core.conn) {             // private; maps a terminal state to Error
+                self.shared.drop_watch_sink(reg);
+                return ResponseFuture::ready(Err(e));
+            }
+            if let Err(e) = core.conn.submit(req, self.shared.driver.now()) {
+                self.shared.drop_watch_sink(reg);                     // the token comes back in e
+                return ResponseFuture::ready(Err(map_submit_error(e.stage, e.code)));
+            }
+        }
+        self.shared.driver.wake();
+        ResponseFuture::waiting(slot, decode)
+    }
+}
+```
+
+Under `Compat::NATIVE`, paths reach `submit` already validated (`PathIn::Native`), and zk-proto joins them with the component chroot (02 §6.1). `SubmitError.code` is the final code (CC-11, 00 §4); `map_submit_error` converts it with `Error::from_code`, except that `Stage::TooManyPending` (code ZTHROTTLEDOP, 02 §6.1) becomes `Error::TooManyPendingRequests`. `Stage::NotEnabled` (code ZUNIMPLEMENTED, 02 §6.1) cannot occur natively, because `native_ops` is true. Natively the order of refusals is: path validation, then terminal state (`SessionExpired`, `AuthFailed`, `Closing`), then proto's own refusals (closing, pending limit).
+
+**Lock poisoning.** No user code runs under any of these locks, and zk-proto is total (02 §1, invariant 4). All internal locks are taken through `lock_unpoisoned()` (`lock().unwrap_or_else(PoisonError::into_inner)`), so a poisoned lock never becomes a permanent error.
+
+**The guarantee.** For any two calls A and B on the same `Client` or its clones, if A's call returns before B's starts, A gets the smaller xid, is written first, and its future becomes ready first. ZooKeeper processes the requests of one session in FIFO order. The core lock orders concurrent calls from different threads. The guarantee holds while disconnected: queued requests go out in order after the next handshake (behind auth, SetWatches and SASL frames). Futures become *ready* in wire order. A program that needs to *observe* that order awaits them in order on one task.
+
+### 5.2 `ResponseFuture` and `Slot`
+
+```rust
+#[must_use = "the request was already sent; dropping this future only discards the result"]
+pub struct ResponseFuture<T, E = Error> { /* Ready(Option<Result<T,E>>) | Waiting{slot, decoder} | Done */ }
+
+impl<T, E> Future for ResponseFuture<T, E> { type Output = Result<T, E>; }
+impl<T, E> Unpin for ResponseFuture<T, E> {}
+// Send + Sync + 'static when T and E are. It never borrows the Client.
+
+impl<T, E: From<Error>> ResponseFuture<T, E> {
+    pub fn is_ready(&self) -> bool;
+    #[cfg(feature = "blocking")] pub fn wait(self) -> Result<T, E>;
+    #[cfg(feature = "blocking")] pub fn wait_timeout(self, d: Duration) -> Result<Result<T, E>, Self>;
+}
+```
+
+`Slot<T>` is a private single-value cell of about 120 lines of safe Rust. It is the only Rust result slot (CC-18, 00 §4) and exists only in zk-client; the drop-in has no Rust slot.
+
+```rust
+struct Slot<T> { st: Mutex<SlotState<T>>, cv: Condvar }
+struct SlotState<T> { value: Option<T>, waker: Option<Waker>, receiver_alive: bool, closed: bool }
+
+impl<T> Slot<T> {
+    fn fill(&self, v: T) {
+        let waker = {
+            let mut s = self.st.lock_unpoisoned();
+            s.value = Some(v);
+            s.waker.take()                 // take the waker under the slot lock...
+        };                                 // ...release the slot lock...
+        self.cv.notify_all();
+        if let Some(w) = waker { w.wake(); }   // ...and only then wake.
+    }
+}
+```
+
+The waker is taken out with `Option::take` under the slot lock and called after the slot lock is released. The IO side also releases the core lock and `sinks` before it calls `fill`. A waker that polls inline (the `Waker` contract allows it) can therefore re-enter `ResponseFuture::poll` without self-deadlock. `poll` stores a new waker only when `value` is `None`, and replaces it with `will_wake` deduplication.
+
+If the last `NativeCompletion::Reply` for a slot is dropped without `fill` (for example when a `Connection` is dropped without `into_leftovers`), its `Drop` marks the slot closed, notifies the condvar and wakes the stored waker, in the same order as `fill`. `poll` and `wait()` then return the client's terminal error (`Error::Closing`, or `SessionExpired`/`AuthFailed` when the session ended that way).
+
+`wait()` blocks on the condvar and needs no executor. It is refused where it would deadlock: on the client's own IO thread, and inside any user trait object that the client runs on the IO side (`Resolve`, `SaslMechanism`, `CredentialSource`, `Metrics`), including when the tokio driver runs that object through `spawn_blocking`. The driver marks those frames in a `thread_local!` `Cell<u64>` that holds the client id (a `Cell` has no `Drop`, so rule R7 (01 §3.3) is met). `wait()` then returns `Err(Error::InvalidState)` at once. `OneshotWatcher::wait` returns `Err(WatchError::InvalidState)` and `PersistentWatcher::recv` returns `Some(Err(WatchError::InvalidState))` under the same marker check. The drop-in has the same guard in C (05 D7, ledger DSP-04; CC-4, 00 §4).
+
+The wire reply is decoded into `zk_jute` records on the IO side (`zk_proto::Reply`). Conversion to public types runs in `poll`/`wait` on the caller's task, which keeps the IO thread light.
+
+### 5.3 Requests made while not connected
+
+- Requests made before the first connection, or during a reconnect, wait in the queue and are written after the handshake.
+- On any disconnect, every request that is in flight **or queued** fails (the zk-proto teardown fails the whole FIFO in every profile, 02 §12.1, ledger ST-06). Natively the error is `Error::ConnectionLoss` for every recoverable cause: transport loss, the 2/3·T receive deadline, a TLS failure, an xid mismatch or a malformed frame (`Compat::disconnect_rc = ConnectionLoss`, the ledger value, §19.2). `disconnect_rc = ConnectionLoss` collapses only these recoverable causes. Terminal causes keep their own codes: `SessionExpired`, `AuthFailed` (also for a SASL failure), and `Closing` for a closed client (§9.2, §13). The cause is not lost. The driver reads the public zk-proto `Cause` of the most recent teardown with `Connection::last_teardown_cause() -> Option<Cause>` (02 §12.1), zk-client maps it to the public `DisconnectCause` or to the richer io, TLS or SASL error, `SessionInfo::last_error` carries the result (§8.2), and the session log record names it (§17).
+- A create or set that fails with `ConnectionLoss` may still have been applied. `Error::is_retry_safe(op)` returns false for non-idempotent operations in that case.
+
+---
+
+## 6. Core types
+
+### 6.1 Paths
+
+`ZPath` is a **sized, `Copy`, borrowed** wrapper. An unsized `#[repr(transparent)] struct ZPath(str)` would need a pointer cast to build `&ZPath` from `&str`. `#![forbid(unsafe_code)]` does not allow that cast, and no allowlisted crate provides it.
+
+```rust
+/// A valid absolute ZooKeeper path, borrowed from a string. Invariant: valid by Java PathUtils rules.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ZPath<'a>(&'a str);
+/// Owned form.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ZPathBuf(String);
+
+impl<'a> ZPath<'a> {
+    pub fn new(s: &'a str) -> Result<ZPath<'a>, PathError>;
+    /// The check is a const fn over bytes (manual UTF-8 decode). A bad literal in a
+    /// `const` fails to compile. At run time it panics.
+    pub const fn from_static(s: &'static str) -> ZPath<'static>;
+    pub const ROOT: ZPath<'static>;
+    pub fn as_str(self) -> &'a str;
+    pub fn parent(self) -> Option<ZPath<'a>>;
+    pub fn name(self) -> Option<&'a str>;               // last component
+    pub fn components(self) -> impl Iterator<Item = &'a str>;
+    pub fn join(self, child: &str) -> Result<ZPathBuf, PathError>;
+    pub fn starts_with(self, base: ZPath<'_>) -> bool;  // component-wise, never byte prefix
+    pub fn is_root(self) -> bool;
+    pub fn to_buf(self) -> ZPathBuf;
+}
+impl ZPathBuf {
+    pub fn new(s: String) -> Result<ZPathBuf, PathError>;
+    pub fn as_path(&self) -> ZPath<'_>;
+    pub fn into_string(self) -> String;
+}
+impl AsRef<str> for ZPathBuf {}  impl std::fmt::Display for ZPathBuf {}  impl std::fmt::Display for ZPath<'_> {}
+
+/// Sealed. Implemented for &str, String, &String, ZPath<'_>, ZPathBuf, &ZPathBuf.
+pub trait PathArg: sealed::Sealed { fn to_zpath(&self) -> Result<ZPath<'_>, PathError>; }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PathError { pub path: String, pub index: usize, pub reason: PathErrorReason }
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PathErrorReason { Empty, NotAbsolute, EmptyComponent, TrailingSlash, RelativeComponent, InvalidChar(char) }
+```
+
+Validation is `zk_proto::native::validate_path` (Java `PathUtils.validatePath`), called with `sequential` set for sequential creates:
+
+- non-empty and starts with `/`; no `//`; no trailing `/` except the root;
+- no `.` or `..` components;
+- no U+0000, U+0001–U+001F, U+007F–U+009F, U+D800–U+F8FF, U+FFF0–U+FFFF, and every code point above U+FFFF (Java sees these as surrogate pairs inside U+D800–U+F8FF).
+
+For a sequential create the rules apply to `path + "1"`, so `/jobs/` is a valid sequential prefix. `&str` and `String` arguments are validated at submit; an invalid path gives a ready `Err(Error::InvalidPath(..))` and sends nothing. `ZPath`/`ZPathBuf` arguments skip re-validation. The legacy `is_valid_legacy` (accepts 0x1F, 0x7F and high bytes, and is applied after chroot concatenation, zookeeper.c:4064-4106) is used only under `Compat::LEGACY_C`.
+
+**Paths from the server.** The Java server stores every string as a Java `String` and writes it as UTF-8, so well-formed replies always carry valid UTF-8. zk-client converts server paths with a trusted constructor that checks UTF-8 only. Invalid UTF-8 in a reply is a malformed reply: the affected request fails with `Error::MarshallingError`, and a watch event with an invalid path is dropped with an error log record. (zk-proto treats truly malformed frames as teardowns; this is the narrower per-item case.)
+
+**Chroot (CC-21, 00 §4).** zk-proto applies the chroot for both profiles. The native profile uses `ChrootPolicy::Component`:
+
+- on submit, a component-wise join (`chroot + path`; the root path maps to the chroot itself);
+- on every returned path and every watch-event path, a strip only on a component boundary, done where the reply or event is decoded. zk-client does not strip again;
+- a reply path outside the chroot is a protocol anomaly: zk-proto emits an error `Log` output and the request fails with `MarshallingError`. A watch event outside the chroot is dropped with the same log, except an event whose path is exactly `/zookeeper/config`, which is matched against its absolute key and delivered unstripped;
+- the `Reply::Ephemerals` decoder (02 §5.1) drops entries outside the chroot without a log, because the server matches the prefix as a string (§7).
+
+C uses `strcpy`/`strcat` and a plain `strncmp` prefix test (zookeeper.c:1710-1744), so chroot `/zoo` turns `/zookeeper/config` into `"keeper/config"`. Natively the config node `/zookeeper/config` is never chrooted: in `get_config`, in its watch and in its events (`Op::GetConfig` carries no chroot). In C, async `zoo_awgetconfig` uses the raw path (zookeeper.c:4214-4222) but sync `zoo_wgetconfig` calls `zoo_wget`, which applies the chroot (zookeeper.c:5677-5687).
+
+### 6.2 Identifiers and versions
+
+```rust
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)] pub struct Zxid(pub i64);
+#[derive(Copy, Clone, PartialEq, Eq, Hash)] pub struct SessionId(pub i64);   // Display/Debug "0x{:016x}"
+#[derive(Clone, PartialEq, Eq)] pub struct SessionPassword(Zeroizing<[u8; 16]>); // Debug "<redacted>"; wiped on drop (§16.3)
+impl SessionPassword { pub fn from_bytes(b: [u8; 16]) -> Self; pub fn as_bytes(&self) -> &[u8; 16]; }
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Version(i32);
+impl Version { pub const ANY: Version = Version(-1); pub const fn new(v: i32) -> Self; pub const fn get(self) -> i32; }
+```
+
+`Version::ANY` is the wire's `-1`. A plain newtype reads better than `Option<Version>` in `set_data(p, d, stat.version)`.
+
+### 6.3 Stat
+
+```rust
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Stat {
+    pub czxid: Zxid, pub mzxid: Zxid, pub pzxid: Zxid,
+    pub ctime: i64, pub mtime: i64,                      // ms since the Unix epoch
+    pub version: Version, pub cversion: Version, pub aversion: Version,
+    pub ephemeral_owner: i64,                            // raw wire value
+    pub data_length: i32, pub num_children: i32,
+}
+impl Stat {
+    pub fn ctime(&self) -> SystemTime; pub fn mtime(&self) -> SystemTime;
+    pub fn ephemeral_kind(&self) -> EphemeralKind;       // 0 => None
+}
+#[non_exhaustive] pub enum EphemeralKind { None, Session(SessionId), Container, Ttl(Duration) }
+```
+
+`Stat` is not `#[non_exhaustive]`: its fields are the fixed jute `Stat` record, and tests construct it.
+
+### 6.4 CreateMode and TTL
+
+```rust
+/// TTL in ms, 1..=0xFF_FFFF_FFFF (server EphemeralType.TTL max, about 34.8 years).
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)] pub struct Ttl(u64);
+impl Ttl { pub const MAX: Ttl; pub fn new(d: Duration) -> Result<Ttl, Error>; pub fn from_millis(ms: u64) -> Result<Ttl, Error>; }
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum CreateMode {
+    Persistent, PersistentSequential, Ephemeral, EphemeralSequential, Container,
+    PersistentWithTtl(Ttl), PersistentSequentialWithTtl(Ttl),
+}
+impl CreateMode { pub fn is_sequential(&self) -> bool; pub fn is_ephemeral(&self) -> bool; pub fn ttl(&self) -> Option<Ttl>; }
+```
+
+The TTL is part of the variant. The C error class "TTL mode with ttl outside 1..=0xFF_FFFF_FFFF, or non-TTL mode with ttl ≥ 0 → ZBADARGUMENTS" (zookeeper.c:4399-4458) therefore cannot be written, and the `ZOO_SEQUENCE|ZOO_CONTAINER` aliasing does not exist. Opcode selection is internal: CREATE2 (15) for the four classic modes, CREATE_CONTAINER (19), CREATE_TTL (21), all decoded as `Reply::PathStat`, so `create` always returns a `Stat`.
+
+### 6.5 ACLs
+
+```rust
+bitflags::bitflags! {
+    #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+    pub struct Perms: i32 { const READ = 1; const WRITE = 2; const CREATE = 4; const DELETE = 8; const ADMIN = 16; const ALL = 0x1f; }
+}
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Id { pub scheme: Cow<'static, str>, pub id: Cow<'static, str> }
+impl Id {
+    pub const ANYONE: Id;      // world:anyone
+    pub const AUTH_IDS: Id;    // auth:""
+    pub fn new(scheme: impl Into<Cow<'static, str>>, id: impl Into<Cow<'static, str>>) -> Id;
+    pub fn ip(cidr: &str) -> Id;
+    /// "user:base64(sha1(user:password))", as DigestAuthenticationProvider.generateDigest.
+    /// SHA-1 here is a small safe-Rust implementation in zk-client (no extra crate).
+    pub fn digest(user: &str, password: &str) -> Id;
+}
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Acl { pub perms: Perms, pub id: Id }
+pub mod acl {
+    pub const OPEN_ACL_UNSAFE: &[Acl];   // ALL, world:anyone
+    pub const READ_ACL_UNSAFE: &[Acl];   // READ, world:anyone
+    pub const CREATOR_ALL_ACL: &[Acl];   // ALL, auth:""
+}
+```
+
+Unknown permission bits from the server are kept (`Perms::from_bits_retain`). The ACL constants are immutable `const` slices. C exports them as mutable data objects (zookeeper.c:194-201).
+
+### 6.6 Node data
+
+Node data is `Vec<u8>` on reads and `&[u8]` on writes. A znode with null data (wire length −1) reads as an empty `Vec` from `get_data`. Applications that must tell null from empty use `get_data_opt`, which returns `Option<Vec<u8>>`. Both decode the same `zk_proto::Reply::Data { data: JBuffer, .. }`, whose null-preserving `JBuffer` keeps the distinction (CC-20, 00 §4). The native client never writes null data. The C `value=NULL, value_len=-1` convention (recordio.c:250-252) belongs to the shim.
+
+---
+
+## 7. Operations
+
+All are methods on `Client`. Each returns at once, with the request already submitted.
+
+```rust
+impl Client {
+    // ---- CRUD ----
+    pub fn create(&self, path: impl PathArg, data: &[u8], mode: CreateMode, acl: &[Acl])
+        -> ResponseFuture<(ZPathBuf, Stat)>;                                  // ops 15/19/21; chroot stripped
+    pub fn delete(&self, path: impl PathArg, version: Version) -> ResponseFuture<()>;           // op 2
+    pub fn exists(&self, path: impl PathArg) -> ResponseFuture<Option<Stat>>;                  // op 3; NoNode => Ok(None)
+    pub fn get_data(&self, path: impl PathArg) -> ResponseFuture<(Vec<u8>, Stat)>;             // op 4
+    pub fn get_data_opt(&self, path: impl PathArg) -> ResponseFuture<(Option<Vec<u8>>, Stat)>; // op 4; null kept
+    pub fn set_data(&self, path: impl PathArg, data: &[u8], version: Version) -> ResponseFuture<Stat>; // op 5
+    pub fn get_children(&self, path: impl PathArg) -> ResponseFuture<(Vec<String>, Stat)>;      // op 12 always
+    pub fn get_all_children_number(&self, path: impl PathArg) -> ResponseFuture<u32>;          // op 104 (3.6+)
+    pub fn get_ephemerals(&self, prefix: impl PathArg) -> ResponseFuture<Vec<ZPathBuf>>;       // op 103 (3.6+)
+    pub fn get_ephemerals_all(&self) -> ResponseFuture<Vec<ZPathBuf>>;                         // op 103, prefix "/"
+
+    // ---- one-shot watches (§9) ----
+    pub fn exists_watched(&self, path: impl PathArg) -> ResponseFuture<(Option<Stat>, OneshotWatcher)>;
+    pub fn get_data_watched(&self, path: impl PathArg) -> ResponseFuture<(Vec<u8>, Stat, OneshotWatcher)>;
+    pub fn get_children_watched(&self, path: impl PathArg) -> ResponseFuture<(Vec<String>, Stat, OneshotWatcher)>;
+
+    // ---- persistent watches (3.6+) ----
+    pub fn add_watch(&self, path: impl PathArg, mode: AddWatchMode) -> ResponseFuture<PersistentWatcher>; // op 106
+    pub fn remove_watches(&self, path: impl PathArg, kind: WatcherKind, local_only: bool) -> ResponseFuture<()>; // op 18
+
+    // ---- ACL ----
+    pub fn get_acl(&self, path: impl PathArg) -> ResponseFuture<(Vec<Acl>, Stat)>;             // op 6
+    pub fn set_acl(&self, path: impl PathArg, acl: &[Acl], aversion: Version) -> ResponseFuture<Stat>; // op 7
+
+    // ---- consistency ----
+    pub fn sync(&self, path: impl PathArg) -> ResponseFuture<()>;                              // op 9
+
+    // ---- transactions (§10) ----
+    pub fn multi(&self, txn: &MultiWriter<'_>) -> ResponseFuture<MultiResults, MultiError>;    // op 14
+    pub fn multi_read(&self, ops: &MultiReader<'_>) -> ResponseFuture<Vec<Result<ReadResult, Error>>>; // op 22 (3.6+)
+
+    // ---- dynamic reconfiguration (§11) ----
+    pub fn get_config(&self) -> ResponseFuture<(EnsembleConfig, Stat)>;
+    pub fn get_config_watched(&self) -> ResponseFuture<(EnsembleConfig, Stat, OneshotWatcher)>;
+    pub fn reconfig(&self, change: &Reconfig, expected: Option<i64>) -> ResponseFuture<(EnsembleConfig, Stat)>; // op 16
+    pub fn update_servers(&self, connect_string: &str) -> Result<(), Error>;   // local host list (ZOOKEEPER-1355)
+
+    // ---- auth ----
+    pub fn add_auth(&self, scheme: &str, data: impl Into<Vec<u8>>) -> ResponseFuture<()>;      // op 100, xid -4
+    pub fn who_am_i(&self) -> ResponseFuture<Vec<ClientInfo>>;                                  // op 107 (3.9+)
+
+    // ---- session & lifecycle (§13) ----
+    pub fn state(&self) -> SessionInfo;
+    pub fn state_watcher(&self) -> StateWatcher;
+    pub fn session(&self) -> (SessionId, SessionPassword);
+    pub fn negotiated_timeout(&self) -> Option<Duration>;
+    pub fn last_zxid(&self) -> Zxid;
+    pub fn connected_server(&self) -> Option<SocketAddr>;
+    pub fn stats(&self) -> ClientStats;
+    pub fn ready(&self) -> ReadyFuture;                  // pending < max_pending_requests / 2; at once when unbounded
+    pub fn close(&self) -> CloseFuture;                  // submitted at call time
+    pub fn detach(self) -> (SessionId, SessionPassword); // drop the connection, keep the session
+}
+#[derive(Clone, Debug, PartialEq, Eq)] pub struct ClientInfo { pub auth_scheme: String, pub user: String }
+```
+
+**`get_ephemerals` semantics.** As in Java, the prefix is validated as a path, and the server matches it as a **string prefix**, not a component prefix (`/app` matches `/app2/x`). Under a chroot, zk-proto sends `chroot + prefix` (for the root prefix, the chroot itself). Because the server's match is a string prefix, the results can include siblings of the chroot (`/app2/x` for chroot `/app`). The `Reply::Ephemerals` decoder keeps only results inside the chroot on a component boundary and strips the chroot from them (§6.1). `get_ephemerals_all()` is Java's no-argument `getEphemerals()`.
+
+**`add_auth`, native semantics** (`Compat::auth_resend = Forward`, `auth_completion = PerRequest`, `auth_dup_while_associating = false`):
+
+- The auth packet is appended in call order; it does not jump the queue. Requests made before `add_auth` run under the old identity, those after under the new one. Under `PerRequest` the auth packet goes to the tail of `tx`, not to the priority position (02 §6.3, §8).
+- While not connected the entry is only recorded; the next establishment sends it ahead of queued requests.
+- Each call gets its own result: AUTH replies are matched FIFO against in-flight auth packets.
+- The completion token is retained if and only if `Connection::add_auth` returns `Ok` (CC-10, 00 §4). Credentials are held as `zk_proto::SecretBytes` (wiped on drop) and re-sent in original order on every reconnect, ahead of SetWatches and user requests.
+- A failure is the terminal `AuthFailed` state, because the server closes the connection.
+- C collects every pending completion for one reply (zookeeper.c:559-573, 2151-2229), re-sends the list as priority frames that come out in reverse order, and sends the packet twice while ASSOCIATING without SASL (ledger AUT-01). That is the legacy profile only.
+
+---
+
+## 8. Results and errors
+
+### 8.1 `Error`
+
+```rust
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum Error {
+    // ---- 1:1 with enum ZOO_ERRORS (zookeeper.h:94-147) ----
+    SystemError,                 // -1
+    RuntimeInconsistency,        // -2
+    DataInconsistency,           // -3
+    ConnectionLoss,              // -4  (every recoverable teardown natively, §5.3)
+    MarshallingError,            // -5
+    Unimplemented,               // -6
+    OperationTimeout,            // -7  (close timeout, §13; not a teardown code natively)
+    BadArguments,                // -8
+    InvalidState,                // -9  (also: blocking wait on the client's own IO side)
+    NewConfigNoQuorum,           // -13
+    ReconfigInProgress,          // -14
+    SslConnectionError,          // -15
+    ApiError,                    // -100
+    NoNode,                      // -101
+    NoAuth,                      // -102
+    BadVersion,                  // -103
+    NoChildrenForEphemerals,     // -108
+    NodeExists,                  // -110
+    NotEmpty,                    // -111
+    SessionExpired,              // -112
+    InvalidCallback,             // -113
+    InvalidAcl,                  // -114
+    AuthFailed,                  // -115
+    Closing,                     // -116  (client closed, closing or detached)
+    Nothing,                     // -117
+    SessionMoved,                // -118
+    NotReadOnly,                 // -119
+    EphemeralOnLocalSession,     // -120
+    NoWatcher,                   // -121
+    ReconfigDisabled,            // -123
+    SessionClosedRequireSaslAuth,// -124
+    ThrottledOp,                 // -127
+    // ---- server codes not in the C enum (KeeperException.Code) ----
+    UnknownSession,              // -12
+    RequestTimeout,              // -122
+    QuotaExceeded,               // -125
+    /// Any other non-zero wire code, unchanged (C passes reply codes through too, zookeeper.c:3482).
+    Unknown(i32),
+    // ---- client-side; code() gives the nearest legacy code ----
+    InvalidPath(PathError),             // code() = -8
+    InvalidArgument(Cow<'static, str>), // code() = -8
+    TooManyPendingRequests,             // code() = -127; local backpressure, only with max_pending_requests set (§14)
+}
+
+impl Error {
+    pub fn code(&self) -> i32;
+    pub fn from_code(code: i32) -> Option<Error>;     // 0 => None; unknown => Unknown(code)
+    pub fn is_connection_loss(&self) -> bool;         // ConnectionLoss | OperationTimeout | SslConnectionError | RuntimeInconsistency
+    pub fn is_session_terminal(&self) -> bool;        // SessionExpired | AuthFailed | Closing
+    pub fn is_retry_safe(&self, op: OpKind) -> bool;  // false for non-idempotent ops after a connection-loss-class error
+}
+impl std::fmt::Display for Error { /* Java-style messages; SslConnectionError has a real message */ }
+impl std::error::Error for Error {}
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+```
+
+- **One flat `Error` that is `Clone + Eq`.** One teardown cause fans out to many futures, and callers match `Error::NoNode` the way Java code uses `KeeperException.Code` (ledger NAT-01).
+- **No path payload** except in `InvalidPath`. Path context is in the log record for the request.
+- **Recoverable teardowns give `ConnectionLoss`.** Native requests failed by a recoverable teardown see `Error::ConnectionLoss`, whatever the cause (`disconnect_rc = ConnectionLoss`, the ledger value, 07 §2.1; CC-15, 00 §4). This is what Java applications expect from `KeeperException.ConnectionLossException`. Terminal causes keep their own codes: `SessionExpired`, `AuthFailed` and `Closing`. The cause is in `SessionInfo::last_error` and in the session log record (§8.2, §17). `is_connection_loss()` stays for the other codes in its group, which reach native code from close (§13), from server replies, or from `Error::from_code` on codes that an application stores.
+- `zerror(-15)` has no case in C and returns "unknown error" (zookeeper.c:5227-5299); native `Display` gives a real message.
+
+### 8.2 Connection-level errors
+
+Socket, TLS and SASL failures belong to the connection. Requests see a code. The underlying cause is reported in two places:
+
+```rust
+#[derive(Debug, Clone)]
+pub struct ConnectError { error: Error, cause: Option<Arc<dyn std::error::Error + Send + Sync>> }
+impl ConnectError { pub fn error(&self) -> &Error; }
+impl std::error::Error for ConnectError { fn source(&self) -> Option<&(dyn std::error::Error + 'static)>; }
+impl From<ConnectError> for Error;
+
+/// Why the last connection ended, when no richer error (io, TLS, SASL) exists.
+/// Requests failed by that teardown see ConnectionLoss (§5.3).
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum DisconnectCause { ReceiveTimeout, TlsHandshakeTimeout, XidMismatch, MalformedFrame, ServerClosed }
+impl std::fmt::Display for DisconnectCause {}
+impl std::error::Error for DisconnectCause {}
+
+#[derive(Clone)]
+pub struct SessionInfo {
+    pub state: SessionState,
+    pub epoch: u64,                          // +1 on every established connection
+    pub disconnected_since: Option<Instant>,
+    pub last_error: Option<Arc<dyn std::error::Error + Send + Sync>>, // io::Error, TlsConfigError, SaslError, DisconnectCause
+}
+```
+
+`DisconnectCause` is a public zk-client type. `Cause` is a public zk-proto type (02 §12.1). After a teardown the driver reads it with `last_teardown_cause() -> Option<Cause>`, and zk-client maps it as follows (`Cause::is_terminal` is true for `SessionExpired`, `AuthFailed` and `SaslTeardown`):
+
+| zk-proto `Cause` | Pending requests (NATIVE) | `SessionInfo::last_error` |
+|---|---|---|
+| `ConnectFailed`, `Io`, `SocketCreate` | `ConnectionLoss` | the `io::Error` |
+| `Eof` | `ConnectionLoss` | `DisconnectCause::ServerClosed` |
+| `Tls` | `ConnectionLoss` | the TLS error |
+| `TlsHandshakeTimeout` | `ConnectionLoss` | `DisconnectCause::TlsHandshakeTimeout` |
+| `RecvTimeout` | `ConnectionLoss` | `DisconnectCause::ReceiveTimeout`, or the `TlsConfigError` when this attempt reported `TransportFailure::TlsConfig` (§16.1) |
+| `XidMismatch` | `ConnectionLoss` | `DisconnectCause::XidMismatch` |
+| `ProtocolError` | `ConnectionLoss` | `DisconnectCause::MalformedFrame` |
+| `RwServerFound` | `ConnectionLoss` (`rw_switch_rc`, §3) | unchanged; the switch is not an error |
+| `ForcedClose` | `ConnectionLoss` (`forced_close`, §11) | unchanged; a forced move is not an error |
+| `SessionExpired` (terminal) | `SessionExpired` | none; the state is `Expired` |
+| `AuthFailed` (terminal; digest auth rejected) | `AuthFailed` | none; the state is `AuthFailed` |
+| `SaslTeardown` (terminal; SASL failure under `sasl_failure = Teardown`) | `AuthFailed` | the `SaslError` (mechanism error, credential-source error or server rejection, §16.2); the state is `AuthFailed` |
+| close or detach (terminal; not a zk-proto teardown `Cause`) | `Closing` | none; the state is `Closed` |
+
+---
+
+## 9. Watches
+
+### 9.1 Types
+
+```rust
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WatchedEvent {
+    pub kind: EventKind,
+    pub path: ZPathBuf,          // chroot stripped by zk-proto, component-wise
+    pub zxid: Option<Zxid>,      // from the notification ReplyHeader (02 §5.1; Java 3.9 getZxid); zk-client maps a value <= 0 to None
+}
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum EventKind { NodeCreated, NodeDeleted, NodeDataChanged, NodeChildrenChanged }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum WatchError {
+    Removed,                 // remove_watches() removed it (Java Data/Child/PersistentWatchRemoved)
+    ConnectionLost,          // only with restore_watches(false): the watch was not restored
+    SessionExpired,          // session terminal
+    AuthFailed,              // session terminal
+    Closed,                  // close(), detach() or the last Client dropped
+    Lagged { missed: u64 },  // persistent only, with persistent_watch_buffer set; not terminal
+    InvalidState,            // blocking wait or recv on the client's own IO side (§5.2); not terminal
+}
+impl std::fmt::Display for WatchError {}
+impl std::error::Error for WatchError {}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)] pub enum AddWatchMode { Persistent, PersistentRecursive } // wire 0 / 1
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum WatcherKind { Children, Data, Any, Persistent, PersistentRecursive }               // wire 1..5
+
+/// Exactly one outcome.
+pub struct OneshotWatcher { /* WatchId, slot, Weak<Shared>, path */ }
+impl Future for OneshotWatcher { type Output = Result<WatchedEvent, WatchError>; }
+impl OneshotWatcher {
+    pub fn path(&self) -> ZPath<'_>;
+    pub fn kind(&self) -> WatcherKind;            // Data (incl. exists) or Children
+    pub fn remove(self) -> ResponseFuture<()>;
+    #[cfg(feature = "blocking")] pub fn wait(self) -> Result<WatchedEvent, WatchError>;
+}
+
+/// Many events. Ends (yields None) after one terminal WatchError.
+pub struct PersistentWatcher { /* WatchId, event queue (§9.2), Weak<Shared>, path, mode */ }
+#[cfg(feature = "stream")] impl futures_core::Stream for PersistentWatcher { type Item = Result<WatchedEvent, WatchError>; }
+impl PersistentWatcher {
+    pub fn next(&mut self) -> Next<'_>;           // inherent; works without the stream feature
+    pub fn path(&self) -> ZPath<'_>;
+    pub fn mode(&self) -> AddWatchMode;
+    pub fn remove(self) -> ResponseFuture<()>;
+    #[cfg(feature = "blocking")] pub fn recv(&mut self) -> Option<Result<WatchedEvent, WatchError>>;
+}
+```
+
+### 9.2 Semantics
+
+**Arming happens when the reply arrives,** on the IO side, before the reply's slot is filled (02 §10.2; C arms in `activateWatcher` before it queues or signals the completion, zookeeper.c:3632-3651):
+
+- The watcher is returned with the result, so it cannot exist unless the request succeeded.
+- `exists_watched` on a missing node returns `(None, watcher)`: the exist-table arm on NoNode (02 §10.2). `get_data_watched` and `get_children_watched` arm only on success.
+- An event that arrives right after the reply is never lost: it lands in the watcher's sink even before the caller polls the `ResponseFuture`.
+- A request that fails, including through teardown, never arms.
+
+**Which events reach which watcher** follows the server and Java:
+
+- Data and exist one-shot watchers get Created, Changed and Deleted. Child one-shot watchers get ChildrenChanged and Deleted.
+- `Persistent` watches get every event type whose path is that exact path, including NodeChildrenChanged, which reports a change in its children.
+- `PersistentRecursive` watches get Created, Changed and Deleted for the path and every descendant, never ChildrenChanged (zk-proto drops it from recursive matching, as the Java client does; the server sends it only for a standard child watch on that path, 02 §10.3).
+- One-shot watchers leave the registry when the notification is received (02 §10.3), so a watcher never fires twice and re-arming from the consuming task is safe.
+
+**No deduplication between handles, and server-watch reference counting.** Every native watcher has a unique `WatchId`, so proto's `(fn, ctx)`-style dedup never merges two native handles (`Compat::watch_table = Ordered`). The server holds one watch per (path, class). zk-proto counts the local users of each server-side class (`Data` covers data and exist watches, `Children`, `Persistent`, `PersistentRecursive`), and **the count includes registrations still riding on unanswered requests** (02 §10.4). This matters: a handle dropped while another `get_data_watched` on the same path is in flight must not send `RemoveWatches`, or the server would remove the watch that the in-flight request is about to set.
+
+**Removal.** When a class count drops to zero while the server watch is believed set, `Connection::detach_watcher` returns a `RemoveHint`, and zk-client submits `RemoveWatches` (op 18) with that class's wire type and a `Discard` completion (`NoWatcher` is ignored). That happens on handle drop, on a failed in-flight registration that was the last user, and on explicit removal.
+
+| Action | Local effect | Server request | Notification to removed watchers |
+|---|---|---|---|
+| Drop `OneshotWatcher`/`PersistentWatcher` | `detach_watcher(id)` | op 18 if this was the last user (fire-and-forget) | none (handle gone) |
+| `watcher.remove().await` | same | same; the server result is returned (`Ok(())` with no request if other users remain) | none (consumed) |
+| `client.remove_watches(path, kind, local_only)` | all local watchers of `kind` on `path` | op 18 unless `local_only`; queued like any request while disconnected | each gets `Err(WatchError::Removed)` (through `WatchTerminated`) |
+| `ResponseFuture` of a watched op dropped before the reply | the reply arms it; zk-client sees `receiver_alive == false` and detaches at once | as for drop | none |
+
+`CheckWatches` (op 17) is never used natively. It only checks and leaves the server watch in place (FinalRequestProcessor.java:568-581). That is why C's `zoo_remove_watches` with a specific watcher leaves server watches behind (02 §10.4, ledger WAT-11).
+
+**Session events are not sent to watchers** (`Compat::session_fanout_to_path_watchers = false`; there is no default watcher). Connection changes go only to `StateWatcher` (ledger NAT-05).
+
+**Watch restoration.** With `restore_watches(true)` (default), watchers stay armed across reconnects. zk-proto sends `SetWatches` (op 101) with `relativeZxid = last_zxid`, or `SetWatches2` (op 105) when persistent watches exist, split into packets of at most 128 KiB, the limit Java uses (`Compat::set_watches_batch = Some(128 KiB)`). For one-shot watches the server then fires any events missed while disconnected, by comparing each node's zxids with `relativeZxid`. Persistent and recursive watches are only re-added, with no replay (DataTree.java:1544-1550), so a `PersistentWatcher` consumer that needs a complete view re-reads the watched state after each reconnect (a new `epoch` in `StateWatcher`, §9.3); `TreeCache` does this (§22.5). Keys are server paths, so the config watch (keyed `/zookeeper/config`, never chrooted) is restored at the right node under any chroot. With `restore_watches(false)` (Java `disableAutoWatchReset`; `Config.restore_watches`, 02 §3.3), zk-proto sends no SetWatches. On every disconnect it clears the registry and emits `WatchTerminated{reason: TerminateReason::ConnectionLost}`, so every watcher ends with `WatchError::ConnectionLost`.
+
+**Terminal session states (Java semantics).** On Expired, AuthFailed or Closed (`Compat::clear_watches_on_expiry = true`):
+
+- every one-shot watcher resolves to the matching `WatchError`;
+- every persistent watcher yields it once and then `None`;
+- the registry is cleared;
+- `StateWatcher` reports the terminal state;
+- every pending and later request fails with the matching `Error`.
+
+SASL failure is the terminal `AuthFailed` state natively (`Compat::sasl_failure = Teardown`, ledger NAT-07). The drop-in runs the same teardown with its own session event and rcs (ST-18, DV-FIX-3). The legacy profile's expiry-table behavior (ST-11) does not apply here.
+
+**Persistent-watch queues.** Each `PersistentWatcher` has its own event queue. By default it is unbounded, as Java's watcher delivery is, and the IO side never blocks on it: a slow consumer grows memory and never stalls IO or expires the session. These queues are outside the bounded hand-off of §4. With `persistent_watch_buffer(n)` the queue holds at most `n` events. When it is full, the event is dropped and a counter is incremented. The next poll yields `Err(WatchError::Lagged { missed })` before any later event, and the watcher stays active; the application re-reads the watched state. A terminal error never takes a queue slot and is never dropped. `Lagged` occurs only with a configured bound.
+
+**Delivery order.** The IO side routes `Output` items in wire order, so readiness follows the ZooKeeper ordering guarantee: a watch event that the server sends before a reply is pushed to its sink before that reply's slot is filled. When one event matches several watchers on the same path, the watchers of each kind (exist, data, child, persistent, recursive) receive it in registration order, and the kinds follow the order of 02 §10.3: one-shot tables in the delivery-column order, then persistent, then recursive. The native profile uses insertion-ordered watch tables (`Compat::watch_table = Ordered`, 02 §10). Watchers are separate objects, possibly polled by different tasks, so the order in which the application observes different objects is up to the application. Within one `PersistentWatcher`, events are in server order.
+
+### 9.3 Session state
+
+```rust
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum SessionState {
+    Connecting,          // before the first connect, or during a reconnect (Java "Disconnected")
+    Connected,           // SyncConnected (after SASL, if configured)
+    ConnectedReadOnly,
+    Expired,             // terminal
+    AuthFailed,          // terminal
+    Closed,              // terminal (close(), detach(), or last clone dropped)
+}
+impl SessionState { pub fn is_connected(self) -> bool; pub fn is_terminal(self) -> bool; }
+
+#[derive(Clone)]
+pub struct StateWatcher { /* Weak<Shared>, last seen (epoch, state) */ }
+impl StateWatcher {
+    pub fn current(&self) -> SessionInfo;
+    /// Resolves at the next change after the last one this watcher saw. Intermediate states can
+    /// merge; `epoch` shows that a reconnect happened. A terminal state never merges away.
+    /// After a terminal state, this resolves at once, always.
+    pub fn changed(&mut self) -> Changed<'_>;    // named future, Send
+}
+```
+
+`StateWatcher` keeps only the latest value plus an epoch, like `tokio::sync::watch`, so it needs no backpressure. The legacy integer states (0, 1, 2, 3, 5, 7, 999, −112, −113) are not part of this enum; mapping them is the shim's job.
+
+---
+
+## 10. Transactions
+
+```rust
+pub struct MultiWriter<'a> { /* Vec<WriteOp<'a>> borrowing paths and data */ }
+#[derive(Debug)] pub struct OpHandle<T> { index: usize, writer_id: u64, _t: PhantomData<fn() -> T> }
+impl<T> Copy for OpHandle<T> {}  impl<T> Clone for OpHandle<T> { /* ... */ }
+
+#[derive(Clone, Debug, PartialEq, Eq)] pub struct Created { pub path: ZPathBuf, pub stat: Stat }
+
+impl<'a> MultiWriter<'a> {
+    pub fn new() -> Self;
+    pub fn create(&mut self, path: &'a str, data: &'a [u8], mode: CreateMode, acl: &'a [Acl])
+        -> Result<OpHandle<Created>, Error>;             // CREATE2 / CONTAINER / TTL sub-ops
+    pub fn delete(&mut self, path: &'a str, version: Version) -> Result<OpHandle<()>, Error>;
+    pub fn set_data(&mut self, path: &'a str, data: &'a [u8], version: Version) -> Result<OpHandle<Stat>, Error>;
+    pub fn check(&mut self, path: &'a str, version: Version) -> Result<OpHandle<()>, Error>;
+    pub fn len(&self) -> usize; pub fn is_empty(&self) -> bool;
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum OpResult { Create(Created), Delete, SetData(Stat), Check }
+
+pub struct MultiResults { /* Vec<OpResult>, writer_id */ }
+impl MultiResults {
+    /// Typed access. Panics if `h` came from a different MultiWriter (programming error).
+    pub fn get<T: FromOpResult>(&self, h: OpHandle<T>) -> &T;
+    pub fn iter(&self) -> std::slice::Iter<'_, OpResult>;
+    pub fn into_vec(self) -> Vec<OpResult>;
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum MultiError {
+    /// Rolled back. `index` is the first failing op. per_op[i] is the code of each op: None for ops
+    /// ahead of the failure (the server reports 0), `error` at `index`, RuntimeInconsistency for ops
+    /// after it, as the server reports (DataTree.java:1032).
+    Aborted { index: usize, error: Error, per_op: Vec<Option<Error>> },
+    /// The request as a whole failed (connection loss, SessionExpired, NotReadOnly, ...).
+    Request(Error),
+}
+impl From<MultiError> for Error;   // Aborted => its `error`
+impl From<Error> for MultiError;   // => Request (lets ResponseFuture::wait map local errors)
+impl std::error::Error for MultiError {}
+
+pub struct MultiReader<'a> { /* ... */ }
+impl<'a> MultiReader<'a> {
+    pub fn get_data(&mut self, path: &'a str) -> Result<usize, Error>;
+    pub fn get_children(&mut self, path: &'a str) -> Result<usize, Error>;
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ReadResult { Data { data: Vec<u8>, stat: Stat }, Children(Vec<String>) }
+```
+
+- **Paths are validated when an op is added,** so `?` names the failing op. Data is borrowed: `multi()` serializes the whole transaction under the core lock at call time and keeps no references.
+- **TTL, container and create2 sub-ops are supported.** C accepts only sub-op types {1, 19, 2, 5, 13} and returns `ZUNIMPLEMENTED` for any other, including create2 and TTL (zookeeper.c:4937-4945; 02 §6.1 check 4).
+- **Responses are decoded by the wire `MultiHeader.type`** (unconditional in zk-proto, CC-15, 00 §4; ledger MUL-07). A header-only error reply (`NotReadOnly` from a read-only server) becomes `MultiError::Request`, never a partial decode. In C, sync `zoo_multi` cannot handle this case (zookeeper.c:3308-3337, 5527-5531; ledger MUL-06).
+- **`multi_read`** (op 22) decodes into `Reply::MultiRead` (02 §2.3, §6.1). Its decoder accepts wire types 4 (`GetDataResponse`), 8 (`GetChildrenResponse`) and −1 (`ErrorResponse`), and only when `Compat::native_ops` is true. A sub-op error does not abort the others, so the result is per op.
+
+---
+
+## 11. Reconfiguration and configuration
+
+```rust
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EnsembleConfig { pub raw: String, pub version: Option<i64>, pub servers: Vec<ServerEntry> }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ServerEntry { pub id: u64, pub host: String, pub quorum_port: u16, pub election_port: u16,
+                         pub role: ServerRole, pub client: Option<(String, u16)> }
+#[non_exhaustive] #[derive(Copy, Clone, Debug, PartialEq, Eq)] pub enum ServerRole { Participant, Observer }
+
+#[non_exhaustive]
+pub enum Reconfig {
+    Incremental { joining: Vec<String>, leaving: Vec<u64> }, // "server.N=host:p1:p2[:role];[caddr:]cport"
+    NonIncremental { members: Vec<String> },
+}
+```
+
+- `get_config` reads `/zookeeper/config` (op 4) and never applies the chroot. Its watch is keyed on the absolute path, and its events carry `path = "/zookeeper/config"` under any chroot.
+- `reconfig(change, expected)` sends `ReconfigRequest` with `curConfigId = expected.unwrap_or(-1)`. Without super or admin auth, or with `reconfigEnabled=false`, the result is `NoAuth`, `ReconfigDisabled`, `NewConfigNoQuorum` or `ReconfigInProgress`.
+- `update_servers(connect_string)` runs the ZOOKEEPER-1355 rebalance in zk-proto (02 §9.3, `Connection::set_servers`) with the native knobs:
+  - the string is parsed before anything is committed (a parse error returns `Error::InvalidArgument` and changes nothing), and a chroot is rejected; zk-proto then commits the host list and the driver resolves it as 02 §9.4 specifies; if no address resolves, the last good address list stays in use (`dns_failure = UseLastGood`) and the next due resolution retries the new list. C commits the new string before it resolves (zookeeper.c:1551-1572); natively, as in the legacy profile, only an unparsable string is refused (CC-23, 00 §4; 05 D9);
+  - endpoints compare by IP and port (`addr_eq = IpAndPort`), and randomness comes from the client's private `NativeRng`;
+  - a forced move is a full teardown (`forced_close = Teardown`): requests pending at the move fail with `ConnectionLoss`, and a `Connecting` transition is reported; a request submitted after the move stays queued and goes out on the next connection (02 §12.3).
+
+  With `update_servers_from_config(true)` the client keeps a config watch armed and calls `update_servers` with the client addresses of each new config.
+
+---
+
+## 12. Operations the C client lacks
+
+| Operation | Opcode | Server | Native API | Why it is included |
+|---|---|---|---|---|
+| Persistent / recursive watches | addWatch 106 | 3.6 | `add_watch` | Replaces re-arm loops; Curator caches depend on it. No C equivalent (proto.h:25-49) |
+| SetWatches2 | 105 | 3.6 | internal, on reconnect | Restores persistent watches |
+| RemoveWatches for persistent kinds | 18 with type 4/5 | 3.6 | `remove_watches`, drop | Removes persistent watches |
+| multiRead | 22 | 3.6 | `multi_read` | Consistent snapshot of several nodes |
+| getEphemerals | 103 | 3.6 | `get_ephemerals`, `get_ephemerals_all` | Session introspection |
+| getAllChildrenNumber | 104 | 3.6 | `get_all_children_number` | Cheap subtree size |
+| whoAmI | 107 | 3.9 | `who_am_i` | Check the identity after SASL, x509 or digest auth |
+| CREATE2 / TTL in multi | 15 / 21 in op 14 | 3.5 / 3.5.3 | `MultiWriter::create` | C returns ZUNIMPLEMENTED |
+| Watch-event zxid | ReplyHeader of xid −1 | 3.9 (populated) | `WatchedEvent::zxid` | Ordering and diagnostics |
+
+Not included: `getMaxChildren`/`setMaxChildren` (no opcode), `deleteContainer` (20, server-internal), `createSession`/`closeSession` (covered by connect and close), and standalone `check` (only inside multi in released servers).
+
+The client does not probe the server version. On an older server a modern op fails with `Error::Unimplemented`, or with `Error::ConnectionLoss` if the server closes the connection on an unknown opcode. The docs give the minimum server version for each method.
+
+---
+
+## 13. Lifecycle and reentrancy
+
+- **`Client` is `Clone`.** All clones share one session, which lasts until `close()` or `detach()`, or until the last clone is dropped. `ResponseFuture`, `OneshotWatcher`, `PersistentWatcher` and `StateWatcher` do not keep the session alive.
+- **`close(&self) -> CloseFuture`** is submitted at call time (`Compat::close_mode = Drain`, 02 §13):
+  1. `begin_close` refuses new requests; they fail at once with `Error::Closing`.
+  2. Requests already queued keep their FIFO entries. `queue_close_op` appends `CloseSession` (op −11) behind their frames, and their replies are delivered normally. C fails them with `ZCLOSING` but still sends them, so the server can run work that the caller was told failed (zookeeper.c:4007-4048; ledger CLS-02). That inconsistency is not reproduced natively.
+  3. If connected, the client waits up to `close_timeout` for the `CloseSession` reply. FIFO matching means that reply arrives after every earlier reply. Then `destroy` tears down: leftovers fail with `Closing`, watchers end with `WatchError::Closed`, and the state becomes `Closed`.
+  4. Result: `Ok(())`, `Err(OperationTimeout)`, or a connection-loss-class error. If not connected, no `CloseSession` is sent, and the server expires the session later, as in Java. After a terminal state, `close()` completes at once through the waiting IO side (03 §7). A second `close` returns a future with the same outcome.
+  5. On a TLS connection, a graceful close sends a TLS `close_notify` alert, as the drop-in does (06 §3). After the `CloseSession` exchange, or when it ends within `close_timeout`, the driver calls `send_close_notify()`, flushes the alert without blocking within the rest of the close budget, and closes the socket. It never waits for the server's `close_notify`. `detach()`, forced teardowns, error teardowns and the RW probe send no close_notify. After a fatal TLS error that rustls detects, the driver makes one non-blocking send of the fatal alert that rustls queued, and drops it when earlier ciphertext is still waiting in `ct_out`, as the drop-in does and as OpenSSL does inside `SSL_connect` and `SSL_read` in legacy (03 §4.3.5).
+- **Dropping the last clone** starts the same close in the background and does not block. With `Runtime::Thread` the IO thread finishes it and exits. With `Runtime::Tokio` the task finishes it, unless the runtime is shutting down; then the socket is just closed, and ephemerals disappear at expiry. Applications that need prompt ephemeral deletion call `close().await`.
+- **`detach(self)`** closes the transport without `CloseSession` (`Connection::abandon`, 02 §13) and returns the credentials. Pending requests fail with `Closing`; watchers end with `Closed`. Another client resumes the session with `ClientBuilder::session(id, pw)`.
+- **User trait objects on the IO side.** `Resolve`, `SaslMechanismFactory`/`SaslMechanism`, `CredentialSource` and `Metrics` run on the IO thread (or through `spawn_blocking`), always with every internal lock released and inside `catch_unwind`:
+  - a panicking `Resolve` counts as a resolve failure; a panicking SASL mechanism or credential source counts as a mechanism error, which is the terminal `AuthFailed` state (§16.2);
+  - a panicking `Metrics` hook is logged once, and the hook is disabled for this client.
+
+  Calling async `Client` methods from them is harmless, because submission never waits on the IO side. A blocking `wait()` from them is detected and returns `Err(Error::InvalidState)`, or `WatchError::InvalidState` from a watcher's `wait()` or `recv()` (§5.2), instead of deadlocking.
+
+---
+
+## 14. Concurrency, cancellation and backpressure
+
+**Send/Sync:**
+
+| Type | Send | Sync | Clone | Unpin | Notes |
+|---|---|---|---|---|---|
+| `Client` | yes | yes | yes | yes | `Arc`; all methods take `&self` |
+| `ResponseFuture<T,E>` | if T,E | if T,E | no | yes | `'static`; does not borrow `Client` |
+| `OneshotWatcher` | yes | yes | no | yes | Future |
+| `PersistentWatcher` | yes | yes | no | yes | `next()` takes `&mut` |
+| `StateWatcher` | yes | yes | yes | yes | |
+| `ZPath<'a>` | yes | yes | Copy | yes | |
+| `MultiWriter<'a>` | yes | yes | yes | yes | borrows `&'a str`/`&'a [u8]` |
+| `blocking::Client` | yes | yes | yes | — | |
+
+**Cancellation safety:**
+
+- Dropping a `ResponseFuture` **does not cancel the server operation**; it was sent at call time. Only the result is lost. `tokio::time::timeout(d, fut)` is safe, but a timed-out write can still be applied; the docs say so.
+- `ResponseFuture`, `OneshotWatcher`, `PersistentWatcher::next()` and `StateWatcher::changed()` are safe to poll in one `select!` branch and then drop or poll again: a value leaves its slot or queue only when it is returned.
+- There is no per-request timeout. Replies are FIFO-matched and cannot be skipped; for that reason Java's request timeout tears the connection down. Natively the session timeout bounds every request through the 2/3·T receive deadline.
+
+**Backpressure:**
+
+- **Outbound.** By default the number of pending requests is unbounded, as in Java (`Config.max_pending = None`, 02 §6.1). With `max_pending_requests(n)`, zk-proto counts queued plus in-flight requests (`Config.max_pending = Some(n)`). At the limit a new submission returns a ready `Err(Error::TooManyPendingRequests)` (`Stage::TooManyPending`), and nothing is sent. A submission cannot wait, because it is synchronous. `client.ready().await` resolves once the count is below half the limit, and at once when no limit is set.
+- **Delivery.** `dispatch_queue_capacity` (default 4096) bounds the undelivered results, auth outcomes and one-shot events. One read of frames, and items that do not come from frames, can take the count over the bound (03 §7). At the bound the IO side of an established session stops reading frames, so a consumer that stalls for longer than about 2/3·T loses the connection, and the session reconnects while the consumer is stalled (§4).
+- **Inbound frames** are capped by `max_frame_size` (`Compat::max_frame_len`). **The native default is 4 MiB** (02 §14.1; CC-15, 00 §4). The server's default `jute.maxbuffer` is 0xfffff for data; a reply adds headers and a Stat, child lists can be large, and some deployments raise the server limit, so a cap of exactly 0xfffff would reject legitimate replies. 4 MiB leaves headroom and still bounds memory against a misbehaving server. A larger frame is a protocol error: teardown with `ConnectionLoss` (`last_error` = `DisconnectCause::MalformedFrame`) and an error log record. C has no cap (zookeeper.c:1936-1960; ledger WIRE-01).
+- One-shot watchers hold one event each and `StateWatcher` the latest value. Persistent watchers have a queue that is unbounded by default and bounded by `persistent_watch_buffer` when it is set (§9.2).
+
+---
+
+## 15. Blocking facade (`feature = "blocking"`)
+
+```rust
+pub mod blocking {
+    #[derive(Clone)]
+    pub struct Client { inner: crate::Client }    // always Runtime::Thread
+    impl Client {
+        pub fn connect(builder: crate::ClientBuilder) -> Result<Client, crate::ConnectError>;
+        pub fn create(&self, path: impl PathArg, data: &[u8], mode: CreateMode, acl: &[Acl]) -> Result<(ZPathBuf, Stat)>;
+        pub fn get_data(&self, path: impl PathArg) -> Result<(Vec<u8>, Stat)>;
+        pub fn get_data_watched(&self, path: impl PathArg) -> Result<(Vec<u8>, Stat, OneshotWatcher)>;
+        // ...one method per async method, same names and arguments, returning Result<T>
+        pub fn close(&self) -> Result<()>;
+        pub fn as_async(&self) -> &crate::Client;  // pipeline: issue several, then .wait() each
+    }
+}
+```
+
+Each blocking method is `self.inner.op(..).wait()`. `wait()` blocks on the `Slot` condvar and needs no executor. Inside a tokio worker it blocks that worker but does not deadlock, because `blocking::Client` forces the thread driver; the docs call it misuse. On the client's own IO side it returns `InvalidState` (§5.2).
+
+---
+
+## 16. Security configuration
+
+This document owns the native TLS and SASL names. 06 §3.12 (native TLS) and 06 §4.8 (native SASL) own the semantics.
+
+### 16.1 TLS (`feature = "tls-rustls"`)
+
+**Engine.** Native TLS uses the same engine as the drop-in (06 §3.1, §3.2): `zk-driver::net::tls::RustlsConn`, a `rustls::ClientConnection` over in-memory buffers (`read_tls`/`write_tls` into `Vec<u8>`), behind the `TlsConn`/`TlsConnector` driver traits. Both native drivers pump it through `TlsTransport` over the rustix socket (03 §4.3.4, §8.1), so all sends keep MSG_NOSIGNAL/SO_NOSIGPIPE. The tokio driver uses the same sans-IO object over its `AsyncFd` socket; `tokio-rustls` is not used. The crypto provider is the one the build selects, with the drop-in's three choices (§18): `tls-ring` (the default provider; Apache-2.0 AND ISC, ASF Category A; 00 §2.5.7), `tls-aws-lc-rs` or `tls-aws-lc-rs-fips`. Each enables zk-driver's `tls` feature and its provider feature of the same name.
+
+**Shared loaders.** `TlsOptionsBuilder` uses the drop-in loaders in `zk-driver::net::tls` (module names as in 06 §3.1). There is one trust loader, `trust.rs`, for both profiles, and the `tls-rustls` feature adds no trust crates: no rustls-native-certs and no openssl-probe; only the opt-in `tls-platform-verifier` adds them (§18).
+
+- CA file (06 §3.4): PEM blocks labeled `CERTIFICATE`, `X509 CERTIFICATE` and `TRUSTED CERTIFICATE`. The aux trust and reject settings of a `TRUSTED CERTIFICATE` block are honored by the OpenSSL rules of 06 §3.4. `X509 CRL` blocks are parsed and counted, as OpenSSL `X509_load_cert_crl_file` counts them, but they are not used, because legacy sets no CRL-check flags. Well-formed blocks of other types are ignored. The `CaFile` step succeeds when the file yields at least one certificate or at least one CRL. It logs "Failed to load CA file %s" and fails when the file cannot be read, when a PEM block is malformed (06 §3.4), when `ca` is NULL, or when it yields neither a certificate nor a CRL; natively `build()` then reports `TlsConfigError::CaFile(path)`.
+- System roots (`add_system_roots`): the shared default-location loader in `trust.rs`, with exactly the drop-in's location rules (06 §3.4):
+  - `SSL_CERT_FILE`, and `SSL_CERT_DIR` (a list split on `:`, on `;` on Windows), when they are set, and only when the loader's `tls_env_allowed` input is set. That input is false in a set-uid or set-gid process, so the variables are ignored there, as OpenSSL ignores them. The loader reads the variables itself. In the drop-in the shim computes the input (`getauxval(AT_SECURE)` or `issetugid()`, 05 §6). Natively zk-client computes it once, when `TlsOptionsBuilder::build` or `legacy_c_compat` runs, with safe rustix calls: `getuid() == geteuid() && getgid() == getegid()` on Unix, and true on Windows (06 §3.12; 01 §3.3; on Windows the flag is 1, as the shim sets it, 05 §6). `#![forbid(unsafe_code)]` therefore still holds in zk-client;
+  - otherwise the compile-time defaults `ZK_TLS_DEFAULT_CERT_FILE` and `ZK_TLS_DEFAULT_CERT_DIR`. The C build sets them from `--with-rust-tls-default-paths=FILE:DIR`, whose default is the OPENSSLDIR recorded at configure time. That value comes from `openssl version -d`, run with the `openssl` binary of the installation that the legacy probe selected: `$with_openssl/bin/openssl` for `--with-openssl=DIR`, `OPENSSL_ROOT_DIR/bin` in CMake, and otherwise the first `openssl` on PATH. With no such binary, the platform list of 01 §6.1 applies (the rule is 06 §3.4). For a native cargo build, the build environment can set the two variables. When it sets neither, zk-driver's `build.rs` applies the same platform list on the build host: `<dir>/cert.pem` and `<dir>/certs` from the first listed directory that exists. Cross builds set the variables explicitly. Nothing is probed at run time;
+  - `openssl_probe::probe()` is never called, and the macOS keychain and the Windows certificate store are not consulted (applications that want the OS trust store use `with_platform_verifier`, below);
+  - a directory (`SSL_CERT_DIR` or the default directory) is read by OpenSSL hash-name lookup: only files named `<hash>.<n>` whose name matches the certificate's OpenSSL subject-name hash, with suffixes from `.0` up to the first suffix whose file is missing or does not load (no certificate, or a corrupt block). Other files are ignored. OpenSSL 3.0 also consults a default `X509_LOOKUP_store` over the same directory value when it is a single path and the `by_dir` pass finds no certificate with the wanted subject; that lookup reads `<hash>.<digits>` names with the hex part compared case-insensitively and no stop at a suffix gap. OpenSSL 3.5 adds no default store location. The loader applies the `by_dir` rule alone; where OpenSSL 3.0 accepts through the store lookup, or where OpenSSL 3.0 or 3.5 keeps a certificate that comes before a corrupt block in a hash-named file, or a certificate in a hash-named file of another subject, the stricter verdict is DV-TLS-3 (06 §3.4).
+- Client identity (06 §3.6): the cert chain from PEM; private keys as unencrypted PKCS#8, PKCS#1 RSA or SEC1 EC; encrypted PKCS#8 with PBES2 (PBKDF2 with HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384 or HMAC-SHA512 as the PRF (the accepted subset of the PRFs OpenSSL loads; other PRFs that OpenSSL loads are DV-TLS-5), or scrypt; with AES-128/192/256-CBC or DES-EDE3-CBC); or traditional OpenSSL PEM encryption (`Proc-Type: 4,ENCRYPTED` with `DEK-Info`, EVP_BytesToKey MD5, and AES-*-CBC, DES-EDE3-CBC or DES-CBC; `legacy_pem.rs`). scrypt parameters whose memory need is over 32 MiB are rejected before allocation, as OpenSSL's default `EVP_PBE_scrypt` maxmem does. PKCS#12 PBE, and ciphers or PRFs outside these sets, are rejected (DV-TLS-5, 06 §3.13); PBES1 fails in both cores under the reference default providers. An unencrypted key ignores a given passphrase. A key/cert mismatch of the same key type fails at the `ClientKey` step, as `SSL_CTX_use_PrivateKey_file` does (natively `TlsConfigError::PrivateKey(path)`); the `CheckPrivateKey` SPKI comparison covers any remaining case (natively `TlsConfigError::KeyMismatch`). Decrypted key bytes are held in `Zeroizing<Vec<u8>>`. In the `tls-aws-lc-rs-fips` build the accepted set is smaller, as in the FIPS drop-in: unencrypted keys, and encrypted PKCS#8 with PBES2, PBKDF2 with HMAC-SHA256, HMAC-SHA384 or HMAC-SHA512, and AES-128/192/256-CBC. Traditional PEM encryption (MD5-based), DES-EDE3-CBC and DES-CBC, the HMAC-SHA1 and HMAC-SHA224 PRFs, and scrypt are rejected with `TlsConfigError::PrivateKey(path)` (DV-TLS-6, 06 §3.15.3).
+
+**Native-only surface.** The `TlsOptions` API, the `WebPki` default, the per-client overrides, `ReloadPolicy`, the platform verifier and the `DefaultRoots` check in `build()` are native-only and live in zk-client.
+
+```rust
+pub struct TlsOptions { /* Arc<rustls::ClientConfig> cache + sources + tls_verify */ }
+impl TlsOptions {
+    pub fn builder() -> TlsOptionsBuilder;
+    /// Drop-in trust decision, for migration. Parses the zookeeper_init_ssl cert string
+    /// ("ca,cert,key,passwd"). Selects TlsVerify::LegacyChainOnly, CA file plus the default
+    /// locations, no SNI, no name check. Keeps no copy of the cert string; the passphrase
+    /// field is copied into a SecretString.
+    pub fn legacy_c_compat(cert_string: &str) -> Result<TlsOptions, TlsConfigError>;
+    /// Full control. The hostname and SNI policy is what the given config does.
+    pub fn from_rustls(cfg: Arc<rustls::ClientConfig>) -> TlsOptions;
+}
+impl TlsOptionsBuilder {
+    pub fn ca_file(self, p: impl Into<PathBuf>) -> Self;          // a pin: only these roots by default
+    pub fn add_system_roots(self) -> Self;                         // opt-in; drop-in location rules
+    pub fn client_identity(self, chain: impl Into<PathBuf>, key: impl Into<PathBuf>,
+                           passphrase: Option<SecretString>) -> Self; // encrypted keys accepted
+    pub fn server_name(self, name: ServerName<'static>) -> Self;   // one name for the whole ensemble
+    pub fn danger_disable_hostname_verification(self) -> Self;    // chain only; WARN once per client
+    pub fn min_protocol(self, v: &'static SupportedProtocolVersion) -> Self; // default TLS 1.2
+    pub fn reload(self, r: ReloadPolicy) -> Self;                 // default OnChange
+    /// OS trust store and OS verification policy (rustls-platform-verifier).
+    #[cfg(feature = "tls-platform-verifier")]
+    pub fn with_platform_verifier(self) -> Self;
+    pub fn build(self) -> Result<TlsOptions, TlsConfigError>;     // reads and checks files at this call
+}
+pub enum ReloadPolicy { OnChange, Never }
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub enum TlsConfigError { CaFile(PathBuf), DefaultRoots, CertChain(PathBuf), PrivateKey(PathBuf), KeyMismatch, Context,
+                          PlatformVerifier(String), NotFips }
+impl std::fmt::Display for TlsConfigError {}
+impl std::error::Error for TlsConfigError {}
+```
+
+- **Verifier (`Compat::tls_verify`).** The native default is `WebPki`: hostname verification is on; the `ServerName` is the host token as written in the connect string (carried in the driver's `Endpoint`), not the resolved IP; IP-literal tokens verify against IP SANs; SNI is sent for DNS names only. This matches Java's `zookeeper.ssl.hostnameVerification=true`. `legacy_c_compat` overrides `tls_verify` to `LegacyChainOnly` for that client (02 §14.1 allows per-client overrides of `NATIVE`). It then gets the exact drop-in decision, rules (a)-(d) of 06 §3.5, including OpenSSL's acceptance of X.509 v1 leaves below a valid v3 chain and of v1 self-signed anchors (06 §3.14). `WebPki` rejects v1 certificates. Rule (b) accepts a leaf that is byte-identical to a trust-set certificate only when that certificate is OpenSSL-self-signed (`EXFLAG_SS`, defined in full in 06 §3.4). `WebPki` rejects such a leaf.
+- **Protocols and algorithms.** The client supports TLS 1.2 and 1.3 only and never renegotiates. SHA-1 and MD5 signatures, RSA keys under 2048 bits and DSA are rejected (the drop-in records the same facts as DV-TLS-1 and DV-TLS-3).
+- **Platform verifier (`feature = "tls-platform-verifier"`).** `with_platform_verifier()` replaces the chain verifier with `rustls-platform-verifier`, built with the client's selected provider. The OS trust store and the OS verification policy then decide the chain and the hostname, with any revocation checks that the OS policy makes (Security.framework on Apple targets, the CryptoAPI chain engine on Windows). On targets with no platform verifier (Linux and the BSDs) the crate verifies with webpki over the roots that `rustls-native-certs` finds. `Compat::tls_verify` stays `WebPki`: the `ServerName` and the SNI rule are unchanged. `add_system_roots()` keeps the OpenSSL-location loader above and never uses the platform verifier, and the drop-in never uses it. `build()` reports `TlsConfigError::PlatformVerifier` in three cases:
+  - `with_platform_verifier` is combined with `ca_file`, `add_system_roots` or `danger_disable_hostname_verification`, which would mix two trust decisions;
+  - the process is set-uid or set-gid (`tls_env_allowed` is false) on a target where the crate finds roots through `rustls-native-certs`, because that path reads `SSL_CERT_FILE` and `SSL_CERT_DIR` with no set-uid check;
+  - the OS verifier cannot be created.
+
+  The feature cannot be combined with `tls-aws-lc-rs-fips` (`compile_error!`), because the OS verifier checks signatures outside the FIPS module. It has its own native closure golden (§18).
+- **FIPS build (`feature = "tls-aws-lc-rs-fips"`).** The FIPS build uses aws-lc-rs `fips` (`aws-lc-fips-sys`; CMake and Go on the build host), rustls `fips` and `require_ems`, and only FIPS-approved cipher suites, key-exchange groups and signature algorithms (06 §3). `build()` and `legacy_c_compat` check `ClientConfig::fips()` and report `TlsConfigError::NotFips` when it is false (zk-client never aborts on this; 06 §3.15.2). `ClientBuilder::build()` and `connect()` make the same check for a config from `from_rustls`, and fail with a `ConnectError` whose error is `Error::InvalidArgument` and whose cause is `TlsConfigError::NotFips`. Every signature check, including the X.509 v1-leaf verifier of `legacy_c_compat`, uses only the FIPS module. The validation scope is Linux x86_64 and aarch64.
+- **Graceful close.** A graceful close sends `close_notify` without waiting for the server's alert (§13). `detach()`, forced and error teardowns and the RW probe send no close_notify. Legacy C frees the TLS session with no `SSL_shutdown` and sends no close_notify (`close_zsock`, zookeeper.c:648-670); the difference shows only on the wire. After a fatal TLS error that rustls detects, the driver makes one non-blocking send of the fatal alert that rustls queued, and drops it when `ct_out` is not empty, as the drop-in does and as OpenSSL sends its alert inside `SSL_connect` and `SSL_read` in legacy (§13; 03 §4.3.5).
+- **Configuration failures.** `build()` reports `TlsConfigError` at once. With `add_system_roots`, `build()` reports `TlsConfigError::DefaultRoots` when the shared loader reports zero usable roots in the default locations. This check is native-only: a native user who asked for system roots needs to learn that there are none. The drop-in `DefaultVerifyPaths` step fails only on a resource error; missing or empty default locations do not fail it, which matches `SSL_CTX_set_default_verify_paths` (06 §3.4). `legacy_c_compat` keeps the drop-in rule and never reports `DefaultRoots`. With `ReloadPolicy::OnChange`, files are read again on a connection attempt when they changed. A reload that fails follows the single core rule for TLS config errors (CC-14, 00 §4): the attempt reports `TransportFailure::TlsConfig{step, file}` (`file` is for the log line only) and no teardown, the receive deadline then fails the attempt over (pending requests see `ConnectionLoss`, §5.3), and `SessionInfo::last_error` carries the `TlsConfigError`.
+- **Handshake.** The handshake is non-blocking, with the 2/3·T deadline from TCP-connect completion (§3). A handshake failure tears the connection down: pending requests fail with `ConnectionLoss` (§5.3), and `SessionInfo::last_error` names the TLS failure. C's handshake is a blocking `SSL_connect`/`select` loop with no deadline (zookeeper.c:2937-2975).
+- **TLS and SASL combine natively** (06 §6). The C client cannot: `zookeeper_init_ssl` passes no SASL parameters and `zookeeper_init_sasl` passes no cert (zookeeper.c:1520-1544; ZOOKEEPER-3482).
+
+### 16.2 SASL (`feature = "sasl"`, `feature = "sasl-gssapi"`)
+
+Cyrus is never linked into native builds (06 §4.8). The native mechanisms are safe-Rust DIGEST-MD5 and GSSAPI through `libgssapi` (CC-34, 00 §4).
+
+```rust
+#[non_exhaustive]
+pub enum SaslConfig {
+    /// Safe-Rust DIGEST-MD5 (qop=auth). Service "zookeeper", server name "zk-sasl-md5".
+    #[cfg(feature = "sasl")]
+    DigestMd5 { username: String, password: Arc<dyn CredentialSource>, service: String, server_name: String },
+    /// GSSAPI (Kerberos) through libgssapi. Credentials come from the GSSAPI default
+    /// (ccache or keytab). server_name None means the connect-string host token.
+    #[cfg(feature = "sasl-gssapi")]
+    Gssapi { service: String, server_name: Option<String> },
+    /// User-supplied mechanism.
+    Custom(Arc<dyn SaslMechanismFactory>),
+}
+pub trait CredentialSource: Send + Sync + 'static {
+    /// Called on every (re)authentication, so rotation works.
+    fn password(&self) -> Result<SecretString, CredentialError>;
+}
+#[non_exhaustive] #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum CredentialError { Transient, Permanent }
+pub trait SaslMechanismFactory: Send + Sync + 'static {
+    fn create(&self, ctx: &SaslContext) -> Result<Box<dyn SaslMechanism>, SaslError>;
+}
+pub trait SaslMechanism: Send {
+    fn name(&self) -> &str;
+    fn start(&mut self) -> Result<SaslStep, SaslError>;
+    fn step(&mut self, challenge: Option<&[u8]>) -> Result<SaslStep, SaslError>;   // None = server sent -1
+}
+/// Public copy of zk_proto's SaslStep { token, done }.
+pub struct SaslStep { pub token: Option<Vec<u8>>, pub done: bool }
+pub struct SaslContext { pub server_host: String, pub server_addr: SocketAddr, pub local_addr: SocketAddr }
+#[derive(Clone, Debug)]
+pub struct SaslError { pub kind: SaslErrorKind, pub message: String }
+#[non_exhaustive] #[derive(Clone, Debug)]
+pub enum SaslErrorKind { Mechanism, ServerRejected, Credential(CredentialError) }
+impl std::fmt::Display for SaslError {}
+impl std::error::Error for SaslError {}
+```
+
+zk-client converts `SaslError` to `zk_proto::SaslError` (02 §7.4) in its `SaslSession` adapter: `rc = ZSYSTEMERROR`, `errstring` from `message`, `errdetail` empty. It keeps the public value for `SessionInfo::last_error`. zk-client re-exports no proto type (§2.1).
+
+- A new mechanism instance per connection, so no flag carries over between attempts. In C, `is_gssapi` is set once and never cleared, and `is_last_packet` persists in the shared client (zk_sasl.c:332-334, 361-366, 390-397; ledger SAS-04).
+- Each client owns its credential source, so there is no shared secret buffer (compare zk_sasl.c:447-482 and ledger DAT-13).
+- zk-proto owns the ZooKeeper-level rules for both profiles (K10, 02 §7.4): op 102 framing, the send gate, deferred CONNECTED, the DIGEST-MD5 empty initial response and the GSSAPI final packet. zk-client adapts `SaslMechanism` to `zk_proto::SaslSession` and answers each `Action::Sasl(SaslCall{gen, ..})` with `handle_sasl_started`/`handle_sasl_stepped`; a stale `gen` is ignored (CC-17, 00 §4). The drop-in runs Cyrus in hardened shim C from SASL{START, STEP, DISPOSE} outbox items (06 §4.6, §4.7); none of that code is reachable from zk-client.
+- Every SASL failure is the terminal `AuthFailed` state (`Compat::sasl_failure = Teardown`, zk-proto `Cause::SaslTeardown`, 02 §7.4, §12.1): a mechanism error, a `CredentialError` of either kind, a panic in the mechanism or the credential source, and a server rejection. Everything pending fails with `Error::AuthFailed`, watchers end with `WatchError::AuthFailed`, and `SessionInfo::last_error` carries the `SaslError`. A `SaslErrorKind::Credential` value keeps the `Transient` or `Permanent` kind of a credential-source error, and a panic counts as `SaslErrorKind::Mechanism`, so the application can decide whether to build a new client. The client never retries SASL on the next server, not even after a `Transient` error (an unreadable file, an unreachable KDC): zk-proto has one native SASL failure path, and it is terminal.
+- If the driver cannot read the local or peer socket address for `SaslContext`, it calls `handle_sasl_addr_failed` (§4). zk-proto logs the core "getsockname" or "getpeername" site and "SASL authentication failed. rc=%d", and the failure is the same terminal `AuthFailed` state.
+
+### 16.3 Secret hygiene
+
+- `SessionPassword`, builder and `add_auth` credentials, `SecretString` passphrases and SASL tokens are wiped on drop with `zeroize`, redacted in `Debug`, and never logged.
+- Credentials and tokens that enter the core are `zk_proto::SecretBytes` (a `Zeroizing<Vec<u8>>` newtype, not `Clone`, 06 §7).
+- `SecretString` is zk-client's own newtype over `zeroize::Zeroizing<String>` (CC-19, 00 §4): not `Clone`, `Debug` prints `<redacted>`.
+- `zeroize` (`default-features = false`, `features = ["alloc"]`, no derive) is a normal dependency of zk-proto and of zk-client. `secrecy` is not used.
+- Decrypted TLS private keys are held in `Zeroizing<Vec<u8>>` by the shared loader (06 §3.6, 06 §7).
+- Wipe on drop is the whole guarantee. Secret memory is not locked (no `mlock`) and not excluded from core dumps (no `madvise(MADV_DONTDUMP)`), in both profiles (06 §7).
+
+---
+
+## 17. Observability
+
+- **Log records.** zk-proto emits structured `Output::Log(LogRecord)` items in order with the other outputs (02 §5.1). It never formats strings, never reads a clock and never depends on `tracing`. zk-client implements `zk_proto::LogFilter` by asking the active `tracing` subscriber (or `log`'s max level), and renders each record as:
+  - `tracing` events and spans when feature `tracing` (default) is on;
+  - `log` records when feature `log` is on and `tracing` is off;
+  - nothing otherwise.
+
+  Targets: `apache_zookeeper::session` (span per connection attempt with `server`, `session_id`, `epoch`; info on state changes; warn on reconnect, with the teardown cause), `::request` (debug per request: `xid`, `op`, `path`, `rc`, `latency`), `::watch` (arm, fire, detach, lag), `::proto` (error for protocol violations). The `ClientBuilder::name` label is attached to every record. The time stamp comes from the subscriber. (In the drop-in, zk-ffi stamps wall-clock time when it moves a Log output into the outbox; CC-30, 00 §4.)
+- **Never logged:** passwords, auth data, SASL tokens, `SessionPassword`, TLS passphrases. TLS logs carry file paths only.
+- **Metrics hook:**
+
+```rust
+/// Every method has an empty default. The driver calls it after it routes a batch of outputs,
+/// with no internal lock held, inside catch_unwind. It must not block.
+pub trait Metrics: Send + Sync + 'static {
+    fn request_completed(&self, op: OpKind, result: Result<(), &Error>, latency: Duration) {}
+    fn state_changed(&self, state: SessionState) {}
+    fn bytes(&self, sent: usize, received: usize) {}
+    fn watch_event(&self, kind: EventKind) {}
+    fn watch_lagged(&self, missed: u64) {}
+    fn pending_requests(&self, n: usize) {}
+}
+#[derive(Clone, Debug)] pub struct ClientStats { pub pending: usize, pub sent: u64, pub received: u64,
+    pub reconnects: u64, pub last_zxid: Zxid, pub negotiated_timeout: Option<Duration>, pub server: Option<SocketAddr> }
+```
+
+There is no dependency on `metrics` or `prometheus`. Adapters are a few lines of user code, and an example ships with the crate.
+
+---
+
+## 18. Feature flags and dependency allowlist
+
+The feature set is CC-34 (00 §4). The build-level list is 01 §10; this table gives the API meaning.
+
+| Feature | Default | Enables | Extra third-party deps (allowlist, 01 §3.7) |
+|---|---|---|---|
+| `tokio` | **on** | `Runtime::Tokio`; zk-driver's `tokio` driver. Unix targets only (`cfg(unix)`); on other targets it compiles to nothing (§4) | tokio (`rt,net,time,sync,io-util`) and its closure (mio, socket2 only through tokio), as a `cfg(unix)` target dependency |
+| `tracing` | **on** | log records as `tracing` events and spans | tracing (+tracing-core) |
+| `stream` | **on** | `futures_core::Stream` for `PersistentWatcher` | futures-core |
+| `blocking` | off | `blocking::Client`, `wait()`/`wait_timeout()`/`recv()` | none |
+| `log` | off | log records as `log` records | log |
+| `tls-rustls` | off | `TlsOptions`; zk-driver's `tls` feature (`RustlsConn` and the shared loaders). Selects no provider; exactly one provider feature below is required | — (the provider feature brings the closure) |
+| `tls-ring` | off | implies `tls-rustls`; zk-driver's `tls-ring`. The default provider | the drop-in TLS closure with ring (K14, 00 §3): rustls, rustls-pki-types, rustls-webpki, ring, untrusted, zeroize, pkcs8, pkcs5, der, spki, pem-rfc7468, base64ct, aes, des, cbc, cipher, md-5, sha1, sha2, pbkdf2, hmac, scrypt, and rustix (libc backend), with their transitive closure. No rustls-pemfile, no rustls-native-certs and no openssl-probe. Native trust uses the shared loader and adds no trust crates |
+| `tls-aws-lc-rs` | off | implies `tls-rustls`; zk-driver's `tls-aws-lc-rs` | the drop-in TLS closure with aws-lc-rs and aws-lc-sys in place of ring: the same crates as `zk-ffi-<target>-aws-lc-rs.txt`; the native check uses `native-<featureset>.txt` (01 §3.3 R4) |
+| `tls-aws-lc-rs-fips` | off | implies `tls-rustls`; zk-driver's `tls-aws-lc-rs-fips`: aws-lc-rs `fips`, rustls `fips`, FIPS-only algorithms and key formats (§16.1) | the drop-in FIPS closure with aws-lc-rs and aws-lc-fips-sys: the same crates as `zk-ffi-<target>-aws-lc-rs-fips.txt`; the native check uses `native-<featureset>.txt` (01 §3.3 R4); needs CMake and Go on the build host |
+| `tls-platform-verifier` | off | implies `tls-rustls`; `TlsOptionsBuilder::with_platform_verifier` (§16.1). Native-only; not combinable with `tls-aws-lc-rs-fips` | rustls-platform-verifier and its per-platform closure (on Linux and the BSDs it includes rustls-native-certs and openssl-probe); banned from the zk-ffi closure by cargo-deny; its own native closure golden, `native-<featureset>.txt` (01 §3.3 R4) |
+| `sasl` | off | DIGEST-MD5 | md-5 (+digest family), getrandom |
+| `sasl-gssapi` | off | GSSAPI | libgssapi (+libgssapi-sys); links the system libgssapi_krb5, outside our unsafe budget like ring |
+| `serde` | off | Serialize/Deserialize for Stat, Acl, Id, Perms, Zxid, SessionId, CreateMode | serde |
+
+`rustls-pemfile` is not in the `tls-rustls` closure: the shared PEM reader must see RFC 1421 headers (`Proc-Type`, `DEK-Info`) for traditional encrypted keys, so it is a small reader in `zk-driver::net::tls::pem` over `base64ct` (06 §3.1). `sha1` serves PBKDF2-HMAC-SHA1 in encrypted PKCS#8 (pkcs5 `sha1-insecure`, 01 §3.7). The OpenSSL subject hash for hash-named trust directories uses the provider's SHA-1 (06 §3.4).
+
+**TLS provider features.** zk-client mirrors the drop-in provider features. zk-driver and zk-ffi have the TLS features `tls`, `tls-ring` (the default provider), `tls-aws-lc-rs` and `tls-aws-lc-rs-fips`; zk-client has `tls-rustls` and the three provider features of the same names, each of which implies `tls-rustls` and enables its zk-driver namesake. Applications normally enable only the provider feature, for example `features = ["tls-ring"]`. When `tls-rustls` is enabled with no provider or with more than one, `compile_error!` stops the build with a message that names the three features. Lint and test jobs therefore use explicit feature sets, never `--all-features` (08 §14). Each provider has its own closure golden, and cargo-deny has build-specific exceptions for the aws-lc builds (01 §3.3, §3.7). Neither aws-lc build ships in a release before the ASF legal review of aws-lc-sys and aws-lc-fips-sys passes (00 §6); `tls-ring` has no such prerequisite.
+
+**Non-optional native closure.** The closure is zk-driver's (`rustix` with `use-libc`, and its `libc`/`errno`/`bitflags`/`linux-raw-sys`/`windows-sys`, with the `windows-targets`/`windows_*` import-library crates that `windows-sys` pulls) plus `zeroize`. `libc` and `errno` are in the closure on every target, Windows included, because rustix with `use-libc` uses its libc backend there; only `linux-raw-sys` (Linux) and `windows-sys` (Windows) are limited to one platform (01 §3.3 R4). The closure has no other crates. Sockets and polling use rustix. Per-client randomness (shuffle, jitter) comes from zk-proto's injected `Rng`, implemented in zk-client as `NativeRng`: a per-client SplitMix64 seeded from `std::collections::hash_map::RandomState` (K7, CC-19, 00 §4). `on_resolution` is a no-op; `random` and `drand48` are derived from its output. mio, socket2, fastrand, secrecy, rsasl, tokio-rustls and rustls-pemfile are not used by zk-client. rustls-native-certs and openssl-probe enter only through `tls-platform-verifier` on the targets named above.
+
+**Defaults decision.** `tokio`, `tracing` and `stream` are on. `tls-rustls`, the provider features, `tls-platform-verifier` and the SASL features are off, so the default native closure carries no crypto or GSSAPI code. None of the native-only features is reachable from zk-ffi: `tokio`, `tracing`, `stream`, `log`, `serde`, `tls-platform-verifier`, `sasl` and `sasl-gssapi` live in zk-client or in zk-driver features that zk-ffi does not enable. zk-driver's `tls` and provider features are enabled by both, because one TLS engine and one loader serve both profiles (06 §3.1). The R4 golden closures prove it: `zk-ffi-<target>-notls.txt`, `zk-ffi-<target>.txt` (`tls,tls-ring`), `zk-ffi-<target>-aws-lc-rs.txt` (`tls,tls-aws-lc-rs`) and `zk-ffi-<target>-aws-lc-rs-fips.txt` (`tls,tls-aws-lc-rs-fips`) for the drop-in, and `native-<featureset>.txt` for each supported native feature set, including one with `tls-platform-verifier` (01 §3.3).
+
+**Allowlist.** The native-only rows of 01 §3.7 are: tokio (and mio/socket2 only as its internal dependencies), tracing, futures-core, log, serde, libgssapi, and rustls-platform-verifier with its per-platform closure. getrandom is shared with the drop-in TLS closure (ring). The rustls/ring/RustCrypto rows serve both closures (K14, 00 §3). `mio` stays banned from direct use.
+
+---
+
+## 19. Layers over zk-proto, and what stays out of the C shim
+
+### 19.1 Layering, and the native hooks in zk-proto
+
+02 is the single source of truth for the core API (CC-17, 00 §4). This document uses its names: `Connection<T: Tokens>`, `Request<T>`, `Op<W>`, `PathIn::Native`, `Route::Queued`, `InputDefect`, `submit(Request<T>, Millis) -> Result<Submitted<T>, SubmitError<T>>`, `Stage`, `poll_output() -> Option<Output<T>>`, `poll_action() -> Option<Action>`, `Action::{Connect, ProbeRw}{endpoint, tls}`, `Reply`, `TerminateReason`, `detach_watcher`, `Compat::NATIVE`, `DriverMode`.
+
+| Native API element | zk-proto primitive | What zk-client adds |
+|---|---|---|
+| Every request method | `Connection::submit(Request<T>, now)`: chroot join (`ChrootPolicy::Component`), xid, encode, tx + FIFO append, pending limit | Strict path validation, terminal-state check, typed decoding, `Slot` |
+| One-shot watches | `Op::{Exists, GetData, GetChildren}.watch: Option<WatchId>`, checker table, collection at receipt, SetWatches | `OneshotWatcher`, drop-detach, `WatchError` |
+| Persistent watches | Persistent registry tables, `Op::AddWatch.watch: WatchId` (106), SetWatches2 (`native_ops = true`) | `PersistentWatcher`, per-watcher queue (bounded only with `persistent_watch_buffer`), `Lagged` |
+| Watch removal | `detach_watcher` (02 §10.4), `Op::RemoveWatches` with wtype 1-5, local removal | Handle `remove()`, `Removed` notification |
+| Session state | `State`, `Output::Session`, `expiry = Java` | `SessionState`, `StateWatcher`, epoch |
+| Auth | `add_auth(scheme, SecretBytes, Option<T::Auth>, now)` with `auth_resend = Forward`, `auth_completion = PerRequest` | `add_auth` future, builder credentials |
+| SASL | `SaslSession`/`SaslStep`/`SaslCall{gen}`, op 102 framing, gate, mechanism quirks | Mechanisms, `CredentialSource` |
+| Multi | encode; multi decode by wire type | `MultiWriter`/`OpHandle<T>`/`MultiError` |
+| Host list, timers, pings, RO probe | `HostSpec`/`AddrVec`, `set_servers`, timers driven from `Millis`, `Action::ProbeRw{endpoint, tls}` | Builder knobs, `Resolve` adapter, `NativeRng` |
+| `connect_timeout` | `Config.connect_timeout_ms = Some(t)`: bound on each TCP-connect attempt (02 §9.1) | Default `session_timeout` / 3 |
+| `reconnect_delay` | `Config.reconnect_delay_ms` and `Config.reconnect_jitter_pct = 25`: the `not_before` of `Backoff::Deadline` after a full host-list pass (02 §7.2) | Default 1 s, ±25% jitter from `NativeRng` |
+| `dns_refresh` | Per-client override of `Compat::resolve_cadence`, plus `Config.resolve_delay_ms` (02 §3.3, §9.4): `EachPass` → `EachPass` and -1, `Interval(d)` → `Throttled { ms: d }` and d, `Never` → `Never` and -1 | Default `EachPass`, equal to `NATIVE` |
+| `server_order` | The `shuffle` argument of `handle_resolved(gen, shuffle, now)`: `Shuffled` = true, `AsGiven` = false | Default `Shuffled` |
+| `close_timeout` | `Config.close_timeout_ms`: the deadline of `CloseMode::Drain` (02 §13) | Default 3 s |
+| TLS | `Action::Connect{endpoint, tls}`, `handle_transport_ready`/`handle_transport_failed`, `tls_verify` | `TlsOptions` → `RustlsConn` connector (in zk-driver) |
+| Close / detach | `begin_close`/`queue_close_op`/`close_step`/`destroy` with `CloseMode::Drain`; `abandon` (02 §13) | `CloseFuture`, `LifeGuard` |
+
+zk-client contains no protocol logic.
+
+**Native hooks in zk-proto (CC-15, 00 §4).** zk-proto provides these for zk-client. Each is gated so that `Compat::LEGACY_C` is unchanged. The names are zk-proto's (02 §15):
+
+| Hook | zk-proto section |
+|---|---|
+| `Reply` has the native variants `Ephemerals` (`GetEphemeralsResponse`, chroot entries filtered per 02 §5.1), `ChildrenCount` (`GetAllChildrenNumberResponse`), `WhoAmI` (`WhoAmIResponse`) and `MultiRead(Vec<MultiItem>)`. Multi decoding accepts wire types 4 and 8 only for `MultiRead`. `Op` has the native variants `AddWatch`, `MultiRead`, `GetEphemerals`, `GetAllChildrenNumber`, `WhoAmI` (opcodes 106, 22, 103, 104, 107) | 02 §2.3, §6.1 |
+| `WatchedEvent` has `zxid: i64` from the notification's ReplyHeader | 02 §5.1 |
+| `Connection::detach_watcher(&T::Watcher) -> Option<RemoveHint { path, wtype }>`. Per-(path, class) counts include registrations on unanswered requests. A hint is also produced when a failed registration drops the last count while a server watch is set. `has_watcher` and local removal accept wtype 4 and 5 | 02 §10.4 |
+| `Output::WatchTerminated { watchers: Vec<T::Watcher>, reason: TerminateReason { Removed, ConnectionLost, SessionExpired, AuthFailed, Closed } }`, emitted only when `session_fanout_to_path_watchers == false`: on a successful remove, local or non-local (`Removed`), on `clear_watches_on_expiry`, on close or abandon, on a SASL or digest auth failure teardown, and on disconnect with `restore_watches == false` | 02 §10.4 |
+| `Compat::session_fanout_to_path_watchers` (`LEGACY_C` true, `NATIVE` false) and per-handle `Config.restore_watches: bool` (legacy always true) | 02 §3.3, §10 |
+| `Compat::close_mode: CloseMode { LegacyFailPending, Drain }`. Under `Drain`, `begin_close` refuses new submits but keeps the FIFO; `queue_close_op` appends CLOSE_OP behind the queued frames and records its xid, and a reply with that xid returns ZOK; `close_step` reports `CloseProgress { Pending, Complete }`; the close completes on the CLOSE_OP reply or the deadline, at once when `queue_close_op` returned false, and when a teardown ends the transport during the drain, then `destroy` fails leftovers with ZCLOSING | 02 §13 |
+| `Connection::abandon(now)`: close the transport without CLOSE_OP, fail pending work with ZCLOSING, end watchers with `Closed` | 02 §13 |
+| `Config.max_pending: Option<usize>` (legacy `None`). A refusal is `SubmitError { stage: Stage::TooManyPending, code: ZTHROTTLEDOP, token }`. Query `pending_len()` | 02 §6.1 |
+| With `native_ops == false`, the native `Op` variants and persistent registrations are refused at `Stage::NotEnabled` with ZUNIMPLEMENTED, and SetWatches2 is never built; with `native_ops == true`, multi also accepts CREATE2 (15) and CREATE_TTL (21) sub-ops | 02 §6.1, §15 |
+| Under `auth_completion = PerRequest`, a new auth packet is appended to the tail of `tx` (call order), not inserted at the priority position. Reconnect re-sends still go first | 02 §6.3, §8 |
+| `Compat::NATIVE.max_frame_len = Some(4 MiB)` (§14) | 02 §14.1 |
+| `Config.connect_timeout_ms: Option<u32>` (legacy `None`). With `Some(c)`, a TCP-connect attempt that has not completed `c` ms after `handle_connect_started(InProgress)` tears down with `RecvTimeout`, the receive rule does not apply in that phase, and `recv_to` is left out of `timeout_ms` there | 02 §3.3, §4.1, §9.1 |
+| `Config.reconnect_delay_ms` and `Config.reconnect_jitter_pct` (legacy 0). Under `Backoff::Deadline`, the end of a full host-list pass sets `not_before = now + d ± j` from one `Rng::random` draw | 02 §3.3, §7.2 |
+| `ResolveCadence::{EachPass, Never}` (with `Throttled { ms }` for `Interval(d)`): resolution once per host-list pass, or only at init and `set_servers` | 02 §3.3, §9.4 |
+| `Config.close_timeout_ms` (legacy 0). Under `CloseMode::Drain`, `begin_close(now)` sets `close_deadline = now + close_timeout_ms`, and `close_step` completes the close at that deadline at the latest | 02 §3.3, §13 |
+
+### 19.2 The `Compat` values this API relies on
+
+There is one `Compat` struct. 02 owns the type and the field names; the ledger (07 §2.1) owns the values (CC-15, 00 §4). It has the associated consts `Compat::LEGACY_C`, the one value the drop-in uses (02 §14.3), and `Compat::NATIVE`. zk-client always starts from `Compat::NATIVE`. It overrides NATIVE fields only through builder knobs: `max_frame_size` (max_frame_len), `dns_refresh` (resolve_cadence) and `TlsOptions::legacy_c_compat` (tls_verify); the other connection knobs, and the `resolve_delay_ms` half of `dns_refresh`, are Config fields or, for `server_order`, the `shuffle` argument of `handle_resolved` (§19.1). Per-driver settings are not `Compat` fields: they are in `DriverMode { interest: Precise, session_delivery: Dispatch }` and in the zk-driver type `DispatchMode::IoThread` (CC-16, 00 §4).
+
+| Field (02 name) | `NATIVE` value | Effect on this API |
+|---|---|---|
+| `native_ops` | true | AddWatch, SetWatches2, persistent tables, ops 22 and 103-107 |
+| `set_watches_batch` | `Some(128 KiB)` | §9.2 |
+| `auth_resend` / `auth_completion` / `auth_dup_while_associating` | `Forward` / `PerRequest` / false | §7 |
+| `watch_table` | `Ordered` | no cross-handle dedup; registration order per watch kind on one path (§9.2) |
+| `session_fanout_to_path_watchers` | false | session changes go only to `StateWatcher` |
+| `clear_watches_on_expiry` | true | terminal states end watchers |
+| `expiry` | `Java` | Java expiry rule (§3) |
+| `close_mode` | `Drain` | §13 |
+| `max_frame_len` | `Some(4 MiB)`, overridable per client | §14 |
+| `server_cursor`, `addr_eq` | `SingleAdvance`, `IpAndPort` | failover |
+| `forced_close`, `sasl_failure` | `Teardown`, `Teardown` | §11 (forced close); §16.2 (terminal SASL failure) |
+| `rw_switch_rc` | `ConnectionLoss` | §3 |
+| `dns_failure`, `resolve_cadence`, `reconnect_backoff` | `UseLastGood`, `EachPass` (overridable per client with `dns_refresh`), `Deadline` | reconnect behavior |
+| `handshake_timeout`, `ping_when_outstanding` | `Requested`, true | session keep-alive |
+| `negative_frame_len` | `Disconnect` | malformed input |
+| `chroot` | `Component` | §6.1 |
+| `disconnect_rc` | `ConnectionLoss` | §5.3, §8.1: recoverable teardowns give `ConnectionLoss`; terminal causes keep `SessionExpired`, `AuthFailed` and `Closing`; the cause is in `SessionInfo::last_error` |
+| `tls_verify` | `WebPki`, overridable per client | §16.1 |
+| xid allocator (not a field) | per handle, starting at 1, wrapping to 1 (02 §6.2, K8) | none visible |
+
+The multi parse by wire type and the TLS handshake deadline from TCP-connect completion are unconditional in zk-proto; they are not knobs (CC-15, 00 §4). The TLS config-error rule has a single value (CC-14, 00 §4).
+
+### 19.3 How native-only features stay out of the C shim (four independent barriers)
+
+1. **Crate graph.** All native-only API types (including `TlsOptions` and the SASL surface), the platform verifier, native SASL mechanisms, libgssapi, tracing, futures-core, tokio and the recipes are in `apache-zookeeper`, in `apache-zookeeper-recipes` or behind zk-driver's `tokio` and `std-thread` features. zk-ffi does not depend on zk-client. The R1/R4 checks and the G2 graph check (08 §10) keep it that way. The rustls engine is shared on purpose (06 §3.1); in the drop-in, `Compat::LEGACY_C` fixes it to `LegacyChainOnly`, and the drop-in has no API to change that.
+2. **Protocol policy.** Under `Compat::LEGACY_C` (`native_ops = false`), zk-proto refuses persistent registrations and opcodes 22 and 103-107 (`Stage::NotEnabled`, 02 §6.1) and never builds `SetWatches2`. A future zk-ffi bug therefore cannot emit them.
+3. **Closed internal ABI.** The `zkrs_*` list (owned by 05, `shim/zkrs.h`) has no entry point for these operations. Adding one changes `zkrs.h`, which is drift-checked.
+4. **Wire conformance.** The differential C suite records every opcode that the shim sends and asserts that the set is a subset of the legacy set {1-9, 11-21, −11, 100-102}.
+
+---
+
+## 20. Usage examples
+
+**Connect, create an ephemeral sequential node, read it back**
+
+```rust
+use apache_zookeeper::{acl, Client, CreateMode, Error};
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let zk = Client::builder("zk1:2181,zk2:2181,[2001:db8::3]:2181/app")
+        .session_timeout(Duration::from_secs(15))
+        .connect().await?;
+
+    let (me, _) = zk.create("/workers/w-", b"host-a", CreateMode::EphemeralSequential, acl::OPEN_ACL_UNSAFE).await?;
+    match zk.get_data("/config/limits").await {
+        Ok((data, stat)) => println!("{me}: limits v{} = {:?}", stat.version.get(), data),
+        Err(Error::NoNode) => println!("no limits configured"),
+        Err(e) => return Err(e.into()),
+    }
+    zk.close().await?;
+    Ok(())
+}
+```
+
+**Pipelining: ordered at call time, awaited together**
+
+```rust
+let a = zk.create("/q/item-", b"1", CreateMode::PersistentSequential, acl::OPEN_ACL_UNSAFE); // xid n, queued
+let b = zk.create("/q/item-", b"2", CreateMode::PersistentSequential, acl::OPEN_ACL_UNSAFE); // xid n+1, queued
+let c = zk.get_children("/q");                                                              // sees a and b
+let (rb, ra, rc) = tokio::join!(b, a, c); // poll order has no effect; a's sequence number < b's
+```
+
+**One-shot watch loop**
+
+```rust
+loop {
+    let (data, _stat, watcher) = zk.get_data_watched("/config/limits").await?;
+    apply(&data);
+    match watcher.await {
+        Ok(ev) if ev.kind == EventKind::NodeDeleted => { wait_for_create(&zk).await?; }
+        Ok(_) => continue,                                   // changed: read again and re-arm
+        Err(WatchError::SessionExpired) => return rebuild_client().await,
+        Err(e) => return Err(e.into()),
+    }
+}
+```
+
+**Persistent recursive watch with lag handling**
+
+```rust
+let mut w = zk.add_watch("/services", AddWatchMode::PersistentRecursive).await?;
+let mut view = load_tree(&zk, "/services").await?;
+while let Some(item) = w.next().await {
+    match item {
+        Ok(ev) => view.apply(&zk, ev).await?,
+        Err(WatchError::Lagged { missed }) => { tracing::warn!(missed, "resync"); view = load_tree(&zk, "/services").await?; }
+        Err(terminal) => { tracing::info!(?terminal, "watch ended"); break; }
+    }
+}
+```
+
+**Transaction with typed results**
+
+```rust
+let mut txn = MultiWriter::new();
+txn.check("/lock/owner", owner_stat.version)?;
+let job = txn.create("/jobs/j-", &payload, CreateMode::PersistentSequential, acl::OPEN_ACL_UNSAFE)?;
+let ctr = txn.set_data("/jobs/counter", &n.to_be_bytes(), counter_stat.version)?;
+match zk.multi(&txn).await {
+    Ok(r) => { let created: &Created = r.get(job); let new_ctr: &Stat = r.get(ctr); /* ... */ }
+    Err(MultiError::Aborted { index: 0, error: Error::BadVersion, .. }) => lost_lock(),
+    Err(e) => return Err(e.into()),
+}
+```
+
+**TLS with hostname verification and an encrypted client key**
+
+```rust
+let tls = TlsOptions::builder()
+    .ca_file("/etc/zk/ca.pem")                                   // only this root is trusted
+    .client_identity("/etc/zk/client.pem", "/etc/zk/client.key", Some(passphrase))
+    .build()?;                                                   // files are read and checked here
+let zk = Client::builder("zk1.example.com:2281,zk2.example.com:2281").tls(tls).connect().await?;
+```
+
+**Static paths and session handover with the blocking facade**
+
+```rust
+const LEADER: ZPath<'static> = ZPath::from_static("/election/leader");   // checked at compile time
+
+// Process A
+let (id, pw) = zk.detach();
+persist(id, &pw);
+// Process B (no async runtime)
+let zk = apache_zookeeper::blocking::Client::connect(Client::builder(hosts).session(id, pw))?; // Err(SessionExpired) if gone
+let (kids, _) = zk.get_children("/workers")?;
+let leader = zk.get_data(LEADER)?;
+```
+
+---
+
+## 21. Deliberate differences from the C client
+
+Each row is a difference between the native API and the legacy C client. Rows with a NAT-n ledger ID are native-only (ledger class NO), except that the Rust-core drop-in has the same uniform ConnectionLoss on the RO→RW switch (DV-FIX-9), the same single-advance cursor (DV-FIX-1), the same IP-and-port endpoint equality (DV-FIX-2), a teardown on SASL failure (DV-FIX-3), batched SetWatches (DV-FIX-4), an absolute config node for sync getconfig (DV-FIX-5), the `zerror(-15)` text (DV-FIX-6), rejection of chroot escapes (DV-FIX-7), and a teardown on a forced close (DV-FIX-8). Both profiles send `close_notify` on a graceful close (TLS-06). For every other row, the C shim keeps C behavior through `Compat::LEGACY_C` and the ledger.
+
+| Area | C client (ref) | Native API | Ledger |
+|---|---|---|---|
+| Callbacks | `watcher_fn` and completions on the completion thread; sync results and auth completions on the IO thread (zookeeper.c:3632-3651, 2151-2189) | futures and streams; no user callbacks | — |
+| Errors | int codes; `zerror(-15)` gives "unknown error" | typed `Error` with `Unknown(i32)`; real `Display` text | NAT-01 |
+| Teardown rc | Per cause (ZCONNECTIONLOSS, ZOPERATIONTIMEOUT, ZSSLCONNECTIONERROR, ZRUNTIMEINCONSISTENCY, …) | `ConnectionLoss` for every recoverable cause; terminal causes keep their codes; cause in `SessionInfo::last_error` | ST-06 (NATIVE value) |
+| Default watcher | Gets every session event, last (zk_hashtable.c:296-306) | None; `StateWatcher` | NAT-05 |
+| Session events to path watchers | Yes; tables not cleared on expiry | No; terminal states end watchers (Java) | NAT-05 |
+| Watch removal notification | Never (no NOTWATCHING) | `WatchError::Removed` | NAT-05 |
+| Specific watch removal | CheckWatches op 17 leaves the server watch | Reference-counted RemoveWatches op 18 | NAT-05 |
+| Watch reset opt-out | Not available | `restore_watches(false)` | NAT-05 |
+| Auth | Priority insert, reverse resend, one reply completes all, duplicate packet while ASSOCIATING | FIFO, per-call result, no duplicate | NAT-04 |
+| SASL engine | Cyrus libsasl2 | safe-Rust DIGEST-MD5; GSSAPI through libgssapi; custom mechanisms | NAT-12 |
+| SASL failure | State AUTH_FAILED, no event, no cleanup; pending work waits for close (zookeeper.c:3147-3150; ST-18) | `AuthFailed` terminal state, everything fails | NAT-07 |
+| Chroot | `strcat` concatenation and prefix strip (zookeeper.c:1710-1744) | Component-wise, in zk-proto | NAT-03 |
+| Path rules | `isValidPath` byte rules (zookeeper.c:4064-4106) | Java `PathUtils` | NAT-03 |
+| getconfig chroot | Async not chrooted, sync chrooted | Never chrooted | NAT-03 |
+| Connect string | First `/` splits the chroot; `strrchr(':')`; bare IPv6 | Java grammar with `[v6]` | — |
+| TLS trust | Chain only, CA file plus default locations, no SNI, no name check (zookeeper.c:2876-2890; the drop-in keeps this as `LegacyChainOnly`) | `WebPki`: pinned roots, name check, SNI; `legacy_c_compat` and explicit opt-outs | NAT-08 |
+| TLS + SASL | Not possible | Supported | NAT-08 |
+| Global state | srandom/srand48 reseed, global logLevel | None; private RNG, IP-and-port endpoint equality, single-advance cursor | NAT-06 |
+| Connection management | No connect bound beyond the 2/3·T receive timeout in state 1, or the kernel connect timeout in TLS state 7 (ST-16); after a full pass, one iteration with a T/60 wait hint (whether a legacy client with an even-sized list reaches the end of the list depends on the cursor parity; DV-FIX-1); DNS re-resolved on every interest iteration while disconnected (zookeeper.c:1104-1123, 2645, 2660-2672, 2746-2763) | `connect_timeout` (default T/3) per TCP-connect attempt; `reconnect_delay` (1 s, ±25%) after a full pass; `dns_refresh` EachPass (default), Interval(d) or Never (§3) | NAT-06 |
+| Multi | create2 and TTL sub-ops → ZUNIMPLEMENTED | Supported | NAT-02 |
+| RO→RW switch | Fake `ZOK` for some kinds (ST-08) | `ConnectionLoss` for all pending requests | NAT-10 |
+| Close | Fails queued requests with ZCLOSING but still sends them | Queued requests complete; new ones fail with `Closing` | NAT-11 |
+| Frame size | Unlimited | 4 MiB default cap | NAT-09 |
+| Null znode data | `NULL`/−1 | Empty `Vec` from `get_data`; `None` from `get_data_opt` | NAT-02 |
+| Delivery backpressure | The completion list is an unbounded linked list (`queue_completion_nolock`, zookeeper.c:3806-3828) | `dispatch_queue_capacity` bounds the undelivered results, auth outcomes and one-shot events (it can be exceeded by one read of frames and by items not read from frames, 03 §7); then the IO side of an established session stops reading (§4) | — |
+| TLS trust from the OS | Not available | Opt-in `with_platform_verifier` (feature `tls-platform-verifier`) | NAT-08 |
+| TLS close | No `close_notify` (zookeeper.c:648-670) | `close_notify` on a graceful close (wire only, as the drop-in) | TLS-06 |
+
+---
+
+## 22. Recipes (`zk-recipes`, package `apache-zookeeper-recipes`)
+
+### 22.1 Crate and rules
+
+The recipes crate holds three coordination recipes: `DistributedLock`, `LeaderLatch` and `TreeCache`. It is delivered after M5, as milestone M5R.
+
+- **Crate.** Workspace crate `zk-recipes`, package `apache-zookeeper-recipes`, lib `apache_zookeeper_recipes`, `publish = false`, `#![forbid(unsafe_code)]`. Its only normal dependency is `apache-zookeeper` with `default-features = false`; the application's own feature choice for `apache-zookeeper` unifies with it. It has no tokio, timer or UUID dependency.
+- **Public API only.** The recipes use only the public zk-client API (§3-§15). They do not reach zk-proto or zk-driver, so a recipe can do nothing that an application cannot do itself. Because the crate depends on zk-client, rule R1 (§2.1) already keeps it out of the zk-ffi closure.
+- **Runtime-agnostic and task-free.** No recipe spawns a task or a thread. A recipe makes progress while the application awaits one of its futures, and its futures work on any executor. The recipe methods are `async fn`s: a recipe issues several requests one after another, so the call-time ordering rule of §1 applies to each request inside it, not to the recipe as a whole. Every returned future is `Send`.
+- **Timeouts and cancellation.** The recipes have no internal timer. Applications bound a wait with their executor's timeout (for example `tokio::time::timeout`). Every recipe future is cancellation-safe: when it is dropped while it waits, it submits a `delete` for any node that it created and that it does not hand to the caller. Requests are submitted at call time (§5), so that delete needs no executor. One case is excepted: when the future is dropped while the outcome of a participant create is unknown (after ConnectionLoss, before the protected-mode lookup of §22.2), the node name is not known and no delete is submitted. Such a node is ephemeral and disappears when the session ends; until then other participants order it as a normal contender.
+- **Errors.** Recipe methods return `apache_zookeeper::Error`. A terminal session state ends every recipe with `SessionExpired`, `AuthFailed` or `Closing`; the application creates a new client and new recipe objects.
+- **Minimum server.** `DistributedLock` and `LeaderLatch` need 3.5.1 (container parents). `TreeCache` needs 3.6 (persistent recursive watches).
+
+### 22.2 Node layouts (Apache Curator interoperability)
+
+The lock and latch layouts are the layouts of Apache Curator's `InterProcessMutex` and `LeaderLatch`, so Rust processes and Java processes that use Curator can contend on the same paths.
+
+| Recipe | Curator class | Participant node (`EphemeralSequential`) | Node data |
+|---|---|---|---|
+| `DistributedLock` | `InterProcessMutex` | `<lock_path>/_c_<uuid>-lock-<seq>` | not read by either side; the recipe writes the `node_data` given to it, empty by default |
+| `LeaderLatch` | `LeaderLatch` | `<latch_path>/_c_<uuid>-latch-<seq>` | the participant id, which both sides read as the participant id |
+
+- **Protected names.** The `_c_<uuid>-` prefix is Curator's protected-mode prefix. `<uuid>` is a random version-4 UUID in the canonical lowercase 8-4-4-4-12 form. The recipe builds it from 128 bits drawn from `std::collections::hash_map::RandomState` hashers, as `NativeRng` is seeded (§18); it must be unique, not secret. `<seq>` is the server's 10-digit sequence suffix.
+- **Order.** Participants are ordered as Curator orders them: each child name is reduced to the text after the last occurrence of its marker (`lock-` or `latch-`), or kept whole when the marker is absent, and the reduced names are compared as strings. With 10-digit sequence numbers this is the creation order. Children are not filtered, as in Curator, so both sides agree on the order even if foreign nodes exist under the path.
+- **Parents.** Missing parents of the lock or latch path are created as `CreateMode::Container` nodes, as Curator's `creatingParentContainersIfNeeded` does.
+- **Recovery after `ConnectionLoss` on create.** A create that fails with `ConnectionLoss` may still have been applied (§5.3). The recipe keeps the same `<uuid>`, waits for the next connection, lists the parent, and adopts the child whose name starts with `_c_<uuid>-`. When no such child exists, it creates the node again with the same `<uuid>`. This is Curator's protected-mode recovery, so neither side leaves an orphan participant node.
+
+### 22.3 `DistributedLock`
+
+```rust
+pub struct DistributedLock { /* Client, lock path, node data */ }
+impl DistributedLock {
+    pub fn new(client: &Client, lock_path: impl PathArg) -> Result<DistributedLock, Error>;
+    pub fn node_data(self, data: Vec<u8>) -> Self;                     // default empty
+    /// Waits until this participant holds the lock.
+    pub async fn acquire(&self) -> Result<LockGuard, Error>;
+    /// Takes the lock only if it is free; never waits for another holder.
+    pub async fn try_acquire(&self) -> Result<Option<LockGuard>, Error>;
+}
+pub struct LockGuard { /* participant node, Client, StateWatcher */ }
+impl LockGuard {
+    pub fn node(&self) -> ZPath<'_>;
+    pub async fn release(self) -> Result<(), Error>;                   // deletes the participant node
+    /// Resolves when the lock is certainly lost: a terminal session state, or the node deleted.
+    pub async fn lost(&self) -> Error;
+}
+```
+
+- **Acquire.** The recipe creates its participant node (§22.2), then loops: `get_children(lock_path)`, order the children, and hold the lock if its node is first. Otherwise it calls `get_data_watched` on the node just before its own (watch the predecessor, so a release wakes only the next waiter). On `NoNode` it loops at once. Otherwise it awaits the watcher and then loops. Curator does the same.
+- **`try_acquire`.** It creates the node and checks the order once. When the node is not first, it deletes the node and returns `Ok(None)`.
+- **Release.** `release().await` deletes the node and returns the server result. Dropping a `LockGuard` submits the same delete without waiting.
+- **Not reentrant.** A second `acquire` on a lock that this process already holds waits like any other participant. Curator's reentrancy is per Java thread and is local bookkeeping; it does not show in the node layout.
+- **Connection loss.** The lock is an ephemeral node, so it stays held while the session lives. While `StateWatcher` reports `Connecting`, the holder cannot know whether the session will expire, and the documentation tells holders to pause work that the lock protects until the state is `Connected` again (Curator's SUSPENDED advice). `lost()` resolves with the terminal error when the session ends, or with `Error::NoNode` when the participant node is deleted by another client. After acquiring, the guard arms `exists_watched` on its own node, and re-arms it on each new `epoch`; a `NodeDeleted` event, or a `None` result from that call, resolves `lost()` with `Error::NoNode`.
+
+### 22.4 `LeaderLatch`
+
+```rust
+pub struct LeaderLatch { /* Client, latch path, participant id */ }
+impl LeaderLatch {
+    pub fn new(client: &Client, latch_path: impl PathArg, participant_id: impl Into<Vec<u8>>)
+        -> Result<LeaderLatch, Error>;
+    /// Creates the participant node. It does not wait for leadership.
+    pub async fn start(&self) -> Result<Latch, Error>;
+}
+pub struct Latch { /* participant node, StateWatcher, last evaluated leadership */ }
+impl Latch {
+    pub fn is_leader(&self) -> bool;                                   // the last evaluated value
+    /// Resolves at the next change of leadership with the new value.
+    pub async fn changed(&mut self) -> Result<bool, Error>;
+    pub async fn await_leadership(&mut self) -> Result<(), Error>;
+    /// Every participant with its id (node data), in latch order; the first is the leader.
+    pub async fn participants(&self) -> Result<Vec<Participant>, Error>;
+    pub async fn close(self) -> Result<(), Error>;                     // deletes the participant node
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Participant { pub id: Vec<u8>, pub is_leader: bool }
+```
+
+- **Leadership.** The participant whose node is first in latch order (§22.2) is the leader. A non-leader watches its predecessor with `get_data_watched`, as in §22.3. The evaluation runs while the application awaits `changed()` or `await_leadership()`; `is_leader()` returns the last value.
+- **Connection loss.** On `Connecting` the latch reports `false` at once, because leadership is uncertain. On the next `Connected` state of the same session (a new `epoch`), it checks that its node still exists and evaluates the order again. If the node is gone, it creates a new one with a new `<uuid>`. A terminal state ends the latch with the terminal error.
+- **Close.** `close().await` deletes the node and returns the server result. Dropping a `Latch` submits the same delete without waiting, which gives leadership to the next participant.
+
+### 22.5 `TreeCache`
+
+```rust
+pub struct TreeCache { /* Client, PersistentWatcher, cached tree */ }
+impl TreeCache {
+    pub fn builder(client: &Client, root: impl PathArg) -> TreeCacheBuilder;
+    pub fn get(&self, path: impl PathArg) -> Option<CachedNode>;      // snapshot of one node
+    pub fn children(&self, path: impl PathArg) -> Option<Vec<String>>;
+    /// Drives the cache: applies watch events and yields the resulting changes.
+    /// Ends (None) after one terminal error.
+    pub async fn next(&mut self) -> Option<Result<TreeEvent, Error>>;
+}
+impl TreeCacheBuilder {
+    pub fn cache_data(self, yes: bool) -> Self;                        // default true
+    pub fn max_depth(self, depth: Option<usize>) -> Self;              // default None (whole subtree)
+    /// Arms the watch, then runs the initial sync.
+    pub async fn start(self) -> Result<TreeCache, Error>;
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CachedNode { pub stat: Stat, pub data: Option<Arc<[u8]>> }  // data None when cache_data(false)
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum TreeEvent {
+    NodeAdded { path: ZPathBuf, node: CachedNode },
+    NodeUpdated { path: ZPathBuf, node: CachedNode },
+    NodeRemoved { path: ZPathBuf, node: CachedNode },
+    Initialized,                                                       // the initial sync is complete
+    Resynced,                                                          // a resync after a reconnect or lag is complete
+}
+```
+
+- **Watch first.** `start()` calls `add_watch(root, AddWatchMode::PersistentRecursive)` before it reads anything, so no change after the watch is set can be missed. The root itself need not exist; the cache stays empty until the root is created.
+- **Initial sync.** The cache reads the tree breadth-first from the root with `get_data` and `get_children`, pipelined as §5.1 allows, and records each node. `next()` then yields a `NodeAdded` for each node and then `Initialized`. Watch events that arrive during the sync are kept and applied after it, by the rule below.
+- **Events.** A recursive watch delivers Created, Changed and Deleted for every descendant and never ChildrenChanged (§9.2; 02 §10.3), so the cache keeps child lists from Created and Deleted events. On `NodeCreated` or `NodeDataChanged` the cache calls `get_data(path)` and applies the reply only when it is newer than the cached node: a different `czxid` (the node was deleted and created again) or a greater `mzxid`. It then yields `NodeAdded` or `NodeUpdated`. A `NoNode` reply, or a `NodeDeleted` event, removes the node and its cached subtree, deepest first, with one `NodeRemoved` each. Events deeper than `max_depth` are ignored.
+- **Resync.** The server re-adds persistent watches on reconnect without replaying missed events (§9.2). After each new `epoch` that is not terminal, the cache therefore reads the tree again as in the initial sync, yields `NodeAdded`, `NodeUpdated` and `NodeRemoved` for each difference, and then `Resynced`. A `WatchError::Lagged` (only with `persistent_watch_buffer` set) causes the same resync.
+- **Termination.** A terminal session state makes `next()` yield that state's `Error` once and then `None`. A `WatchError::Removed` from an explicit `remove_watches` call makes it yield `Error::NoWatcher` once and then `None`. A `WatchError::ConnectionLost` (a client built with `restore_watches(false)`) does not end the cache: at the next `epoch` the cache calls `add_watch` again and runs the resync.
+
+08 specifies the recipe tests: sans-IO tests, tests against a real server, and a Curator interoperability test in the Java integration job.
+
+---
+
+## Interfaces defined
+- Crate graph (K1): zk-jute <- zk-proto <- zk-driver <- {zk-client (apache-zookeeper) <- zk-recipes (apache-zookeeper-recipes), zk-ffi}; zk-ffi never depends on zk-client; zk-jute sources generated by the Java RustGenerator in zookeeper-jute (Rcc -l rust, Maven execution generate-Rust-Jute) into crates/zk-jute/src/generated/zookeeper_jute.rs, git-ignored, listed in Cargo.toml include, build.rs fails with a configure.ac-style jute message when they are missing (01 §8), no Rust generator crate and no committed generated source; zk-proto's only third-party dep is zeroize; zk-driver's only non-optional third-party dep is rustix(use-libc), with optional features tokio, std-thread, tls, tls-ring, tls-aws-lc-rs and tls-aws-lc-rs-fips (RustlsConn + loaders, shared with the drop-in, 06 §3.1; tls needs exactly one provider or compile_error! stops the build); every crate has publish = false and ships only in the ASF source release, applications use path dependencies on a source tree after jute generation; lockstep versions, internal ones exact-pinned; apache-zookeeper and apache-zookeeper-recipes carry the API promise
+- apache_zookeeper::Client (Clone+Send+Sync): every request method is a plain fn; strict path validation before the core lock; terminal-state check and zk_proto::Connection::submit (Request{op with PathIn::Native, token, Route::Queued, defect: InputDefect::default()}) under it; zk-proto joins the chroot (ChrootPolicy::Component); call order = xid order = wire order = reply order; map_submit_error maps Stage::TooManyPending to Error::TooManyPendingRequests, other stages through Error::from_code
+- apache_zookeeper::ResponseFuture<T, E=Error>: Future<Output=Result<T,E>> + Unpin + 'static; dropping it never cancels the server operation; wait()/wait_timeout() under feature 'blocking', refused with InvalidState on the client's IO thread and inside IO-side user trait objects (thread_local Cell<u64> marker)
+- Private Slot<T> (zk-client only; the only Rust result slot, CC-18, 00 §4): Mutex{value, waker, receiver_alive, closed} + Condvar; fill() takes the waker under the slot lock, releases it, then notifies and wakes; the IO side fills slots only after releasing core and sinks
+- apache_zookeeper::ZPath<'a>: sized Copy wrapper over &'a str (validated by zk_proto::native::validate_path, called with sequential set for sequential creates); ZPathBuf owned; PathArg (sealed) -> Result<ZPath<'_>, PathError>; const fn ZPath::from_static and ZPath::ROOT
+- apache_zookeeper::Error: #[non_exhaustive], Clone+Eq; one variant per ZOO_ERRORS code, plus UnknownSession(-12), RequestTimeout(-122), QuotaExceeded(-125), Unknown(i32), InvalidPath, InvalidArgument, TooManyPendingRequests; code()/from_code() round-trip for wire codes and `Unknown(i32)`; the client-side variants map to their nearest legacy code; recoverable teardowns give ConnectionLoss (Compat::NATIVE.disconnect_rc = ConnectionLoss, ledger 07 §2.1); terminal states keep SessionExpired/AuthFailed/Closing; is_connection_loss() covers ConnectionLoss|OperationTimeout|SslConnectionError|RuntimeInconsistency for codes from close, server replies or from_code
+- apache_zookeeper::DisconnectCause {ReceiveTimeout, TlsHandshakeTimeout, XidMismatch, MalformedFrame, ServerClosed} (public; #[non_exhaustive], std::error::Error): mapped by zk-client from the public zk-proto Cause (02 §12.1) that the driver reads with Connection::last_teardown_cause() -> Option<Cause>; terminal causes (SessionExpired, AuthFailed, SaslTeardown) keep their codes, SaslTeardown giving AuthFailed; carried in SessionInfo.last_error when no io, TLS or SASL error describes the teardown
+- apache_zookeeper::OneshotWatcher (Future) and PersistentWatcher (inherent next(); futures_core::Stream under feature 'stream'): armed on reply before the reply future is ready; drop/remove go through zk_proto::Connection::detach_watcher refcounts (incl. in-flight registrations) and RemoveWatches op 18; WatchError {Removed, ConnectionLost, SessionExpired, AuthFailed, Closed} mapped from proto TerminateReason, Lagged from the persistent_watch_buffer bound (§9.2), and InvalidState (not terminal) from a blocking wait or recv on the client's own IO side (§5.2); persistent-watch queues unbounded by default, bounded by persistent_watch_buffer when set (Lagged only then); several watchers of one kind on one path receive an event in registration order, kinds in the table order of 02 §10.3 (watch_table = Ordered)
+- apache_zookeeper::StateWatcher / SessionInfo{state, epoch, disconnected_since, last_error}: latest value; Expired, AuthFailed, Closed terminal and never merged away; last_error holds io::Error, TlsConfigError, SaslError or DisconnectCause
+- apache_zookeeper::MultiWriter<'a> -> OpHandle<T>; Client::multi -> ResponseFuture<MultiResults, MultiError>; MultiReader + Client::multi_read (op 22, Reply::MultiRead, decode by wire type 4/8/-1)
+- ClientBuilder limits: max_pending_requests (default unbounded; TooManyPendingRequests only with a limit), persistent_watch_buffer (default unbounded), dispatch_queue_capacity (default 4096 undelivered results, auth outcomes and one-shot events; at the bound the IO side of an established session stops reading frames, keeps sending requests and pings, and a stall longer than about 2/3·T ends the connection with ConnectionLoss; the reconnect's handshake frames are always read), max_frame_size (4 MiB), close_timeout (3 s, the CloseMode::Drain deadline)
+- ClientBuilder connection management: connect_timeout (default session_timeout / 3, per TCP-connect attempt), reconnect_delay (1 s, ±25%, after a full host-list pass), server_order (ServerOrder {Shuffled (default), AsGiven}), dns_refresh (DnsRefresh {EachPass (default), Interval(Duration), Never}), mapped to zk-proto Config and Compat::resolve_cadence as 02 §3.3 specifies
+- apache_zookeeper::Runtime { Thread(ThreadOptions), Tokio(Handle) (cfg(all(unix, feature = "tokio"))) }: Windows has the threaded driver only, from M4; zk-driver threaded driver with DispatchMode::IoThread (one IO thread from spawn_std, rustix poll plus the coalescing waker (a pipe on Unix, a loopback socket pair on Windows, 03 §5.3, §8.8), no dispatch thread) or one tokio task; both with DriverMode{interest: Precise, session_delivery: Dispatch}; both execute Action::{Resolve{gen: u64, ..}, Connect{endpoint, tls}, CloseTransport, ProbeRw{endpoint, tls}, Sasl(SaslCall{gen: u32, kind: Start | Step | Dispose})} (new_conn before handle_tcp_connected; no Sasl(Dispose) at teardown, Sasl(Dispose) immediately before the next Start on reconnect (zk_sasl.c:215-217) and after CloseTransport at destroy; getsockname/getpeername failure before Start reported with handle_sasl_addr_failed(gen, SaslAddr, now)) and drain zk_proto Output items (Completion, Watch, WatchTerminated, Session, Auth, Log, ClientId, DrainPoint) after releasing the core lock
+- User trait objects Resolve, SaslMechanism/SaslMechanismFactory, CredentialSource, Metrics: run on the IO side (or spawn_blocking) with every internal lock released, inside catch_unwind
+- Native TLS (feature tls-rustls): TlsOptions/TlsOptionsBuilder {ca_file, add_system_roots, client_identity(chain, key, Option<SecretString>), server_name, danger_disable_hostname_verification, min_protocol, reload, build}, TlsOptions::legacy_c_compat(cert_string) (overrides tls_verify to LegacyChainOnly), TlsOptions::from_rustls(Arc<rustls::ClientConfig>), ReloadPolicy {OnChange, Never}, TlsConfigError (DefaultRoots when add_system_roots and the shared loader reports zero usable roots; a native-only check, the drop-in DefaultVerifyPaths step fails only on a resource error); engine is zk-driver's RustlsConn with the shared loaders of 06 §3.4 and §3.6 (trust.rs, identity.rs, legacy_pem.rs); CA file accepts CERTIFICATE, X509 CERTIFICATE and TRUSTED CERTIFICATE (aux rules honored), counts X509 CRL blocks without using them, and fails CaFile when the file cannot be read, when a PEM block is malformed (06 §3.4), when `ca` is NULL, or when it yields neither a certificate nor a CRL; client keys per 06 §3.6 (PBKDF2 PRFs HMAC-SHA1/224/256/384/512, scrypt over 32 MiB rejected before allocation); add_system_roots uses the drop-in location rules (SSL_CERT_FILE/SSL_CERT_DIR only when tls_env_allowed, which zk-client computes with rustix getuid()==geteuid() && getgid()==getegid() and so is false in set-uid/set-gid processes; else the compile-time ZK_TLS_DEFAULT_CERT_FILE/ZK_TLS_DEFAULT_CERT_DIR, which zk-driver's build.rs takes from the 01 §6.1 platform list on the build host when the native build environment sets neither; openssl_probe::probe() never called; hash-named directory files only); no rustls-native-certs and no openssl-probe outside tls-platform-verifier; default Compat::tls_verify = WebPki; legacy_c_compat accepts X.509 v1 leaves and v1 self-signed anchors as the drop-in does (06 §3.14); TlsOptionsBuilder::with_platform_verifier() (feature tls-platform-verifier, native-only) uses rustls-platform-verifier with the OS trust store and policy, is exclusive with ca_file, add_system_roots and the hostname opt-out, is refused in set-uid/set-gid processes where it reads roots through rustls-native-certs, and cannot be combined with tls-aws-lc-rs-fips; TlsConfigError adds PlatformVerifier(String) and NotFips; the tls-aws-lc-rs-fips build checks ClientConfig::fips() and reports NotFips, never aborting (also for from_rustls configs at ClientBuilder::build/connect) and accepts only unencrypted keys and PBES2 PBKDF2 with HMAC-SHA256/384/512 and AES-CBC (DV-TLS-6, 06 §3.15.3); a graceful close sends close_notify without waiting for the peer's, detach and error teardowns send no close_notify
+- Native SASL (features sasl, sasl-gssapi): SaslConfig {DigestMd5, Gssapi, Custom}, CredentialSource -> Result<SecretString, CredentialError {Transient, Permanent}>, SaslMechanismFactory, SaslMechanism; public SaslStep { token: Option<Vec<u8>>, done: bool } mirrors zk_proto's SaslStep; public SaslError { kind: SaslErrorKind {Mechanism, ServerRejected, Credential(CredentialError)}, message: String }, converted to zk_proto::SaslError in the SaslSession adapter; zk-client answers Action::Sasl(SaslCall{gen: u32, ..}) with handle_sasl_started/handle_sasl_stepped, reports a getsockname/getpeername failure with handle_sasl_addr_failed, and drops the mechanism on Dispose; every SASL failure is the terminal AuthFailed state (sasl_failure = Teardown, Cause::SaslTeardown), never retried on the next server, and the application decides whether to create a new client; Cyrus never linked
+- apache_zookeeper::SecretString: newtype over zeroize::Zeroizing<String>, not Clone, redacted Debug; core credentials are zk_proto::SecretBytes; SessionPassword wraps Zeroizing<[u8; 16]>; zeroize only, no mlock and no MADV_DONTDUMP
+- zk_proto usage (02 names): NativeTokens implements Tokens { Completion = NativeCompletion, Watcher = WatchId(u64), Auth = Arc<Slot<i32>> }; NativeRng (SplitMix64 from RandomState) implements zk_proto::Rng; zk-client implements LogFilter over tracing/log; zk-client always starts from Compat::NATIVE; time enters as Millis
+- Native hooks in zk-proto (02 §15, zk-proto names): Reply {Ephemerals, ChildrenCount, WhoAmI, MultiRead}; WatchedEvent.zxid; detach_watcher refcount incl. in-flight + wtype 4/5; Output::WatchTerminated{watchers, reason: TerminateReason}; Compat session_fanout_to_path_watchers + Config.restore_watches; Compat close_mode {LegacyFailPending, Drain} with close_step; Connection::abandon; Config.max_pending + SubmitError{stage: Stage::TooManyPending, code: ZTHROTTLEDOP}; native ops refused at Stage::NotEnabled with ZUNIMPLEMENTED under native_ops == false; tail-insert auth under PerRequest; NATIVE max_frame_len = 4 MiB
+- Feature flags (CC-34, 00 §4): default {tokio, tracing, stream}, tokio Unix-only (cfg(unix) target dependency, compiles to nothing elsewhere); optional blocking, log, tls-rustls, tls-ring (default provider), tls-aws-lc-rs, tls-aws-lc-rs-fips, tls-platform-verifier, sasl, sasl-gssapi, serde; tls-rustls enables zk-driver's shared tls feature and needs exactly one provider feature (each provider feature implies tls-rustls and enables its zk-driver namesake; none or several stops the build with compile_error!), with the drop-in TLS closure of that provider (K14, 00 §3: no rustls-pemfile, no rustls-native-certs, no openssl-probe; sha1, base64ct and pem-rfc7468 included); the aws-lc builds ship only after the ASF legal review of aws-lc-sys and aws-lc-fips-sys (00 §6); lint and test jobs use explicit feature sets, never --all-features; no native-only feature is reachable from zk-ffi (R1/R4 goldens supply-chain/closure/zk-ffi-<target>-notls.txt, zk-ffi-<target>.txt, zk-ffi-<target>-aws-lc-rs.txt, zk-ffi-<target>-aws-lc-rs-fips.txt and native-<featureset>.txt, one of them with tls-platform-verifier; cargo-deny bans rustls-platform-verifier from the zk-ffi closure); zk-client also depends on rustix (process, use-libc) for the set-uid check
+- apache_zookeeper_recipes (zk-recipes, publish = false, forbid(unsafe), only normal dependency apache-zookeeper, milestone M5R): DistributedLock {acquire, try_acquire} -> LockGuard {node, release, lost}; LeaderLatch::start -> Latch {is_leader, changed, await_leadership, participants, close}; TreeCache::builder(..).start() over a PersistentRecursive watch with initial sync, resync on each new epoch and on Lagged, TreeEvent {NodeAdded, NodeUpdated, NodeRemoved, Initialized, Resynced}; Curator-compatible layouts `_c_<uuid>-lock-<seq>` (InterProcessMutex) and `_c_<uuid>-latch-<seq>` (LeaderLatch), Curator ordering by the text after the last marker, container parents, protected-mode recovery after ConnectionLoss on create; no spawned tasks, cancellation-safe futures
+
+## Decisions
+
+| Decision | Rationale | Alternatives |
+|---|---|---|
+| The crate graph is zk-jute <- zk-proto <- zk-driver <- {zk-client, zk-ffi}, and zk-client <- zk-recipes (K1). zk-driver's only mandatory third-party dependency is rustix(use-libc); native-only dependencies live in zk-client or behind zk-driver's tokio and std-thread features. | The graph makes it impossible for native-only features (persistent watches, native TLS options, native SASL, tracing, tokio) to reach libzookeeper_{st,mt}, and feature unification cannot leak them when zk-ffi is built alone. Only the public API crate carries a semver promise. | One zk-client crate with drivers and API. Rejected: zk-ffi would depend on the public API crate, and only feature discipline would keep native code out of the C libraries. |
+| zk-jute sources come from the Java RustGenerator in zookeeper-jute (Rcc -l rust, Maven execution generate-Rust-Jute), are written into crates/zk-jute/src/generated/, are git-ignored, and are listed in Cargo.toml include (01 §8; CC-20, 00 §4). build.rs fails with a message that mirrors configure.ac's jute check when they are missing. | One generator beside CGenerator serves Java, C and Rust from the same .jute file, so the three codecs cannot drift apart unnoticed (three-way codec test, 08 §8.4). | — |
+| Every native crate has publish = false and ships only in the ASF source release; applications use path dependencies on a source tree. | The releases this design covers make no registry commitment while the API settles. The source release is the ASF release artifact, and the crates build from it with the same jute step as the rest of ZooKeeper. | — |
+| ZPath is a sized, Copy, borrowed wrapper ZPath<'a>(&'a str) with an owned ZPathBuf; PathArg returns ZPath<'_>. | An unsized #[repr(transparent)] ZPath(str) needs a pointer cast that #![forbid(unsafe_code)] does not allow, and no allowlisted crate provides it. The sized wrapper is ergonomic, const-constructible and needs no Cow/ToOwned. | ref-cast crate (adds a proc-macro dependency to the allowlist and vet set); a separate crate that allows unsafe (widens the unsafe budget); ZPathBuf everywhere (an allocation on every call). |
+| Request methods are plain fns returning named futures; strict validation before the lock; terminal-state check and proto submit under the core lock; zk-proto joins and strips the chroot (CC-21, 00 §4). | Call order equals wire and reply order, matching the C contract (zookeeper.c:4177-4198) and the pipelining guarantee that applications rely on. One chroot implementation serves both profiles, and watch-event paths are stripped where they are decoded. | async fn methods or IntoFuture builders, which order on first poll and break pipelining order; a second chroot layer in zk-client. |
+| The native threaded driver has no dispatch thread and uses rustix poll with the coalescing waker (a pipe on Unix, a loopback socket pair on Windows), the same primitives as libzookeeper_mt; after releasing the core lock, the IO thread routes Output items itself into slots, per-watcher queues and the session state. DispatchMode is a zk-driver type; DriverMode stays {interest, session_delivery}. | No user callbacks exist natively, so a dispatch thread adds a thread and a hop for nothing. Reusing the poll and waker of 03 §5.3 keeps mio and socket2 out of the closure. | mio Poll (banned; conflicts with 03); a dispatch thread with closure delivery. |
+| Slot fill takes the waker under the slot lock, releases it, then wakes; all internal locks are non-poisoning; user trait objects (Resolve, SASL, CredentialSource, Metrics) run with no lock held inside catch_unwind; blocking wait() is refused on the IO side through a Drop-free thread-local marker. | Inline-polling wakers cannot self-deadlock, a panicking user hook cannot poison the core lock, no user code runs under a library lock, and the refusal also covers hooks run through spawn_blocking. | Mapping poisoned locks to SystemError (one panicking Metrics impl would break the client permanently); a ThreadId check (misses spawn_blocking frames). |
+| Native close drains: queued requests are sent ahead of CloseSession and their replies delivered (Compat::close_mode = Drain). detach() uses Connection::abandon. | Removes the C inconsistency where a request is reported ZCLOSING yet still executed, and matches Java. The Compat knob keeps CLS-02 for the legacy profile. | The legacy close natively (fail with ZCLOSING, still send), or dropping unsent frames, which silently loses writes the caller queued. |
+| Connection management uses builder knobs whose values are zk-proto inputs (02 §3.3): connect_timeout (default session_timeout / 3, per TCP-connect attempt), reconnect_delay (1 s, ±25%, after a full host-list pass), dns_refresh (default EachPass: one resolution per host-list pass, none while connected) and close_timeout (3 s). zk-ffi always passes (05 §15.1) the legacy values, so LEGACY_C behavior does not depend on them. | T/3 is what is left of the session timeout when the 2/3·T receive deadline detects a lost connection, so one unresponsive server cannot hold a connect attempt past the time in which the session can still be resumed. A paced pass with jitter avoids reconnect storms after an ensemble outage. Resolving between passes keeps the address list fixed during a pass and picks up changed DNS records once every known address has failed. | A 2/3·T connect bound (one blackholed server can outlast the session); resolving on every interest iteration while disconnected (C's cadence, one getaddrinfo per wakeup) or on a fixed timer (the address list can change in the middle of a pass); C's one-shot skip (one iteration with a T/60 wait hint, after which the client connects again regardless of elapsed time, zookeeper.c:2666-2672). |
+| Server-watch reference counts include registrations on unanswered requests; RemoveWatches is sent only when a class count reaches zero while a server watch is set. | Otherwise dropping one handle while another watched request is in flight removes the server watch that the in-flight request is about to set, and events are lost. | Count only armed watchers (race), or never send RemoveWatches on drop (leaks server watches). |
+| No deduplication between native watcher handles; session events go only to StateWatcher; watchers survive reconnects through chunked SetWatches/SetWatches2 by default, with restore_watches(false) as Java's disableAutoWatchReset; terminal states end every watcher. | Idiomatic typed handles, Java terminal semantics, and an explicit opt-out for applications that prefer to resync themselves. | Delivering session events to every watcher (Java/C), which forces re-arm logic everywhere. |
+| max_pending_requests and persistent_watch_buffer are unbounded by default, as in Java, and configurable; with a configured persistent_watch_buffer a full queue drops events and yields a non-terminal Lagged{missed}; the IO side never blocks on a persistent queue. | Java applications expect no local request limit and no event loss. A slow watch-stream consumer grows memory instead of stalling IO or expiring the session, and applications that need a memory bound set one and handle Lagged. | Fixed default limits, which reject requests and drop events that Java would accept; blocking the IO side; silent drop. |
+| The undelivered-item count (untaken results, auth outcomes and one-shot events) is bounded by dispatch_queue_capacity (default 4096) in both native drivers; at the bound the IO side of an established session stops reading frames but keeps sending requests and pings. | Bounded memory between IO and the application without dropping any item. A stalled consumer shows up as a receive-timeout ConnectionLoss, as an unresponsive peer does, and the session reconnects while the consumer is stalled, because the gate does not apply to the handshake. | An unbounded hand-off (no memory bound); dropping results (breaks the one-outcome rule of every future). |
+| Watch tables are insertion-ordered (watch_table = Ordered), so several watchers of one kind on one path receive an event in registration order; the kinds follow the table order of 02 §10.3. | A deterministic, documented order that applications and tests can rely on. | Hash order (no stable order). |
+| One flat Clone+Eq Error with 1:1 ZOO_ERRORS mapping; native requests failed by a recoverable teardown see ConnectionLoss (disconnect_rc = ConnectionLoss, the ledger value), and terminal causes keep SessionExpired, AuthFailed and Closing; the cause goes to SessionInfo.last_error (DisconnectCause, io, TLS or SASL error) and the session log. | The ledger owns the value (CC-15, 00 §4). One code matches Java's ConnectionLossException and gives applications one retry branch; the cause stays visible for diagnosis without being spread over request codes. | Per-cause teardown rcs (PerCause, the legacy value): more detail in each request's code, but differs from the ledger and from Java. |
+| Native max_frame_len default is 4 MiB (02 §14.1; CC-15, 00 §4). | Above any reply a default-configured server sends (data cap 0xfffff plus headers and Stat, large child lists), tolerant of servers with a raised jute.maxbuffer, and still bounds memory. | 0xfffff (rejects legitimate max-size replies), 0xfffff+1024, 16 MiB. |
+| Default features {tokio, tracing, stream}; TLS and SASL opt-in (CC-34, 00 §4); tokio is Unix-only, so Windows uses the threaded driver from M4; per-client randomness from NativeRng (SplitMix64 from RandomState) in zk-client; zk-proto emits Log outputs and zk-client renders them to tracing or log. | Minimal default native closure with no crypto or GSSAPI code, nothing native-only in the drop-in closure, and no hard tracing dependency in core crates. A Windows build with the default features compiles, because tokio is a cfg(unix) target dependency. | {tokio, tls-rustls, log} as the default; tracing as a required dependency; fastrand for randomness. |
+| Native TLS shares zk-driver's RustlsConn and the trust and identity loaders with the drop-in (06 §3.1, §3.4, §3.6), including the default-location loader for add_system_roots (no openssl_probe::probe(), the environment read only when tls_env_allowed, which zk-client computes with safe rustix uid/gid calls, the compile-time ZK_TLS_DEFAULT_CERT_FILE/ZK_TLS_DEFAULT_CERT_DIR otherwise, set by zk-driver's build.rs from the 01 §6.1 platform list when a native build sets neither, hash-named directories) and no extra trust crates; the native default verifier is WebPki; legacy_c_compat selects LegacyChainOnly per client; TlsOptions, from_rustls, server_name, reload, the hostname opt-out and the DefaultRoots check in build() stay native-only in zk-client. | One TLS engine, one PEM/key loader, one set of location rules and one audited closure for both profiles (K14, 00 §3). With rustls there is no OpenSSL dependency closure, and all TLS state machine code is in memory-safe Rust. probe() reads the environment itself and falls back silently, which would bypass the set-uid rule and widen trust. The rustix uid/gid comparison needs no unsafe code, so zk-client keeps #![forbid(unsafe_code)]. A native user who asks for system roots and gets none learns it at build() time instead of at the first handshake. Native users get encrypted PKCS#8 and traditional PEM keys for free, and a migration path with the exact drop-in trust decision. | A separate native TLS stack, which would need a second closure and a second loader; unencrypted keys only in the builder. |
+| Native SASL is safe-Rust DIGEST-MD5 (feature sasl) and GSSAPI through libgssapi (feature sasl-gssapi), with SaslConfig {DigestMd5, Gssapi, Custom} and a public SaslStep with the shape of zk_proto's SaslStep; the ZooKeeper-level quirks live in zk-proto; every SASL failure is the terminal AuthFailed state (sasl_failure = Teardown); Cyrus is never linked natively. | One home for the quirks (K10); the native closure avoids Cyrus and rsasl; GSSAPI needs a system library anyway, so it is a separate opt-in. zk-proto has one SASL failure path natively (Cause::SaslTeardown, terminal), and Java also ends the session on SASL failure. | rsasl (not offered, CC-34, 00 §4); Cyrus through FFI in native builds (the drop-in keeps Cyrus in hardened shim C only, 06 §4.7). |
+| Secrets use zeroize: zk_proto::SecretBytes in the core and a zk-client SecretString newtype over Zeroizing<String>; secrecy is not used (CC-19, 00 §4). | One small audited crate already in both closures; redacted Debug and wipe on drop for every credential type. | secrecy (an extra crate for the same guarantee); black_box best-effort wipes (no guarantee). |
+| Native add_auth appends in call order with a per-call result (tail insert under PerRequest, 02 §6.3) and re-sends forward on reconnect. | Requests run under the identity in effect at call time, and each call learns its own outcome. | Priority insert, which makes a later auth apply to earlier-queued requests. |
+| Node data is Vec<u8> from get_data (null reads as empty) plus get_data_opt returning Option<Vec<u8>> from the null-preserving JBuffer; the native client never writes null data. | Ergonomic default, while the rare application that needs it can still tell null from empty. | Option<Vec<u8>> everywhere, or a Data enum. |
+| zk-client mirrors the drop-in provider features: tls-rustls with exactly one of tls-ring (the default provider), tls-aws-lc-rs or tls-aws-lc-rs-fips; the aws-lc builds ship only after the ASF legal review of aws-lc-sys and aws-lc-fips-sys; tls-rustls stays opt-in. | One provider matrix, one set of closure goldens and one FIPS story for both profiles; native FIPS users get the same FIPS-only algorithms and key formats as the drop-in. An opt-in TLS feature keeps the crypto closure out of every default native build. | ring only natively (no FIPS path for Rust applications); tls-rustls on by default (crypto code in every default build). |
+| tls-platform-verifier is a native-only, opt-in feature with TlsOptionsBuilder::with_platform_verifier(), exclusive with the file-based trust options; add_system_roots() keeps the OpenSSL-location loader; the drop-in never uses the platform verifier, and cargo-deny bans it from the zk-ffi closure. | Applications on macOS and Windows can use the OS trust store and OS policy, which the OpenSSL locations never see, while add_system_roots() keeps the drop-in's exact location rules and the drop-in closure stays unchanged. Refusing it in set-uid processes where it reads roots through rustls-native-certs keeps the set-uid environment rule. | add_system_roots() consulting the OS stores (changes the meaning of an existing option and widens trust silently); rustls-native-certs in add_system_roots (probe() bypasses the set-uid rule). |
+| The tokio feature is Unix-only; on Windows the native API runs on the threaded driver from M4, and async applications await the same futures there. | The tokio driver is built on AsyncFd, which tokio offers only on Unix, and the threaded driver already completes futures for any executor, so a second Windows IO path adds code without adding capability. | A Windows tokio path over tokio::net::TcpStream (a second socket path to test and keep in step with TlsTransport). |
+| Every native SASL failure, a Transient credential error included, ends the session; the application decides whether to create a new client. | One terminal SASL path in zk-proto (Cause::SaslTeardown) and Java's behavior. A retry inside the session would need a recoverable SASL cause in zk-proto and would hide credential problems behind reconnect loops. | Retry a Transient error on the next server. |
+| Secrets are wiped on drop with zeroize only; no mlock and no madvise(MADV_DONTDUMP). | Wipe on drop covers the lifetime risk without platform calls; zk-client keeps forbid(unsafe_code) and needs no new dependency. | mlock or MADV_DONTDUMP for secret pages (unsafe or extra crates, per-platform limits, and no guarantee for copies made by the TLS or SASL engines). |
+| A graceful native close sends close_notify after the CloseSession exchange, flushed without blocking within the close budget, and never waits for the server's alert; detach, forced and error teardowns and the RW probe send no close_notify; after a fatal TLS error that rustls detects, the driver makes one non-blocking send of the fatal alert and drops it when `ct_out` is not empty, as the drop-in does (03 §4.3.5). | A clean TLS shutdown on the wire at no cost to close latency; the difference from legacy is wire-only. The fatal alert is what OpenSSL sends in legacy. | No close_notify (legacy); waiting for the server's close_notify (adds latency and can hang on a peer that never sends it). |
+| Recipes live in a separate zk-recipes crate (apache-zookeeper-recipes, publish = false, forbid(unsafe)) on zk-client's public API only, delivered after M5 as M5R: DistributedLock, LeaderLatch and TreeCache; the lock and latch use Curator's node layouts, ordering and protected-mode recovery. | Recipes need nothing beyond the public API, so a separate crate keeps zk-client small and proves the API is sufficient. Curator-compatible layouts let Rust and Java processes contend on the same paths. TreeCache on PersistentRecursive watches needs one watch for a whole subtree. | Recipes inside zk-client; a Rust-only node layout (no mixed Rust and Java deployments); TreeCache on per-node one-shot watches (one watch per node, re-arm races). |
