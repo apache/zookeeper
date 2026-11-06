@@ -587,6 +587,8 @@ public class LearnerHandler extends ZooKeeperThread {
                     ServerMetrics.getMetrics().SNAP_COUNT.add(1);
                 }
             } else {
+                LOG.info("Sending diffs last zxid of peer is 0x{}, zxid of leader is 0x{}",
+                        Long.toHexString(peerLastZxid), Long.toHexString(leaderLastZxid));
                 syncThrottler = learnerMaster.getLearnerDiffSyncThrottler();
                 syncThrottler.beginSync(exemptFromThrottle);
                 ServerMetrics.getMetrics().INFLIGHT_DIFF_COUNT.add(syncThrottler.getSyncInProgress());
