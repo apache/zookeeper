@@ -21,6 +21,10 @@
 
 #include "ZKMocks.h"
 #include <proto.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -36,6 +40,10 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testCloseWhileInProgressFromCompletion);
     CPPUNIT_TEST(testCloseWhileMultiInProgressFromMain);
     CPPUNIT_TEST(testCloseWhileMultiInProgressFromCompletion);
+    CPPUNIT_TEST(testServerListChangeFailsPendingRequests);
+    CPPUNIT_TEST(testSendFailureDefersTeardown);
+    CPPUNIT_TEST(testPingSendFailureTearsDown);
+    CPPUNIT_TEST(testServerListChangeKeepsAuthFailedState);
     CPPUNIT_TEST(testConnectResponseFull);
     CPPUNIT_TEST(testConnectResponseNoReadOnlyFlag);
     CPPUNIT_TEST(testConnectResponseSplitAtReadOnlyFlag);
@@ -43,6 +51,8 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
 #else    
     CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
+    CPPUNIT_TEST(testServerListChangeDuringSessionEstablishment);
+    CPPUNIT_TEST(testFullWakeupPipeKeepsConnection);
 #endif
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently2);
@@ -118,6 +128,35 @@ public:
         bool called_;
         int rc_;
     };
+
+    // Records the session states that the watcher receives, in order.
+    class SessionEvents{
+    public:
+        void add(int state){
+            synchronized(mx_);
+            states_.push_back(state);
+        }
+        vector<int> get() const{
+            synchronized(mx_);
+            return states_;
+        }
+        bool contains(int state) const{
+            vector<int> s=get();
+            return find(s.begin(),s.end(),state)!=s.end();
+        }
+        mutable Mutex mx_;
+        vector<int> states_;
+    };
+
+    static void sessionWatcher(zhandle_t *, int type, int state,
+            const char *, void *ctx){
+        if(type==ZOO_SESSION_EVENT && ctx!=0)
+            ((SessionEvents*)ctx)->add(state);
+    }
+
+    static int portOf(const struct sockaddr_storage& addr){
+        return ntohs(((const struct sockaddr_in*)&addr)->sin_port);
+    }
 #ifndef THREADED
     // send two get data requests; verify that the corresponding completions called
     void testConcurrentOperations1()
@@ -714,6 +753,189 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
     }
 
+    // Records the status of any completion type.
+    class StatusCompletion: public AsyncCompletion{
+    public:
+        StatusCompletion():called_(false),rc_(ZAPIERROR){}
+        virtual void dataCompl(int rc, const char *value, int len, const Stat *stat){
+            record(rc);
+        }
+        virtual void statCompl(int rc, const Stat *stat){ record(rc); }
+        virtual void stringCompl(int rc, const char *value){ record(rc); }
+        virtual void voidCompl(int rc){ record(rc); }
+        void record(int rc){ called_=true; rc_=rc; }
+        bool called_;
+        int rc_;
+    };
+
+    // A server list change that drops the current server must do a full
+    // teardown. The pending requests fail with ZCONNECTIONLOSS, and no
+    // request or partial frame goes to the next server.
+    void testServerListChangeFailsPendingRequests()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+        SessionEvents events;
+
+        zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
+                TEST_CLIENT_ID,&events,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+
+        // The server receives this request but does not reply.
+        StatusCompletion sentRes;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/a",0,asyncCompletion,&sentRes));
+        CPPUNIT_ASSERT(zh->sent_requests.head!=0);
+        // This request stays in the send queue, partly sent.
+        zkServer.sendErrno=EAGAIN;
+        StatusCompletion queuedRes;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/b",0,asyncCompletion,&queuedRes));
+        CPPUNIT_ASSERT(zh->to_send.head!=0);
+        zh->to_send.head->curr_offset=2;
+        zkServer.sendErrno=0;
+
+        // The new list does not contain the current server. The call only
+        // asks for a disconnect. It does not close the socket.
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zoo_set_servers(zh,"127.0.0.2:2122"));
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,zh->fd->sock);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT(!sentRes.called_);
+        CPPUNIT_ASSERT(!queuedRes.called_);
+
+        // The next driver call does the teardown and connects to the new
+        // server with empty queues.
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zookeeper_interest(zh,&fd,&interest,&tv));
+        CPPUNIT_ASSERT(sentRes.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,sentRes.rc_);
+        CPPUNIT_ASSERT(queuedRes.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,queuedRes.rc_);
+        CPPUNIT_ASSERT(events.contains(ZOO_CONNECTING_STATE));
+        CPPUNIT_ASSERT(zh->sent_requests.head==0);
+        CPPUNIT_ASSERT(zh->to_send.head==0);
+        CPPUNIT_ASSERT_EQUAL(2122,portOf(zh->addr_cur));
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(0,zh->disconnect_requested);
+    }
+
+    // A failed send in an asynchronous call must not close the socket in
+    // the caller. The next driver call does the full teardown.
+    void testSendFailureDefersTeardown()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+        SessionEvents events;
+
+        zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
+                TEST_CLIENT_ID,&events,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+
+        zkServer.sendErrno=ECONNRESET;
+        StatusCompletion res;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/a",0,asyncCompletion,&res));
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,zh->fd->sock);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(1,zh->disconnect_requested);
+        CPPUNIT_ASSERT(!res.called_);
+        zkServer.sendErrno=0;
+
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zookeeper_interest(zh,&fd,&interest,&tv));
+        CPPUNIT_ASSERT(res.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,res.rc_);
+        CPPUNIT_ASSERT(events.contains(ZOO_CONNECTING_STATE));
+        CPPUNIT_ASSERT(zh->sent_requests.head==0);
+        CPPUNIT_ASSERT(zh->to_send.head==0);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(0,zh->disconnect_requested);
+    }
+
+    // A failed ping send must close the connection and must not return the
+    // closed socket.
+    void testPingSendFailureTearsDown()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+        SessionEvents events;
+
+        zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
+                TEST_CLIENT_ID,&events,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+
+        // A ping is due after one third of the session timeout.
+        timeMock.tick(4);
+        zkServer.sendErrno=ECONNRESET;
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        zkServer.sendErrno=0;
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,rc);
+        CPPUNIT_ASSERT_EQUAL(-1,fd);
+        CPPUNIT_ASSERT_EQUAL(0,interest);
+        CPPUNIT_ASSERT_EQUAL(-1,(int)zh->fd->sock);
+        CPPUNIT_ASSERT(events.contains(ZOO_CONNECTING_STATE));
+        CPPUNIT_ASSERT(zh->to_send.head==0);
+        CPPUNIT_ASSERT_EQUAL(0,zoo_state(zh));
+    }
+
+    // Changes the server list from an authentication completion.
+    struct AuthFailureContext{
+        zhandle_t *zh;
+        int rc;
+        int setServersRc;
+    };
+    static void setServersOnAuthCompletion(int rc, const void *data){
+        AuthFailureContext *ctx=(AuthFailureContext*)data;
+        ctx->rc=rc;
+        ctx->setServersRc=zoo_set_servers(ctx->zh,"127.0.0.2:2122");
+    }
+
+    // A server list change from a failed authentication callback must not
+    // hide the failure. The handle stays in ZOO_AUTH_FAILED_STATE.
+    void testServerListChangeKeepsAuthFailedState()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+        SessionEvents events;
+
+        zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
+                TEST_CLIENT_ID,&events,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+
+        // The server rejects the credential.
+        zkServer.addOperationResponse(new ZooStatResponse(0,ZAUTHFAILED));
+        AuthFailureContext ctx={zh,ZAPIERROR,ZAPIERROR};
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zoo_add_auth(zh,"digest","u:p",3,
+                setServersOnAuthCompletion,&ctx));
+
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zookeeper_interest(zh,&fd,&interest,&tv));
+        CPPUNIT_ASSERT_EQUAL((int)ZAUTHFAILED,zookeeper_process(zh,interest));
+        CPPUNIT_ASSERT_EQUAL((int)ZAUTHFAILED,ctx.rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,ctx.setServersRc);
+        CPPUNIT_ASSERT_EQUAL(ZOO_AUTH_FAILED_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT(events.contains(ZOO_AUTH_FAILED_STATE));
+        CPPUNIT_ASSERT_EQUAL((int)ZINVALIDSTATE,
+                zookeeper_interest(zh,&fd,&interest,&tv));
+    }
+
     void testConnectResponseFull()
     {
         CloseFinally guard(&zh);
@@ -1092,7 +1314,154 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
         
         CPPUNIT_ASSERT(ensureCondition(action.isNodeChangedTriggered(),1000)<1000);
-        CPPUNIT_ASSERT_EQUAL(string("/x/y/z"),action.path_);                
+        CPPUNIT_ASSERT_EQUAL(string("/x/y/z"),action.path_);
+    }
+
+    // A mock server that holds the first handshake reply until the test
+    // releases it.
+    class HeldHandshakeServer: public ZookeeperServer{
+    public:
+        HeldHandshakeServer():held_(false),released_(false){}
+        virtual void notifyBufferSent(const std::string& buffer){
+            {
+                synchronized(mx_);
+                if(!released_ && HandshakeRequest::isValid(buffer)){
+                    handshake_=buffer;
+                    held_=true;
+                    return;
+                }
+            }
+            ZookeeperServer::notifyBufferSent(buffer);
+        }
+        void release(){
+            string buffer;
+            {
+                synchronized(mx_);
+                released_=true;
+                buffer=handshake_;
+            }
+            ZookeeperServer::notifyBufferSent(buffer);
+        }
+        SyncedBoolCondition isHeld() const{
+            return SyncedBoolCondition(held_,mx_);
+        }
+        mutable Mutex mx_;
+        bool held_;
+        bool released_;
+        string handshake_;
+    };
+
+    // Releases the authentication lock if an assertion fails.
+    struct AuthLockGuard{
+        AuthLockGuard(zhandle_t* zh):zh_(zh),locked_(true){zoo_lock_auth(zh_);}
+        ~AuthLockGuard(){unlock();}
+        void unlock(){
+            if(locked_){
+                locked_=false;
+                zoo_unlock_auth(zh_);
+            }
+        }
+        zhandle_t* zh_;
+        bool locked_;
+    };
+
+    // A server list change while the IO thread completes the session setup
+    // must not give the watcher an invalid state. The watcher gets
+    // ZOO_CONNECTED_STATE, then ZOO_CONNECTING_STATE, then the session
+    // connects to the new server.
+    void testServerListChangeDuringSessionEstablishment()
+    {
+        Mock_gettimeofday timeMock;
+        HeldHandshakeServer zkServer;
+        Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
+        CloseFinally guard(&zh);
+        SessionEvents events;
+
+        zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
+                TEST_CLIENT_ID,&events,0);
+        CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT(ensureCondition(zkServer.isHeld(),1000)<1000);
+
+        {
+            // The IO thread sets the connected state, then waits for this
+            // lock in send_auth_info() before it sends the session event.
+            AuthLockGuard authLock(zh);
+            zkServer.release();
+            CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh),1000)<1000);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                    zoo_set_servers(zh,"127.0.0.2:2122"));
+            CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
+        }
+
+        // Wait for the reconnect to the new server.
+        struct SecondConnect{
+            SecondConnect(const SessionEvents& e):e_(e){}
+            bool operator()() const{
+                vector<int> s=e_.get();
+                return count(s.begin(),s.end(),ZOO_CONNECTED_STATE)>=2;
+            }
+            const SessionEvents& e_;
+        };
+        CPPUNIT_ASSERT(ensureCondition(SecondConnect(events),2000)<2000);
+
+        vector<int> states=events.get();
+        CPPUNIT_ASSERT(states.size()>=3);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,states[0]);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTING_STATE,states[1]);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,states[2]);
+        CPPUNIT_ASSERT(!events.contains(ZOO_NOTCONNECTED_STATE));
+        CPPUNIT_ASSERT_EQUAL(2122,portOf(zh->addr_cur));
+    }
+    // Holds the reconfig lock, and so stops the IO thread in its next
+    // zookeeper_interest() call. Releases the lock if an assertion fails.
+    struct ReconfigLockGuard{
+        ReconfigLockGuard(zhandle_t* zh):zh_(zh),locked_(true){lock_reconfig(zh_);}
+        ~ReconfigLockGuard(){unlock();}
+        void unlock(){
+            if(locked_){
+                locked_=false;
+                unlock_reconfig(zh_);
+            }
+        }
+        zhandle_t* zh_;
+        bool locked_;
+    };
+
+    // A full wakeup pipe already holds a wakeup for the IO thread. An
+    // asynchronous call must then succeed and keep the connection.
+    void testFullWakeupPipeKeepsConnection()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("127.0.0.1:2121",watcher,10000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh),1000)<1000);
+
+        AsyncGetOperationCompletion res;
+        {
+            // Stop the IO thread so that it does not empty the pipe.
+            ReconfigLockGuard reconfigLock(zh);
+            millisleep(200);
+            struct adaptor_threads* adaptor=
+                (struct adaptor_threads*)zh->adaptor_priv;
+            char buf[4096]={0};
+            while(write(adaptor->self_pipe[1],buf,sizeof(buf))>0){}
+            CPPUNIT_ASSERT_EQUAL(EAGAIN,errno);
+            CPPUNIT_ASSERT_EQUAL((int)ZOK,wakeup_io_thread(zh));
+
+            zkServer.addOperationResponse(new ZooGetResponse("1",1));
+            CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                    zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res));
+            CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,zh->fd->sock);
+            CPPUNIT_ASSERT_EQUAL(0,zh->disconnect_requested);
+        }
+
+        CPPUNIT_ASSERT(ensureCondition(res,1000)<1000);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,res.rc_);
+        CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
     }
 #endif
 };

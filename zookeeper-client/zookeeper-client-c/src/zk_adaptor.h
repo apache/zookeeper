@@ -208,6 +208,8 @@ struct _zhandle {
     int reconfig;                       // Are we in the process of reconfiguring cluster's ensemble
     double pOld, pNew;                  // Probability for selecting between 'addrs_old' and 'addrs_new'
     int delay;
+    int disconnect_requested;           // When set, the next zookeeper_interest() call drops the
+                                        // connection. The reconfig lock guards this flag.
     int disable_reconnection_attempt;   // When set, client will not try reconnect to a different server in
                                         // server list. This makes a sticky server for client, and is useful
                                         // for testing if a sticky server is required, or if client wants to
@@ -288,6 +290,7 @@ struct sync_completion *alloc_sync_completion(void);
 int wait_sync_completion(struct sync_completion *sc);
 void free_sync_completion(struct sync_completion *sc);
 void notify_sync_completion(struct sync_completion *sc);
+int wakeup_io_thread(zhandle_t *zh);
 #endif
 int adaptor_send_queue(zhandle_t *zh, int timeout);
 int process_async(int outstanding_sync);
