@@ -547,12 +547,10 @@ static int32_t compare_and_swap(volatile int32_t* operand, int32_t expected,
 /* This function uses the same xid sequence as ClientCnxn.getXid in the Java
  * client. Each handle has a counter that starts at 1. The counter wraps from
  * INT32_MAX back to 1, so a request never uses a reserved control xid. A
- * counter value that is not positive restarts the sequence at 1. A
  * compare-and-swap loop lets many application threads share one handle. */
 int32_t get_xid(zhandle_t *zh)
 {
     int32_t current;
-    int32_t xid;
     if (zh == NULL) {
         /* Most API calls get an xid before they check the handle. These
          * calls reject a NULL handle, so this xid never goes to a server. */
@@ -560,10 +558,9 @@ int32_t get_xid(zhandle_t *zh)
     }
     do {
         current = zh->xid;
-        xid = current > 0 ? current : 1;
     } while (compare_and_swap(&zh->xid, current,
-                xid == INT32_MAX ? 1 : xid + 1) != current);
-    return xid;
+                current == INT32_MAX ? 1 : current + 1) != current);
+    return current;
 }
 
 int lock_reconfig(struct _zhandle *zh)

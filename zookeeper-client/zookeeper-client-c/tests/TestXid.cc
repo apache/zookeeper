@@ -40,7 +40,6 @@ class Zookeeper_xid : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Zookeeper_xid);
     CPPUNIT_TEST(testNewHandleStartsAtOne);
     CPPUNIT_TEST(testWrapFromMaxToOne);
-    CPPUNIT_TEST(testNonPositiveCounterSkipsToOne);
     CPPUNIT_TEST(testHandlesHaveIndependentCounters);
     CPPUNIT_TEST(testNullHandle);
 #ifndef THREADED
@@ -99,18 +98,6 @@ public:
         CPPUNIT_ASSERT_EQUAL(XID_MAX, get_xid(&h));
         CPPUNIT_ASSERT_EQUAL(1, get_xid(&h));
         CPPUNIT_ASSERT_EQUAL(2, get_xid(&h));
-    }
-
-    void testNonPositiveCounterSkipsToOne()
-    {
-        zhandle_t h;
-        memset(&h, 0, sizeof(h));
-        CPPUNIT_ASSERT_EQUAL(1, get_xid(&h));
-        h.xid = SET_WATCHES_XID;
-        CPPUNIT_ASSERT_EQUAL(1, get_xid(&h));
-        CPPUNIT_ASSERT_EQUAL(2, get_xid(&h));
-        h.xid = numeric_limits<int32_t>::min();
-        CPPUNIT_ASSERT_EQUAL(1, get_xid(&h));
     }
 
     void testHandlesHaveIndependentCounters()
