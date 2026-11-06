@@ -30,7 +30,7 @@ export function GettingStartedSection() {
     {
       title: "2. Quick Start",
       desc: "Set up a single ZooKeeper server and learn the basics of the CLI.",
-      to: `${CURRENT_DOCS_PATH}/overview/quick-start`
+      to: `${CURRENT_DOCS_PATH}/overview/quick-start/`
     },
     {
       title: "3. Write a Client",
