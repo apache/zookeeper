@@ -43,28 +43,24 @@ public class MBeanRegistry {
     public static final String DOMAIN = "org.apache.ZooKeeperService";
 
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
-    private static volatile MBeanRegistry instance = new MBeanRegistry();
+
+    private static final MBeanRegistry INSTANCE = new MBeanRegistry();
 
     private final Object LOCK = new Object();
 
-    private Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<>();
+    private final Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<>();
 
     private MBeanServer mBeanServer;
 
     /**
-     * Useful for unit tests. Change the MBeanRegistry instance
-     *
-     * @param instance new instance
+     * Return the global singleton instance for the MBeanRegistry.
+     * @return MBeanRegistry implementation.
      */
-    public static void setInstance(MBeanRegistry instance) {
-        MBeanRegistry.instance = instance;
-    }
-
     public static MBeanRegistry getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
-    public MBeanRegistry() {
+    private MBeanRegistry() {
         try {
             mBeanServer = ManagementFactory.getPlatformMBeanServer();
         } catch (Error e) {
@@ -114,8 +110,6 @@ public class MBeanRegistry {
 
     /**
      * Unregister the MBean identified by the path.
-     * @param path
-     * @param bean
      */
     private void unregister(String path, ZKMBeanInfo bean) throws JMException {
         if (path == null) {
@@ -140,7 +134,6 @@ public class MBeanRegistry {
 
     /**
      * Unregister MBean.
-     * @param bean
      */
     public void unregister(ZKMBeanInfo bean) {
         if (bean == null) {
