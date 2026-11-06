@@ -67,6 +67,25 @@ public:
 };
 
 // *****************************************************************************
+// getaddrinfo
+
+// Simulates a resolver outage. While an instance exists, every lookup fails
+// with failWith. Without an instance, lookups go to the C library.
+class Mock_getaddrinfo: public Mock
+{
+public:
+    Mock_getaddrinfo():failWith(EAI_AGAIN),callCounter(0){mock_=this;}
+    virtual ~Mock_getaddrinfo(){mock_=0;}
+
+    int failWith;
+    int callCounter;
+    virtual int call(const char* node, const char* service,
+            const struct addrinfo* hints, struct addrinfo** res);
+
+    static Mock_getaddrinfo* mock_;
+};
+
+// *****************************************************************************
 // calloc
 
 class Mock_calloc: public Mock
