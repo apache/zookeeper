@@ -120,6 +120,24 @@ Mock_gethostbyname::HostEntry& Mock_gethostbyname::HostEntry::addAddress(
 
 
 // *****************************************************************************
+// getaddrinfo
+
+int getaddrinfo(const char *node, const char *service,
+        const struct addrinfo *hints, struct addrinfo **res) {
+    if(!Mock_getaddrinfo::mock_)
+        return LIBC_SYMBOLS.getaddrinfo(node,service,hints,res);
+    return Mock_getaddrinfo::mock_->call(node,service,hints,res);
+}
+
+Mock_getaddrinfo* Mock_getaddrinfo::mock_=0;
+
+int Mock_getaddrinfo::call(const char* node, const char* service,
+        const struct addrinfo* hints, struct addrinfo** res) {
+    callCounter++;
+    return failWith;
+}
+
+// *****************************************************************************
 // calloc
 #ifndef USING_DUMA
 DECLARE_WRAPPER(void*,calloc,(size_t p1, size_t p2)){
