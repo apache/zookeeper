@@ -18,8 +18,8 @@
 package org.apache.zookeeper.audit;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.MultiOperationRecord;
@@ -138,16 +138,18 @@ public final class AuditHelper {
     }
 
     private static void logMultiOperation(Request request, ProcessTxnResult rc) throws IOException, KeeperException {
-        Map<String, String> createModes = AuditHelper.getCreateModes(request);
+        // a multi has exactly one result per op, in the same order
+        Iterator<Op> ops = request.readRequestRecord(MultiOperationRecord::new).iterator();
         boolean multiFailed = false;
         for (ProcessTxnResult subTxnResult : rc.multiResult) {
+            Op op = ops.next();
             switch (subTxnResult.type) {
                 case ZooDefs.OpCode.create:
                 case ZooDefs.OpCode.create2:
                 case ZooDefs.OpCode.createTTL:
                 case ZooDefs.OpCode.createContainer:
                     log(request, subTxnResult.path, AuditConstants.OP_CREATE, null,
-                            createModes.get(subTxnResult.path), Result.SUCCESS);
+                            getCreateMode(op), Result.SUCCESS);
                     break;
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.deleteContainer:
@@ -185,22 +187,12 @@ public final class AuditHelper {
         return CreateMode.fromFlag(createFlags).toString().toLowerCase();
     }
 
-    private static Map<String, String> getCreateModes(Request request)
-            throws IOException, KeeperException {
-        Map<String, String> createModes = new HashMap<>();
-        if (!ZKAuditProvider.isAuditEnabled()) {
-            return createModes;
+    private static String getCreateMode(Op op) throws KeeperException {
+        Record requestRecord = op.toRequestRecord();
+        if (requestRecord instanceof CreateTTLRequest) {
+            return getCreateMode(((CreateTTLRequest) requestRecord).getFlags());
         }
-        MultiOperationRecord multiRequest = request.readRequestRecord(MultiOperationRecord::new);
-        for (Op op : multiRequest) {
-            if (op.getType() == ZooDefs.OpCode.create || op.getType() == ZooDefs.OpCode.create2
-                    || op.getType() == ZooDefs.OpCode.createContainer) {
-                CreateRequest requestRecord = (CreateRequest) op.toRequestRecord();
-                createModes.put(requestRecord.getPath(),
-                        getCreateMode(requestRecord.getFlags()));
-            }
-        }
-        return createModes;
+        return getCreateMode(((CreateRequest) requestRecord).getFlags());
     }
 
 }
