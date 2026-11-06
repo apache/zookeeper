@@ -534,14 +534,36 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr)
 #endif
 }
 
-// make sure the static xid is initialized before any threads started
-__attribute__((constructor)) int32_t get_xid()
+static int32_t compare_and_swap(volatile int32_t* operand, int32_t expected,
+        int32_t desired)
 {
-    static int32_t xid = -1;
-    if (xid == -1) {
-        xid = time(0);
+#ifndef WIN32
+    return __sync_val_compare_and_swap(operand, expected, desired);
+#else
+    return InterlockedCompareExchange((volatile LONG*)operand, desired, expected);
+#endif
+}
+
+/* This function uses the same xid sequence as ClientCnxn.getXid in the Java
+ * client. Each handle has a counter that starts at 1. The counter wraps from
+ * INT32_MAX back to 1, so a request never uses a reserved control xid. A
+ * counter value that is not positive restarts the sequence at 1. A
+ * compare-and-swap loop lets many application threads share one handle. */
+int32_t get_xid(zhandle_t *zh)
+{
+    int32_t current;
+    int32_t xid;
+    if (zh == NULL) {
+        /* Most API calls get an xid before they check the handle. These
+         * calls reject a NULL handle, so this xid never goes to a server. */
+        return 0;
     }
-    return fetch_and_add(&xid,1);
+    do {
+        current = zh->xid;
+        xid = current > 0 ? current : 1;
+    } while (compare_and_swap(&zh->xid, current,
+                xid == INT32_MAX ? 1 : xid + 1) != current);
+    return xid;
 }
 
 int lock_reconfig(struct _zhandle *zh)

@@ -254,6 +254,9 @@ struct _zhandle {
      * right before top-level API call returns to the caller */
     int32_t ref_counter;
     volatile int close_requested;
+    /* The next xid for a request on this handle. Each handle has its own
+     * counter, as in the Java client. See get_xid. */
+    volatile int32_t xid;
     void *adaptor_priv;
 
     /* Used for debugging only: non-zero value indicates the time when the zookeeper_process
@@ -313,7 +316,9 @@ int leave_critical(zhandle_t* zh);
 // zhandle object reference counting
 void api_prolog(zhandle_t* zh);
 int api_epilog(zhandle_t *zh, int rc);
-int32_t get_xid();
+/* Returns the next xid for zh. Request xids are always positive, because
+ * the protocol reserves negative xids for control frames. */
+int32_t get_xid(zhandle_t *zh);
 
 // returns the new value of the ref counter
 int32_t inc_ref_counter(zhandle_t* zh,int i);

@@ -75,13 +75,21 @@ int32_t inc_ref_counter(zhandle_t* zh,int i)
     return zh->ref_counter;
 }
 
-int32_t get_xid()
+/* This function uses the same xid sequence as ClientCnxn.getXid in the Java
+ * client. Each handle has a counter that starts at 1. The counter wraps from
+ * INT32_MAX back to 1, so a request never uses a reserved control xid. A
+ * counter value that is not positive restarts the sequence at 1. */
+int32_t get_xid(zhandle_t *zh)
 {
-    static int32_t xid = -1;
-    if (xid == -1) {
-        xid = time(0);
+    int32_t xid;
+    if (zh == NULL) {
+        /* Most API calls get an xid before they check the handle. These
+         * calls reject a NULL handle, so this xid never goes to a server. */
+        return 0;
     }
-    return xid++;
+    xid = zh->xid > 0 ? zh->xid : 1;
+    zh->xid = xid == INT32_MAX ? 1 : xid + 1;
+    return xid;
 }
 
 int lock_reconfig(struct _zhandle *zh)
