@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.management.JMException;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
@@ -77,7 +78,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     LinkedBlockingQueue<Request> pendingTxns = new LinkedBlockingQueue<>();
 
     public void logRequest(Request request) {
-        if ((request.zxid & 0xffffffffL) != 0) {
+        if (ZxidUtils.getCounterFromZxid(request.zxid) != 0) {
             pendingTxns.add(request);
         }
         syncProcessor.processRequest(request);
