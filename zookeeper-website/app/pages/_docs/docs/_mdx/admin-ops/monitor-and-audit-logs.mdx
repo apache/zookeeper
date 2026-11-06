@@ -325,15 +325,28 @@ event also covers the logout performed during Kerberos re-login and does not ind
 disconnection. Stopping only the refresh thread does not log a logout.
 
 If the audit logger throws `RuntimeException` or `LinkageError` during a JAAS operation,
-ZooKeeper writes the error to the regular log. These errors do not change the JAAS result.
-ZooKeeper retains logger initialization failures and reports the original cause on subsequent
-audit calls and server startup. When recording a failed server start, these audit errors do not
-change the server's exit code.
+ZooKeeper reports the error in the regular log without changing the JAAS result.
+The standard server entry points initialize an enabled logger before starting data purging,
+opening transaction storage, or starting listeners. If initialization fails, startup stops
+and the error reports the logger class and original cause. Errors while auditing a failed
+start do not change the server's exit code.
 
-Each JVM uses one audit logger. For a custom logger, set `zookeeper.audit.impl.class` to its fully
-qualified class name before the audit provider is first used. An audited client login can select
-the logger before an embedded server reads its configuration. A later server configuration
-that requests a different logger class fails; configuring the same class again is allowed.
+On clients, logger initialization errors are reported in the regular log and leave JAAS
+behavior unchanged. Auditing remains disabled for that client runtime. A new runtime can
+retry initialization, and the failure does not affect other clients' or servers' audit loggers.
+
+Each server runtime has one audit logger, shared by its components across quorum role changes
+and database replacement. A client runtime initializes its logger on the first JAAS login
+attempt and reuses it for retries, reconnections, and ticket renewals. Clients without a
+configured JAAS login do not initialize an audit logger.
+
+Server configuration captures the JVM audit defaults when the configuration object is created.
+The server's `audit.enable` and `audit.impl.class` settings override the captured
+`zookeeper.audit.enable` and `zookeeper.audit.impl.class` defaults. Parsing a server's
+configuration leaves these JVM properties unchanged, so enabling audit for an embedded server
+does not enable it for clients or other servers in the same JVM. A client Login reads the
+audit settings from `ZKClientConfig` on its first JAAS login attempt. Subsequent configuration
+changes do not reconfigure an initialized runtime's logger.
 
 ```
 user=zkcli@HADOOP.COM operation=login result=success
@@ -341,6 +354,35 @@ user=zkcli@HADOOP.COM operation=logout result=success
 user=zkcli@HADOOP.COM operation=ticketRenewal result=success
 user=zkcli@HADOOP.COM operation=ticketRenewal result=failure
 ```
+
+### Audit API Migration in 3.10.0
+
+**Breaking change in 3.10.0:** the global `ZKAuditProvider` class is removed. Code that calls
+this static API must be updated to use the owning runtime's context and recompiled.
+The `AuditLogger` SPI, configuration keys, and audit event format remain unchanged.
+ZooKeeper initializes a separate logger for each runtime. Custom logger implementations
+should store runtime state in instance fields.
+
+- Use the owning `ZooKeeperServer.getAuditContext()` or `QuorumPeer.getAuditContext()`
+  for `isEnabled()` and `log(...)`. There is no JVM-wide enabled state or default runtime.
+- Calls to `AuditHelper.addAuditLog(...)` must supply the owning context; the overloads
+  without a context are removed.
+- Use `ZKConfig.AUDIT_ENABLE` and `ZKConfig.AUDIT_IMPL_CLASS` for the system property names.
+- The static `ServerCnxnFactory.getUserName()` is removed. Use the owning context's
+  `getServerUser()`.
+
+These context accessors are internal APIs. Applications that only configure audit logging
+or implement `AuditLogger` do not need to call them.
+
+For custom bootstrap code, pass a prepared context to each factory's `setAuditContext()`
+before `configure()` to use one logger from the first JAAS login onward. An independently
+configured factory uses its initial context for JAAS logins performed before association
+with a server. When associated, its existing Login adopts the server's context without
+repeating authentication. Explicitly bound, conflicting contexts are rejected.
+
+`serverStop` is logged during JVM shutdown. Closing an embedded server does not emit this
+event. The shutdown hook retains the audit backend and server username; the closed server
+runtime can be garbage collected.
 
 ### Audit Log Configuration
 

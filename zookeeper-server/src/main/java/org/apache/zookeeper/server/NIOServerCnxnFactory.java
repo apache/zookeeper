@@ -742,8 +742,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public void startup(ZooKeeperServer zks, boolean startServer) throws IOException, InterruptedException {
-        start();
         setZooKeeperServer(zks);
+        start();
         if (startServer) {
             zks.startdata();
             zks.startup();

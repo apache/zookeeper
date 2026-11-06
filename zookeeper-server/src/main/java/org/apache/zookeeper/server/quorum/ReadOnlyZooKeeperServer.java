@@ -59,6 +59,7 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
             self.getInitialConfig(),
             self.isReconfigEnabled());
         this.self = self;
+        setAuditContext(self.getAuditContext());
     }
 
     @Override

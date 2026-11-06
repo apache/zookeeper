@@ -44,6 +44,7 @@ import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.audit.AuditHelper;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
@@ -102,10 +103,16 @@ public class FinalRequestProcessor implements RequestProcessor {
     private final RequestPathMetricsCollector requestPathMetricsCollector;
 
     ZooKeeperServer zks;
+    private final AuditContext auditContext;
 
     public FinalRequestProcessor(ZooKeeperServer zks) {
         this.zks = zks;
+        this.auditContext = zks.getAuditContext();
         this.requestPathMetricsCollector = zks.getRequestPathMetricsCollector();
+    }
+
+    private void addAuditLog(Request request, ProcessTxnResult result, boolean failedTxn) {
+        AuditHelper.addAuditLog(auditContext, request, result, failedTxn);
     }
 
     private ProcessTxnResult applyRequest(Request request) {
@@ -176,7 +183,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         int responseSize = 0;
         try {
             if (request.getHdr() != null && request.getHdr().getType() == OpCode.error) {
-                AuditHelper.addAuditLog(request, rc, true);
+                addAuditLog(request, rc, true);
                 /*
                  * When local session upgrading is disabled, leader will
                  * reject the ephemeral node creation due to session expire.
@@ -209,7 +216,7 @@ public class FinalRequestProcessor implements RequestProcessor {
               throw KeeperException.create(Code.THROTTLEDOP);
             }
 
-            AuditHelper.addAuditLog(request, rc);
+            addAuditLog(request, rc, false);
 
             switch (request.type) {
             case OpCode.ping: {

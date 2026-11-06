@@ -42,6 +42,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,6 +55,7 @@ import java.util.stream.IntStream;
 import javax.security.sasl.SaslException;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
@@ -1114,6 +1116,48 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     ServerCnxnFactory secureCnxnFactory;
 
     private FileTxnSnapLog logFactory = null;
+    private AuditContext auditContext;
+
+    /**
+     * Binds the audit context prepared before starting this peer.
+     */
+    @InterfaceAudience.Private
+    public void setAuditContext(AuditContext context) {
+        if (auditContext == null && (isAlive() || authServer instanceof SaslQuorumAuthServer)) {
+            throw new IllegalStateException(
+                "Audit context must be configured before quorum authentication and startup");
+        }
+        context = AuditContext.bind(auditContext, context);
+        if (zkDb != null) {
+            zkDb.setAuditContext(context);
+        }
+        if (cnxnFactory != null) {
+            cnxnFactory.setAuditContext(context);
+        }
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.setAuditContext(context);
+        }
+        auditContext = context;
+    }
+
+    @InterfaceAudience.Private
+    public AuditContext getAuditContext() {
+        return auditContext == null ? AuditContext.disabled() : auditContext;
+    }
+
+    private void initializeAuditContext() {
+        if (auditContext == null) {
+            AuditContext context;
+            if (cnxnFactory != null) {
+                context = cnxnFactory.initializeAuditContext();
+            } else if (secureCnxnFactory != null) {
+                context = secureCnxnFactory.initializeAuditContext();
+            } else {
+                context = AuditContext.fromSystemProperties();
+            }
+            setAuditContext(context);
+        }
+    }
 
     private final QuorumStats quorumStats;
 
@@ -1151,6 +1195,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir, File dataLogDir, int electionType, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit, boolean quorumListenOnAllIPs, ServerCnxnFactory cnxnFactory, QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
+        if (cnxnFactory != null) {
+            setAuditContext(cnxnFactory.initializeAuditContext());
+        } else {
+            initializeAuditContext();
+        }
         this.electionType = electionType;
         this.myid = myid;
         this.tickTime = tickTime;
@@ -1159,7 +1208,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.connectToLearnerMasterLimit = connectToLearnerMasterLimit;
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
-        this.zkDb = new ZKDatabase(this.logFactory);
+        setZKDatabase(new ZKDatabase(this.logFactory));
         if (quorumConfig == null) {
             quorumConfig = new QuorumMaj(quorumPeers);
         }
@@ -1170,12 +1219,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void initialize() throws SaslException {
         // init quorum auth server & learner
         if (isQuorumSaslAuthEnabled()) {
+            initializeAuditContext();
             Set<String> authzHosts = new HashSet<>();
             for (QuorumServer qs : getView().values()) {
                 authzHosts.add(qs.hostname);
             }
-            authServer = new SaslQuorumAuthServer(isQuorumServerSaslAuthRequired(), quorumServerLoginContext, authzHosts);
-            authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(), quorumServicePrincipal, quorumLearnerLoginContext);
+            authServer = new SaslQuorumAuthServer(
+                isQuorumServerSaslAuthRequired(), quorumServerLoginContext, authzHosts, auditContext);
+            authLearner = new SaslQuorumAuthLearner(
+                isQuorumLearnerSaslAuthRequired(), quorumServicePrincipal, quorumLearnerLoginContext, auditContext);
         } else {
             authServer = new NullQuorumAuthServer();
             authLearner = new NullQuorumAuthLearner();
@@ -1188,6 +1240,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     @Override
     public synchronized void start() {
+        initializeAuditContext();
         if (!getView().containsKey(myid)) {
             throw new RuntimeException("My id " + myid + " not in the peer list");
         }
@@ -2182,10 +2235,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public void setCnxnFactory(ServerCnxnFactory cnxnFactory) {
+        if (auditContext != null && cnxnFactory != null) {
+            cnxnFactory.setAuditContext(auditContext);
+        }
         this.cnxnFactory = cnxnFactory;
     }
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
+        if (auditContext != null && secureCnxnFactory != null) {
+            secureCnxnFactory.setAuditContext(auditContext);
+        }
         this.secureCnxnFactory = secureCnxnFactory;
     }
 
@@ -2267,6 +2326,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * @param database
      */
     public void setZKDatabase(ZKDatabase database) {
+        if (auditContext != null && database != null) {
+            database.setAuditContext(auditContext);
+        }
         this.zkDb = database;
     }
 
@@ -2407,6 +2469,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         // start cnxnFactory first
                         try {
                             cnxnFactory = ServerCnxnFactory.createFactory();
+                            cnxnFactory.setAuditContext(auditContext);
                             cnxnFactory.configure(myNewQS.clientAddr, getMaxClientCnxns(), getClientPortListenBacklog(), false);
                             cnxnFactory.start();
                         } catch (IOException e) {
@@ -2430,6 +2493,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         try {
                             configureSSLAuth();
                             secureCnxnFactory = ServerCnxnFactory.createFactory(true);
+                            secureCnxnFactory.setAuditContext(auditContext);
                             secureCnxnFactory.configure(myNewQS.secureClientAddr, getMaxClientCnxns(), getClientPortListenBacklog(), true);
                             secureCnxnFactory.start();
 
@@ -2804,7 +2868,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * @throws IOException
      */
     public static QuorumPeer createFromConfig(QuorumPeerConfig config) throws IOException {
+        AuditContext context = AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
+        return createFromConfig(config, context);
+    }
+
+    /**
+     * Creates a peer using the audit context prepared by its bootstrap owner.
+     */
+    @InterfaceAudience.Private
+    public static QuorumPeer createFromConfig(QuorumPeerConfig config, AuditContext auditContext) throws IOException {
+        Objects.requireNonNull(auditContext);
         QuorumPeer quorumPeer = new QuorumPeer();
+        quorumPeer.setAuditContext(auditContext);
         quorumPeer.setTxnFactory(new FileTxnSnapLog(config.getDataLogDir(), config.getDataDir()));
         quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
         quorumPeer.enableLocalSessionsUpgrading(config.isLocalSessionsUpgradingEnabled());

@@ -19,10 +19,11 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import javax.management.JMException;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.audit.ZKAuditProvider;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
@@ -55,6 +56,18 @@ public class ZooKeeperServerMain {
     private ContainerManager containerManager;
     private MetricsProvider metricsProvider;
     private AdminServer adminServer;
+    private AuditContext auditContext;
+    private boolean auditInitializationAttempted;
+    private ServerConfig config;
+
+    public ZooKeeperServerMain() {
+    }
+
+    @InterfaceAudience.Private
+    public ZooKeeperServerMain(AuditContext auditContext) {
+        this.auditContext = Objects.requireNonNull(auditContext);
+        auditInitializationAttempted = true;
+    }
 
     /*
      * Start up the ZooKeeper server.
@@ -69,40 +82,49 @@ public class ZooKeeperServerMain {
             LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (ConfigException e) {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (DatadirException e) {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         } catch (AdminServerException e) {
             LOG.error("Unable to start AdminServer, exiting abnormally", e);
             System.err.println("Unable to start AdminServer, exiting abnormally");
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
-            ZKAuditProvider.addServerStartFailureAuditLog();
+            main.auditStartupFailure();
             ServiceUtils.requestSystemExit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         LOG.info("Exiting normally");
         ServiceUtils.requestSystemExit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
-    protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
+    private void auditStartupFailure() {
         try {
-            ManagedUtil.registerLog4jMBeans();
-        } catch (JMException e) {
-            LOG.warn("Unable to register log4j JMX control", e);
+            if (auditContext == null && !auditInitializationAttempted) {
+                auditInitializationAttempted = true;
+                auditContext = config == null ? AuditContext.fromSystemProperties()
+                    : AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
+            }
+            if (auditContext != null) {
+                auditContext.logServerStartFailure();
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LOG.error("Unable to audit server startup failure", e);
         }
+    }
 
-        ServerConfig config = new ServerConfig();
+    protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
+        config = new ServerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
         } else {
@@ -119,8 +141,17 @@ public class ZooKeeperServerMain {
      * @throws AdminServerException
      */
     public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
+        this.config = config;
         // Validate auditing before starting metrics, transaction storage, or listeners.
-        ZKAuditProvider.checkAuditState();
+        if (auditContext == null) {
+            auditInitializationAttempted = true;
+            auditContext = AuditContext.create(config.isAuditEnabled(), config.getAuditLoggerClass());
+        }
+        try {
+            ManagedUtil.registerLog4jMBeans();
+        } catch (JMException e) {
+            LOG.warn("Unable to register log4j JMX control", e);
+        }
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {
@@ -143,6 +174,7 @@ public class ZooKeeperServerMain {
                 jvmPauseMonitor = new JvmPauseMonitor(config);
             }
             final ZooKeeperServer zkServer = new ZooKeeperServer(jvmPauseMonitor, txnLog, config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, config.listenBacklog, null, config.initialConfig);
+            zkServer.setAuditContext(auditContext);
             txnLog.setServerStats(zkServer.serverStats());
 
             // Registers shutdown handler which will be used to know the
@@ -158,6 +190,7 @@ public class ZooKeeperServerMain {
             boolean needStartZKServer = true;
             if (config.getClientPortAddress() != null) {
                 cnxnFactory = ServerCnxnFactory.createFactory();
+                cnxnFactory.setAuditContext(auditContext);
                 cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), false);
                 cnxnFactory.startup(zkServer);
                 // zkServer has been started. So we don't need to start it again in secureCnxnFactory.
@@ -165,13 +198,14 @@ public class ZooKeeperServerMain {
             }
             if (config.getSecureClientPortAddress() != null) {
                 secureCnxnFactory = ServerCnxnFactory.createFactory(true);
+                secureCnxnFactory.setAuditContext(auditContext);
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 
             containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor);
             containerManager.start();
-            ZKAuditProvider.addZKStartStopAuditLog();
+            auditContext.logServerStart();
 
             serverStarted();
 
@@ -250,7 +284,6 @@ public class ZooKeeperServerMain {
         }
         return 0;
     }
-
 
     /**
      * Shutdowns properly the service, this method is not a public API.

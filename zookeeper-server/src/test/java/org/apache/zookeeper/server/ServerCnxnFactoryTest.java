@@ -20,9 +20,12 @@ package org.apache.zookeeper.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import java.util.Arrays;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -95,15 +98,17 @@ public class ServerCnxnFactoryTest {
 
     @ParameterizedTest
     @EnumSource(FactoryType.class)
-    public void testShedConnections_SmallPercentageRoundsToZero(final FactoryType factoryType) {
+    public void testShedConnections_SmallPercentageReportsClosedConnections(final FactoryType factoryType) {
         factory = createFactory(factoryType);
 
         // Add single mock connection
         final ServerCnxn mockCnxn = mock(ServerCnxn.class);
         factory.cnxns.add(mockCnxn);
 
-        // small percentage rounds to 0
-        assertEquals(0, factory.shedConnections(1), "1% of 1 connection should round to 0");
+        // Each connection has a 1% chance of being closed.
+        final int shedCount = factory.shedConnections(1);
+        assertTrue(shedCount == 0 || shedCount == 1);
+        verify(mockCnxn, times(shedCount)).close(ServerCnxn.DisconnectReason.SHED_CONNECTIONS_COMMAND);
     }
 
     @ParameterizedTest

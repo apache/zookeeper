@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.audit.ZKAuditProvider;
+import org.apache.zookeeper.audit.Slf4jAuditLogger;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
@@ -47,6 +47,7 @@ import org.apache.zookeeper.common.ConfigException;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
@@ -65,6 +66,9 @@ import org.slf4j.MDC;
 
 @InterfaceAudience.Public
 public class QuorumPeerConfig {
+
+    public static final String AUDIT_ENABLE = "audit.enable";
+    public static final String AUDIT_IMPL_CLASS = "audit.impl.class";
 
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
     private static final int UNSET_SERVERID = -1;
@@ -91,6 +95,9 @@ public class QuorumPeerConfig {
     protected int maxSessionTimeout = -1;
     protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
+    private boolean auditEnabled = Boolean.getBoolean(ZKConfig.AUDIT_ENABLE);
+    private String auditLoggerClass = System.getProperty(ZKConfig.AUDIT_IMPL_CLASS, Slf4jAuditLogger.class.getName());
+
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
     /** defaults to -1 if not set explicitly */
@@ -262,6 +269,16 @@ public class QuorumPeerConfig {
      * @throws ConfigException
      */
     public void parseProperties(Properties zkProp) throws IOException, ConfigException {
+        // Read these first so even an invalid numeric or address setting can be audited.
+        for (Entry<Object, Object> entry : zkProp.entrySet()) {
+            String key = entry.getKey().toString().trim();
+            String value = entry.getValue().toString().trim();
+            if (AUDIT_ENABLE.equals(key)) {
+                auditEnabled = Boolean.parseBoolean(value);
+            } else if (AUDIT_IMPL_CLASS.equals(key)) {
+                auditLoggerClass = value;
+            }
+        }
         Integer clientPort = null;
         Integer secureClientPort = null;
         int observerMasterPort = 0;
@@ -380,8 +397,8 @@ public class QuorumPeerConfig {
                 multiAddressReachabilityCheckEnabled = parseBoolean(key, value);
             } else if (key.equals("oraclePath")) {
                 oraclePath = value;
-            } else if (key.equals("audit.impl.class")) {
-                ZKAuditProvider.configureAuditLogger(value);
+            } else if (AUDIT_ENABLE.equals(key) || AUDIT_IMPL_CLASS.equals(key)) {
+                // Already captured above; these settings belong to this server.
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -636,7 +653,6 @@ public class QuorumPeerConfig {
         }
     }
 
-
     private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical, String oraclePath) throws ConfigException {
         if (oraclePath == null) {
             return createQuorumVerifier(dynamicConfigProp, isHierarchical);
@@ -852,6 +868,14 @@ public class QuorumPeerConfig {
     public int getMaxSessionTimeout() {
         return maxSessionTimeout;
     }
+    public boolean isAuditEnabled() {
+        return auditEnabled;
+    }
+
+    public String getAuditLoggerClass() {
+        return auditLoggerClass;
+    }
+
     public String getMetricsProviderClassName() {
         return metricsProviderClassName;
     }

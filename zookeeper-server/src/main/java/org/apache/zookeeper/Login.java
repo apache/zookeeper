@@ -26,6 +26,7 @@ package org.apache.zookeeper;
  */
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
@@ -37,9 +38,10 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.audit.AuditEvent.Result;
-import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
@@ -90,6 +92,7 @@ public class Login {
     // Initialize 'lastLogin' to do a login at first time
     private long lastLogin = Time.currentElapsedTime() - MIN_TIME_BEFORE_RELOGIN;
     private final ZKConfig zkConfig;
+    private volatile AuditContext auditContext;
 
     /**
      * LoginThread constructor. The constructor starts the thread used to
@@ -107,8 +110,19 @@ public class Login {
      * @throws javax.security.auth.login.LoginException
      *             Thrown if authentication fails.
      */
-    public Login(final String loginContextName, Supplier<CallbackHandler> callbackHandlerSupplier, final ZKConfig zkConfig) throws LoginException {
+    public Login(final String loginContextName, Supplier<CallbackHandler> callbackHandlerSupplier,
+                 final ZKConfig zkConfig) throws LoginException {
+        this(loginContextName, callbackHandlerSupplier, zkConfig, createClientAuditContext(zkConfig));
+    }
+
+    /**
+     * Creates a login using the audit context prepared by its owning runtime.
+     */
+    @InterfaceAudience.Private
+    public Login(String loginContextName, Supplier<CallbackHandler> callbackHandlerSupplier,
+                 ZKConfig zkConfig, AuditContext auditContext) throws LoginException {
         this.zkConfig = zkConfig;
+        this.auditContext = Objects.requireNonNull(auditContext);
         this.callbackHandlerSupplier = callbackHandlerSupplier;
         principal = readLoginConfiguration(loginContextName);
         login = login(loginContextName);
@@ -393,14 +407,27 @@ public class Login {
         return auditPrincipal;
     }
 
+    /** Associates a listener's existing JAAS login with its server before serving requests. */
+    @InterfaceAudience.Private
+    public void setAuditContext(AuditContext context) {
+        auditContext = Objects.requireNonNull(context, "auditContext");
+    }
+
     private void audit(String user, String operation, Result result) {
         try {
-            // An early client must not freeze audit configuration while auditing is disabled.
-            if (Boolean.getBoolean(ZKAuditProvider.AUDIT_ENABLE)) {
-                ZKAuditProvider.log(user, operation, result);
-            }
+            auditContext.log(user, operation, result);
         } catch (RuntimeException | LinkageError e) {
             LOG.error("Unable to audit {} ({}) for {}", operation, result, user, e);
+        }
+    }
+
+    static AuditContext createClientAuditContext(ZKConfig config) {
+        try {
+            return AuditContext.create(config.getBoolean(ZKConfig.AUDIT_ENABLE),
+                config.getProperty(ZKConfig.AUDIT_IMPL_CLASS));
+        } catch (RuntimeException | LinkageError e) {
+            LOG.error("Unable to initialize client audit logging", e);
+            return AuditContext.disabled();
         }
     }
 

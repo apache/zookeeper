@@ -20,6 +20,7 @@ package org.apache.zookeeper.audit;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.MultiOperationRecord;
@@ -43,19 +44,18 @@ import org.slf4j.LoggerFactory;
 public final class AuditHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AuditHelper.class);
 
-    public static void addAuditLog(Request request, ProcessTxnResult rc) {
-        addAuditLog(request, rc, false);
-    }
-
     /**
      * Add audit log if audit log is enabled and operation is of type which to be audit logged.
      *
+     * @param context   initialized audit context of the owning runtime
      * @param request   user request
      * @param txnResult ProcessTxnResult
      * @param failedTxn whether audit is being done failed transaction for normal transaction
      */
-    public static void addAuditLog(Request request, ProcessTxnResult txnResult, boolean failedTxn) {
-        if (!ZKAuditProvider.isAuditEnabled()) {
+    @InterfaceAudience.Private
+    public static void addAuditLog(AuditContext context, Request request,
+                                   ProcessTxnResult txnResult, boolean failedTxn) {
+        if (!context.isEnabled()) {
             return;
         }
         String op;
@@ -110,7 +110,7 @@ public final class AuditHelper {
                     if (failedTxn) {
                         op = AuditConstants.OP_MULTI_OP;
                     } else {
-                        logMultiOperation(request, txnResult);
+                        logMultiOperation(context, request, txnResult);
                         //operation si already logged
                         return;
                     }
@@ -123,7 +123,7 @@ public final class AuditHelper {
                     return;
             }
             Result result = getResult(txnResult, failedTxn);
-            log(request, path, op, acls, createMode, result);
+            log(context, request, path, op, acls, createMode, result);
         } catch (Throwable e) {
             LOG.error("Failed to audit log request {}", request.type, e);
         }
@@ -137,7 +137,8 @@ public final class AuditHelper {
         }
     }
 
-    private static void logMultiOperation(Request request, ProcessTxnResult rc) throws IOException, KeeperException {
+    private static void logMultiOperation(AuditContext context, Request request, ProcessTxnResult rc)
+        throws IOException, KeeperException {
         Map<String, String> createModes = AuditHelper.getCreateModes(request);
         boolean multiFailed = false;
         for (ProcessTxnResult subTxnResult : rc.multiResult) {
@@ -146,16 +147,16 @@ public final class AuditHelper {
                 case ZooDefs.OpCode.create2:
                 case ZooDefs.OpCode.createTTL:
                 case ZooDefs.OpCode.createContainer:
-                    log(request, subTxnResult.path, AuditConstants.OP_CREATE, null,
+                    log(context, request, subTxnResult.path, AuditConstants.OP_CREATE, null,
                             createModes.get(subTxnResult.path), Result.SUCCESS);
                     break;
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.deleteContainer:
-                    log(request, subTxnResult.path, AuditConstants.OP_DELETE, null,
+                    log(context, request, subTxnResult.path, AuditConstants.OP_DELETE, null,
                             null, Result.SUCCESS);
                     break;
                 case ZooDefs.OpCode.setData:
-                    log(request, subTxnResult.path, AuditConstants.OP_SETDATA, null,
+                    log(context, request, subTxnResult.path, AuditConstants.OP_SETDATA, null,
                             null, Result.SUCCESS);
                     break;
                 case ZooDefs.OpCode.error:
@@ -166,19 +167,15 @@ public final class AuditHelper {
             }
         }
         if (multiFailed) {
-            log(request, rc.path, AuditConstants.OP_MULTI_OP, null,
+            log(context, request, rc.path, AuditConstants.OP_MULTI_OP, null,
                     null, Result.FAILURE);
         }
     }
 
-    private static void log(Request request, String path, String op, String acls, String createMode, Result result) {
-        log(request.getUsersForAudit(), op, path, acls, createMode,
+    private static void log(AuditContext context, Request request, String path, String op,
+                            String acls, String createMode, Result result) {
+        context.log(request.getUsersForAudit(), op, path, acls, createMode,
                 request.cnxn.getSessionIdHex(), request.cnxn.getHostAddress(), result);
-    }
-
-    private static void log(String user, String operation, String znode, String acl,
-                            String createMode, String session, String ip, Result result) {
-        ZKAuditProvider.log(user, operation, znode, acl, createMode, session, ip, result);
     }
 
     private static String getCreateMode(int createFlags) throws KeeperException {
@@ -188,9 +185,6 @@ public final class AuditHelper {
     private static Map<String, String> getCreateModes(Request request)
             throws IOException, KeeperException {
         Map<String, String> createModes = new HashMap<>();
-        if (!ZKAuditProvider.isAuditEnabled()) {
-            return createModes;
-        }
         MultiOperationRecord multiRequest = request.readRequestRecord(MultiOperationRecord::new);
         for (Op op : multiRequest) {
             if (op.getType() == ZooDefs.OpCode.create || op.getType() == ZooDefs.OpCode.create2

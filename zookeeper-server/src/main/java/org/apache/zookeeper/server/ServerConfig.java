@@ -23,7 +23,9 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Properties;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.audit.Slf4jAuditLogger;
 import org.apache.zookeeper.common.ConfigException;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
@@ -52,6 +54,8 @@ public class ServerConfig {
     protected int maxSessionTimeout = -1;
     protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
+    private boolean auditEnabled = Boolean.getBoolean(ZKConfig.AUDIT_ENABLE);
+    private String auditLoggerClass = System.getProperty(ZKConfig.AUDIT_IMPL_CLASS, Slf4jAuditLogger.class.getName());
     /** defaults to -1 if not set explicitly */
     protected int listenBacklog = -1;
     protected String initialConfig;
@@ -93,7 +97,12 @@ public class ServerConfig {
      */
     public void parse(String path) throws ConfigException {
         QuorumPeerConfig config = new QuorumPeerConfig();
-        config.parse(path);
+        try {
+            config.parse(path);
+        } finally {
+            // Startup failures must use the audit settings read before validation failed.
+            readAuditSettings(config);
+        }
 
         // let qpconfig parse the file and then pull the stuff we are
         // interested in
@@ -119,8 +128,22 @@ public class ServerConfig {
         jvmPauseSleepTimeMs = config.getJvmPauseSleepTimeMs();
         metricsProviderClassName = config.getMetricsProviderClassName();
         metricsProviderConfiguration = config.getMetricsProviderConfiguration();
+        readAuditSettings(config);
         listenBacklog = config.getClientPortListenBacklog();
         initialConfig = config.getInitialConfig();
+    }
+
+    public boolean isAuditEnabled() {
+        return auditEnabled;
+    }
+
+    private void readAuditSettings(QuorumPeerConfig config) {
+        auditEnabled = config.isAuditEnabled();
+        auditLoggerClass = config.getAuditLoggerClass();
+    }
+
+    public String getAuditLoggerClass() {
+        return auditLoggerClass;
     }
 
     public InetSocketAddress getClientPortAddress() {

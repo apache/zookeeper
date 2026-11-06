@@ -21,6 +21,8 @@ package org.apache.zookeeper.server.quorum;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import org.apache.zookeeper.audit.AuditContext;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -39,9 +41,11 @@ public class ReadOnlyZooKeeperServerTest {
      */
     @Test
     public void testReadOnlyZookeeperServer() {
+        QuorumPeer quorumPeer = mock(QuorumPeer.class);
+        when(quorumPeer.getAuditContext()).thenReturn(AuditContext.disabled());
         ReadOnlyZooKeeperServer readOnlyZooKeeperServer = new ReadOnlyZooKeeperServer(
                 mock(FileTxnSnapLog.class),
-                mock(QuorumPeer.class),
+                quorumPeer,
                 mock(ZKDatabase.class));
 
         final ConnectRequest request = new ConnectRequest();
