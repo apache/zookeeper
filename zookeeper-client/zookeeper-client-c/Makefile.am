@@ -109,6 +109,7 @@ TEST_SOURCES = \
 	tests/ThreadingUtil.cc \
 	tests/TestZookeeperInit.cc \
 	tests/TestZookeeperClose.cc \
+	tests/TestAuthCompletion.cc \
 	tests/TestReconfig.cc \
 	tests/TestReconfigServer.cc \
 	tests/TestClientRetry.cc \
