@@ -224,6 +224,13 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testMonitorWithoutServer() {
+        CommandResponse response = Commands.runGetCommand("monitor", null, new HashMap<>(), null, null);
+        assertEquals(HttpServletResponse.SC_OK, response.getStatusCode());
+        assertNull(response.toMap().get("error"));
+    }
+
+    @Test
     public void testRuok() throws IOException, InterruptedException {
         testCommand("ruok");
     }
