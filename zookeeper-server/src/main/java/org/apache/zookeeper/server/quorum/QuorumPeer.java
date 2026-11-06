@@ -85,6 +85,8 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumOracleMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
+import org.apache.zookeeper.server.util.ZxidLayout;
+import org.apache.zookeeper.server.util.ZxidLayoutState;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1205,11 +1207,21 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private void loadDataBase() {
         try {
+            // Restore the zxid layout first: every zxid parsed below and by
+            // the rest of this member's lifetime depends on it.
+            try {
+                zxidLayoutState.switchAt(readLongFromFile(ZXID_LAYOUT_SWITCH_EPOCH_FILENAME));
+                LOG.info("Using the {} zxid layout from epoch 0x{} on",
+                    ZxidLayout.WIDE_COUNTER, Long.toHexString(zxidLayoutState.getSwitchEpoch()));
+            } catch (FileNotFoundException e) {
+                // never switched: everything is in the legacy layout
+            }
+            zkDb.setZxidLayoutState(zxidLayoutState);
             zkDb.loadDataBase();
 
             // load the epochs
             long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
-            long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
+            long epochOfZxid = zxidLayoutState.layoutFor(lastProcessedZxid).getEpochFromZxid(lastProcessedZxid);
             try {
                 currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
             } catch (FileNotFoundException e) {
@@ -2310,6 +2322,105 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public static final String CURRENT_EPOCH_FILENAME = "currentEpoch";
 
     public static final String ACCEPTED_EPOCH_FILENAME = "acceptedEpoch";
+
+    public static final String ZXID_LAYOUT_SWITCH_EPOCH_FILENAME = "zxidLayoutSwitchEpoch";
+
+    /**
+     * Whether a newly elected leader may switch the ensemble to the
+     * wide-counter (24-bit epoch / 40-bit counter) zxid layout, see
+     * ZOOKEEPER-2789. Enable it only after every member of the ensemble
+     * runs a binary that understands the layout (learner protocol version
+     * 0x11000 or above): once a leader has switched, members that do not
+     * understand the layout are refused, and the switch cannot be undone.
+     */
+    public static final String WIDE_COUNTER_ZXID_ENABLED = "zookeeper.wideCounterZxidEnabled";
+
+    private final boolean wideCounterZxidEnabled = Boolean.getBoolean(WIDE_COUNTER_ZXID_ENABLED);
+
+    private final ZxidLayoutState zxidLayoutState = new ZxidLayoutState();
+
+    public boolean isWideCounterZxidEnabled() {
+        return wideCounterZxidEnabled;
+    }
+
+    public ZxidLayoutState getZxidLayoutState() {
+        return zxidLayoutState;
+    }
+
+    /**
+     * Records that the ensemble uses the wide-counter zxid layout from the
+     * given epoch on, both in memory and on disk, so a restart keeps parsing
+     * the on-disk data with the correct layouts. No-op if this switch epoch
+     * is already recorded.
+     *
+     * @throws IOException if the switch epoch cannot be persisted
+     * @throws IllegalStateException if a different switch epoch was already recorded
+     */
+    public void recordZxidLayoutSwitch(long epoch) throws IOException {
+        if (zxidLayoutState.isSwitched() && zxidLayoutState.getSwitchEpoch() == epoch) {
+            return;
+        }
+        zxidLayoutState.switchAt(epoch);
+        writeLongToFile(ZXID_LAYOUT_SWITCH_EPOCH_FILENAME, epoch);
+        LOG.info("Switched to the {} zxid layout starting from epoch 0x{}", ZxidLayout.WIDE_COUNTER, Long.toHexString(epoch));
+    }
+
+    /**
+     * Adopts the zxid layout switch epoch announced by the leader during the
+     * LEADERINFO handshake.
+     *
+     * <p>A locally recorded switch epoch may only be moved while this member
+     * holds no wide-counter data yet, which happens when the leader that
+     * announced the previous switch epoch failed before its epoch committed
+     * anything. Once wide-counter zxids exist on disk, a different
+     * announcement means the histories diverged (e.g. an unsupported
+     * downgrade happened) and joining would corrupt the zxid order.
+     *
+     * @throws IOException if the epochs conflict or persisting fails
+     */
+    public void adoptZxidLayoutSwitch(long epoch) throws IOException {
+        if (zxidLayoutState.isSwitched() && zxidLayoutState.getSwitchEpoch() == epoch) {
+            return;
+        }
+        if (zxidLayoutState.isSwitched()) {
+            checkZxidLayoutSwitchUnused("move the zxid layout switch epoch to 0x" + Long.toHexString(epoch));
+            zxidLayoutState.forceSwitchAt(epoch);
+        } else {
+            zxidLayoutState.switchAt(epoch);
+        }
+        writeLongToFile(ZXID_LAYOUT_SWITCH_EPOCH_FILENAME, epoch);
+        LOG.info("Adopted the {} zxid layout switch at epoch 0x{} from the leader",
+            ZxidLayout.WIDE_COUNTER, Long.toHexString(epoch));
+    }
+
+    /**
+     * Called when the leader announces no zxid layout switch. A locally
+     * recorded but still unused switch is forgotten (the leader that
+     * announced it failed before its epoch committed anything, and the
+     * current leader does not have the feature enabled). A used one makes
+     * joining impossible, see {@link #adoptZxidLayoutSwitch(long)}.
+     */
+    public void abandonUnusedZxidLayoutSwitch() throws IOException {
+        if (!zxidLayoutState.isSwitched()) {
+            return;
+        }
+        checkZxidLayoutSwitchUnused("abandon the zxid layout switch");
+        zxidLayoutState.clear();
+        File file = new File(logFactory.getSnapDir(), ZXID_LAYOUT_SWITCH_EPOCH_FILENAME);
+        if (file.exists() && !file.delete()) {
+            throw new IOException("Failed to delete " + file);
+        }
+        LOG.info("Abandoned the unused {} zxid layout switch: the current leader did not announce one", ZxidLayout.WIDE_COUNTER);
+    }
+
+    private void checkZxidLayoutSwitchUnused(String action) throws IOException {
+        long firstWideZxid = ZxidLayout.WIDE_COUNTER.makeZxid(zxidLayoutState.getSwitchEpoch(), 0);
+        if (Long.compareUnsigned(getLastLoggedZxid(), firstWideZxid) >= 0) {
+            throw new IOException("Refusing to " + action + ": this member already holds zxids in the "
+                + ZxidLayout.WIDE_COUNTER + " layout of epoch 0x" + Long.toHexString(zxidLayoutState.getSwitchEpoch())
+                + ", the leader's history diverged from ours (was the ensemble downgraded?)");
+        }
+    }
 
     /**
      * Write a long value to disk atomically. Either succeeds or an exception
