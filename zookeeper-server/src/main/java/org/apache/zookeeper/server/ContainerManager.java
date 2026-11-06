@@ -145,7 +145,7 @@ public class ContainerManager {
             DeleteContainerRequest record = new DeleteContainerRequest(containerPath);
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
             try {
-                LOG.info("Attempting to delete candidate container: {}", containerPath);
+                LOG.debug("Attempting to delete candidate container: {}", containerPath);
                 postDeleteRequest(request);
             } catch (Exception e) {
                 LOG.error("Could not delete container: {}", containerPath, e);
