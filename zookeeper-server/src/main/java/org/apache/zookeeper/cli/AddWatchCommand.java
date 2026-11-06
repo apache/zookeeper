@@ -65,6 +65,8 @@ public class AddWatchCommand extends CliCommand {
             } catch (IllegalArgumentException e) {
                 throw new CliParseException(getUsageStr());
             }
+        } else {
+            mode = defaultMode;
         }
 
         return this;
