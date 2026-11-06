@@ -59,6 +59,7 @@ import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
@@ -1189,16 +1190,15 @@ public class DataTree {
                     "Ignoring NoNodeException for path {} while removing ephemeral for dead session {}",
                         path, sessionHex);
             }
-            if (ZKAuditProvider.isAuditEnabled()) {
-                if (deleted) {
+            try {
+                if (ZKAuditProvider.isAuditEnabled()) {
                     ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
                             AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.SUCCESS);
-                } else {
-                    ZKAuditProvider.log(ZKAuditProvider.getZKUser(),
-                            AuditConstants.OP_DEL_EZNODE_EXP, path, null, null,
-                            sessionHex, null, Result.FAILURE);
+                            sessionHex, null, deleted ? Result.SUCCESS : Result.FAILURE);
                 }
+            } catch (RuntimeException | LinkageError e) {
+                LOG.error("Unable to audit deletion of ephemeral node {} for session {}",
+                        StringUtils.sanitizeForLog(path), sessionHex, e);
             }
         }
     }

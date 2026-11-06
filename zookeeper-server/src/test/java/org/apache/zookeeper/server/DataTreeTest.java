@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -25,6 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -33,11 +40,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
@@ -48,19 +59,26 @@ import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.AuditEvent.Result;
+import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.slf4j.Logger;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 
 public class DataTreeTest extends ZKTestCase {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
+    protected static final Logger LOG = (Logger) LoggerFactory.getLogger(DataTreeTest.class);
 
     /**
      * For ZOOKEEPER-1755 - Test race condition when taking dumpEphemerals and
@@ -108,6 +126,83 @@ public class DataTreeTest extends ZKTestCase {
         for (int i = 0; i < count; i++) {
             dataTree.createNode("/test" + i, new byte[0], null, session + i, dataTree.getNode("/").stat.getCversion()
                                                                                      + 1, 1, 1);
+        }
+    }
+
+    private static Stream<Arguments> closeSessionAuditFailures() {
+        List<String> paths = List.of("/first", "/second");
+        Map<String, Result> successfulDeletes = Map.of("/first", Result.SUCCESS, "/second", Result.SUCCESS);
+        RuntimeException runtimeFailure = new RejectedExecutionException("test audit write failure");
+        LinkageError linkageFailure = new NoClassDefFoundError("test audit write failure");
+        return Stream.of(
+            Arguments.of(null, runtimeFailure, false, successfulDeletes),
+            Arguments.of(paths, runtimeFailure, true, successfulDeletes),
+            Arguments.of(paths, linkageFailure, false, successfulDeletes),
+            Arguments.of(List.of("/missing", "/first"), runtimeFailure, true,
+                Map.of("/first", Result.SUCCESS, "/second", Result.SUCCESS, "/missing", Result.FAILURE)));
+    }
+
+    @ParameterizedTest(name = "txnPaths={0}, auditFailure={1}, failEveryEvent={2}")
+    @MethodSource("closeSessionAuditFailures")
+    public void testCloseSessionCompletesAfterAuditFailure(List<String> txnPaths, Throwable auditFailure,
+                                                         boolean failEveryEvent,
+                                                         Map<String, Result> expectedResults) throws Exception {
+        List<String> auditedPaths = new ArrayList<>();
+        long session = 1L;
+        DataTree tree = new DataTree();
+        Logger logger = (Logger) LoggerFactory.getLogger(DataTree.class);
+        Level previousLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> errors = new ListAppender<>();
+        errors.start();
+        logger.addAppender(errors);
+        logger.setLevel(Level.ERROR);
+        try (MockedStatic<ZKAuditProvider> audit = mockStatic(ZKAuditProvider.class)) {
+            audit.when(ZKAuditProvider::isAuditEnabled).thenReturn(true);
+            audit.when(() -> ZKAuditProvider.log(any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    String path = invocation.getArgument(2);
+                    assertEquals(AuditConstants.OP_DEL_EZNODE_EXP, invocation.getArgument(1));
+                    assertEquals("0x1", invocation.getArgument(5));
+                    assertEquals(expectedResults.get(path), invocation.getArgument(7));
+                    auditedPaths.add(path);
+                    if (failEveryEvent || auditedPaths.size() == 1) {
+                        throw auditFailure;
+                    }
+                    return null;
+                });
+            assertEquals(0, tree.processTxn(new TxnHeader(session, 0, 1L, 0L, ZooDefs.OpCode.create),
+                new CreateTxn("/first", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, true, 1)).err);
+            assertEquals(0, tree.processTxn(new TxnHeader(session, 0, 2L, 0L, ZooDefs.OpCode.create),
+                new CreateTxn("/second", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, true, 2)).err);
+            assertEquals(2, tree.getEphemerals(session).size());
+            assertEquals(2L, tree.lastProcessedZxid);
+
+            CloseSessionTxn txn = txnPaths == null ? null : new CloseSessionTxn(txnPaths);
+            DataTree.ProcessTxnResult result = assertDoesNotThrow(() -> tree.processTxn(
+                new TxnHeader(session, 0, 3L, 0L, ZooDefs.OpCode.closeSession), txn));
+
+            assertEquals(0, result.err);
+            assertNull(tree.getNode("/first"));
+            assertNull(tree.getNode("/second"));
+            assertFalse(tree.getSessions().contains(session));
+            assertEquals(3L, tree.lastProcessedZxid);
+            assertEquals(expectedResults.keySet().stream().sorted().toList(),
+                auditedPaths.stream().sorted().toList());
+            assertEquals(failEveryEvent ? expectedResults.size() : 1, errors.list.size());
+            for (int i = 0; i < errors.list.size(); i++) {
+                ILoggingEvent error = errors.list.get(i);
+                String message = error.getFormattedMessage();
+                assertTrue(message.contains(auditedPaths.get(i)));
+                assertTrue(message.contains("0x1"));
+                assertNotNull(error.getThrowableProxy());
+                assertEquals(auditFailure.getClass().getName(), error.getThrowableProxy().getClassName());
+                assertEquals(auditFailure.getMessage(), error.getThrowableProxy().getMessage());
+            }
+        } finally {
+            logger.detachAppender(errors);
+            logger.setLevel(previousLevel);
+            errors.stop();
+            tree.shutdownWatcher();
         }
     }
 
