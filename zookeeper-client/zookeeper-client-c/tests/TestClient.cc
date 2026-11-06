@@ -51,6 +51,9 @@ struct buff_struct_2 {
 //              it needs a overhaul to work properly with both threaded and single
 //              threaded (ZOOKEEPER-2640)
 #ifdef THREADED
+// The client uses this internal function to map a server path to a client path.
+extern "C" char* sub_string(zhandle_t *zh, const char* server_path);
+
 // For testing LogMessage Callback functionality
 list<string> logMessages;
 void logMessageHandler(const char* message) {
@@ -225,6 +228,9 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testPing);
     CPPUNIT_TEST(testAcl);
     CPPUNIT_TEST(testChroot);
+    CPPUNIT_TEST(testChrootPathValidation);
+    CPPUNIT_TEST(testChrootGetConfig);
+    CPPUNIT_TEST(testChrootServerPathMapping);
     CPPUNIT_TEST(testAuth);
     CPPUNIT_TEST(testCloseInAuthCompletion);
     CPPUNIT_TEST(testHangingClient);
@@ -1203,6 +1209,166 @@ public:
                          create_completion_fn, path2282);
         waitForCreateCompletion(3);
         CPPUNIT_ASSERT(count == 0);
+    }
+
+    // A handle with a chroot and a handle with no chroot reject the same
+    // invalid client paths. Invalid paths do not reach nodes outside the
+    // chroot.
+    void testChrootPathValidation() {
+        watchctx_t ctx, ctx_ch;
+        struct Stat stat;
+        struct String_vector children;
+        char buf[64];
+        int len;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk, "/tenant", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk, "/tenant2", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk, "/tenantx", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
+        zhandle_t *zk_ch = createchClient(&ctx_ch, "127.0.0.1:22181/tenant");
+        CPPUNIT_ASSERT(zk_ch);
+
+        const char *bad[] = { NULL, "", "x", "2", "2/x", "x/y" };
+        for (size_t i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) {
+            const char *path = bad[i];
+            zhandle_t *handles[] = { zk, zk_ch };
+            int multi_rc[2];
+            for (size_t j = 0; j < 2; j++) {
+                zhandle_t *zh = handles[j];
+                verifyCreateFails(path, zh);
+                verifyCreateFailsSeq(path, zh);
+                CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS,
+                        zoo_exists(zh, path, 0, &stat));
+                len = sizeof(buf);
+                CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS,
+                        zoo_get(zh, path, 0, buf, &len, &stat));
+                CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS,
+                        zoo_set(zh, path, "x", 1, -1));
+                CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS,
+                        zoo_delete(zh, path, -1));
+                CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS,
+                        zoo_get_children(zh, path, 0, &children));
+                CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS,
+                        zoo_remove_all_watches(zh, path, ZWATCHTYPE_ANY, 1));
+                zoo_op_t op;
+                zoo_op_result_t result;
+                zoo_delete_op_init(&op, path, -1);
+                multi_rc[j] = zoo_multi(zh, 1, &op, &result);
+            }
+            // zoo_multi reports a sub-request error as ZMARSHALLINGERROR.
+            // The two handles give the same error.
+            CPPUNIT_ASSERT(multi_rc[0] != ZOK);
+            CPPUNIT_ASSERT_EQUAL(multi_rc[0], multi_rc[1]);
+        }
+
+        // Invalid paths did not change the chroot node or its sibling nodes.
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_exists(zk, "/tenant", 0, &stat));
+        CPPUNIT_ASSERT_EQUAL(0, stat.version);
+        CPPUNIT_ASSERT_EQUAL(0, stat.numChildren);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_exists(zk, "/tenant2", 0, &stat));
+        CPPUNIT_ASSERT_EQUAL(0, stat.numChildren);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_exists(zk, "/tenantx", 0, &stat));
+        CPPUNIT_ASSERT_EQUAL(0, stat.version);
+
+        // A sequential create of the client root makes a child of the chroot
+        // node. A sequential create of "/" on a handle with no chroot has
+        // the same result at the cluster root.
+        char path_buffer[64];
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk_ch, "/", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, ZOO_SEQUENCE, path_buffer,
+                sizeof(path_buffer)));
+        CPPUNIT_ASSERT_EQUAL((size_t)11, strlen(path_buffer));
+        CPPUNIT_ASSERT_EQUAL('/', path_buffer[0]);
+        string server_path = string("/tenant") + path_buffer;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_exists(zk, server_path.c_str(), 0, &stat));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_get_children(zk, "/", 0, &children));
+        for (int i = 0; i < children.count; i++) {
+            CPPUNIT_ASSERT(strncmp(children.data[i], "tenant0", 7) != 0);
+        }
+        deallocate_String_vector(&children);
+
+        // Other operations on the client root use the chroot node.
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_exists(zk_ch, "/", 0, &stat));
+        CPPUNIT_ASSERT_EQUAL(1, stat.numChildren);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_get_children(zk_ch, "/", 0, &children));
+        CPPUNIT_ASSERT_EQUAL(1, (int)children.count);
+        CPPUNIT_ASSERT_EQUAL(string(path_buffer + 1), string(children.data[0]));
+        deallocate_String_vector(&children);
+    }
+
+    // Cluster configuration is not in the chroot namespace. Synchronous and
+    // asynchronous reads get the same node as a handle with no chroot.
+    void testChrootGetConfig() {
+        watchctx_t ctx, ctx_ch;
+        char buf[1024], buf_ch[1024];
+        int len = sizeof(buf);
+        int len_ch = sizeof(buf_ch);
+        struct Stat stat, stat_ch;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_create(zk, "/cfgchroot", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0));
+        zhandle_t *zk_ch = createchClient(&ctx_ch, "127.0.0.1:22181/cfgchroot");
+        CPPUNIT_ASSERT(zk_ch);
+
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_getconfig(zk, 0, buf, &len, &stat));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_getconfig(zk_ch, 0, buf_ch, &len_ch, &stat_ch));
+        CPPUNIT_ASSERT_EQUAL(len, len_ch);
+        CPPUNIT_ASSERT(len <= 0 || memcmp(buf, buf_ch, len) == 0);
+        CPPUNIT_ASSERT_EQUAL(stat.czxid, stat_ch.czxid);
+        CPPUNIT_ASSERT_EQUAL(stat.mzxid, stat_ch.mzxid);
+
+        len_ch = sizeof(buf_ch);
+        memset(&stat_ch, 0, sizeof(stat_ch));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_wgetconfig(zk_ch, watcher, &ctx_ch,
+                buf_ch, &len_ch, &stat_ch));
+        CPPUNIT_ASSERT_EQUAL(len, len_ch);
+        CPPUNIT_ASSERT_EQUAL(stat.mzxid, stat_ch.mzxid);
+    }
+
+    static bool hasChrootPathError() {
+        for (list<string>::iterator it = logMessages.begin();
+                it != logMessages.end(); ++it) {
+            if (it->find("does not include chroot path") != string::npos) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // The chroot prefix of a server path ends at a path-component boundary.
+    // Cluster configuration that is not in the chroot does not cause an
+    // error.
+    void testChrootServerPathMapping() {
+        watchctx_t ctx;
+        logMessages.clear();
+        zhandle_t *zh = zookeeper_init2("127.0.0.1:22181/zoo", watcher, 10000,
+                0, &ctx, 0, logMessageHandler);
+        CPPUNIT_ASSERT(zh);
+        ctx.zh = zh;
+
+        char *client_path = sub_string(zh, "/zoo");
+        CPPUNIT_ASSERT_EQUAL(string("/"), string(client_path));
+        free(client_path);
+        client_path = sub_string(zh, "/zoo/a/b");
+        CPPUNIT_ASSERT_EQUAL(string("/a/b"), string(client_path));
+        free(client_path);
+        CPPUNIT_ASSERT(!hasChrootPathError());
+
+        const char *config_path = ZOO_CONFIG_NODE;
+        CPPUNIT_ASSERT(sub_string(zh, config_path) == config_path);
+        CPPUNIT_ASSERT(!hasChrootPathError());
+
+        const char *sibling_path = "/zoo2/a";
+        CPPUNIT_ASSERT(sub_string(zh, sibling_path) == sibling_path);
+        CPPUNIT_ASSERT(hasChrootPathError());
+
+        CPPUNIT_ASSERT(sub_string(zh, NULL) == NULL);
     }
 
     // Test creating normal handle via zookeeper_init then explicitly setting callback
