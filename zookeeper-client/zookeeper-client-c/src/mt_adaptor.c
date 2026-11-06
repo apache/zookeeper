@@ -336,11 +336,24 @@ int wakeup_io_thread(zhandle_t *zh)
 {
     struct adaptor_threads *adaptor_threads = zh->adaptor_priv;
     char c=0;
+    /*
+     * A full pipe already holds a wakeup for the IO thread, so a full pipe
+     * is not an error. Retry the write if a signal interrupts it.
+     */
 #ifndef WIN32
-    return write(adaptor_threads->self_pipe[1],&c,1)==1? ZOK: ZSYSTEMERROR;    
+    for (;;) {
+        if (write(adaptor_threads->self_pipe[1],&c,1)==1)
+            return ZOK;
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return ZOK;
+        if (errno != EINTR)
+            return ZSYSTEMERROR;
+    }
 #else
-    return send(adaptor_threads->self_pipe[1], &c, 1, 0)==1? ZOK: ZSYSTEMERROR;    
-#endif         
+    if (send(adaptor_threads->self_pipe[1], &c, 1, 0)==1)
+        return ZOK;
+    return WSAGetLastError() == WSAEWOULDBLOCK ? ZOK : ZSYSTEMERROR;
+#endif
 }
 
 int adaptor_send_queue(zhandle_t *zh, int timeout)
