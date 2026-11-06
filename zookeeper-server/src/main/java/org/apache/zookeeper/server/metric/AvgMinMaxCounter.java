@@ -69,7 +69,7 @@ public class AvgMinMaxCounter extends Metric implements Summary {
         long currentTotal = total.get();
         if (currentCount > 0) {
             double avgLatency = currentTotal / (double) currentCount;
-            BigDecimal bg = new BigDecimal(avgLatency);
+            BigDecimal bg = BigDecimal.valueOf(avgLatency);
             return bg.setScale(4, RoundingMode.HALF_UP).doubleValue();
         }
         return 0;
