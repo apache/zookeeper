@@ -285,7 +285,6 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, in
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
 
 static int disable_conn_permute=0; // permute enabled by default
-static struct sockaddr_storage *addr_rw_server = 0;
 
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int mode);
@@ -1215,6 +1214,10 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
 
     addrvec_free(&zh->addrs);
     zh->addrs = resolved;
+
+    // The read/write server hint comes from the old list. Drop it so that
+    // the next connect follows the new list.
+    zh->has_addr_rw_server = 0;
 
     // If we need to do a reconfig and we're currently connected to a server,
     // then force close that connection so on next interest() call we'll make a
@@ -2517,7 +2520,7 @@ static int ping_rw_server(zhandle_t* zh)
 
 out:
     close_zsock(&fd);
-    addr_rw_server = rc ? &zh->addr_rw_server : 0;
+    zh->has_addr_rw_server = rc;
     return rc;
 }
 
@@ -2671,9 +2674,9 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
             LOG_WARN(LOGCALLBACK(zh), "Delaying connection after exhaustively trying all servers [%s]", zh->hostname);
             unlock_reconfig(zh);
         } else {
-            if (addr_rw_server) {
-                zh->addr_cur = *addr_rw_server;
-                addr_rw_server = 0;
+            if (zh->has_addr_rw_server) {
+                zh->addr_cur = zh->addr_rw_server;
+                zh->has_addr_rw_server = 0;
             } else {
                 // No need to delay -- grab the next server and attempt connection
                 zoo_cycle_next_server(zh);
@@ -2753,6 +2756,8 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
 #else
             errno = ETIMEDOUT;
 #endif
+            // The error handler closes the socket, so do not return its fd.
+            *fd = -1;
             *interest=0;
             *tv = get_timeval(0);
             return api_epilog(zh,handle_socket_error_msg(zh,
@@ -2772,6 +2777,10 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                     rc = send_ping(zh);
                     if (rc < 0) {
                         LOG_ERROR(LOGCALLBACK(zh), "failed to send PING request (zk retcode=%d)",rc);
+                        // A failed send can close the socket. Return the
+                        // current fd so that the caller does not poll a
+                        // closed descriptor.
+                        *fd = zh->fd->sock;
                         return api_epilog(zh,rc);
                     }
                 }
@@ -2794,7 +2803,20 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                     LOG_INFO(LOGCALLBACK(zh),
                              "r/w server found at %s",
                              format_endpoint_info(&addr));
-                    cleanup(zh, ZOK);
+                    // The read-only server did not complete the pending
+                    // requests. Fail them with ZCONNECTIONLOSS, as for any
+                    // other disconnect.
+                    cleanup(zh, ZCONNECTIONLOSS);
+                    // The socket is closed. Ask the caller to call again at
+                    // once, so that it connects to the read/write server.
+                    // The probe can block, so clear the deadline to prevent
+                    // a false "exceeded deadline" warning.
+                    *fd = -1;
+                    *interest = 0;
+                    *tv = get_timeval(0);
+                    zh->next_deadline.tv_sec = 0;
+                    zh->next_deadline.tv_usec = 0;
+                    return api_epilog(zh, ZOK);
                 } else {
                     addrvec_next(&zh->addrs, NULL);
                 }
