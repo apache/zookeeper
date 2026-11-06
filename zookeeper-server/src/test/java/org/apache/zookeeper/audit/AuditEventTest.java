@@ -18,6 +18,7 @@
 package org.apache.zookeeper.audit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Locale;
 import org.apache.zookeeper.audit.AuditEvent.Result;
 import org.junit.jupiter.api.Test;
 
@@ -51,5 +52,22 @@ public class AuditEventTest {
         String actual = auditEvent.toString();
         String expected = "user=Value1\toperation=fakeoperation=deleteznode=/forged:pw\tresult=success";
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testFormatRegardlessOfDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+        try {
+            AuditEvent auditEvent = new AuditEvent(Result.INVOKED);
+            auditEvent.addEntry(AuditEvent.FieldName.SESSION, "0x1000");
+            auditEvent.addEntry(AuditEvent.FieldName.IP, "10.0.0.7");
+            auditEvent.addEntry(AuditEvent.FieldName.OPERATION, "create");
+            String expected = "session=0x1000\tip=10.0.0.7\toperation=create\tresult=invoked";
+            assertEquals(expected, auditEvent.toString());
+            assertEquals("10.0.0.7", auditEvent.getValue(AuditEvent.FieldName.IP));
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 }
