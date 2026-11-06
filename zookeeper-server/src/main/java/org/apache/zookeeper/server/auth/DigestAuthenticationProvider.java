@@ -177,7 +177,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     private List<Id> handleAuthentication(final byte[] authData) {
         final List<Id> ids = new ArrayList<>();
-        final String id = new String(authData);
+        final String id = new String(authData, UTF_8);
         try {
             final String digest = generateDigest(id);
             if (digest.equals(superDigest)) {
