@@ -21,6 +21,8 @@
 
 #include "ZKMocks.h"
 #include <proto.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 using namespace std;
 
@@ -36,6 +38,7 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testCloseWhileInProgressFromCompletion);
     CPPUNIT_TEST(testCloseWhileMultiInProgressFromMain);
     CPPUNIT_TEST(testCloseWhileMultiInProgressFromCompletion);
+    CPPUNIT_TEST(testReadOnlyToReadWriteTransition);
     CPPUNIT_TEST(testConnectResponseFull);
     CPPUNIT_TEST(testConnectResponseNoReadOnlyFlag);
     CPPUNIT_TEST(testConnectResponseSplitAtReadOnlyFlag);
@@ -712,6 +715,131 @@ public:
         // verify that completion #2 was called, and it was called with ZCLOSING status
         CPPUNIT_ASSERT(res2.called_);
         CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
+    }
+
+    // Records the status of any completion type.
+    class StatusCompletion: public AsyncCompletion{
+    public:
+        StatusCompletion():called_(false),rc_(ZAPIERROR){}
+        virtual void dataCompl(int rc, const char *value, int len, const Stat *stat){
+            record(rc);
+        }
+        virtual void statCompl(int rc, const Stat *stat){ record(rc); }
+        virtual void stringCompl(int rc, const char *value){ record(rc); }
+        virtual void voidCompl(int rc){ record(rc); }
+        void record(int rc){ called_=true; rc_=rc; }
+        bool called_;
+        int rc_;
+    };
+
+    // A mock server that also answers the read-only probe. While the probe
+    // is enabled, connect() succeeds and the reply to "isro" is "rw".
+    class ReadWriteProbeServer: public ZookeeperServer{
+    public:
+        ReadWriteProbeServer():probeEnabled(false),probeCount(0),
+            rwReplyPending(false){}
+        virtual int callConnect(int s,const struct sockaddr *addr,socklen_t len){
+            if(probeEnabled){
+                probeCount++;
+                return 0;
+            }
+            return ZookeeperServer::callConnect(s,addr,len);
+        }
+        virtual ssize_t callSend(int s,const void *buf,size_t len,int flags){
+            if(probeEnabled && len==4 && memcmp(buf,"isro",4)==0){
+                rwReplyPending=true;
+                return len;
+            }
+            return ZookeeperServer::callSend(s,buf,len,flags);
+        }
+        virtual ssize_t callRecv(int s,void *buf,size_t len,int flags){
+            if(rwReplyPending){
+                rwReplyPending=false;
+                memcpy(buf,"rw",2);
+                return 2;
+            }
+            return ZookeeperServer::callRecv(s,buf,len,flags);
+        }
+        bool probeEnabled;
+        int probeCount;
+        bool rwReplyPending;
+    };
+
+    static int portOf(const struct sockaddr_storage& addr){
+        return ntohs(((const struct sockaddr_in*)&addr)->sin_port);
+    }
+
+    // A read-only session that finds a read/write server must fail all
+    // pending requests with ZCONNECTIONLOSS. It must not return the closed
+    // socket, and only this handle can use the read/write server hint.
+    void testReadOnlyToReadWriteTransition()
+    {
+        Mock_gettimeofday timeMock;
+        ReadWriteProbeServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("127.0.0.1:2121,127.0.0.1:2122",watcher,10000,
+                TEST_CLIENT_ID,0,ZOO_READONLY);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+        zh->state=ZOO_READONLY_STATE;
+        zh->last_ping_rw=timeMock.tv;
+        zh->ping_rw_timeout=200;
+        // The probe uses the next server in the list.
+        struct sockaddr_storage rwServer=zh->addrs.data[zh->addrs.next];
+
+        // The server does not reply to these requests.
+        StatusCompletion delRes, setRes, getRes, createRes, multiRes;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_adelete(zh,"/a",-1,asyncCompletion,&delRes));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aset(zh,"/a","x",1,-1,asyncCompletion,&setRes));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/a",0,asyncCompletion,&getRes));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_acreate(zh,"/a","x",1,&ZOO_OPEN_ACL_UNSAFE,0,
+                        asyncCompletion,&createRes));
+        zoo_op_t ops[1];
+        zoo_op_result_t results[1];
+        zoo_create_op_init(&ops[0],"/b",0,-1,&ZOO_OPEN_ACL_UNSAFE,0,0,0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_amulti(zh,1,ops,results,asyncCompletion,&multiRes));
+
+        // The probe is due and finds a read/write server.
+        timeMock.tick(1);
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        zkServer.probeEnabled=true;
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        zkServer.probeEnabled=false;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(1,zkServer.probeCount);
+
+        CPPUNIT_ASSERT_EQUAL(-1,fd);
+        CPPUNIT_ASSERT_EQUAL(0,interest);
+        CPPUNIT_ASSERT_EQUAL(0L,(long)tv.tv_sec);
+        CPPUNIT_ASSERT_EQUAL(0L,(long)tv.tv_usec);
+
+        StatusCompletion* all[]={&delRes,&setRes,&getRes,&createRes,&multiRes};
+        for(size_t i=0;i<sizeof(all)/sizeof(all[0]);i++){
+            CPPUNIT_ASSERT(all[i]->called_);
+            CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,all[i]->rc_);
+        }
+
+        // Another handle must not use the hint of this handle.
+        zhandle_t* other=zookeeper_init("127.0.0.1:2181",watcher,10000,0,0,0);
+        CPPUNIT_ASSERT(other!=0);
+        CloseFinally otherGuard(&other);
+        rc=zookeeper_interest(other,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(2181,portOf(other->addr_cur));
+
+        // This handle reconnects to the read/write server.
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(portOf(rwServer),portOf(zh->addr_cur));
+        CPPUNIT_ASSERT_EQUAL(0,zh->has_addr_rw_server);
     }
 
     void testConnectResponseFull()
