@@ -1677,6 +1677,9 @@ public:
       rc = zoo_remove_watches(zk, "/something2", ZWATCHTYPE_DATA,
                                           watcher_rw, ctx2, 1);
       CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+      /* later tests in this suite need a running server */
+      startServer();
     }
 
     static volatile int localRemoveCompletions;
