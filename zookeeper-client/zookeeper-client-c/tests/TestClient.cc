@@ -234,6 +234,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testLastZxid);
     CPPUNIT_TEST(testServersResolutionDelay);
     CPPUNIT_TEST(testRemoveWatchers);
+    CPPUNIT_TEST(testAsyncRemoveWatchers);
 #endif
     CPPUNIT_TEST_SUITE_END();
 
@@ -1676,12 +1677,106 @@ public:
       rc = zoo_remove_watches(zk, "/something2", ZWATCHTYPE_DATA,
                                           watcher_rw, ctx2, 1);
       CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+      /* later tests in this suite need a running server */
+      startServer();
+    }
+
+    static volatile int localRemoveCompletions;
+
+    static void localRemoveCompletion(int rc, const void *data) {
+        localRemoveCompletions++;
+    }
+
+    // The async removal calls take the completion as a plain function
+    // pointer. A local removal must not call the completion or touch the
+    // caller's data. The guard buffer is larger than a sync completion, so
+    // a write of mutex state into it changes its bytes.
+    void testAsyncRemoveWatchers() {
+      const char *path = "/asyncRemove";
+      char buf[1024];
+      int blen = sizeof(buf);
+      unsigned char guard[512];
+      unsigned char expected[sizeof(guard)];
+      struct String_vector str_vec = {0, NULL};
+      int rc;
+      watchctx_t ctx;
+      zhandle_t *zk;
+
+      memset(guard, 0xA5, sizeof(guard));
+      memcpy(expected, guard, sizeof(guard));
+      localRemoveCompletions = 0;
+
+      zk = createClient(&ctx);
+      CPPUNIT_ASSERT(zk);
+      rc = zoo_create(zk, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+      /* local removal of one watcher */
+      count = 0;
+      rc = zoo_wget(zk, path, watcher_rw, NULL, buf, &blen, NULL);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      rc = zoo_aremove_watches(zk, path, ZWATCHTYPE_DATA, watcher_rw, NULL,
+                               1, localRemoveCompletion, guard);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      CPPUNIT_ASSERT(memcmp(guard, expected, sizeof(guard)) == 0);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA, watcher_rw, NULL, 1);
+      CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
+
+      /* local removal of all watchers */
+      rc = zoo_wget(zk, path, watcher_rw, NULL, buf, &blen, NULL);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      rc = zoo_wget_children(zk, path, watcher_rw2, NULL, &str_vec);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      deallocate_String_vector(&str_vec);
+      rc = zoo_aremove_all_watches(zk, path, ZWATCHTYPE_ANY, 1,
+                                   localRemoveCompletion, guard);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      CPPUNIT_ASSERT(memcmp(guard, expected, sizeof(guard)) == 0);
+      rc = zoo_remove_all_watches(zk, path, ZWATCHTYPE_ANY, 1);
+      CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
+
+      /* the removed watchers do not fire */
+      rc = zoo_set(zk, path, "nowatch", 7, -1);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      rc = zoo_create(zk, "/asyncRemove/child", "", 0,
+                      &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      millisleep(500);
+      CPPUNIT_ASSERT_EQUAL(0, (int)count);
+      CPPUNIT_ASSERT_EQUAL(0, (int)localRemoveCompletions);
+
+      /* a server removal calls the completion with the caller's data */
+      rc = zoo_wget(zk, path, watcher_rw, NULL, buf, &blen, NULL);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      rc = zoo_aremove_watches(zk, path, ZWATCHTYPE_DATA, watcher_rw, NULL,
+                               0, voidCompletion, (void*)ZOK);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      waitForVoidCompletion(10);
+      CPPUNIT_ASSERT_EQUAL(0, (int)count);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, (int)voidRc);
+
+      rc = zoo_wget(zk, path, watcher_rw, NULL, buf, &blen, NULL);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      rc = zoo_aremove_all_watches(zk, path, ZWATCHTYPE_ANY, 0,
+                                   voidCompletion, (void*)ZOK);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      waitForVoidCompletion(10);
+      CPPUNIT_ASSERT_EQUAL(0, (int)count);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, (int)voidRc);
+      rc = zoo_remove_all_watches(zk, path, ZWATCHTYPE_ANY, 1);
+      CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
+      rc = zoo_remove_all_watches(zk, path, ZWATCHTYPE_ANY, 0);
+      CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
+
+      zookeeper_close(zk);
     }
 };
 
 volatile int Zookeeper_simpleSystem::count;
 volatile int Zookeeper_simpleSystem::voidRc;
 volatile int Zookeeper_simpleSystem::voidExpected;
+volatile int Zookeeper_simpleSystem::localRemoveCompletions;
 zhandle_t *Zookeeper_simpleSystem::async_zk;
 const char Zookeeper_simpleSystem::hostPorts[] = "127.0.0.1:22181";
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_simpleSystem);
