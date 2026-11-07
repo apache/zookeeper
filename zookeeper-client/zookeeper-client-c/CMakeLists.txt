@@ -255,6 +255,7 @@ set(test_sources
   tests/TestClientRetry.cc
   tests/TestOperations.cc
   tests/TestMulti.cc
+  tests/TestMultiFailure.cc
   tests/TestWatchers.cc
   tests/TestClient.cc
   tests/ZooKeeperQuorumServer.cc
