@@ -353,19 +353,20 @@ void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc)
     }    
 }
 
-/* If watcher is NULL, we return TRUE since we consider it a match */
+/* A NULL watcher matches any watcher on the path. A path with no watchers
+ * matches nothing, so a removal of all watchers reports ZNOWATCHER. */
 static int containsWatcher(zk_hashtable *watchers, const char *path,
         watcher_fn watcher, void *watcherCtx)
 {
     watcher_object_list_t *wl;
     watcher_object_t e;
 
+    wl = hashtable_search(watchers->ht, (void *)path);
+    if (!wl || !wl->head)
+        return 0;
+
     if (!watcher)
         return 1;
-
-    wl = hashtable_search(watchers->ht, (void *)path);
-    if (!wl)
-        return 0;
 
     e.watcher = watcher;
     e.context = watcherCtx;
