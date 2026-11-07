@@ -2141,9 +2141,15 @@ static void handle_error(zhandle_t *zh,int rc)
     cleanup(zh, rc);
     // NOTE: If we're at the end of the list of addresses to connect to, then
     // we want to delay the next connection attempt to avoid spinning.
-    // Then increment what host we'll connect to since we failed to connect to current
     zh->delay = addrvec_atend(&zh->addrs);
-    addrvec_next(&zh->addrs, &zh->addr_cur);
+    // Outside a reconfig pass, zoo_cycle_next_server moves the cursor before
+    // each connect. Here the client only records the next server, so that a
+    // failure does not skip it.
+    if (zh->reconfig) {
+        addrvec_next(&zh->addrs, &zh->addr_cur);
+    } else {
+        addrvec_peek(&zh->addrs, &zh->addr_cur);
+    }
 }
 
 static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, int rc,
