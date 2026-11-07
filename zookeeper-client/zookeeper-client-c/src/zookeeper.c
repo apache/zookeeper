@@ -252,6 +252,7 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep);
 /* deserialize forward declarations */
 static void deserialize_response(zhandle_t *zh, int type, int xid, int failed, int rc, completion_list_t *cptr, struct iarchive *ia);
 static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, struct iarchive *ia);
+static void cleanup_failed_multi(zhandle_t *zh, int xid, int rc, completion_list_t *cptr);
 
 /* completion routine forward declarations */
 static int add_completion(zhandle_t *zh, int xid, int completion_type,
@@ -2034,6 +2035,13 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
                 struct sync_completion
                             *sc = (struct sync_completion*)cptr->data;
                 sc->rc = reason;
+                /*
+                 * The caller reads the result array of a multi after the
+                 * wait ends. Fill every slot with the failure code first.
+                 */
+                if (cptr->c.type == COMPLETION_MULTI) {
+                    cleanup_failed_multi(zh, cptr->xid, reason, cptr);
+                }
                 notify_sync_completion(sc);
                 zh->outstanding_sync--;
                 destroy_completion_entry(cptr);
@@ -3305,16 +3313,45 @@ static void cleanup_failed_multi(zhandle_t *zh, int xid, int rc, completion_list
     }
 }
 
+/*
+ * Deliver a Create2Response to a string completion. The server answers
+ * container creates in a multi with a path and a stat. The sub-operation
+ * result has no place for the stat, so this function discards it.
+ */
+static void deserialize_create2_to_string(zhandle_t *zh, int rc,
+        completion_list_t *cptr, struct iarchive *ia)
+{
+    struct Create2Response res;
+    const char *client_path;
+    memset(&res, 0, sizeof(res));
+    deserialize_Create2Response(ia, "reply", &res);
+    client_path = sub_string(zh, res.path);
+    cptr->c.string_result(rc, client_path, cptr->data);
+    free_duplicate_path(client_path, res.path);
+    deallocate_Create2Response(&res);
+}
+
+/*
+ * Decode the sub-results of a multi reply. The wire type of each sub-result
+ * selects its record format. Every sub-operation gets a result. This is
+ * also true when the reply does not match the request.
+ */
 static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, struct iarchive *ia)
 {
     int rc = 0;
     completion_head_t *clist = &cptr->c.clist;
     struct MultiHeader mhdr = {0, 0, 0};
     assert(clist);
-    deserialize_MultiHeader(ia, "multiheader", &mhdr);
+    if (deserialize_MultiHeader(ia, "multiheader", &mhdr) < 0) {
+        mhdr.done = 1;
+    }
     while (!mhdr.done) {
         completion_list_t *entry = dequeue_completion_nolock(clist);
-        assert(entry);
+        if (entry == NULL) {
+            LOG_ERROR(LOGCALLBACK(zh),
+                    "Multi reply xid=%#x has more results than operations", xid);
+            return ZMARSHALLINGERROR;
+        }
 
         if (mhdr.type == -1) {
             struct ErrorResponse er;
@@ -3325,12 +3362,25 @@ static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, st
             }
         }
 
-        deserialize_response(zh, entry->c.type, xid, mhdr.type == -1, mhdr.err, entry, ia);
-        deserialize_MultiHeader(ia, "multiheader", &mhdr);
+        if (mhdr.type == ZOO_CREATE2_OP && entry->c.type == COMPLETION_STRING) {
+            deserialize_create2_to_string(zh, mhdr.err, entry, ia);
+        } else {
+            deserialize_response(zh, entry->c.type, xid, mhdr.type == -1, mhdr.err, entry, ia);
+        }
+        if (deserialize_MultiHeader(ia, "multiheader", &mhdr) < 0) {
+            mhdr.done = 1;
+        }
         //While deserializing the response we must destroy completion entry for each operation in
         //the zoo_multi transaction. Otherwise this results in memory leak when client invokes zoo_multi
         //operation.
         destroy_completion_entry(entry);
+    }
+
+    if (clist->head != NULL) {
+        LOG_ERROR(LOGCALLBACK(zh),
+                "Multi reply xid=%#x has fewer results than operations", xid);
+        cleanup_failed_multi(zh, xid, ZMARSHALLINGERROR, cptr);
+        rc = ZMARSHALLINGERROR;
     }
 
     return rc;
@@ -3879,7 +3929,11 @@ static int do_add_completion(zhandle_t *zh, const void *dc,
     if (!c)
         return ZSYSTEMERROR;
     lock_completion_list(&zh->sent_requests);
-    if (zh->close_requested != 1) {
+    /*
+     * Refuse new requests on a closing or unrecoverable handle. No later
+     * teardown drains the queue, so a synchronous caller waits forever.
+     */
+    if (zh->close_requested != 1 && !is_unrecoverable(zh)) {
         queue_completion_nolock(&zh->sent_requests, c, add_to_front);
         if (dc == SYNCHRONOUS_MARKER) {
             zh->outstanding_sync++;
@@ -4829,6 +4883,23 @@ static void op_result_stat_completion(int err, const struct Stat *stat, const vo
     }
 }
 
+/*
+ * Fail every result slot of a multi that zoo_amulti() does not submit.
+ * No reply arrives for such a multi, so the slots get the return code.
+ */
+static void fail_multi_results(int count, zoo_op_result_t *results, int rc)
+{
+    int i;
+    if (results == NULL) {
+        return;
+    }
+    for (i = 0; i < count; i++) {
+        results[i].err = rc;
+        results[i].value = NULL;
+        results[i].stat = NULL;
+    }
+}
+
 static int CheckVersionRequest_init(zhandle_t *zh, struct CheckVersionRequest *req,
         const char *path, int version)
 {
@@ -4855,6 +4926,11 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     int rc = serialize_RequestHeader(oa, "header", &h);
 
     int index = 0;
+    if (count > 0 && (ops == NULL || results == NULL)) {
+        close_buffer_oarchive(&oa, 1);
+        fail_multi_results(count, results, ZBADARGUMENTS);
+        return ZBADARGUMENTS;
+    }
     for (index=0; index < count; index++) {
         const zoo_op_t *op = ops+index;
         zoo_op_result_t *result = results+index;
@@ -4972,10 +5048,13 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     LOG_DEBUG(LOGCALLBACK(zh), "Sending multi request xid=%#x with %d subrequests to %s",
             h.xid, index, zoo_get_current_server(zh));
 
-    if (rc == ZUNIMPLEMENTED) {
-        return rc;
+    if (rc != ZUNIMPLEMENTED) {
+        rc = nonblocking_send(zh, rc);
     }
-    return nonblocking_send(zh, rc);
+    if (rc != ZOK) {
+        fail_multi_results(count, results, rc);
+    }
+    return rc;
 }
 
 typedef union WatchesRequest WatchesRequest;
@@ -5527,7 +5606,15 @@ static void process_sync_completion(zhandle_t *zh,
     case COMPLETION_VOID:
         break;
     case COMPLETION_MULTI:
-        sc->rc = deserialize_multi(zh, cptr->xid, cptr, ia);
+        /*
+         * A reply with an error in its header has no multi body. Fail
+         * every sub-operation with the header error.
+         */
+        if (sc->rc == 0) {
+            sc->rc = deserialize_multi(zh, cptr->xid, cptr, ia);
+        } else {
+            cleanup_failed_multi(zh, cptr->xid, sc->rc, cptr);
+        }
         break;
     default:
         LOG_DEBUG(LOGCALLBACK(zh), "Unsupported completion type=%d", cptr->c.type);
