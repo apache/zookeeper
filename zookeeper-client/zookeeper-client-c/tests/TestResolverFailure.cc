@@ -18,6 +18,8 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <string.h>
+#include <netinet/in.h>
+#include <vector>
 
 extern "C" {
 #include <src/addrvec.h>
@@ -43,6 +45,7 @@ class Zookeeper_resolverFailure : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testResolverFailureKeepsReceiveTimeout);
     CPPUNIT_TEST(testResolverFailureReconnectsToCachedAddress);
     CPPUNIT_TEST(testRejectedServerListKeepsReconnecting);
+    CPPUNIT_TEST(testFailoverTriesEveryCachedAddress);
     CPPUNIT_TEST(testFailedInterestSetsSafeOutputs);
 #endif
     CPPUNIT_TEST_SUITE_END();
@@ -63,6 +66,22 @@ class Zookeeper_resolverFailure : public CPPUNIT_NS::TestFixture
             }
         }
         int pingCount_;
+    };
+
+    // Refuses each connect, and records the port of each attempt.
+    class RefusingServer: public Mock_socket {
+    public:
+        RefusingServer() {
+            connectReturns = -1;
+            connectErrno = ECONNREFUSED;
+        }
+        virtual int callConnect(int s, const struct sockaddr *addr,
+                socklen_t len) {
+            ports.push_back(
+                ntohs(((const struct sockaddr_in *)addr)->sin_port));
+            return Mock_socket::callConnect(s, addr, len);
+        }
+        vector<int> ports;
     };
 
 public:
@@ -193,6 +212,38 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
         CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD, fd);
         CPPUNIT_ASSERT_EQUAL((int)ZOO_CONNECTING_STATE, zoo_state(zh));
+    }
+
+    // Failover must try each cached address in turn. Each connect failure
+    // must move the cursor only one time, or a two-server list never
+    // reaches the second server. The first pass after zookeeper_init is a
+    // reconfig pass, because all addresses are new. Later passes are normal
+    // passes. The test covers both kinds of pass.
+    void testFailoverTriesEveryCachedAddress()
+    {
+        Mock_gettimeofday timeMock;
+        RefusingServer refusingServer;
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("127.0.0.1:2121,127.0.0.1:2122", watcher,
+                TIMEOUT*1000, TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        CPPUNIT_ASSERT_EQUAL(2, (int)zh->addrs.count);
+        Mock_getaddrinfo resolverOutage;
+
+        // Some calls do not connect, because they apply the delay at the
+        // end of the server list.
+        for (int i = 0; i < 8; i++) {
+            int fd = -2;
+            int interest = 0;
+            timeval tv;
+            zookeeper_interest(zh, &fd, &interest, &tv);
+        }
+        CPPUNIT_ASSERT(refusingServer.ports.size() >= 5);
+        for (size_t i = 0; i < refusingServer.ports.size(); i++) {
+            CPPUNIT_ASSERT_EQUAL(i % 2 == 0 ? 2121 : 2122,
+                    refusingServer.ports[i]);
+        }
     }
 
     // Event loops such as do_io() ignore the return code. Thus an error
