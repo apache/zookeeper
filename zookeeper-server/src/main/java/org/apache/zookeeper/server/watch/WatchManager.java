@@ -19,10 +19,12 @@
 package org.apache.zookeeper.server.watch;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,6 +54,13 @@ public class WatchManager implements IWatchManager {
     private final Map<Watcher, Map<String, WatchStats>> watch2Paths = new HashMap<>();
 
     private int recursiveWatchQty = 0;
+
+    private volatile PathAclLookup pathAclLookup;
+
+    @Override
+    public void setPathAclLookup(PathAclLookup lookup) {
+        this.pathAclLookup = lookup;
+    }
 
     @Override
     public synchronized int size() {
@@ -140,8 +149,22 @@ public class WatchManager implements IWatchManager {
     public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
         Set<Watcher> watchers = new HashSet<>();
+        // Watchers that matched ONLY through a PERSISTENT_RECURSIVE ancestor registration,
+        // mapped to the ancestor path(s) (registration roots) that matched. A watcher that
+        // also has its own exact-path match at `path` never appears here: an exact match is
+        // always sufficient on its own and needs no extra check, since in that case the
+        // registration root IS the node the event is about (same ACL, nothing extra to check).
+        // See IWatchManager#setPathAclLookup for why the ancestor root needs its own check at
+        // all: delivery is otherwise filtered only by the changed node's own ACL, which a
+        // restrictive ancestor's ACL never constrains.
+        Map<Watcher, List<String>> recursiveAnchorsByWatcher = null;
         synchronized (this) {
             PathParentIterator pathParentIterator = getPathParentIterator(path);
+            boolean mayHaveRecursiveMatches = getRecursiveWatchQty() > 0;
+            Set<Watcher> exactMatchWatchers = mayHaveRecursiveMatches ? new HashSet<>() : null;
+            if (mayHaveRecursiveMatches) {
+                recursiveAnchorsByWatcher = new HashMap<>();
+            }
             for (String localPath : pathParentIterator.asIterable()) {
                 Set<Watcher> thisWatchers = watchTable.get(localPath);
                 if (thisWatchers == null || thisWatchers.isEmpty()) {
@@ -158,6 +181,12 @@ public class WatchManager implements IWatchManager {
                     }
                     if (!pathParentIterator.atParentPath()) {
                         watchers.add(watcher);
+                        if (exactMatchWatchers != null) {
+                            // pathParentIterator always yields the exact path before any
+                            // ancestor, so no entry for `watcher` can exist in
+                            // recursiveAnchorsByWatcher yet at this point.
+                            exactMatchWatchers.add(watcher);
+                        }
                         WatchStats newStats = stats.removeMode(WatcherMode.STANDARD);
                         if (newStats == WatchStats.NONE) {
                             iterator.remove();
@@ -170,6 +199,9 @@ public class WatchManager implements IWatchManager {
                         }
                     } else if (stats.hasMode(WatcherMode.PERSISTENT_RECURSIVE)) {
                         watchers.add(watcher);
+                        if (recursiveAnchorsByWatcher != null && !exactMatchWatchers.contains(watcher)) {
+                            recursiveAnchorsByWatcher.computeIfAbsent(watcher, k -> new ArrayList<>()).add(localPath);
+                        }
                     }
                 }
                 if (thisWatchers.isEmpty()) {
@@ -184,12 +216,22 @@ public class WatchManager implements IWatchManager {
             return null;
         }
 
+        PathAclLookup aclLookup = this.pathAclLookup;
         for (Watcher w : watchers) {
             if (suppress != null && suppress.contains(w)) {
                 continue;
             }
             if (w instanceof ServerWatcher) {
-                ((ServerWatcher) w).process(e, acl);
+                List<String> recursiveAnchors = recursiveAnchorsByWatcher == null ? null : recursiveAnchorsByWatcher.get(w);
+                if (recursiveAnchors == null || aclLookup == null) {
+                    ((ServerWatcher) w).process(e, acl);
+                } else {
+                    Map<String, List<ACL>> recursiveWatchRootAcls = new LinkedHashMap<>();
+                    for (String root : recursiveAnchors) {
+                        recursiveWatchRootAcls.put(root, aclLookup.getACL(root));
+                    }
+                    ((ServerWatcher) w).process(e, acl, recursiveWatchRootAcls);
+                }
             } else {
                 w.process(e);
             }

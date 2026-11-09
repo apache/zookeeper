@@ -31,6 +31,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.security.cert.Certificate;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -708,8 +709,38 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     @Override
     public void process(WatchedEvent event, List<ACL> znodeAcl) {
+        if (checkWatchDeliveryAcl(event, znodeAcl, null)) {
+            deliverWatchedEvent(event);
+        }
+    }
+
+    @Override
+    public void process(WatchedEvent event, List<ACL> znodeAcl, Map<String, List<ACL>> recursiveWatchRootAcls) {
+        if (checkWatchDeliveryAcl(event, znodeAcl, recursiveWatchRootAcls)) {
+            deliverWatchedEvent(event);
+        }
+    }
+
+    /**
+     * @param recursiveWatchRootAcls see {@link ServerWatcher#process(WatchedEvent, List, Map)};
+     *                                {@code null} when this delivery isn't through a
+     *                                PERSISTENT_RECURSIVE watch's ancestor registration.
+     * @return true if {@code event} may be delivered
+     */
+    private boolean checkWatchDeliveryAcl(WatchedEvent event, List<ACL> znodeAcl, Map<String, List<ACL>> recursiveWatchRootAcls) {
         try {
             zkServer.checkACL(this, znodeAcl, ZooDefs.Perms.READ, getAuthInfo(), event.getPath(), null);
+            if (recursiveWatchRootAcls != null) {
+                for (Map.Entry<String, List<ACL>> rootAcl : recursiveWatchRootAcls.entrySet()) {
+                    if (rootAcl.getValue() == null) {
+                        // the registration root no longer exists; we can't confirm READ on it,
+                        // so fail closed rather than silently skipping the check.
+                        throw new KeeperException.NoAuthException();
+                    }
+                    zkServer.checkACL(this, rootAcl.getValue(), ZooDefs.Perms.READ, getAuthInfo(), rootAcl.getKey(), null);
+                }
+            }
+            return true;
         } catch (KeeperException.NoAuthException e) {
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(
@@ -717,8 +748,11 @@ public class NIOServerCnxn extends ServerCnxn {
                     ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                     "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId) + " (filtered by ACL)");
             }
-            return;
+            return false;
         }
+    }
+
+    private void deliverWatchedEvent(WatchedEvent event) {
         ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, event.getZxid(), 0);
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(

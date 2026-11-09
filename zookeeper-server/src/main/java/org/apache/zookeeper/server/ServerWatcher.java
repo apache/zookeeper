@@ -18,6 +18,7 @@
 package org.apache.zookeeper.server;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.ACL;
@@ -25,5 +26,20 @@ import org.apache.zookeeper.data.ACL;
 public interface ServerWatcher extends Watcher {
 
   void process(WatchedEvent event, List<ACL> znodeAcl);
+
+  /**
+   * Called instead of {@link #process(WatchedEvent, List)} when delivering an event through a
+   * PERSISTENT_RECURSIVE watch whose registration root is an ancestor of the node the event is
+   * about, rather than the node itself. {@code recursiveWatchRootAcls} maps each such
+   * registration root path to its CURRENT ACL ({@code null} if that root no longer exists); a
+   * conforming implementation must additionally require READ against every one of them before
+   * delivering, since otherwise a restrictive ancestor's ACL is bypassed entirely by recursive
+   * watch delivery -- the plain {@code znodeAcl} check alone only ever covers the node the
+   * event is about. The default implementation falls back to the plain per-event check, for
+   * implementations (e.g. test doubles) that don't carry real ACL semantics.
+   */
+  default void process(WatchedEvent event, List<ACL> znodeAcl, Map<String, List<ACL>> recursiveWatchRootAcls) {
+    process(event, znodeAcl);
+  }
 
 }
