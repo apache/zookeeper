@@ -71,7 +71,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
-    <tag>HEAD</tag>
+    <tag>branch-3.10</tag>
   </scm>
   <issueManagement>
     <system>JIRA</system>
@@ -529,7 +529,7 @@
   <properties>
     <!-- maven properties -->
     <maven.compiler.release>17</maven.compiler.release>
-    <project.build.outputTimestamp>1691130453</project.build.outputTimestamp>
+    <project.build.outputTimestamp>1794247071</project.build.outputTimestamp>
     <dependency.locations.enabled>false</dependency.locations.enabled>
     <surefire.version>2.22.1</surefire.version>
 
