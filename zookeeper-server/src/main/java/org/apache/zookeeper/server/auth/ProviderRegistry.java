@@ -31,7 +31,7 @@ public class ProviderRegistry {
 
     public static final String AUTHPROVIDER_PROPERTY_PREFIX = "zookeeper.authProvider.";
 
-    private static boolean initialized = false;
+    private static volatile boolean initialized = false;
     private static final Map<String, AuthenticationProvider> authenticationProviders = new HashMap<>();
 
     //VisibleForTesting
