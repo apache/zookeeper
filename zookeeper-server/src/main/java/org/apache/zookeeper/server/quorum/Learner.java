@@ -396,7 +396,7 @@ public class Learner {
         }
 
         private Socket connectToLeader() throws IOException, X509Exception, InterruptedException {
-            Socket sock = createSocket();
+            Socket sock = null;
 
             // leader connection timeout defaults to tickTime * initLimit
             int connectTimeout = self.tickTime * self.initLimit;
@@ -410,8 +410,10 @@ public class Learner {
             int remainingTimeout;
             long startNanoTime = nanoTime();
 
-            for (int tries = 0; tries < 5 && socket.get() == null; tries++) {
+            for (int tries = 0; tries < 5; tries++) {
                 try {
+                    sock = createSocket();
+
                     // recalculate the init limit time because retries sleep for 1000 milliseconds
                     remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1_000_000);
                     if (remainingTimeout <= 0) {
@@ -423,35 +425,29 @@ public class Learner {
                     if (self.isSslQuorum()) {
                         ((SSLSocket) sock).startHandshake();
                     }
-                    sock.setTcpNoDelay(nodelay);
-                    break;
                 } catch (IOException e) {
+                    // close failed socket before retrying
+                    if (sock != null) {
+                        try {
+                            sock.close();
+                        } catch (IOException closeException) {
+                            LOG.debug("Failed to close socket after connection failure", closeException);
+                        }
+                        sock = null;
+                    }
                     remainingTimeout = connectTimeout - (int) ((nanoTime() - startNanoTime) / 1_000_000);
 
                     if (remainingTimeout <= leaderConnectDelayDuringRetryMs) {
-                        LOG.error(
-                          "Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, connecting to {}",
-                          tries,
-                          remainingTimeout,
-                          address,
-                          e);
+                        LOG.error("Unexpected exception, connectToLeader exceeded. tries={}, remaining init limit={}, connecting to {}",
+                                tries, remainingTimeout, address, e);
                         throw e;
                     } else if (tries >= 4) {
-                        LOG.error(
-                          "Unexpected exception, retries exceeded. tries={}, remaining init limit={}, connecting to {}",
-                          tries,
-                          remainingTimeout,
-                          address,
-                          e);
+                        LOG.error("Unexpected exception, retries exceeded. tries={}, remaining init limit={}, connecting to {}",
+                                tries, remainingTimeout, address, e);
                         throw e;
                     } else {
-                        LOG.warn(
-                          "Unexpected exception, tries={}, remaining init limit={}, connecting to {}",
-                          tries,
-                          remainingTimeout,
-                          address,
-                          e);
-                        sock = createSocket();
+                        LOG.warn("Unexpected exception, tries={}, remaining init limit={}, connecting to {}",
+                                tries, remainingTimeout, address, e);
                     }
                 }
                 Thread.sleep(leaderConnectDelayDuringRetryMs);
