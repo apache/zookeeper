@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${prefix}/lib
+includedir=${prefix}/include/
+
+Name: @CMAKE_PROJECT_NAME@
+Description: Zookeeper C client library
+Version: @CMAKE_PROJECT_VERSION@
+Libs: -L${libdir} -lzookeeper
+Libs.private: @LIBS@ ${libdir}/libzookeeper@CMAKE_STATIC_LIBRARY_SUFFIX@
+Cflags: -I${includedir}
