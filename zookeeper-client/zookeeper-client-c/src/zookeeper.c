@@ -1050,6 +1050,51 @@ fail:
     return rc;
 }
 
+/*
+ * Only the driver closes the connection. The driver is the IO thread, or the
+ * caller of zookeeper_interest() in the single-threaded library. Other code
+ * sets a flag to ask for a disconnect. The next zookeeper_interest() call
+ * does the full teardown. The teardown sends the session event and fails the
+ * pending requests. Thus no stale request or partial frame goes to the next
+ * server.
+ *
+ * The reconfig lock guards the flag. The caller of this function holds it.
+ */
+static void request_disconnect_locked(zhandle_t *zh)
+{
+    zh->disconnect_requested = 1;
+}
+
+static void wakeup_driver(zhandle_t *zh)
+{
+#ifdef THREADED
+    /* The IO thread can sleep in poll(). Wake it so that it acts at once. */
+    if (zh->adaptor_priv) {
+        wakeup_io_thread(zh);
+    }
+#endif
+}
+
+static void request_disconnect(zhandle_t *zh)
+{
+    lock_reconfig(zh);
+    request_disconnect_locked(zh);
+    unlock_reconfig(zh);
+    wakeup_driver(zh);
+}
+
+/* Return and clear the disconnect request. */
+static int take_disconnect_request(zhandle_t *zh)
+{
+    int requested;
+
+    lock_reconfig(zh);
+    requested = zh->disconnect_requested;
+    zh->disconnect_requested = 0;
+    unlock_reconfig(zh);
+    return requested;
+}
+
 /**
  * Updates the list of servers and determine if changing connections is necessary.
  * Permutes server list for proper load balancing.
@@ -1079,6 +1124,7 @@ fail:
  */
 int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
 {
+    int disconnect = 0;
     int rc = ZOK;
     char *hosts = NULL;
     uint32_t num_old = 0;
@@ -1216,18 +1262,21 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
     addrvec_free(&zh->addrs);
     zh->addrs = resolved;
 
-    // If we need to do a reconfig and we're currently connected to a server,
-    // then force close that connection so on next interest() call we'll make a
-    // new connection
+    // If the client must move to another server, ask the driver to drop the
+    // current connection. Its next connect uses the new list.
     if (zh->reconfig == 1 && zh->fd->sock != -1)
     {
-        close_zsock(zh->fd);
-        zh->state = ZOO_NOTCONNECTED_STATE;
+        request_disconnect_locked(zh);
+        disconnect = 1;
     }
 
 finish:
 
     unlock_reconfig(zh);
+
+    if (disconnect) {
+        wakeup_driver(zh);
+    }
 
     // If we short-circuited out and never assigned resolved to zh->addrs then we
     // need to free resolved to avoid a memleak.
@@ -2451,7 +2500,15 @@ static struct timeval get_timeval(int interval)
             get_buffer_len(oa));
     leave_critical(zh);
     close_buffer_oarchive(&oa, rc < 0);
+#ifdef THREADED
+    /*
+     * Only the IO thread sends pings, from zookeeper_interest(). That call
+     * then asks for write readiness, so the IO thread needs no wakeup.
+     */
+    return rc < 0 ? rc : ZOK;
+#else
     return rc<0 ? rc : adaptor_send_queue(zh, 0);
+#endif
 }
 
 /* upper bound of a timeout for seeking for r/w server when in read-only mode */
@@ -2643,6 +2700,16 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
     api_prolog(zh);
 
     rc = update_addrs(zh, &now);
+
+    // Do the teardown that a server list change or a failed send asked for.
+    // If an error closed the socket already, do nothing. The connect code
+    // below then selects the next server.
+    if (take_disconnect_request(zh) && zh->fd->sock != -1) {
+        LOG_INFO(LOGCALLBACK(zh), "Closing connection to %s on request",
+                 format_endpoint_info(&zh->addr_cur));
+        cleanup(zh, ZCONNECTIONLOSS);
+    }
+
     if (rc != ZOK) {
         return api_epilog(zh, rc);
     }
@@ -2771,8 +2838,15 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 if (zh->sent_requests.head == 0) {
                     rc = send_ping(zh);
                     if (rc < 0) {
-                        LOG_ERROR(LOGCALLBACK(zh), "failed to send PING request (zk retcode=%d)",rc);
-                        return api_epilog(zh,rc);
+                        // This is the driver thread, so do the teardown
+                        // now. Do not return the closed socket.
+                        *fd = -1;
+                        *interest = 0;
+                        *tv = get_timeval(0);
+                        return api_epilog(zh, handle_socket_error_msg(zh,
+                                __LINE__, __func__, ZCONNECTIONLOSS,
+                                "failed to send PING request (zk retcode=%d)",
+                                rc));
                     }
                 }
                 send_to = zh->recv_timeout/3;
@@ -4149,14 +4223,16 @@ static int Request_path_watch_init(zhandle_t *zh, int mode,
  * ASYNC API
  *---------------------------------------------------------------------------*/
 
-/* make an attempt to send queued requests immediately without blocking */
+/*
+ * Try to send the queued requests without blocking. The caller can be an
+ * application thread or a callback, so a failed send does not close the
+ * socket here. The driver does the teardown on its next pass. The pending
+ * requests then fail with ZCONNECTIONLOSS.
+ */
 static int nonblocking_send(zhandle_t *zh, int rc)
 {
-    if (adaptor_send_queue(zh, 0) < 0) {
-        if (zh->fd->sock != -1) {
-            close_zsock(zh->fd);
-            zh->state = ZOO_NOTCONNECTED_STATE;
-        }
+    if (adaptor_send_queue(zh, 0) < 0 && zh->fd->sock != -1) {
+        request_disconnect(zh);
     }
     return (rc < 0) ? ZMARSHALLINGERROR : ZOK;
 }
