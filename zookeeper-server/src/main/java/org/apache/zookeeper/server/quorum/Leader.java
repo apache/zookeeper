@@ -564,13 +564,20 @@ public class Leader extends LearnerMaster {
                 boolean error = false;
                 try {
                     socket = serverSocket.accept();
+                    BufferedInputStream is;
 
-                    // start with the initLimit, once the ack is processed
-                    // in LearnerHandler switch to the syncLimit
-                    socket.setSoTimeout(self.tickTime * self.initLimit);
-                    socket.setTcpNoDelay(nodelay);
+                    try {
+                        // start with the initLimit, once the ack is processed
+                        // in LearnerHandler switch to the syncLimit
+                        socket.setSoTimeout(self.tickTime * self.initLimit);
+                        socket.setTcpNoDelay(nodelay);
 
-                    BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
+                        is = new BufferedInputStream(socket.getInputStream());
+                    } catch (IOException e) {
+                        error = true;
+                        return;  // close the socket at the finally block
+                    }
+
                     LearnerHandler fh = new LearnerHandler(socket, is, Leader.this);
                     fh.start();
                 } catch (SocketException e) {
