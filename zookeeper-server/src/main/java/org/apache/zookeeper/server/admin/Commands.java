@@ -581,6 +581,7 @@ public class Commands {
      *   - "znode_count": Integer
      *   - "watch_count": Integer
      *   - "ephemerals_count": Integer
+     *   - "max_session_ephemeral_path_bytes": Number (UTF-8 bytes)
      *   - "approximate_data_size": Long
      *   - "open_file_descriptor_count": Long (unix only)
      *   - "max_file_descriptor_count": Long (unix only)

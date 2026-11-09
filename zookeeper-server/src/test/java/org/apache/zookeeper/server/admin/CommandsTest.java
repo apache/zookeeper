@@ -39,6 +39,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
@@ -188,6 +191,7 @@ public class CommandsTest extends ClientBase {
                 new Field("znode_count", Integer.class),
                 new Field("watch_count", Integer.class),
                 new Field("ephemerals_count", Integer.class),
+                new Field("max_session_ephemeral_path_bytes", Long.class),
                 new Field("approximate_data_size", Long.class),
                 new Field("open_file_descriptor_count", Long.class),
                 new Field("max_file_descriptor_count", Long.class),
@@ -221,6 +225,21 @@ public class CommandsTest extends ClientBase {
         }
         Field[] fieldsArray = fields.toArray(new Field[0]);
         testCommand("monitor", fieldsArray);
+    }
+
+    @Test
+    public void testMonitorMaxSessionEphemeralPathBytes() throws Exception {
+        ZooKeeperServer server = serverFactory.getZooKeeperServer();
+        try (ZooKeeper zk = createClient()) {
+            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            zk.create("/中", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            CommandResponse response = Commands.runGetCommand("monitor", server, new HashMap<>(), null, null);
+            assertEquals(6L, response.toMap().get("max_session_ephemeral_path_bytes"));
+
+            zk.delete("/中", -1);
+            response = Commands.runGetCommand("monitor", server, new HashMap<>(), null, null);
+            assertEquals(2L, response.toMap().get("max_session_ephemeral_path_bytes"));
+        }
     }
 
     @Test
