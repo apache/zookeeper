@@ -19,6 +19,7 @@ package org.apache.zookeeper.audit;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -182,7 +183,7 @@ public final class AuditHelper {
     }
 
     private static String getCreateMode(int createFlags) throws KeeperException {
-        return CreateMode.fromFlag(createFlags).toString().toLowerCase();
+        return CreateMode.fromFlag(createFlags).toString().toLowerCase(Locale.ROOT);
     }
 
     private static Map<String, String> getCreateModes(Request request)
