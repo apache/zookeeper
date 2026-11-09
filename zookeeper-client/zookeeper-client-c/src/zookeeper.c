@@ -297,7 +297,7 @@ static int init_ssl_for_socket(zsock_t *fd, zhandle_t *zh, int fail_on_error);
 static int aremove_watches(
     zhandle_t *zh, const char *path, ZooWatcherType wtype,
     watcher_fn watcher, void *watcherCtx, int local,
-    void_completion_t *completion, const void *data, int all);
+    void_completion_t completion, const void *data, int all);
 
 #ifdef THREADED
 static void process_sync_completion(zhandle_t *zh,
@@ -4988,7 +4988,7 @@ union WatchesRequest {
 static int aremove_watches(
         zhandle_t *zh, const char *path, ZooWatcherType wtype,
         watcher_fn watcher, void *watcherCtx, int local,
-        void_completion_t *completion, const void *data, int all)
+        void_completion_t completion, const void *data, int all)
 {
     buffer_list_t *b;
     char *server_path = prepend_string(zh, path);
@@ -5018,12 +5018,11 @@ static int aremove_watches(
         goto done;
     }
 
+    /* A local removal is complete when this call returns. No reply comes,
+     * so this path does not use the completion or the data. */
     if (local) {
         removeWatchers(zh, server_path, wtype, watcher, watcherCtx);
         unlock_watchers(zh);
-#ifdef THREADED
-        notify_sync_completion((struct sync_completion *)data);
-#endif
         rc = ZOK;
         goto done;
     }
@@ -5881,7 +5880,9 @@ static int remove_watches(
 
     rc = aremove_watches(zh, path, wtype, watcher, wctx, local,
                               SYNCHRONOUS_MARKER, sc, all);
-    if (rc == ZOK) {
+    /* A local removal is complete when aremove_watches returns. No reply
+     * comes, so the caller does not wait. */
+    if (rc == ZOK && !local) {
         wait_sync_completion(sc);
         rc = sc->rc;
     }
@@ -5924,14 +5925,14 @@ int zoo_remove_all_watches(
 
 int zoo_aremove_watches(zhandle_t *zh, const char *path, ZooWatcherType wtype,
         watcher_fn watcher, void *watcherCtx, int local,
-        void_completion_t *completion, const void *data)
+        void_completion_t completion, const void *data)
 {
     return aremove_watches(
         zh, path, wtype, watcher, watcherCtx, local, completion, data, 0);
 }
 
 int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
-        ZooWatcherType wtype, int local, void_completion_t *completion,
+        ZooWatcherType wtype, int local, void_completion_t completion,
         const void *data)
 {
     return aremove_watches(

@@ -1943,6 +1943,11 @@ typedef enum {
  * \param watcherCtx the context associated with the watcher to be removed
  * \param local whether the watches will be removed locally even if there is
  * no server connection
+ * \param completion the routine that the client calls when the server
+ * replies. If local is nonzero, the client removes the watches before this
+ * call returns. The client then does not call the completion.
+ * \param data the data that the client gives to the completion routine. The
+ * client does not read or write this data.
  * \return the return code for the function call.
  * ZOK - operation completed successfully
  * ZNOWATCHER - the watcher couldn't be found.
@@ -1954,7 +1959,7 @@ typedef enum {
  */
 ZOOAPI int zoo_aremove_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local,
-        void_completion_t *completion, const void *data);
+        void_completion_t completion, const void *data);
 
 /**
  * \brief removes all the watches for the given path and watcher type.
@@ -1984,6 +1989,11 @@ ZOOAPI int zoo_remove_all_watches(zhandle_t *zh, const char *path,
  * \param wtype the watcher type to be removed
  * \param local whether the watches will be removed locally even if there is
  * no server connection
+ * \param completion the routine that the client calls when the server
+ * replies. If local is nonzero, the client removes the watches before this
+ * call returns. The client then does not call the completion.
+ * \param data the data that the client gives to the completion routine. The
+ * client does not read or write this data.
  * \return the return code for the function call.
  * ZOK - operation completed successfully
  * ZNOWATCHER - the watcher couldn't be found.
@@ -1994,7 +2004,7 @@ ZOOAPI int zoo_remove_all_watches(zhandle_t *zh, const char *path,
  * ZSYSTEMERROR - a system error occurred
 */
 ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
-        ZooWatcherType wtype, int local, void_completion_t *completion,
+        ZooWatcherType wtype, int local, void_completion_t completion,
         const void *data);
 
 #ifdef THREADED
