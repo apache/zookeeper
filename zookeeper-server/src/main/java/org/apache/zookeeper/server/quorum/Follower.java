@@ -93,7 +93,7 @@ public class Follower extends Learner {
                 }
                 //check to see if the leader zxid is lower than ours
                 //this should never happen but is just a safety check
-                long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
+                long newEpoch = self.getZxidLayoutState().current().getEpochFromZxid(newEpochZxid);
                 if (newEpoch < self.getAcceptedEpoch()) {
                     LOG.error("Proposed leader epoch "
                               + ZxidUtils.zxidToString(newEpochZxid)
