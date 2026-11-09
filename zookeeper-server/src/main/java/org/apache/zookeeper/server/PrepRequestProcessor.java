@@ -666,7 +666,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             ttl = -1;
         }
         CreateMode createMode = CreateMode.fromFlag(flags);
-        validateCreateRequest(path, createMode, request, ttl);
+        validateCreateRequest(type, path, createMode, request, ttl);
         String parentPath = validatePathForCreate(path, request.sessionId);
 
         List<ACL> listACL = fixupACL(path, request.authInfo, acl);
@@ -1010,7 +1010,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         return retval;
     }
 
-    private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl) throws KeeperException {
+    private void validateCreateRequest(int type, String path, CreateMode createMode, Request request, long ttl) throws KeeperException {
+        if (type == OpCode.createTTL && !createMode.isTTL()) {
+            throw new KeeperException.BadArgumentsException(path);
+        }
         if (createMode.isTTL() && !EphemeralType.extendedEphemeralTypesEnabled()) {
             throw new KeeperException.UnimplementedException();
         }
