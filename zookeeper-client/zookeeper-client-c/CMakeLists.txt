@@ -259,6 +259,7 @@ set(test_sources
   tests/TestClient.cc
   tests/ZooKeeperQuorumServer.cc
   tests/TestReadOnlyClient.cc
+  tests/TestXid.cc
   tests/TestLogClientEnv.cc)
 
 if(WANT_SYNCAPI)
