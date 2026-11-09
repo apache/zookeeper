@@ -1073,6 +1073,10 @@ fail:
  * \param ref_time an optional "reference time," used to determine if
  * resolution can be skipped in accordance to the delay set by \ref
  * zoo_set_servers_resolution_delay.  Passing NULL prevents skipping.
+ * A non-NULL ref_time also marks a periodic refresh from the driver. If
+ * resolution fails during a refresh, the client keeps its last good address
+ * list, and the function returns ZOK. A failed lookup is not a topology
+ * change, so the connection and the reconnect logic continue.
  *
  * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the
  * protocol and its evaluation,
@@ -1132,6 +1136,17 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
     rc = resolve_hosts(zh, hosts, &resolved);
     if (rc != ZOK)
     {
+        // A resolver outage must not stop pings, timeouts, or reconnects.
+        // Thus a periodic refresh keeps the cached addresses. It records the
+        // attempt time, so the resolution delay also paces the retries.
+        // Callers that set a new server list pass NULL and get the error.
+        if (ref_time && zh->addrs.count > 0) {
+            LOG_WARN(LOGCALLBACK(zh),
+                     "Failed to resolve server list [%s], keeping the last "
+                     "good addresses (zk retcode=%d)", zh->hostname, rc);
+            zh->last_resolve = *ref_time;
+            rc = ZOK;
+        }
         goto finish;
     }
 
@@ -2126,9 +2141,15 @@ static void handle_error(zhandle_t *zh,int rc)
     cleanup(zh, rc);
     // NOTE: If we're at the end of the list of addresses to connect to, then
     // we want to delay the next connection attempt to avoid spinning.
-    // Then increment what host we'll connect to since we failed to connect to current
     zh->delay = addrvec_atend(&zh->addrs);
-    addrvec_next(&zh->addrs, &zh->addr_cur);
+    // Outside a reconfig pass, zoo_cycle_next_server moves the cursor before
+    // each connect. Here the client only records the next server, so that a
+    // failure does not skip it.
+    if (zh->reconfig) {
+        addrvec_next(&zh->addrs, &zh->addr_cur);
+    } else {
+        addrvec_peek(&zh->addrs, &zh->addr_cur);
+    }
 }
 
 static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, int rc,
@@ -2630,6 +2651,12 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
 
     if(zh==0 || fd==0 ||interest==0 || tv==0)
         return ZBADARGUMENTS;
+    // Set safe outputs before any early return. Some event loops ignore the
+    // return code and pass the outputs to poll(). Thus an error return must
+    // not leave them uninitialized, and it must not cause a busy loop.
+    *fd = -1;
+    *interest = 0;
+    *tv = get_timeval(zh->recv_timeout/60);
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
     get_system_time(&now);

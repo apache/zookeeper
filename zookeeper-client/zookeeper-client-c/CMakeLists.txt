@@ -252,6 +252,7 @@ set(test_sources
   tests/TestSASLAuth.cc
   tests/TestReconfig.cc
   tests/TestReconfigServer.cc
+  tests/TestResolverFailure.cc
   tests/TestClientRetry.cc
   tests/TestOperations.cc
   tests/TestMulti.cc

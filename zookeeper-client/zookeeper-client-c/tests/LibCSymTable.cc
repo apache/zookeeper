@@ -35,6 +35,7 @@ LibCSymTable::LibCSymTable()
 {
     void* handle=getHandle();
     LOAD_SYM(gethostbyname);
+    LOAD_SYM(getaddrinfo);
     LOAD_SYM(calloc);
     LOAD_SYM(realloc);
     LOAD_SYM(free);
