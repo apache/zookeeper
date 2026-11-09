@@ -196,8 +196,10 @@ public class RaceConditionTest extends QuorumPeerTestBase {
                     RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
                     commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
                     commitProcessor.start();
-                    ProposalRequestProcessor proposalProcessor = new MockProposalRequestProcessor(this, commitProcessor);
-                    proposalProcessor.initialize();
+                    AckRequestProcessor ackProcessor = new AckRequestProcessor(this.getLeader());
+                    syncProcessor = new MockSyncRequestProcessor(this, ackProcessor);
+                    syncProcessor.start();
+                    ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
                     prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
                     prepRequestProcessor.start();
                     firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
@@ -225,21 +227,6 @@ public class RaceConditionTest extends QuorumPeerTestBase {
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.delete, RequestRecord.fromRecord(deleteTxn), null);
             processRequest(request);
             super.shutdown();
-        }
-
-    }
-
-    private static class MockProposalRequestProcessor extends ProposalRequestProcessor {
-
-        public MockProposalRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
-            super(zks, nextProcessor);
-
-            /**
-             * The only purpose here is to inject the mocked
-             * SyncRequestProcessor
-             */
-            AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());
-            syncProcessor = new MockSyncRequestProcessor(zks, ackProcessor);
         }
 
     }

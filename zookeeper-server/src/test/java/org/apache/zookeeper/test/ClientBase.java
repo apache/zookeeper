@@ -735,6 +735,10 @@ public abstract class ClientBase extends ZKTestCase {
         return createZKClient(cxnString, CONNECTION_TIMEOUT);
     }
 
+    public static ZooKeeper createZKClient(String cxnString, CountdownWatcher watcher) throws Exception {
+        return createZKClient(cxnString, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, new ZKClientConfig(), watcher);
+    }
+
     /**
      * Returns ZooKeeper client after connecting to ZooKeeper Server. Session
      * timeout is {@link #CONNECTION_TIMEOUT}
@@ -757,6 +761,11 @@ public abstract class ClientBase extends ZKTestCase {
     public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
         long connectionTimeout, ZKClientConfig config) throws IOException {
         CountdownWatcher watcher = new CountdownWatcher();
+        return createZKClient(cxnString, sessionTimeout, connectionTimeout, config, watcher);
+    }
+
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout,
+                                           long connectionTimeout, ZKClientConfig config, CountdownWatcher watcher) throws IOException {
         ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher, config);
         try {
             watcher.waitForConnected(connectionTimeout);
@@ -765,5 +774,4 @@ public abstract class ClientBase extends ZKTestCase {
         }
         return zk;
     }
-
 }
