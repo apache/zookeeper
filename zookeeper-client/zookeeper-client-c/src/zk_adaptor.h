@@ -177,9 +177,21 @@ struct adaptor_threads {
 };
 #endif
 
+/**
+ * Outstanding SetAuth request. The list is a FIFO that matches the order of
+ * frames on the wire. Each reply completes the head entry.
+ */
+typedef struct _auth_request {
+    auth_info *auth;                /* credential carried by this frame */
+    void_completion_t completion;   /* NULL on a reconnect resend */
+    const char *data;
+    struct _auth_request *next;
+} auth_request_t;
+
 /** the auth list for adding auth */
 typedef struct _auth_list_head {
      auth_info *auth;
+     auth_request_t *pending;       /* FIFO of SetAuth frames on the wire */
 #ifdef THREADED
      pthread_mutex_t lock;
 #endif

@@ -361,7 +361,7 @@ static int is_sasl_auth_in_progress(zhandle_t* zh)
  * Extract the type field (ZOO_*_OP) of a serialized RequestHeader.
  *
  * (This is not the most efficient way of fetching 4 bytes, but it is
- * currently only used during SASL negotiation.)
+ * only used during SASL negotiation and session establishment.)
  *
  * \param buffer the buffer to extract the request type from.  Must
  *   start with a serialized RequestHeader;
@@ -502,18 +502,6 @@ int zoo_recv_timeout(zhandle_t *zh)
 
 /** these functions are thread unsafe, so make sure that
     zoo_lock_auth is called before you access them **/
-static auth_info* get_last_auth(auth_list_head_t *auth_list) {
-    auth_info *element;
-    element = auth_list->auth;
-    if (element == NULL) {
-        return NULL;
-    }
-    while (element->next != NULL) {
-        element = element->next;
-    }
-    return element;
-}
-
 static void free_auth_completion(auth_completion_list_t *a_list) {
     auth_completion_list_t *tmp, *ftmp;
     if (a_list == NULL) {
@@ -556,12 +544,22 @@ static void add_auth_completion(auth_completion_list_t* a_list, void_completion_
     return;
 }
 
+/*
+ * Collect completions that still wait for an auth result. Then clear the
+ * pending FIFO. The caller has dropped the connection that carried those
+ * frames.
+ */
 static void get_auth_completions(auth_list_head_t *auth_list, auth_completion_list_t *a_list) {
+    auth_request_t *req;
     auth_info *element;
-    element = auth_list->auth;
-    if (element == NULL) {
-        return;
+    while ((req = auth_list->pending) != NULL) {
+        auth_list->pending = req->next;
+        if (req->completion) {
+            add_auth_completion(a_list, &req->completion, req->data);
+        }
+        free(req);
     }
+    element = auth_list->auth;
     while (element) {
         if (element->completion) {
             add_auth_completion(a_list, &element->completion, element->data);
@@ -590,24 +588,17 @@ static void add_last_auth(auth_list_head_t *auth_list, auth_info *add_el) {
 static void init_auth_info(auth_list_head_t *auth_list)
 {
     auth_list->auth = NULL;
-}
-
-static void mark_active_auth(zhandle_t *zh) {
-    auth_list_head_t auth_h = zh->auth_h;
-    auth_info *element;
-    if (auth_h.auth == NULL) {
-        return;
-    }
-    element = auth_h.auth;
-    while (element != NULL) {
-        element->state = 1;
-        element = element->next;
-    }
+    auth_list->pending = NULL;
 }
 
 static void free_auth_info(auth_list_head_t *auth_list)
 {
     auth_info *auth = auth_list->auth;
+    auth_request_t *req;
+    while ((req = auth_list->pending) != NULL) {
+        auth_list->pending = req->next;
+        free(req);
+    }
     while (auth != NULL) {
         auth_info* old_auth = NULL;
         if(auth->scheme!=NULL)
@@ -2148,101 +2139,169 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, in
     return rc;
 }
 
+/*
+ * Apply one SetAuth reply to the head of the pending FIFO. The server
+ * replies to SetAuth in receive order, so the head is the matching request.
+ * An empty FIFO means the reply is not for this handle. The client ignores
+ * it. The session stays connected.
+ */
 static void auth_completion_func(int rc, zhandle_t* zh)
 {
-    void_completion_t auth_completion = NULL;
-    auth_completion_list_t a_list;
-    auth_completion_list_t *a_tmp;
+    auth_request_t *req;
 
     if(zh==NULL)
         return;
 
     zoo_lock_auth(zh);
-
+    req = zh->auth_h.pending;
+    if (req == NULL) {
+        zoo_unlock_auth(zh);
+        LOG_WARN(LOGCALLBACK(zh),
+                 "Ignoring an authentication reply (rc=%d) that has no pending request",
+                 rc);
+        return;
+    }
+    zh->auth_h.pending = req->next;
     if(rc!=0){
         zh->state=ZOO_AUTH_FAILED_STATE;
     }else{
-        //change state for all auths
-        mark_active_auth(zh);
+        req->auth->state = 1;
     }
-    a_list.completion = NULL;
-    a_list.next = NULL;
-    get_auth_completions(&zh->auth_h, &a_list);
     zoo_unlock_auth(zh);
     if (rc) {
         LOG_ERROR(LOGCALLBACK(zh), "Authentication scheme %s failed. Connection closed.",
-                   zh->auth_h.auth->scheme);
+                   req->auth->scheme);
     }
     else {
-        LOG_INFO(LOGCALLBACK(zh), "Authentication scheme %s succeeded", zh->auth_h.auth->scheme);
+        LOG_INFO(LOGCALLBACK(zh), "Authentication scheme %s succeeded", req->auth->scheme);
     }
-    a_tmp = &a_list;
-    // chain call user's completion function
-    while (a_tmp->completion != NULL) {
-        auth_completion = a_tmp->completion;
-        auth_completion(rc, a_tmp->auth_data);
-        a_tmp = a_tmp->next;
-        if (a_tmp == NULL)
-            break;
+    if (req->completion) {
+        req->completion(rc, req->data);
     }
-    free_auth_completion(&a_list);
+    free(req);
 }
 
-static int send_info_packet(zhandle_t *zh, auth_info* auth) {
+/*
+ * Enqueue one SetAuth frame and its pending-FIFO entry as one locked
+ * operation. add_to_front must match the send-queue position. Then the FIFO
+ * stays in wire order. If the credential has a completion, that completion
+ * moves to the pending entry.
+ */
+static int send_info_packet(zhandle_t *zh, auth_info* auth, int add_to_front) {
     struct oarchive *oa;
     struct RequestHeader h = {AUTH_XID, ZOO_SETAUTH_OP};
     struct AuthPacket req;
+    auth_request_t *ar;
+    auth_request_t **link;
+    buffer_list_t *b = NULL;
     int rc;
+
+    ar = calloc(1, sizeof(*ar));
+    if (ar == NULL) {
+        return ZSYSTEMERROR;
+    }
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
     req.type=0;   // ignored by the server
     req.scheme = auth->scheme;
     req.auth = auth->auth;
     rc = rc < 0 ? rc : serialize_AuthPacket(oa, "req", &req);
-    /* add this buffer to the head of the send queue */
-    rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
-            get_buffer_len(oa));
+    if (rc >= 0) {
+        b = allocate_buffer(get_buffer(oa), get_buffer_len(oa));
+        if (b == NULL) {
+            rc = ZSYSTEMERROR;
+        }
+    }
     /* Free serialized buffer if not enqueued */
     close_buffer_oarchive(&oa, rc < 0);
+    if (rc < 0) {
+        free(ar);
+        return rc;
+    }
 
-    return rc;
+    ar->auth = auth;
+    ar->completion = auth->completion;
+    ar->data = auth->data;
+    auth->completion = NULL;
+    queue_buffer(&zh->to_send, b, add_to_front);
+    link = &zh->auth_h.pending;
+    if (!add_to_front) {
+        while (*link != NULL) {
+            link = &(*link)->next;
+        }
+    }
+    ar->next = *link;
+    *link = ar;
+    return ZOK;
 }
 
-/** send all auths, not just the last one **/
+/*
+ * Drop unsent SetAuth frames from the send queue. This runs before a session
+ * resends credentials. A leftover frame would send the same credential twice,
+ * and its reply would have no FIFO entry.
+ */
+static void remove_auth_frames(buffer_head_t *list)
+{
+    buffer_list_t *b;
+    buffer_list_t *next;
+    buffer_list_t *last = NULL;
+    int32_t type;
+
+    lock_buffer_list(list);
+    for (b = list->head; b != NULL; b = next) {
+        next = b->next;
+        if (extract_request_type(b->buffer, b->len, &type) == ZOK &&
+            type == ZOO_SETAUTH_OP) {
+            if (last == NULL) {
+                list->head = next;
+            } else {
+                last->next = next;
+            }
+            free_buffer(b);
+        } else {
+            last = b;
+        }
+    }
+    list->last = last;
+    unlock_buffer_list(list);
+}
+
+/*
+ * Resend every stored credential on a newly established session. First
+ * return pending completions to their credentials and drop leftover SetAuth
+ * frames. Then enqueue one new frame per credential. Any unsent completion
+ * goes with that frame.
+ */
 static int send_auth_info(zhandle_t *zh) {
-    int rc = 0;
+    int rc = ZOK;
     auth_info *auth = NULL;
+    auth_request_t *req;
 
     zoo_lock_auth(zh);
+    while ((req = zh->auth_h.pending) != NULL) {
+        zh->auth_h.pending = req->next;
+        if (req->completion) {
+            req->auth->completion = req->completion;
+            req->auth->data = req->data;
+        }
+        free(req);
+    }
+    remove_auth_frames(&zh->to_send);
     auth = zh->auth_h.auth;
     if (auth == NULL) {
         zoo_unlock_auth(zh);
         return ZOK;
     }
     while (auth != NULL) {
-        rc = send_info_packet(zh, auth);
+        int auth_rc = send_info_packet(zh, auth, 1);
+        if (auth_rc < 0) {
+            rc = auth_rc;
+        }
         auth = auth->next;
     }
     zoo_unlock_auth(zh);
     LOG_DEBUG(LOGCALLBACK(zh), "Sending all auth info request to %s", zoo_get_current_server(zh));
     return (rc <0) ? ZMARSHALLINGERROR:ZOK;
-}
-
-static int send_last_auth_info(zhandle_t *zh)
-{
-    int rc = 0;
-    auth_info *auth = NULL;
-
-    zoo_lock_auth(zh);
-    auth = get_last_auth(&zh->auth_h);
-    if(auth==NULL) {
-      zoo_unlock_auth(zh);
-      return ZOK; // there is nothing to send
-    }
-    rc = send_info_packet(zh, auth);
-    zoo_unlock_auth(zh);
-    LOG_DEBUG(LOGCALLBACK(zh), "Sending auth info request to %s",zoo_get_current_server(zh));
-    return (rc < 0)?ZMARSHALLINGERROR:ZOK;
 }
 
 static void free_key_list(char **list, int count)
@@ -5303,6 +5362,8 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 {
     struct buffer auth;
     auth_info *authinfo;
+    int rc = ZOK;
+    int sent;
     if(scheme==NULL || zh==NULL)
         return ZBADARGUMENTS;
 
@@ -5327,25 +5388,48 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
         auth.len = 0;
     }
 
-    zoo_lock_auth(zh);
-    authinfo = (auth_info*) malloc(sizeof(auth_info));
+    authinfo = (auth_info*) calloc(1, sizeof(auth_info));
+    if (authinfo == NULL) {
+        deallocate_Buffer(&auth);
+        return ZSYSTEMERROR;
+    }
     authinfo->scheme=strdup(scheme);
+    if (authinfo->scheme == NULL) {
+        deallocate_Buffer(&auth);
+        free(authinfo);
+        return ZSYSTEMERROR;
+    }
     authinfo->auth=auth;
     authinfo->completion=completion;
     authinfo->data=data;
     authinfo->next = NULL;
-    add_last_auth(&zh->auth_h, authinfo);
+
+    // Hold the auth lock across enqueue. This pairs the credential with its
+    // FIFO entry. Concurrent callers cannot send the same tail credential.
+    // Append the frame after earlier application requests. If the session
+    // is not connected, store the credential only. send_auth_info() sends
+    // it when the session is established.
+    zoo_lock_auth(zh);
+    sent = is_connected(zh);
+    if (sent) {
+        rc = send_info_packet(zh, authinfo, 0);
+    }
+    if (rc == ZOK) {
+        add_last_auth(&zh->auth_h, authinfo);
+    }
     zoo_unlock_auth(zh);
 
-    if (is_connected(zh) ||
-        // When associating, only send info packets if no SASL
-        // negotiation is planned.  (Such packets would be queued in
-        // front of SASL packets, which is forbidden, and SASL
-        // completion is followed by a 'send_auth_info' anyway.)
-        (zh->state == ZOO_ASSOCIATING_STATE && !has_sasl_client(zh))) {
-        return send_last_auth_info(zh);
+    if (rc != ZOK) {
+        // The credential is not in the list. The completion does not run.
+        free(authinfo->scheme);
+        deallocate_Buffer(&authinfo->auth);
+        free(authinfo);
+        return ZMARSHALLINGERROR;
     }
-
+    if (sent) {
+        LOG_DEBUG(LOGCALLBACK(zh), "Sending auth info request to %s",
+                  zoo_get_current_server(zh));
+    }
     return ZOK;
 }
 
