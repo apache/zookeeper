@@ -1,0 +1,53 @@
+/target/
+/fuzz/target/
+/fuzz/corpus/
+/fuzz/artifacts/
+/crates/zk-ffi-layout/target/
+/crates/zk-jute/src/generated/
+# The TLS test material is made at test time into the zk-testkit cache.
+# These rules catch the output of a manual run of a generator in place.
+/c/tests/conformance/tls/corpus/
+/crates/zk-driver/tests/fixtures/tls/*
+!/crates/zk-driver/tests/fixtures/tls/gen.sh
+!/crates/zk-driver/tests/fixtures/tls/trust/
+/crates/zk-driver/tests/fixtures/tls/trust/*
+!/crates/zk-driver/tests/fixtures/tls/trust/gen.sh
+# The autoreconf output of the drop-in project in c, and the output of an
+# in-tree configure and make there. Maven configures and builds in
+# target/c-build, and installs in target/c.
+/c/Makefile.in
+/c/aclocal.m4
+/c/autom4te.cache/
+/c/build-aux/
+/c/config.h.in
+/c/config.h.in~
+/c/configure
+/c/configure~
+/c/Makefile
+/c/config.h
+/c/config.log
+/c/config.status
+/c/libtool
+/c/stamp-h1
+/c/zookeeper_st.pc
+/c/zookeeper_mt.pc
+/c/cargo-sources.toml
+/c/.deps/
+/c/.libs/
+/c/*.o
+/c/*.lo
+/c/*.la
+/c/*.gcno
+/c/*.gcda
+/c/cli_st
+/c/cli_mt
+/c/load_gen
+/c/zookeeper_*.sym
+/c/zookeeper_*.keep
+/c/cargo/
+/c/zktest-public/
+/c/zktest-public-src/
+/c/zktest-public-st
+/c/zktest-public-mt
+/c/abi-tests-*/
+/c/link-tests-*/

@@ -1,0 +1,138 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[workspace]
+resolver = "3"
+members = [
+    "crates/zk-jute",
+    "crates/zk-proto",
+    "crates/zk-driver",
+    "crates/zk-client",
+    "crates/zk-recipes",
+    "crates/zk-ffi",
+    "crates/zk-testkit",
+    "crates/zk-fakeserver",
+    "crates/zk-xcheck",
+    "xtask",
+]
+# These crates are separate workspaces with their own lock files. The
+# layout check needs a C compiler and the C headers. The fuzz crate needs
+# a nightly toolchain.
+exclude = ["crates/zk-ffi-layout", "fuzz"]
+default-members = [
+    "crates/zk-jute",
+    "crates/zk-proto",
+    "crates/zk-driver",
+    "crates/zk-client",
+    "crates/zk-recipes",
+]
+
+[workspace.package]
+# Equal to ZOO_VERSION. The release executions keep it in sync with the root pom.xml.
+version = "3.10.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/apache/zookeeper"
+publish = false
+
+[workspace.dependencies]
+zk-jute = { path = "crates/zk-jute", version = "=3.10.0" }
+zk-proto = { path = "crates/zk-proto", version = "=3.10.0" }
+zk-driver = { path = "crates/zk-driver", version = "=3.10.0", default-features = false }
+# zk-recipes takes no client features of its own. The
+# application selects them, and cargo unifies the two choices.
+apache-zookeeper = { path = "crates/zk-client", version = "=3.10.0", default-features = false }
+zk-testkit = { path = "crates/zk-testkit", version = "=3.10.0" }
+zk-fakeserver = { path = "crates/zk-fakeserver", version = "=3.10.0" }
+rustix = { version = "1.1", default-features = false }
+rustls = { version = "0.23.31", default-features = false }
+rustls-pki-types = { version = "1.12", default-features = false }
+rustls-webpki = { version = "0.103.4", default-features = false }
+tokio = { version = "1.47", default-features = false }
+proptest = { version = "1", default-features = false }
+bitflags = { version = "2.6", default-features = false }
+zeroize = { version = "1.8", default-features = false }
+tracing = { version = "0.1.41", default-features = false }
+log = { version = "0.4.22", default-features = false }
+futures-core = { version = "0.3.31", default-features = false }
+serde = { version = "1.0.200", default-features = false }
+# TLS key loading. The 0.10 family keeps MSRV 1.85.
+ring = { version = "0.17.14", default-features = false }
+aws-lc-rs = { version = "1.13", default-features = false }
+pkcs8 = { version = "0.10.2", default-features = false }
+pkcs5 = { version = "0.7", default-features = false }
+der = { version = "0.7", default-features = false }
+spki = { version = "0.7", default-features = false }
+pem-rfc7468 = { version = "0.7", default-features = false }
+base64ct = { version = "1.6", default-features = false }
+aes = { version = "0.8", default-features = false }
+des = { version = "0.8", default-features = false }
+cbc = { version = "0.1", default-features = false }
+cipher = { version = "0.4", default-features = false }
+md-5 = { version = "0.10", default-features = false }
+sha1 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+pbkdf2 = { version = "0.12", default-features = false }
+hmac = { version = "0.12", default-features = false }
+scrypt = { version = "0.11", default-features = false }
+# Native SASL.
+getrandom = { version = "0.2", default-features = false }
+libgssapi = { version = "0.11", default-features = false }
+# Opt-in OS verifier for the native crate only.
+rustls-platform-verifier = { version = "0.7.1", default-features = false }
+# The loom models only. A build without `--cfg loom` never uses it.
+loom = { version = "0.7.2", default-features = false }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unsafe_op_in_unsafe_fn = "deny"
+missing_docs = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "deny", priority = -1 }
+# `cargo fuzz` sets `--cfg fuzzing`. Only zk-client uses it. `--cfg loom`
+# selects the loom lock facade for the loom models.
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(fuzzing)", "cfg(loom)"] }
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+large_stack_arrays = "deny"
+large_stack_frames = "deny"
+
+[profile.release]
+debug = "line-tables-only"
+
+# libzookeeper_mt and libzookeeper_st.
+[profile.capi]
+inherits = "release"
+panic = "abort"
+lto = "fat"
+codegen-units = 1
+opt-level = 2
+overflow-checks = false
+debug-assertions = false
+
+# --enable-debug and CMake Debug builds.
+[profile.capi-dev]
+inherits = "dev"
+panic = "abort"

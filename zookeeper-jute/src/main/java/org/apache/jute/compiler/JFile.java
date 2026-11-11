@@ -76,6 +76,10 @@ public class JFile {
             CGenerator gen = new CGenerator(mName, mInclFiles, mRecords,
                     outputDirectory);
             gen.genCode();
+        } else if ("rust".equals(language)) {
+            RustGenerator gen = new RustGenerator(mName, mInclFiles, mRecords,
+                    outputDirectory);
+            gen.genCode();
         } else if ("csharp".equals(language)) {
             CSharpGenerator gen = new CSharpGenerator(mName, mInclFiles, mRecords,
                     outputDirectory);

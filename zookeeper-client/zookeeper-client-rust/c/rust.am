@@ -1,0 +1,387 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file holds the automake part of the Rust client core. It also
+# holds the public-API suites. Makefile.am sets the legacy variables and
+# then includes this file, so this file can append to its lists.
+# m4/zk_rust.m4 sets the substitutions and the conditionals.
+#
+# The Rust C tree is the source directory. ZKRS_SRCDIR and ZKRS_ABS_SRCDIR
+# name it in the recipes. ZKC_SRCDIR and ZKC_ABS_SRCDIR name the legacy C
+# tree. The build reads the headers, the jute files, the program sources
+# and the legacy tests of that tree. The ABI and public-API tests are in
+# the tests subtree. That subtree is optional. Without it, ZKRS_TESTS is
+# false.
+ZKRS_SRCDIR = $(srcdir)
+ZKRS_ABS_SRCDIR = $(abs_srcdir)
+
+#########################################################################
+# This part builds the Rust client core. It builds the st
+# library, and also the mt library when the legacy build has it
+# (WANT_SYNCAPI). For each
+# flavor, the zk-ffi staticlib, the shim of the flavor and the verbatim
+# jute units become one pre-linked object. Only the golden export and
+# archive sets stay global in it. libtool makes the shared library and
+# the static archive from that object, so each archive has one member.
+
+EXPORT_TSV = $(ZKRS_SRCDIR)/abi/symbols.tsv $(ZKRS_SRCDIR)/abi/static-symbols.tsv
+EXPORT_GEN = $(AWK) -f $(ZKRS_SRCDIR)/abi/gen-exports.awk -v ssl=$(HAVE_SSL01) -v sasl=$(HAVE_SASL01)
+
+# The .sym list is the export set of the shared library. The .keep list
+# adds the archive-only globals of static-symbols.tsv for the pre-link.
+zookeeper_st.sym: $(ZKRS_SRCDIR)/abi/gen-exports.awk $(EXPORT_TSV)
+	$(EXPORT_GEN) -v flavor=st -v fmt=sym $(EXPORT_TSV) >$@.tmp && mv -f $@.tmp $@
+zookeeper_st.keep: $(ZKRS_SRCDIR)/abi/gen-exports.awk $(EXPORT_TSV)
+	$(EXPORT_GEN) -v flavor=st -v fmt=keep $(EXPORT_TSV) >$@.tmp && mv -f $@.tmp $@
+zookeeper_mt.sym: $(ZKRS_SRCDIR)/abi/gen-exports.awk $(EXPORT_TSV)
+	$(EXPORT_GEN) -v flavor=mt -v fmt=sym $(EXPORT_TSV) >$@.tmp && mv -f $@.tmp $@
+zookeeper_mt.keep: $(ZKRS_SRCDIR)/abi/gen-exports.awk $(EXPORT_TSV)
+	$(EXPORT_GEN) -v flavor=mt -v fmt=keep $(EXPORT_TSV) >$@.tmp && mv -f $@.tmp $@
+
+# configure gives ZKRS_STATICLIB, the path of the zk-ffi staticlib.
+# zk-ffi/build.rs checks the crate version against ZK_VERSION_H.
+# Each cargo call gets ZKRS_CARGO_SOURCE_ARGS. With a vendor directory or
+# system crates, it holds --offline and the cargo-sources.toml of configure.
+# The staticlib call runs through ZKRS_CARGO_WRAP. When configure selects a
+# Rust target CPU, the wrapper adds -C target-cpu to the rustflags of cargo.
+ZK_VERSION_H = $(ZKC_ABS_SRCDIR)/include/zookeeper_version.h
+if ZKRS_PREBUILT
+# Another build made the staticlib. make never runs cargo here.
+$(ZKRS_STATICLIB):
+	@test -f $@ || { echo "$@ is missing: build zookeeper-client-rust first" >&2; exit 1; }
+else
+# cargo runs on each make. It does not write the staticlib again when the
+# sources do not change, so the pre-link runs only after a change. One
+# staticlib serves both flavors, because the flavor is a run-time value.
+# A recipe that does not run make gets no jobserver descriptors, so cargo
+# gets an empty MAKEFLAGS and uses its own job count.
+zkrs-force:
+zkrs-cargo: $(ZKRS_STATICLIB)
+$(ZKRS_STATICLIB): zkrs-force
+	MAKEFLAGS= MFLAGS= CARGO_TARGET_DIR=$(abs_builddir)/cargo ZK_VERSION_H=$(ZK_VERSION_H) \
+	  ZK_TLS_DEFAULT_CERT_FILE="$(ZK_TLS_DEFAULT_CERT_FILE)" ZK_TLS_DEFAULT_CERT_DIR="$(ZK_TLS_DEFAULT_CERT_DIR)" \
+	  CC_$(RUST_TARGET_ENV)="$(CC)" AR_$(RUST_TARGET_ENV)="$(AR)" \
+	  $(ZKRS_CARGO_WRAP) $(CARGO) $(ZKRS_CARGO_SOURCE_ARGS) rustc --manifest-path $(RUST_WORKSPACE)/Cargo.toml -p zk-ffi $(ZKRS_CARGO_FEATURES) \
+	  --profile $(ZKRS_PROFILE) $(ZKRS_TARGET_ARGS) --locked --crate-type staticlib
+endif
+
+# The shim gets the legacy warning set. -Werror comes from ZKS_WERROR.
+ZKS_CPPFLAGS = -D_GNU_SOURCE -I$(ZKC_SRCDIR)/include -I$(ZKC_SRCDIR)/generated -I$(ZKRS_SRCDIR)/shim \
+    $(SOLARIS_CPPFLAGS) $(ZKS_FEATURE_CPPFLAGS) $(ZKS_CONFIG_CPPFLAGS)
+ZKS_OBJFLAGS = -prefer-pic -ffunction-sections -fdata-sections
+ZKS_AM_CFLAGS = -Wall $(ZKS_WERROR) -Wdeclaration-after-statement
+if ENABLEGCOV
+ZKS_AM_CFLAGS += -fprofile-arcs -ftest-coverage
+endif
+ZKS_LIB_CFLAGS = $(ZKS_AM_CFLAGS) $(ZKS_CFLAGS) $(ZKS_HARDEN_CFLAGS) $(ZKS_OBJFLAGS)
+# The sources are nodist, because the drop-in project has no source tarball.
+# The ZooKeeper source release ships the drop-in project. Without
+# subdir-objects, each object takes the basename of its source. The shim
+# basenames differ from the basenames of the legacy sources, so no two
+# objects have the same name.
+SHIM_HDRS = shim/zkrs.h shim/zks_internal.h \
+    shim/zks_log_sites.h shim/zks_sasl.h
+SHIM_SRC = shim/zks_data.c shim/zks_handle.c shim/zks_async.c \
+    shim/zks_multi.c shim/zks_drain.c shim/zks_log.c \
+    shim/zks_env.c shim/zks_errors.c shim/zks_resolve.c \
+    shim/zks_rng.c shim/zks_compat.c shim/zks_layout_check.c $(SHIM_HDRS)
+# Only mt has the sync API and the library threads.
+SHIM_MT_SRC = shim/zks_sync.c shim/zks_threads.c
+# TLS and SASL add their shim units.
+# zks_tls.c compiles with the shim flags. The two Cyrus glue units are in
+# their own convenience libraries. Only they get the Cyrus include
+# directory (ZKS_SASL_CFLAGS) and the SASL hardening set. The shim
+# library of the flavor then contains their objects.
+if RUST_TLS
+SHIM_SRC += shim/zks_tls.c
+endif
+ZKS_SASL_SRC = shim/zks_sasl_cyrus.c shim/zks_sasl_cb.c shim/zks_sasl_cb.h
+ZKS_SASL_LIB_CFLAGS = $(ZKS_AM_CFLAGS) $(ZKS_CFLAGS) $(ZKS_HARDEN_SASL_CFLAGS) $(ZKS_OBJFLAGS)
+nodist_libzks_sasl_st_la_SOURCES = $(ZKS_SASL_SRC)
+libzks_sasl_st_la_CPPFLAGS = $(ZKS_CPPFLAGS) $(ZKS_SASL_CFLAGS)
+libzks_sasl_st_la_CFLAGS = $(ZKS_SASL_LIB_CFLAGS)
+nodist_libzks_sasl_mt_la_SOURCES = $(ZKS_SASL_SRC)
+libzks_sasl_mt_la_CPPFLAGS = $(ZKS_CPPFLAGS) $(ZKS_SASL_CFLAGS) -DTHREADED
+libzks_sasl_mt_la_CFLAGS = $(ZKS_SASL_LIB_CFLAGS)
+if RUST_SASL
+ZKS_SASL_LA_st = libzks_sasl_st.la
+noinst_LTLIBRARIES += libzks_sasl_st.la
+if WANT_SYNCAPI
+ZKS_SASL_LA_mt = libzks_sasl_mt.la
+noinst_LTLIBRARIES += libzks_sasl_mt.la
+endif
+endif
+
+# recordio.c and zookeeper.jute.c of the legacy tree compile unchanged,
+# with the legacy flags. The units in legacy/ include the legacy sources,
+# so each object stays in the build directory.
+# The st shim has no THREADED, as in the legacy st core.
+noinst_LTLIBRARIES += libzks_jute.la libzks_st.la
+nodist_libzks_jute_la_SOURCES = legacy/recordio.c legacy/zookeeper.jute.c
+libzks_jute_la_CPPFLAGS = $(AM_CPPFLAGS)
+libzks_jute_la_CFLAGS = $(AM_CFLAGS) $(ZKS_OBJFLAGS)
+nodist_libzks_st_la_SOURCES = $(SHIM_SRC)
+libzks_st_la_CPPFLAGS = $(ZKS_CPPFLAGS)
+libzks_st_la_CFLAGS = $(ZKS_LIB_CFLAGS)
+libzks_st_la_LIBADD = libzks_jute.la $(ZKS_SASL_LA_st)
+nodist_libzks_mt_la_SOURCES = $(SHIM_SRC) $(SHIM_MT_SRC)
+libzks_mt_la_CPPFLAGS = $(ZKS_CPPFLAGS) -DTHREADED
+libzks_mt_la_CFLAGS = $(ZKS_LIB_CFLAGS)
+libzks_mt_la_LIBADD = libzks_jute.la $(ZKS_SASL_LA_mt)
+if WANT_SYNCAPI
+noinst_LTLIBRARIES += libzks_mt.la
+endif
+
+ZKRS_PRELINK = $(SHELL) $(ZKRS_SRCDIR)/abi/prelink.sh --cc "$(CC)" --cflags "$(CFLAGS)" \
+    --ld "$(LD)" --objcopy "$(OBJCOPY)" --nm "$(NM)" --host-os "$(host_os)" --rust $(ZKRS_STATICLIB)
+zookeeper_st_all.lo: libzks_st.la $(ZKRS_STATICLIB) zookeeper_st.keep $(ZKRS_SRCDIR)/abi/prelink.sh
+	$(ZKRS_PRELINK) --shim .libs/libzks_st.a --keep zookeeper_st.keep --out zookeeper_st_all
+zookeeper_mt_all.lo: libzks_mt.la $(ZKRS_STATICLIB) zookeeper_mt.keep $(ZKRS_SRCDIR)/abi/prelink.sh
+	$(ZKRS_PRELINK) --shim .libs/libzks_mt.a --keep zookeeper_mt.keep --out zookeeper_mt_all
+
+# The Rust core adds no OpenSSL flags. A SASL build adds only -lsasl2.
+# st links no -lpthread, as in legacy st. On glibc
+# before 2.34, ZKRS_NATIVE_LIBS has -lpthread for the Rust staticlib, so
+# st gets it.
+ZKRS_LIB_LDFLAGS = -no-undefined -version-info 2 $(SOLARIS_LIB_LDFLAGS)
+ZKRS_LIBADD_st = zookeeper_st_all.lo -lm $(CLOCK_GETTIME_LIBS) $(ZKRS_SASL_LIBS) $(ZKRS_NATIVE_LIBS)
+ZKRS_LDFLAGS_st = $(ZKRS_LIB_LDFLAGS) -export-symbols zookeeper_st.sym $(ZKRS_GC_LDFLAGS)
+ZKRS_LIBADD_mt = zookeeper_mt_all.lo -lm $(CLOCK_GETTIME_LIBS) -lpthread $(ZKRS_SASL_LIBS) $(ZKRS_NATIVE_LIBS)
+ZKRS_LDFLAGS_mt = $(ZKRS_LIB_LDFLAGS) -export-symbols zookeeper_mt.sym $(ZKRS_GC_LDFLAGS)
+
+# The Rust libraries are the $(libdir) libraries. The mt library, the mt
+# programs and the mt pc file exist only with WANT_SYNCAPI. Helper
+# variables hold their names.
+if WANT_SYNCAPI
+ZKRS_MT_LA = libzookeeper_mt.la
+ZKRS_MT_BINS = cli_mt load_gen
+ZKRS_MT_PC = zookeeper_mt.pc
+endif
+lib_LTLIBRARIES = libzookeeper_st.la $(ZKRS_MT_LA)
+# Only the Rust core installs pkg-config files.
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = zookeeper_st.pc $(ZKRS_MT_PC)
+ZKRS_LAS = libzookeeper_st.la $(ZKRS_MT_LA)
+libzookeeper_st_la_SOURCES =
+libzookeeper_st_la_LIBADD = $(ZKRS_LIBADD_st)
+libzookeeper_st_la_DEPENDENCIES = zookeeper_st_all.lo zookeeper_st.sym
+libzookeeper_st_la_LDFLAGS = $(ZKRS_LDFLAGS_st)
+libzookeeper_mt_la_SOURCES =
+libzookeeper_mt_la_LIBADD = $(ZKRS_LIBADD_mt)
+libzookeeper_mt_la_DEPENDENCIES = zookeeper_mt_all.lo zookeeper_mt.sym
+libzookeeper_mt_la_LDFLAGS = $(ZKRS_LDFLAGS_mt)
+
+# The programs keep the legacy sources and flags, so they have no
+# per-target CPPFLAGS. configure sets WANT_OPENSSL, and thus
+# HAVE_OPENSSL_H, only when they can see the OpenSSL headers. cli_st has
+# no THREADED, as in legacy. A SASL build links -lsasl2 into the
+# programs, as in legacy.
+bin_PROGRAMS = cli_st $(ZKRS_MT_BINS)
+nodist_cli_st_SOURCES = legacy/cli.c
+cli_st_LDADD = libzookeeper_st.la $(ZKRS_SASL_LIBS)
+nodist_cli_mt_SOURCES = legacy/cli.c
+cli_mt_LDADD = libzookeeper_mt.la $(ZKRS_SASL_LIBS)
+cli_mt_CFLAGS = $(AM_CFLAGS) -DTHREADED
+nodist_load_gen_SOURCES = legacy/load_gen.c
+load_gen_LDADD = libzookeeper_mt.la
+load_gen_CFLAGS = $(AM_CFLAGS) -DTHREADED
+
+CLEANFILES = zookeeper_st.sym zookeeper_st.keep zookeeper_st_all.lo zookeeper_st_all.o \
+    .libs/zookeeper_st_all.o \
+    zookeeper_mt.sym zookeeper_mt.keep zookeeper_mt_all.lo zookeeper_mt_all.o \
+    .libs/zookeeper_mt_all.o
+
+# These targets check the ABI of the built Rust libraries.
+# abi-check checks each shared library against the goldens. abi-static
+# checks each static archive. The
+# flavor comes from the library name. The .la file gives the names of the
+# built files. --libdir gives the install directory, so the check can
+# compare the install name of the library.
+ZKRS_XTASK = MAKEFLAGS= MFLAGS= CARGO_TARGET_DIR=$(abs_builddir)/cargo $(CARGO) $(ZKRS_CARGO_SOURCE_ARGS) xtask abi
+.PHONY: abi-check abi-static zkrs-cargo zkrs-force
+abi-check: $(ZKRS_LAS)
+	@set -e; for la in $(ZKRS_LAS); do \
+	  fl=`basename $$la .la | sed 's/^libzookeeper_//'`; \
+	  file=`. ./$$la; echo "$$dlname"`; \
+	  test -n "$$file" || { echo "abi-check: $$la has no shared library (--disable-shared)" >&2; exit 1; }; \
+	  echo "abi-check: $(abs_builddir)/.libs/$$file (flavor $$fl)"; \
+	  (cd $(RUST_WORKSPACE) && $(ZKRS_XTASK) check $(abs_builddir)/.libs/$$file \
+	    --flavor $$fl --config $(ZKRS_ABI_CONFIG) --libdir $(libdir)); \
+	done
+abi-static: $(ZKRS_LAS)
+	@set -e; for la in $(ZKRS_LAS); do \
+	  fl=`basename $$la .la | sed 's/^libzookeeper_//'`; \
+	  file=`. ./$$la; echo "$$old_library"`; \
+	  test -n "$$file" || { echo "abi-static: $$la has no static archive (--disable-static)" >&2; exit 1; }; \
+	  echo "abi-static: $(abs_builddir)/.libs/$$file (flavor $$fl)"; \
+	  (cd $(RUST_WORKSPACE) && $(ZKRS_XTASK) static $(abs_builddir)/.libs/$$file \
+	    --flavor $$fl --config $(ZKRS_ABI_CONFIG)); \
+	done
+
+# check-abi and check-link run the runtime ABI tests (tests/abi) and the
+# link tests (tests/link) on each installed Rust library.
+# The runners get the legacy C tree in
+# ZK_C_DIR. Run make install first. The build-tree shared libraries have
+# the install name of the library directory, so the loader uses the
+# installed ones. The runners skip the xtask checks, because abi-check and
+# abi-static do them. ZK_ABI_TEST_HOST (host:port) names a running server.
+# An empty value skips the server tests. ZK_ABI_TEST_DEAD_HOST is an
+# address with no server. ZK_ABI_TEST_REF is the directory of a
+# legacy library of the same flavor. The runners compile with cc, because
+# CC can hold options such as -std=gnu23. The link tests get -lsasl2 with
+# the native libraries, because a SASL archive needs it. The link tests
+# also get ZKRS_CARGO_SOURCE_CONFIG, so their cargo calls use the crate
+# sources of configure.
+if ZKRS_TESTS
+ZK_ABI_TEST_HOST =
+ZK_ABI_TEST_DEAD_HOST =
+ZK_ABI_TEST_REF =
+ZK_ABI_TEST_ARGS = host='$(ZK_ABI_TEST_HOST)'; dead='$(ZK_ABI_TEST_DEAD_HOST)'; ref='$(ZK_ABI_TEST_REF)'; \
+    lib='$(DESTDIR)$(libdir)'; ZK_C_DIR='$(ZKC_ABS_SRCDIR)'; export ZK_C_DIR
+ZKRS_TEST_PHONY = check-abi check-link
+check-abi:
+	@set -e; $(ZK_ABI_TEST_ARGS); \
+	for la in $(ZKRS_LAS); do \
+	  fl=`basename $$la .la | sed 's/^libzookeeper_//'`; \
+	  echo "check-abi: $$lib (flavor $$fl, config $(ZKRS_ABI_CONFIG))"; \
+	  $(ZKRS_SRCDIR)/tests/abi/run-abi-tests.sh --flavor $$fl --config $(ZKRS_ABI_CONFIG) \
+	    --lib "$$lib" --no-xtask \
+	    --out $(abs_builddir)/abi-tests-$$fl $${host:+--host "$$host"} \
+	    $${dead:+--dead-host "$$dead"} $${ref:+--ref "$$ref"}; \
+	done
+check-link:
+	@set -e; $(ZK_ABI_TEST_ARGS); for la in $(ZKRS_LAS); do \
+	  fl=`basename $$la .la | sed 's/^libzookeeper_//'`; \
+	  test -f "$$lib/libzookeeper_$$fl.a" || { echo "check-link: no $$lib/libzookeeper_$$fl.a" >&2; exit 1; }; \
+	  echo "check-link: $$lib/libzookeeper_$$fl.a (flavor $$fl)"; \
+	  ZKRS_WORKSPACE='$(RUST_WORKSPACE)' ZKRS_CARGO_SOURCE_CONFIG='$(ZKRS_CARGO_SOURCE_CONFIG)' \
+	  $(ZKRS_SRCDIR)/tests/link/run-link-tests.sh --flavor $$fl --config $(ZKRS_ABI_CONFIG) \
+	    --archive "$$lib/libzookeeper_$$fl.a" --la "$$lib/libzookeeper_$$fl.la" \
+	    --destdir '$(DESTDIR)' \
+	    --native-libs '$(ZKRS_NATIVE_LIBS) $(ZKRS_SASL_LIBS)' --no-xtask --out $(abs_builddir)/link-tests-$$fl \
+	    $${host:+--host "$$host"} $${ref:+--ref "$$ref"}; \
+	done
+endif ZKRS_TESTS
+# automake rejects a .PHONY rule in ZKRS_TESTS, because the .PHONY rule
+# above has no condition. Without ZKRS_TESTS, the variable is empty.
+.PHONY: $(ZKRS_TEST_PHONY)
+
+if !ZKRS_PREBUILT
+# make check runs the Rust tests. zookeeper-client-c runs the legacy tests.
+# zk-ffi runs with the TLS and SASL features of this configuration.
+check-local:
+	cd $(RUST_WORKSPACE) && MAKEFLAGS= MFLAGS= CARGO_TARGET_DIR=$(abs_builddir)/cargo \
+	  $(CARGO) $(ZKRS_CARGO_SOURCE_ARGS) test --locked --workspace --exclude zk-ffi
+	cd $(RUST_WORKSPACE) && MAKEFLAGS= MFLAGS= CARGO_TARGET_DIR=$(abs_builddir)/cargo \
+	  ZK_TLS_DEFAULT_CERT_FILE="$(ZK_TLS_DEFAULT_CERT_FILE)" ZK_TLS_DEFAULT_CERT_DIR="$(ZK_TLS_DEFAULT_CERT_DIR)" \
+	  $(CARGO) $(ZKRS_CARGO_SOURCE_ARGS) test --locked -p zk-ffi $(ZKRS_CARGO_FEATURES)
+endif
+
+distclean-local:
+	rm -rf cargo cargo-sources.toml
+
+#########################################################################
+# This part builds the public-API suites zktest-public-st and
+# zktest-public-mt. They use only the public API, so the
+# same binary runs against either core. Each links the shared library of
+# its flavor, with no mocks and no --wrap. Only `make check-public` builds
+# and runs them. The mt suite needs the mt library, so it exists only with
+# WANT_SYNCAPI. The server script is tests/public/zkServer.sh. Without
+# the tests subtree, ZKRS_TESTS is false. Then these targets do not exist.
+#
+# The port variables select the server ports. Give them on the make
+# command line, then run `make clean` before a rebuild with other values.
+# The value 0 means the legacy ports.
+if ZKRS_TESTS
+ZKTEST_PORT = 22181
+ZKTEST_DOWN_PORT = 22182
+ZKTEST_QUORUM_PORT_BASE = 0
+ZKTEST_RO_PORT_BASE = 0
+# The secure port and the certificate directory of the testSSL* cases.
+ZKTEST_SSL_PORT = 22281
+ZKTEST_CERT_DIR = /tmp/certs
+ZKTEST_PUBLIC_SERVER_CMD = ZOOPORT=$(ZKTEST_PORT) ZKTEST_RO_PORT_BASE=$(ZKTEST_RO_PORT_BASE) \
+    ZKTEST_SSL_PORT=$(ZKTEST_SSL_PORT) ZKTEST_CERT_DIR=$(ZKTEST_CERT_DIR) \
+    $(ZKRS_ABS_SRCDIR)/tests/public/zkServer.sh
+ZKTEST_PUBLIC_RUN = ZKTEST_PORT=$(ZKTEST_PORT) ZKTEST_RO_PORT_BASE=$(ZKTEST_RO_PORT_BASE) \
+    ZK_C_DIR='$(ZKC_ABS_SRCDIR)' $(SHELL) $(ZKRS_SRCDIR)/tests/public/run-public.sh
+
+# The suites run in link order, and later suites need the server state of
+# earlier suites. TestClient ends with the server stopped, so TestMulti
+# must come before it. This order is the order of the legacy TEST_SOURCES.
+# Most cases need THREADED (ZOOKEEPER-2640), so the st suite has few cases.
+#
+# The suites compile copies of the legacy test sources, so the legacy
+# tree stays as it is. tests/public/gen-sources.sh makes the copies with
+# the port variables above. The copy of ZooKeeperQuorumServer.h holds the
+# quorum ports. The cases that the
+# suites do not register still compile. They read the internals, so they
+# need the legacy source root and config.h on the include path, as the
+# legacy suite does.
+# ThreadingUtil.cc gets the libc lock functions from LibCSymTable.cc
+# through dlsym, so the suites link -ldl.
+EXTRA_PROGRAMS = zktest-public-mt zktest-public-st
+ZKTEST_PUBLIC_SRC = \
+	zktest-public-src/TestDriver.cc \
+	zktest-public-src/LibCSymTable.cc \
+	zktest-public-src/Util.cc \
+	zktest-public-src/ThreadingUtil.cc \
+	zktest-public-src/TestReconfigServer.cc \
+	zktest-public-src/TestClientRetry.cc \
+	zktest-public-src/TestMulti.cc \
+	zktest-public-src/TestClient.cc \
+	zktest-public-src/ZooKeeperQuorumServer.cc \
+	zktest-public-src/ZooKeeperQuorumServer.h \
+	zktest-public-src/TestReadOnlyClient.cc \
+	zktest-public-src/TestLogClientEnv.cc \
+	zktest-public-src/TestSASLAuth.cc
+$(ZKTEST_PUBLIC_SRC): zktest-public-src/stamp
+zktest-public-src/stamp: $(ZKRS_SRCDIR)/tests/public/gen-sources.sh $(ZKRS_SRCDIR)/tests/public/omit-cases.txt \
+    $(wildcard $(ZKC_SRCDIR)/tests/*.cc $(ZKC_SRCDIR)/tests/*.h)
+	@mkdir -p zktest-public-src && rm -f $@.tmp && touch $@.tmp
+	$(SHELL) $(ZKRS_SRCDIR)/tests/public/gen-sources.sh $(ZKC_SRCDIR)/tests $(ZKTEST_PORT) \
+	  $(ZKTEST_DOWN_PORT) $(ZKTEST_SSL_PORT) $(ZKTEST_CERT_DIR) $(ZKTEST_QUORUM_PORT_BASE) \
+	  $(ZKTEST_PUBLIC_SRC)
+	@mv -f $@.tmp $@
+mostlyclean-local:
+	rm -rf zktest-public-src
+# CPPUNIT_CFLAGS defines ZKSERVER_CMD for the legacy suite, so -U removes it.
+ZKTEST_PUBLIC_CXXFLAGS = $(CPPUNIT_CFLAGS) \
+    -UZKSERVER_CMD -DZKSERVER_CMD="\"$(ZKTEST_PUBLIC_SERVER_CMD)\""
+ZKTEST_PUBLIC_CPPFLAGS = -I$(ZKC_SRCDIR) $(AM_CPPFLAGS)
+nodist_zktest_public_mt_SOURCES = $(ZKTEST_PUBLIC_SRC)
+zktest_public_mt_CPPFLAGS = $(ZKTEST_PUBLIC_CPPFLAGS)
+zktest_public_mt_CXXFLAGS = $(AM_CXXFLAGS) -DTHREADED $(ZKTEST_PUBLIC_CXXFLAGS)
+zktest_public_mt_LDADD = libzookeeper_mt.la $(CPPUNIT_LIBS) -lpthread -ldl
+nodist_zktest_public_st_SOURCES = $(ZKTEST_PUBLIC_SRC)
+zktest_public_st_CPPFLAGS = $(ZKTEST_PUBLIC_CPPFLAGS)
+zktest_public_st_CXXFLAGS = $(AM_CXXFLAGS) $(ZKTEST_PUBLIC_CXXFLAGS)
+zktest_public_st_LDADD = libzookeeper_st.la $(CPPUNIT_LIBS) -ldl
+
+if WANT_SYNCAPI
+ZKTEST_PUBLIC_MT = zktest-public-mt$(EXEEXT)
+endif
+ZKTEST_PUBLIC_BINS = $(ZKTEST_PUBLIC_MT) zktest-public-st$(EXEEXT)
+
+# The binary below .libs is the real program. --libdir puts the build-tree
+# library first on the loader path. Each suite has its own work directory.
+check-public: $(ZKTEST_PUBLIC_BINS)
+	@test -n "$(CPPUNIT_LIBS)" || { echo "check-public needs CppUnit: configure found none" >&2; exit 1; }
+	@set -e; for b in $(ZKTEST_PUBLIC_BINS); do \
+	  echo "check-public: $$b"; \
+	  $(ZKTEST_PUBLIC_RUN) --libdir .libs --workdir $(abs_builddir)/zktest-public/$$b .libs/$$b; \
+	done
+endif ZKRS_TESTS

@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <!--
+  /**
+   * Licensed to the Apache Software Foundation (ASF) under one
+   * or more contributor license agreements.  See the NOTICE file
+   * distributed with this work for additional information
+   * regarding copyright ownership.  The ASF licenses this file
+   * to you under the Apache License, Version 2.0 (the
+   * "License"); you may not use this file except in compliance
+   * with the License.  You may obtain a copy of the License at
+   *
+   *     http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   */
+  -->
+  <!--
+  The Rust client and the drop-in C client libraries with the Rust core.
+
+  The rust profile of zookeeper-client adds this module:
+  mvn -Pfull-build -Prust install builds the legacy C client and the Rust
+  client. Cargo, autotools and make do the work, through
+  maven/rust-module.sh. The module builds the workspace crates and the
+  zk-ffi staticlib. Then the drop-in project in
+  c links the staticlib into libzookeeper_st and libzookeeper_mt, and
+  installs them in target/c. -Drust-dropin=no builds only the crates.
+  This module changes no file of zookeeper-client-c. maven/README.md
+  gives the properties and the profiles.
+  -->
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.apache.zookeeper</groupId>
+    <artifactId>zookeeper-client</artifactId>
+    <version>3.10.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>zookeeper-client-rust</artifactId>
+  <packaging>pom</packaging>
+  <name>Apache ZooKeeper - Client - Rust</name>
+  <description>ZooKeeper Rust client and the Rust core of the C client</description>
+
+  <properties>
+    <!-- plain, coverage (rust-test-coverage) or asan (rust-test-asan) -->
+    <rust-test-mode>plain</rust-test-mode>
+    <!-- the first port of the real-server tests; when it is empty, the real-server tests do not run -->
+    <rust-test-port-base></rust-test-port-base>
+    <!-- the Curator interop job (profile rust-integration) -->
+    <rust-it-port-base>23400</rust-it-port-base>
+    <rust-it-server-versions>head</rust-it-server-versions>
+    <rust-it-mvn-args></rust-it-mvn-args>
+    <skipTests>false</skipTests>
+    <!-- the -C target-cpu of the zk-ffi staticlib: auto follows the C compiler, no adds no flag, else a CPU name -->
+    <rust-target-cpu>auto</rust-target-cpu>
+    <!-- yes builds the drop-in C client libraries; no builds only the crates -->
+    <rust-dropin>yes</rust-dropin>
+    <!-- yes, or the property without a value, runs the drop-in checks (see the profile rust-dropin-check) -->
+    <rust-dropin-check>no</rust-dropin-check>
+    <!-- the profiles c-test-coverage and c-test-asan set these configure options, as in zookeeper-client-c -->
+    <c-test-coverage-arg> </c-test-coverage-arg>
+    <c-test-asan-arg> </c-test-asan-arg>
+  </properties>
+
+  <!-- these modules give the generated jute records and the test server, and set the reactor order -->
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper-jute</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>rust-dropin-value</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireProperty>
+                  <property>rust-dropin</property>
+                  <regex>no|yes</regex>
+                  <regexMessage>-Drust-dropin=${rust-dropin} is not valid: give no or yes</regexMessage>
+                </requireProperty>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>rust-dropin-check-value</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireProperty>
+                  <property>rust-dropin-check</property>
+                  <regex>no|yes|false|true</regex>
+                  <regexMessage>-Drust-dropin-check=${rust-dropin-check} is not valid: give no or yes, or give the property without a value</regexMessage>
+                </requireProperty>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <workingDirectory>${project.basedir}</workingDirectory>
+          <executable>sh</executable>
+          <environmentVariables>
+            <ZKRS_TLS>${rust-tls}</ZKRS_TLS>
+            <ZKRS_TLS_PROVIDER>${rust-tls-provider}</ZKRS_TLS_PROVIDER>
+            <ZKRS_TARGET_CPU>${rust-target-cpu}</ZKRS_TARGET_CPU>
+            <ZKRS_CARGO_VENDOR>${rust-cargo-vendor}</ZKRS_CARGO_VENDOR>
+            <ZKRS_SYSTEM_CRATES>${rust-system-crates}</ZKRS_SYSTEM_CRATES>
+            <ZKRS_OPENSSL>${c-client-openssl}</ZKRS_OPENSSL>
+            <ZKRS_SASL>${c-client-sasl}</ZKRS_SASL>
+            <ZKRS_VERSION>${project.version}</ZKRS_VERSION>
+            <ZKRS_BUILD_DIR>${project.build.directory}</ZKRS_BUILD_DIR>
+            <ZKRS_SKIP_TESTS>${skipTests}</ZKRS_SKIP_TESTS>
+            <ZKRS_TEST_MODE>${rust-test-mode}</ZKRS_TEST_MODE>
+            <ZKRS_TEST_PORT_BASE>${rust-test-port-base}</ZKRS_TEST_PORT_BASE>
+            <CARGO_TARGET_DIR>${project.build.directory}/cargo</CARGO_TARGET_DIR>
+            <ZKRS_DROPIN>${rust-dropin}</ZKRS_DROPIN>
+            <ZKRS_DROPIN_CHECK>${rust-dropin-check}</ZKRS_DROPIN_CHECK>
+            <ZKRS_CONFIGURE_ARGS>${c-test-coverage-arg} ${c-test-asan-arg}</ZKRS_CONFIGURE_ARGS>
+            <ACLOCAL>aclocal -I /usr/share/aclocal</ACLOCAL>
+          </environmentVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <!-- checks the options, the toolchain and the version; makes the TLS and SASL decisions and fetches the crates -->
+            <id>rust-prepare</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <arguments>
+                <argument>${project.basedir}/maven/rust-module.sh</argument>
+                <argument>prepare</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- builds the zk-ffi staticlib with the capi profile, then the other crates -->
+            <id>rust-build</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <arguments>
+                <argument>${project.basedir}/maven/rust-module.sh</argument>
+                <argument>build</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- makes the configure script of the drop-in project in c -->
+            <id>dropin-autoreconf</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <arguments>
+                <argument>${project.basedir}/maven/rust-module.sh</argument>
+                <argument>dropin-autoreconf</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- configures the drop-in project in target/c-build with the prebuilt staticlib -->
+            <id>dropin-configure</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <arguments>
+                <argument>${project.basedir}/maven/rust-module.sh</argument>
+                <argument>dropin-configure</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- builds the drop-in libraries and installs them in target/c -->
+            <id>dropin-install</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <arguments>
+                <argument>${project.basedir}/maven/rust-module.sh</argument>
+                <argument>dropin-install</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- checks the exported symbols and the runtime ABI of the installed drop-in libraries -->
+            <id>dropin-abi-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <arguments>
+                <argument>${project.basedir}/maven/rust-module.sh</argument>
+                <argument>dropin-abi-check</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <!-- this module isn't to be deployed to Maven Central -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <!--
+          The root pom excludes these files for a scan from the root. A scan
+          of this module uses paths relative to the module, so the module
+          gives the same excludes in that form.
+          -->
+          <excludes combine.children="append">
+            <exclude>**/Cargo.lock</exclude>
+            <exclude>**/target/**</exclude>
+            <exclude>fuzz/corpus/**</exclude>
+            <exclude>fuzz/artifacts/**</exclude>
+            <exclude>c/build-aux/**</exclude>
+            <exclude>c/autom4te.cache/**</exclude>
+            <exclude>c/configure</exclude>
+            <exclude>c/configure~</exclude>
+            <exclude>c/Makefile.in</exclude>
+            <exclude>c/aclocal.m4</exclude>
+            <exclude>c/config.h.in</exclude>
+            <exclude>c/config.h.in~</exclude>
+            <exclude>c/libtool</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <!--
+      -Drust-dropin-check or -Drust-dropin-check=yes runs the link tests and the
+      public-API suites of the drop-in libraries. Each value of the property
+      activates this profile, so the script does nothing for no and false.
+      -->
+      <id>rust-dropin-check</id>
+      <activation>
+        <property>
+          <name>rust-dropin-check</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>dropin-check</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <!-- -DskipTests skips these checks -->
+                  <arguments>
+                    <argument>${project.basedir}/maven/rust-module.sh</argument>
+                    <argument>dropin-check</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- -DskipCargoTest or -DskipTests skips the cargo tests -->
+      <id>cargo-test</id>
+      <activation>
+        <property>
+          <name>!skipCargoTest</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>rust-test</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <!-- the environment of the cppunit profile of zookeeper-client-c -->
+                  <environmentVariables>
+                    <LD_LIBRARY_PATH>${env.LD_LIBRARY_PATH};/usr/lib</LD_LIBRARY_PATH>
+                    <CALLER>ANT</CALLER>
+                    <CLOVER_HOME>${project.basedir}/../../zookeeper-server/target</CLOVER_HOME>
+                    <base_dir>${project.basedir}/../..</base_dir>
+                  </environmentVariables>
+                  <arguments>
+                    <argument>${project.basedir}/maven/rust-module.sh</argument>
+                    <argument>test</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- -DskipRustLint skips the lint checks -->
+      <id>rust-lint</id>
+      <activation>
+        <property>
+          <name>!skipRustLint</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <!-- cargo fmt check and cargo clippy with -D warnings -->
+                <id>rust-lint</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <arguments>
+                    <argument>${project.basedir}/maven/rust-module.sh</argument>
+                    <argument>lint</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- opt-in with -Prust-integration: the Curator interop test of zk-recipes against real servers -->
+      <id>rust-integration</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>rust-curator-interop</id>
+                <phase>integration-test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <environmentVariables>
+                    <ZKRS_IT_PORT_BASE>${rust-it-port-base}</ZKRS_IT_PORT_BASE>
+                    <ZKRS_IT_VERSIONS>${rust-it-server-versions}</ZKRS_IT_VERSIONS>
+                    <ZKRS_IT_MVN_ARGS>${rust-it-mvn-args}</ZKRS_IT_MVN_ARGS>
+                    <!-- the text around the expression makes a string of the boolean setting -->
+                    <ZKRS_MVN_OFFLINE>offline=${settings.offline}</ZKRS_MVN_OFFLINE>
+                    <ZKRS_MVN_REPO>${settings.localRepository}</ZKRS_MVN_REPO>
+                  </environmentVariables>
+                  <arguments>
+                    <argument>${project.basedir}/maven/rust-module.sh</argument>
+                    <argument>interop</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- builds the drop-in libraries with gcov instrumentation, as the profile of the same id in zookeeper-client-c -->
+      <id>c-test-coverage</id>
+      <properties>
+        <c-test-coverage-arg>--enable-gcov</c-test-coverage-arg>
+      </properties>
+    </profile>
+    <profile>
+      <!-- builds the drop-in libraries with AddressSanitizer and LeakSanitizer, as the profile of the same id in zookeeper-client-c -->
+      <id>c-test-asan</id>
+      <properties>
+        <c-test-asan-arg>--enable-asan</c-test-asan-arg>
+      </properties>
+    </profile>
+    <profile>
+      <!-- the cargo tests with coverage instrumentation (needs cargo-llvm-cov) -->
+      <id>rust-test-coverage</id>
+      <properties>
+        <rust-test-mode>coverage</rust-test-mode>
+      </properties>
+    </profile>
+    <profile>
+      <!-- the cargo tests with AddressSanitizer and LeakSanitizer (needs a nightly toolchain) -->
+      <id>rust-test-asan</id>
+      <properties>
+        <rust-test-mode>asan</rust-test-mode>
+      </properties>
+    </profile>
+  </profiles>
+
+</project>

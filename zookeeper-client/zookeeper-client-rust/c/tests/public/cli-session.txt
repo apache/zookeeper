@@ -1,0 +1,114 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Scripted `cli_st` interactive session. Consumed by # `run-cli-session.sh` to
+# verify differential output equivalence between the legacy C and Rust single-
+# threaded implementations.
+#
+# Invariant: in `st` mode, `cli_st` drives its handle via `zookeeper_interest`
+# and `zookeeper_process`, dispatching all watchers and completion callbacks
+# synchronously on the caller thread inside `zookeeper_process` (spec lines
+# 384-393, 584-589). Because output ordering directly reflects callback dispatch
+# order, comparing normalized transcripts verifies FIFO dispatch equivalence.
+#
+# Directive syntax:
+#   > LINE      Write LINE to `cli_st` stdin. Consecutive `>` lines without an
+#               intervening wait are pipelined back-to-back.
+#   ? ERE       Await one new line matching extended regex ERE on `cli_st`
+#               stderr emitted after the start of the current command group.
+#   ?N ERE      Await N new lines matching ERE.
+#   ! LINE      Execute a secondary batch client (`cli_st` with `"cmd:LINE"`) to
+#               completion, starting a new command group and recording auxiliary
+#               output to a separate stream.
+# All waits are bounded by `run-cli-session.sh --wait`.
+
+# Session establishment event dispatched via `zookeeper_process`.
+? ^Got a new session id
+
+# Asynchronous node creation across persistent, ephemeral, and sequential modes.
+> create /clis
+? ^\[/clis\]: rc = 0
+> create +e /clis/eph
+? ^\[/clis/eph\]: rc = 0
+> create +s /clis/seq-
+? ^\[/clis/seq-\]: rc = 0
+
+# Register a data watch (`get`) and child watch (`ls`) on `/clis`.
+> get /clis
+? ephemeralOwner
+> ls /clis
+?2 ^time =
+
+# `set` triggers the data watch on `/clis`. The server transmits the watch
+# notification frame ahead of the set response; single-queue FIFO ordering
+# ensures the watcher executes before the completion callback.
+> set /clis newdata
+? ^Watcher CHANGED_EVENT
+? ^/clis: rc = 0 Stat:
+? ephemeralOwner
+
+# `ls2` retrieves both child names and node `Stat`.
+> ls2 /clis
+? ephemeralOwner
+
+# Creating a child node triggers the registered child watch.
+> create /clis/child
+? ^Watcher CHILD_EVENT
+? ^\[/clis/child\]: rc = 0
+
+# `wexists` registers an existence watch on a non-existent path, triggered by `create`.
+> wexists /clis/later
+? ^/clis/later: rc = -101 Stat:
+> create /clis/later
+? ^Watcher CREATED_EVENT
+? ^\[/clis/later\]: rc = 0
+
+# `exists` registers an existence watch, triggered by `delete`.
+> exists /clis/later
+? ^/clis/later: rc = 0 Stat:
+> delete /clis/later
+? ^Watcher DELETED_EVENT
+? ^/clis/later: rc = 0
+
+# Three pipelined requests flushed in submission order complete in FIFO order.
+> create /clis/p1
+> create /clis/p2
+> delete /clis/p1
+? ^\[/clis/p1\]: rc = 0
+? ^\[/clis/p2\]: rc = 0
+? ^/clis/p1: rc = 0
+
+# Out-of-band watch notification triggered by an external client while `cli_st`
+# is blocked in `select()`.
+> get /clis/eph
+? ephemeralOwner
+! set /clis/eph other
+? ^Watcher CHANGED_EVENT state = CONNECTED_STATE for path /clis/eph
+
+# Exercise `sync`, `ZNONODE` (-101), `ZNOTEMPTY` (-111), and client side path validation.
+> sync /clis
+? ^\[/clis\]: rc = 0
+> get /clis/missing
+? ^/clis/missing: rc = -101
+> delete /clis
+? ^/clis: rc = -111
+> get clis
+? ^Path must start with /
+
+# `myid` writes the session ID to stdout; `quit` closes the handle and exits.
+> myid
+> quit
+? ^Quitting

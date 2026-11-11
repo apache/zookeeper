@@ -1,0 +1,118 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+name = "zk-driver"
+description = "Network transports, TLS and drivers for the ZooKeeper protocol core."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+zk-jute.workspace = true
+zk-proto.workspace = true
+# The transmit copy buffer can hold secret frames.
+zeroize = { workspace = true, features = ["alloc"] }
+rustix = { workspace = true, features = ["std", "net", "event", "pipe", "fs", "use-libc"] }
+rustls = { workspace = true, optional = true, features = ["std", "tls12"] }
+rustls-pki-types = { workspace = true, optional = true, features = ["std"] }
+rustls-webpki = { workspace = true, optional = true, features = ["std"] }
+# PEM, X.509 and PKCS#8 parsing for the legacy TLS inputs.
+# Every TLS build has these crates.
+der = { workspace = true, optional = true, features = ["alloc", "oid"] }
+spki = { workspace = true, optional = true, features = ["alloc"] }
+pem-rfc7468 = { workspace = true, optional = true, features = ["alloc"] }
+base64ct = { workspace = true, optional = true, features = ["alloc"] }
+pkcs8 = { workspace = true, optional = true, features = ["alloc", "pkcs5"] }
+sha2 = { workspace = true, optional = true }
+# Key decryption in safe Rust. Only the non-FIPS providers enable these
+# crates.
+pkcs5 = { workspace = true, optional = true, features = ["alloc"] }
+pbkdf2 = { workspace = true, optional = true, features = ["hmac"] }
+scrypt = { workspace = true, optional = true }
+hmac = { workspace = true, optional = true }
+sha1 = { workspace = true, optional = true }
+aes = { workspace = true, optional = true }
+des = { workspace = true, optional = true }
+cbc = { workspace = true, optional = true, features = ["alloc"] }
+cipher = { workspace = true, optional = true, features = ["alloc", "block-padding"] }
+md-5 = { workspace = true, optional = true }
+# The provider crate gives SHA-1 for the subject hash. The FIPS build also
+# derives and decrypts keys in the FIPS module.
+ring = { workspace = true, optional = true }
+aws-lc-rs = { workspace = true, optional = true }
+
+# The loom models replace the lock facade under `--cfg loom`. Normal
+# builds never select this table, and no shipped artifact contains loom.
+[target.'cfg(loom)'.dependencies]
+loom.workspace = true
+
+# AsyncFd is a Unix API, so the tokio driver exists only on Unix.
+[target.'cfg(unix)'.dependencies]
+tokio = { workspace = true, optional = true, features = ["rt", "net", "time", "sync", "io-util"] }
+
+[dev-dependencies]
+zk-fakeserver = { workspace = true, features = ["tls"] }
+zk-testkit.workspace = true
+proptest = { workspace = true, features = ["std"] }
+
+# `tls` is the TLS module. It needs exactly one provider feature, and each
+# provider feature implies `tls`. Builds never use --all-features.
+#
+# `_legacy-keys` is internal. It holds the RustCrypto key-decryption crates
+# and `legacy_pem.rs`, and only the non-FIPS providers enable it.
+[features]
+default = []
+tls = [
+    "dep:rustls",
+    "dep:rustls-pki-types",
+    "dep:rustls-webpki",
+    "dep:der",
+    "dep:spki",
+    "dep:pem-rfc7468",
+    "dep:base64ct",
+    "dep:pkcs8",
+    "dep:sha2",
+]
+tls-ring = ["tls", "rustls/ring", "dep:ring", "_legacy-keys"]
+tls-aws-lc-rs = ["tls", "rustls/aws_lc_rs", "dep:aws-lc-rs", "aws-lc-rs/aws-lc-sys", "_legacy-keys"]
+tls-aws-lc-rs-fips = ["tls", "rustls/fips", "dep:aws-lc-rs", "aws-lc-rs/fips"]
+_legacy-keys = [
+    "pkcs8/encryption",
+    "pkcs8/3des",
+    "pkcs8/sha1-insecure",
+    "dep:pkcs5",
+    "pkcs5/pbes2",
+    "pkcs5/3des",
+    "pkcs5/sha1-insecure",
+    "dep:pbkdf2",
+    "dep:scrypt",
+    "dep:hmac",
+    "dep:sha1",
+    "dep:aes",
+    "dep:des",
+    "dep:cbc",
+    "dep:cipher",
+    "dep:md-5",
+]
+tokio = ["dep:tokio"]
+std-thread = []

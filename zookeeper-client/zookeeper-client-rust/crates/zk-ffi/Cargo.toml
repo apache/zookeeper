@@ -1,0 +1,83 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+name = "zk-ffi"
+description = "C ABI bridge for the libzookeeper_mt and libzookeeper_st drop-in libraries."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+# zk-ffi keeps its own lint table, because the workspace forbids
+# unsafe_code and this crate allows it in `src/abi`.
+# The other entries repeat the workspace lints.
+[lints.rust]
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+missing_docs = "warn"
+rust_2018_idioms = { level = "deny", priority = -1 }
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(loom)"] }
+
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"
+multiple_unsafe_ops_per_block = "deny"
+missing_safety_doc = "deny"
+ptr_as_ptr = "deny"
+large_stack_arrays = "deny"
+large_stack_frames = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+
+# libc gives malloc, calloc and free to `abi::raw` only. zeroize keeps
+# the TLS passphrase copy. The plain drop-in build
+# passes no feature, so its staticlib has no TLS code.
+[dependencies]
+zk-jute.workspace = true
+zk-proto.workspace = true
+zk-driver.workspace = true
+libc = { version = "0.2", default-features = false }
+zeroize = { workspace = true, features = ["alloc"] }
+
+# The TLS tests take their certificates from the test-time fixtures.
+[dev-dependencies]
+zk-testkit.workspace = true
+
+# The loom models of the C exports run under `--cfg loom` only.
+[target.'cfg(loom)'.dev-dependencies]
+loom.workspace = true
+
+# The drop-in configurations. `tls` needs exactly one provider
+# feature, and each provider feature implies `tls`. `sasl` enables the
+# Cyrus SASL item flow; Cyrus itself stays in the C glue.
+[features]
+default = []
+tls = ["zk-driver/tls"]
+tls-ring = ["tls", "zk-driver/tls-ring"]
+tls-aws-lc-rs = ["tls", "zk-driver/tls-aws-lc-rs"]
+tls-aws-lc-rs-fips = ["tls", "zk-driver/tls-aws-lc-rs-fips"]
+sasl = []

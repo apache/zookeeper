@@ -1,0 +1,50 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+name = "apache-zookeeper-recipes"
+description = "Coordination recipes for Apache ZooKeeper."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "apache_zookeeper_recipes"
+
+# The only normal dependency is the client, with no features.
+# The crate has no runtime, timer or UUID dependency of its own.
+[dependencies]
+apache-zookeeper.workspace = true
+
+# The tests run the client on its own IO thread (`Runtime::Thread`), so
+# they need no client feature. tokio gives the test executor and its
+# timeouts only. zk-fakeserver is the in-process model server of the
+# model-level tests.
+[dev-dependencies]
+zk-fakeserver.workspace = true
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "time", "sync"] }
+
+# The Curator interop peer. The JUnit test in `interop/curator` starts
+# it as a process.
+[[example]]
+name = "interop_peer"
+path = "examples/interop_peer.rs"
