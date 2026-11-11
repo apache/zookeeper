@@ -111,6 +111,36 @@ public interface IWatchManager {
     void removeWatcher(Watcher watcher);
 
     /**
+     * Supplies a callback this watch manager can use, at event-delivery time, to resolve the
+     * current ACL of an arbitrary path. An implementation that supports
+     * {@link WatcherMode#PERSISTENT_RECURSIVE} watches uses this to additionally require READ
+     * on a recursive watch's own registration root before delivering an event about one of its
+     * descendants -- otherwise a client with no READ on a restricted subtree could register a
+     * recursive watch on it and learn descendant names as soon as a more permissively-ACL'd
+     * descendant changes, bypassing the READ requirement {@code getChildren()} enforces for the
+     * same discovery. An implementation that doesn't support recursive watches may ignore this.
+     *
+     * @param lookup resolves a path's current ACL
+     */
+    default void setPathAclLookup(PathAclLookup lookup) {
+        // no-op: only relevant to implementations that support PERSISTENT_RECURSIVE watches
+    }
+
+    /**
+     * Whether this implementation actually honors {@link #setPathAclLookup}. An implementation
+     * that doesn't override {@code setPathAclLookup} (the default no-op above) must also leave
+     * this at its default {@code false}, so that callers enabling
+     * {@code zookeeper.recursiveWatch.requireAncestorRead} against such an implementation can
+     * detect and log that the setting will silently have no effect, rather than the operator
+     * believing the ancestor-READ gate is active when it isn't.
+     *
+     * @return true if calling {@link #setPathAclLookup} has a real effect on event delivery
+     */
+    default boolean supportsPathAclLookup() {
+        return false;
+    }
+
+    /**
      * Distribute the watch event for the given path.
      *
      * @param path znode path
