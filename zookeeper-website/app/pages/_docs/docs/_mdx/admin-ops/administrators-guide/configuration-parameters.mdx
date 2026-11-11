@@ -1480,6 +1480,31 @@ the integrity of IP-based access controls.
 
   Default: **true** (3.9.0+), **false** (3.8.x)
 
+- _recursiveWatch.requireAncestorRead_ :
+  (Java system property: **zookeeper.recursiveWatch.requireAncestorRead**)
+  **New in 3.10.0:**
+  ZooKeeper ACLs are per-node and not inherited, so a child znode can have a strictly more
+  permissive ACL than its parent. By default, a `PERSISTENT_RECURSIVE` watch (see
+  "Persistent, Recursive Watches" in the Programmer's Guide) is notified about a descendant's
+  change as soon as that descendant's own ACL grants the watching client READ, regardless of
+  whether the client has READ on the watch's own registration root or on any node between that
+  root and the descendant.
+  This is intentional, long-standing behavior, not an oversight, but it does mean a client with no
+  READ on a restricted subtree can still learn descendant names under it via a recursive watch,
+  something `getChildren()` would not allow for the same subtree.
+
+  Setting this property to **true** additionally requires READ, re-checked live at event-delivery
+  time, on every node from a recursive watch's registration root down to the changed node's own
+  parent, inclusive, before notifying that watch. This matches what `getChildren()` already
+  enforces for the same discovery, and must be set on every server in the ensemble, since each
+  server independently delivers its own watch events to the clients connected to it.
+
+  This has no effect unless the configured `zookeeper.watchManagerName` is one that supports
+  resolving a znode's ACL at delivery time (the default `WatchManager` does); the server logs a
+  warning at startup if this is set with a watch manager that doesn't.
+
+  Default: **false**.
+
 ## Single EKU certificate support
 
 **New in 3.10.0.**

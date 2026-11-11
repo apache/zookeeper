@@ -99,13 +99,17 @@ public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
     /**
-     * When enabled, a PERSISTENT_RECURSIVE watch additionally requires READ on its own
-     * registration root (resolved live, at event-delivery time) before being notified about one
-     * of that root's descendants -- not just READ on the changed node itself. This is OFF by
-     * default: letting a recursive watch see a descendant whose own ACL is more permissive than
-     * its ancestor's is long-standing, specified ZooKeeper behavior (see
+     * When enabled, a PERSISTENT_RECURSIVE watch additionally requires READ on every node from
+     * its own registration root down to the event's parent, inclusive (resolved live, at
+     * event-delivery time), before being notified about one of that root's descendants -- not
+     * just READ on the changed node itself, and not just on the registration root alone (an
+     * unreadable node anywhere in between would otherwise still have its existence disclosed).
+     * This is OFF by default: letting a recursive watch see a descendant whose own ACL is more
+     * permissive than its ancestor's is long-standing, specified ZooKeeper behavior (see
      * {@code PersistentWatcherACLTest}'s "truth table"), not an oversight, so changing it is
-     * opt-in rather than a default-on behavior change for every existing deployment.
+     * opt-in rather than a default-on behavior change for every existing deployment. This must be
+     * set on every server in the ensemble, since each server independently delivers its own watch
+     * events; see {@code zookeeperAdmin.md}.
      */
     public static final String REQUIRE_RECURSIVE_WATCH_ANCESTOR_READ = "zookeeper.recursiveWatch.requireAncestorRead";
 
@@ -319,6 +323,18 @@ public class DataTree {
             if (requireRecursiveWatchAncestorRead) {
                 dataWatches.setPathAclLookup(this::lookupAclForWatchGate);
                 childWatches.setPathAclLookup(this::lookupAclForWatchGate);
+                if (!dataWatches.supportsPathAclLookup() || !childWatches.supportsPathAclLookup()) {
+                    // setPathAclLookup defaults to a no-op, so a configured
+                    // zookeeper.watchManagerName that doesn't override it (e.g.
+                    // WatchManagerOptimized) would otherwise make this flag silently do nothing.
+                    LOG.warn(
+                        "{} is set but the configured watch manager ({}) does not support "
+                            + "resolving a recursive watch's ancestor ACL at delivery time; "
+                            + "PERSISTENT_RECURSIVE watches will NOT have ancestor-READ enforced "
+                            + "despite this setting",
+                        REQUIRE_RECURSIVE_WATCH_ANCESTOR_READ,
+                        WatchManagerFactory.ZOOKEEPER_WATCH_MANAGER_NAME);
+                }
             }
         } catch (Exception e) {
             LOG.error("Unexpected exception when creating WatchManager, exiting abnormally", e);

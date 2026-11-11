@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ClientCnxn;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -718,37 +717,6 @@ public class NIOServerCnxn extends ServerCnxn {
     public void process(WatchedEvent event, List<ACL> znodeAcl, Map<String, List<ACL>> recursiveWatchRootAcls) {
         if (checkWatchDeliveryAcl(event, znodeAcl, recursiveWatchRootAcls)) {
             deliverWatchedEvent(event);
-        }
-    }
-
-    /**
-     * @param recursiveWatchRootAcls see {@link ServerWatcher#process(WatchedEvent, List, Map)};
-     *                                {@code null} when this delivery isn't through a
-     *                                PERSISTENT_RECURSIVE watch's ancestor registration.
-     * @return true if {@code event} may be delivered
-     */
-    private boolean checkWatchDeliveryAcl(WatchedEvent event, List<ACL> znodeAcl, Map<String, List<ACL>> recursiveWatchRootAcls) {
-        try {
-            zkServer.checkACL(this, znodeAcl, ZooDefs.Perms.READ, getAuthInfo(), event.getPath(), null);
-            if (recursiveWatchRootAcls != null) {
-                for (Map.Entry<String, List<ACL>> rootAcl : recursiveWatchRootAcls.entrySet()) {
-                    if (rootAcl.getValue() == null) {
-                        // the registration root no longer exists; we can't confirm READ on it,
-                        // so fail closed rather than silently skipping the check.
-                        throw new KeeperException.NoAuthException();
-                    }
-                    zkServer.checkACL(this, rootAcl.getValue(), ZooDefs.Perms.READ, getAuthInfo(), rootAcl.getKey(), null);
-                }
-            }
-            return true;
-        } catch (KeeperException.NoAuthException e) {
-            if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(
-                    LOG,
-                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                    "Not delivering event " + event + " to 0x" + Long.toHexString(this.sessionId) + " (filtered by ACL)");
-            }
-            return false;
         }
     }
 

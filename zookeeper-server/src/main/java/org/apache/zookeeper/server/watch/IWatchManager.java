@@ -127,6 +127,20 @@ public interface IWatchManager {
     }
 
     /**
+     * Whether this implementation actually honors {@link #setPathAclLookup}. An implementation
+     * that doesn't override {@code setPathAclLookup} (the default no-op above) must also leave
+     * this at its default {@code false}, so that callers enabling
+     * {@code zookeeper.recursiveWatch.requireAncestorRead} against such an implementation can
+     * detect and log that the setting will silently have no effect, rather than the operator
+     * believing the ancestor-READ gate is active when it isn't.
+     *
+     * @return true if calling {@link #setPathAclLookup} has a real effect on event delivery
+     */
+    default boolean supportsPathAclLookup() {
+        return false;
+    }
+
+    /**
      * Distribute the watch event for the given path.
      *
      * @param path znode path
