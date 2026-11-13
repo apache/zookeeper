@@ -25,7 +25,13 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 
 public class DeleteContainerRequest implements Record {
+    /**
+     * Delete the node at the path whatever its mzxid.
+     */
+    public static final long ANY_MZXID = -1;
+
     private String path;
+    private long mzxid = ANY_MZXID;
 
     public DeleteContainerRequest() {
     }
@@ -34,18 +40,33 @@ public class DeleteContainerRequest implements Record {
         this.path = path;
     }
 
+    /**
+     * @param mzxid only delete the node if it still has this mzxid, so not if it was modified, or
+     *              replaced by a node created at the same path, after it was checked for deletion
+     */
+    public DeleteContainerRequest(String path, long mzxid) {
+        this.path = path;
+        this.mzxid = mzxid;
+    }
+
     public String getPath() {
         return path;
+    }
+
+    public long getMzxid() {
+        return mzxid;
     }
 
     @Override
     public void serialize(OutputArchive archive, String tag) throws IOException {
         archive.writeBuffer(path.getBytes(StandardCharsets.UTF_8), "path");
+        archive.writeLong(mzxid, "mzxid");
     }
 
     @Override
     public void deserialize(InputArchive archive, String tag) throws IOException {
         byte[] bytes = archive.readBuffer("path");
         path = new String(bytes, StandardCharsets.UTF_8);
+        mzxid = archive.readLong("mzxid");
     }
 }
