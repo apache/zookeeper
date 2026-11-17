@@ -119,6 +119,7 @@ TEST_SOURCES = \
 	tests/ZooKeeperQuorumServer.cc \
 	tests/ZooKeeperQuorumServer.h \
 	tests/TestReadOnlyClient.cc \
+	tests/TestXid.cc \
 	tests/TestLogClientEnv.cc \
         tests/TestSASLAuth.cc \
 	$(NULL)
