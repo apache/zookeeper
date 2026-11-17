@@ -161,10 +161,10 @@ Mock_flush_send_queue* Mock_flush_send_queue::mock_=0;
 
 //******************************************************************************
 //
-DECLARE_WRAPPER(int32_t,get_xid,())
+DECLARE_WRAPPER(int32_t,get_xid,(zhandle_t* zh))
 {
     if(!Mock_get_xid::mock_)
-        return CALL_REAL(get_xid,());
+        return CALL_REAL(get_xid,(zh));
     return Mock_get_xid::mock_->call();
 }
 
