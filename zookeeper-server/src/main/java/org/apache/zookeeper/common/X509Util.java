@@ -83,7 +83,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    public static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    public static final String DEFAULT_PROTOCOL_SERVER = "TLSv1.2";
+    public static final String DEFAULT_PROTOCOL_CLIENT = "TLS";
     private static String[] getGCMCiphers() {
         return new String[]{"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"};
     }
@@ -288,7 +289,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        return createSSLContextAndOptions(config).getSSLContext();
+        return createSSLContextAndOptions(config, true).getSSLContext();
     }
 
     public SSLContextAndOptions getDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
@@ -341,8 +342,12 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
+        return createSSLContextAndOptions(config, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config, boolean isClient) throws SSLContextException {
         final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
         if (supplierContextClassName != null) {
             LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
@@ -364,11 +369,11 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                                               + "'", e);
             }
         } else {
-            return createSSLContextAndOptionsFromConfig(config);
+            return createSSLContextAndOptionsFromConfig(config, isClient);
         }
     }
 
-    public SSLContextAndOptions createSSLContextAndOptionsFromConfig(ZKConfig config) throws SSLContextException {
+    public SSLContextAndOptions createSSLContextAndOptionsFromConfig(ZKConfig config, boolean isClient) throws SSLContextException {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 
@@ -421,7 +426,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             }
         }
 
-        String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        String defaultProtocol = isClient ? DEFAULT_PROTOCOL_CLIENT : DEFAULT_PROTOCOL_SERVER;
+        String protocol = config.getProperty(sslProtocolProperty, defaultProtocol);
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);

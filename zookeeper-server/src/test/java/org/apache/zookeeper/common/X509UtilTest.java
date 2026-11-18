@@ -101,7 +101,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             throws Exception {
         init(caKeyType, certKeyType, keyPassword, paramIndex);
         SSLContext sslContext = x509Util.getDefaultSSLContext();
-        assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
+        assertEquals(X509Util.DEFAULT_PROTOCOL_SERVER, sslContext.getProtocol());
     }
 
     @ParameterizedTest
