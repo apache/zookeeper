@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -282,7 +283,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         private LearnerType getType(String s) throws ConfigException {
-            switch (s.trim().toLowerCase()) {
+            switch (s.trim().toLowerCase(Locale.ROOT)) {
                 case "observer":
                     return LearnerType.OBSERVER;
                 case "participant":
@@ -1004,14 +1005,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public String getDetailedPeerState() {
-        final StringBuilder sb = new StringBuilder(getPeerState().toString().toLowerCase());
+        final StringBuilder sb = new StringBuilder(getPeerState().toString().toLowerCase(Locale.ROOT));
         final ZabState zabState = getZabState();
         if (!ZabState.ELECTION.equals(zabState)) {
-            sb.append(" - ").append(zabState.toString().toLowerCase());
+            sb.append(" - ").append(zabState.toString().toLowerCase(Locale.ROOT));
         }
         final SyncMode syncMode = getSyncMode();
         if (!SyncMode.NONE.equals(syncMode)) {
-            sb.append(" - ").append(syncMode.toString().toLowerCase());
+            sb.append(" - ").append(syncMode.toString().toLowerCase(Locale.ROOT));
         }
         return sb.toString();
     }
