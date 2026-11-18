@@ -35,6 +35,8 @@ import org.apache.jute.compiler.generated.Token;
  */
 public class JRecord extends JCompType {
 
+    private static final String COMMENT_LINE_SEPARATOR = "\n";
+
     private String mFQName;
     private String mName;
     private String mModule;
@@ -866,7 +868,7 @@ public class JRecord extends JCompType {
             if (!line.isEmpty()) {
                 builder.append(indent).append(line);
             }
-            builder.append(System.lineSeparator());
+            builder.append(COMMENT_LINE_SEPARATOR);
         }
 
         return builder.toString();
