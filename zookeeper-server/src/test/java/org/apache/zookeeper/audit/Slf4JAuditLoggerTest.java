@@ -32,6 +32,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.ZooDefs;
@@ -242,6 +243,27 @@ public class Slf4JAuditLoggerTest extends QuorumPeerTestBase {
         verifyLog(getAuditLog(AuditConstants.OP_MULTI_OP, null,
                 Result.FAILURE),
                 readAuditLog(os));
+    }
+
+    @Test
+    public void testMultiOperationCreateModeAuditLogs()
+            throws InterruptedException, KeeperException, IOException {
+        List<Op> ops = new ArrayList<>();
+        ops.add(Op.create("/multiSeq", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL));
+        ops.add(Op.create("/multiTtl", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_WITH_TTL, 3600));
+
+        List<OpResult> results = zk.multi(ops);
+        String seqPath = ((OpResult.CreateResult) results.get(0)).getPath();
+
+        List<String> multiOpLogs = readAuditLog(os, 2);
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, seqPath, Result.SUCCESS, null,
+                CreateMode.PERSISTENT_SEQUENTIAL.toString().toLowerCase()),
+                multiOpLogs.get(0));
+        verifyLog(getAuditLog(AuditConstants.OP_CREATE, "/multiTtl", Result.SUCCESS, null,
+                CreateMode.PERSISTENT_WITH_TTL.toString().toLowerCase()),
+                multiOpLogs.get(1));
     }
 
     @Test
