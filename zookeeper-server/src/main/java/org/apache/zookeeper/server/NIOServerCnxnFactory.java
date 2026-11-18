@@ -659,7 +659,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         ss.socket().setReuseAddress(true);
         LOG.info("binding to port {}", addr);
         if (listenBacklog == -1) {
-            ss.socket().bind(addr);
+            ss.socket().bind(addr, Integer.MAX_VALUE);
         } else {
             ss.socket().bind(addr, listenBacklog);
         }
@@ -695,7 +695,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             this.ss = ServerSocketChannel.open();
             ss.socket().setReuseAddress(true);
             LOG.info("binding to port {}", addr);
-            ss.socket().bind(addr);
+            ss.socket().bind(addr, listenBacklog == -1 ? Integer.MAX_VALUE : listenBacklog);
             ss.configureBlocking(false);
             acceptThread = new AcceptThread(ss, addr, selectorThreads);
             acceptThread.start();
