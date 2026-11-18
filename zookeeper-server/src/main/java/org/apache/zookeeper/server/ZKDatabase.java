@@ -384,9 +384,9 @@ public class ZKDatabase {
      * @return list of proposal (request part of each proposal is null)
      */
     public Iterator<Proposal> getProposalsFromTxnLog(long startZxid, long sizeLimit) {
-        if (sizeLimit < 0) {
+        if (sizeLimit < 0L) {
             LOG.debug("Negative size limit - retrieving proposal via txnlog is disabled");
-            return TxnLogProposalIterator.EMPTY_ITERATOR;
+            return Collections.emptyIterator();
         }
 
         TxnIterator itr = null;
@@ -401,7 +401,7 @@ public class ZKDatabase {
                     "Unable to find proposals from txnlog for zxid: 0x{}",
                     Long.toHexString(startZxid));
                 itr.close();
-                return TxnLogProposalIterator.EMPTY_ITERATOR;
+                return Collections.emptyIterator();
             }
 
             if (sizeLimit > 0) {
@@ -409,7 +409,7 @@ public class ZKDatabase {
                 if (txnSize > sizeLimit) {
                     LOG.info("Txnlog size: {} exceeds sizeLimit: {}", txnSize, sizeLimit);
                     itr.close();
-                    return TxnLogProposalIterator.EMPTY_ITERATOR;
+                    return Collections.emptyIterator();
                 }
             }
         } catch (IOException e) {
@@ -421,7 +421,7 @@ public class ZKDatabase {
             } catch (IOException ioe) {
                 LOG.warn("Error closing file iterator", ioe);
             }
-            return TxnLogProposalIterator.EMPTY_ITERATOR;
+            return Collections.emptyIterator();
         }
         return new TxnLogProposalIterator(itr);
     }
