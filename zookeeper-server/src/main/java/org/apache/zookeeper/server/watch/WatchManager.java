@@ -19,10 +19,12 @@
 package org.apache.zookeeper.server.watch;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,6 +54,18 @@ public class WatchManager implements IWatchManager {
     private final Map<Watcher, Map<String, WatchStats>> watch2Paths = new HashMap<>();
 
     private int recursiveWatchQty = 0;
+
+    private volatile PathAclLookup pathAclLookup;
+
+    @Override
+    public void setPathAclLookup(PathAclLookup lookup) {
+        this.pathAclLookup = lookup;
+    }
+
+    @Override
+    public boolean supportsPathAclLookup() {
+        return true;
+    }
 
     @Override
     public synchronized int size() {
@@ -140,9 +154,38 @@ public class WatchManager implements IWatchManager {
     public WatcherOrBitSet triggerWatch(String path, EventType type, long zxid, List<ACL> acl, WatcherOrBitSet suppress) {
         WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path, zxid);
         Set<Watcher> watchers = new HashSet<>();
+        // Every ancestor level above `path`, closest parent first and "/" last, regardless of
+        // whether any watcher is registered at that level. Needed so that, for a watcher with a
+        // PERSISTENT_RECURSIVE registration on some ancestor root R, we can require READ not just
+        // on R but on every node from R down to path's own parent -- matching what getChildren()
+        // enforces for that same discovery, and closing the "intermediate segment name leak" gap
+        // a root-only check still has (an unreadable node between R and path's parent must still
+        // block delivery, even though R and path's parent are each independently readable).
+        List<String> ancestorChain = null;
+        // For a watcher that matched ONLY through one or more PERSISTENT_RECURSIVE ancestor
+        // registrations (never for one with its own exact-path match at `path`: that's always
+        // sufficient on its own, see below), the index into ancestorChain of its FARTHEST
+        // (deepest towards "/") matching registration root. Checking ancestorChain[0..cutoff]
+        // inclusive is equivalent to separately requiring every individual registration root's
+        // own chain to pass: each such chain is a prefix of ancestorChain, so the farthest root's
+        // prefix is a superset of every shallower root's prefix, and "superset passes" implies
+        // "every subset passes" -- so one bounded check per watcher reproduces requiring ALL of a
+        // watcher's matching registrations to pass, exactly as ServerWatcher#process's contract
+        // already requires ("every one of them"), without re-deriving or storing each root
+        // separately.
+        Map<Watcher, Integer> recursiveChainCutoffByWatcher = null;
         synchronized (this) {
             PathParentIterator pathParentIterator = getPathParentIterator(path);
+            boolean mayHaveRecursiveMatches = getRecursiveWatchQty() > 0;
+            Set<Watcher> exactMatchWatchers = mayHaveRecursiveMatches ? new HashSet<>() : null;
+            if (mayHaveRecursiveMatches) {
+                recursiveChainCutoffByWatcher = new HashMap<>();
+                ancestorChain = new ArrayList<>();
+            }
             for (String localPath : pathParentIterator.asIterable()) {
+                if (pathParentIterator.atParentPath() && ancestorChain != null) {
+                    ancestorChain.add(localPath);
+                }
                 Set<Watcher> thisWatchers = watchTable.get(localPath);
                 if (thisWatchers == null || thisWatchers.isEmpty()) {
                     continue;
@@ -158,6 +201,12 @@ public class WatchManager implements IWatchManager {
                     }
                     if (!pathParentIterator.atParentPath()) {
                         watchers.add(watcher);
+                        if (exactMatchWatchers != null) {
+                            // pathParentIterator always yields the exact path before any
+                            // ancestor, so no entry for `watcher` can exist in
+                            // recursiveChainCutoffByWatcher yet at this point.
+                            exactMatchWatchers.add(watcher);
+                        }
                         WatchStats newStats = stats.removeMode(WatcherMode.STANDARD);
                         if (newStats == WatchStats.NONE) {
                             iterator.remove();
@@ -170,6 +219,12 @@ public class WatchManager implements IWatchManager {
                         }
                     } else if (stats.hasMode(WatcherMode.PERSISTENT_RECURSIVE)) {
                         watchers.add(watcher);
+                        if (recursiveChainCutoffByWatcher != null && !exactMatchWatchers.contains(watcher)) {
+                            // localPath was just appended above, so its index is the last one.
+                            // Iteration visits ancestors in increasing distance, so later
+                            // overwrites for the same watcher always reflect the farther root.
+                            recursiveChainCutoffByWatcher.put(watcher, ancestorChain.size() - 1);
+                        }
                     }
                 }
                 if (thisWatchers.isEmpty()) {
@@ -184,12 +239,37 @@ public class WatchManager implements IWatchManager {
             return null;
         }
 
+        PathAclLookup aclLookup = this.pathAclLookup;
+        // Shared across every watcher processed below: many watchers commonly share registration
+        // roots (e.g. "/"), and the ancestor chain itself is identical for all of them in this
+        // call, so looking a given path's ACL up more than once per triggerWatch call is wasted
+        // work. A plain HashMap (not computeIfAbsent) is used deliberately: getACL legitimately
+        // returns null for a since-deleted node, and computeIfAbsent would re-query every time for
+        // such a path instead of caching the null result.
+        Map<String, List<ACL>> aclCache = aclLookup == null ? null : new HashMap<>();
         for (Watcher w : watchers) {
             if (suppress != null && suppress.contains(w)) {
                 continue;
             }
             if (w instanceof ServerWatcher) {
-                ((ServerWatcher) w).process(e, acl);
+                Integer cutoff = recursiveChainCutoffByWatcher == null ? null : recursiveChainCutoffByWatcher.get(w);
+                if (cutoff == null || aclLookup == null) {
+                    ((ServerWatcher) w).process(e, acl);
+                } else {
+                    Map<String, List<ACL>> recursiveWatchRootAcls = new LinkedHashMap<>();
+                    for (int i = 0; i <= cutoff; i++) {
+                        String ancestorPath = ancestorChain.get(i);
+                        List<ACL> cached;
+                        if (aclCache.containsKey(ancestorPath)) {
+                            cached = aclCache.get(ancestorPath);
+                        } else {
+                            cached = aclLookup.getACL(ancestorPath);
+                            aclCache.put(ancestorPath, cached);
+                        }
+                        recursiveWatchRootAcls.put(ancestorPath, cached);
+                    }
+                    ((ServerWatcher) w).process(e, acl, recursiveWatchRootAcls);
+                }
             } else {
                 w.process(e);
             }

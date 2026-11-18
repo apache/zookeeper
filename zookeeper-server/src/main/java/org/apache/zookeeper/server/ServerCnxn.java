@@ -35,8 +35,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.compat.ProtocolManager;
 import org.apache.zookeeper.data.ACL;
@@ -260,6 +262,42 @@ public abstract class ServerCnxn implements Stats, ServerWatcher {
     }
 
     public abstract void process(WatchedEvent event, List<ACL> znodeAcl);
+
+    /**
+     * Shared by every {@link ServerWatcher#process(WatchedEvent, List, Map)} implementation
+     * (NIO and Netty transports alike): the actual ACL enforcement is identical regardless of
+     * transport, only the subsequent delivery mechanism ({@code deliverWatchedEvent}) differs,
+     * so that part stays in each subclass's own {@code process} override.
+     *
+     * @param recursiveWatchRootAcls see {@link ServerWatcher#process(WatchedEvent, List, Map)};
+     *                                {@code null} when this delivery isn't through a
+     *                                PERSISTENT_RECURSIVE watch's ancestor registration.
+     * @return true if {@code event} may be delivered
+     */
+    protected final boolean checkWatchDeliveryAcl(WatchedEvent event, List<ACL> znodeAcl, Map<String, List<ACL>> recursiveWatchRootAcls) {
+        try {
+            zkServer.checkACL(this, znodeAcl, ZooDefs.Perms.READ, getAuthInfo(), event.getPath(), null);
+            if (recursiveWatchRootAcls != null) {
+                for (Map.Entry<String, List<ACL>> rootAcl : recursiveWatchRootAcls.entrySet()) {
+                    if (rootAcl.getValue() == null) {
+                        // the registration root no longer exists; we can't confirm READ on it,
+                        // so fail closed rather than silently skipping the check.
+                        throw new KeeperException.NoAuthException();
+                    }
+                    zkServer.checkACL(this, rootAcl.getValue(), ZooDefs.Perms.READ, getAuthInfo(), rootAcl.getKey(), null);
+                }
+            }
+            return true;
+        } catch (KeeperException.NoAuthException e) {
+            if (LOG.isTraceEnabled()) {
+                ZooTrace.logTraceMessage(
+                    LOG,
+                    ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                    "Not delivering event " + event + " to 0x" + Long.toHexString(getSessionId()) + " (filtered by ACL)");
+            }
+            return false;
+        }
+    }
 
     public abstract long getSessionId();
 
