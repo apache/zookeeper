@@ -37,6 +37,10 @@ on:
         description: Maven goals
         required: true
         default: -Pfull-build apache-rat:check verify -DskipTests spotbugs:check checkstyle:check javadoc:jar
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
   mvn:
     name: mvn (triggered by ${{ github.event.sender.login }})
