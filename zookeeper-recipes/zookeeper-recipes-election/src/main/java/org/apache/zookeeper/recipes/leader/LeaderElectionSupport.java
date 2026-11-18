@@ -90,7 +90,7 @@ public class LeaderElectionSupport implements Watcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(LeaderElectionSupport.class);
 
-    private ZooKeeper zooKeeper;
+    private volatile ZooKeeper zooKeeper;
 
     private State state;
     private Set<LeaderElectionAware> listeners;
@@ -135,8 +135,13 @@ public class LeaderElectionSupport implements Watcher {
         try {
             makeOffer();
             determineElectionStatus();
-        } catch (KeeperException | InterruptedException e) {
-            becomeFailed(e);
+        } catch (KeeperException e) {
+            if (failElection(e)) {
+                Thread.currentThread().interrupt();
+            }
+        } catch (InterruptedException e) {
+            failElection(e);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -154,8 +159,11 @@ public class LeaderElectionSupport implements Watcher {
             try {
                 zooKeeper.delete(leaderOffer.getNodePath(), -1);
                 LOG.info("Removed leader offer {}", leaderOffer.getNodePath());
-            } catch (InterruptedException | KeeperException e) {
+            } catch (KeeperException e) {
                 becomeFailed(e);
+            } catch (InterruptedException e) {
+                becomeFailed(e);
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -185,7 +193,41 @@ public class LeaderElectionSupport implements Watcher {
         return leaderOffer;
     }
 
+    /**
+     * Removes the leader offer of the failed election, so it doesn't make other offers wait for a
+     * participant that is no longer in the election, and then sends the failed event. If the offer
+     * can't be removed, it is kept for {@link #stop()} to remove. Must be called holding the lock.
+     *
+     * @return whether removing the offer was interrupted; the caller decides whether to restore
+     *         the interrupt status, which must not be done on the ZooKeeper event thread
+     */
+    private boolean failElection(Exception e) {
+        assert Thread.holdsLock(this);
+        boolean interrupted = false;
+        if (leaderOffer != null) {
+            try {
+                zooKeeper.delete(leaderOffer.getNodePath(), -1);
+                LOG.info("Removed leader offer {} after failure", leaderOffer.getNodePath());
+                leaderOffer = null;
+            } catch (KeeperException.NoNodeException noNode) {
+                LOG.debug("Leader offer {} was already removed", leaderOffer.getNodePath());
+                leaderOffer = null;
+            } catch (KeeperException ke) {
+                LOG.warn("Failed to remove leader offer {} after failure", leaderOffer.getNodePath(), ke);
+            } catch (InterruptedException ie) {
+                LOG.warn("Interrupted while removing leader offer {} after failure", leaderOffer.getNodePath(), ie);
+                interrupted = true;
+            }
+        }
+        becomeFailed(e);
+        return interrupted;
+    }
+
     private void determineElectionStatus() throws KeeperException, InterruptedException {
+        if (state == State.STOP) {
+            // a listener stopped the election
+            return;
+        }
 
         state = State.DETERMINE;
         dispatchEvent(EventType.DETERMINE_START);
@@ -204,6 +246,7 @@ public class LeaderElectionSupport implements Watcher {
          * offer just less than us. If they exist, watch for their failure, but if
          * they don't, become the leader.
          */
+        boolean found = false;
         for (int i = 0; i < leaderOffers.size(); i++) {
             LeaderOffer leaderOffer = leaderOffers.get(i);
 
@@ -211,6 +254,10 @@ public class LeaderElectionSupport implements Watcher {
                 LOG.debug("There are {} leader offers. I am {} in line.", leaderOffers.size(), i);
 
                 dispatchEvent(EventType.DETERMINE_COMPLETE);
+                if (state == State.STOP) {
+                    // a listener stopped the election
+                    return;
+                }
 
                 if (i == 0) {
                     becomeLeader();
@@ -219,8 +266,14 @@ public class LeaderElectionSupport implements Watcher {
                 }
 
                 /* Once we've figured out where we are, we're done. */
+                found = true;
                 break;
             }
+        }
+
+        if (!found && state != State.STOP) {
+            // our offer was removed by someone else, so we are no longer taking part
+            throw new KeeperException.NoNodeException(currentLeaderOffer.getNodePath());
         }
     }
 
@@ -240,6 +293,10 @@ public class LeaderElectionSupport implements Watcher {
 
         if (stat != null) {
             dispatchEvent(EventType.READY_START);
+            if (state == State.STOP) {
+                // a listener stopped the election
+                return;
+            }
             LOG.debug(
                 "We're behind {} in line and they're alive. Keeping an eye on them.",
                 neighborLeaderOffer.getNodePath());
@@ -307,7 +364,14 @@ public class LeaderElectionSupport implements Watcher {
          * the sequence number and the node name.
          */
         for (String offer : strings) {
-            String hostName = new String(zooKeeper.getData(rootNodeName + "/" + offer, false, null));
+            String hostName;
+            try {
+                hostName = new String(zooKeeper.getData(rootNodeName + "/" + offer, false, null));
+            } catch (KeeperException.NoNodeException e) {
+                // the offer was withdrawn after the children were listed
+                LOG.debug("Leader offer {} was removed while reading the offers", offer);
+                continue;
+            }
 
             leaderOffers.add(new LeaderOffer(
                 Integer.valueOf(offer.substring("n_".length())),
@@ -323,10 +387,19 @@ public class LeaderElectionSupport implements Watcher {
         return leaderOffers;
     }
 
+    /**
+     * Runs the election again when the offer we wait behind is deleted. That holds the same lock as
+     * {@link #start()} and {@link #stop()}, so a concurrent stop() can't interleave with it.
+     * Listeners are called holding this lock.
+     */
     @Override
     public void process(WatchedEvent event) {
-        if (event.getType().equals(Watcher.Event.EventType.NodeDeleted)) {
-            if (!event.getPath().equals(getLeaderOffer().getNodePath())
+        if (!event.getType().equals(Watcher.Event.EventType.NodeDeleted)) {
+            return;
+        }
+        synchronized (this) {
+            if (leaderOffer != null
+                && !event.getPath().equals(leaderOffer.getNodePath())
                 && state != State.STOP) {
                 LOG.debug(
                     "Node {} deleted. Need to run through the election process.",
@@ -334,7 +407,8 @@ public class LeaderElectionSupport implements Watcher {
                 try {
                     determineElectionStatus();
                 } catch (KeeperException | InterruptedException e) {
-                    becomeFailed(e);
+                    // this is the client's event thread: don't restore the interrupt status here
+                    failElection(e);
                 }
             }
         }
