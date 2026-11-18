@@ -28,8 +28,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.Test;
