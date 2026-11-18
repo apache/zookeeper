@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
@@ -42,6 +44,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.KeeperException.NoAuthException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Quotas;
@@ -49,9 +52,11 @@ import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.PathTrie;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -687,6 +692,49 @@ public class DataTreeTest extends ZKTestCase {
         assertThrows(NodeExistsException.class, () ->
             dt.createNode("/the_parent", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 1, 1, 0));
         dt.createNode("/the_parent/the_child", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, -1, 2, 2, 2);
+    }
+
+    /**
+     * Applying a create txn to an existing node (routine when replay overlaps
+     * a fuzzy snapshot, e.g. after a restart or SNAP sync) must keep the ACL
+     * reference counts exact, so that unused ACLs are garbage collected and
+     * the cache does not grow until the next reload.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testCreateTxnReplayOnExistingNodeKeepsAclRefCountExact() throws Exception {
+        DataTree dt = new DataTree();
+        int baseline = dt.aclCacheSize();
+
+        TxnHeader hdr = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
+        Record txn = new CreateTxn("/x", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
+        dt.processTxn(hdr, txn);
+        // Duplicate apply of the same create txn hits the node-exists branch.
+        dt.processTxn(hdr, txn);
+        assertEquals(baseline + 1, dt.aclCacheSize());
+
+        TxnHeader deleteHdr = new TxnHeader(1, 2, 3, 2, ZooDefs.OpCode.delete);
+        Record deleteTxn = new DeleteTxn("/x");
+        dt.processTxn(deleteHdr, deleteTxn);
+        // The ACL is no longer referenced by any node, so it must have been
+        // garbage collected.
+        assertEquals(baseline, dt.aclCacheSize());
+    }
+
+    /**
+     * The ACL used to filter watch events of a node whose ACL is unknown must
+     * deny READ to ordinary sessions. Null or an empty ACL would not, because
+     * checkACL treats both as unrestricted.
+     *
+     * See ZOOKEEPER-4689.
+     */
+    @Test
+    public void testNoPermissionsAclDeniesRead() {
+        ZooKeeperServer zks = new ZooKeeperServer();
+        List<Id> authInfo = Collections.singletonList(new Id("ip", "127.0.0.1"));
+        assertThrows(NoAuthException.class, () ->
+            zks.checkACL(null, DataTree.NO_PERMISSIONS_ACL, ZooDefs.Perms.READ, authInfo, "/x", null));
     }
 
     private DataTree buildDataTreeForTest() {
