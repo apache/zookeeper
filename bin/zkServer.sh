@@ -46,7 +46,7 @@ if [[ -z $JMXLOCALONLY ]]; then
 fi
 
 if [[ -z $JMXDISABLE ]] || [[ $JMXDISABLE == 'false' ]]; then
-  echo "ZooKeeper JMX enabled by default" >&2
+  echo "ZooKeeper JMX enabled by default"
   if [[ -z $JMXPORT ]]; then
     # for some reason these two options are necessary on jdk6 on Ubuntu
     #   accord to the docs they are not necessary, but otw jconsole cannot
@@ -62,14 +62,14 @@ if [[ -z $JMXDISABLE ]] || [[ $JMXDISABLE == 'false' ]]; then
     if [[ -z $JMXLOG4J ]]; then
       JMXLOG4J=true
     fi
-    echo "ZooKeeper remote JMX Port set to $JMXPORT" >&2
-    echo "ZooKeeper remote JMX authenticate set to $JMXAUTH" >&2
-    echo "ZooKeeper remote JMX ssl set to $JMXSSL" >&2
-    echo "ZooKeeper remote JMX log4j set to $JMXLOG4J" >&2
+    echo "ZooKeeper remote JMX Port set to $JMXPORT"
+    echo "ZooKeeper remote JMX authenticate set to $JMXAUTH"
+    echo "ZooKeeper remote JMX ssl set to $JMXSSL"
+    echo "ZooKeeper remote JMX log4j set to $JMXLOG4J"
     if [[ -z $JMXHOSTNAME ]]; then
       ZOOMAIN=("-Dcom.sun.management.jmxremote" "-Dcom.sun.management.jmxremote.port=$JMXPORT" "-Dcom.sun.management.jmxremote.authenticate=$JMXAUTH" "-Dcom.sun.management.jmxremote.ssl=$JMXSSL" "-Dzookeeper.jmx.log4j.disable=$JMXLOG4J" "org.apache.zookeeper.server.quorum.QuorumPeerMain")
     else
-      echo "ZooKeeper remote JMX Hostname set to $JMXHOSTNAME" >&2
+      echo "ZooKeeper remote JMX Hostname set to $JMXHOSTNAME"
       ZOOMAIN=("-Dcom.sun.management.jmxremote" "-Djava.rmi.server.hostname=$JMXHOSTNAME" "-Dcom.sun.management.jmxremote.port=$JMXPORT" "-Dcom.sun.management.jmxremote.authenticate=$JMXAUTH" "-Dcom.sun.management.jmxremote.ssl=$JMXSSL" "-Dzookeeper.jmx.log4j.disable=$JMXLOG4J" "org.apache.zookeeper.server.quorum.QuorumPeerMain")
     fi
   fi
@@ -103,7 +103,7 @@ else
   KILL='kill'
 fi
 
-echo "Using config: $ZOOCFG" >&2
+echo "Using config: $ZOOCFG"
 
 case "$OSTYPE" in
   *solaris*)
