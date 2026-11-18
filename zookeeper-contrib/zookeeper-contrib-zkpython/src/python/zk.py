@@ -48,7 +48,7 @@ try:
     zookeeper.get_children(handle, "/zk-python", my_getc_watch)
     for i in xrange(5):
         print("Creating sequence node ", i, " ", zookeeper.create(handle, "/zk-python/sequencenode", "data", [ZOO_OPEN_ACL_UNSAFE], zookeeper.SEQUENCE ))
-except:
+except Exception:
     pass
 
 def pp_zk(handle,root, indent = 0):

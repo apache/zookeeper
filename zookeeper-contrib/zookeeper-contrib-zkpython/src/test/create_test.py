@@ -28,7 +28,7 @@ class CreationTest(zktestbase.TestBase):
         try:
             zookeeper.delete(self.handle, "/zk-python-createtest")
             zookeeper.delete(self.handle, "/zk-python-acreatetest")
-        except:
+        except Exception:
             pass
 
     def test_sync_create(self):
