@@ -18,8 +18,9 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -53,19 +54,16 @@ public class SaslAuthFailFipsModeTest extends ClientBase {
 
     @Test
     public void testDigestMd5RejectedInFipsMode() throws Exception {
-        ZooKeeper zk = null;
         CountdownWatcher watcher = new CountdownWatcher();
-        try {
-            zk = createClient(watcher);
-            zk.create("/fips-test", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-            fail("DIGEST-MD5 SASL authentication should be rejected when FIPS mode is enabled.");
-        } catch (KeeperException e) {
-            assertEquals(KeeperException.Code.AUTHFAILED, e.code());
+        // A rejected connection may disappear before createClient's JMX check.
+        try (ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher)) {
+            assertTrue(watcher.clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Unable to connect to server");
+            waitFor("DIGEST-MD5 SASL authentication should be rejected when FIPS mode is enabled.",
+                    () -> zk.getState() == ZooKeeper.States.AUTH_FAILED,
+                    (int) TimeUnit.MILLISECONDS.toSeconds(CONNECTION_TIMEOUT));
+            assertThrows(KeeperException.AuthFailedException.class,
+                         () -> zk.create("/fips-test", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT));
             watcher.waitForDisconnected(SaslTestUtil.CLIENT_DISCONNECT_TIMEOUT);
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
         }
     }
 
