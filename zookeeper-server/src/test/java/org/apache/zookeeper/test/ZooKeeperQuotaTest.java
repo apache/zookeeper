@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
@@ -644,12 +645,9 @@ public class ZooKeeperQuotaTest extends ClientBase {
         assertEquals(count, stats.getCount());
         assertEquals(bytes, stats.getBytes());
 
-        try {
-            zk.create(path + "/over", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            fail("should not create a node when it exceeds the hard count quota");
-        } catch (QuotaExceededException e) {
-            //expected
-        }
+        // should not create a node when it exceeds the hard count quota
+        assertThrows(QuotaExceededException.class,
+                () -> zk.create(path + "/over", "data".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
     }
 
     @Test
