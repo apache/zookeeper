@@ -28,7 +28,7 @@ class TestBase(unittest.TestCase):
         unittest.TestCase.__init__(self,methodName)
         self.host = "localhost:%d" % self.SERVER_PORT
         self.sslhost = "localhost:%d" % self.SERVER_SSL_PORT
-        self.sslcert =  "./target/zkpython_tests/ssl/server.crt,./target/zkpython_tests/ssl/client.crt,./target/zkpython_tests/ssl/clientkey.pem,password"
+        self.sslcert =  "./target/zkpython_tests/ssl/root.crt,./target/zkpython_tests/ssl/client.crt,./target/zkpython_tests/ssl/clientkey.pem,password"
         self.connected = False
         self.handle = -1
         logdir = os.environ.get("ZKPY_LOG_DIR")

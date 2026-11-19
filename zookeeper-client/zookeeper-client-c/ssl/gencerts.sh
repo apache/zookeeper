@@ -40,6 +40,8 @@ FQDN=${FQDN:-"zookeeper.apache.org"}
 openssl genrsa -out rootkey.pem 2048
 
 #Generate the root Cert
+# The root CA needs its own subject and the CA extensions, so that the server and client
+# certificates can be verified against it (newer OpenSSL versions require both).
 openssl req -x509 -new -key rootkey.pem -out root.crt -config <(
   cat <<-EOF
 [ req ]
@@ -47,6 +49,12 @@ default_bits = 2048
 prompt = no
 default_md = sha256
 distinguished_name = dn
+x509_extensions = v3_ca
+
+[ v3_ca ]
+basicConstraints = critical, CA:TRUE
+keyUsage = critical, keyCertSign, cRLSign
+subjectKeyIdentifier = hash
 
 [ dn ]
 C = US
@@ -54,7 +62,7 @@ ST = California
 L = San Francisco
 O = ZooKeeper
 emailAddress = dev@$FQDN
-CN = $FQDN
+CN = ZooKeeper Test CA
 EOF
 )
 

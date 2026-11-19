@@ -154,7 +154,7 @@ public:
 
         watchctx_t watch;
         zhandle_t* zh = connectReadOnlySSL("localhost:22281",
-                                           "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password",
+                                           "/tmp/certs/root.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password",
                                            &watch);
 
         assertCanRead(zh, "/");
