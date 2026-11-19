@@ -2,7 +2,6 @@
 
 <p align="left">
   <a href="https://zookeeper.apache.org/">
-    <img src="https://zookeeper.apache.org/images/zookeeper_small.gif" alt="https://zookeeper.apache.org/"><br/>
   </a>
 </p>
 
