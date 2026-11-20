@@ -96,7 +96,7 @@ DSP-12	RE	-	-
 DSP-13	FU	-	conf:ldg_a_lock_reenter
 DSP-14	FU	-	conf:st_except,conf:st_except_dev,conf:st_sasl_except
 DSP-15	RE	-	-
-DSP-16	RE	-	conf:st_reenter
+DSP-16	RE	-	conf:st_reenter,conf:st_value_reenter
 DSP-17	RE	-	script:zookeeper-client-rust/c/tests/public/cli-session.txt
 DSP-18	FU	-	conf:dev_misc
 DSP-19	FU	-	conf:ldg_a_st_threads

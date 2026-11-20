@@ -657,10 +657,11 @@ pub(crate) fn with_outbox<R>(
     };
     let r = f(&mut b.ob);
     sasl::settle_unanswered(handle);
-    b.adopt(logging::now());
     if !b.keep() {
         return r;
     }
+    // Only non-empty outboxes are persisted, avoiding a wall-clock read on empty steps.
+    b.adopt(logging::now());
     // Retain existing heap outboxes or promote stack-allocated outboxes if items or resume points
     // require persistence.
     if let Some(b) = boxed.or_else(|| local.map(Box::new)) {
@@ -694,9 +695,9 @@ pub extern "C" fn zkrs_outbox_next(ob: *mut zkrs_outbox, it: *mut zkrs_item) -> 
             return 0;
         };
         b.stage.clear();
-        let host = Arc::clone(b.handle.host());
+        let host = &**b.handle.host();
         while let Some(item) = b.ob.pop() {
-            if let Some(v) = b.stage.stage(item, b.stamp, &*host) {
+            if let Some(v) = b.stage.stage(item, b.stamp, host) {
                 if let Some((kind, r#gen)) = b.stage.taken_sasl() {
                     sasl::note_taken(&b.handle, kind, r#gen);
                 }
@@ -721,8 +722,7 @@ pub extern "C" fn zkrs_outbox_finish(ob: *mut zkrs_outbox) {
             return;
         };
         b.stage.clear();
-        let host = Arc::clone(b.handle.host());
-        b.ob.finish(&*host);
+        b.ob.finish(&**b.handle.host());
         if b.ob.resume_at().is_some() {
             raw::outbox_into_impl(ob, b);
         }

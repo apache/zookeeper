@@ -429,7 +429,8 @@ typedef struct zkrs_handle zkrs_handle;
 /**
  * The outbox of one driving call, on the C stack.
  *
- * `impl` is NULL until Rust stores the first item. Only Rust reads it.
+ * `impl` is NULL until Rust stores the first item. C can test it for NULL
+ * to skip an empty drain. Only Rust reads through it.
  */
 typedef struct zkrs_outbox {
     /**

@@ -427,7 +427,7 @@ impl<T: DriverTokens> Polled<T> {
         };
         if flush && st.io.has_socket() {
             let cx = self.st_ctx();
-            if !st.io.flush_once(&cx, &mut proof) {
+            if !st.io.flush_once_at(&cx, &mut proof, now) {
                 self.st_forced_close(&mut st, &mut proof, ob, now);
             }
         }

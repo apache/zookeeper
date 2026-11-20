@@ -66,15 +66,21 @@ struct Harness {
 
 impl Harness {
     fn new(server: &FakeServer) -> Self {
+        Self::with_logs(server, Some(LogLevel::Debug))
+    }
+
+    /// Constructs a test harness configured to emit log records up to `level`, or disables logging
+    /// when `level` is `None`.
+    fn with_logs(server: &FakeServer, level: Option<LogLevel>) -> Self {
         let host = Arc::new(TestHost::new());
-        host.set_log_level(Some(LogLevel::Debug));
+        host.set_log_level(level);
         host.set_addrs(b"127.0.0.1", vec![server.addr()]);
         let conn = Connection::new(
             test_config(server.connect_string().as_bytes()),
             Compat::LEGACY_C,
             DriverMode::ST,
             Box::new(SeededRng::new(1)),
-            Box::new(LevelFilter::up_to(LogLevel::Debug)),
+            Box::new(level.map_or(LevelFilter::off(), LevelFilter::up_to)),
             Box::new(SharedDefaultWatcher::new(None)),
             Millis(0),
         );
@@ -207,6 +213,48 @@ fn dropped_connection_reconnects() {
     // Client successfully reconnects and re-establishes the existing session on the recovered
     // server.
     assert_eq!(server.cluster().sessions().len(), 1);
+}
+
+#[test]
+fn interest_turn_reads_the_clock_again_after_a_slow_resolve() {
+    let server = FakeServer::start().unwrap();
+    let clock = Arc::new(TestClock::new(Millis(0)));
+    // Suppress log emission so the turn proceeds directly from DNS resolution to timer evaluation.
+    let mut h = Harness::with_logs(&server, None);
+    h.env.clock = clock.clone();
+    assert!(h.run_until(State::Connected));
+    let before = h.host.resolves();
+    // Simulate a DNS lookup on the next interest step that exceeds the session timeout.
+    h.host.set_slow_dns(clock, 30_000);
+    let out = h.interest();
+    assert!(h.host.resolves() > before);
+    // Timer evaluation within the same step must observe the post-resolution clock and expire.
+    assert_eq!(out.rc, ZOPERATIONTIMEOUT);
+    assert_ne!(h.state(), State::Connected);
+}
+
+#[test]
+fn each_interest_call_starts_a_new_turn() {
+    let server = FakeServer::start().unwrap();
+    let clock = Arc::new(TestClock::new(Millis(0)));
+    let mut h = Harness::new(&server);
+    h.env.clock = clock.clone();
+    let mut connected = false;
+    for _ in 0..200 {
+        let out = h.interest();
+        h.process(out);
+        if h.state() == State::Connected {
+            connected = true;
+            break;
+        }
+    }
+    assert!(connected);
+    let first = h.interest().timeout_ms;
+    clock.advance(1_000);
+    let second = h.interest().timeout_ms;
+    // A subsequent interest turn samples the updated clock and reflects the elapsed interval.
+    assert!(first > 1_000);
+    assert_eq!(second, first - 1_000);
 }
 
 // ---------------------------------------------------------------------

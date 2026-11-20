@@ -358,7 +358,7 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest, struct timeval *tv
     s = ZKS_CALL(zkrs_interest(core, &o, &written, &ob, &rc));
     for (;;) {
         if (s != ZKRS_MORE) {
-            err = ZKS_CALL(zkrs_last_errno(core));
+            err = ZKS_CALL_LEAF(zkrs_last_errno(core));
         }
         zks_drain(zh, &ob);
         if (s != ZKRS_MORE) {

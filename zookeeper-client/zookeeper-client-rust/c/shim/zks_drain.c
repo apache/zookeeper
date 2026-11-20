@@ -83,6 +83,7 @@ static void zks_deliver_result(zhandle_t *zh, uintptr_t token, const zkrs_result
     struct Stat *stp = NULL;
     struct String_vector *svp = NULL;
     struct ACL_vector *avp = NULL;
+    const char *value = NULL;
 
     memset(&tmp, 0, sizeof tmp);
     memset(&st, 0, sizeof st);
@@ -106,16 +107,24 @@ static void zks_deliver_result(zhandle_t *zh, uintptr_t token, const zkrs_result
     }
     if (!v->failed) {
         d.stat = &st;
-        d.value = &tmp.val;
+        /*
+         * Non-empty payloads are borrowed directly from the result view for the duration of the
+         * data callback, whereas empty values retain a dedicated allocation so the callback still
+         * receives a non-NULL buffer pointer.
+         */
+        if (r->kind != ZKRS_K_DATA || v->data.len <= 0 || v->data.ptr == NULL) {
+            d.value = &tmp.val;
+        }
         d.value_len = &tmp.val_len;
         d.strings = &tmp.sv;
         d.acl = &tmp.av;
         d.str = &tmp.str;
         d.str_len = &tmp.str_len;
-        ZKS_CALL_VOID(zkrs_write_result(v, &d));
+        ZKS_CALL_LEAF_VOID(zkrs_write_result(v, &d));
         stp = &st;
         svp = &tmp.sv;
         avp = &tmp.av;
+        value = d.value != NULL ? tmp.val : v->data.ptr;
     }
     /* Dispatches results according to the requested completion signature. */
     switch (r->kind) {
@@ -127,7 +136,7 @@ static void zks_deliver_result(zhandle_t *zh, uintptr_t token, const zkrs_result
         break;
     case ZKRS_K_DATA:
         /* Null znode values are passed as (NULL, -1) per C client contract. */
-        ZKS_APP_CALL(r->fn.d(v->rc, tmp.val, tmp.val_len, stp, r->data));
+        ZKS_APP_CALL(r->fn.d(v->rc, value, tmp.val_len, stp, r->data));
         break;
     case ZKRS_K_STRINGLIST:
         ZKS_APP_CALL(r->fn.sl(v->rc, svp, r->data));
@@ -162,7 +171,7 @@ static void zks_deliver_watch(zhandle_t *zh, const zkrs_watch_event_view *ev)
     if (ev->n == 0) {
         return;
     }
-    path = ZKS_CALL(zkrs_write_path(&ev->path));
+    path = ZKS_CALL_LEAF(zkrs_write_path(&ev->path));
     for (i = 0; i < ev->n; i++) {
         watcher_fn w = (watcher_fn)ev->list[i].fn;
         if (w == NULL || w == zks_null_watcher) {
@@ -247,14 +256,14 @@ static void zks_outbox_unwind(zkrs_outbox **g)
  * Drains queued outbox items (logs, results, watches, thread actions, SASL steps)
  * completely in native C frames, unmasking cancellations safely outside Rust code.
  */
-ZKS_HIDDEN void zks_drain(zhandle_t *zh, zkrs_outbox *ob)
+static void zks_drain_items(zhandle_t *zh, zkrs_outbox *ob)
 {
     ZKS_HOLD_SCOPE;
     zkrs_outbox *guard __attribute__((cleanup(zks_outbox_unwind))) = ob;
     zkrs_item it;
 
     ZKS_ASSERT_NOT_IN_RUST();
-    while (ZKS_CALL(zkrs_outbox_next(ob, &it))) {
+    while (ZKS_CALL_LEAF(zkrs_outbox_next(ob, &it))) {
         switch (it.type) {
         case ZKRS_ITEM_LOG:
             zks_log_emit(zh, it.log);
@@ -286,6 +295,17 @@ ZKS_HIDDEN void zks_drain(zhandle_t *zh, zkrs_outbox *ob)
     ZKS_CALL_VOID(zkrs_outbox_finish(ob));
 }
 
+/*
+ * Drains the outbox produced by a single driving step. Steps that neither enqueue items nor
+ * register a continuation leave the outbox handle unset, avoiding an FFI call on empty drains.
+ */
+ZKS_HIDDEN void zks_drain(zhandle_t *zh, zkrs_outbox *ob)
+{
+    if (ob->impl != NULL) {
+        zks_drain_items(zh, ob);
+    }
+}
+
 ZKS_HIDDEN int zks_drive(zhandle_t *zh, const zkrs_handle *core, zkrs_step s, zkrs_outbox *ob,
                          int *rc)
 {
@@ -302,7 +322,7 @@ ZKS_HIDDEN int zks_drive_errno(zhandle_t *zh, const zkrs_handle *core, zkrs_step
     ZKS_HOLD_SCOPE;
     for (;;) {
         if (s != ZKRS_MORE && err != NULL) {
-            *err = ZKS_CALL(zkrs_last_errno(core));
+            *err = ZKS_CALL_LEAF(zkrs_last_errno(core));
         }
         zks_drain(zh, ob);
         if (s == ZKRS_MORE) {

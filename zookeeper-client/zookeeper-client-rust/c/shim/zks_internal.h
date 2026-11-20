@@ -245,6 +245,24 @@ static inline int zks_rust_enter(const char *what)
         zks_cancel_unmask(zks_cm_);                                                      \
     } while (0)
 
+/*
+ * Invokes a Rust leaf entry without the cancel mask. A leaf entry only reads
+ * or copies memory and takes short Rust locks. It calls no cancellation point,
+ * no application code, and it never drops the last handle reference. A
+ * deferred cancel thus cannot act inside it. Use ZKS_CALL for all other entries.
+ */
+#define ZKS_CALL_LEAF(x)                                                                 \
+    __extension__({                                                                      \
+        zks_check_call(#x);                                                              \
+        (x);                                                                             \
+    })
+/* Invokes a void Rust leaf entry without the cancel mask. */
+#define ZKS_CALL_LEAF_VOID(x)                                                            \
+    do {                                                                                 \
+        zks_check_call(#x);                                                              \
+        (x);                                                                             \
+    } while (0)
+
 /* ------------------------------------------------------------------------
  * Thread Role Tracking and Execution Context.
  *
