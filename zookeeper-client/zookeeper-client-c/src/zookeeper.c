@@ -285,7 +285,6 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, in
 static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
 
 static int disable_conn_permute=0; // permute enabled by default
-static struct sockaddr_storage *addr_rw_server = 0;
 
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int mode);
@@ -1213,6 +1212,11 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
         }
     }
 
+    // The read/write server hint comes from the old list. Drop it so that
+    // the next connect follows the new list. The version change tells a
+    // probe in progress that its result is stale.
+    zh->has_addr_rw_server = 0;
+    zh->addrs_version++;
     addrvec_free(&zh->addrs);
     zh->addrs = resolved;
 
@@ -2463,39 +2467,46 @@ static int ping_rw_server(zhandle_t* zh)
 {
     char buf[10];
     zsock_t fd;
-    int rc;
+    struct sockaddr_storage addr;
+    unsigned int addrs_version;
+    int rc = 0;
     sendsize_t ssize;
     int sock_flags;
 
-    addrvec_peek(&zh->addrs, &zh->addr_rw_server);
+    // An application thread can change the server list at any time. Read
+    // the list under the reconfig lock, but do not hold the lock during the
+    // probe, because the probe can block.
+    lock_reconfig(zh);
+    addrvec_peek(&zh->addrs, &addr);
+    addrs_version = zh->addrs_version;
+    unlock_reconfig(zh);
 
 #ifdef SOCK_CLOEXEC_ENABLED
     sock_flags = SOCK_STREAM | SOCK_CLOEXEC;
 #else
     sock_flags = SOCK_STREAM;
 #endif
-    fd.sock = socket(zh->addr_rw_server.ss_family, sock_flags, 0);
+    fd.sock = socket(addr.ss_family, sock_flags, 0);
+#ifdef HAVE_OPENSSL_H
+    // close_zsock() reads these fields, so set them before the first exit.
+    fd.ssl_sock = NULL;
+    fd.ssl_ctx = NULL;
+#endif
     if (fd.sock < 0) {
-        return 0;
+        goto out;
     }
 
     zookeeper_set_sock_nodelay(zh, fd.sock);
     zookeeper_set_sock_timeout(zh, fd.sock, 1);
 
-    rc = zookeeper_connect(zh, &zh->addr_rw_server, fd.sock);
-    if (rc < 0) {
-        return 0;
+    if (zookeeper_connect(zh, &addr, fd.sock) < 0) {
+        goto out;
     }
 
 #ifdef HAVE_OPENSSL_H
-    fd.ssl_sock = NULL;
-    fd.ssl_ctx = NULL;
-
     if (zh->fd->cert != NULL) {
         fd.cert = zh->fd->cert;
-        rc = init_ssl_for_socket(&fd, zh, 0);
-        if (rc != ZOK) {
-            rc = 0;
+        if (init_ssl_for_socket(&fd, zh, 0) != ZOK) {
             goto out;
         }
     }
@@ -2503,14 +2514,11 @@ static int ping_rw_server(zhandle_t* zh)
 
     ssize = zookeeper_send(&fd, "isro", 4);
     if (ssize < 0) {
-        rc = 0;
         goto out;
     }
 
     memset(buf, 0, sizeof(buf));
-    rc = zookeeper_recv(&fd, buf, sizeof(buf), 0);
-    if (rc < 0) {
-        rc = 0;
+    if (zookeeper_recv(&fd, buf, sizeof(buf), 0) < 0) {
         goto out;
     }
 
@@ -2518,7 +2526,17 @@ static int ping_rw_server(zhandle_t* zh)
 
 out:
     close_zsock(&fd);
-    addr_rw_server = rc ? &zh->addr_rw_server : 0;
+    // Keep the result only if the server list did not change during the
+    // probe. Otherwise the probed server can be absent from the new list.
+    lock_reconfig(zh);
+    if (zh->addrs_version != addrs_version) {
+        rc = 0;
+    }
+    zh->has_addr_rw_server = rc != 0;
+    if (rc) {
+        zh->addr_rw_server = addr;
+    }
+    unlock_reconfig(zh);
     return rc;
 }
 
@@ -2672,10 +2690,18 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
             LOG_WARN(LOGCALLBACK(zh), "Delaying connection after exhaustively trying all servers [%s]", zh->hostname);
             unlock_reconfig(zh);
         } else {
-            if (addr_rw_server) {
-                zh->addr_cur = *addr_rw_server;
-                addr_rw_server = 0;
-            } else {
+            // A server list change can clear the read/write server hint
+            // on another thread, so read and clear it under the lock.
+            int use_rw_server;
+
+            lock_reconfig(zh);
+            use_rw_server = zh->has_addr_rw_server;
+            zh->has_addr_rw_server = 0;
+            if (use_rw_server) {
+                zh->addr_cur = zh->addr_rw_server;
+            }
+            unlock_reconfig(zh);
+            if (!use_rw_server) {
                 // No need to delay -- grab the next server and attempt connection
                 zoo_cycle_next_server(zh);
             }
@@ -2754,6 +2780,8 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
 #else
             errno = ETIMEDOUT;
 #endif
+            // The error handler closes the socket, so do not return its fd.
+            *fd = -1;
             *interest=0;
             *tv = get_timeval(0);
             return api_epilog(zh,handle_socket_error_msg(zh,
@@ -2789,15 +2817,29 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 zh->ping_rw_timeout = min(zh->ping_rw_timeout * 2,
                                           MAX_RW_TIMEOUT);
                 if (ping_rw_server(zh)) {
-                    struct sockaddr_storage addr;
-                    addrvec_peek(&zh->addrs, &addr);
                     zh->ping_rw_timeout = MIN_RW_TIMEOUT;
                     LOG_INFO(LOGCALLBACK(zh),
                              "r/w server found at %s",
-                             format_endpoint_info(&addr));
-                    cleanup(zh, ZOK);
+                             format_endpoint_info(&zh->addr_rw_server));
+                    // The read-only server did not complete the pending
+                    // requests. Fail them with ZCONNECTIONLOSS, as for any
+                    // other disconnect.
+                    cleanup(zh, ZCONNECTIONLOSS);
+                    // The socket is closed. Ask the caller to call again at
+                    // once, so that it connects to the read/write server.
+                    // The probe can block. Clear the deadline, so that the
+                    // next call does not log a false "Exceeded deadline"
+                    // warning.
+                    *fd = -1;
+                    *interest = 0;
+                    *tv = get_timeval(0);
+                    zh->next_deadline.tv_sec = 0;
+                    zh->next_deadline.tv_usec = 0;
+                    return api_epilog(zh, ZOK);
                 } else {
+                    lock_reconfig(zh);
                     addrvec_next(&zh->addrs, NULL);
+                    unlock_reconfig(zh);
                 }
             }
             send_to = min(send_to, zh->ping_rw_timeout - idle_ping_rw);

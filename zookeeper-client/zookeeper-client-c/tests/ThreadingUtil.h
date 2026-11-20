@@ -189,6 +189,8 @@ public:
         pthread_join(thread_,0);
         else
         pthread_detach(thread_);
+        // A thread can be joined only once, so later calls do nothing.
+        hasRun_=false;
     }
 private:
     void awaitStart() {
