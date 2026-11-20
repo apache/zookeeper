@@ -115,7 +115,6 @@ struct sync_completion {
 };
 
 typedef struct _auth_info {
-    int state; /* 0=>inactive, >0 => active */
     char* scheme;
     struct buffer auth;
     void_completion_t completion;

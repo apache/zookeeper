@@ -2165,8 +2165,6 @@ static void auth_completion_func(int rc, zhandle_t* zh)
     zh->auth_h.pending = req->next;
     if(rc!=0){
         zh->state=ZOO_AUTH_FAILED_STATE;
-    }else{
-        req->auth->state = 1;
     }
     zoo_unlock_auth(zh);
     if (rc) {
@@ -5425,11 +5423,12 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
         free(authinfo->scheme);
         deallocate_Buffer(&authinfo->auth);
         free(authinfo);
-        return ZMARSHALLINGERROR;
+        return rc == ZSYSTEMERROR ? ZSYSTEMERROR : ZMARSHALLINGERROR;
     }
     if (sent) {
         LOG_DEBUG(LOGCALLBACK(zh), "Sending auth info request to %s",
                   zoo_get_current_server(zh));
+        return nonblocking_send(zh, ZOK);
     }
     return ZOK;
 }
