@@ -1849,6 +1849,11 @@ ZOOAPI const char* zerror(int c);
  * the following result codes may be passed into the completion callback:
  * ZOK operation completed successfully
  * ZAUTHFAILED authentication failed
+ * If the server rejects an earlier credential, a request that is still
+ * pending also receives ZAUTHFAILED. If the connection closes before the
+ * reply, the completion receives the error that closed it, for example
+ * ZCONNECTIONLOSS. The client keeps the credential and sends it again on the
+ * next connection. That resend has no completion.
  * \param data the data that will be passed to the completion routine when the
  * function completes.
  * \return ZOK on success or one of the following errcodes on failure:
