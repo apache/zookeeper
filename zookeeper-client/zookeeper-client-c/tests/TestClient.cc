@@ -1300,6 +1300,27 @@ public:
         deallocate_String_vector(&children);
     }
 
+    // Result of one asynchronous configuration read.
+    struct ConfigResult {
+        ConfigResult(): rc(ZAPIERROR), mzxid(0) {}
+        int rc;
+        string value;
+        int64_t mzxid;
+    };
+
+    static void configCompletion(int rc, const char *value, int value_len,
+            const struct Stat *stat, const void *data) {
+        ConfigResult *res = (ConfigResult *)data;
+        res->rc = rc;
+        if (rc == ZOK) {
+            if (value != NULL && value_len > 0) {
+                res->value.assign(value, value_len);
+            }
+            res->mzxid = stat->mzxid;
+        }
+        count++;
+    }
+
     // Cluster configuration is not in the chroot namespace. Synchronous and
     // asynchronous reads get the same node as a handle with no chroot.
     void testChrootGetConfig() {
@@ -1329,6 +1350,15 @@ public:
                 buf_ch, &len_ch, &stat_ch));
         CPPUNIT_ASSERT_EQUAL(len, len_ch);
         CPPUNIT_ASSERT_EQUAL(stat.mzxid, stat_ch.mzxid);
+
+        ConfigResult res;
+        count = 0;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_agetconfig(zk_ch, 0, configCompletion, &res));
+        waitForCreateCompletion(10);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, res.rc);
+        CPPUNIT_ASSERT_EQUAL(string(buf, len > 0 ? len : 0), res.value);
+        CPPUNIT_ASSERT_EQUAL(stat.mzxid, res.mzxid);
     }
 
     static bool hasChrootPathError() {

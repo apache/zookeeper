@@ -1748,11 +1748,22 @@ static char* prepend_string(zhandle_t *zh, const char* client_path) {
 }
 
 /**
+ * Give the error for a null result of prepend_chroot. An absolute client
+ * path maps to null only if the allocation fails.
+ */
+static int prepend_error(const char* client_path) {
+    return (client_path != NULL && client_path[0] == '/') ?
+        ZSYSTEMERROR : ZBADARGUMENTS;
+}
+
+/**
  * Map a server path to a client path.
  *
  * The chroot prefix matches only at a path component boundary, f.e. a chroot
  * of /app does not match the path /app2. Cluster configuration is not in
  * the chroot namespace, so it is not affected by the chroot prefix.
+ * A chroot of /zookeeper is the exception. The configuration node is then
+ * inside the chroot, so the client reports its path as /config.
  */
 char* sub_string(zhandle_t *zh, const char* server_path) {
     size_t chroot_len;
@@ -4151,6 +4162,10 @@ static int Request_path_init(zhandle_t *zh, int mode,
      * Restore *path_out to caller's original path pointer on validation
      * failure so caller-side free_duplicate_path() remains safe.
      */
+    if (*path_out == NULL) {
+        *path_out = (char *)path;
+        return prepend_error(path);
+    }
     if (zh == NULL || !isValidPath(*path_out, mode)) {
         free_duplicate_path(*path_out, path);
         *path_out = (char *)path;
@@ -4254,6 +4269,9 @@ int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
     struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
 
+    if (server_path == NULL) {
+        return prepend_error(path);
+    }
     if (zh==0 || !isValidPath(server_path, 0)) {
         free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
@@ -5033,6 +5051,10 @@ static int aremove_watches(
     WatchesRequest req;
     watcher_deregistration_t *wdo;
 
+    if (server_path == NULL) {
+        rc = prepend_error(path);
+        goto done;
+    }
     if (!zh || !isValidPath(server_path, 0)) {
         rc = ZBADARGUMENTS;
         goto done;
@@ -5678,7 +5700,11 @@ int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
             buffer,buffer_len,stat);
 }
 
-int zoo_wget(zhandle_t *zh, const char *path,
+/*
+ * Read a node and wait for the result. A configuration read uses the
+ * configuration call, because that node is not in the chroot namespace.
+ */
+static int wget_sync(zhandle_t *zh, int config, const char *path,
         watcher_fn watcher, void* watcherCtx,
         char *buffer, int* buffer_len, struct Stat *stat)
 {
@@ -5692,7 +5718,11 @@ int zoo_wget(zhandle_t *zh, const char *path,
 
     sc->u.data.buffer = buffer;
     sc->u.data.buff_len = *buffer_len;
-    rc=zoo_awget(zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    if (config) {
+        rc=zoo_awgetconfig(zh, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    } else {
+        rc=zoo_awget(zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    }
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;
@@ -5704,6 +5734,14 @@ int zoo_wget(zhandle_t *zh, const char *path,
     }
     free_sync_completion(sc);
     return rc;
+}
+
+int zoo_wget(zhandle_t *zh, const char *path,
+        watcher_fn watcher, void* watcherCtx,
+        char *buffer, int* buffer_len, struct Stat *stat)
+{
+    return wget_sync(zh, 0, path, watcher, watcherCtx, buffer, buffer_len,
+            stat);
 }
 
 int zoo_getconfig(zhandle_t *zh, int watch, char *buffer,
@@ -5720,28 +5758,8 @@ int zoo_getconfig(zhandle_t *zh, int watch, char *buffer,
 int zoo_wgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
        char *buffer, int* buffer_len, struct Stat *stat)
 {
-    struct sync_completion *sc;
-    int rc=0;
-
-    if(buffer_len==NULL)
-        return ZBADARGUMENTS;
-    if((sc=alloc_sync_completion())==NULL)
-        return ZSYSTEMERROR;
-
-    sc->u.data.buffer = buffer;
-    sc->u.data.buff_len = *buffer_len;
-    rc=zoo_awgetconfig(zh, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
-    if(rc==ZOK){
-        wait_sync_completion(sc);
-        rc = sc->rc;
-        if (rc == 0) {
-            if(stat)
-                *stat = sc->u.data.stat;
-            *buffer_len = sc->u.data.buff_len;
-        }
-    }
-    free_sync_completion(sc);
-    return rc;
+    return wget_sync(zh, 1, NULL, watcher, watcherCtx, buffer, buffer_len,
+            stat);
 }
 
 
