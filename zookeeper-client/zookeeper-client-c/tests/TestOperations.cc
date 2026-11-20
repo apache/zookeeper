@@ -18,13 +18,13 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "CppAssertHelper.h"
+#include <algorithm>
+#include <vector>
 
 #include "ZKMocks.h"
 #include <proto.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <algorithm>
-#include <vector>
 
 using namespace std;
 
@@ -112,23 +112,6 @@ public:
         NodeStat stat_;
     };
 
-    class AsyncVoidOperationCompletion: public AsyncCompletion{
-    public:
-        AsyncVoidOperationCompletion():called_(false),rc_(ZAPIERROR){}
-        virtual void voidCompl(int rc){
-            synchronized(mx_);
-            called_=true;
-            rc_=rc;
-        }
-        bool operator()()const{
-            synchronized(mx_);
-            return called_;
-        }
-        mutable Mutex mx_;
-        bool called_;
-        int rc_;
-    };
-
     // Records the session states that the watcher receives, in order.
     class SessionEvents{
     public:
@@ -153,6 +136,38 @@ public:
         if(type==ZOO_SESSION_EVENT && ctx!=0)
             ((SessionEvents*)ctx)->add(state);
     }
+
+    class AsyncVoidOperationCompletion: public AsyncCompletion{
+    public:
+        AsyncVoidOperationCompletion():called_(false),rc_(ZAPIERROR){}
+        virtual void voidCompl(int rc){
+            synchronized(mx_);
+            called_=true;
+            rc_=rc;
+        }
+        bool operator()()const{
+            synchronized(mx_);
+            return called_;
+        }
+        mutable Mutex mx_;
+        bool called_;
+        int rc_;
+    };
+
+    // Records the status of any completion type.
+    class StatusCompletion: public AsyncCompletion{
+    public:
+        StatusCompletion():called_(false),rc_(ZAPIERROR){}
+        virtual void dataCompl(int rc, const char *value, int len, const Stat *stat){
+            record(rc);
+        }
+        virtual void statCompl(int rc, const Stat *stat){ record(rc); }
+        virtual void stringCompl(int rc, const char *value){ record(rc); }
+        virtual void voidCompl(int rc){ record(rc); }
+        void record(int rc){ called_=true; rc_=rc; }
+        bool called_;
+        int rc_;
+    };
 
     static int portOf(const struct sockaddr_storage& addr){
         return ntohs(((const struct sockaddr_in*)&addr)->sin_port);
@@ -752,21 +767,6 @@ public:
         CPPUNIT_ASSERT(res2.called_);
         CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
     }
-
-    // Records the status of any completion type.
-    class StatusCompletion: public AsyncCompletion{
-    public:
-        StatusCompletion():called_(false),rc_(ZAPIERROR){}
-        virtual void dataCompl(int rc, const char *value, int len, const Stat *stat){
-            record(rc);
-        }
-        virtual void statCompl(int rc, const Stat *stat){ record(rc); }
-        virtual void stringCompl(int rc, const char *value){ record(rc); }
-        virtual void voidCompl(int rc){ record(rc); }
-        void record(int rc){ called_=true; rc_=rc; }
-        bool called_;
-        int rc_;
-    };
 
     // A server list change that drops the current server must do a full
     // teardown. The pending requests fail with ZCONNECTIONLOSS, and no
