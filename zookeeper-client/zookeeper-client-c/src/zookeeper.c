@@ -3333,9 +3333,11 @@ static void deserialize_create2_to_string(zhandle_t *zh, int rc,
 }
 
 /*
- * Decode the sub-results of a multi reply. The wire type of each sub-result
- * selects its record format. Every sub-operation gets a result. This is
- * also true when the reply does not match the request.
+ * Decode the sub-results of a multi reply. The completion type of each
+ * sub-operation selects its record format. Two wire types are exceptions.
+ * An error result has an ErrorResponse, and a container create has a
+ * Create2Response. Every sub-operation gets a result. This is also true
+ * when the reply does not match the request.
  */
 static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, struct iarchive *ia)
 {
@@ -5049,7 +5051,12 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
     LOG_DEBUG(LOGCALLBACK(zh), "Sending multi request xid=%#x with %d subrequests to %s",
             h.xid, index, zoo_get_current_server(zh));
 
-    if (rc != ZUNIMPLEMENTED) {
+    /*
+     * A failed call-time check returns its own code. A serializer error
+     * becomes ZMARSHALLINGERROR.
+     */
+    if (rc != ZUNIMPLEMENTED && rc != ZBADARGUMENTS && rc != ZINVALIDSTATE
+            && rc != ZSYSTEMERROR) {
         rc = nonblocking_send(zh, rc);
     }
     if (rc != ZOK) {

@@ -115,6 +115,35 @@ private:
     Stat setStat_;
 };
 
+/* A multi reply with a number of successful check results. A check result
+ * has a MultiHeader and no body. */
+class CheckMultiResponse: public Response
+{
+public:
+    CheckMultiResponse(int count): xid_(0), count_(count) {}
+    virtual void setXID(int32_t xid) { xid_ = xid; }
+    virtual string toString() const {
+        oarchive *oa = create_buffer_oarchive();
+        ReplyHeader h = {xid_, 1, ZOK};
+        serialize_ReplyHeader(oa, "hdr", &h);
+        for (int i = 0; i < count_; i++) {
+            MultiHeader check = {ZOO_CHECK_OP, 0, 0};
+            serialize_MultiHeader(oa, "multiheader", &check);
+        }
+        MultiHeader done = {-1, 1, -1};
+        serialize_MultiHeader(oa, "multiheader", &done);
+
+        int32_t len = htonl(get_buffer_len(oa));
+        string res((char*)&len, sizeof(len));
+        res.append(get_buffer(oa), get_buffer_len(oa));
+        close_buffer_oarchive(&oa, 1);
+        return res;
+    }
+private:
+    int32_t xid_;
+    int count_;
+};
+
 #ifdef THREADED
 /* A mock server that drops the connection when a multi request arrives. The
  * multi is then in flight when the connection fails. */
@@ -153,6 +182,20 @@ struct MultiCall {
     }
     bool operator()() const { return done.get() != 0; }
 };
+
+/* Records the result of an asynchronous multi. */
+struct AsyncMulti {
+    int rc;
+    AtomicInt done;
+
+    AsyncMulti(): rc(ZAPIERROR) { done = 0; }
+    static void completion(int rc, const void *data) {
+        AsyncMulti *m = (AsyncMulti*)data;
+        m->rc = rc;
+        m->done = 1;
+    }
+    bool operator()() const { return done.get() != 0; }
+};
 #endif
 
 class Zookeeper_multiFailure : public CPPUNIT_NS::TestFixture
@@ -164,6 +207,9 @@ class Zookeeper_multiFailure : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testConnectionLossFillsResults);
     CPPUNIT_TEST(testHeaderOnlyErrorReply);
     CPPUNIT_TEST(testContainerCreateKeepsAlignment);
+    CPPUNIT_TEST(testAsyncContainerCreate);
+    CPPUNIT_TEST(testMoreResultsThanOperations);
+    CPPUNIT_TEST(testFewerResultsThanOperations);
     CPPUNIT_TEST(testZeroCountOnExpiredHandle);
     CPPUNIT_TEST(testMultiOnExpiredHandle);
 #endif
@@ -199,9 +245,9 @@ public:
         zookeeper_close(zh);
     }
 
-    /* zoo_amulti() rejects a multi with an invalid path before it queues
-     * the request. Every result slot then holds the return code. This
-     * includes the slots after the invalid operation. */
+    /* zoo_amulti() rejects a multi with an invalid path with ZBADARGUMENTS
+     * before it queues the request. Every result slot then holds that code.
+     * This includes the slots after the invalid operation. */
     void testValidationFailureFillsResults()
     {
         zh = zookeeper_init("localhost:2121", watcher, 10000, 0, 0, 0);
@@ -217,7 +263,7 @@ public:
         fillSentinel(results, 3);
 
         int rc = zoo_amulti(zh, 3, ops, results, 0, 0);
-        CPPUNIT_ASSERT(rc != ZOK);
+        CPPUNIT_ASSERT_EQUAL((int)ZBADARGUMENTS, rc);
         for (int i = 0; i < 3; i++) {
             CPPUNIT_ASSERT_EQUAL(rc, results[i].err);
         }
@@ -339,6 +385,96 @@ public:
         CPPUNIT_ASSERT_EQUAL((int64_t)0x2222, setStat.mzxid);
     }
 
+    /* The asynchronous multi decodes a container create in the same way. */
+    void testAsyncContainerCreate()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        Mock_poll pollMock(&zkServer, ZookeeperServer::FD);
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh), 1000) < 1000);
+
+        char buf[64];
+        Stat setStat;
+        memset(&setStat, 0, sizeof(setStat));
+        zoo_op_t ops[2];
+        zoo_op_result_t results[2];
+        zoo_create_op_init(&ops[0], "/container", "", 0, &ZOO_OPEN_ACL_UNSAFE,
+                ZOO_CONTAINER, buf, sizeof(buf));
+        zoo_set_op_init(&ops[1], "/container", "x", 1, -1, &setStat);
+        fillSentinel(results, 2);
+
+        AsyncMulti multi;
+        zkServer.addOperationResponse(new ContainerMultiResponse("/container",
+                makeStat(0), makeStat(7)));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_amulti(zh, 2, ops, results,
+                AsyncMulti::completion, &multi));
+        CPPUNIT_ASSERT(ensureCondition(multi, 1000) < 1000);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, multi.rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, results[0].err);
+        CPPUNIT_ASSERT_EQUAL(string("/container"), string(buf));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, results[1].err);
+        CPPUNIT_ASSERT_EQUAL(7, setStat.version);
+    }
+
+    /* A reply with more sub-results than operations fails the multi with
+     * ZMARSHALLINGERROR. The operations keep the results that they got. */
+    void testMoreResultsThanOperations()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        Mock_poll pollMock(&zkServer, ZookeeperServer::FD);
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh), 1000) < 1000);
+
+        zoo_op_t ops[2];
+        zoo_op_result_t results[2];
+        zoo_check_op_init(&ops[0], "/a", 0);
+        zoo_check_op_init(&ops[1], "/b", 0);
+        fillSentinel(results, 2);
+
+        zkServer.addOperationResponse(new CheckMultiResponse(3));
+        int rc = zoo_multi(zh, 2, ops, results);
+        CPPUNIT_ASSERT_EQUAL((int)ZMARSHALLINGERROR, rc);
+        for (int i = 0; i < 2; i++) {
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, results[i].err);
+        }
+    }
+
+    /* A reply with fewer sub-results than operations fails the multi with
+     * ZMARSHALLINGERROR. The operations without a result get that code. */
+    void testFewerResultsThanOperations()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        Mock_poll pollMock(&zkServer, ZookeeperServer::FD);
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("localhost:2121", watcher, 10000, TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh), 1000) < 1000);
+
+        zoo_op_t ops[3];
+        zoo_op_result_t results[3];
+        zoo_check_op_init(&ops[0], "/a", 0);
+        zoo_check_op_init(&ops[1], "/b", 0);
+        zoo_check_op_init(&ops[2], "/c", 0);
+        fillSentinel(results, 3);
+
+        zkServer.addOperationResponse(new CheckMultiResponse(1));
+        int rc = zoo_multi(zh, 3, ops, results);
+        CPPUNIT_ASSERT_EQUAL((int)ZMARSHALLINGERROR, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, results[0].err);
+        CPPUNIT_ASSERT_EQUAL((int)ZMARSHALLINGERROR, results[1].err);
+        CPPUNIT_ASSERT_EQUAL((int)ZMARSHALLINGERROR, results[2].err);
+    }
+
     void expireSession(ZookeeperServer& zkServer)
     {
         zkServer.returnSessionExpired();
@@ -371,11 +507,11 @@ public:
         }
         pthread_join(call.thread, 0);
         CPPUNIT_ASSERT_MESSAGE("zoo_multi() hangs on an expired handle", returned);
-        CPPUNIT_ASSERT(call.rc != ZOK);
+        CPPUNIT_ASSERT_EQUAL((int)ZINVALIDSTATE, call.rc);
     }
 
-    /* A multi with operations on an expired handle also fails at once, and
-     * every result slot holds the return code. */
+    /* A multi with operations on an expired handle also fails at once with
+     * ZINVALIDSTATE, and every result slot holds that code. */
     void testMultiOnExpiredHandle()
     {
         Mock_gettimeofday timeMock;
@@ -391,7 +527,7 @@ public:
         fillSentinel(results, 2);
 
         int rc = zoo_multi(zh, 2, ops, results);
-        CPPUNIT_ASSERT(rc != ZOK);
+        CPPUNIT_ASSERT_EQUAL((int)ZINVALIDSTATE, rc);
         for (int i = 0; i < 2; i++) {
             CPPUNIT_ASSERT_EQUAL(rc, results[i].err);
         }
