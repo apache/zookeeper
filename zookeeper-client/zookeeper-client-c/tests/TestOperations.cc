@@ -53,6 +53,7 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testAsyncGetOperation);
     CPPUNIT_TEST(testServerListChangeDuringSessionEstablishment);
     CPPUNIT_TEST(testFullWakeupPipeKeepsConnection);
+    CPPUNIT_TEST(testServerListChangeFailsBlockedSyncCall);
 #endif
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently1);
     CPPUNIT_TEST(testOperationsAndDisconnectConcurrently2);
@@ -172,6 +173,23 @@ public:
     static int portOf(const struct sockaddr_storage& addr){
         return ntohs(((const struct sockaddr_in*)&addr)->sin_port);
     }
+
+#ifdef THREADED
+    // Closes the handle and then joins the job, also when an assertion
+    // fails. The close makes a waiting synchronous call return ZCLOSING,
+    // so the join cannot hang. The join also occurs before the job destroys
+    // its own members. Declare the guard after the job.
+    struct CloseThenJoin{
+        CloseThenJoin(CloseFinally& close,TestJob& job):
+            close_(close),job_(job){}
+        ~CloseThenJoin(){
+            close_.execute();
+            job_.join();
+        }
+        CloseFinally& close_;
+        TestJob& job_;
+    };
+#endif
 #ifndef THREADED
     // send two get data requests; verify that the corresponding completions called
     void testConcurrentOperations1()
@@ -775,8 +793,8 @@ public:
     {
         Mock_gettimeofday timeMock;
         ZookeeperServer zkServer;
-        CloseFinally guard(&zh);
         SessionEvents events;
+        CloseFinally guard(&zh);
 
         zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
                 TEST_CLIENT_ID,&events,0);
@@ -829,8 +847,8 @@ public:
     {
         Mock_gettimeofday timeMock;
         ZookeeperServer zkServer;
-        CloseFinally guard(&zh);
         SessionEvents events;
+        CloseFinally guard(&zh);
 
         zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
                 TEST_CLIENT_ID,&events,0);
@@ -866,8 +884,8 @@ public:
     {
         Mock_gettimeofday timeMock;
         ZookeeperServer zkServer;
-        CloseFinally guard(&zh);
         SessionEvents events;
+        CloseFinally guard(&zh);
 
         zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
                 TEST_CLIENT_ID,&events,0);
@@ -909,8 +927,8 @@ public:
     {
         Mock_gettimeofday timeMock;
         ZookeeperServer zkServer;
-        CloseFinally guard(&zh);
         SessionEvents events;
+        CloseFinally guard(&zh);
 
         zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
                 TEST_CLIENT_ID,&events,0);
@@ -1374,8 +1392,8 @@ public:
         Mock_gettimeofday timeMock;
         HeldHandshakeServer zkServer;
         Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
-        CloseFinally guard(&zh);
         SessionEvents events;
+        CloseFinally guard(&zh);
 
         zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
                 TEST_CLIENT_ID,&events,0);
@@ -1412,19 +1430,48 @@ public:
         CPPUNIT_ASSERT(!events.contains(ZOO_NOTCONNECTED_STATE));
         CPPUNIT_ASSERT_EQUAL(2122,portOf(zh->addr_cur));
     }
-    // Holds the reconfig lock, and so stops the IO thread in its next
-    // zookeeper_interest() call. Releases the lock if an assertion fails.
-    struct ReconfigLockGuard{
-        ReconfigLockGuard(zhandle_t* zh):zh_(zh),locked_(true){lock_reconfig(zh_);}
-        ~ReconfigLockGuard(){unlock();}
-        void unlock(){
-            if(locked_){
-                locked_=false;
-                unlock_reconfig(zh_);
+    // A poll() mock that can park the IO thread. A parked IO thread does not
+    // read the wakeup pipe, so the test controls the pipe contents.
+    class ParkingPoll: public Mock_poll{
+    public:
+        ParkingPoll(Mock_socket* s,int fd):
+            Mock_poll(s,fd),park_(false),parked_(false){}
+        virtual int call(struct pollfd *fds, POLL_NFDS_TYPE nfds, int to){
+            for(;;){
+                {
+                    synchronized(mx_);
+                    if(!park_){
+                        parked_=false;
+                        break;
+                    }
+                    parked_=true;
+                }
+                millisleep(1);
             }
+            return Mock_poll::call(fds,nfds,to);
         }
-        zhandle_t* zh_;
-        bool locked_;
+        void park(){
+            synchronized(mx_);
+            park_=true;
+        }
+        void release(){
+            synchronized(mx_);
+            park_=false;
+        }
+        SyncedBoolCondition isParked() const{
+            return SyncedBoolCondition(parked_,mx_);
+        }
+        mutable Mutex mx_;
+        bool park_;
+        bool parked_;
+    };
+
+    // Releases a parked IO thread, also when an assertion fails. Declare it
+    // after CloseFinally, so that the release occurs before the close.
+    struct ParkRelease{
+        ParkRelease(ParkingPoll& poll):poll_(poll){}
+        ~ParkRelease(){ poll_.release(); }
+        ParkingPoll& poll_;
     };
 
     // A full wakeup pipe already holds a wakeup for the IO thread. An
@@ -1433,35 +1480,165 @@ public:
     {
         Mock_gettimeofday timeMock;
         ZookeeperServer zkServer;
-        Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
+        ParkingPoll pollMock(&zkServer,ZookeeperServer::FD);
+        // The completion must outlive the close and the park release,
+        // because both can complete the request.
+        AsyncGetOperationCompletion res;
         CloseFinally guard(&zh);
+        ParkRelease parkRelease(pollMock);
 
         zh=zookeeper_init("127.0.0.1:2121",watcher,10000,TEST_CLIENT_ID,0,0);
         CPPUNIT_ASSERT(zh!=0);
         CPPUNIT_ASSERT(ensureCondition(ClientConnected(zh),1000)<1000);
 
-        AsyncGetOperationCompletion res;
-        {
-            // Stop the IO thread so that it does not empty the pipe.
-            ReconfigLockGuard reconfigLock(zh);
-            millisleep(200);
-            struct adaptor_threads* adaptor=
-                (struct adaptor_threads*)zh->adaptor_priv;
-            char buf[4096]={0};
-            while(write(adaptor->self_pipe[1],buf,sizeof(buf))>0){}
-            CPPUNIT_ASSERT_EQUAL(EAGAIN,errno);
-            CPPUNIT_ASSERT_EQUAL((int)ZOK,wakeup_io_thread(zh));
+        // Park the IO thread, then fill the pipe. The pipe stays full until
+        // the release.
+        pollMock.park();
+        CPPUNIT_ASSERT(ensureCondition(pollMock.isParked(),1000)<1000);
+        struct adaptor_threads* adaptor=
+            (struct adaptor_threads*)zh->adaptor_priv;
+        char buf[4096]={0};
+        while(write(adaptor->self_pipe[1],buf,sizeof(buf))>0){}
+        CPPUNIT_ASSERT_EQUAL(EAGAIN,errno);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,wakeup_io_thread(zh));
 
-            zkServer.addOperationResponse(new ZooGetResponse("1",1));
-            CPPUNIT_ASSERT_EQUAL((int)ZOK,
-                    zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res));
-            CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,zh->fd->sock);
-            CPPUNIT_ASSERT_EQUAL(0,zh->disconnect_requested);
-        }
+        zkServer.addOperationResponse(new ZooGetResponse("1",1));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res));
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,zh->fd->sock);
+        lock_reconfig(zh);
+        int requested=zh->disconnect_requested;
+        unlock_reconfig(zh);
+        CPPUNIT_ASSERT_EQUAL(0,requested);
 
+        pollMock.release();
         CPPUNIT_ASSERT(ensureCondition(res,1000)<1000);
         CPPUNIT_ASSERT_EQUAL((int)ZOK,res.rc_);
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE,zoo_state(zh));
+    }
+
+    // Counts the get requests that reach the server. The server does not
+    // reply to them.
+    class GetRequestServer: public ZookeeperServer{
+    public:
+        virtual void onMessageReceived(const RequestHeader& rh, iarchive* ia){
+            if(rh.type==ZOO_GETDATA_OP)
+                ++getRequests;
+        }
+        AtomicInt getRequests;
+    };
+
+    // Checks that a get request reached the server.
+    struct GetRequestReceived{
+        GetRequestReceived(const AtomicInt& n):n_(n){}
+        bool operator()() const{ return n_.get()>0; }
+        const AtomicInt& n_;
+    };
+
+    // Runs one synchronous get request and records its result.
+    class BlockedGetJob: public TestJob{
+    public:
+        BlockedGetJob(zhandle_t* zh):zh_(zh),done_(false),rc_(ZAPIERROR){}
+        virtual TestJob* clone() const { return new BlockedGetJob(zh_); }
+        virtual void run(){
+            char buf[1];
+            int size=sizeof(buf);
+            int rc=zoo_get(zh_,"/a",0,buf,&size,0);
+            synchronized(mx_);
+            rc_=rc;
+            done_=true;
+        }
+        virtual void validate(const char* file, int line) const{}
+        bool operator()() const{
+            synchronized(mx_);
+            return done_;
+        }
+        int rc() const{
+            synchronized(mx_);
+            return rc_;
+        }
+        zhandle_t* zh_;
+        mutable Mutex mx_;
+        bool done_;
+        int rc_;
+    };
+
+    // Checks for a connected session with the given server.
+    struct ConnectedTo{
+        ConnectedTo(zhandle_t* zh,const char* server):zh_(zh),server_(server){}
+        bool operator()() const{
+            return zoo_state(zh_)==ZOO_CONNECTED_STATE &&
+                server_==zoo_get_current_server(zh_);
+        }
+        zhandle_t* zh_;
+        string server_;
+    };
+
+    // Checks that the watcher received a session event with the given state.
+    struct EventSeen{
+        EventSeen(const SessionEvents& e,int state):e_(e),state_(state){}
+        bool operator()() const{ return e_.contains(state_); }
+        const SessionEvents& e_;
+        int state_;
+    };
+
+    // A poll() mock with a long timeout, so that an idle IO thread wakes
+    // only for the wakeup pipe. zookeeper_close() and the debug check for
+    // a readable socket poll only the session socket. The mock answers a
+    // poll of only the session socket at once, so these polls do not wait
+    // for the long timeout. The mock does not report the socket as
+    // writable, so zookeeper_close() does not send the close request. The
+    // test does not need it.
+    class LongIdlePoll: public Mock_poll{
+    public:
+        LongIdlePoll(Mock_socket* s,int fd):Mock_poll(s,fd){
+            timeout=60000;
+        }
+        virtual int call(struct pollfd *fds, POLL_NFDS_TYPE nfds, int to){
+            if(nfds==1 && fds[0].fd==myFD){
+                bool readable=isFDReadable();
+                fds[0].revents=readable?POLLIN:0;
+                return readable?1:0;
+            }
+            return Mock_poll::call(fds,nfds,to);
+        }
+    };
+
+    // A synchronous call that waits when zoo_set_servers() drops the current
+    // server must return ZCONNECTIONLOSS. The client then connects to the
+    // new server.
+    void testServerListChangeFailsBlockedSyncCall()
+    {
+        Mock_gettimeofday timeMock;
+        GetRequestServer zkServer;
+        // The test fails if zoo_set_servers() does not wake the IO thread.
+        LongIdlePoll pollMock(&zkServer,ZookeeperServer::FD);
+        SessionEvents events;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("127.0.0.1:2121",sessionWatcher,10000,
+                TEST_CLIENT_ID,&events,0);
+        CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT(ensureCondition(
+                ConnectedTo(zh,"127.0.0.1:2121"),1000)<1000);
+
+        BlockedGetJob job(zh);
+        CloseThenJoin closeThenJoin(guard,job);
+        job.start();
+        CPPUNIT_ASSERT(ensureCondition(
+                GetRequestReceived(zkServer.getRequests),1000)<1000);
+        CPPUNIT_ASSERT(!job());
+
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zoo_set_servers(zh,"127.0.0.2:2122"));
+        CPPUNIT_ASSERT(ensureCondition(job,1000)<1000);
+        job.join();
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,job.rc());
+        // The completion thread sends the session event, so it can arrive
+        // after the synchronous call returns.
+        CPPUNIT_ASSERT(ensureCondition(
+                EventSeen(events,ZOO_CONNECTING_STATE),1000)<1000);
+        CPPUNIT_ASSERT(ensureCondition(
+                ConnectedTo(zh,"127.0.0.2:2122"),1000)<1000);
     }
 #endif
 };

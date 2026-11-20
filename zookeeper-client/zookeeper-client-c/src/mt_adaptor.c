@@ -167,9 +167,6 @@ void *do_io(void *);
 void *do_completion(void *);
 #endif
 
-
-int wakeup_io_thread(zhandle_t *zh);
-
 #ifdef WIN32
 static int set_nonblock(SOCKET fd){
     ULONG nonblocking_flag = 1;

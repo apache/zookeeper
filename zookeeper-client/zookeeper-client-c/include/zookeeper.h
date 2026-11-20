@@ -812,6 +812,14 @@ ZOOAPI const char* zoo_version_str();
  * the client moves back to the normal mode of operation where it will pick an
  * arbitrary server from the 'host' string.
  *
+ * This call does not drop the connection itself. It asks the driver to drop
+ * it. The driver is the IO thread in the multithreaded library. In the
+ * single-threaded library, the driver is the next zookeeper_interest() call.
+ * Until the driver acts, zoo_state() continues to return the current state,
+ * for example ZOO_CONNECTED_STATE or ZOO_READONLY_STATE. If the session was
+ * connected, the watcher then receives a ZOO_CONNECTING_STATE session event.
+ * All outstanding requests complete with ZCONNECTIONLOSS.
+ *
  * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the
  * protocol and its evaluation,
  *

@@ -653,9 +653,10 @@ void close_zsock(zsock_t *fd)
          * Release the SSL_CTX only together with its SSL object. A context
          * without an SSL object exists only while init_ssl_for_socket()
          * configures it on the IO thread. That function releases it on
-         * every failure path (ZOOKEEPER-5004). An application thread can
-         * call this function (for example through zoo_set_servers()), and
-         * a release here could free the context during its configuration.
+         * every failure path (ZOOKEEPER-5004). Only the driver closes the
+         * session socket. destroy() closes it after the IO thread stops.
+         * Thus no other thread can run init_ssl_for_socket() at the same
+         * time. Keep this rule as a defensive measure.
          */
         if (fd->ssl_sock) {
             SSL_free(fd->ssl_sock);
@@ -1124,7 +1125,6 @@ static int take_disconnect_request(zhandle_t *zh)
  */
 int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
 {
-    int disconnect = 0;
     int rc = ZOK;
     char *hosts = NULL;
     uint32_t num_old = 0;
@@ -1267,16 +1267,11 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
     if (zh->reconfig == 1 && zh->fd->sock != -1)
     {
         request_disconnect_locked(zh);
-        disconnect = 1;
     }
 
 finish:
 
     unlock_reconfig(zh);
-
-    if (disconnect) {
-        wakeup_driver(zh);
-    }
 
     // If we short-circuited out and never assigned resolved to zh->addrs then we
     // need to free resolved to avoid a memleak.
@@ -1600,6 +1595,9 @@ zhandle_t *zookeeper_init_sasl(const char *host, watcher_fn watcher,
  */
 int zoo_set_servers(zhandle_t *zh, const char *hosts)
 {
+    int rc;
+    int disconnect;
+
     if (hosts == NULL)
     {
         LOG_ERROR(LOGCALLBACK(zh), "New server list cannot be empty");
@@ -1618,7 +1616,19 @@ int zoo_set_servers(zhandle_t *zh, const char *hosts)
 
     unlock_reconfig(zh);
 
-    return update_addrs(zh, NULL);
+    rc = update_addrs(zh, NULL);
+
+    // This call can come from any thread or callback. If a disconnect is
+    // pending, wake the IO thread so that it acts at once. The update_addrs()
+    // call in zookeeper_interest() needs no wakeup, because the driver
+    // already runs.
+    lock_reconfig(zh);
+    disconnect = zh->disconnect_requested;
+    unlock_reconfig(zh);
+    if (disconnect) {
+        wakeup_driver(zh);
+    }
+    return rc;
 }
 
 /*
@@ -2688,6 +2698,12 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
 
     if(zh==0 || fd==0 ||interest==0 || tv==0)
         return ZBADARGUMENTS;
+    // Set safe outputs before any early return. Some event loops ignore the
+    // return code and pass the outputs to poll(). Thus an error return must
+    // not leave them uninitialized, and it must not cause a busy loop.
+    *fd = -1;
+    *interest = 0;
+    *tv = get_timeval(zh->recv_timeout/60);
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
     get_system_time(&now);
@@ -2839,15 +2855,15 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 if (zh->sent_requests.head == 0) {
                     rc = send_ping(zh);
                     if (rc < 0) {
-                        // This is the driver thread, so do the teardown
-                        // now. Do not return the closed socket.
+                        LOG_ERROR(LOGCALLBACK(zh), "failed to send PING request (zk retcode=%d)",rc);
+                        // zookeeper_interest() runs in the driver, so it
+                        // does the teardown now. It must not return the
+                        // closed socket.
+                        handle_error(zh, ZCONNECTIONLOSS);
                         *fd = -1;
                         *interest = 0;
                         *tv = get_timeval(0);
-                        return api_epilog(zh, handle_socket_error_msg(zh,
-                                __LINE__, __func__, ZCONNECTIONLOSS,
-                                "failed to send PING request (zk retcode=%d)",
-                                rc));
+                        return api_epilog(zh, ZCONNECTIONLOSS);
                     }
                 }
                 send_to = zh->recv_timeout/3;
