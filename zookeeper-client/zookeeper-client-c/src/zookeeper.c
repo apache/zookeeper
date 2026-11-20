@@ -1706,42 +1706,84 @@ void free_duplicate_path(const char *free_path, const char* path) {
 }
 
 /**
-  prepend the chroot path if available else return the path
-*/
-static char* prepend_string(zhandle_t *zh, const char* client_path) {
+ * Map a client path to a server path under the chroot.
+ *
+ * A valid client path is absolute. The chroot prefix does not make an
+ * invalid path valid. A sequential create of the client root stays in
+ * the chroot namespace. A null result is an invalid path or a failed
+ * allocation.
+ */
+static char* prepend_chroot(zhandle_t *zh, const char* client_path, int mode) {
+    size_t chroot_len;
+    size_t path_len;
     char *ret_str;
     if (zh == NULL || zh->chroot == NULL)
         return (char *) client_path;
-    // handle the chroot itself, client_path = "/"
-    if (strlen(client_path) == 1) {
+    if (client_path == NULL || client_path[0] != '/')
+        return NULL;
+    /*
+     * The client root is the chroot node. A sequential create of the root
+     * keeps a slash at the end of the server path. The server adds the
+     * sequence number as a child of the chroot, not as a sibling.
+     */
+    if (client_path[1] == '\0' && !ZOOKEEPER_IS_SEQUENCE(mode)) {
         return strdup(zh->chroot);
     }
-    ret_str = (char *) malloc(strlen(zh->chroot) + strlen(client_path) + 1);
-    strcpy(ret_str, zh->chroot);
-    return strcat(ret_str, client_path);
+    chroot_len = strlen(zh->chroot);
+    path_len = strlen(client_path);
+    ret_str = (char *) malloc(chroot_len + path_len + 1);
+    if (ret_str == NULL)
+        return NULL;
+    memcpy(ret_str, zh->chroot, chroot_len);
+    memcpy(ret_str + chroot_len, client_path, path_len + 1);
+    return ret_str;
 }
 
 /**
-   strip off the chroot string from the server path
-   if there is one else return the exact path
+ * Map a client path to a server path when the request does not create a
+ * sequential node.
+ */
+static char* prepend_string(zhandle_t *zh, const char* client_path) {
+    return prepend_chroot(zh, client_path, 0);
+}
+
+/**
+ * Give the error for a null result of prepend_chroot. An absolute client
+ * path maps to null only if the allocation fails.
+ */
+static int prepend_error(const char* client_path) {
+    return (client_path != NULL && client_path[0] == '/') ?
+        ZSYSTEMERROR : ZBADARGUMENTS;
+}
+
+/**
+ * Map a server path to a client path.
+ *
+ * The chroot prefix matches only at a path component boundary, f.e. a chroot
+ * of /app does not match the path /app2. Cluster configuration is not in
+ * the chroot namespace, so it is not affected by the chroot prefix.
+ * A chroot of /zookeeper is the exception. The configuration node is then
+ * inside the chroot, so the client reports its path as /config.
  */
 char* sub_string(zhandle_t *zh, const char* server_path) {
-    char *ret_str;
-    if (zh->chroot == NULL)
+    size_t chroot_len;
+    if (zh->chroot == NULL || server_path == NULL)
         return (char *) server_path;
     //ZOOKEEPER-1027
-    if (strncmp(server_path, zh->chroot, strlen(zh->chroot)) != 0) {
+    chroot_len = strlen(zh->chroot);
+    if (strncmp(server_path, zh->chroot, chroot_len) == 0) {
+        if (server_path[chroot_len] == '\0') {
+            return strdup("/");
+        }
+        if (server_path[chroot_len] == '/') {
+            return strdup(server_path + chroot_len);
+        }
+    }
+    if (strcmp(server_path, ZOO_CONFIG_NODE) != 0) {
         LOG_ERROR(LOGCALLBACK(zh), "server path %s does not include chroot path %s",
                    server_path, zh->chroot);
-        return (char *) server_path;
     }
-    if (strlen(server_path) == strlen(zh->chroot)) {
-        //return "/"
-        ret_str = strdup("/");
-        return ret_str;
-    }
-    ret_str = strdup(server_path + strlen(zh->chroot));
-    return ret_str;
+    return (char *) server_path;
 }
 
 static buffer_list_t *allocate_buffer(char *buff, int len)
@@ -4115,11 +4157,15 @@ static int Request_path_init(zhandle_t *zh, int mode,
 {
     assert(path_out);
 
-    *path_out = prepend_string(zh, path);
+    *path_out = prepend_chroot(zh, path, mode);
     /*
      * Restore *path_out to caller's original path pointer on validation
      * failure so caller-side free_duplicate_path() remains safe.
      */
+    if (*path_out == NULL) {
+        *path_out = (char *)path;
+        return prepend_error(path);
+    }
     if (zh == NULL || !isValidPath(*path_out, mode)) {
         free_duplicate_path(*path_out, path);
         *path_out = (char *)path;
@@ -4223,6 +4269,9 @@ int zoo_awgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
     struct GetDataRequest req =  { (char*)server_path, watcher!=0 };
     int rc;
 
+    if (server_path == NULL) {
+        return prepend_error(path);
+    }
     if (zh==0 || !isValidPath(server_path, 0)) {
         free_duplicate_path(server_path, path);
         return ZBADARGUMENTS;
@@ -5002,6 +5051,10 @@ static int aremove_watches(
     WatchesRequest req;
     watcher_deregistration_t *wdo;
 
+    if (server_path == NULL) {
+        rc = prepend_error(path);
+        goto done;
+    }
     if (!zh || !isValidPath(server_path, 0)) {
         rc = ZBADARGUMENTS;
         goto done;
@@ -5647,7 +5700,11 @@ int zoo_get(zhandle_t *zh, const char *path, int watch, char *buffer,
             buffer,buffer_len,stat);
 }
 
-int zoo_wget(zhandle_t *zh, const char *path,
+/*
+ * Read a node and wait for the result. A configuration read uses the
+ * configuration call, because that node is not in the chroot namespace.
+ */
+static int wget_sync(zhandle_t *zh, int config, const char *path,
         watcher_fn watcher, void* watcherCtx,
         char *buffer, int* buffer_len, struct Stat *stat)
 {
@@ -5661,7 +5718,11 @@ int zoo_wget(zhandle_t *zh, const char *path,
 
     sc->u.data.buffer = buffer;
     sc->u.data.buff_len = *buffer_len;
-    rc=zoo_awget(zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    if (config) {
+        rc=zoo_awgetconfig(zh, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    } else {
+        rc=zoo_awget(zh, path, watcher, watcherCtx, SYNCHRONOUS_MARKER, sc);
+    }
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;
@@ -5675,16 +5736,30 @@ int zoo_wget(zhandle_t *zh, const char *path,
     return rc;
 }
 
+int zoo_wget(zhandle_t *zh, const char *path,
+        watcher_fn watcher, void* watcherCtx,
+        char *buffer, int* buffer_len, struct Stat *stat)
+{
+    return wget_sync(zh, 0, path, watcher, watcherCtx, buffer, buffer_len,
+            stat);
+}
+
 int zoo_getconfig(zhandle_t *zh, int watch, char *buffer,
         int* buffer_len, struct Stat *stat)
 {
-    return zoo_wget(zh,ZOO_CONFIG_NODE,watch?zh->watcher:0,zh->context, buffer,buffer_len,stat);
+    return zoo_wgetconfig(zh,watch?zh->watcher:0,zh->context, buffer,buffer_len,stat);
 }
 
+/*
+ * Cluster configuration is not in the chroot namespace. This function
+ * uses the asynchronous configuration call so that the synchronous and
+ * asynchronous APIs will both read the same configuration node.
+ */
 int zoo_wgetconfig(zhandle_t *zh, watcher_fn watcher, void* watcherCtx,
        char *buffer, int* buffer_len, struct Stat *stat)
 {
-   return zoo_wget(zh, ZOO_CONFIG_NODE, watcher, watcherCtx, buffer, buffer_len, stat);
+    return wget_sync(zh, 1, NULL, watcher, watcherCtx, buffer, buffer_len,
+            stat);
 }
 
 
