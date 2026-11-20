@@ -47,6 +47,10 @@ class Zookeeper_resolverFailure : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testRejectedServerListKeepsReconnecting);
     CPPUNIT_TEST(testFailoverTriesEveryCachedAddress);
     CPPUNIT_TEST(testFailedInterestSetsSafeOutputs);
+    CPPUNIT_TEST(testResolverFailureBacksOff);
+    CPPUNIT_TEST(testPartialResolutionKeepsConnection);
+    CPPUNIT_TEST(testPartialResolutionWhileDisconnected);
+    CPPUNIT_TEST(testAcceptedServerListBecomesCurrent);
 #endif
     CPPUNIT_TEST_SUITE_END();
 
@@ -83,6 +87,19 @@ class Zookeeper_resolverFailure : public CPPUNIT_NS::TestFixture
         }
         vector<int> ports;
     };
+
+    static int portOf(const struct sockaddr_storage *addr) {
+        return ntohs(((const struct sockaddr_in *)addr)->sin_port);
+    }
+
+#ifndef THREADED
+    static int interestOnce(zhandle_t *zh) {
+        int fd = -2;
+        int interest = 0;
+        timeval tv;
+        return zookeeper_interest(zh, &fd, &interest, &tv);
+    }
+#endif
 
 public:
     Zookeeper_resolverFailure() {
@@ -190,8 +207,8 @@ public:
                                        sizeof(zh->addr_cur)));
     }
 
-    // zoo_set_servers reports a resolver failure, and the client still
-    // reconnects to the last good addresses.
+    // zoo_set_servers reports a resolver failure. The client keeps its
+    // current server list, and it reconnects to the last good addresses.
     void testRejectedServerListKeepsReconnecting()
     {
         Mock_gettimeofday timeMock;
@@ -204,6 +221,10 @@ public:
         Mock_getaddrinfo resolverOutage;
         CPPUNIT_ASSERT_EQUAL((int)ZSYSTEMERROR,
                 zoo_set_servers(zh, "zk1.example.com:2121"));
+        CPPUNIT_ASSERT_EQUAL(string("127.0.0.1:2121"), string(zh->hostname));
+        CPPUNIT_ASSERT(zh->hostname_pending == 0);
+        // A rejected list does not delay refreshes of the current list.
+        CPPUNIT_ASSERT_EQUAL(0, zh->resolve_backoff_ms);
 
         int fd = -2;
         int interest = 0;
@@ -272,6 +293,9 @@ public:
             CPPUNIT_ASSERT_EQUAL(0, interest);
             CPPUNIT_ASSERT_EQUAL(TIMEOUT*1000/60,
                     (int)(tv.tv_sec*1000 + tv.tv_usec/1000));
+            rc = zookeeper_interest(zh, &fd, &interest, &tv);
+            CPPUNIT_ASSERT_EQUAL((int)ZSYSTEMERROR, rc);
+            CPPUNIT_ASSERT_EQUAL(2, resolverOutage.callCounter);
         }
 
         // A terminal state also gives safe values.
@@ -284,6 +308,129 @@ public:
         CPPUNIT_ASSERT_EQUAL(-1, fd);
         CPPUNIT_ASSERT_EQUAL(0, interest);
         CPPUNIT_ASSERT(tv.tv_sec != 0 || tv.tv_usec != 0);
+    }
+
+    // A failed lookup delays the next periodic lookup, also while the client
+    // is not connected. The delay starts when the slow lookup ends, and it
+    // doubles after each failed lookup. A complete lookup clears it.
+    void testResolverFailureBacksOff()
+    {
+        Mock_gettimeofday timeMock;
+        RefusingServer refusingServer;
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("127.0.0.1:2121", watcher, TIMEOUT*1000,
+                TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        Mock_getaddrinfo resolverOutage;
+        resolverOutage.clock = &timeMock;
+        resolverOutage.lookupMillis = 5000;
+
+        // Each lookup takes 5 seconds and fails.
+        interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL(1, resolverOutage.callCounter);
+        CPPUNIT_ASSERT_EQUAL(1000, zh->resolve_backoff_ms);
+        CPPUNIT_ASSERT_EQUAL(-1, (int)zh->fd->sock);
+
+        // The wait counts from the end of the lookup.
+        interestOnce(zh);
+        timeMock.millitick(900);
+        interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL(1, resolverOutage.callCounter);
+
+        timeMock.millitick(200);
+        interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL(2, resolverOutage.callCounter);
+        CPPUNIT_ASSERT_EQUAL(2000, zh->resolve_backoff_ms);
+
+        timeMock.millitick(1500);
+        interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL(2, resolverOutage.callCounter);
+        timeMock.millitick(600);
+        interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL(3, resolverOutage.callCounter);
+        CPPUNIT_ASSERT_EQUAL(4000, zh->resolve_backoff_ms);
+        CPPUNIT_ASSERT_EQUAL(1, (int)zh->addrs.count);
+
+        // The resolver recovers. A complete lookup clears the wait.
+        resolverOutage.failNode = "zk1.example.com";
+        resolverOutage.lookupMillis = 0;
+        timeMock.millitick(4100);
+        int before = resolverOutage.callCounter;
+        interestOnce(zh);
+        CPPUNIT_ASSERT(resolverOutage.callCounter > before);
+        CPPUNIT_ASSERT_EQUAL(0, zh->resolve_backoff_ms);
+    }
+
+    // While the client is connected, a partial periodic refresh keeps the
+    // whole cached list. Thus the client keeps its connection to a host
+    // that does not resolve.
+    void testPartialResolutionKeepsConnection()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("127.0.0.1:2121,127.0.0.2:2122", watcher,
+                TIMEOUT*1000, TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        CPPUNIT_ASSERT_EQUAL(2, (int)zh->addrs.count);
+        forceConnected(zh, &timeMock.tv);
+        for (uint32_t i = 0; i < zh->addrs.count; i++) {
+            if (portOf(&zh->addrs.data[i]) == 2122) {
+                zh->addr_cur = zh->addrs.data[i];
+            }
+        }
+        CPPUNIT_ASSERT_EQUAL(2122, portOf(&zh->addr_cur));
+
+        Mock_getaddrinfo partialOutage;
+        partialOutage.failNode = "127.0.0.2";
+        int rc = interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD, (int)zh->fd->sock);
+        CPPUNIT_ASSERT_EQUAL((int)ZOO_CONNECTED_STATE, zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL(2, (int)zh->addrs.count);
+        CPPUNIT_ASSERT_EQUAL(1000, zh->resolve_backoff_ms);
+    }
+
+    // While the client is not connected, a partial periodic refresh also
+    // keeps the whole cached list, and it starts the wait.
+    void testPartialResolutionWhileDisconnected()
+    {
+        Mock_gettimeofday timeMock;
+        RefusingServer refusingServer;
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("127.0.0.1:2121,127.0.0.2:2122", watcher,
+                TIMEOUT*1000, TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        CPPUNIT_ASSERT_EQUAL(-1, (int)zh->fd->sock);
+        Mock_getaddrinfo partialOutage;
+        partialOutage.failNode = "127.0.0.2";
+        interestOnce(zh);
+        CPPUNIT_ASSERT_EQUAL(2, (int)zh->addrs.count);
+        CPPUNIT_ASSERT_EQUAL(1000, zh->resolve_backoff_ms);
+    }
+
+    // A server list becomes current if only some of its hosts resolve.
+    // The client then uses the addresses that resolved.
+    void testAcceptedServerListBecomesCurrent()
+    {
+        CloseFinally guard(&zh);
+
+        zh = zookeeper_init("127.0.0.1:2121", watcher, TIMEOUT*1000,
+                TEST_CLIENT_ID, 0, 0);
+        CPPUNIT_ASSERT(zh != 0);
+        Mock_getaddrinfo partialOutage;
+        partialOutage.failNode = "127.0.0.3";
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_set_servers(zh, "127.0.0.2:2122,127.0.0.3:2123"));
+        CPPUNIT_ASSERT_EQUAL(string("127.0.0.2:2122,127.0.0.3:2123"),
+                string(zh->hostname));
+        CPPUNIT_ASSERT(zh->hostname_pending == 0);
+        CPPUNIT_ASSERT_EQUAL(1, (int)zh->addrs.count);
+        CPPUNIT_ASSERT_EQUAL(2122, portOf(&zh->addrs.data[0]));
+        CPPUNIT_ASSERT_EQUAL(0, zh->resolve_backoff_ms);
     }
 #endif
 };

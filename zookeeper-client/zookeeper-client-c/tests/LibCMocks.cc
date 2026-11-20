@@ -134,6 +134,10 @@ Mock_getaddrinfo* Mock_getaddrinfo::mock_=0;
 int Mock_getaddrinfo::call(const char* node, const char* service,
         const struct addrinfo* hints, struct addrinfo** res) {
     callCounter++;
+    if (clock)
+        clock->millitick(lookupMillis);
+    if (failNode && (!node || strcmp(node, failNode) != 0))
+        return LIBC_SYMBOLS.getaddrinfo(node,service,hints,res);
     return failWith;
 }
 

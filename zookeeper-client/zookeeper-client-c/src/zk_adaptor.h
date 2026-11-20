@@ -195,6 +195,7 @@ struct _zhandle {
 
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to
+    char *hostname_pending;             // list from zoo_set_servers() that is not yet resolved
     struct sockaddr_storage addr_cur;   // address of server we're currently connecting/connected to 
     struct sockaddr_storage addr_rw_server; // address of last known read/write server found.
 
@@ -204,6 +205,7 @@ struct _zhandle {
 
     struct timeval last_resolve;        // time of last hostname resolution
     int resolve_delay_ms;               // see zoo_set_servers_resolution_delay
+    int resolve_backoff_ms;             // wait after a failed refresh, or 0 after a complete lookup
 
     int reconfig;                       // Are we in the process of reconfiguring cluster's ensemble
     double pOld, pNew;                  // Probability for selecting between 'addrs_old' and 'addrs_new'

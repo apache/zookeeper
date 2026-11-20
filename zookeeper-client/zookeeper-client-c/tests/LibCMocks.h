@@ -69,15 +69,24 @@ public:
 // *****************************************************************************
 // getaddrinfo
 
-// Simulates a resolver outage. While an instance exists, every lookup fails
-// with failWith. Without an instance, lookups go to the C library.
+class Mock_gettimeofday;
+
+// Simulates a resolver outage. While an instance exists, lookups fail with
+// failWith. If failNode is set, only lookups of that node fail, and the
+// other lookups go to the C library. If clock is set, each lookup advances
+// it by lookupMillis, to simulate a slow resolver. Without an instance,
+// lookups go to the C library.
 class Mock_getaddrinfo: public Mock
 {
 public:
-    Mock_getaddrinfo():failWith(EAI_AGAIN),callCounter(0){mock_=this;}
+    Mock_getaddrinfo():failWith(EAI_AGAIN),failNode(0),clock(0),
+        lookupMillis(0),callCounter(0){mock_=this;}
     virtual ~Mock_getaddrinfo(){mock_=0;}
 
     int failWith;
+    const char* failNode;
+    Mock_gettimeofday* clock;
+    int lookupMillis;
     int callCounter;
     virtual int call(const char* node, const char* service,
             const struct addrinfo* hints, struct addrinfo** res);
