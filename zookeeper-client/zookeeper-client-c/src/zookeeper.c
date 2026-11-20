@@ -716,6 +716,8 @@ static void destroy(zhandle_t *zh)
         free(zh->hostname);
         zh->hostname = NULL;
     }
+    free(zh->hostname_pending);
+    zh->hostname_pending = NULL;
     if (zh->fd->sock != -1) {
         close_zsock(zh->fd);
         memset(&zh->addr_cur, 0, sizeof(zh->addr_cur));
@@ -824,12 +826,41 @@ static int count_hosts(char *hosts)
     return count+1;
 }
 
+/*
+ * Limits for the wait after a failed refresh. The wait starts at the minimum
+ * and doubles after each failed refresh, up to the maximum.
+ */
+#define RESOLVE_BACKOFF_MIN_MS 1000
+#define RESOLVE_BACKOFF_MAX_MS 60000
+
+/*
+ * Record a periodic refresh in which one or more hosts did not resolve. A
+ * slow resolver can block the caller for a long time. Thus the wait starts
+ * when the lookup ends, not when it starts. The caller holds the reconfig
+ * lock.
+ */
+static void note_resolve_failure(zhandle_t *zh)
+{
+    get_system_time(&zh->last_resolve);
+    if (zh->resolve_backoff_ms < RESOLVE_BACKOFF_MIN_MS) {
+        zh->resolve_backoff_ms = RESOLVE_BACKOFF_MIN_MS;
+    } else if (zh->resolve_backoff_ms < RESOLVE_BACKOFF_MAX_MS / 2) {
+        zh->resolve_backoff_ms *= 2;
+    } else {
+        zh->resolve_backoff_ms = RESOLVE_BACKOFF_MAX_MS;
+    }
+}
+
 /**
  * Resolve hosts and populate provided address vector with shuffled results.
  * The contents of the provided address vector will be initialized to an
  * empty state.
+ *
+ * The function skips each host that does not resolve, and it counts these
+ * hosts in *unresolved. It returns an error if no host resolves.
  */
-static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *avec)
+static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *avec,
+        int *unresolved)
 {
     int rc = ZOK;
     char *host = NULL;
@@ -840,6 +871,8 @@ static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *a
     if (zh == NULL || hosts_in == NULL || avec == NULL) {
         return ZBADARGUMENTS;
     }
+
+    *unresolved = 0;
 
     // initialize address vector
     addrvec_init(avec);
@@ -987,6 +1020,7 @@ static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *a
                 LOG_ERROR(LOGCALLBACK(zh), "getaddrinfo: %s\n", strerror(errno));
 #endif
                 rc=ZSYSTEMERROR;
+                (*unresolved)++;
                 goto next;
             }
         }
@@ -1073,6 +1107,14 @@ fail:
  * \param ref_time an optional "reference time," used to determine if
  * resolution can be skipped in accordance to the delay set by \ref
  * zoo_set_servers_resolution_delay.  Passing NULL prevents skipping.
+ * A non-NULL ref_time also marks a periodic refresh from the driver. If a
+ * host does not resolve during a refresh, the client keeps its cached
+ * addresses and the function returns ZOK. A failed lookup is not a topology
+ * change. See zoo_set_servers_resolution_delay for the wait.
+ *
+ * A NULL ref_time resolves the list that zoo_set_servers() staged, if there
+ * is one. The staged list becomes current if one or more of its hosts
+ * resolve. The client then uses only the addresses that resolved.
  *
  * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the
  * protocol and its evaluation,
@@ -1085,6 +1127,7 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
     uint32_t num_new = 0;
     uint32_t i = 0;
     int found_current = 0;
+    int unresolved = 0;
     addrvec_t resolved = { 0 };
 
     // Verify we have a valid handle
@@ -1100,6 +1143,17 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
 
     // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
     lock_reconfig(zh);
+
+    // After a failed refresh, the next refresh waits before it tries again.
+    // Thus a slow or failing resolver cannot block each pass of the event
+    // loop. The wait applies also while the client is not connected, because
+    // the client then reconnects to the cached addresses.
+    if (ref_time && zh->resolve_backoff_ms > 0 && zh->addrs.count > 0) {
+        int elapsed_ms = calculate_interval(&zh->last_resolve, ref_time);
+        if (elapsed_ms >= 0 && elapsed_ms < zh->resolve_backoff_ms) {
+            goto finish;
+        }
+    }
 
     // Check if we are due for a host name resolution.  (See
     // zoo_set_servers_resolution_delay.  The answer is always "yes"
@@ -1122,17 +1176,48 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
         }
     }
 
-    // Copy zh->hostname for local use
-    hosts = strdup(zh->hostname);
+    // zoo_set_servers() stages a new list in hostname_pending. The list
+    // becomes current only if one or more of its hosts resolve. A periodic
+    // refresh always uses the current list.
+    if (!ref_time && zh->hostname_pending) {
+        hosts = strdup(zh->hostname_pending);
+    } else {
+        hosts = strdup(zh->hostname);
+    }
     if (hosts == NULL) {
         rc = ZSYSTEMERROR;
         goto finish;
     }
 
-    rc = resolve_hosts(zh, hosts, &resolved);
-    if (rc != ZOK)
+    rc = resolve_hosts(zh, hosts, &resolved, &unresolved);
+    if (rc != ZOK || (ref_time && unresolved > 0 && zh->addrs.count > 0))
     {
+        // A resolver outage must not stop pings, timeouts, or reconnects.
+        // Thus a periodic refresh keeps all cached addresses if a host does
+        // not resolve. The client does not drop or change its server only
+        // because a lookup failed.
+        // A failed zoo_set_servers() call keeps the current list, and the
+        // caller gets the error.
+        if (ref_time) {
+            note_resolve_failure(zh);
+        }
+        if (ref_time && zh->addrs.count > 0) {
+            LOG_WARN(LOGCALLBACK(zh),
+                     "%d host(s) in server list [%s] did not resolve, keeping "
+                     "the last good addresses", unresolved, zh->hostname);
+            rc = ZOK;
+        } else if (!ref_time && zh->hostname_pending) {
+            free(zh->hostname_pending);
+            zh->hostname_pending = NULL;
+        }
         goto finish;
+    }
+
+    // One or more hosts of the new list resolved. It becomes the current list.
+    if (!ref_time && zh->hostname_pending) {
+        free(zh->hostname);
+        zh->hostname = zh->hostname_pending;
+        zh->hostname_pending = NULL;
     }
 
     // Unconditionally note last resolution time.
@@ -1140,6 +1225,15 @@ int update_addrs(zhandle_t *zh, const struct timeval *ref_time)
         zh->last_resolve = *ref_time;
     } else {
         get_system_time(&zh->last_resolve);
+    }
+
+    // A complete lookup clears the wait. A partial periodic refresh gets to
+    // this point only if no addresses are cached. It uses the addresses that
+    // resolved, and it starts the wait.
+    if (unresolved == 0) {
+        zh->resolve_backoff_ms = 0;
+    } else if (ref_time) {
+        note_resolve_failure(zh);
     }
 
     // If the addrvec list is identical to last time we ran don't do anything
@@ -1560,12 +1654,14 @@ int zoo_set_servers(zhandle_t *zh, const char *hosts)
     // NOTE: guard access to {hostname, addr_cur, addrs, addrs_old, addrs_new, last_resolve, resolve_delay_ms}
     lock_reconfig(zh);
 
-    // Reset hostname to new set of hosts to connect to
-    if (zh->hostname) {
-        free(zh->hostname);
+    // Stage the new list. update_addrs() makes it current only if one or
+    // more of its hosts resolve. Thus a failed call keeps the current list.
+    free(zh->hostname_pending);
+    zh->hostname_pending = strdup(hosts);
+    if (zh->hostname_pending == NULL) {
+        unlock_reconfig(zh);
+        return ZSYSTEMERROR;
     }
-
-    zh->hostname = strdup(hosts);
 
     unlock_reconfig(zh);
 
@@ -2127,9 +2223,15 @@ static void handle_error(zhandle_t *zh,int rc)
     cleanup(zh, rc);
     // NOTE: If we're at the end of the list of addresses to connect to, then
     // we want to delay the next connection attempt to avoid spinning.
-    // Then increment what host we'll connect to since we failed to connect to current
     zh->delay = addrvec_atend(&zh->addrs);
-    addrvec_next(&zh->addrs, &zh->addr_cur);
+    // Outside a reconfig pass, zoo_cycle_next_server moves the cursor before
+    // each connect. Here the client only records the next server, so that a
+    // failure does not skip it.
+    if (zh->reconfig) {
+        addrvec_next(&zh->addrs, &zh->addr_cur);
+    } else {
+        addrvec_peek(&zh->addrs, &zh->addr_cur);
+    }
 }
 
 static int handle_socket_error_msg(zhandle_t *zh, int line, const char *func, int rc,
@@ -2631,6 +2733,12 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
 
     if(zh==0 || fd==0 ||interest==0 || tv==0)
         return ZBADARGUMENTS;
+    // Set safe outputs before any early return. Some event loops ignore the
+    // return code and pass the outputs to poll(). Thus an error return must
+    // not leave them uninitialized, and it must not cause a busy loop.
+    *fd = -1;
+    *interest = 0;
+    *tv = get_timeval(zh->recv_timeout/60);
     if (is_unrecoverable(zh))
         return ZINVALIDSTATE;
     get_system_time(&now);

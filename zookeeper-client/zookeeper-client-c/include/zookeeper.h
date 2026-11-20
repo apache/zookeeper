@@ -820,7 +820,11 @@ ZOOAPI const char* zoo_version_str();
  * \return ZOK on success or one of the following errcodes on failure:
  * ZBADARGUMENTS - invalid input parameters
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
- * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details
+ * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details.
+ * This includes the case where no host in the new list resolves. The client
+ * then keeps its current server list and addresses. If only some hosts
+ * in the new list resolve, the call succeeds. The client then uses the
+ * addresses that resolved. Later routine resolutions retry the other hosts.
  */
 ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
 
@@ -839,11 +843,22 @@ ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
  * This method allows an application to influence the rate of polling.
  * When delay_ms is set to a value greater than zero, the client skips
  * most "routine" resolutions which would have happened in a window of
- * that many milliseconds since the last successful one.
+ * that many milliseconds since the last resolution. A failed routine
+ * resolution also counts.
  *
  * Setting delay_ms to 0 disables this logic, reverting to the default
  * behavior.  Setting it to -1 disables network resolutions during
  * normal operation (but not, e.g., on connection loss).
+ *
+ * If a host does not resolve during a routine resolution, the client
+ * keeps all of its cached addresses. Until all hosts resolve, routine
+ * resolutions do not change these addresses. zoo_set_servers() replaces
+ * them. The client then waits before the next routine resolution, also
+ * while it is not connected. The wait starts at one second and doubles
+ * after each failed resolution, up to one minute. A resolution in which
+ * all hosts resolve clears the wait. This wait applies in addition to
+ * delay_ms. A single resolution still blocks the I/O loop for as long as
+ * the resolver takes. The wait only limits how often this occurs.
  *
  * \param delay_ms 0, -1, or the window size in milliseconds
  * \return ZOK on success or ZBADARGUMENTS for invalid input parameters

@@ -65,6 +65,8 @@
 struct LibCSymTable
 {
     DECLARE_SYM(hostent*,gethostbyname,(const char*));
+    DECLARE_SYM(int,getaddrinfo,(const char*,const char*,
+                const struct addrinfo*,struct addrinfo**));
     DECLARE_SYM(void*,calloc,(size_t, size_t));
     DECLARE_SYM(void*,realloc,(void*, size_t));
     DECLARE_SYM(void,free,(void*));
