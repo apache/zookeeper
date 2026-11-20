@@ -559,7 +559,7 @@ void processline(const char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        ptr = strchr(line, ' ');
+        ptr = (char *) strchr(line, ' ');
         if (!ptr) {
             fprintf(stderr, "No data found after path\n");
             return;
@@ -773,7 +773,7 @@ void processline(const char *line) {
     } else if (startsWith(line, "addauth ")) {
       char *ptr;
       line += 8;
-      ptr = strchr(line, ' ');
+      ptr = (char *) strchr(line, ' ');
       if (ptr) {
         *ptr = '\0';
         ptr++;
