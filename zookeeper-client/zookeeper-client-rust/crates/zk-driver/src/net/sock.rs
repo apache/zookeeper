@@ -334,6 +334,31 @@ impl TcpSock {
         }
     }
 
+    /// Receives incoming socket data directly into the uninitialized spare capacity of `v`,
+    /// advancing `v.len()` by the number of bytes read and retrying upon `EINTR`.
+    ///
+    /// Reads up to `v.capacity() - v.len()` bytes without reallocating or pre-zeroing memory.
+    /// When `v` has no remaining spare capacity, delegates to [`Self::recv`] with an empty slice.
+    /// Returning `Ok(0)` when spare capacity is non-empty indicates remote socket closure (EOF).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error without modifying `v` if the read fails; `EWOULDBLOCK` indicates no data
+    /// is currently available.
+    pub fn recv_spare(&self, v: &mut Vec<u8>) -> Result<usize, Errno> {
+        if v.capacity() == v.len() {
+            return self.recv(&mut []);
+        }
+        loop {
+            let spare = rustix::buffer::spare_capacity(&mut *v);
+            match rustix::net::recv(&self.fd, spare, RecvFlags::empty()) {
+                Err(Errno::INTR) => {}
+                Err(e) => return Err(e),
+                Ok((n, _)) => return Ok(n),
+            }
+        }
+    }
+
     /// Queries and clears the socket's pending asynchronous error status (`SO_ERROR`).
     ///
     /// # Errors

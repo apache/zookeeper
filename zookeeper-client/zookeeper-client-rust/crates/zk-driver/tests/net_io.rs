@@ -289,6 +289,79 @@ mod sock {
         assert_eq!(a.local_addr().unwrap(), b.peer_addr().unwrap());
         assert!(a.raw() >= 0);
     }
+
+    /// Spins until `sock` has at least `len` bytes queued in its kernel receive buffer.
+    fn wait_bytes(sock: &TcpSock, len: u64) {
+        let start = std::time::Instant::now();
+        while rustix::io::ioctl_fionread(sock).unwrap() < len {
+            assert!(start.elapsed() < std::time::Duration::from_secs(10));
+            std::thread::yield_now();
+        }
+    }
+
+    /// Verifies that `recv_spare` appends into uninitialized tail capacity without growing the
+    /// vector beyond its existing allocation.
+    #[test]
+    #[allow(clippy::arithmetic_side_effects)]
+    fn recv_spare_appends_and_reads_at_most_the_spare_capacity() {
+        let (a, b) = socket_pair();
+        let mut v = Vec::with_capacity(8);
+        v.extend_from_slice(b"xyz");
+        let cap = v.capacity();
+        assert_eq!(a.send(b"0123456789").unwrap(), 10);
+        wait_bytes(&b, 10);
+        let n = b.recv_spare(&mut v).unwrap();
+        assert_eq!(n, cap - 3);
+        assert_eq!(v.capacity(), cap, "the read makes the vector grow");
+        assert_eq!(v.len(), cap);
+        assert_eq!(v.get(..3), Some(&b"xyz"[..]));
+        assert_eq!(v.get(3..), b"0123456789".get(..n));
+        v.clear();
+        let m = b.recv_spare(&mut v).unwrap();
+        assert_eq!(n + m, 10);
+        assert_eq!(v, b"0123456789".get(n..).unwrap());
+    }
+
+    /// Verifies that `recv_spare` returns `EWOULDBLOCK` on an empty nonblocking socket while
+    /// leaving existing vector contents and capacity intact.
+    #[test]
+    fn recv_spare_with_no_data_leaves_the_vector() {
+        let (_a, b) = socket_pair();
+        rustix::io::ioctl_fionbio(&b, true).unwrap();
+        let mut v = Vec::with_capacity(64);
+        v.extend_from_slice(b"keep");
+        let cap = v.capacity();
+        assert_eq!(b.recv_spare(&mut v), Err(Errno::WOULDBLOCK));
+        assert_eq!(v, b"keep");
+        assert_eq!(v.capacity(), cap);
+    }
+
+    /// Verifies that `recv_spare` returns `Ok(0)` upon remote peer closure (EOF).
+    #[test]
+    fn recv_spare_sees_the_peer_close() {
+        let (a, b) = socket_pair();
+        drop(a);
+        let mut v = Vec::with_capacity(64);
+        assert_eq!(b.recv_spare(&mut v), Ok(0));
+        assert!(v.is_empty());
+    }
+
+    /// Verifies that `recv_spare` on a vector with zero spare capacity matches `recv(&mut [])`
+    /// without reallocating or consuming queued socket bytes.
+    #[test]
+    fn recv_spare_on_a_full_vector_reads_nothing() {
+        let (a, b) = socket_pair();
+        assert_eq!(a.send(b"data").unwrap(), 4);
+        wait_bytes(&b, 4);
+        let mut v = vec![7u8; 4];
+        v.shrink_to_fit();
+        let cap = v.capacity();
+        let mut empty = [0u8; 0];
+        assert_eq!(b.recv_spare(&mut v), b.recv(&mut empty));
+        assert_eq!(v, [7u8; 4]);
+        assert_eq!(v.capacity(), cap);
+        assert_eq!(rustix::io::ioctl_fionread(&b).unwrap(), 4);
+    }
 }
 
 mod waker {

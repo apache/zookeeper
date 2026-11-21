@@ -368,3 +368,86 @@ fn a_refused_connect_with_read_only_events_moves_to_the_next_host() {
         .or_else(|| log_pos(&seen, LogSite::SockConnectFailed));
     assert!(failed.is_some(), "no log line for the refused connect");
 }
+
+/// Drives single-threaded polling rounds until `n` operation completion results have been collected
+/// in arrival order.
+fn results(h: &Polled<TestTokens>, n: usize) -> Vec<Item<TestTokens>> {
+    let mut got = Vec::new();
+    let done = common::wait_until(Duration::from_secs(30), || {
+        got.extend(
+            round(h)
+                .into_iter()
+                .filter(|i| matches!(i, Item::Result { .. })),
+        );
+        got.len() >= n
+    });
+    assert!(done, "{} of {n} results", got.len());
+    got
+}
+
+/// Verifies that reply frames straddling the 64 KiB read buffer boundary and a 1 MiB reply frame
+/// are reassembled intact and delivered in order.
+#[test]
+fn frames_at_the_read_buffer_edges_arrive_whole() {
+    let server = FakeServer::start().unwrap();
+    let h = connected(&server);
+    for (i, len) in common::EDGE_FRAME_LENS.into_iter().enumerate() {
+        let data = common::pattern(len - common::GET_DATA_FRAME_BASE, i as u8);
+        let path = format!("/edge{i}");
+        server.cluster().create(&path, &data, 0).unwrap();
+        let id = i as u64 + 1;
+        let mut ob = h.outbox();
+        h.submit(common::get_data_at(id, &path), &mut ob)
+            .ok()
+            .unwrap();
+        let got = results(&h, 1);
+        common::check_result(&got[0], id, Some(&data));
+    }
+}
+
+/// Verifies that interleaved large and small replies flushed in a single server burst preserve
+/// payload integrity and completion ordering.
+#[test]
+fn large_and_small_frames_interleaved_arrive_in_order() {
+    let server = FakeServer::start().unwrap();
+    let h = connected(&server);
+    let mut want: Vec<Option<Vec<u8>>> = Vec::new();
+    for (i, len) in common::EDGE_FRAME_LENS.into_iter().enumerate() {
+        let data = common::pattern(len - common::GET_DATA_FRAME_BASE, i as u8);
+        server
+            .cluster()
+            .create(&format!("/mix{i}"), &data, 0)
+            .unwrap();
+        want.push(Some(data));
+        want.push(None);
+        let small = common::pattern(i + 1, 0x40 + i as u8);
+        server
+            .cluster()
+            .create(&format!("/small{i}"), &small, 0)
+            .unwrap();
+        want.push(Some(small));
+    }
+    // Hold server processing so all replies flush in a single coalesced burst upon release.
+    server.hold();
+    let mut ob = h.outbox();
+    for k in 0..want.len() {
+        let id = k as u64 + 1;
+        let i = k / 3;
+        let req = match k % 3 {
+            0 => common::get_data_at(id, &format!("/mix{i}")),
+            2 => common::get_data_at(id, &format!("/small{i}")),
+            _ => common::exists(id),
+        };
+        h.submit(req, &mut ob).ok().unwrap();
+    }
+    drop(ob);
+    let start = Instant::now();
+    while start.elapsed() < Duration::from_millis(200) {
+        assert!(round(&h).iter().all(|i| !matches!(i, Item::Result { .. })));
+    }
+    server.release();
+    let got = results(&h, want.len());
+    for (k, (item, w)) in got.iter().zip(&want).enumerate() {
+        common::check_result(item, k as u64 + 1, w.as_deref());
+    }
+}

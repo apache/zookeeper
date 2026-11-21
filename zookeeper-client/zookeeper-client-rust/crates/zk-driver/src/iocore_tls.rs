@@ -293,14 +293,14 @@ pub(crate) fn handshake_step<T: Tokens>(
     };
     let mut failed: Option<i32> = None;
     if events.read {
-        match t.sock.recv(&mut io.rx) {
+        match io.rx.recv(&t.sock, READ_BUFFER_LEN) {
             Ok(0) => {
                 // Peer closed the TCP connection before completing the TLS handshake.
                 let _latched = t.tls.feed_eof();
                 failed = Some(0);
             }
             Ok(n) => {
-                let data = io.rx.get(..n).unwrap_or_default();
+                let data = io.rx.data().get(..n).unwrap_or_default();
                 if t.tls.feed(data).is_err() {
                     alert_attempt(&t.sock, &mut *t.tls, &t.ct_out);
                     // Cryptographic decode failures occurring after the final flight are latched
@@ -408,14 +408,14 @@ pub(crate) fn tls_read<T: Tokens>(
     };
     if events.read && t.pending.is_none() && gate {
         io.read_attempted = true;
-        match t.sock.recv(&mut io.rx) {
+        match io.rx.recv(&t.sock, READ_BUFFER_LEN) {
             Ok(0) => {
                 // Peer closed the socket. Latch end-of-file state in the TLS engine so any
                 // preceding decrypted records in the engine are drained first.
                 let _latched = t.tls.feed_eof();
             }
             Ok(n) => {
-                let data = io.rx.get(..n).unwrap_or_default();
+                let data = io.rx.data().get(..n).unwrap_or_default();
                 if t.tls.feed(data).is_err() {
                     alert_attempt(&t.sock, &mut *t.tls, &t.ct_out);
                 }

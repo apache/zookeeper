@@ -152,6 +152,75 @@ pub type RawSock = std::os::fd::RawFd;
 /// per `recv` syscall while keeping `IoCore` itself compact on the stack.
 pub const READ_BUFFER_LEN: usize = 64 * 1024;
 
+/// Fixed-capacity (`READ_BUFFER_LEN`) receive buffer for plaintext and TLS ciphertext reads.
+///
+/// Allocated with uninitialized spare capacity (`Vec::with_capacity`) to avoid a 64 KiB zeroing
+/// pass on handle initialization. The underlying vector's `len` tracks the high-water mark of
+/// initialized bytes while its capacity remains fixed at `READ_BUFFER_LEN`. Full-capacity reads
+/// write directly into uninitialized spare capacity via [`TcpSock::recv_spare`], whereas smaller
+/// reads zero-initialize only the slice beyond the current high-water mark so syscall read lengths
+/// remain identical to `want`.
+pub(crate) struct RxBuf {
+    buf: Vec<u8>,
+}
+
+impl RxBuf {
+    /// Allocates an uninitialized receive buffer with fixed capacity `READ_BUFFER_LEN`.
+    fn new() -> Self {
+        Self {
+            buf: Vec::with_capacity(READ_BUFFER_LEN),
+        }
+    }
+
+    /// Reads up to `want` bytes from `sock` into the leading region of the buffer.
+    ///
+    /// Newly received bytes occupy `data()[..n]`; because residual bytes from earlier reads may
+    /// remain initialized past index `n`, callers must slice strictly to the returned byte count.
+    pub(crate) fn recv(&mut self, sock: &TcpSock, want: usize) -> Result<usize, Errno> {
+        if want >= READ_BUFFER_LEN {
+            self.buf.clear();
+            return sock.recv_spare(&mut self.buf);
+        }
+        if self.buf.len() < want {
+            self.buf.resize(want, 0);
+        }
+        match self.buf.get_mut(..want) {
+            Some(room) => sock.recv(room),
+            None => Ok(0),
+        }
+    }
+
+    /// Returns the initialized prefix of the buffer.
+    pub(crate) fn data(&self) -> &[u8] {
+        &self.buf
+    }
+
+    /// Returns the fixed buffer capacity.
+    #[cfg(test)]
+    pub(crate) fn capacity(&self) -> usize {
+        self.buf.capacity()
+    }
+
+    /// Populates the entire buffer capacity with a sentinel `byte` to detect unoverwritten regions
+    /// in tests.
+    #[cfg(test)]
+    pub(crate) fn fill(&mut self, byte: u8) {
+        self.buf.clear();
+        self.buf.resize(READ_BUFFER_LEN, byte);
+    }
+
+    /// Stages `bytes` at the front of the buffer to simulate a socket read of identical payload.
+    #[cfg(test)]
+    pub(crate) fn put(&mut self, bytes: &[u8]) {
+        if self.buf.len() < bytes.len() {
+            self.buf.resize(bytes.len(), 0);
+        }
+        if let Some(room) = self.buf.get_mut(..bytes.len()) {
+            room.copy_from_slice(bytes);
+        }
+    }
+}
+
 /// Maximum single frame payload length accepted from the protocol core without intermediary
 /// copying (4 MiB).
 ///
@@ -791,8 +860,8 @@ pub struct IoCore {
     /// Active network transport handle (`None`, `Connecting`, `Plain`, `Tls`, or `Parked`).
     pub(crate) conn: Transport,
     /// Primary heap buffer dedicated to socket reads and TLS ciphertext ingestion
-    /// (`READ_BUFFER_LEN` = 64 KiB).
-    pub(crate) rx: Box<[u8]>,
+    /// (`READ_BUFFER_LEN` = 64 KiB), allocated without upfront zero-initialization.
+    pub(crate) rx: RxBuf,
     /// Number of unprocessed plaintext bytes currently residing at the front of `rx` ready for
     /// zero-copy parsing by `frame_steps` before any spill to `rx_pending`.
     rx_fresh: usize,
@@ -880,7 +949,7 @@ impl IoCore {
     pub fn new() -> Self {
         Self {
             conn: Transport::None,
-            rx: vec![0u8; READ_BUFFER_LEN].into_boxed_slice(),
+            rx: RxBuf::new(),
             rx_fresh: 0,
             rx_pending: Vec::new(),
             tx_copy: Zeroizing::new(Vec::new()),
@@ -2537,7 +2606,7 @@ impl IoCore {
         let Transport::Parked(sock) = &self.conn else {
             return self.done(ZOK);
         };
-        match sock.recv(&mut self.rx) {
+        match self.rx.recv(sock, READ_BUFFER_LEN) {
             Ok(0) => self.fail_end(cx, proof, ob, TransportFailure::Eof),
             Ok(_) | Err(Errno::WOULDBLOCK) => self.done(ZNOTHING),
             Err(e) => {
@@ -2669,9 +2738,9 @@ impl IoCore {
     ) -> Option<Progress> {
         let st = cx.flavor == Flavor::St;
         let cap = if st {
-            self.rx.len()
+            READ_BUFFER_LEN
         } else {
-            cx.cfg.max_read.min(self.rx.len())
+            cx.cfg.max_read.min(READ_BUFFER_LEN)
         };
         let want = if st { hint.min(cap) } else { cap };
         if want == 0 {
@@ -2840,18 +2909,14 @@ impl IoCore {
         let Transport::Plain(sock) = &self.conn else {
             return Ok(0);
         };
-        let want = want.min(self.rx.len());
-        let got = match self.rx.get_mut(..want) {
-            Some(buf) => sock.recv(buf),
-            None => Ok(0),
-        };
+        let got = self.rx.recv(sock, want.min(READ_BUFFER_LEN));
         match got {
             Ok(0) => Err(TransportFailure::Eof),
             Ok(n) => {
                 if self.rx_pending.is_empty() {
                     self.rx_fresh = n;
                 } else {
-                    let data = self.rx.get(..n).unwrap_or_default();
+                    let data = self.rx.data().get(..n).unwrap_or_default();
                     self.rx_pending.extend_from_slice(data);
                 }
                 Ok(n)
@@ -2870,7 +2935,7 @@ impl IoCore {
     /// bytes are moved to `rx_pending`, `rx_fresh` is reset to `0`.
     fn rx_input(&self) -> &[u8] {
         if self.rx_fresh > 0 {
-            self.rx.get(..self.rx_fresh).unwrap_or_default()
+            self.rx.data().get(..self.rx_fresh).unwrap_or_default()
         } else {
             self.rx_pending.as_slice()
         }
@@ -2880,7 +2945,7 @@ impl IoCore {
     /// unconsumed bytes from `rx[n..rx_fresh]` into `rx_pending` and resetting `rx_fresh` to `0`.
     fn rx_consume(&mut self, n: usize) {
         if self.rx_fresh > 0 {
-            let rest = self.rx.get(n..self.rx_fresh).unwrap_or_default();
+            let rest = self.rx.data().get(n..self.rx_fresh).unwrap_or_default();
             self.rx_pending.extend_from_slice(rest);
             self.rx_fresh = 0;
         } else {
@@ -3262,9 +3327,7 @@ mod tests {
     #[test]
     fn the_rest_of_a_fresh_read_moves_to_rx_pending() {
         let mut io = IoCore::new();
-        if let Some(b) = io.rx.get_mut(..3) {
-            b.copy_from_slice(b"abc");
-        }
+        io.rx.put(b"abc");
         io.rx_fresh = 3;
         assert_eq!(io.rx_input(), b"abc");
         io.rx_consume(1);
@@ -3277,5 +3340,121 @@ mod tests {
         assert_eq!(io.rx_input(), b"c");
         io.spill_fresh();
         assert_eq!(io.rx_pending, b"c");
+    }
+
+    /// Verifies that a newly constructed `IoCore` allocates full `READ_BUFFER_LEN` capacity with
+    /// zero initialized length.
+    #[test]
+    fn a_new_core_has_an_empty_read_buffer_of_full_capacity() {
+        let io = IoCore::new();
+        assert_eq!(io.rx.capacity(), READ_BUFFER_LEN);
+        assert!(io.rx.data().is_empty());
+        assert_eq!(io.rx_fresh, 0);
+    }
+
+    /// Transmits `bytes` from `peer` and spins until `io`'s socket receive queue holds the full
+    /// payload.
+    #[allow(clippy::unwrap_used)]
+    fn send_now(io: &IoCore, peer: &TcpSock, bytes: &[u8]) {
+        assert_eq!(peer.send(bytes).unwrap(), bytes.len());
+        let Some(sock) = io.conn.sock() else {
+            return;
+        };
+        let start = std::time::Instant::now();
+        while rustix::io::ioctl_fionread(sock).unwrap() < bytes.len() as u64 {
+            assert!(start.elapsed() < std::time::Duration::from_secs(10));
+            std::thread::yield_now();
+        }
+    }
+
+    /// Streams `len` copies of `byte` from `peer` while draining them via `plain_recv(want)`,
+    /// asserting that each read exposes only newly received bytes and updates `rx_fresh`
+    /// accurately.
+    #[allow(clippy::unwrap_used, clippy::arithmetic_side_effects)]
+    fn send_and_read(io: &mut IoCore, peer: &TcpSock, byte: u8, len: usize, want: usize) {
+        let data = vec![byte; len];
+        std::thread::scope(|s| {
+            s.spawn(|| {
+                let mut off = 0;
+                while let Some(rest) = data.get(off..).filter(|r| !r.is_empty()) {
+                    off += peer.send(rest).unwrap();
+                }
+            });
+            let mut got = 0;
+            while got < len {
+                let n = io.plain_recv(want).unwrap();
+                assert!(n > 0 && n <= want, "read {n} of {want}");
+                assert_eq!(io.rx_fresh, n);
+                assert_eq!(io.rx_input().len(), n);
+                assert!(io.rx_input().iter().all(|b| *b == byte), "a stale byte");
+                io.rx_consume(n);
+                assert!(io.rx_pending.is_empty());
+                got += n;
+            }
+        });
+        assert!(io.rx_input().is_empty());
+    }
+
+    /// Verifies that single-threaded exact-frame-sized reads never expose residual bytes from
+    /// preceding larger reads.
+    #[test]
+    fn st_sized_reads_show_only_new_bytes() {
+        let (a, peer) = socket_pair();
+        let mut io = IoCore::new();
+        io.conn = Transport::Plain(a);
+        send_and_read(&mut io, &peer, 0x11, 4, 4);
+        send_and_read(&mut io, &peer, 0x22, 37, 37);
+        send_and_read(&mut io, &peer, 0x33, READ_BUFFER_LEN, READ_BUFFER_LEN);
+        send_and_read(&mut io, &peer, 0x44, 4, 4);
+        send_and_read(&mut io, &peer, 0x55, 37, 37);
+        send_and_read(&mut io, &peer, 0x66, 3000, 3000);
+        send_and_read(&mut io, &peer, 0x77, 4, 4);
+        assert_eq!(io.rx.capacity(), READ_BUFFER_LEN);
+    }
+
+    /// Verifies that interleaving full-capacity multithreaded reads with smaller bounded reads
+    /// exposes only newly received bytes.
+    #[test]
+    fn full_and_small_reads_show_only_new_bytes() {
+        let (a, peer) = socket_pair();
+        let mut io = IoCore::new();
+        io.conn = Transport::Plain(a);
+        send_and_read(&mut io, &peer, 0xA1, READ_BUFFER_LEN, READ_BUFFER_LEN);
+        send_and_read(&mut io, &peer, 0xB2, 10, 10);
+        send_and_read(&mut io, &peer, 0xC3, 3000, READ_BUFFER_LEN);
+        send_and_read(&mut io, &peer, 0xD4, 2 * READ_BUFFER_LEN, READ_BUFFER_LEN);
+        send_and_read(&mut io, &peer, 0xE5, 10, READ_BUFFER_LEN);
+        assert_eq!(io.rx.capacity(), READ_BUFFER_LEN);
+    }
+
+    /// Verifies that partial frames spanning multiple reads preserve byte ordering across
+    /// `spill_fresh` and `rx_consume` on both full-capacity and bounded read paths.
+    #[test]
+    fn a_split_frame_keeps_its_byte_order() {
+        let (a, peer) = socket_pair();
+        let mut io = IoCore::new();
+        io.conn = Transport::Plain(a);
+        send_now(&io, &peer, b"abc");
+        assert_eq!(io.plain_recv(READ_BUFFER_LEN), Ok(3));
+        assert_eq!(io.rx_fresh, 3);
+        send_now(&io, &peer, b"defg");
+        assert_eq!(io.plain_recv(READ_BUFFER_LEN), Ok(4));
+        assert_eq!(io.rx_fresh, 0);
+        assert_eq!(io.rx_input(), b"abcdefg");
+        io.rx_consume(5);
+        assert_eq!(io.rx_input(), b"fg");
+        send_now(&io, &peer, b"hi");
+        assert_eq!(io.plain_recv(2), Ok(2));
+        assert_eq!(io.rx_input(), b"fghi");
+        io.rx_consume(4);
+        assert!(io.rx_input().is_empty());
+        send_now(&io, &peer, b"jklmn");
+        assert_eq!(io.plain_recv(5), Ok(5));
+        assert_eq!(io.rx_fresh, 5);
+        io.rx_consume(2);
+        assert_eq!((io.rx_fresh, io.rx_input()), (0, b"lmn".as_slice()));
+        send_now(&io, &peer, b"op");
+        assert_eq!(io.plain_recv(READ_BUFFER_LEN), Ok(2));
+        assert_eq!(io.rx_input(), b"lmnop");
     }
 }

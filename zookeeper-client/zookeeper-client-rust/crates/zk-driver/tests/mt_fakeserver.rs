@@ -225,3 +225,108 @@ fn a_request_goes_out_in_the_pass_of_its_wake() {
     let end = threads.close();
     assert!(matches!(end, Step::Done(_) | Step::Release));
 }
+
+/// Receives `n` operation completion results from `rx` in arrival order.
+fn results(rx: &mpsc::Receiver<Item<TestTokens>>, n: usize) -> Vec<Item<TestTokens>> {
+    let end = Instant::now() + Duration::from_secs(30);
+    let mut got = Vec::new();
+    while got.len() < n {
+        let left = end.saturating_duration_since(Instant::now());
+        match rx.recv_timeout(left) {
+            Ok(i @ Item::Result { .. }) => got.push(i),
+            Ok(_) => {}
+            Err(e) => panic!("{} of {n} results: {e}", got.len()),
+        }
+    }
+    got
+}
+
+/// Verifies that reply frames straddling the 64 KiB read buffer boundary and a 1 MiB reply frame
+/// are reassembled intact and delivered in order.
+#[test]
+fn frames_at_the_read_buffer_edges_arrive_whole() {
+    let server = FakeServer::start().unwrap();
+    let shared = handle(&server, IpHost::new());
+    let (rx, threads) = start_threads(&shared);
+    assert!(common::wait_until(WAIT, || shared.state() == State::Connected.code()));
+    for (i, len) in common::EDGE_FRAME_LENS.into_iter().enumerate() {
+        let data = common::pattern(len - common::GET_DATA_FRAME_BASE, i as u8);
+        let path = format!("/edge{i}");
+        server.cluster().create(&path, &data, 0).unwrap();
+        let id = i as u64 + 1;
+        shared.submit(common::get_data_at(id, &path)).ok().unwrap();
+        let got = results(&rx, 1);
+        common::check_result(&got[0], id, Some(&data));
+    }
+    let end = threads.close();
+    assert!(matches!(end, Step::Done(_) | Step::Release));
+}
+
+/// Verifies that a burst of small replies coalesced into batched socket reads are decoded and
+/// delivered in strict request order.
+#[test]
+fn many_small_replies_together_arrive_in_order() {
+    let server = FakeServer::start().unwrap();
+    let shared = handle(&server, IpHost::new());
+    let (rx, threads) = start_threads(&shared);
+    assert!(common::wait_until(WAIT, || shared.state() == State::Connected.code()));
+    let n = 500;
+    // Hold server processing so all replies flush in a single coalesced burst upon release.
+    server.hold();
+    for id in 1..=n {
+        shared.submit(exists(id)).ok().unwrap();
+    }
+    std::thread::sleep(Duration::from_millis(200));
+    server.release();
+    let got = results(&rx, n as usize);
+    for (k, item) in got.iter().enumerate() {
+        common::check_result(item, k as u64 + 1, None);
+    }
+    let end = threads.close();
+    assert!(matches!(end, Step::Done(_) | Step::Release));
+}
+
+/// Verifies that interleaved large and small replies flushed in a single server burst preserve
+/// payload integrity and completion ordering.
+#[test]
+fn large_and_small_frames_interleaved_arrive_in_order() {
+    let server = FakeServer::start().unwrap();
+    let shared = handle(&server, IpHost::new());
+    let (rx, threads) = start_threads(&shared);
+    assert!(common::wait_until(WAIT, || shared.state() == State::Connected.code()));
+    let mut want: Vec<Option<Vec<u8>>> = Vec::new();
+    for (i, len) in common::EDGE_FRAME_LENS.into_iter().enumerate() {
+        let data = common::pattern(len - common::GET_DATA_FRAME_BASE, i as u8);
+        server
+            .cluster()
+            .create(&format!("/mix{i}"), &data, 0)
+            .unwrap();
+        want.push(Some(data));
+        want.push(None);
+        let small = common::pattern(i + 1, 0x40 + i as u8);
+        server
+            .cluster()
+            .create(&format!("/small{i}"), &small, 0)
+            .unwrap();
+        want.push(Some(small));
+    }
+    server.hold();
+    for k in 0..want.len() {
+        let id = k as u64 + 1;
+        let i = k / 3;
+        let req = match k % 3 {
+            0 => common::get_data_at(id, &format!("/mix{i}")),
+            2 => common::get_data_at(id, &format!("/small{i}")),
+            _ => exists(id),
+        };
+        shared.submit(req).ok().unwrap();
+    }
+    std::thread::sleep(Duration::from_millis(200));
+    server.release();
+    let got = results(&rx, want.len());
+    for (k, (item, w)) in got.iter().zip(&want).enumerate() {
+        common::check_result(item, k as u64 + 1, w.as_deref());
+    }
+    let end = threads.close();
+    assert!(matches!(end, Step::Done(_) | Step::Release));
+}

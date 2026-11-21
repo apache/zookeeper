@@ -334,6 +334,58 @@ pub fn exists_at(id: u64, path: PathIn) -> Request<TestTokens> {
     }
 }
 
+/// Constructs an unwatched `getData` request for the legacy path `path`.
+pub fn get_data_at(id: u64, path: &str) -> Request<TestTokens> {
+    Request {
+        op: Op::GetData {
+            path: PathIn::Legacy(Some(path.as_bytes().to_vec())),
+            watch: None,
+        },
+        token: CompletionId::new(id),
+        route: Route::Queued,
+        defect: InputDefect::default(),
+    }
+}
+
+/// Reply frame sizes straddling the 64 KiB read buffer boundary (both with and without the 4-byte
+/// frame length prefix), plus a 1 MiB oversized frame.
+pub const EDGE_FRAME_LENS: [usize; 7] = [65_531, 65_532, 65_533, 65_535, 65_536, 65_537, 1 << 20];
+
+/// Wire frame size (excluding the 4-byte length prefix) of an empty `getData` reply: 16-byte
+/// `ReplyHeader` + 4-byte data length + 68-byte `Stat`.
+pub const GET_DATA_FRAME_BASE: usize = 88;
+
+/// Generates a deterministic `len`-byte payload parameterized by `seed` so distinct replies have
+/// non-overlapping byte patterns.
+pub fn pattern(len: usize, seed: u8) -> Vec<u8> {
+    (0..len)
+        .map(|i| {
+            (i as u8)
+                .wrapping_mul(31)
+                .wrapping_add(seed.wrapping_mul(97))
+        })
+        .collect()
+}
+
+/// Asserts that `item` is a successful completion for request `id` carrying either the expected
+/// `getData` payload `want` or an `exists` `Stat` reply when `want` is `None`.
+pub fn check_result(item: &Item<TestTokens>, id: u64, want: Option<&[u8]>) {
+    let Item::Result { token, result, .. } = item else {
+        panic!("not a result: {item:?}");
+    };
+    assert_eq!(token.id(), id, "results come in request order");
+    assert_eq!(result.rc, 0, "request {id}");
+    match (want, &result.reply) {
+        (Some(w), Some(zk_proto::Reply::Data { data, .. })) => {
+            let got = data.as_bytes().unwrap();
+            assert_eq!(got.len(), w.len(), "request {id}");
+            assert!(got == w, "request {id}: wrong data bytes");
+        }
+        (None, Some(zk_proto::Reply::Stat(_))) => {}
+        (_, other) => panic!("request {id}: reply {other:?}"),
+    }
+}
+
 /// Constructs an unwatched `exists` request targeting the legacy root path (`/`).
 pub fn exists(id: u64) -> Request<TestTokens> {
     exists_at(id, PathIn::Legacy(Some(b"/".to_vec())))

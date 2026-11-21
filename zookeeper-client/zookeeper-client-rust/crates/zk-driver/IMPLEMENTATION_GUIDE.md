@@ -167,7 +167,7 @@ Every step call writes into a caller `Outbox`. `Core::pump` moves the proto outp
 | `mt`, `st` | `IoCore::{interest_step, process_step, resume, flush_once, close_flush, sasl_addrs}`, `Core::{pump, restore_requeued}`, `Lifecycle`, `Waker` (mt), `Env::step_ctx` |
 | `native` | `IoCore::{interest_step, process_step, resume, take_jobs, complete_job, close_flush}`, `iocore::run_job` (DNS thread), `Poll`, `Waker`, `ReadGate`, `RouteSink`, `Spawn` |
 | `tokio` | as `native`, with `spawn_blocking` for `run_job`, `AsyncFd` for readiness (one registration per wait) and `Notify` for wake |
-| `iocore` | `TcpSock::{open, start_connect, send, recv, socket_error, local_addr, peer_addr}`, `map_revents`, `request_flags`, `probe`, `resolve::{run, apply_results}`, `iocore_tls::*` |
+| `iocore` | `TcpSock::{open, start_connect, send, recv, recv_spare, socket_error, local_addr, peer_addr}`, `map_revents`, `request_flags`, `probe`, `resolve::{run, apply_results}`, `iocore_tls::*` |
 | `iocore_tls` | `TlsConn` methods, `TlsConnector::new_conn`, `alert_attempt` |
 | `net::probe` | `TcpSock`, `Poll`, `TlsConnector::new_conn` (TLS probe) |
 | `tls` | rustls, the trust and identity files |
@@ -180,7 +180,7 @@ Files: `src/net/sock.rs`, `src/net/poll.rs`, `src/net/probe.rs`, `src/net/waker.
 
 Sources: spec "Socket abstractions, polling, and wakeups"; zookeeper.c `zookeeper_init_internal`, `resolve_hosts`, `zookeeper_set_sock_nodelay`, `ping_rw_server`.
 
-Also in the package: `net/mod.rs`, `net/waker.rs` (`Waker`, `WakeRx`), `TcpSock::{from_owned, into_owned, raw, send, recv, socket_error, local_addr, peer_addr}`, `errno_value`, `ResolveRun::new`, `shuffle_on`.
+Also in the package: `net/mod.rs`, `net/waker.rs` (`Waker`, `WakeRx`), `TcpSock::{from_owned, into_owned, raw, send, recv, recv_spare, socket_error, local_addr, peer_addr}`, `errno_value`, `ResolveRun::new`, `shuffle_on`.
 
 Main functions:
 
@@ -270,6 +270,7 @@ Invariants:
 - The st flavor reads `read_hint()` bytes for plaintext. When that read completes a frame length, the same call reads the frame body, as `recv_buffer` does. One call never reads past the end of one frame.
 - In every plaintext flavor, a read that fills its request and leaves the frame open gives a read of the rest of that frame in the same call. After one of those reads blocks, the later calls for that frame make no more of them (`rx_more_blocked`).
 - A plaintext read that is wholly inside the current frame body goes straight into the body (`body_room`, `recv`, `handle_body_read`) under one `core` lock. This occurs only when no received bytes wait. Other reads go to `rx`.
+- `IoCore::new` does not zero `rx` (`RxBuf`). A read of the full capacity goes into the spare capacity (`recv_spare`). A smaller read zeroes only the bytes above the high-water mark. The read size does not depend on the initialized part of the buffer. The parser sees only the bytes of the last read (`rx_fresh`) or `rx_pending`.
 - `close_flush` returns `ZOK`, `ZOPERATIONTIMEOUT`, `ZCONNECTIONLOSS` or `ZSYSTEMERROR` and never exceeds its budgets.
 
 ### mt

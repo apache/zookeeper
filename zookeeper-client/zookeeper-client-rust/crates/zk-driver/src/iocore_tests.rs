@@ -865,7 +865,7 @@ fn st_reads_the_body_straight_into_the_frame() {
     let (p, _) = r.process(read_ev());
     assert_eq!(p, Progress::Done(ZOK));
     assert_eq!(r.state(), State::Connected);
-    assert!(r.io.rx[4..].iter().all(|b| *b == 0xA5));
+    assert!(r.io.rx.data()[4..].iter().all(|b| *b == 0xA5));
     assert!(r.io.rx_pending.is_empty());
 }
 
@@ -884,8 +884,8 @@ fn mt_reads_the_rest_straight_into_the_frame() {
     let (p, _) = r.process(read_ev());
     assert_eq!(p, Progress::Done(ZOK));
     assert_eq!(r.state(), State::Connected);
-    assert_eq!(&r.io.rx[..8], &frame[..8]);
-    assert!(r.io.rx[8..].iter().all(|b| *b == 0xA5));
+    assert_eq!(&r.io.rx.data()[..8], &frame[..8]);
+    assert!(r.io.rx.data()[8..].iter().all(|b| *b == 0xA5));
 }
 
 #[test]
@@ -1211,6 +1211,60 @@ fn tls_config_failure_parks_the_socket() {
     let (p, _) = r.process(read_ev());
     assert_eq!(p, Progress::Done(ZCONNECTIONLOSS));
     assert!(!r.has_transport());
+    assert!(matches!(r.io.conn, Transport::None));
+}
+
+/// Initializes a test rig whose transport has transitioned to `Transport::Parked` following a TLS
+/// configuration error.
+fn parked_rig() -> Rig {
+    let mut r = Rig::new(
+        true,
+        vec![TlsSetupError::Config {
+            step: TlsConfigStep::CaFile,
+        }],
+    );
+    let _ = r.process(write_ev());
+    assert!(matches!(r.io.conn, Transport::Parked(_)));
+    r
+}
+
+/// Verifies that a parked socket drains incoming data exceeding one `READ_BUFFER_LEN` window and
+/// subsequently detects remote EOF.
+#[test]
+fn a_parked_socket_drains_data_and_then_sees_the_eof() {
+    let mut r = parked_rig();
+    r.peer_send(&vec![0x5A; READ_BUFFER_LEN + 4464]);
+    rustix::net::shutdown(&r.peer, rustix::net::Shutdown::Write).unwrap();
+    let mut drains = 0;
+    let end = loop {
+        let (p, _) = r.process(read_ev());
+        if !matches!(r.io.conn, Transport::Parked(_)) {
+            break p;
+        }
+        assert_eq!(p, Progress::Done(ZNOTHING));
+        drains += 1;
+        assert!(drains < 100, "the parked socket never sees the EOF");
+    };
+    assert!(drains >= 2, "{drains} drain reads");
+    assert_eq!(end, Progress::Done(ZCONNECTIONLOSS));
+    assert!(!r.has_transport());
+    assert!(matches!(r.io.conn, Transport::None));
+}
+
+/// Verifies that a parked socket continues to surface a subsequent TCP RST and its `ECONNRESET`
+/// errno after draining buffered bytes.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_LINGER, which makes the reset peer")]
+fn a_parked_socket_drains_data_and_then_sees_a_reset() {
+    let mut r = parked_rig();
+    r.peer_send(&[0x5A; 100]);
+    let (p, _) = r.process(read_ev());
+    assert_eq!(p, Progress::Done(ZNOTHING));
+    assert!(matches!(r.io.conn, Transport::Parked(_)));
+    reset_peer(&mut r);
+    let (p, _) = r.process(read_ev());
+    assert_eq!(p, Progress::Done(ZCONNECTIONLOSS));
+    assert_eq!(r.io.take_errno(), Some(Errno::CONNRESET.raw_os_error()));
     assert!(matches!(r.io.conn, Transport::None));
 }
 
