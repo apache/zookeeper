@@ -19,6 +19,7 @@
 package org.apache.zookeeper.cli;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -28,6 +29,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZKUtil;
@@ -233,15 +236,17 @@ public class SetQuotaCommand extends CliCommand {
         byte[] data;
 
         if (zk.exists(quotaPath, false) == null) {
-            zk.create(quotaPath, quota.getStatsBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
-            StatsTrack stats = new StatsTrack();
-            stats.setCount(0);
-            stats.setBytes(0L);
-
-            zk.create(statPath, stats.getStatsBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            // create the limit and stat nodes together, so a failure can't leave only one of them.
+            // A stat node without a limit node isn't kept up to date, so replace it. The server
+            // computes the usage when the stat node is created.
+            List<Op> ops = new ArrayList<>();
+            if (zk.exists(statPath, false) != null) {
+                ops.add(Op.delete(statPath, -1));
+            }
+            ops.add(Op.create(quotaPath, quota.getStatsBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
+            ops.add(createStatOp(statPath));
+            multi(zk, ops);
 
             data = zk.getData(quotaPath, false, new Stat());
             StatsTrack quotaStrack = new StatsTrack(data);
@@ -267,6 +272,16 @@ public class SetQuotaCommand extends CliCommand {
                 quotaStrack.setByteHardLimit(quota.getByteHardLimit());
             }
 
+            // the stat node is missing if an earlier call failed after creating the limit node.
+            // Only create it while the limit node still exists.
+            if (zk.exists(statPath, false) == null) {
+                try {
+                    multi(zk, Arrays.asList(Op.check(quotaPath, -1), createStatOp(statPath)));
+                } catch (KeeperException.NodeExistsException ne) {
+                    //do nothing
+                }
+            }
+
             data = zk.getData(statPath, false, new Stat());
             StatsTrack statStrack = new StatsTrack(data);
             checkQuota(quotaStrack, statStrack);
@@ -275,6 +290,37 @@ public class SetQuotaCommand extends CliCommand {
         }
 
         return true;
+    }
+
+    /**
+     * Runs the operations with {@link ZooKeeper#multi}, but throws the exception of the failed
+     * operation with its path, like the single operations do.
+     */
+    static void multi(ZooKeeper zk, List<Op> ops) throws KeeperException, InterruptedException {
+        try {
+            zk.multi(ops);
+        } catch (KeeperException e) {
+            List<OpResult> results = e.getResults();
+            if (results != null) {
+                for (int i = 0; i < results.size(); i++) {
+                    OpResult result = results.get(i);
+                    if (result instanceof OpResult.ErrorResult && ((OpResult.ErrorResult) result).getErr() != 0) {
+                        KeeperException.Code code = KeeperException.Code.get(((OpResult.ErrorResult) result).getErr());
+                        KeeperException withPath = KeeperException.create(code, ops.get(i).getPath());
+                        withPath.initCause(e);
+                        throw withPath;
+                    }
+                }
+            }
+            throw e;
+        }
+    }
+
+    private static Op createStatOp(String statPath) {
+        StatsTrack stats = new StatsTrack();
+        stats.setCount(0);
+        stats.setBytes(0L);
+        return Op.create(statPath, stats.getStatsBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     }
 
     private static void checkQuota(StatsTrack quotaStrack, StatsTrack statStrack) {
