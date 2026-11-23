@@ -121,6 +121,15 @@ const MIN_SEGMENT_OPTION: usize = 88;
 #[cfg(any(target_os = "linux", target_os = "android"))]
 const MAX_SEGMENT_OPTION: usize = 32_767;
 
+/// TCP segment payload capacity (in bytes) per loopback packet.
+///
+/// The Linux kernel transmits packets of up to 64 KiB over the loopback device, carrying a whole
+/// number of segments per packet. After the kernel header reserve, 65215 bytes remain for
+/// segments on Linux 5.14 for `x86_64`; 65100 bytes retains a margin for kernels with a larger
+/// reserve.
+#[cfg(any(target_os = "linux", target_os = "android"))]
+const LOOPBACK_PACKET_BYTES: usize = 65_100;
+
 /// Computes the `TCP_MAXSEG` clamp for a loopback socket with an `SO_RCVBUF` allocation of
 /// `rcvbuf` bytes.
 ///
@@ -131,9 +140,15 @@ const MAX_SEGMENT_OPTION: usize = 32_767;
 /// can leave the free window just under one MSS without triggering a window update, forcing the
 /// sender to stall until the ~200 ms persist timer expires.
 ///
-/// Bounding the segment size to one sixth of `rcvbuf` prevents persist timer stalls whenever the
-/// effective window is at least one third of `rcvbuf`. Returns `None` when `rcvbuf / 6` already
-/// meets or exceeds the loopback MTU segment limit.
+/// Bounding the segment size to at most one sixth of `rcvbuf` prevents persist timer stalls
+/// whenever the effective window is at least one third of `rcvbuf`. Returns `None` when
+/// `rcvbuf / 6` already meets or exceeds the loopback MTU segment limit.
+///
+/// Below that bound, the clamped limit is aligned downward to the largest segment size for which
+/// the fewest whole segments permitted by the limit fit within a single 65100-byte loopback
+/// packet. With the default 128 KiB receive buffer, an unaligned one-sixth limit of 21845 bytes
+/// fits two segments per packet, whereas the aligned 21700-byte limit fits three segments per
+/// packet, reducing the packets and acknowledgments required for a large transfer.
 #[cfg(any(target_os = "linux", target_os = "android"))]
 fn loopback_segment_limit(rcvbuf: usize) -> Option<u32> {
     let limit = rcvbuf / 6;
@@ -142,7 +157,14 @@ fn loopback_segment_limit(rcvbuf: usize) -> Option<u32> {
     }
     // Clamp to the kernel's permissible TCP_MAXSEG bounds. Clamping downward only widens the
     // window update safety margin.
-    u32::try_from(limit.clamp(MIN_SEGMENT_OPTION, MAX_SEGMENT_OPTION)).ok()
+    let limit = limit.clamp(MIN_SEGMENT_OPTION, MAX_SEGMENT_OPTION);
+    // Because the aligned segment size never exceeds the clamped limit, the safety margin against
+    // persist timer stalls is preserved.
+    let segments = LOOPBACK_PACKET_BYTES.div_ceil(limit);
+    let aligned = LOOPBACK_PACKET_BYTES
+        .checked_div(segments)
+        .map_or(limit, |size| size.max(MIN_SEGMENT_OPTION).min(limit));
+    u32::try_from(aligned).ok()
 }
 
 /// Applies a pre-handshake `TCP_MAXSEG` ceiling derived from the socket's initial receive buffer
@@ -416,7 +438,7 @@ mod tests {
 
     use std::net::{SocketAddr, UdpSocket};
 
-    use super::{loopback_segment_limit, uses_loopback_device};
+    use super::{LOOPBACK_PACKET_BYTES, loopback_segment_limit, uses_loopback_device};
 
     /// Returns `true` if connecting to `s` routes over the loopback interface.
     fn local(s: &str) -> bool {
@@ -443,18 +465,45 @@ mod tests {
     }
 
     #[test]
-    fn the_segment_limit_is_a_sixth_of_the_receive_buffer() {
-        assert_eq!(loopback_segment_limit(131_072), Some(21_845));
-        assert_eq!(loopback_segment_limit(160_000), Some(26_666));
-        assert_eq!(loopback_segment_limit(4_096), Some(682));
+    fn the_segment_limit_is_at_most_a_sixth_of_the_receive_buffer() {
+        assert_eq!(loopback_segment_limit(131_072), Some(21_700));
+        assert_eq!(loopback_segment_limit(160_000), Some(21_700));
+        assert_eq!(loopback_segment_limit(130_200), Some(21_700));
+        assert_eq!(loopback_segment_limit(130_199), Some(16_275));
+        assert_eq!(loopback_segment_limit(4_096), Some(678));
     }
 
     #[test]
     fn the_segment_limit_stays_in_the_accepted_range() {
         assert_eq!(loopback_segment_limit(0), Some(88));
-        assert_eq!(loopback_segment_limit(196_601), Some(32_766));
-        assert_eq!(loopback_segment_limit(196_602), Some(32_767));
-        assert_eq!(loopback_segment_limit(392_975), Some(32_767));
+        assert_eq!(loopback_segment_limit(500), Some(88));
+        assert_eq!(loopback_segment_limit(196_601), Some(32_550));
+        assert_eq!(loopback_segment_limit(196_602), Some(32_550));
+        assert_eq!(loopback_segment_limit(392_975), Some(32_550));
+    }
+
+    /// Verifies for buffer sizes that get a limit that the aligned MSS stays within the clamped
+    /// one-sixth limit and, except at the 88-byte floor, fits at least the fewest permitted
+    /// segments.
+    #[test]
+    fn a_loopback_packet_is_filled_by_the_fewest_segments() {
+        for rcvbuf in (0..392_976).step_by(37) {
+            let limit = (rcvbuf / 6).clamp(88, 32_767);
+            let mss = usize::try_from(loopback_segment_limit(rcvbuf).unwrap()).unwrap();
+            assert!(mss <= limit, "rcvbuf {rcvbuf}: {mss} > {limit}");
+            let fewest = LOOPBACK_PACKET_BYTES.div_ceil(limit);
+            let held = LOOPBACK_PACKET_BYTES.checked_div(mss).unwrap();
+            assert!(mss == 88 || held >= fewest, "rcvbuf {rcvbuf}: {mss}");
+            // Verify that `mss` is maximal: either it equals the clamped limit, or a segment one
+            // byte larger would fit fewer than `fewest` whole segments in a packet.
+            let larger = LOOPBACK_PACKET_BYTES
+                .checked_div(mss.checked_add(1).unwrap())
+                .unwrap();
+            assert!(
+                mss == limit || larger < fewest,
+                "rcvbuf {rcvbuf}: {mss} is not maximal"
+            );
+        }
     }
 
     #[test]

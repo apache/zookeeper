@@ -167,9 +167,10 @@ mod sock {
     }
 
     /// Connects to a listener bound at `bind` and verifies that both endpoints negotiate a maximum
-    /// segment size no greater than one sixth of the client's initial `SO_RCVBUF` capacity, after
-    /// streaming enough server data to grow the client receive window past Linux's initial
-    /// post-handshake half window MSS cap.
+    /// segment size no greater than one sixth of the client's initial `SO_RCVBUF` capacity and
+    /// aligned so a single loopback packet holds at least the fewest server segments permitted by
+    /// that limit, after streaming enough server data to grow the client receive window past
+    /// Linux's initial post-handshake half window MSS cap.
     #[cfg(all(any(target_os = "linux", target_os = "android"), not(miri)))]
     fn check_the_segment_limit(bind: std::net::SocketAddr) {
         use std::io::Write;
@@ -211,6 +212,14 @@ mod sock {
         );
         assert!(
             theirs as usize * 6 <= rcvbuf,
+            "{addr}: server MSS {theirs}, rcvbuf {rcvbuf}"
+        );
+        // The negotiated server MSS must be small enough that at least the fewest whole segments
+        // permitted by the clamped one-sixth limit fit within a 65100-byte loopback packet.
+        const PACKET: usize = 65_100;
+        let fewest = PACKET.div_ceil((rcvbuf / 6).clamp(88, 32_767));
+        assert!(
+            PACKET.checked_div(theirs as usize).unwrap() >= fewest,
             "{addr}: server MSS {theirs}, rcvbuf {rcvbuf}"
         );
     }
