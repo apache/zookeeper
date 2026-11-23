@@ -194,6 +194,8 @@ Invariants:
 - Secret frames (`FrameBytes::Secret`) never leave as a plain `Vec` outside `poll_transmit`.
 - `secret_end` is the end of the secret bytes in the driver's copy buffer. A secret copy sets it, and a plain copy leaves it. Each `poll_transmit` first erases the old copies past the buffer length up to `secret_end`, also with no transport. Other frames cause no erase.
 - When `out` holds bytes on entry or after a secret copy, a growth of `out` erases the old buffer before it is freed.
+- `tx_spare` keeps the storage of one sent plain multi or multi read frame with a capacity of 4 KiB to 1 MiB. A larger spare stays. Secret frames and lent frames never become the spare.
+- Only `encode_multi` takes `tx_spare`. It writes the body after a `REQUEST_HEAD_LEN` placeholder, so `submit_multi` sets `framed: true` and the frame needs no copy.
 
 ### recv: recv.rs
 
@@ -241,6 +243,8 @@ Invariants:
 - `arm_watch` and `apply_unwatch` run before the completion output.
 - `consumed` counts only the bytes the decoder took. The rest stay with the caller.
 - A decode failure puts the FIFO head back before the teardown.
+- A multi reply decodes into the item vector of `MultiSpare` (`multi_spare`), if the slot has one. The consumer gives the vector back with `MultiSpare::put`. The slot keeps a vector of at least 64 items and shrinks a vector above 1 MiB. Both sides only try the lock.
+- `item_logs` holds entries only for sub-operations with log records, in index order. The completion logs come out in the same order as before.
 
 ### watches: watches.rs
 

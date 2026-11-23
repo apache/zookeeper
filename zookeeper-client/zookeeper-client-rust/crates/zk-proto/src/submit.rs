@@ -629,7 +629,7 @@ impl<T: Tokens> Connection<T> {
         Ok(Prepared {
             op_type,
             body,
-            framed: false,
+            framed: true,
             shape: Shape::Multi { op_types, kind },
             watch: None,
             unwatch: None,
@@ -842,8 +842,8 @@ impl<T: Tokens> Connection<T> {
     ///   yield `Stage::Enqueue` with `ZMARSHALLINGERROR` after the full opcode scan completes.
     /// - Unrecoverable session states reject even empty multi-transactions with `ZMARSHALLINGERROR`
     ///   to prevent synchronous callers from blocking indefinitely on uncompleted empty batches.
-    /// - Returns the serialized payload buffer alongside the sequence of sub-operation wire
-    ///   opcodes.
+    /// - Returns the serialized payload buffer (prefixed with a [`REQUEST_HEAD_LEN`] header
+    ///   reservation for in-place framing) alongside the sequence of sub-operation wire opcodes.
     /// - Shared between owned and borrowed sub-operation representations to guarantee identical
     ///   validation ordering and error reporting.
     pub(crate) fn encode_multi<I>(
@@ -859,7 +859,13 @@ impl<T: Tokens> Connection<T> {
         if types.try_reserve_exact(ops.len()).is_err() {
             return Err(MARSHAL);
         }
-        let mut body = Vec::new();
+        // Prepend a REQUEST_HEAD_LEN reservation for in-place framing, reusing the recycled
+        // transmit buffer from a previously sent multi frame when available.
+        let mut body = self.requests.take_tx_spare();
+        if body.try_reserve(REQUEST_HEAD_LEN).is_err() {
+            return Err(MARSHAL);
+        }
+        body.resize(REQUEST_HEAD_LEN, 0);
         // Matches C client behavior by scanning all sub-operations to allow subsequent unsupported
         // opcodes to trigger ZUNIMPLEMENTED.
         let mut failed = false;
@@ -2077,14 +2083,31 @@ mod tests {
         }
         .encode(&mut want);
         multi::encode_end(&mut want);
-        assert_eq!(body, want);
+        assert_eq!(body[..REQUEST_HEAD_LEN], [0; REQUEST_HEAD_LEN]);
+        assert_eq!(body[REQUEST_HEAD_LEN..], want);
         assert_eq!(
             c.encode_multi(Vec::<MultiOp>::new(), false)
                 .unwrap()
                 .0
                 .len(),
-            MULTI_HEADER_LEN
+            REQUEST_HEAD_LEN + MULTI_HEADER_LEN
         );
+    }
+
+    /// Verifies that `encode_multi` reuses `tx_spare` buffer capacity while producing wire bytes
+    /// identical to a freshly allocated buffer.
+    #[test]
+    fn encode_multi_reuses_the_transmit_spare() {
+        let mut c = legacy();
+        c.requests.tx_spare = vec![7; 8192];
+        let at = c.requests.tx_spare.as_ptr();
+        let (body, _) = c.encode_multi(vec![mcheck(lp("/b"))], false).unwrap();
+        assert_eq!(body.as_ptr(), at);
+        assert_eq!(c.requests.tx_spare.capacity(), 0);
+        let (fresh, _) = legacy()
+            .encode_multi(vec![mcheck(lp("/b"))], false)
+            .unwrap();
+        assert_eq!(body, fresh);
     }
 
     #[test]

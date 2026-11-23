@@ -25,11 +25,12 @@
 //! authentication handshakes, chroot path rewriting, and completion generation.
 
 use core::ops::Range;
+use std::sync::{Arc, Mutex};
 
 use zeroize::Zeroize;
 use zk_jute::data::Stat;
 use zk_jute::handshake::CONNECT_RESPONSE_FRAME_LEN;
-use zk_jute::multi::{self, MultiBody, MultiKind};
+use zk_jute::multi::{self, MultiBody, MultiItem, MultiKind};
 use zk_jute::proto::{
     Create2Response, CreateResponse, GetACLResponse, GetAllChildrenNumberResponse,
     GetChildren2Response, GetChildrenResponse, GetDataResponse, GetEphemeralsResponse, ReplyHeader,
@@ -76,6 +77,65 @@ pub(crate) struct Recv {
     /// Spare buffer allocation cache to facilitate zero-copy handoffs for oversized `GetData`
     /// payloads.
     pub(crate) spares: Spares,
+    /// Shared recycling slot for large `Vec<MultiItem>` allocations returned by multi reply
+    /// consumers.
+    pub(crate) multi_spare: Arc<MultiSpare>,
+}
+
+/// Minimum element capacity required for [`MultiSpare`] to retain a returned `Vec<MultiItem>`.
+const MULTI_SPARE_MIN: usize = 64;
+
+/// Maximum byte capacity retained by [`MultiSpare`]; larger buffers are shrunk to this ceiling.
+const MULTI_SPARE_MAX_BYTES: usize = 1024 * 1024;
+
+/// Single-slot recycling pool for decoded `Vec<MultiItem>` allocations across multi-operation
+/// responses.
+///
+/// Reclaiming the `Vec<MultiItem>` buffer via [`MultiSpare::put`] after a consumer finishes
+/// processing a large multi response avoids repeated large heap allocations and page faults on
+/// subsequent decodes. Protected by a non-blocking `try_lock` mutex so producers and consumers on
+/// separate threads never contend.
+#[derive(Debug, Default)]
+pub struct MultiSpare(Mutex<Vec<MultiItem>>);
+
+impl MultiSpare {
+    /// Returns a consumed `Vec<MultiItem>` allocation to the spare slot.
+    ///
+    /// Clears all elements, shrinks capacities exceeding `MULTI_SPARE_MAX_BYTES`, and retains
+    /// the buffer if its capacity meets `MULTI_SPARE_MIN` and exceeds any existing spare while
+    /// the lock is uncontended.
+    pub fn put(&self, mut items: Vec<MultiItem>) {
+        if items.capacity() < MULTI_SPARE_MIN {
+            return;
+        }
+        items.clear();
+        let max = MULTI_SPARE_MAX_BYTES
+            .checked_div(core::mem::size_of::<MultiItem>())
+            .unwrap_or(0);
+        if items.capacity() > max {
+            items.shrink_to(max);
+        }
+        if let Ok(mut slot) = self.0.try_lock() {
+            if slot.capacity() < items.capacity() {
+                core::mem::swap(&mut *slot, &mut items);
+            }
+        }
+    }
+
+    /// Acquires the cached `Vec<MultiItem>` buffer if available and uncontended, or returns an
+    /// empty vector.
+    fn take(&self) -> Vec<MultiItem> {
+        self.0
+            .try_lock()
+            .map(|mut slot| core::mem::take(&mut *slot))
+            .unwrap_or_default()
+    }
+
+    /// Returns the element capacity currently held in the spare slot.
+    #[cfg(test)]
+    pub(crate) fn capacity(&self) -> usize {
+        self.0.lock().map_or(0, |slot| slot.capacity())
+    }
 }
 
 impl Recv {
@@ -86,6 +146,7 @@ impl Recv {
             decoder: FrameDecoder::new(max_frame_len),
             stalled: false,
             spares: Spares::default(),
+            multi_spare: Arc::default(),
         }
     }
 
@@ -228,9 +289,9 @@ struct Decoded {
     rc: i32,
     /// Log records emitted during chroot path prefix stripping for top-level response paths.
     head_logs: Vec<LogRecord>,
-    /// Per-sub-operation log records emitted during chroot path stripping in multi-operation
-    /// transactions.
-    item_logs: Vec<Vec<LogRecord>>,
+    /// Sparse per-sub-operation chroot stripping log records for multi-operation transactions,
+    /// stored as `(sub_op_index, records)` pairs in ascending index order.
+    item_logs: Vec<(usize, Vec<LogRecord>)>,
 }
 
 /// Maps a transaction sub-operation opcode to its corresponding legacy C client completion log site
@@ -274,6 +335,13 @@ fn int_args(a: i64, b: i64, c: i64) -> Vec<LogArg> {
 }
 
 impl<T: Tokens> Connection<T> {
+    /// Returns a shared handle to the [`MultiSpare`] pool for recycling consumed
+    /// [`Reply::Multi`] and [`Reply::MultiRead`] item vectors back to the response decoder.
+    #[must_use]
+    pub fn multi_spare(&self) -> Arc<MultiSpare> {
+        Arc::clone(&self.recv.multi_spare)
+    }
+
     /// Computes the exact byte count required to finalize the next frame component.
     ///
     /// Driven single threaded network event loops consult this value to perform
@@ -606,7 +674,7 @@ impl<T: Tokens> Connection<T> {
         match self.recv_decode_record(shape, rest) {
             Ok(d) => {
                 logs.extend(d.head_logs);
-                logs.extend(d.item_logs.into_iter().flatten());
+                logs.extend(d.item_logs.into_iter().flat_map(|(_, l)| l));
                 Ok((d.reply, d.rc))
             }
             Err(DecodeFail::Malformed) => {
@@ -878,11 +946,12 @@ impl<T: Tokens> Connection<T> {
         expected: usize,
         kind: MultiKind,
     ) -> Result<Decoded, DecodeFail> {
-        let mut items =
-            multi::decode_multi(r, expected, kind).map_err(|_| DecodeFail::Malformed)?;
+        let spare = self.recv.multi_spare.take();
+        let mut items = multi::decode_multi_into(r, expected, kind, spare)
+            .map_err(|_| DecodeFail::Malformed)?;
         let mut rc = ZOK;
-        let mut item_logs = Vec::with_capacity(items.len());
-        for item in &mut items {
+        let mut item_logs = Vec::new();
+        for (at, item) in items.iter_mut().enumerate() {
             let mut logs = Vec::new();
             match &mut item.body {
                 MultiBody::Create(c) => {
@@ -903,7 +972,9 @@ impl<T: Tokens> Connection<T> {
                 | MultiBody::GetData(_)
                 | MultiBody::GetChildren(_) => {}
             }
-            item_logs.push(logs);
+            if !logs.is_empty() {
+                item_logs.push((at, logs));
+            }
         }
         let reply = match kind {
             MultiKind::Multi => Reply::Multi(items),
@@ -989,7 +1060,7 @@ impl<T: Tokens> Connection<T> {
         rc: i32,
         reply: Option<&Reply>,
         head_logs: Vec<LogRecord>,
-        item_logs: Vec<Vec<LogRecord>>,
+        item_logs: Vec<(usize, Vec<LogRecord>)>,
     ) -> Vec<LogRecord> {
         let mut logs = Vec::new();
         let x = i64::from(pending.xid);
@@ -1013,8 +1084,8 @@ impl<T: Tokens> Connection<T> {
                 },
                 Some(Reply::Multi(items)),
             ) => {
-                let mut extra = item_logs.into_iter();
-                for (op, item) in op_types.iter().zip(items) {
+                let mut extra = item_logs.into_iter().peekable();
+                for (at, (op, item)) in op_types.iter().zip(items).enumerate() {
                     let item_failed = item.wire_type == opcode::ERROR;
                     let item_rc = match &item.body {
                         MultiBody::Error(e) => e.err,
@@ -1026,9 +1097,11 @@ impl<T: Tokens> Connection<T> {
                         });
                         logs.extend(record);
                     }
-                    logs.extend(extra.next().into_iter().flatten());
+                    while let Some((_, l)) = extra.next_if(|(n, _)| *n == at) {
+                        logs.extend(l);
+                    }
                 }
-                logs.extend(extra.flatten());
+                logs.extend(extra.flat_map(|(_, l)| l));
             }
             (
                 Shape::Multi {
@@ -1046,9 +1119,9 @@ impl<T: Tokens> Connection<T> {
                         logs.extend(record);
                     }
                 }
-                logs.extend(item_logs.into_iter().flatten());
+                logs.extend(item_logs.into_iter().flat_map(|(_, l)| l));
             }
-            _ => logs.extend(item_logs.into_iter().flatten()),
+            _ => logs.extend(item_logs.into_iter().flat_map(|(_, l)| l)),
         }
         logs
     }
@@ -1735,6 +1808,35 @@ mod tests {
             op_types: ops.to_vec(),
             kind: MultiKind::Multi,
         }
+    }
+
+    /// Verifies that multi-response decoding reuses `Vec<MultiItem>` storage returned via
+    /// [`MultiSpare`] and enforces the configured minimum and maximum capacity bounds.
+    #[test]
+    fn multi_decode_reuses_the_given_back_items() {
+        let c = conn_with(Compat::LEGACY_C, None);
+        let spare = c.multi_spare();
+        let items: Vec<MultiItem> = Vec::with_capacity(MULTI_SPARE_MIN);
+        let at = items.as_ptr();
+        spare.put(items);
+        assert_eq!(spare.capacity(), MULTI_SPARE_MIN);
+        let body = multi_body(&[(2, 0, vec![]), (13, 0, vec![])]);
+        let mut logs = Vec::new();
+        let (reply, _) = c
+            .decode_reply(&multi_shape(&[2, 13]), &body, &mut logs)
+            .unwrap();
+        let Reply::Multi(items) = reply else {
+            panic!("not a multi")
+        };
+        assert_eq!((items.as_ptr(), items.len()), (at, 2));
+        assert_eq!(spare.capacity(), 0);
+        // Sub-threshold capacities are discarded and oversized capacities are clamped to the byte
+        // ceiling.
+        spare.put(Vec::with_capacity(MULTI_SPARE_MIN - 1));
+        assert_eq!(spare.capacity(), 0);
+        let max = MULTI_SPARE_MAX_BYTES / core::mem::size_of::<MultiItem>();
+        spare.put(Vec::with_capacity(2 * max));
+        assert!((MULTI_SPARE_MIN..=max).contains(&spare.capacity()));
     }
 
     #[test]

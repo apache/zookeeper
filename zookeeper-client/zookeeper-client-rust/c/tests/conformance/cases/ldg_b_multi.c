@@ -32,6 +32,11 @@
  *   close while in flight. Legacy C returns the error code while leaving
  *   results[i].err unmodified; the Rust drop-in populates every results[i].err
  *   with the overall failure code.
+ * - Thread cancellation while blocked in synchronous zoo_multi: the Rust
+ *   drop-in releases the waiter reference via its pthread cancellation cleanup
+ *   handler without writing to the caller's results array after cancellation,
+ *   leaving the handle operational for subsequent requests, whereas the C
+ *   client lacks a cancellation cleanup handler.
  *
  * zkconf-skip-st: the case tests the sync zoo_multi of the mt library
  */
@@ -39,7 +44,10 @@
 #include "zkconf.h"
 
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define UNTOUCHED 12345
 
@@ -58,10 +66,10 @@ static void quiet_log(const char *msg)
     (void)msg;
 }
 
-/* Connects a child handle to server 0 without emitting trace events. */
-static zhandle_t *child_connect(void)
+/* Connects a child handle to host without emitting trace events. */
+static zhandle_t *child_connect(const char *host)
 {
-    zhandle_t *zh = zookeeper_init2(zkc_host(0), quiet_watcher, 10000, NULL,
+    zhandle_t *zh = zookeeper_init2(host, quiet_watcher, 10000, NULL,
                                     NULL, 0, quiet_log);
     int i;
     for (i = 0; zh != NULL && i < 200; i++) {
@@ -81,7 +89,7 @@ static int g_with_child;
 
 static int child_container(void)
 {
-    zhandle_t *zh = child_connect();
+    zhandle_t *zh = child_connect(zkc_host(0));
     zoo_op_t ops[2];
     zoo_op_result_t res[2];
     char buf[2][64];
@@ -170,6 +178,50 @@ static void end_close(zhandle_t *zh)
     zkc_close(zh);
 }
 
+/*
+ * Subprocess scenario: cancels a worker thread blocked in zoo_multi while the
+ * proxy holds the server response, then releases the held response and verifies
+ * that a subsequent zoo_exists succeeds on the same handle without late writes
+ * to the heap-allocated results array or path buffer, returning 0 on clean
+ * cancellation, 2 on late buffer mutation, 4 on subsequent request failure, or
+ * 3 on harness setup failure.
+ */
+static int child_cancel(void)
+{
+    static char path[64];
+    struct multi_job *j;
+    struct Stat st;
+    const char *px;
+    zhandle_t *zh;
+    pthread_t th;
+    void *ret = NULL;
+    int rc;
+    px = zkc_proxy_start(zkc_host(0));
+    zh = px == NULL ? NULL : child_connect(px);
+    j = malloc(sizeof(*j));
+    if (zh == NULL || j == NULL) {
+        return 3;
+    }
+    snprintf(path, sizeof(path), "/ldgb_m3_%ld", (long)getpid());
+    job_init(j, zh, path);
+    zkc_proxy_hold(1);
+    if (pthread_create(&th, NULL, multi_thread, j) != 0) {
+        return 3;
+    }
+    zkc_sleep_ms(500);
+    if (pthread_cancel(th) != 0 || pthread_join(th, &ret) != 0 ||
+        ret != PTHREAD_CANCELED) {
+        return 3;
+    }
+    zkc_proxy_hold(0);
+    rc = zoo_exists(zh, "/", 0, &st);
+    if (j->res[0].err != UNTOUCHED || j->res[1].err != UNTOUCHED ||
+        j->buf[0] != '\0') {
+        return 2;
+    }
+    return rc == ZOK ? 0 : 4;
+}
+
 static void check_mul05(const char *what, const struct multi_job *j)
 {
     int filled = j->res[0].err == j->rc && j->res[1].err == j->rc;
@@ -203,6 +255,11 @@ int main(int argc, char **argv)
     zkc_dev("MUL-07", (strcmp(res, "exit:0") == 0) == rust,
             "container create then create: %s (legacy: a crash or a wrong"
             " result; rust: exit:0)", res);
+
+    /* Run the cancellation subprocess before starting the parent proxy instance. */
+    res = zkc_child("CAN-03 cancel a zoo_multi waiter", child_cancel, 15000);
+    zkc_dev("CAN-03", rust ? strcmp(res, "exit:0") == 0 : 1,
+            "cancelled zoo_multi waiter: %s (rust: exit:0)", res);
 
     px = zkc_proxy_start(zkc_host(0));
     if (px == NULL) {

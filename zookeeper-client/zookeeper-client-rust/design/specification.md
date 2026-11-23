@@ -579,13 +579,15 @@ Asynchronous submission routines (`zoo_a*`) put their arguments into a private r
 
 Multi-operation requests (`zoo_amulti`) enforce specialized validation: null operation lists or negative counts return `ZBADARGUMENTS`. The request holds the caller's `zoo_op_t` array, and Rust reads each operation in place during the call. Unsupported operation types return `ZUNIMPLEMENTED`, taking precedence over subsequent validation failures.
 
+Large multi-operations reuse their buffers. A connection keeps the storage of one sent multi frame, and the next multi encodes its request into it. The multi reply decoder reuses the item storage that the consumer of the last reply gives back. Each drop-in handle also keeps the staging vectors of large multi results between drains. Each kept buffer has a limit of 1 MiB, so one handle keeps at most about 4 MiB. Small multis and other operations keep no buffers. The reuse does not change the wire bytes, the results or the log records. It prevents a heap trim and page fault cycle for each large multi that an application sends in a loop.
+
 `zoo_add_auth` verifies the scheme, handle, and session state before copying credentials. An unlocked preliminary check verifies state before acquiring the authentication mutex, ensuring invocations on terminated handles return immediately without contending on locks.
 
 ### Synchronous operation wrappers
 
 Synchronous API wrappers exist exclusively within `libzookeeper_mt`. Each wrapper allocates a heap synchronization record via `calloc`, executes the corresponding asynchronous operation with an internal completion marker, and blocks on a POSIX condition variable. Waited condition variables are guarded by cancellation cleanup handlers (`pthread_cleanup_push`) that release references safely if the waiting thread is canceled.
 
-Buffers are populated on the caller's thread upon waking via `zkrs_sync_copy_out`, ensuring multithreaded safety. Output data lengths are bounded by caller capacity: if the returned length exceeds buffer capacity, the buffer is filled to capacity while the full length is reported. Output vectors transfer ownership directly to caller pointers.
+Buffers are populated on the caller's thread upon waking via `zkrs_sync_copy_out`, ensuring multithreaded safety. A multi is the exception. The completion thread writes the per-operation results directly into the caller's `zoo_op_result_t` array, as legacy and `zoo_amulti` do. It writes them under the record mutex, and only while the caller blocks in its wait. Thus a cancelled caller never gets a late write. When the reply arrives before the caller waits, or when the handle closes, the caller's thread copies the results out. Output data lengths are bounded by caller capacity: if the returned length exceeds buffer capacity, the buffer is filled to capacity while the full length is reported. Output vectors transfer ownership directly to caller pointers.
 
 If a synchronous operation is invoked from an I/O worker thread (such as from within an authentication callback), queuing the request would result in an immediate deadlock. The wrapper detects this condition and returns `ZSYSTEMERROR` with `errno` set to `EDEADLK`.
 

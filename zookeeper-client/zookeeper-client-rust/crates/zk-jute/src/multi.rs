@@ -187,8 +187,24 @@ pub fn decode_multi(
     expected: usize,
     kind: MultiKind,
 ) -> Result<Vec<MultiItem>, MultiError> {
+    decode_multi_into(r, expected, kind, Vec::new())
+}
+
+/// Deserializes a multi-operation response body into a caller supplied `items` vector, clearing
+/// any prior elements while reusing its existing heap capacity across replies.
+///
+/// # Errors
+///
+/// Returns the same [`MultiError`] variants as [`decode_multi`].
+pub fn decode_multi_into(
+    r: &mut Reader<'_>,
+    expected: usize,
+    kind: MultiKind,
+    mut items: Vec<MultiItem>,
+) -> Result<Vec<MultiItem>, MultiError> {
     let fit = r.remaining().checked_div(MULTI_HEADER_LEN).unwrap_or(0);
-    let mut items = Vec::with_capacity(expected.min(fit));
+    items.clear();
+    items.reserve(expected.min(fit));
     loop {
         let header = MultiHeader::decode(r)?;
         if header.done {

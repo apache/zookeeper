@@ -472,6 +472,8 @@ struct zks_sync {
     pthread_mutex_t m;
     pthread_cond_t c;
     int refs, done, rc, failed, origin;
+    int waiting; /* 1 while the waiter blocks in zks_sync_wait. */
+    int placed;  /* 1 when the completer wrote the multi results in place. */
     uint32_t kind; /* Target operation opcode (ZKRS_K_*). */
     char *data;
     int32_t data_len; /* Length in bytes, or -1 for non-existent/null data. */

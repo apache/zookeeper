@@ -28,7 +28,8 @@
 
 use zk_jute::data::Stat;
 use zk_jute::multi::{
-    MultiBody, MultiError, MultiItem, MultiKind, decode_multi, encode_end, encode_op_header,
+    MultiBody, MultiError, MultiItem, MultiKind, decode_multi, decode_multi_into, encode_end,
+    encode_op_header,
 };
 use zk_jute::proto::{
     Create2Response, CreateResponse, ErrorResponse, GetChildrenResponse, GetDataResponse,
@@ -237,4 +238,35 @@ fn empty_multi_is_only_the_terminator() {
             .unwrap()
             .is_empty()
     );
+}
+
+/// Verifies that `decode_multi_into` reuses the caller provided buffer allocation while clearing
+/// prior elements, and does not expose partial items on decode errors.
+#[test]
+fn decode_into_reuses_the_item_storage() {
+    let mut b = Vec::new();
+    for n in 0..3 {
+        header(opcode::SET_DATA, 0, &mut b);
+        SetDataResponse { stat: stat(n) }.encode(&mut b);
+    }
+    end(&mut b);
+    let old = vec![
+        MultiItem {
+            wire_type: opcode::DELETE,
+            err: 0,
+            body: MultiBody::Empty,
+        };
+        64
+    ];
+    let at = old.as_ptr();
+    let items = decode_multi_into(&mut Reader::new(&b), 3, MultiKind::Multi, old).unwrap();
+    assert_eq!(items.as_ptr(), at);
+    assert!(items.capacity() >= 64);
+    assert_eq!(
+        items,
+        decode_multi(&mut Reader::new(&b), 3, MultiKind::Multi).unwrap()
+    );
+    // Count mismatch decode errors return `Err` without exposing partially decoded items.
+    let bad = decode_multi_into(&mut Reader::new(&b), 2, MultiKind::Multi, items);
+    assert!(matches!(bad, Err(MultiError::CountMismatch { .. })));
 }

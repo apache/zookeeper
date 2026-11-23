@@ -76,6 +76,7 @@ pub use connection::{Connection, Leftovers};
 pub use hooks::{DefaultWatcher, LogFilter, Rng, SaslSession, Tokens};
 pub use log::{LogArg, LogLevel, LogRecord, LogSite, SiteInfo};
 pub use output::{OpResult, Origin, Output, Reply, Stopped, TerminateReason, WatchedEvent};
+pub use recv::MultiSpare;
 pub use request::{
     AddAuthError, InputDefect, MultiOp, MultiOpRef, Op, PathIn, Request, Route, Stage, SubmitError,
     Submitted, check_ttl,

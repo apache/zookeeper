@@ -1548,6 +1548,144 @@ fn sync_multi_null_results_and_count_zero() {
     assert_eq!(a.err, 99);
 }
 
+/// Captured post-write snapshot of six `COpResult` slots: per slot `(err, value_ptr_tag, valuelen,
+/// stat_ptr_tag)` tuples alongside the three caller path buffers and the destination `CStat`.
+type MultiSlots = (Vec<(i32, u8, i32, u8)>, [[u8; 8]; 3], CStat);
+
+/// Exercises a multi-operation result writer against six freshly initialized slots (`STR`, `STAT`,
+/// `STR` with a truncated 3-byte buffer, `STAT` with a null stat pointer, `VOID` with a sentinel
+/// value pointer, and `STR`).
+fn multi_slots(write: impl FnOnce(*mut COpResult, *const u8, i32)) -> MultiSlots {
+    let kinds = [K_STR, K_STAT, K_STR, K_STAT, K_VOID, K_STR];
+    let mut bufs = [[0xEEu8; 8]; 3];
+    let mut st = marker_stat();
+    let [b0, b1, b2] = &mut bufs;
+    let (p0, p1, p2) = (
+        b0.as_mut_ptr().cast::<c_char>(),
+        b1.as_mut_ptr().cast::<c_char>(),
+        b2.as_mut_ptr().cast::<c_char>(),
+    );
+    let ps = &raw mut st;
+    let slot = |value, valuelen, stat| COpResult {
+        err: 99,
+        value,
+        valuelen,
+        stat,
+    };
+    let mut res = [
+        slot(p0, 8, ptr::null_mut()),
+        slot(ptr::null_mut(), 0, ps),
+        slot(p1, 3, ptr::null_mut()),
+        slot(ptr::null_mut(), 0, ptr::null_mut()),
+        slot(marker_ptr(), 5, ptr::null_mut()),
+        slot(p2, 8, ptr::null_mut()),
+    ];
+    write(res.as_mut_ptr(), kinds.as_ptr(), 6);
+    let vtag = |p: *mut c_char| match p {
+        _ if p.is_null() => 0,
+        _ if p == p0 => 1,
+        _ if p == p1 => 2,
+        _ if p == p2 => 3,
+        _ if p == marker_ptr() => 4,
+        _ => 5,
+    };
+    let stag = |p: *mut CStat| match p {
+        _ if p.is_null() => 0,
+        _ if p == ps => 1,
+        _ => 2,
+    };
+    let rows = res
+        .iter()
+        .map(|r| (r.err, vtag(r.value), r.valuelen, stag(r.stat)))
+        .collect();
+    (rows, bufs, st)
+}
+
+/// Evaluates the two step staged multi copy out path (`write_result` followed by `sync_copy_out`).
+fn multi_staged(v: &zkrs_result_view) -> MultiSlots {
+    let mut ops = ptr::null_mut();
+    let mut n = 0;
+    let mut d = dst();
+    d.ops = &raw mut ops;
+    d.nops = &raw mut n;
+    writers::write_result(v, &d);
+    let out = multi_slots(|res, kinds, count| {
+        let mut s = sync_src(ZKRS_K_MULTI);
+        s.rc = v.rc;
+        s.failed = v.failed;
+        s.origin = i32::try_from(v.origin).unwrap_or(-1);
+        s.ops = ops;
+        s.nops = n;
+        s.op_kind = kinds;
+        let mut sd = sync_dst();
+        sd.results = res.cast();
+        sd.count = count;
+        writers::sync_copy_out(&s, &sd);
+    });
+    take_copies(ops, n);
+    out
+}
+
+/// Evaluates the direct in-place synchronous multi completion path (`zks_sync_complete_multi`),
+/// normalizing teardown views to failed views with no sub-operation entries.
+fn multi_in_place(v: &zkrs_result_view) -> MultiSlots {
+    let mut tv = *v;
+    if tv.origin == ZKRS_ORIGIN_TEARDOWN {
+        tv.failed = 1;
+        tv.ops = ptr::null();
+        tv.nops = 0;
+    }
+    multi_slots(|res, kinds, count| writers::write_multi(&tv, res, kinds, count))
+}
+
+/// Verifies that direct in-place synchronous multi result population produces identical caller
+/// buffer state to staged copy out across all return codes, origins, and sub-result shapes.
+#[test]
+fn sync_multi_in_place_matches_the_staged_copy_out() {
+    let full = [
+        op(0, 0, zstr(c"/n0000000007"), ptr::null()),
+        op(0, 0, zkrs_str::null(), &ST),
+        op(0, 0, zstr(c"/abcdef"), ptr::null()),
+        op(0, 0, zkrs_str::null(), &ST),
+        op(0, 0, zkrs_str::null(), ptr::null()),
+        op(0, 0, zstr(c""), ptr::null()),
+        op(0, 0, zstr(c"/extra"), ptr::null()),
+    ];
+    let partial = [
+        op(0, 0, zstr(c"/a"), ptr::null()),
+        op(-101, 1, zkrs_str::null(), &ST),
+        op(-2, 1, zstr(c"/b"), ptr::null()),
+        op(-110, 0, zkrs_str::null(), &ST),
+    ];
+    let mut cases = Vec::new();
+    for ops in [&full[..], &partial[..], &[][..]] {
+        for (rc, failed) in [(0, 0), (-101, 0), (-118, 1), (-116, 1)] {
+            for origin in [ZKRS_ORIGIN_REPLY, ZKRS_ORIGIN_TEARDOWN] {
+                let mut v = multi_view(ops);
+                v.rc = rc;
+                v.failed = failed;
+                v.origin = origin;
+                cases.push(v);
+            }
+        }
+    }
+    // Negative sub-operation counts are treated as empty on both paths.
+    for failed in [0, 1] {
+        let mut v = view(ZKRS_K_MULTI);
+        v.rc = -4;
+        v.failed = failed;
+        v.nops = -1;
+        cases.push(v);
+    }
+    let mut wrote = 0;
+    for v in &cases {
+        let staged = multi_staged(v);
+        assert_eq!(multi_in_place(v), staged, "view {v:?}");
+        wrote += usize::from(staged.0.iter().any(|r| r.0 != 99));
+    }
+    assert!(wrote > cases.len() / 2, "most cases write the slots");
+}
+
 #[test]
 fn sync_copy_out_through_the_export() {
     let h = *b"abc";

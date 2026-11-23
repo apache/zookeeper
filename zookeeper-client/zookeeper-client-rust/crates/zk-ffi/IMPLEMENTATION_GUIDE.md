@@ -209,7 +209,7 @@ Rust exports and their C callers:
 | `zkrs_registry_add`, `zkrs_registry_remove`, `zkrs_registry_check` (`registry.rs`) | the `ZKS_REGISTRY_*` macros of registry builds (`zks_internal.h`) |
 | `zkrs_write_result` (`results.rs`, `raw/writers.rs`) | `zks_deliver_result` (`zks_drain.c`), `zks_sync_complete` (`zks_sync.c`) |
 | `zkrs_write_path` (`results.rs`) | `zks_deliver_watch` (`zks_drain.c`) |
-| `zkrs_write_multi` (`results.rs`) | `zks_multi_complete` (`zks_multi.c`) |
+| `zkrs_write_multi` (`results.rs`) | `zks_multi_complete` (`zks_multi.c`), `zks_sync_complete` (`zks_sync.c`) |
 | `zkrs_sync_copy_out` (`results.rs`) | the sync wrappers (`zks_sync.c`) |
 | `zkrs_sasl_result`, `zkrs_sasl_mark_failed` (`sasl.rs`) | the Cyrus glue (`zks_sasl_cyrus.c`) |
 | `zkrs_feature_tls` (`tls.rs`) | `zks_tls.c`; the configure and CMake TLS checks look for the symbol with `nm` |
@@ -263,7 +263,7 @@ Functions:
 
 Calls made: `libc` (through `c_malloc` and `c_calloc`), the mirrors of `legacy.rs`.
 
-Calls received: `results.rs` (`zkrs_write_result`, `zkrs_write_path`, `zkrs_write_multi`, `zkrs_sync_copy_out`), and so `zks_deliver_result` and `zks_deliver_watch` (`zks_drain.c`), `zks_multi_complete` (`zks_multi.c`) and the sync wrappers (`zks_sync.c`).
+Calls received: `results.rs` (`zkrs_write_result`, `zkrs_write_path`, `zkrs_write_multi`, `zkrs_sync_copy_out`), and so `zks_deliver_result` and `zks_deliver_watch` (`zks_drain.c`), `zks_multi_complete` (`zks_multi.c`), `zks_sync_complete` and the sync wrappers (`zks_sync.c`).
 
 Invariants:
 
@@ -388,6 +388,8 @@ Invariants:
 - `site_id` is the index in `LogSite::ALL`. The generated `zks_log_sites.h` uses the same order.
 - `zkrs_state` gives every legacy state value, including 0, 7, 999, -112 and -113. `zkrs_peer_addr` gives -1 unless the state is CONNECTED.
 - `zkrs_set_servers` with a NULL `hosts` gives ZBADARGUMENTS and the `SetServersEmpty` line. It returns `ZKRS_MORE` at the log-flush barrier before a Blocking `resolve`.
+- Each handle keeps `Spares` for large multi results. A RESULT with 64 or more sub-operations takes the stats and ops vectors with `try_lock`. `zkrs_outbox_finish` and `zkrs_outbox_requeue` give them back, cleared and shrunk to 1 MiB. Small results take no lock.
+- After a large multi RESULT is staged, its item vector goes back to the `MultiSpare` slot of the connection. The handle finds the slot once with `read_conn`, on the first large reply.
 
 ### Async entry points and multi (C)
 
@@ -479,7 +481,7 @@ Functions:
 | the 23 sync wrappers | zks_sync.c |
 | the static `zks_wgetconfig_`, `zks_wget_children_`, `zks_wget_children2_`, `zks_remove_watches` | zks_sync.c |
 
-Calls made: the exported `zoo_a*` functions and `zks_aremove_watches` (`zks_async.c`), `zkrs_write_result`, `zkrs_sync_copy_out`, `zks_current_role`, `ZKS_REGISTRY_CHECK`, pthreads, `deallocate_*`.
+Calls made: the exported `zoo_a*` functions and `zks_aremove_watches` (`zks_async.c`), `zkrs_write_result`, `zkrs_write_multi`, `zkrs_sync_copy_out`, `zks_current_role`, `ZKS_REGISTRY_CHECK`, pthreads, `deallocate_*`.
 
 Calls received: the application; `zks_deliver_result` and `zks_vt_discard_token` (`zks_drain.c`); `zks_aremove_watches` (`zks_async.c`).
 
@@ -487,7 +489,8 @@ Invariants:
 
 - The IO thread gets ZSYSTEMERROR with `errno = EDEADLK` before anything is queued. Legacy C deadlocks here.
 - The record has two references: the waiter and the completer. The completer touches nothing after its unreference. A cancelled waiter drops its reference in a cleanup handler.
-- The completion writes only record members. The caller buffers are written only by the waiting thread, through `zkrs_sync_copy_out`, and only when `rc == ZOK` (except the multi per-op writers).
+- The completion writes only record members, except for a multi. The caller buffers are written only by the waiting thread, through `zkrs_sync_copy_out`, and only when `rc == ZOK` (except the multi per-op writers).
+- A multi reply writes the caller results array directly with `zkrs_write_multi`, as legacy does. The completion does this under the record mutex, and only while the waiter blocks in `zks_sync_wait`. A cancelled waiter clears that flag in its cleanup handler, so the completion never writes the array after the waiter leaves. For a teardown reply, the completion writes the failure code to every slot, as the copy-out does. When the waiter does not wait yet, the completion stages the results, and the waiter copies them out. A handle close always takes the copy-out path.
 - The vectors pass to the caller by struct assignment. A NULL output pointer frees them with `deallocate_*`.
 - `zoo_getconfig` and `zoo_wgetconfig` use `zks_wgetconfig_`, so they read the absolute config node under a chroot.
 - The whole file is under `THREADED`.

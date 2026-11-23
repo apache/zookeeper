@@ -26,6 +26,7 @@ use std::collections::VecDeque;
 use zeroize::Zeroize;
 use zk_jute::Record;
 use zk_jute::multi::MultiKind;
+use zk_jute::opcode;
 use zk_jute::proto::RequestHeader;
 
 use crate::connection::Connection;
@@ -392,7 +393,18 @@ pub(crate) struct Requests<T: Tokens> {
     /// High-water mark offset of sensitive cryptographic bytes in caller copy buffers, tracked
     /// for zeroization.
     secret_end: usize,
+    /// Recycled byte buffer from a previously transmitted plaintext `multi` frame, reused for
+    /// in-place encoding of the next `multi` request.
+    pub(crate) tx_spare: Vec<u8>,
 }
+
+/// Minimum capacity threshold (4 KiB) for retaining a transmitted `multi` frame buffer in
+/// `tx_spare`.
+pub(crate) const TX_SPARE_MIN: usize = 4 * 1024;
+
+/// Maximum capacity ceiling (1 MiB) for retaining a transmitted `multi` frame buffer in
+/// `tx_spare`.
+pub(crate) const TX_SPARE_MAX: usize = 1024 * 1024;
 
 impl<T: Tokens> Requests<T> {
     /// Instantiates empty transmission and pending FIFO queues, seeding transaction identifiers.
@@ -404,7 +416,33 @@ impl<T: Tokens> Requests<T> {
             next_xid: if xid_seed <= 0 { 1 } else { xid_seed },
             unacked: 0,
             secret_end: 0,
+            tx_spare: Vec::new(),
         }
+    }
+
+    /// Retains the backing allocation of a completed outbound frame in `tx_spare` when eligible.
+    ///
+    /// Only non-secret `MULTI` or `MULTI_READ` frames whose capacity falls within
+    /// `TX_SPARE_MIN..=TX_SPARE_MAX` and exceeds any currently retained buffer are kept. Secret
+    /// frames are always dropped so their contents are zeroized immediately.
+    fn keep_tx_spare(&mut self, frame: OutFrame) {
+        if let FrameBytes::Plain(v) = frame.bytes {
+            let cap = v.capacity();
+            if (TX_SPARE_MIN..=TX_SPARE_MAX).contains(&cap)
+                && cap > self.tx_spare.capacity()
+                && is_multi_frame(&v)
+            {
+                self.tx_spare = v;
+            }
+        }
+    }
+
+    /// Extracts and clears the recycled transmit buffer, or returns a new empty vector if none is
+    /// cached.
+    pub(crate) fn take_tx_spare(&mut self) -> Vec<u8> {
+        let mut v = core::mem::take(&mut self.tx_spare);
+        v.clear();
+        v
     }
 
     /// Allocates the next positive transaction identifier, wrapping from `i32::MAX` to 1.
@@ -673,6 +711,7 @@ impl<T: Tokens> Connection<T> {
             match done.kind {
                 FrameKind::Request { xid } => {
                     self.requests.mark_written(xid);
+                    self.requests.keep_tx_spare(done);
                 }
                 FrameKind::Connect => self.on_connect_sent(),
                 FrameKind::Ping
@@ -780,6 +819,16 @@ const FRAME_PREFIX_LEN: usize = 4;
 
 /// Combined byte size of frame length prefix and encoded [`RequestHeader`].
 pub(crate) const REQUEST_HEAD_LEN: usize = FRAME_PREFIX_LEN + 8;
+
+/// Determines whether an encoded request frame carries a `MULTI` or `MULTI_READ` opcode in the
+/// trailing 4 bytes of its [`REQUEST_HEAD_LEN`] header prefix.
+fn is_multi_frame(frame: &[u8]) -> bool {
+    frame
+        .get(REQUEST_HEAD_LEN - 4..REQUEST_HEAD_LEN)
+        .and_then(|b| <[u8; 4]>::try_from(b).ok())
+        .map(i32::from_be_bytes)
+        .is_some_and(|t| t == opcode::MULTI || t == opcode::MULTI_READ)
+}
 
 /// Pops and fails pending FIFO entries through the last synchronous `Route::Direct` request.
 fn requests_fail_run<T: Tokens, F: FnMut(Pending<T>)>(
@@ -1154,6 +1203,59 @@ mod tests {
         assert_eq!((g.as_slice(), g.as_ptr()), (f.as_slice(), at));
         let neg = Connection::<Tk>::frame_in_place(-2, 11, vec![0; REQUEST_HEAD_LEN]);
         assert_eq!(neg, Connection::<Tk>::request_frame(-2, 11, &[]));
+    }
+
+    /// Verifies that only non-secret `MULTI` and `MULTI_READ` frames within the configured
+    /// capacity bounds are retained in `tx_spare` after transmission.
+    #[test]
+    fn a_sent_request_frame_becomes_the_transmit_spare() {
+        let mut c = conn(Phase::Established);
+        let big = Connection::<Tk>::frame_in_place(1, opcode::MULTI, vec![1; TX_SPARE_MIN]);
+        let at = big.as_ptr();
+        c.requests
+            .push_tail(OutFrame::plain(FrameKind::Request { xid: 1 }, big));
+        c.requests
+            .push_tail(frame(FrameKind::Request { xid: 2 }, &[2; 16]));
+        c.requests.push_tail(OutFrame::secret(
+            FrameKind::Request { xid: 3 },
+            vec![3; 2 * TX_SPARE_MIN],
+        ));
+        // Non-multi request opcodes do not overwrite the retained multi frame spare.
+        c.requests.push_tail(OutFrame::plain(
+            FrameKind::Request { xid: 4 },
+            Connection::<Tk>::frame_in_place(4, opcode::SET_DATA, vec![4; 2 * TX_SPARE_MIN]),
+        ));
+        for xid in 1..=4 {
+            c.requests.push_pending(pending(xid, Route::Queued));
+        }
+        let mut out = Vec::new();
+        loop {
+            out.clear();
+            let n = c.poll_transmit(&mut out, usize::MAX);
+            if n == 0 {
+                break;
+            }
+            c.handle_transmitted(n, Millis(1));
+        }
+        assert!(c.requests.tx.is_empty());
+        assert!(c.requests.fifo.iter().all(|p| p.written));
+        let spare = c.requests.take_tx_spare();
+        assert_eq!((spare.as_ptr(), spare.len()), (at, 0));
+        assert_eq!(c.requests.take_tx_spare().capacity(), 0);
+        // Plain `MULTI_READ` frames are also eligible for spare retention.
+        c.requests.keep_tx_spare(OutFrame::plain(
+            FrameKind::Request { xid: 5 },
+            Connection::<Tk>::frame_in_place(5, opcode::MULTI_READ, vec![5; TX_SPARE_MIN]),
+        ));
+        assert_eq!(c.requests.take_tx_spare().capacity(), TX_SPARE_MIN);
+        // Multi frames exceeding `TX_SPARE_MAX` are discarded rather than retained.
+        let mut huge = Vec::with_capacity(TX_SPARE_MAX + 1);
+        huge.resize(REQUEST_HEAD_LEN, 0);
+        c.requests.keep_tx_spare(OutFrame::plain(
+            FrameKind::Request { xid: 6 },
+            Connection::<Tk>::frame_in_place(6, opcode::MULTI, huge),
+        ));
+        assert_eq!(c.requests.tx_spare.capacity(), 0);
     }
 
     /// Validates that uncollected lent frames trigger safety panics upon establishing

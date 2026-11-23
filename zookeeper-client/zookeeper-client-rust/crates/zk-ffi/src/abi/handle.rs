@@ -57,7 +57,7 @@ use zk_proto::{
 
 use super::entry::{abort_with, ffi_guard, with_handle};
 use super::host::FfiHost;
-use super::outbox::{take_driver_outbox, with_outbox};
+use super::outbox::{Spares, take_driver_outbox, with_outbox};
 use super::raw;
 use super::tokens::CTokens;
 use super::types::{
@@ -212,6 +212,8 @@ pub(crate) struct Inner {
     flavor: u32,
     init: Mutex<Option<Init<CTokens>>>,
     driver: OnceLock<Driver>,
+    /// Reusable staging buffers retained across outbox drains for large multi-operation replies.
+    spares: Spares,
 }
 
 impl Inner {
@@ -222,12 +224,18 @@ impl Inner {
             flavor,
             init: Mutex::new(None),
             driver: OnceLock::new(),
+            spares: Spares::default(),
         }
     }
 
     /// Returns a reference to the host foreign function interface abstraction.
     pub(crate) fn host(&self) -> &Arc<FfiHost> {
         &self.host
+    }
+
+    /// Returns the reusable staging buffers retained across outbox drains for large multi replies.
+    pub(crate) fn spares(&self) -> &Spares {
+        &self.spares
     }
 
     /// Returns the runtime flavor constant (`ZKRS_FLAVOR_*`) configured for this handle.

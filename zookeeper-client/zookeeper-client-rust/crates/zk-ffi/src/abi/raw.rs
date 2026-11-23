@@ -491,5 +491,43 @@ extern "C" fn resolve_skip(sink: *mut c_void, family: i32) {
     ffi_guard(|| sink_from_ptr(sink).skipped_families.push(family));
 }
 
+/// Transferable wrapper around an empty `Vec<T>` allocation.
+///
+/// FFI staging vectors store view structs containing raw pointers (`!Send`), preventing a handle
+/// from holding them directly across thread boundaries between outbox drains. Clearing the vector
+/// upon construction guarantees that only the empty heap allocation, and never any raw pointer
+/// element, is transferred across threads.
+pub(crate) struct EmptyVec<T: Copy>(Vec<T>);
+
+// SAFETY: `EmptyVec::new` clears the vector upon construction and provides no mutation methods
+// prior to `into_vec`, guaranteeing that zero elements of `T` are held while transferred across
+// threads and that the underlying global allocator buffer can be safely reclaimed or reused on any
+// thread.
+unsafe impl<T: Copy> Send for EmptyVec<T> {}
+
+impl<T: Copy> Default for EmptyVec<T> {
+    fn default() -> Self {
+        Self(Vec::new())
+    }
+}
+
+impl<T: Copy> EmptyVec<T> {
+    /// Clears `v` while retaining its allocated capacity.
+    pub(crate) fn new(mut v: Vec<T>) -> Self {
+        v.clear();
+        Self(v)
+    }
+
+    /// Returns the allocated element capacity of the underlying buffer.
+    pub(crate) fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
+
+    /// Unwraps and returns the empty vector with its retained capacity.
+    pub(crate) fn into_vec(self) -> Vec<T> {
+        self.0
+    }
+}
+
 #[cfg(test)]
 pub(crate) mod tests;

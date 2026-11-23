@@ -37,17 +37,19 @@ use std::ffi::c_int;
 use std::mem::{offset_of, size_of};
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::ptr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, OnceLock};
 
 use zeroize::Zeroizing;
 
 use zk_driver::outbox::discard_item;
-use zk_driver::{HostLeaves, Item, Outbox, SaslItem, ThreadOp, ThreadRole};
+use zk_driver::{Item, Outbox, SaslItem, ThreadOp, ThreadRole};
 use zk_jute::data::{ACL, Stat};
 use zk_jute::multi::{MultiBody, MultiItem};
 use zk_jute::{JString, JVec, opcode};
 use zk_proto::legacy::watchers::SESSION_EVENT;
-use zk_proto::{LogRecord, OpResult, Origin, Reply, ReplyData, SaslCallKind};
+use zk_proto::{
+    Connection, LogRecord, MultiSpare, OpResult, Origin, Reply, ReplyData, SaslCallKind,
+};
 
 use super::entry::ffi_guard;
 use super::handle::Inner;
@@ -72,6 +74,66 @@ pub(crate) struct FfiOutbox {
     stamp: (i64, i32),
     /// Staging arena maintaining memory backing for the active C item view.
     stage: Staged,
+}
+
+/// Minimum sub-operation count threshold at which a multi reply recycles handle level spare
+/// staging buffers.
+const SPARE_MIN_OPS: usize = 64;
+
+/// Maximum byte capacity retained per recycled spare vector across outbox drains.
+const SPARE_MAX_BYTES: usize = 1024 * 1024;
+
+/// Handle-level pool of recycled staging allocations for large multi-operation replies.
+///
+/// Retaining the FFI staging vectors and decoded item buffers across outbox drains avoids repeated
+/// large heap allocations and page fault churn on high cardinality `multi` workloads. Small
+/// responses bypass the pool entirely, and both acquisition and release use nonblocking
+/// `try_lock` operations.
+#[derive(Default)]
+pub(crate) struct Spares {
+    /// Recycled FFI staging vectors for sub-operation descriptors and stat structures.
+    vecs: Mutex<SpareVecs>,
+    /// Lazily initialized reference to the protocol connection's decoded `MultiItem` spare slot.
+    items: OnceLock<Arc<MultiSpare>>,
+}
+
+/// Recycled FFI staging vectors retained on a handle between outbox drains.
+#[derive(Default)]
+struct SpareVecs {
+    /// Backing storage for sub-operation [`zkrs_stat`] records.
+    stats: Vec<zkrs_stat>,
+    /// Backing storage for projected [`zkrs_multi_op`] view descriptors.
+    ops: raw::EmptyVec<zkrs_multi_op>,
+}
+
+impl Spares {
+    /// Returns a consumed `MultiItem` vector to the protocol connection's decoder spare slot,
+    /// resolving and caching the slot handle via `find` on the first qualifying batch.
+    fn give_items(&self, items: Vec<MultiItem>, find: impl FnOnce() -> Option<Arc<MultiSpare>>) {
+        if items.capacity() < SPARE_MIN_OPS {
+            return;
+        }
+        let slot = match self.items.get() {
+            Some(slot) => slot,
+            None => {
+                let Some(found) = find() else {
+                    return;
+                };
+                self.items.get_or_init(|| found)
+            }
+        };
+        slot.put(items);
+    }
+}
+
+/// Clears `v` and caps its retained allocation capacity at [`SPARE_MAX_BYTES`].
+fn bounded<T>(mut v: Vec<T>) -> Vec<T> {
+    v.clear();
+    let max = SPARE_MAX_BYTES.checked_div(size_of::<T>()).unwrap_or(0);
+    if v.capacity() > max {
+        v.shrink_to(max);
+    }
+    v
 }
 
 /// Staging arena maintaining memory backing for the most recently projected FFI item view.
@@ -126,6 +188,45 @@ impl Staged {
         self.watch = None;
         self.sasl_bytes.clear();
         self.sasl = None;
+    }
+
+    /// Adopts recycled staging vectors from `spares` when staging a multi reply with `n`
+    /// sub-operations that exceeds the current staging capacity.
+    fn take_spares(&mut self, n: usize, spares: &Spares) {
+        if n < SPARE_MIN_OPS || !self.stats.is_empty() || !self.ops.is_empty() {
+            return;
+        }
+        if self.stats.capacity() >= n && self.ops.capacity() >= n {
+            return;
+        }
+        let Ok(mut v) = spares.vecs.try_lock() else {
+            return;
+        };
+        if v.stats.capacity() > self.stats.capacity() {
+            std::mem::swap(&mut self.stats, &mut v.stats);
+        }
+        if v.ops.capacity() > self.ops.capacity() {
+            let ops = std::mem::take(&mut v.ops).into_vec();
+            v.ops = raw::EmptyVec::new(std::mem::replace(&mut self.ops, ops));
+        }
+    }
+
+    /// Clears all staged views and returns qualifying large staging buffers to the handle's
+    /// [`Spares`] pool after the final borrowed view lifetime ends.
+    pub(crate) fn release(&mut self, spares: &Spares) {
+        self.clear();
+        if self.stats.capacity() < SPARE_MIN_OPS && self.ops.capacity() < SPARE_MIN_OPS {
+            return;
+        }
+        let Ok(mut v) = spares.vecs.try_lock() else {
+            return;
+        };
+        if self.stats.capacity() > v.stats.capacity() {
+            v.stats = bounded(std::mem::take(&mut self.stats));
+        }
+        if self.ops.capacity() > v.ops.capacity() {
+            v.ops = raw::EmptyVec::new(bounded(std::mem::take(&mut self.ops)));
+        }
     }
 
     /// Allocates a NUL-terminated copy of a byte slice and returns an FFI string view borrowing
@@ -198,6 +299,7 @@ impl Staged {
         r: &mut OpResult,
         logs: &[LogRecord],
         stamp: (i64, i32),
+        spares: &Spares,
     ) -> *const zkrs_result_view {
         let (delivery_logs, n_delivery_logs) = self.logs.stage(logs, stamp);
         let mut v = zkrs_result_view {
@@ -237,7 +339,10 @@ impl Staged {
                 (v.children, v.nchildren) = self.stage_children(c);
             }
             Some(Reply::Acl(a, _)) => (v.acl, v.nacl) = self.stage_acl(a),
-            Some(Reply::Multi(items)) => (v.ops, v.nops) = self.stage_ops(items),
+            Some(Reply::Multi(items)) => {
+                self.take_spares(items.len(), spares);
+                (v.ops, v.nops) = self.stage_ops(items);
+            }
             // Internal protocol replies not visible to the C client layer never reach the FFI
             // stage.
             _ => {}
@@ -279,17 +384,24 @@ impl Staged {
 
     /// Stages multi-operation sub-results into FFI operation outcome descriptors.
     ///
-    /// Stat structures are staged first to guarantee stable pointer addresses before
-    /// constructing sub-operation records.
+    /// Stat structures are appended in a first pass so their backing vector cannot reallocate
+    /// while the second pass resolves each `SetData` entry's stat pointer by sequential index.
     fn stage_ops(&mut self, items: &[MultiItem]) -> (*const zkrs_multi_op, i32) {
-        let stats: Vec<Option<usize>> = items
-            .iter()
-            .map(|it| match &it.body {
-                MultiBody::SetData(r) => Some(self.push_stat(&r.stat)),
+        let mut next = self.stats.len();
+        for it in items {
+            if let MultiBody::SetData(r) = &it.body {
+                self.push_stat(&r.stat);
+            }
+        }
+        for it in items {
+            let st = match &it.body {
+                MultiBody::SetData(_) => {
+                    let at = next;
+                    next = next.saturating_add(1);
+                    Some(at)
+                }
                 _ => None,
-            })
-            .collect();
-        for (it, st) in items.iter().zip(stats) {
+            };
             let err = match &it.body {
                 MultiBody::Error(e) => e.err,
                 _ => it.err,
@@ -407,8 +519,9 @@ impl Staged {
         &mut self,
         item: Item<CTokens>,
         stamp: (i64, i32),
-        host: &dyn HostLeaves<CTokens>,
+        handle: &Inner,
     ) -> Option<zkrs_item> {
+        let host = &**handle.host();
         let mut it = zkrs_item::empty();
         match item {
             Item::Log(rec) => {
@@ -421,8 +534,17 @@ impl Staged {
                 delivery_logs,
             } => {
                 it.r#type = zkrs_item_type::ZKRS_ITEM_RESULT as u32;
-                it.result = self.stage_result(token.kind(), &mut result, &delivery_logs, stamp);
+                let spares = handle.spares();
+                it.result =
+                    self.stage_result(token.kind(), &mut result, &delivery_logs, stamp, spares);
                 it.token = token.into_raw();
+                if let Some(Reply::Multi(items)) = result.reply.take() {
+                    spares.give_items(items, || {
+                        handle
+                            .driver()
+                            .and_then(|d| d.read_conn(Connection::multi_spare))
+                    });
+                }
             }
             Item::AuthResult { token, rc } => {
                 // Authentication results omit response bodies and delivery trace lines.
@@ -433,7 +555,7 @@ impl Staged {
                     reply: (rc == 0).then_some(Reply::Void),
                 };
                 it.r#type = zkrs_item_type::ZKRS_ITEM_RESULT as u32;
-                it.result = self.stage_result(token.kind(), &mut r, &[], stamp);
+                it.result = self.stage_result(token.kind(), &mut r, &[], stamp, handle.spares());
                 it.token = token.into_raw();
             }
             Item::Watch {
@@ -695,9 +817,8 @@ pub extern "C" fn zkrs_outbox_next(ob: *mut zkrs_outbox, it: *mut zkrs_item) -> 
             return 0;
         };
         b.stage.clear();
-        let host = &**b.handle.host();
         while let Some(item) = b.ob.pop() {
-            if let Some(v) = b.stage.stage(item, b.stamp, host) {
+            if let Some(v) = b.stage.stage(item, b.stamp, &b.handle) {
                 if let Some((kind, r#gen)) = b.stage.taken_sasl() {
                     sasl::note_taken(&b.handle, kind, r#gen);
                 }
@@ -721,7 +842,7 @@ pub extern "C" fn zkrs_outbox_finish(ob: *mut zkrs_outbox) {
         let Some(mut b) = raw::outbox_take(ob) else {
             return;
         };
-        b.stage.clear();
+        b.stage.release(b.handle.spares());
         b.ob.finish(&**b.handle.host());
         if b.ob.resume_at().is_some() {
             raw::outbox_into_impl(ob, b);
@@ -742,7 +863,7 @@ pub extern "C" fn zkrs_outbox_requeue(ob: *mut zkrs_outbox) {
         let Some(mut b) = raw::outbox_take(ob) else {
             return;
         };
-        b.stage.clear();
+        b.stage.release(b.handle.spares());
         let rest = b.ob.requeue();
         if rest.is_empty() && rest.resume_at().is_none() {
             return;
@@ -773,7 +894,7 @@ mod tests {
     use super::super::handle::zkrs_handle_release;
     use super::super::standin;
     use super::super::tokens::CReq;
-    use super::super::types::{ZKRS_K_DATA, ZKRS_K_MULTI, zkrs_log_view};
+    use super::super::types::{ZKRS_K_DATA, ZKRS_K_MULTI, zkrs_handle, zkrs_log_view};
     use super::*;
 
     fn line() -> LogRecord {
@@ -1073,6 +1194,92 @@ mod tests {
         zkrs_outbox_finish(&raw mut ob);
         assert!(ob.r#impl.is_null());
         zkrs_handle_release(h);
+    }
+
+    /// Enqueues and drains a multi-operation result containing `n` sub-operations (with even
+    /// indices carrying `SetData` stat version `k`), returning the staged `ops` buffer address,
+    /// the observed stat versions, and the handle's spare capacity while the view was active.
+    fn drain_multi(h: *const zkrs_handle, n: usize) -> (usize, Vec<Option<i32>>, usize) {
+        let mut ob = empty_outbox();
+        with_handle(h, |i, _| {
+            with_outbox(&raw mut ob, i, |o| {
+                let items = (0..n)
+                    .map(|k| MultiItem {
+                        wire_type: if k % 2 == 0 { 5 } else { 13 },
+                        err: 0,
+                        body: if k % 2 == 0 {
+                            MultiBody::SetData(SetDataResponse {
+                                stat: stat(i32::try_from(k).unwrap_or(-1)),
+                            })
+                        } else {
+                            MultiBody::Empty
+                        },
+                    })
+                    .collect();
+                o.push(Item::Result {
+                    token: CReq::new(0x2000, ZKRS_K_MULTI, standin::discard_token),
+                    result: OpResult {
+                        rc: 0,
+                        zxid: 0,
+                        origin: Origin::Reply,
+                        reply: Some(Reply::Multi(items)),
+                    },
+                    delivery_logs: vec![],
+                });
+            });
+        });
+        let item = next(&mut ob);
+        assert!(item.is_some());
+        let v = raw::read_struct(item.map_or(ptr::null(), |it| it.result));
+        let ops = raw::array(v.ops, v.nops).unwrap_or_default();
+        let versions = ops
+            .iter()
+            .map(|o| (!o.stat.is_null()).then(|| raw::read_struct(o.stat).version))
+            .collect();
+        let held = spare_ops(h);
+        assert!(next(&mut ob).is_none());
+        zkrs_outbox_finish(&raw mut ob);
+        (v.ops.addr(), versions, held)
+    }
+
+    /// Queries the retained `ops` vector capacity currently stored in `h`'s spare pool.
+    fn spare_ops(h: *const zkrs_handle) -> usize {
+        with_handle(h, |i, _| {
+            i.spares().vecs.lock().map_or(0, |v| v.ops.capacity())
+        })
+    }
+
+    /// Verifies that large multi-operation drains recycle their staging allocations through the
+    /// handle's spare pool while preserving stat view accuracy across drains.
+    #[test]
+    fn a_large_multi_reuses_the_staging_storage_of_the_handle() {
+        let _rec = crate::abi::standin::recorder();
+        let h = new_handle();
+        let n = SPARE_MIN_OPS * 2;
+        let want: Vec<_> = (0..n)
+            .map(|k| (k % 2 == 0).then(|| i32::try_from(k).unwrap_or(-1)))
+            .collect();
+        let (first, a, _) = drain_multi(h, n);
+        assert!(spare_ops(h) >= n);
+        let (second, b, held) = drain_multi(h, n);
+        assert_eq!((first, held), (second, 0));
+        assert_eq!((&a, &b), (&want, &want));
+        assert!(spare_ops(h) >= n);
+        // Sub-threshold multi results leave the handle's spare pool untouched.
+        let (_, c, held) = drain_multi(h, 3);
+        assert_eq!((c, held >= n), (vec![Some(0), None, Some(2)], true));
+        assert!(standin::discarded().is_empty());
+        zkrs_handle_release(h);
+    }
+
+    /// Verifies that oversized spare vectors are shrunk to [`SPARE_MAX_BYTES`] when returned to
+    /// the pool.
+    #[test]
+    fn a_spare_vector_shrinks_to_the_byte_bound() {
+        let max = SPARE_MAX_BYTES / size_of::<zkrs_stat>();
+        let v: Vec<zkrs_stat> = bounded(Vec::with_capacity(2 * max));
+        assert!((max..2 * max).contains(&v.capacity()));
+        assert_eq!(bounded(Vec::<zkrs_stat>::with_capacity(8)).capacity(), 8);
     }
 
     #[test]

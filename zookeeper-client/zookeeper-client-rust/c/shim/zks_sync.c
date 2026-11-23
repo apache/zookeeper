@@ -98,20 +98,30 @@ static void zks_sync_unref(struct zks_sync *s)
 }
 
 /*
- * Signals operation completion and drops the completer reference, unblocking the waiting
- * thread within the same synchronization critical section to prevent race conditions.
+ * Latches the completion status, signals the condition variable, and releases the completer's
+ * reference while the caller holds the record mutex. Returns 1 if the caller must deallocate the
+ * record after unlocking.
  */
-static void zks_sync_signal(struct zks_sync *s, int rc, int failed, int origin)
+static int zks_sync_signal_locked(struct zks_sync *s, int rc, int failed, int origin)
 {
-    int last;
-    pthread_mutex_lock(&s->m);
     s->rc = rc;
     s->failed = failed;
     s->origin = origin;
     s->done = 1;
     pthread_cond_signal(&s->c);
     s->refs--;
-    last = s->refs == 0;
+    return s->refs == 0;
+}
+
+/*
+ * Acquires the record mutex, signals operation completion, and releases the completer reference
+ * within a single critical section so the waiting thread cannot miss the wakeup.
+ */
+static void zks_sync_signal(struct zks_sync *s, int rc, int failed, int origin)
+{
+    int last;
+    pthread_mutex_lock(&s->m);
+    last = zks_sync_signal_locked(s, rc, failed, origin);
     pthread_mutex_unlock(&s->m);
     if (last) {
         zks_sync_free(s);
@@ -126,6 +136,7 @@ static void zks_sync_wait_cancelled(void *arg)
 {
     struct zks_sync *s = arg;
     int last;
+    s->waiting = 0;
     s->refs--;
     last = s->refs == 0;
     pthread_mutex_unlock(&s->m);
@@ -134,14 +145,20 @@ static void zks_sync_wait_cancelled(void *arg)
     }
 }
 
-/* Blocks the calling thread on the condition variable until operation completion is signaled. */
+/*
+ * Blocks the calling thread on the condition variable until completion is signaled, asserting
+ * s->waiting while blocked so the completer knows the caller's destination buffers remain live
+ * under the record mutex.
+ */
 static void zks_sync_wait(struct zks_sync *s)
 {
     pthread_mutex_lock(&s->m);
     pthread_cleanup_push(zks_sync_wait_cancelled, s);
+    s->waiting = 1;
     while (!s->done) {
         pthread_cond_wait(&s->c, &s->m);
     }
+    s->waiting = 0;
     pthread_cleanup_pop(0);
     pthread_mutex_unlock(&s->m);
 }
@@ -205,7 +222,7 @@ static int zks_sync_finish(struct zks_sync *s, int rc, const zkrs_sync_dst *dst)
     }
     zks_sync_wait(s);
     rc = s->rc;
-    if (rc == ZOK || s->kind == ZKRS_K_MULTI) {
+    if ((rc == ZOK || s->kind == ZKRS_K_MULTI) && !s->placed) {
         src = zks_sync_src(s);
         ZKS_CALL_VOID(zkrs_sync_copy_out(&src, dst));
     }
@@ -269,6 +286,41 @@ static void zks_sync_take_acl(struct zks_sync *s, struct ACL_vector *acl)
 }
 
 /*
+ * Populates synchronous zoo_multi sub-operation outcomes directly into the caller's results array
+ * under the record mutex while the caller is actively blocked in zks_sync_wait, avoiding an
+ * intermediate heap copy on the I/O thread. If the waiter is cancelled, its cleanup handler
+ * clears s->waiting under the mutex before unwinding so no write occurs after the caller's stack
+ * frame exits. If the completion arrives before the caller enters zks_sync_wait, returns 0 so the
+ * caller falls back to staged copy out. Teardown completions normalize the view so every slot
+ * receives the overall failure code.
+ */
+static int zks_sync_complete_multi(struct zks_sync *s, const struct zks_req *r,
+                                   const zkrs_result_view *v)
+{
+    zkrs_result_view tv;
+    int last;
+    pthread_mutex_lock(&s->m);
+    if (!s->waiting) {
+        pthread_mutex_unlock(&s->m);
+        return 0;
+    }
+    tv = *v;
+    if (tv.origin == ZKRS_ORIGIN_TEARDOWN) {
+        tv.failed = 1;
+        tv.ops = NULL;
+        tv.nops = 0;
+    }
+    ZKS_CALL_VOID(zkrs_write_multi(&tv, r->results, r->op_kind, r->count));
+    s->placed = 1;
+    last = zks_sync_signal_locked(s, v->rc, v->failed, (int)v->origin);
+    pthread_mutex_unlock(&s->m);
+    if (last) {
+        zks_sync_free(s);
+    }
+    return 1;
+}
+
+/*
  * Deserializes response payloads into the synchronization barrier from the completion thread.
  * Handles payload copying outside the mutex before signaling the waiter.
  */
@@ -277,6 +329,9 @@ ZKS_HIDDEN void zks_sync_complete(struct zks_req *r, const zkrs_result_view *v)
     struct zks_sync *s = r->sync;
     zkrs_result_dst d = ZKRS_RESULT_DST_INIT;
     if (s == NULL) {
+        return;
+    }
+    if (r->kind == ZKRS_K_MULTI && zks_sync_complete_multi(s, r, v)) {
         return;
     }
     if (r->kind == ZKRS_K_MULTI) {
