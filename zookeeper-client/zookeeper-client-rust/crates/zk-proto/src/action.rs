@@ -23,6 +23,7 @@
 //! `handle_*` entry points on [`crate::connection::Connection`].
 
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use zk_jute::JString;
 
@@ -42,7 +43,7 @@ pub enum Action {
         /// DNS results.
         generation: u64,
         /// Ordered sequence of ensemble server specifications extracted from the connection string.
-        hosts: Vec<HostSpec>,
+        hosts: Arc<[HostSpec]>,
         /// Indicates whether this represents the initial bootstrap resolution upon client creation.
         initial: bool,
     },

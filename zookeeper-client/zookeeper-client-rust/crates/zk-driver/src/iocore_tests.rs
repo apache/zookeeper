@@ -257,6 +257,40 @@ fn each_interest_call_starts_a_new_turn() {
     assert_eq!(second, first - 1_000);
 }
 
+/// Clock wrapper that records invocation counts so tests can assert per-turn clock sampling.
+struct CountClock {
+    inner: TestClock,
+    reads: AtomicUsize,
+}
+
+impl Clock for CountClock {
+    fn now(&self) -> Millis {
+        self.reads.fetch_add(1, Ordering::SeqCst);
+        self.inner.now()
+    }
+}
+
+#[test]
+fn interest_turn_with_a_resolve_reads_the_clock_twice() {
+    let server = FakeServer::start().unwrap();
+    let clock = Arc::new(CountClock {
+        inner: TestClock::new(Millis(0)),
+        reads: AtomicUsize::new(0),
+    });
+    // Suppress log emission so the turn proceeds uninterrupted from resolution through commit.
+    let mut h = Harness::with_logs(&server, None);
+    h.env.clock = clock.clone();
+    assert!(h.run_until(State::Connected));
+    let resolves = h.host.resolves();
+    clock.reads.store(0, Ordering::SeqCst);
+    let out = h.interest();
+    assert_eq!(out.rc, ZOK);
+    // Re-resolution during an interest turn samples the clock once at turn entry and once after
+    // the lookup, reusing the post-lookup timestamp for both ensemble commit and timer evaluation.
+    assert_eq!(h.host.resolves(), resolves + 1);
+    assert_eq!(clock.reads.load(Ordering::SeqCst), 2);
+}
+
 // ---------------------------------------------------------------------
 // Direct socket-pair test fixtures: bypasses network resolution and connection
 // establishment to verify frame encoding, buffering, and event loops directly.
@@ -1280,7 +1314,7 @@ fn a_closing_connection_runs_no_resolve() {
             let mut proof = Unlocked::new_at_entry();
             let mut g = r.core.lock(&mut proof);
             g.conn.as_deref_mut().unwrap().begin_close(Millis(0));
-            g.set_servers = Some((9, test_config(b"127.0.0.1:2181").hosts));
+            g.set_servers = Some((9, test_config(b"127.0.0.1:2181").hosts.into()));
         }
         let (_out, p) = r.interest();
         assert_ne!(p, Progress::Wait);
@@ -1410,7 +1444,7 @@ fn a_new_host_list_starts_after_the_running_resolve() {
             .as_deref_mut()
             .unwrap()
             .set_servers(hosts.clone(), Millis(0));
-        g.set_servers = Some((next, hosts.clone()));
+        g.set_servers = Some((next, hosts.clone().into()));
     }
     let (_out, p) = r.interest();
     assert!(matches!(p, Progress::Done(_)));
@@ -1421,7 +1455,7 @@ fn a_new_host_list_starts_after_the_running_resolve() {
     let Some(Job::Resolve { hosts: got, .. }) = r.io.take_bg_job() else {
         panic!("the new list does not resolve");
     };
-    assert_eq!(got, hosts);
+    assert_eq!(got.to_vec(), hosts);
 }
 
 #[test]
@@ -1444,7 +1478,7 @@ fn a_resolve_with_no_socket_waits_for_the_running_job() {
             Millis(0),
         );
         let next = conn.set_servers(hosts.clone(), Millis(0));
-        g.set_servers = Some((next, hosts.clone()));
+        g.set_servers = Some((next, hosts.clone().into()));
     }
     // Without an active socket, the state machine awaits in-flight resolution without spawning
     // redundant tasks.
@@ -1468,7 +1502,7 @@ fn a_resolve_with_no_socket_waits_for_the_running_job() {
     else {
         panic!("the new list does not resolve");
     };
-    assert_eq!(got, &hosts);
+    assert_eq!(got.as_ref(), hosts.as_slice());
     // Reconfiguring servers satisfies the post-disconnect resolution requirement, avoiding
     // redundant resolution cycles.
     let (p, mut ob) = r.complete_bg(failed_resolution(*next));
@@ -1504,7 +1538,7 @@ fn run_job_resolves_and_reseeds() {
         &proof,
         Job::Resolve {
             generation: 3,
-            hosts: hosts.clone(),
+            hosts: hosts.clone().into(),
             shuffle: true,
         },
     );
@@ -1525,7 +1559,7 @@ fn run_job_resolves_and_reseeds() {
         &proof,
         Job::Resolve {
             generation: 4,
-            hosts,
+            hosts: hosts.into(),
             shuffle: false,
         },
     );
@@ -1779,7 +1813,7 @@ fn sasl_addrs_name_the_failed_call() {
 
 use zk_jute::JString;
 use zk_jute::rc::ZCLOSING;
-use zk_proto::{InputDefect, Op, PathIn, Request, Route, SecretBytes};
+use zk_proto::{InputDefect, Op, PathIn, Request, Route, SecretBytes, Stopped};
 use zk_testkit::server::codec::{decode_client_frame, encode_reply, split_frames};
 use zk_testkit::tokens::{AuthId, CompletionId};
 
@@ -2340,6 +2374,159 @@ fn handle_with_a_stopped_teardown() -> (Arc<Shared<TestTokens>>, Arc<TestHost>) 
     let (s, host, _peer) = mt_handle(r);
     stop_the_teardown(&s);
     (s, host)
+}
+
+/// Establishes a connected multithreaded test rig with an in-flight synchronous request (token 1)
+/// and an asynchronous queued request (token 2), returning the rig and their assigned XIDs.
+fn mt_rig_with_a_sync_and_a_queued_request() -> (Rig, [i32; 2]) {
+    let mut r = Rig::with_mode(false, vec![], Compat::LEGACY_C, DriverMode::MT);
+    r.flavor = Flavor::Mt;
+    r.plain_connected();
+    {
+        let now = r.clock.now();
+        let mut proof = Unlocked::new_at_entry();
+        let mut core = r.core.lock(&mut proof);
+        let conn = core.conn.as_deref_mut().unwrap();
+        assert!(conn.submit(direct_exists(1), now).is_ok());
+        assert!(conn.submit(queued_exists(2), now).is_ok());
+    }
+    let _ = r.interest();
+    let _ = r.process(write_ev());
+    let (sent, _) = r.peer_recv();
+    let xids = exists_xids(&sent);
+    assert_eq!(xids.len(), 2, "{xids:?}");
+    (r, [xids[0], xids[1]])
+}
+
+/// Drives I/O steps (reusing `ob` across `Step::More` resume continuations) until an outbox item
+/// matching `want` is emitted, returning the step outcome that produced it.
+fn io_steps_until(
+    s: &Shared<TestTokens>,
+    ob: &mut Outbox<TestTokens>,
+    rc: &mut i32,
+    want: &str,
+) -> Step {
+    let mut step = s.io_step(ob, rc);
+    for _ in 0..16 {
+        let mut seen = false;
+        while let Some(item) = ob.pop() {
+            seen |= mt_label(&item) == want;
+        }
+        if seen {
+            return step;
+        }
+        step = if step == Step::More {
+            s.resume(ob, rc)
+        } else {
+            s.io_step(ob, rc)
+        };
+    }
+    panic!("{want} is not delivered");
+}
+
+/// Collects formatted diagnostic labels for all items currently staged in the dispatch queue.
+fn published_labels(s: &Shared<TestTokens>) -> Vec<String> {
+    s.queue
+        .fifo
+        .lock_owner()
+        .items
+        .iter()
+        .map(mt_label)
+        .collect()
+}
+
+#[test]
+fn a_lone_sync_reply_ends_the_io_step() {
+    let (r, xids) = mt_rig_with_a_sync_and_a_queued_request();
+    r.peer_send(&encode_reply(xids[0], 5, -101, &[]));
+    r.wait_readable();
+    let (s, _host, peer) = mt_handle(r);
+    let mut ob = s.outbox();
+    let mut rc = -1;
+    // With no trailing input buffered after the synchronous reply, the step completes directly
+    // without requiring an immediate resume call.
+    let step = io_steps_until(&s, &mut ob, &mut rc, "Result 1 -101");
+    assert_eq!(step, Step::Done(ZOK));
+    {
+        let mut proof = Unlocked::new_at_entry();
+        let core = s.core.lock(&mut proof);
+        // The hold continuation remains parked until the next turn so no subsequent frame read can
+        // overtake the synchronous result delivery.
+        assert!(core.stopped.as_ref().is_some_and(Stopped::is_hold));
+        assert!(core.conn.as_deref().unwrap().is_suspended());
+    }
+    send_from_peer(&peer, &encode_reply(xids[1], 6, -101, &[]));
+    for _ in 0..16 {
+        if !published_labels(&s).is_empty() {
+            break;
+        }
+        let mut step = s.io_step(&mut ob, &mut rc);
+        loop {
+            while ob.pop().is_some() {}
+            if step != Step::More {
+                break;
+            }
+            step = s.resume(&mut ob, &mut rc);
+        }
+    }
+    // The ensuing step clears the parked hold in its prelude and then ingests the queued reply.
+    assert_eq!(published_labels(&s), ["Result 2 -101"]);
+    let mut proof = Unlocked::new_at_entry();
+    let core = s.core.lock(&mut proof);
+    assert!(core.stopped.is_none());
+    assert!(!core.conn.as_deref().unwrap().is_suspended());
+}
+
+#[test]
+fn a_sync_reply_with_a_later_frame_stops_the_io_step() {
+    let (r, xids) = mt_rig_with_a_sync_and_a_queued_request();
+    let mut replies = encode_reply(xids[0], 5, -101, &[]);
+    replies.extend_from_slice(&encode_reply(xids[1], 6, -101, &[]));
+    r.peer_send(&replies);
+    r.wait_readable();
+    let (s, _host, _peer) = mt_handle(r);
+    let mut ob = s.outbox();
+    let mut rc = -1;
+    // When additional bytes remain buffered behind the synchronous reply, the step yields
+    // `Step::More` at the hold barrier so the caller drains the synchronous result before resuming.
+    let step = io_steps_until(&s, &mut ob, &mut rc, "Result 1 -101");
+    assert_eq!(step, Step::More);
+    assert!(published_labels(&s).is_empty());
+    let mut step = s.resume(&mut ob, &mut rc);
+    loop {
+        // Draining the outbox publishes queued completion items to the dispatch queue.
+        while ob.pop().is_some() {}
+        if step != Step::More {
+            break;
+        }
+        step = s.resume(&mut ob, &mut rc);
+    }
+    assert_eq!(step, Step::Done(ZOK));
+    assert_eq!(published_labels(&s), ["Result 2 -101"]);
+}
+
+#[test]
+fn a_close_after_a_lone_sync_reply_discards_the_hold() {
+    let (r, xids) = mt_rig_with_a_sync_and_a_queued_request();
+    r.peer_send(&encode_reply(xids[0], 5, -101, &[]));
+    r.wait_readable();
+    let (s, host, _peer) = mt_handle(r);
+    let mut ob = s.outbox();
+    let mut rc = -1;
+    let step = io_steps_until(&s, &mut ob, &mut rc, "Result 1 -101");
+    assert_eq!(step, Step::Done(ZOK));
+    {
+        let mut proof = Unlocked::new_at_entry();
+        let core = s.core.lock(&mut proof);
+        assert!(core.stopped.as_ref().is_some_and(Stopped::is_hold));
+    }
+    // Initiating handle closure before the next I/O step terminates the I/O loop and discards the
+    // parked hold during teardown while completing the remaining queued request with `ZCLOSING`.
+    let (end, rc, seen, got) = foreign_close(&s, |_| {});
+    assert_eq!((end, rc), (Step::Release, ZOK));
+    assert!(!seen.iter().any(|l| l.starts_with("Result 1")), "{seen:?}");
+    assert_eq!(got, [format!("Result 2 {ZCLOSING}")]);
+    assert!(host.discarded().is_empty(), "{:?}", host.discarded());
 }
 
 /// Transmits synchronous request 1, asynchronous queued request 2, and authentication packet 3

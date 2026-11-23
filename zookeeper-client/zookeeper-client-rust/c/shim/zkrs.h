@@ -1397,8 +1397,9 @@ void zkrs_dispatch_ended(const struct zkrs_handle *h, struct zkrs_outbox *ob);
 
 /**
  * One IO-thread step: interest, poll and process. It returns
- * `ZKRS_MORE` at each barrier and `ZKRS_EXIT` when the IO loop ends. mt
- * only.
+ * `ZKRS_MORE` at a barrier and `ZKRS_EXIT` when the IO loop ends. A
+ * plaintext step that ends at a lone synchronous reply returns
+ * `ZKRS_DONE` and keeps the reply hold until the next step. mt only.
  */
 enum zkrs_step zkrs_io_step(const struct zkrs_handle *h, struct zkrs_outbox *ob, int *rc);
 

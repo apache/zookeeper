@@ -313,6 +313,7 @@ pub struct WatchedEvent {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Stopped {
     id: u64,
+    hold: bool,
 }
 
 impl Stopped {
@@ -320,6 +321,14 @@ impl Stopped {
     #[must_use]
     pub const fn id(&self) -> u64 {
         self.id
+    }
+
+    /// Indicates whether this continuation represents a pure frame read hold barrier following a
+    /// synchronous reply, whose resumption simply unblocks subsequent frame ingestion without
+    /// executing deferred protocol mutations.
+    #[must_use]
+    pub const fn is_hold(&self) -> bool {
+        self.hold
     }
 }
 
@@ -437,8 +446,9 @@ impl<T: Tokens> Outputs<T> {
     fn stop(&mut self, work: Work<T>) {
         let id = self.next_id;
         self.next_id = self.next_id.wrapping_add(1);
+        let hold = matches!(work, Work::Hold);
         self.suspended.push((id, work));
-        self.pending_stop = Some(Stopped { id });
+        self.pending_stop = Some(Stopped { id, hold });
     }
 
     /// Retrieves the continuation token for the stage suspended by the most recently polled barrier

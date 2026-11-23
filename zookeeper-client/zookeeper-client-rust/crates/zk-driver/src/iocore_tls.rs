@@ -471,7 +471,9 @@ pub(crate) fn tls_frames<T: Tokens>(
         }
     };
     match io.frame_loop(cx, proof, ob) {
-        FrameEnd::More => {
+        // Because the TLS session may retain additional decrypted plaintext not yet transferred to
+        // `rx`, synchronous reply holds over TLS always resume within the current turn.
+        FrameEnd::More | FrameEnd::ReplyHold => {
             io.cont = Cont::TlsFrames { handshake };
             return Progress::More;
         }

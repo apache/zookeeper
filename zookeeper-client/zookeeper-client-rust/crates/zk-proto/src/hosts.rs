@@ -23,6 +23,7 @@
 //! endpoints.
 
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use zk_jute::JString;
 use zk_jute::rc;
@@ -78,8 +79,9 @@ enum ResolveOrigin {
 /// Internal state machine governing server endpoint lists, address rotation, and DNS resolution
 /// lifecycles.
 pub(crate) struct Hosts {
-    /// Configured ensemble host specifications in original connection string order.
-    pub(crate) specs: Vec<HostSpec>,
+    /// Configured ensemble host specifications in original connection string order, reference-
+    /// counted so emitted `Action::Resolve` directives share the slice without cloning.
+    pub(crate) specs: Arc<[HostSpec]>,
     /// Active, standby, and reconfiguring server endpoint sets with rotation cursors.
     pub(crate) servers: ServerSet<Endpoint>,
     /// Generation identifier of the latest resolution cycle; responses from superseded generations
@@ -133,7 +135,7 @@ impl Hosts {
     /// Instantiates initial host tracking state with configured host specifications.
     pub(crate) fn new(specs: Vec<HostSpec>, resolve_delay_ms: i32) -> Self {
         Self {
-            specs,
+            specs: specs.into(),
             servers: ServerSet::new(),
             generation: 0,
             resolve_due: true,
@@ -373,7 +375,13 @@ impl<T: Tokens> Connection<T> {
     /// Advances the resolution generation counter, flags a resolution cycle as immediately due,
     /// and resets failure backoff counters to initiate rapid reconnection against the updated
     /// ensemble.
-    pub fn set_servers(&mut self, hosts: Vec<HostSpec>, _now: Millis) -> u64 {
+    pub fn set_servers(&mut self, hosts: Vec<HostSpec>, now: Millis) -> u64 {
+        self.set_servers_shared(hosts.into(), now)
+    }
+
+    /// Replaces the configured server ensemble with a reference counted slice of host
+    /// specifications, sharing ownership with the caller without copying the host list.
+    pub fn set_servers_shared(&mut self, hosts: Arc<[HostSpec]>, _now: Millis) -> u64 {
         // Retain reconstructed connect string for diagnostic logging across reconnection events.
         self.hosts.host_text = Some(join_host_text(&hosts));
         self.hosts.specs = hosts;
@@ -387,7 +395,7 @@ impl<T: Tokens> Connection<T> {
     /// Configures the background DNS resolution refresh interval in milliseconds.
     ///
     /// Values < -1 are rejected with `ZBADARGUMENTS`. Value -1 disables periodic refresh,
-    /// 0 performs continuous re-resolution, and values > 0 enforce the specified interval.
+    /// 0 performs continuous resolution, and values > 0 enforce the specified interval.
     pub fn set_resolve_delay(&mut self, ms: i32) -> i32 {
         if ms < -1 {
             self.emit_log(LogSite::ResolveDelayInvalid, || {
@@ -508,7 +516,7 @@ impl<T: Tokens> Connection<T> {
         self.hosts.pass_ended = false;
         Some(Action::Resolve {
             generation,
-            hosts: self.hosts.specs.clone(),
+            hosts: Arc::clone(&self.hosts.specs),
             initial,
         })
     }
@@ -997,7 +1005,7 @@ mod tests {
         assert_eq!(c.interest.rc, rc::ZOK);
         assert!(!c.hosts.block_connect);
         assert_eq!(c.hosts.servers.addrs.len(), 2);
-        assert_eq!(c.hosts.specs, vec![host("c", 2182)]);
+        assert_eq!(c.hosts.specs.to_vec(), vec![host("c", 2182)]);
     }
 
     #[test]

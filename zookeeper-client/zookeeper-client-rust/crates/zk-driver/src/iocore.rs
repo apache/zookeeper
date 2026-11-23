@@ -112,6 +112,7 @@
 
 use std::cell::Cell;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use rustix::event::{PollFd, PollFlags};
 use rustix::io::Errno;
@@ -122,7 +123,7 @@ use zk_proto::rc::{
 };
 use zk_proto::{
     Action, ConnectStart, Connection, Endpoint, HostResolution, HostSpec, LogArg, LogSite, Millis,
-    ReadOutcome, SaslCallKind, State, TlsResourceAt, Tokens, TransportFailure,
+    ReadOutcome, SaslCallKind, State, Stopped, TlsResourceAt, Tokens, TransportFailure,
 };
 
 use crate::clock::Clock;
@@ -407,7 +408,7 @@ pub(crate) struct DnsRun {
     /// Target resolver generation associated with this host set.
     pub(crate) generation: u64,
     /// Sequence of server host specifications to resolve.
-    pub(crate) hosts: Vec<HostSpec>,
+    pub(crate) hosts: Arc<[HostSpec]>,
     /// Indicates whether random address shuffling (and PRNG reseeding) must follow successful
     /// resolution.
     pub(crate) shuffle: bool,
@@ -418,7 +419,7 @@ impl DnsRun {
     fn job(&self) -> Job {
         Job::Resolve {
             generation: self.generation,
-            hosts: self.hosts.clone(),
+            hosts: Arc::clone(&self.hosts),
             shuffle: self.shuffle,
         }
     }
@@ -463,6 +464,10 @@ pub(crate) enum FrameEnd {
     /// Frame processing halted because an asynchronous SASL handshake step is awaiting its host
     /// mechanism response, or because the native [`ReadGate`] closed under backpressure.
     Held,
+    /// Frame ingestion halted at a multithreaded synchronous reply barrier with no trailing
+    /// buffered input or pending protocol output, allowing the plaintext turn to complete directly
+    /// while deferring hold resumption to the next turn's prelude (or discarding it on close).
+    ReplyHold,
 }
 
 /// Control-flow indicator returned by `run_action` within the `interest_actions` loop.
@@ -537,7 +542,7 @@ pub(crate) enum Job {
         /// Monotonic generation identifier assigned to this resolution run.
         generation: u64,
         /// Host specifications to resolve in order.
-        hosts: Vec<HostSpec>,
+        hosts: Arc<[HostSpec]>,
         /// Indicates whether PRNG reseeding must be triggered if at least one host resolves.
         shuffle: bool,
     },
@@ -1780,7 +1785,9 @@ impl IoCore {
                     flavor: cx.flavor,
                 };
                 let end = run.run(&rcx, proof, ob);
-                self.turn_refresh();
+                // Adopt the post-lookup timestamp sampled by the resolution run, or clear the turn
+                // timestamp if no lookup occurred, so the next evaluation samples a fresh reading.
+                self.turn_at.set(run.last_at());
                 match end {
                     ResolveEnd::More => {
                         self.cont = Cont::Interest;
@@ -1978,7 +1985,7 @@ impl IoCore {
         &mut self,
         cx: &StepCtx<'_, T>,
         generation: u64,
-        hosts: Vec<HostSpec>,
+        hosts: Arc<[HostSpec]>,
     ) -> Flow {
         let run = DnsRun {
             generation,
@@ -2716,7 +2723,7 @@ impl IoCore {
         loop {
             match self.frame_loop(cx, proof, ob) {
                 FrameEnd::More => return Some(self.frames_more()),
-                FrameEnd::Held => return Some(self.done(self.process_rc())),
+                FrameEnd::Held | FrameEnd::ReplyHold => return Some(self.done(self.process_rc())),
                 FrameEnd::Done => {}
             }
             if !free && self.rx_more_blocked {
@@ -2922,7 +2929,7 @@ impl IoCore {
                 };
                 Progress::More
             }
-            FrameEnd::Done | FrameEnd::Held => self.done(self.process_rc()),
+            FrameEnd::Done | FrameEnd::Held | FrameEnd::ReplyHold => self.done(self.process_rc()),
         }
     }
 
@@ -2952,8 +2959,9 @@ impl IoCore {
     /// 4. Invokes `conn.handle_read(self.rx_input(), now)` and commits consumption via
     ///    [`Self::apply_read`].
     /// 5. Settles protocol outputs into `ob` (yielding [`FrameEnd::More`] on a barrier,
-    ///    [`FrameEnd::Held`] if waiting on SASL negotiation, or [`FrameEnd::Done`] if fewer bytes
-    ///    remain than needed to complete the next frame).
+    ///    [`FrameEnd::ReplyHold`] at a lone synchronous reply hold, [`FrameEnd::Held`] if waiting
+    ///    on SASL negotiation, or [`FrameEnd::Done`] if fewer bytes remain than needed to complete
+    ///    the next frame).
     fn frame_steps<T: Tokens>(
         &mut self,
         cx: &StepCtx<'_, T>,
@@ -2981,7 +2989,7 @@ impl IoCore {
             let stalled = has && conn.read_hint() == 0;
             let (n, waits) = self.apply_read(r, has, stalled);
             if self.settle(&mut g, cx, ob) {
-                return FrameEnd::More;
+                return self.barrier_end(&g, cx);
             }
             if waits {
                 return FrameEnd::Held;
@@ -2989,6 +2997,25 @@ impl IoCore {
             if n == 0 {
                 return FrameEnd::Done;
             }
+        }
+    }
+
+    /// Classifies an outbox barrier encountered during a frame parsing iteration.
+    ///
+    /// When a multithreaded synchronous reply parks a hold continuation and neither buffered socket
+    /// input nor pending protocol output remains, resuming the hold immediately would perform no
+    /// further work before ending the turn. Returning [`FrameEnd::ReplyHold`] leaves the hold
+    /// parked in `g.stopped` until the next turn's prelude (or connection teardown on close) while
+    /// still blocking subsequent frame reads until the caller delivers the synchronous reply.
+    fn barrier_end<T: Tokens>(&self, g: &Core<T>, cx: &StepCtx<'_, T>) -> FrameEnd {
+        let parked = cx.flavor == Flavor::Mt
+            && self.rx_input().is_empty()
+            && g.stopped.as_ref().is_some_and(Stopped::is_hold)
+            && g.conn.as_deref().is_some_and(|c| !c.has_output());
+        if parked {
+            FrameEnd::ReplyHold
+        } else {
+            FrameEnd::More
         }
     }
 

@@ -231,7 +231,7 @@ pub(crate) struct Core<T: Tokens> {
     pub(crate) sasl: Option<SaslAnswer>,
     /// Dynamic server reconfiguration list awaiting background DNS resolution, with its generation
     /// tag.
-    pub(crate) set_servers: Option<(u64, Vec<HostSpec>)>,
+    pub(crate) set_servers: Option<(u64, Arc<[HostSpec]>)>,
     /// Active dynamic server reconfiguration operations awaiting completion resume steps.
     pub(crate) set_servers_runs: Vec<SetServersRun>,
     /// Sequence generator allocating unique identifiers for dynamic server update runs.
@@ -343,10 +343,11 @@ impl<T: Tokens> Core<T> {
     /// resolution for the new generation. Returns the assigned resolution generation tag, or `0` if
     /// no active connection exists.
     pub(crate) fn set_servers_native(&mut self, hosts: Vec<HostSpec>, now: Millis) -> u64 {
+        let hosts: Arc<[HostSpec]> = hosts.into();
         let generation = self
             .conn
             .as_deref_mut()
-            .map_or(0, |conn| conn.set_servers(hosts.clone(), now));
+            .map_or(0, |conn| conn.set_servers_shared(Arc::clone(&hosts), now));
         if generation != 0 {
             self.set_servers = Some((generation, hosts));
         }

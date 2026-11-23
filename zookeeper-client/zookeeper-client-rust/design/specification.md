@@ -342,6 +342,7 @@ Execution steps yield one of four outcomes defined by the FFI boundary (`ZKRS_DO
 
 Execution barriers are established at the following synchronization points:
 - Synchronous request completion within the I/O loop or close sequence, ensuring synchronous waiters are signaled before subsequent wire frames are processed. Multiple contiguous synchronous completions coalesce into a single barrier without altering observable event order.
+  If no buffered input and no other output follow a synchronous reply in a plaintext multithreaded I/O step, the step ends with `ZKRS_DONE` instead of `ZKRS_MORE`. The shim delivers the reply in its final drain. The hold on frame reads stays until the next I/O step starts, so the order of events does not change. If a close is requested first, the I/O step exits before it resumes the hold, and the connection teardown discards the hold with the other suspended work. The zero-copy path for large reply bodies still ends the step with `ZKRS_MORE`.
 - Completion of authentication callback batches.
 - Authentication lockpoints matching the exact positions where the legacy C client acquires its internal authentication mutex.
 - SASL negotiation initiation (`Start`) and step transitions (`Step`), where Cyrus SASL routines execute in C and return via `zkrs_sasl_result`.

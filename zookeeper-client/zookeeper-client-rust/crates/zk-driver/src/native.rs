@@ -1760,7 +1760,7 @@ mod tests {
         let f = fixture(8, None);
         let job = Job::Resolve {
             generation: 1,
-            hosts: Vec::new(),
+            hosts: Vec::new().into(),
             shuffle: false,
         };
         let back = f.h.shared.start_dns(job);
