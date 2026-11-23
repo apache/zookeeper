@@ -153,7 +153,7 @@ class ConnectionTest(zktestbase.TestBase):
 
     def testversionstringexists(self):
         self.assertTrue(hasattr(zookeeper, '__version__'))
-        self.assertTrue(re.match("\d.\d.\d", zookeeper.__version__))
+        self.assertTrue(re.match(r"^\d+\.\d+\.\d+$", zookeeper.__version__))
 
 
     def tearDown(self):
