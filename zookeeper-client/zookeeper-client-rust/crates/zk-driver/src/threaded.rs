@@ -93,8 +93,9 @@ use zk_jute::JString;
 use zk_jute::rc::{ZINVALIDSTATE, ZMARSHALLINGERROR, ZOK};
 use zk_proto::legacy::connect::{HostParseError, HostParseErrorKind, parse_servers};
 use zk_proto::{
-    Action, AddAuthError, ClientId, Connection, HostSpec, LogArg, LogRecord, LogSite, Millis,
-    MultiOpRef, Request, SecretBytes, Stage, Stopped, SubmitError, Submitted,
+    Action, AddAuthError, ClientId, Connection, EARLY_FRAME_MIN, FrameEncoder, HostSpec, LogArg,
+    LogRecord, LogSite, Millis, MultiOpRef, Request, SecretBytes, Stage, Stopped, SubmitError,
+    Submitted,
 };
 
 use crate::host::{DriverTokens, HostLeaves, discard_leftovers, log_record};
@@ -323,6 +324,10 @@ pub struct Shared<T: DriverTokens> {
     pub(crate) close_stage: Mutex<CloseStage>,
     /// Runtime environment providing monotonic clock readings, host logging, and DNS resolution.
     pub(crate) env: Env<T>,
+    /// Frame encoder for large request bodies used by submitting threads before acquiring the
+    /// core lock, or `None` when the core holds no connection; boxed to keep the field one
+    /// pointer wide inside the handle.
+    frames: Option<Box<FrameEncoder>>,
 }
 
 impl<T: DriverTokens> Shared<T> {
@@ -371,7 +376,12 @@ impl<T: DriverTokens> Shared<T> {
             cv: Condvar::new(),
             idle: Condvar::new(),
         };
+        let frames = core
+            .conn
+            .as_deref()
+            .map(|c| Box::new(Connection::frame_encoder(c)));
         Ok(Arc::new(Self {
+            frames,
             core: Mutex::new(core),
             io: Mutex::new(side),
             queue: Arc::new(queue),
@@ -566,6 +576,11 @@ impl<T: DriverTokens> Shared<T> {
     /// Submits a request with borrowed payload data, signaling the reactor waker upon
     /// acceptance.
     ///
+    /// The payload of a large `create` or `setData` request (at least [`EARLY_FRAME_MIN`] bytes) is
+    /// encoded into its frame before acquiring the core lock when the frame encoder accepts the
+    /// request, so the lock holder does not copy the payload and the I/O thread waits less for the
+    /// lock. Request validation, `xid` assignment, and queue ordering remain under the lock.
+    ///
     /// # Errors
     ///
     /// Returns a submission error with the original token if enqueuing fails or if the session is
@@ -575,6 +590,16 @@ impl<T: DriverTokens> Shared<T> {
         req: Request<T>,
         data: Option<&[u8]>,
     ) -> Result<Submitted<T>, SubmitError<T>> {
+        // Payloads below EARLY_FRAME_MIN proceed directly to the locked path, so small requests
+        // perform no extra work.
+        if let (Some(frames), Some(d)) = (self.frames.as_deref(), data) {
+            if d.len() >= EARLY_FRAME_MIN {
+                return match frames.prepare(req, data) {
+                    Ok(early) => self.submit_by(early, |c, e, now| c.submit_early(e, now)),
+                    Err(req) => self.submit_by(req, |c, r, now| c.submit_with_data(r, data, now)),
+                };
+            }
+        }
         self.submit_by(req, |c, r, now| c.submit_with_data(r, data, now))
     }
 
@@ -595,10 +620,10 @@ impl<T: DriverTokens> Shared<T> {
 
     /// Internal helper enqueuing a request under the core lock and waking the reactor loop upon
     /// success.
-    fn submit_by(
+    fn submit_by<R: Into<Request<T>>>(
         &self,
-        req: Request<T>,
-        send: impl FnOnce(&mut Connection<T>, Request<T>, Millis) -> SubmitResult<T>,
+        req: R,
+        send: impl FnOnce(&mut Connection<T>, R, Millis) -> SubmitResult<T>,
     ) -> SubmitResult<T> {
         let now = self.env.clock.now();
         let mut proof = Unlocked::new_at_entry();
@@ -612,7 +637,7 @@ impl<T: DriverTokens> Shared<T> {
                 _ => Err(SubmitError {
                     stage: Stage::Enqueue,
                     code: ZMARSHALLINGERROR,
-                    token: req.token,
+                    token: req.into().token,
                 }),
             }
         };

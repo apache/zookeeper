@@ -24,6 +24,7 @@
 //! the outbound transmission buffer (`tx`), and tracked in the pending FIFO queue.
 
 use std::borrow::Cow;
+use std::cell::Cell;
 
 use zk_jute::data::ACL;
 use zk_jute::multi::{self, MultiKind};
@@ -93,14 +94,27 @@ pub(crate) enum Input<'b> {
     Data(&'b [u8]),
     /// Borrowed slice of sub-operations comprising a batched write transaction.
     Multi(&'b [MultiOpRef<'b>]),
+    /// Borrowed node payload slice paired with a request body pre-encoded by the submitter prior
+    /// to acquiring the driver lock. Data validation evaluates the payload slice, while the
+    /// serialization step uses the pre-encoded body only when it matches the validated request.
+    Early(&'b [u8], &'b Cell<Vec<u8>>),
 }
 
 impl<'b> Input<'b> {
     /// Extracts the borrowed node payload slice if the input specifies borrowed data.
     fn data(self) -> Option<&'b [u8]> {
         match self {
-            Self::Data(d) => Some(d),
+            Self::Data(d) | Self::Early(d, _) => Some(d),
             Self::Owned | Self::Multi(_) => None,
+        }
+    }
+
+    /// Extracts the pre-encoded request body if the submitter supplied one (`Self::Early`), or
+    /// returns `None` otherwise.
+    fn early(self) -> Option<&'b Cell<Vec<u8>>> {
+        match self {
+            Self::Early(_, body) => Some(body),
+            Self::Owned | Self::Data(_) | Self::Multi(_) => None,
         }
     }
 }
@@ -194,6 +208,42 @@ impl<T: Tokens> Connection<T> {
         now: Millis,
     ) -> Result<Submitted<T>, SubmitError<T>> {
         self.submit_input(req, Input::Multi(ops), now)
+    }
+
+    /// Validates and admits an operation carrying a request body pre-encoded by
+    /// [`FrameEncoder::prepare`].
+    ///
+    /// Admission gates, validation ordering, error codes, transaction identifier (`xid`)
+    /// assignment, and diagnostic log records are identical to [`Self::submit_with_data`]. Only
+    /// the binary serialization step differs: it reuses the pre-encoded body when that body
+    /// matches the validated request, and re-encodes the request body otherwise.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`SubmitError`] detailing the pipeline failure stage, ZooKeeper return code, and
+    /// token.
+    pub fn submit_early(
+        &mut self,
+        early: EarlyRequest<'_, T>,
+        now: Millis,
+    ) -> Result<Submitted<T>, SubmitError<T>> {
+        let EarlyRequest { req, data, body } = early;
+        self.submit_input(req, Input::Early(data, &body), now)
+    }
+
+    /// Returns a [`FrameEncoder`] holding a copy of this connection's configured chroot prefix
+    /// and chroot policy, enabling request body serialization without access to the connection.
+    #[must_use]
+    pub fn frame_encoder(&self) -> FrameEncoder {
+        FrameEncoder {
+            chroot: self
+                .cfg
+                .chroot
+                .as_ref()
+                .and_then(JString::as_bytes)
+                .map(<[u8]>::to_vec),
+            policy: self.compat.chroot,
+        }
     }
 
     /// Coordinates admission gating, validation checks, and atomic queue insertion for request
@@ -303,9 +353,8 @@ impl<T: Tokens> Connection<T> {
                 path,
                 input.data().or(own.as_bytes()),
                 acl,
-                mode,
-                ttl,
-                create2,
+                (mode, ttl, create2),
+                input.early(),
             ),
             Op::Delete { path, version } => self.submit_delete(path, version),
             Op::Exists { path, watch } => self.submit_exists(path, watch),
@@ -315,7 +364,12 @@ impl<T: Tokens> Connection<T> {
                 path,
                 data: own,
                 version,
-            } => self.submit_set_data(path, input.data().or(own.as_bytes()), version),
+            } => self.submit_set_data(
+                path,
+                input.data().or(own.as_bytes()),
+                version,
+                input.early(),
+            ),
             Op::GetAcl { path } => self.submit_get_acl(path),
             Op::SetAcl { path, acl, version } => {
                 self.submit_set_acl(path, acl, version, Shape::Void)
@@ -365,9 +419,8 @@ impl<T: Tokens> Connection<T> {
         path: PathIn,
         data: Option<&[u8]>,
         acl: JVec<ACL>,
-        mode: i32,
-        ttl: i64,
-        create2: bool,
+        (mode, ttl, create2): (i32, i64, bool),
+        early: Option<&Cell<Vec<u8>>>,
     ) -> Result<Prepared<T::Watcher>, Rejected> {
         check_ttl(mode, ttl).map_err(validate)?;
         let (default, shape, site) = if create2 {
@@ -391,7 +444,7 @@ impl<T: Tokens> Connection<T> {
                 flags: mode,
             }
         };
-        Self::submit_data(server, log, spec, data, tail)
+        Self::submit_data(server, log, spec, data, tail, early)
     }
 
     /// Validates and serializes a node deletion request, verifying path syntax and expected
@@ -438,11 +491,13 @@ impl<T: Tokens> Connection<T> {
         path: PathIn,
         data: Option<&[u8]>,
         version: i32,
+        early: Option<&Cell<Vec<u8>>>,
     ) -> Result<Prepared<T::Watcher>, Rejected> {
         let log = self.submit_path_log(LogSite::SendSetData, &path);
         let server = self.submit_path_state(path)?;
         let spec = (opcode::SET_DATA, Shape::Stat);
-        Self::submit_data(server, log, spec, data, DataTail::SetData { version })
+        let tail = DataTail::SetData { version };
+        Self::submit_data(server, log, spec, data, tail, early)
     }
 
     /// Validates and serializes a `getAcl` metadata query for the specified znode path.
@@ -599,7 +654,7 @@ impl<T: Tokens> Connection<T> {
     ) -> Result<Prepared<T::Watcher>, Rejected> {
         match input {
             Input::Multi(refs) => self.submit_multi(refs, false),
-            Input::Owned | Input::Data(_) => self.submit_multi(ops, false),
+            Input::Owned | Input::Data(_) | Input::Early(..) => self.submit_multi(ops, false),
         }
     }
 
@@ -757,19 +812,30 @@ impl<T: Tokens> Connection<T> {
 
     /// Serializes `create` or `setData` records directly from borrowed payload slices without
     /// intermediate copies.
+    ///
+    /// A pre-encoded `early` body substitutes for serialization when `early_fits` confirms that
+    /// it carries the validated server path and matches the expected frame length; otherwise (when
+    /// `early` is `None` or `early_fits` fails), the record is serialized anew. Because the
+    /// submitter constructed the buffer from the same request, all remaining record fields are
+    /// guaranteed to match.
     fn submit_data(
         server: Vec<u8>,
         log: Option<LogRecord>,
         (op_type, shape): (i32, Shape),
         data: Option<&[u8]>,
         tail: DataTail<'_>,
+        early: Option<&Cell<Vec<u8>>>,
     ) -> Result<Prepared<T::Watcher>, Rejected> {
         let record = DataRecord {
             path: Some(&server),
             data,
             tail,
         };
-        let body = framed_with(record.encoded_len(), |out| record.encode(out))?;
+        let len = record.encoded_len();
+        let body = match early.map(Cell::take) {
+            Some(b) if early_fits(&b, len, &server) => b,
+            _ => framed_with(len, |out| record.encode(out))?,
+        };
         Ok(Prepared {
             op_type,
             body,
@@ -823,12 +889,7 @@ impl<T: Tokens> Connection<T> {
     /// Executes path validation and chroot path resolution directly against raw byte slices.
     fn server_path_raw<'p>(&self, raw: &'p [u8], mode: i32) -> Result<Cow<'p, [u8]>, i32> {
         let chroot = self.cfg.chroot.as_ref().and_then(JString::as_bytes);
-        match self.compat.chroot {
-            ChrootPolicy::LegacyConcatNoEscape => {
-                join_legacy(chroot, raw, mode).map_err(|e| e.rc())
-            }
-            ChrootPolicy::Component => join_native(chroot, raw, mode),
-        }
+        join_server(chroot, self.compat.chroot, raw, mode)
     }
 
     /// Scans and encodes the constituent sub-operations of a transaction batch into wire format.
@@ -1131,6 +1192,153 @@ impl<T: Tokens> Connection<T> {
             ]
         })
     }
+}
+
+/// Validates client znode path syntax and prepends the configured chroot prefix according to the
+/// active [`ChrootPolicy`], dispatching to `join_legacy` or `join_native`.
+fn join_server<'p>(
+    chroot: Option<&[u8]>,
+    policy: ChrootPolicy,
+    raw: &'p [u8],
+    mode: i32,
+) -> Result<Cow<'p, [u8]>, i32> {
+    match policy {
+        ChrootPolicy::LegacyConcatNoEscape => join_legacy(chroot, raw, mode).map_err(|e| e.rc()),
+        ChrootPolicy::Component => join_native(chroot, raw, mode),
+    }
+}
+
+/// Minimum node payload byte length eligible for pre-lock serialization via
+/// [`FrameEncoder::prepare`]; smaller payloads are inexpensive to serialize under the core lock.
+pub const EARLY_FRAME_MIN: usize = 4 * 1024;
+
+/// Standalone serializer that encodes `create` and `setData` request bodies without access to
+/// the [`Connection`].
+///
+/// Multi-threaded drivers retain an encoder per client handle so submitters can serialize large
+/// request bodies prior to acquiring the core lock, avoiding payload copies while the lock is
+/// held. The encoder stores only the chroot prefix and chroot policy, which remain immutable
+/// after connection initialization. Upon submission, the connection still verifies the
+/// pre-encoded body against the validated server path before adopting it.
+#[derive(Clone, Debug)]
+pub struct FrameEncoder {
+    /// Configured chroot prefix bytes of the connection, or `None` when no chroot is active.
+    chroot: Option<Vec<u8>>,
+    /// Chroot path join policy of the connection.
+    policy: ChrootPolicy,
+}
+
+/// Outbound request paired with a pre-encoded wire body for admission via
+/// [`Connection::submit_early`].
+///
+/// Constructed exclusively by [`FrameEncoder::prepare`] with private fields, guaranteeing that
+/// the serialized body was derived from the accompanying request and payload slice.
+pub struct EarlyRequest<'d, T: Tokens> {
+    /// Outbound protocol request to validate and submit.
+    req: Request<T>,
+    /// Borrowed node payload byte slice associated with the request.
+    data: &'d [u8],
+    /// Pre-encoded request body beginning with reserved placeholder bytes for the frame length
+    /// prefix and request header.
+    body: Cell<Vec<u8>>,
+}
+
+impl<T: Tokens> From<EarlyRequest<'_, T>> for Request<T> {
+    fn from(early: EarlyRequest<'_, T>) -> Self {
+        early.req
+    }
+}
+
+impl FrameEncoder {
+    /// Validates and serializes the body of a large `create` or `setData` request prior to
+    /// acquiring the core lock.
+    ///
+    /// Executes only the stateless preparation steps that are independent of mutable connection
+    /// state: TTL constraint verification, znode path validation and chroot prefix resolution,
+    /// and binary Jute record serialization. Returns the original [`Request`] unchanged when
+    /// pre-lock encoding offers no benefit: for other operations, absent payloads or payloads
+    /// smaller than [`EARLY_FRAME_MIN`], flagged input defects, or path and TTL parameters that
+    /// fail validation. Subsequent submission to the connection evaluates and reports any
+    /// validation or serialization error in the canonical pipeline stage order.
+    ///
+    /// # Errors
+    ///
+    /// Returns the original [`Request`] unchanged when an early request body is not produced.
+    pub fn prepare<'d, T: Tokens>(
+        &self,
+        req: Request<T>,
+        data: Option<&'d [u8]>,
+    ) -> Result<EarlyRequest<'d, T>, Request<T>> {
+        let Some(data) = data.filter(|d| d.len() >= EARLY_FRAME_MIN) else {
+            return Err(req);
+        };
+        if req.defect.any() {
+            return Err(req);
+        }
+        match self.encode(&req.op, data) {
+            Some(body) => Ok(EarlyRequest {
+                req,
+                data,
+                body: Cell::new(body),
+            }),
+            None => Err(req),
+        }
+    }
+
+    /// Serializes the framed wire body of a `create` or `setData` request identically to the
+    /// connection, returning `None` for other operations or when a validation check fails.
+    fn encode<W>(&self, op: &Op<W>, data: &[u8]) -> Option<Vec<u8>> {
+        let (path, mode, tail) = match op {
+            Op::SetData { path, version, .. } => (path, 0, DataTail::SetData { version: *version }),
+            Op::Create {
+                path,
+                acl,
+                mode,
+                ttl,
+                ..
+            } => {
+                check_ttl(*mode, *ttl).ok()?;
+                let tail = if is_ttl(*mode) {
+                    DataTail::CreateTtl {
+                        acl,
+                        flags: *mode,
+                        ttl: *ttl,
+                    }
+                } else {
+                    DataTail::Create { acl, flags: *mode }
+                };
+                (path, *mode, tail)
+            }
+            _ => return None,
+        };
+        let raw: &[u8] = match path {
+            PathIn::Legacy(Some(bytes)) => bytes,
+            PathIn::Legacy(None) => return None,
+            PathIn::Native(s) => s.as_bytes()?,
+        };
+        let server = join_server(self.chroot.as_deref(), self.policy, raw, mode).ok()?;
+        let record = DataRecord {
+            path: Some(&server),
+            data: Some(data),
+            tail,
+        };
+        framed_with(record.encoded_len(), |out| record.encode(out)).ok()
+    }
+}
+
+/// Verifies whether a pre-encoded request body matches the expected framed byte length
+/// (`len` plus [`REQUEST_HEAD_LEN`]) and contains the length-prefixed server path immediately
+/// following the request header reservation.
+fn early_fits(body: &[u8], len: usize, server: &[u8]) -> bool {
+    let Some(end) = REQUEST_HEAD_LEN.checked_add(4) else {
+        return false;
+    };
+    let Ok(n) = i32::try_from(server.len()) else {
+        return false;
+    };
+    body.len() == len.saturating_add(REQUEST_HEAD_LEN)
+        && body.get(REQUEST_HEAD_LEN..end) == Some(&n.to_be_bytes()[..])
+        && body.get(end..).is_some_and(|rest| rest.starts_with(server))
 }
 
 /// Validates strict UTF-8 path syntax and prepends chroot prefixes along canonical component
@@ -2235,6 +2443,10 @@ mod tests {
         assert_eq!(wire_buffer(b""), (0, &b""[..]));
     }
 
+    /// Captured outbound transmission frame and diagnostic log records for an accepted
+    /// submission, or the pipeline rejection stage and error code.
+    type Outcome = Result<(Vec<u8>, Vec<LogRecord>), (Stage, i32)>;
+
     /// Constructs a collection of data-bearing operations for verifying borrowed buffer
     /// serialization.
     fn data_ops(path: &str, data: JBuffer) -> Vec<Op<u32>> {
@@ -2266,11 +2478,17 @@ mod tests {
         op: Op<u32>,
         defect: InputDefect,
         data: Option<&[u8]>,
-    ) -> Result<(Vec<u8>, Vec<LogRecord>), (Stage, i32)> {
+    ) -> Outcome {
         let r = match data {
             None => c.submit(req(op, defect), Millis(0)),
             Some(d) => c.submit_with_data(req(op, defect), Some(d), Millis(0)),
         };
+        settle(c, r)
+    }
+
+    /// Extracts the queued transmission frame and diagnostic log records of an accepted
+    /// submission, or returns the rejection stage and error code.
+    fn settle(c: &mut Connection<Tk>, r: Result<Submitted<Tk>, SubmitError<Tk>>) -> Outcome {
         match r {
             Ok(Submitted::Queued { .. }) => {
                 let f = c.requests.tx.pop_back().unwrap();
@@ -2364,6 +2582,245 @@ mod tests {
         let op = create(lp("/a"), 5, 0);
         assert_eq!(outcome(&mut c, op, DEFECT, Some(b"v")), Err(VALIDATE_BAD));
         assert_untouched(&c);
+    }
+
+    /// Constructs a synthetic node payload buffer exceeding [`EARLY_FRAME_MIN`] to trigger
+    /// pre-lock encoding.
+    fn big() -> Vec<u8> {
+        let mut v = vec![0x5a; EARLY_FRAME_MIN + 3];
+        v.extend_from_slice(b"end");
+        v
+    }
+
+    /// Submits an operation via [`Connection::submit_early`] when [`FrameEncoder::prepare`]
+    /// produces a pre-encoded body, falling back to [`Connection::submit_with_data`] otherwise;
+    /// returns a boolean indicating whether the early submission path executed alongside the
+    /// resulting [`Outcome`].
+    fn early_outcome(
+        c: &mut Connection<Tk>,
+        enc: &FrameEncoder,
+        op: Op<u32>,
+        defect: InputDefect,
+        data: &[u8],
+    ) -> (bool, Outcome) {
+        match enc.prepare(req(op, defect), Some(data)) {
+            Ok(early) => {
+                let r = c.submit_early(early, Millis(0));
+                (true, settle(c, r))
+            }
+            Err(r) => {
+                assert_eq!(r.token, 7);
+                let r = c.submit_with_data(r, Some(data), Millis(0));
+                (false, settle(c, r))
+            }
+        }
+    }
+
+    #[test]
+    fn early_bodies_encode_as_borrowed_data() {
+        let value = big();
+        for compat in [Compat::LEGACY_C, Compat::NATIVE] {
+            let plain = || conn_with(Config::legacy(30_000), compat);
+            let rooted = || chrooted(compat);
+            let setups: [&dyn Fn() -> Connection<Tk>; 2] = [&plain, &rooted];
+            for setup in setups {
+                let mut borrowed = setup();
+                let mut early = setup();
+                let enc = early.frame_encoder();
+                for path in ["/a", "/a/b"] {
+                    let ops = data_ops(path, JBuffer::Null);
+                    for (o, b) in ops.into_iter().zip(data_ops(path, JBuffer::Null)) {
+                        let want = outcome(&mut borrowed, o, InputDefect::default(), Some(&value));
+                        let (used, got) =
+                            early_outcome(&mut early, &enc, b, InputDefect::default(), &value);
+                        assert!(used, "{path}");
+                        assert!(want.is_ok());
+                        assert_eq!(got, want, "{path}");
+                    }
+                }
+                let set = |path| Op::SetData {
+                    path,
+                    data: JBuffer::Null,
+                    version: 2,
+                };
+                let want = outcome(
+                    &mut borrowed,
+                    set(np("/n")),
+                    InputDefect::default(),
+                    Some(&value),
+                );
+                let (used, got) = early_outcome(
+                    &mut early,
+                    &enc,
+                    set(np("/n")),
+                    InputDefect::default(),
+                    &value,
+                );
+                assert!(used);
+                assert_eq!(got, want);
+            }
+        }
+    }
+
+    #[test]
+    fn early_bodies_keep_the_stage_order() {
+        let value = big();
+        let drain = || {
+            let mut compat = Compat::LEGACY_C;
+            compat.close_mode = CloseMode::Drain;
+            let mut c = conn_with(Config::legacy(30_000), compat);
+            c.close.closing = true;
+            c
+        };
+        let throttled = || {
+            let mut cfg = Config::legacy(30_000);
+            cfg.max_pending = Some(0);
+            conn_with(cfg, Compat::LEGACY_C)
+        };
+        let expired = || {
+            let mut c = legacy();
+            c.set_state(State::ExpiredSession);
+            c
+        };
+        let closing = || {
+            let mut c = legacy();
+            c.close.closing = true;
+            c
+        };
+        let setups: [&dyn Fn() -> Connection<Tk>; 5] =
+            [&legacy, &drain, &throttled, &expired, &closing];
+        for setup in setups {
+            for path in ["/a", "a", "/a/", ""] {
+                for defect in [InputDefect::default(), DEFECT] {
+                    let ops = data_ops(path, JBuffer::Null);
+                    for (o, b) in ops.into_iter().zip(data_ops(path, JBuffer::Null)) {
+                        let want = outcome(&mut setup(), o, defect, Some(&value));
+                        let mut c = setup();
+                        let enc = c.frame_encoder();
+                        let (used, got) = early_outcome(&mut c, &enc, b, defect, &value);
+                        // Trailing slashes are valid only for the sequential creation variant
+                        // among `data_ops`, so the `/a/` case makes no assertion on `used`.
+                        if path == "/a" && !defect.any() {
+                            assert!(used, "{path}");
+                        } else if path != "/a/" {
+                            assert!(!used, "{path} {defect:?}");
+                        }
+                        assert_eq!(got, want, "{path} {defect:?}");
+                        if got.is_err() {
+                            assert_untouched(&c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn early_body_becomes_the_frame() {
+        let value = big();
+        let mut c = chrooted(Compat::LEGACY_C);
+        let enc = c.frame_encoder();
+        for op in data_ops("/a", JBuffer::Null) {
+            let Ok(early) = enc.prepare(req(op, InputDefect::default()), Some(&value)) else {
+                panic!("no early body");
+            };
+            let body = early.body.take();
+            let at = body.as_ptr();
+            early.body.set(body);
+            assert!(matches!(
+                c.submit_early(early, Millis(0)),
+                Ok(Submitted::Queued { .. })
+            ));
+            let frame = c.requests.tx.back().unwrap();
+            assert_eq!(frame.bytes.as_slice().as_ptr(), at);
+        }
+    }
+
+    #[test]
+    fn stale_early_bodies_are_encoded_again() {
+        let value = big();
+        let stale = [
+            legacy().frame_encoder(),
+            FrameEncoder {
+                chroot: Some(b"/bpp".to_vec()),
+                policy: ChrootPolicy::LegacyConcatNoEscape,
+            },
+        ];
+        for enc in stale {
+            let mut borrowed = chrooted(Compat::LEGACY_C);
+            let mut early = chrooted(Compat::LEGACY_C);
+            let ops = data_ops("/a", JBuffer::Null);
+            for (o, b) in ops.into_iter().zip(data_ops("/a", JBuffer::Null)) {
+                let want = outcome(&mut borrowed, o, InputDefect::default(), Some(&value));
+                let (used, got) =
+                    early_outcome(&mut early, &enc, b, InputDefect::default(), &value);
+                assert!(used);
+                assert!(want.is_ok());
+                assert_eq!(got, want);
+            }
+        }
+    }
+
+    #[test]
+    fn small_or_unchecked_requests_skip_early_encoding() {
+        fn skips(enc: &FrameEncoder, op: Op<u32>, defect: InputDefect, data: Option<&[u8]>) {
+            match enc.prepare(req(op, defect), data) {
+                Ok(_) => panic!("early body"),
+                Err(r) => assert_eq!(r.token, 7),
+            }
+        }
+        let enc = legacy().frame_encoder();
+        let value = big();
+        let small = vec![0x5a; EARLY_FRAME_MIN - 1];
+        for op in data_ops("/a", JBuffer::Null) {
+            skips(&enc, op, InputDefect::default(), Some(&small));
+        }
+        for op in data_ops("/a", JBuffer::from(&value[..])) {
+            skips(&enc, op, InputDefect::default(), None);
+        }
+        for op in data_ops("/a", JBuffer::Null) {
+            skips(&enc, op, DEFECT, Some(&value));
+        }
+        for path in ["a", "", "/a//b"] {
+            for op in data_ops(path, JBuffer::Null) {
+                skips(&enc, op, InputDefect::default(), Some(&value));
+            }
+        }
+        skips(
+            &enc,
+            create(lp("/a"), 5, 0),
+            InputDefect::default(),
+            Some(&value),
+        );
+        let none = Op::SetData {
+            path: PathIn::Legacy(None),
+            data: JBuffer::Null,
+            version: 0,
+        };
+        skips(&enc, none, InputDefect::default(), Some(&value));
+        let delete = Op::Delete {
+            path: lp("/a"),
+            version: -1,
+        };
+        skips(&enc, delete, InputDefect::default(), Some(&value));
+    }
+
+    #[test]
+    fn rejected_early_requests_draw_no_xid() {
+        let value = big();
+        let mut c = legacy();
+        let enc = c.frame_encoder();
+        c.close.closing = true;
+        for op in data_ops("/a", JBuffer::Null) {
+            let (used, got) = early_outcome(&mut c, &enc, op, InputDefect::default(), &value);
+            assert!(used);
+            assert!(got.is_err());
+            assert_untouched(&c);
+        }
+        c.close.closing = false;
+        let mut fresh = legacy();
+        let op = || data_ops("/a", JBuffer::from(&b"v"[..])).remove(0);
+        assert_eq!(queued(&mut c, op()), queued(&mut fresh, op()));
     }
 
     /// Converts an owned `MultiOp` into a borrowed `MultiOpRef` view for zero-copy submission
@@ -2585,7 +3042,7 @@ mod tests {
         ops: Vec<MultiOp>,
         refs: Option<&[MultiOpRef<'_>]>,
         defect: InputDefect,
-    ) -> Result<(Vec<u8>, Vec<LogRecord>), (Stage, i32)> {
+    ) -> Outcome {
         let r = match refs {
             None => c.submit(req(Op::Multi { ops }, defect), Millis(0)),
             Some(r) => {

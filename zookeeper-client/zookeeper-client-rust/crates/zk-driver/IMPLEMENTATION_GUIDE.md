@@ -293,13 +293,14 @@ Main functions:
 
 Also in the package: `from_init`, `outbox`, `state`, `recv_timeout`, `client_id`, `DispatchQueue` (`Publish`).
 
-Calls made: `iocore` steps, `Waker::{new, wake}`, `WakeRx`, `Lifecycle`, `Core::pump`, `Connection::{submit_with_data, submit_multi_ref, add_auth, set_servers, begin_close, queue_close_op, close_step, destroy}`, `parse_init` (set_servers).
+Calls made: `iocore` steps, `Waker::{new, wake}`, `WakeRx`, `Lifecycle`, `Core::pump`, `Connection::{submit_with_data, submit_early, frame_encoder, submit_multi_ref, add_auth, set_servers, begin_close, queue_close_op, close_step, destroy}`, `FrameEncoder::prepare`, `parse_init` (set_servers).
 
 Calls received: zk-ffi (mt build).
 
 Invariants:
 
-- A submit takes the `core` lock, calls proto, then wakes the IO thread.
+- A submit takes the `core` lock, calls proto, then wakes the IO thread. When `frames` is present, a `create` or `setData` with a borrowed payload of at least `EARLY_FRAME_MIN` bytes first calls `FrameEncoder::prepare` with no lock held. If `prepare` encodes the body, `Connection::submit_early` runs under `core`; if `prepare` declines, `Connection::submit_with_data` runs under `core`. The admission gates, the checks, the xid and the queueing stay under `core`.
+- `Shared::new` builds the frame encoder (`frames`) from `Connection::frame_encoder` when the core holds a connection.
 - A wake adds WRITE to the poll events when the poll included an open transport in its data phase (`Transport::data_phase`). The data phase is a plaintext connection or a TLS session after its handshake. The process step thus sends a new request in the iteration of its wake, with no second interest call and poll. A connect in progress, a TLS handshake, a parked socket and a requested close get WRITE only from the socket. The flush sends only what proto releases.
 - The dispatch FIFO keeps the wire order. A result with no outbox entry ahead of it goes to the FIFO in the pump, under the `core` lock. A later result waits in the outbox as a publish entry, and goes to the FIFO when the C drain reaches it. A pump on another thread thus cannot put a later result before an earlier one.
 - The pump stops when the outbox holds an item that C sees and proto has more output. The later results stay in proto. A close from the callback of that item then pumps them before its ZCLOSING results and its close mark. Thus the dispatch thread delivers every reply that was decoded before the close.

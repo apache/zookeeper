@@ -149,7 +149,7 @@ The outputs queue is in `output.rs`. The rules:
 
 Sources: spec "The state machine and driver interaction" and "Requests, transaction identifiers, and replies", and the doc comments of `requests.rs` and `submit.rs`.
 
-Owns: `Requests<T>`, `OutFrame`, `FrameBytes`, `FrameKind`, `Pending<T>`, `Shape`, `WatchKind`, `WatchReg`, `Unwatch`, and `submit.rs` types (`Prepared`, `Checked`, `Rejected`).
+Owns: `Requests<T>`, `OutFrame`, `FrameBytes`, `FrameKind`, `Pending<T>`, `Shape`, `WatchKind`, `WatchReg`, `Unwatch`, and `submit.rs` types (`Prepared`, `Checked`, `Rejected`, `FrameEncoder`, `EarlyRequest`, `EARLY_FRAME_MIN`).
 
 Also in the package: `Requests::{new, next_xid, push_tail, push_priority, push_pending, has_unsent, connect_frame_unwritten, clear_pins, take_all}`, `OutFrame::{plain, secret, is_untouched, is_complete}`, `Shape::legacy_kind`, `pending_len`.
 
@@ -165,6 +165,9 @@ Main functions:
 | `pub fn submit(&mut self, req: Request<T>, now: Millis) -> Result<Submitted<T>, SubmitError<T>>` | submit.rs |
 | `pub fn submit_with_data(&mut self, req: Request<T>, data: Option<&[u8]>, now: Millis) -> Result<Submitted<T>, SubmitError<T>>` | submit.rs |
 | `pub fn submit_multi_ref(&mut self, req: Request<T>, ops: &[MultiOpRef<'_>], now: Millis) -> Result<Submitted<T>, SubmitError<T>>` | submit.rs |
+| `pub fn submit_early(&mut self, early: EarlyRequest<'_, T>, now: Millis) -> Result<Submitted<T>, SubmitError<T>>` | submit.rs |
+| `pub fn frame_encoder(&self) -> FrameEncoder` | submit.rs |
+| `pub fn prepare<'d, T: Tokens>(&self, req: Request<T>, data: Option<&'d [u8]>) -> Result<EarlyRequest<'d, T>, Request<T>>` (`FrameEncoder`) | submit.rs |
 | `fn check_op(&mut self, op, defect, input: Input<'_>) -> Result<Checked<T::Watcher>, Rejected>` | submit.rs |
 | `fn server_path(&self, path: &PathIn, mode: i32) -> Result<Vec<u8>, i32>` | submit.rs |
 | `fn encode_multi<I>(&mut self, ops: I, read: bool) -> Result<(Vec<u8>, Vec<i32>), Rejected>`, where the items of `I` are owned `MultiOp`s or borrowed `&MultiOpRef`s (the private `SubOp` trait) | submit.rs |
@@ -180,6 +183,7 @@ Calls made:
 Calls received:
 
 - `poll_transmit`, `handle_transmitted`, `submit`, `pending_len`: driver.
+- `frame_encoder`, `FrameEncoder::prepare`, `submit_early`: the threaded driver (mt).
 - `may_send`: `poll_transmit`, `write_interest` (hosts).
 - `fail_pending_run`: teardown and close (session).
 - `request_frame`: submit, auth, timers (hosts), watches, close (session). Every module that queues a request frame uses it.
@@ -190,6 +194,7 @@ Invariants:
 - `tx` order: priority frames go before the first untouched frame. A frame with written bytes or a pin stays in place. An unsent `Connect` frame stays ahead of every priority insert.
 - `fifo` order matches the wire order of request frames.
 - A failed `submit` draws no xid and changes no queue.
+- `submit_early` runs the same admission gates and checks as `submit_with_data`, in the same order. It uses the early body only when the body holds the checked server path and has the expected length; otherwise it encodes the body again. A rejected early request draws no xid and changes no queue.
 - `unacked` is the count of copied bytes that `handle_transmitted` did not acknowledge yet. A transport loss clears it (`clear_pins`).
 - Secret frames (`FrameBytes::Secret`) never leave as a plain `Vec` outside `poll_transmit`.
 - `secret_end` is the end of the secret bytes in the driver's copy buffer. A secret copy sets it, and a plain copy leaves it. Each `poll_transmit` first erases the old copies past the buffer length up to `secret_end`, also with no transport. Other frames cause no erase.

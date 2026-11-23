@@ -84,4 +84,5 @@ pub use request::{
 pub use responses::ReplyData;
 pub use secret::SecretBytes;
 pub use state::{Cause, State};
+pub use submit::{EARLY_FRAME_MIN, EarlyRequest, FrameEncoder};
 pub use time::Millis;

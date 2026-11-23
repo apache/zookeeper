@@ -41,8 +41,9 @@ use common::{CountingPoll, IpHost, WAIT, env, exists};
 use zk_driver::outbox::{Flavor, Item};
 use zk_driver::{Env, Init, InitArgs, InitStep, Outbox, Poll, Role, Shared, Step, Unlocked};
 use zk_fakeserver::FakeServer;
-use zk_proto::{Compat, Config, DriverMode, State};
-use zk_testkit::tokens::TestTokens;
+use zk_jute::JBuffer;
+use zk_proto::{Compat, Config, DriverMode, InputDefect, Op, PathIn, Request, Route, State};
+use zk_testkit::tokens::{CompletionId, TestTokens};
 
 /// Initializes a multithreaded drop-in driver instance targeting the mock server.
 fn handle(server: &FakeServer, host: Arc<IpHost>) -> Arc<Shared<TestTokens>> {
@@ -329,4 +330,145 @@ fn large_and_small_frames_interleaved_arrive_in_order() {
     }
     let end = threads.close();
     assert!(matches!(end, Step::Done(_) | Step::Release));
+}
+
+/// Constructs a `setData` request for the legacy path `path` with no owned payload; the caller
+/// passes the payload as borrowed data.
+fn set_data_at(id: u64, path: &str) -> Request<TestTokens> {
+    Request {
+        op: Op::SetData {
+            path: PathIn::Legacy(Some(path.as_bytes().to_vec())),
+            data: JBuffer::Null,
+            version: -1,
+        },
+        token: CompletionId::new(id),
+        route: Route::Queued,
+        defect: InputDefect::default(),
+    }
+}
+
+/// Constructs the payload for request `k` of submitter `t`; even requests are large (64 KiB) and
+/// odd requests are small (100 bytes), so the early and locked encoding paths interleave.
+fn payload(t: u64, k: u64) -> Vec<u8> {
+    let len = if k % 2 == 0 { 64 * 1024 } else { 100 };
+    common::pattern(len, (t * 64 + k) as u8)
+}
+
+/// Verifies that concurrent submitters of large and small `setData` payloads preserve the order
+/// of each submitter, that completions arrive in wire order (increasing `mzxid`), and that the
+/// server stores each payload intact.
+#[test]
+fn concurrent_large_submitters_keep_the_wire_order() {
+    let (submitters, each) = (4u64, 24u64);
+    let server = FakeServer::start().unwrap();
+    for t in 0..submitters {
+        for k in 0..each {
+            server
+                .cluster()
+                .create(&format!("/c{t}-{k}"), b"", 0)
+                .unwrap();
+        }
+    }
+    let shared = handle(&server, IpHost::new());
+    let (rx, threads) = start_threads(&shared);
+    assert!(common::wait_until(WAIT, || shared.state() == State::Connected.code()));
+    let start = Arc::new(std::sync::Barrier::new(submitters as usize));
+    let workers: Vec<_> = (0..submitters)
+        .map(|t| {
+            let s = Arc::clone(&shared);
+            let start = Arc::clone(&start);
+            std::thread::spawn(move || {
+                start.wait();
+                for k in 0..each {
+                    let req = set_data_at(t * 1000 + k + 1, &format!("/c{t}-{k}"));
+                    s.submit_with_data(req, Some(&payload(t, k))).ok().unwrap();
+                }
+            })
+        })
+        .collect();
+    for w in workers {
+        w.join().unwrap();
+    }
+    let got = results(&rx, (submitters * each) as usize);
+    let mut last_zxid = 0;
+    let mut next = vec![0u64; submitters as usize];
+    for item in &got {
+        let Item::Result { token, result, .. } = item else {
+            panic!("not a result: {item:?}");
+        };
+        assert_eq!(result.rc, 0, "request {}", token.id());
+        let Some(zk_proto::Reply::Stat(stat)) = &result.reply else {
+            panic!("request {}: reply {:?}", token.id(), result.reply);
+        };
+        assert!(stat.mzxid > last_zxid, "completions come in wire order");
+        last_zxid = stat.mzxid;
+        let (t, k) = ((token.id() - 1) / 1000, (token.id() - 1) % 1000);
+        assert_eq!(k, next[t as usize], "submitter {t} keeps its order");
+        next[t as usize] += 1;
+    }
+    for t in 0..submitters {
+        for k in 0..each {
+            let data = server.cluster().data(&format!("/c{t}-{k}"));
+            assert!(data == Some(Some(payload(t, k))), "payload {t} {k}");
+        }
+    }
+    let end = threads.close();
+    assert!(matches!(end, Step::Done(_) | Step::Release));
+}
+
+/// Verifies that a large payload with a bad path fails with the same code as a small payload
+/// (`ZBADARGUMENTS`, with the token returned), and that the failure does not disturb a subsequent
+/// request.
+#[test]
+fn a_large_payload_with_a_bad_path_fails_alone() {
+    let server = FakeServer::start().unwrap();
+    server.cluster().create("/ok", b"", 0).unwrap();
+    let shared = handle(&server, IpHost::new());
+    let (rx, threads) = start_threads(&shared);
+    assert!(common::wait_until(WAIT, || shared.state() == State::Connected.code()));
+    for (id, len) in [(1, 64 * 1024), (2, 100)] {
+        let data = common::pattern(len, 3);
+        for path in ["bad", "/bad/", "/a//b"] {
+            let err = shared
+                .submit_with_data(set_data_at(id, path), Some(&data))
+                .err()
+                .unwrap();
+            assert_eq!(err.code, zk_proto::rc::ZBADARGUMENTS, "{path} {len}");
+            assert_eq!(err.token.id(), id);
+        }
+    }
+    let data = common::pattern(64 * 1024, 5);
+    shared
+        .submit_with_data(set_data_at(3, "/ok"), Some(&data))
+        .ok()
+        .unwrap();
+    let got = results(&rx, 1);
+    common::check_result(&got[0], 3, None);
+    assert!(server.cluster().data("/ok") == Some(Some(data)));
+    let end = threads.close();
+    assert!(matches!(end, Step::Done(_) | Step::Release));
+}
+
+/// Verifies that a large payload on a closed handle fails with the same stage and code as a small
+/// payload, and that the caller receives the token back.
+#[test]
+fn a_large_payload_on_a_closed_handle_fails_as_a_small_one() {
+    let server = FakeServer::start().unwrap();
+    let shared = handle(&server, IpHost::new());
+    let (_rx, threads) = start_threads(&shared);
+    assert!(common::wait_until(WAIT, || shared.state() == State::Connected.code()));
+    let end = threads.close();
+    assert!(matches!(end, Step::Done(_) | Step::Release));
+    let fail = |id, len| {
+        let data = common::pattern(len, 7);
+        let err = shared
+            .submit_with_data(set_data_at(id, "/x"), Some(&data))
+            .err()
+            .unwrap();
+        assert_eq!(err.token.id(), id);
+        (err.stage, err.code)
+    };
+    let small = fail(1, 100);
+    assert_ne!(small.1, 0);
+    assert_eq!(fail(2, 64 * 1024), small);
 }
