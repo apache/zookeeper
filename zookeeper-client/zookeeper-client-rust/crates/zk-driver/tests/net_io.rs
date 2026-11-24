@@ -166,6 +166,95 @@ mod sock {
         }
     }
 
+    /// Connects to a listener bound at `bind` and verifies that both endpoints negotiate a maximum
+    /// segment size no greater than one sixth of the client's initial `SO_RCVBUF` capacity, after
+    /// streaming enough server data to grow the client receive window past Linux's initial
+    /// post-handshake half window MSS cap.
+    #[cfg(all(any(target_os = "linux", target_os = "android"), not(miri)))]
+    fn check_the_segment_limit(bind: std::net::SocketAddr) {
+        use std::io::Write;
+
+        const BYTES: usize = 4 << 20;
+        let l = TcpListener::bind(bind).unwrap();
+        let addr = l.local_addr().unwrap();
+        let sock = TcpSock::open(&addr, false).unwrap().sock;
+        if sock.start_connect(&addr).unwrap() == ConnectStart::InProgress {
+            wait_writable(&sock);
+        }
+        let rcvbuf = socket2::SockRef::from(&sock).recv_buffer_size().unwrap();
+        if rcvbuf / 6 >= 65_496 {
+            return;
+        }
+        let (mut peer, _) = l.accept().unwrap();
+        let writer = std::thread::spawn(move || {
+            peer.write_all(&vec![0u8; BYTES]).unwrap();
+            peer
+        });
+        let mut buf = vec![0u8; 1 << 16];
+        let mut got = 0;
+        while got < BYTES {
+            let mut fds = [PollFd::new(&sock, PollFlags::IN)];
+            assert_eq!(RealPoll.poll(&mut fds, 5000).unwrap(), 1);
+            match sock.recv(&mut buf) {
+                Ok(0) => panic!("the server closed the connection early"),
+                Ok(n) => got = got.saturating_add(n),
+                Err(Errno::WOULDBLOCK) => {}
+                Err(e) => panic!("recv failed: {e}"),
+            }
+        }
+        let peer = writer.join().unwrap();
+        let ours = socket2::SockRef::from(&sock).tcp_mss().unwrap();
+        let theirs = socket2::SockRef::from(&peer).tcp_mss().unwrap();
+        assert!(
+            ours as usize * 6 <= rcvbuf,
+            "{addr}: client MSS {ours}, rcvbuf {rcvbuf}"
+        );
+        assert!(
+            theirs as usize * 6 <= rcvbuf,
+            "{addr}: server MSS {theirs}, rcvbuf {rcvbuf}"
+        );
+    }
+
+    /// Verifies that `TcpSock::open` clamps the TCP MSS on IPv4 loopback connections.
+    #[cfg(all(any(target_os = "linux", target_os = "android"), not(miri)))]
+    #[test]
+    fn open_limits_the_segment_size() {
+        check_the_segment_limit("127.0.0.1:0".parse().unwrap());
+    }
+
+    /// Verifies that `TcpSock::open` clamps the TCP MSS on IPv6 loopback connections when IPv6
+    /// loopback is available on the host.
+    #[cfg(all(any(target_os = "linux", target_os = "android"), not(miri)))]
+    #[test]
+    fn open_limits_the_segment_size_for_ipv6_loopback() {
+        if TcpListener::bind("[::1]:0").is_err() {
+            return;
+        }
+        check_the_segment_limit("[::1]:0".parse().unwrap());
+    }
+
+    /// Discovers a non-loopback local IP address assigned to this host by inspecting the source
+    /// address selected for a dummy UDP route without transmitting packets, or `None` if no
+    /// non-loopback route is configured.
+    #[cfg(all(any(target_os = "linux", target_os = "android"), not(miri)))]
+    fn own_address() -> Option<std::net::IpAddr> {
+        let udp = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+        udp.connect("192.0.2.1:9").ok()?;
+        let ip = udp.local_addr().ok()?.ip();
+        (!ip.is_loopback() && !ip.is_unspecified()).then_some(ip)
+    }
+
+    /// Verifies that `TcpSock::open` clamps the TCP MSS when connecting to a non-loopback local
+    /// interface address routed over the kernel loopback device.
+    #[cfg(all(any(target_os = "linux", target_os = "android"), not(miri)))]
+    #[test]
+    fn open_limits_the_segment_size_for_an_own_address() {
+        let Some(ip) = own_address() else {
+            return;
+        };
+        check_the_segment_limit(std::net::SocketAddr::new(ip, 0));
+    }
+
     #[test]
     fn connect_to_a_closed_port_fails() {
         let addr = TcpListener::bind("127.0.0.1:0")

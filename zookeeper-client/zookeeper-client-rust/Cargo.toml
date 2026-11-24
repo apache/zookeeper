@@ -63,6 +63,7 @@ rustls = { version = "0.23.31", default-features = false }
 rustls-pki-types = { version = "1.12", default-features = false }
 rustls-webpki = { version = "0.103.4", default-features = false }
 tokio = { version = "1.47", default-features = false }
+socket2 = { version = "0.6", default-features = false }
 proptest = { version = "1", default-features = false }
 bitflags = { version = "2.6", default-features = false }
 zeroize = { version = "1.8", default-features = false }

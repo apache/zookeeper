@@ -70,6 +70,10 @@ loom.workspace = true
 [target.'cfg(unix)'.dependencies]
 tokio = { workspace = true, optional = true, features = ["rt", "net", "time", "sync", "io-util"] }
 
+# rustix has no TCP_MAXSEG setter. socket2 sets it through a safe API.
+[target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
+socket2 = { workspace = true, features = ["all"] }
+
 [dev-dependencies]
 zk-fakeserver = { workspace = true, features = ["tls"] }
 zk-testkit.workspace = true

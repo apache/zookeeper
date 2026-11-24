@@ -1554,6 +1554,7 @@ dependencies = [
  "scrypt",
  "sha1",
  "sha2",
+ "socket2",
  "spki",
  "tokio",
  "zeroize",
