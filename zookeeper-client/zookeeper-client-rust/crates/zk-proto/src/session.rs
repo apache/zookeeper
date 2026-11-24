@@ -231,7 +231,7 @@ impl<T: Tokens> Connection<T> {
         resp.passwd.zeroize();
         self.session.read_only = resp.read_only;
         self.session.handshake_pending = false;
-        self.out.push(Output::ClientId(self.core.client_id));
+        self.out.push(Output::ClientId(self.core.client_id.clone()));
         if self.cfg.sasl {
             self.teardown_peer_begin_sasl(now);
             Flow::Stop

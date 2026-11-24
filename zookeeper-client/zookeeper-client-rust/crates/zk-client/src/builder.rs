@@ -79,6 +79,7 @@ pub(crate) const DEFAULT_DISPATCH_QUEUE_CAPACITY: usize = 4096;
 
 /// Ordering policy governing server selection from the configured ensemble host list.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ServerOrder {
     /// Randomly shuffles the ensemble host sequence upon initial connection and each server list
     /// refresh.
@@ -90,13 +91,15 @@ pub enum ServerOrder {
 
 /// Policy governing DNS host name resolution and re-resolution frequency.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum DnsRefresh {
     /// Re-resolves host names once per complete traversal of the server list, following reconnect
     /// backoff delay.
     #[default]
     EachPass,
     /// Re-resolves host names once the specified time interval has elapsed since the last
-    /// successful lookup.
+    /// successful lookup. The interval must be at least 1 ms; a shorter interval causes building
+    /// the client to fail.
     Interval(Duration),
     /// Performs DNS resolution only upon client initialization and explicit calls.
     Never,
@@ -149,12 +152,30 @@ pub enum Runtime {
 
 /// Configuration tuning parameters for dedicated background I/O threads.
 #[derive(Clone, Debug, Default)]
+#[non_exhaustive]
 pub struct ThreadOptions {
     /// Optional thread name assigned to the I/O worker thread. Must not contain NULL bytes.
     pub name: Option<String>,
     /// Optional stack size override in bytes. Defaults to the platform's standard library thread
     /// stack size.
     pub stack_size: Option<usize>,
+}
+
+// `ThreadOptions` is `#[non_exhaustive]`, so external crates cannot construct it with a struct
+// literal; these methods configure its fields in builder style starting from
+// `ThreadOptions::default()`.
+impl ThreadOptions {
+    /// Sets the optional I/O worker thread name, which must not contain NUL bytes.
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    /// Sets the I/O worker thread stack size in bytes.
+    pub fn with_stack_size(mut self, bytes: usize) -> Self {
+        self.stack_size = Some(bytes);
+        self
+    }
 }
 
 /// Fluent configuration builder constructing a [`Client`] instance.
@@ -338,7 +359,8 @@ impl ClientBuilder {
     }
 
     /// Configures a backpressure limit on total concurrent queued and in-flight requests.
-    /// Defaults to unbounded.
+    /// Defaults to unbounded. Must be at least 1; a value of 0 causes building the client to fail
+    /// with an invalid-argument error.
     pub fn max_pending_requests(mut self, n: usize) -> Self {
         self.max_pending = Some(n);
         self
@@ -352,13 +374,15 @@ impl ClientBuilder {
     }
 
     /// Configures the maximum event buffer capacity for persistent watcher event queues.
-    /// Defaults to unbounded.
+    /// Defaults to unbounded. Must be at least 1; a value of 0 causes building the client to fail
+    /// with an invalid-argument error.
     pub fn persistent_watch_buffer(mut self, events: usize) -> Self {
         self.persistent_watch_buffer = Some(events);
         self
     }
 
-    /// Configures the capacity of the internal driver read gate buffer. Defaults to 4096.
+    /// Configures the capacity of the internal driver read gate buffer. Defaults to 4096. Must be
+    /// at least 1; a value of 0 causes building the client to fail with an invalid-argument error.
     pub fn dispatch_queue_capacity(mut self, items: usize) -> Self {
         self.dispatch_queue_capacity = items;
         self
@@ -450,6 +474,7 @@ impl ClientBuilder {
     /// dispatch futures.
     fn start(self) -> Result<(Client, Vec<ResponseFuture<()>>), ConnectError> {
         let parsed = connect_string::parse(&self.connect_string)?;
+        checked_limits(&self)?;
         let chroot = match self.chroot {
             None => parsed.chroot,
             Some(Err(e)) => return Err(Error::InvalidPath(e).into()),
@@ -638,6 +663,34 @@ fn checked_timeouts(
         ));
     }
     Ok((timeout_ms, connect_timeout))
+}
+
+/// Refuses with [`Error::InvalidArgument`] a `max_pending_requests` of 0, a
+/// `dispatch_queue_capacity` of 0, a `persistent_watch_buffer` of 0, and a
+/// [`DnsRefresh::Interval`] below 1 ms when the builder builds or connects a client.
+///
+/// The lower layers accept these values but assign them other meanings: a pending limit of 0
+/// causes every request to fail with a throttle error; the driver raises a dispatch capacity of 0
+/// to 1 without notice; an event buffer of 0 drops every persistent watch event; and an interval
+/// below 1 ms truncates to 0 ms, causing the client to re-resolve host names at every check. The
+/// builder refuses them so that a misconfiguration fails at build time.
+fn checked_limits(b: &ClientBuilder) -> Result<(), Error> {
+    let refuse = |what: &'static str| Err(Error::InvalidArgument(what.into()));
+    if b.max_pending == Some(0) {
+        return refuse("max_pending_requests is 0");
+    }
+    if b.dispatch_queue_capacity == 0 {
+        return refuse("dispatch_queue_capacity is 0");
+    }
+    if b.persistent_watch_buffer == Some(0) {
+        return refuse("persistent_watch_buffer is 0");
+    }
+    if let DnsRefresh::Interval(d) = b.dns_refresh {
+        if d.as_millis() == 0 {
+            return refuse("the DNS refresh interval is below 1 ms");
+        }
+    }
+    Ok(())
 }
 
 /// Chains native SASL negotiation errors into the router's contextual error inspection probe.
@@ -916,6 +969,15 @@ mod tests {
     fn a_bad_chroot_is_kept_for_build() {
         let b = ClientBuilder::new("h".into()).chroot("no-slash");
         assert!(matches!(b.chroot, Some(Err(_))));
+    }
+
+    #[test]
+    fn thread_options_setters_set_the_fields() {
+        let o = ThreadOptions::default()
+            .with_name("zk-io")
+            .with_stack_size(1 << 20);
+        assert_eq!(o.name.as_deref(), Some("zk-io"));
+        assert_eq!(o.stack_size, Some(1 << 20));
     }
 
     #[test]

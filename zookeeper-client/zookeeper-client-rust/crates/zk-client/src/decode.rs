@@ -72,8 +72,8 @@ pub(crate) fn rc_error(code: i32) -> Error {
     Error::from_code(code).unwrap_or(Error::MarshallingError)
 }
 
-/// Decodes a server-returned string into a validated [`ZPathBuf`]. Rejects null, empty, or non-
-/// UTF-8 payloads.
+/// Decodes a server-returned string into a validated [`ZPathBuf`]. Rejects null, empty, non-UTF-8,
+/// or invalid path payloads as marshalling errors.
 pub(crate) fn server_path(p: JString) -> Result<ZPathBuf, Error> {
     match p.into_bytes() {
         Some(b) if !b.is_empty() => ZPathBuf::from_server(b),

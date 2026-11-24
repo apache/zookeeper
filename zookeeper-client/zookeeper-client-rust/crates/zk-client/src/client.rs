@@ -126,15 +126,10 @@ impl WeakClient {
 
 /// Diagnostic metrics and runtime statistics for a client instance.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub struct ClientStats {
     /// Count of requests currently queued in memory or awaiting server responses on the wire.
     pub pending: usize,
-    /// Cumulative payload bytes transmitted to the server (untracked by native drivers,
-    /// defaults to `0`).
-    pub sent: u64,
-    /// Cumulative payload bytes received from the server (untracked by native drivers,
-    /// defaults to `0`).
-    pub received: u64,
     /// Total number of successful re-connections established following the initial connection.
     pub reconnects: u64,
     /// Highest ZooKeeper transaction identifier (`zxid`) observed by this client across all
@@ -717,8 +712,6 @@ impl Client {
     pub fn stats(&self) -> ClientStats {
         ClientStats {
             pending: self.shared.pending_len().unwrap_or(0),
-            sent: 0,
-            received: 0,
             reconnects: self.state().epoch.saturating_sub(1),
             last_zxid: self.last_zxid(),
             negotiated_timeout: self.negotiated_timeout(),

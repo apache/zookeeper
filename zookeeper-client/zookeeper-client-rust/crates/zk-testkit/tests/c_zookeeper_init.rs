@@ -106,7 +106,7 @@ fn test_basic() {
         let h = p
             .builder_with(501, |c| {
                 hosts = Some(use_hosts(c, HOST));
-                c.client_id = cid;
+                c.client_id = cid.clone();
             })
             .default_watcher(Some(W0))
             .build();

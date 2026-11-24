@@ -426,7 +426,7 @@ Unit tests make each package testable alone. Each end-to-end test file in `tests
 - `get_children` returns `Vec<String>` (spec). `get_children_with_stat` gives the stat too. Versions take `impl VersionArg` (`Version` or `None`).
 - `StateWatcher::last_error` is a spec addition. `StateWatcher` holds an `Arc<StateCell>`, and `wait_changed` (feature `blocking`) is an addition.
 - `MultiResults::get` returns `Option`. `ReadyFuture` gives a `Result`.
-- The drivers do not count bytes. Thus `ClientStats::{sent, received}` stay 0, and the client never calls `Metrics::bytes`.
+- The drivers do not count bytes. Thus `ClientStats` has no byte counters, and the client never calls `Metrics::bytes`.
 - `blocking_refused` refuses a wait on the IO side of any client. For a client of the tokio driver, it also refuses a wait in any tokio runtime context. Tokio has no public test that tells a worker from a `spawn_blocking` thread, so such a client also refuses a wait in `spawn_blocking`. A client of the thread driver accepts a wait in each tokio context, also in a worker, because the wait cannot stop its driver. In such a context, a client of the tokio driver can use `Handle::block_on` on the future.
 - With no `ClientBuilder::runtime`, the client uses the current tokio runtime only when it is a multi-thread runtime. A current thread runtime gets the thread driver.
 - The futures and the one-shot watcher registrations keep a `driver::Gate`, the read gate reporter of the driver. Thus a take after the last `Client` drop still opens the read gate.

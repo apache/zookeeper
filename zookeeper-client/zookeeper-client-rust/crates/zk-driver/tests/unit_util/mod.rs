@@ -145,7 +145,7 @@ impl HostLeaves<TestTokens> for TestHost {
     }
 
     fn store_client_id(&self, id: &ClientId) {
-        self.ids.lock_owner().push(*id);
+        self.ids.lock_owner().push(id.clone());
     }
 
     fn log_enabled(&self, level: LogLevel) -> bool {

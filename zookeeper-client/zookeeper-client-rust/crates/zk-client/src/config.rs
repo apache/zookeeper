@@ -30,6 +30,7 @@ use crate::error::Error;
 /// Structured ensemble configuration representation parsed from `/zookeeper/config` or returned by
 /// reconfiguration operations.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct EnsembleConfig {
     /// Verbatim text payload retrieved from the `/zookeeper/config` znode.
     pub raw: String,
@@ -41,6 +42,7 @@ pub struct EnsembleConfig {
 
 /// Specification of an individual ensemble server parsed from a `server.N=...` entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ServerEntry {
     /// Unique numeric server identifier assigned to this ensemble node.
     pub id: u64,

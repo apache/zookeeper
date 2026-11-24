@@ -232,6 +232,43 @@ async fn null_data_reads_as_empty_or_none() {
     c.close().await.unwrap();
 }
 
+/// Verifies that when the fake server answers a `create` with a created path that fails path
+/// validation (`"/a//b"`) and answers `get_ephemerals` with a list holding one invalid path
+/// (`"/bad/"`), in both cases the client returns `Error::MarshallingError` instead of a path
+/// value.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_invalid_reply_path_is_a_marshalling_error() {
+    let fake = common::fake();
+    let c = connect(&fake).await;
+    let body = zk_jute::proto::Create2Response {
+        path: "/a//b".into(),
+        stat: zk_jute::data::Stat::default(),
+    }
+    .to_bytes();
+    fake.add_rule(
+        Rule::on_request()
+            .op(opcode::CREATE2)
+            .then(Action::ReplyWith { err: 0, body }),
+    );
+    let r = c
+        .create("/a", b"", CreateMode::Persistent, OPEN_ACL_UNSAFE)
+        .await;
+    assert_eq!(r, Err(Error::MarshallingError));
+    fake.clear_rules();
+    let body = zk_jute::proto::GetEphemeralsResponse {
+        ephemerals: vec!["/ok".into(), "/bad/".into()].into(),
+    }
+    .to_bytes();
+    fake.add_rule(
+        Rule::on_request()
+            .op(opcode::GET_EPHEMERALS)
+            .then(Action::ReplyWith { err: 0, body }),
+    );
+    assert_eq!(c.get_ephemerals("/").await, Err(Error::MarshallingError));
+    fake.clear_rules();
+    c.close().await.unwrap();
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn acl_round_trip() {
     let fake = common::fake();
@@ -431,14 +468,21 @@ async fn multi_rolls_back_on_a_failing_op_in_the_middle() {
     txn.create("/m2", b"", CreateMode::Persistent, OPEN_ACL_UNSAFE)
         .unwrap();
     let err = c.multi(&txn).await.unwrap_err();
-    assert_eq!(
-        err,
+    match &err {
         MultiError::Aborted {
-            index: 1,
-            error: Error::NoNode,
-            per_op: vec![None, Some(Error::NoNode), Some(Error::RuntimeInconsistency)],
+            index,
+            error,
+            per_op,
+            ..
+        } => {
+            assert_eq!((*index, error), (1, &Error::NoNode));
+            assert_eq!(
+                per_op,
+                &[None, Some(Error::NoNode), Some(Error::RuntimeInconsistency)]
+            );
         }
-    );
+        other => panic!("expected an abort: {other:?}"),
+    }
     assert_eq!(Error::from(err), Error::NoNode);
     assert!(fake.cluster().node("/m1").is_none());
     assert!(fake.cluster().node("/m2").is_none());
@@ -455,6 +499,7 @@ async fn multi_rolls_back_on_a_failing_op_in_the_middle() {
             index,
             error,
             per_op,
+            ..
         }) => {
             assert_eq!(index, 1);
             assert_eq!(error, Error::BadVersion);

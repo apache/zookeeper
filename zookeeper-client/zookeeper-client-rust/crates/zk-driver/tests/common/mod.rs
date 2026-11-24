@@ -118,7 +118,7 @@ impl HostLeaves<TestTokens> for IpHost {
     }
 
     fn store_client_id(&self, id: &ClientId) {
-        self.ids.lock().unwrap().push(*id);
+        self.ids.lock().unwrap().push(id.clone());
     }
 
     fn log_enabled(&self, level: LogLevel) -> bool {

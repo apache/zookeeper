@@ -912,7 +912,7 @@ match client.multi(&txn).await {
     Ok(results) => {
         let created_path: &ZPath = results.get(job);
     }
-    Err(MultiError::Aborted { index, error, per_op }) => {
+    Err(MultiError::Aborted { index, error, per_op, .. }) => {
         // Transaction aborted by server due to sub-operation failure
     }
     Err(MultiError::Request(err)) => {

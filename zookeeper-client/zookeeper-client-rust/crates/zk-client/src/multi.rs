@@ -72,10 +72,27 @@ enum WriteOp<'a> {
 }
 
 /// Fluent builder for assembling atomic transactional mutation batches (ZooKeeper `multi` opcode).
-#[derive(Clone, Debug)]
+///
+/// Cloning copies the queued operations and assigns a fresh writer ID. An operation handle
+/// resolves only against the results of the writer with the same writer ID (see
+/// [`MultiResults::get`]), so after clones diverge, a handle from one clone, the original
+/// included, does not resolve against the results of another.
+#[derive(Debug)]
 pub struct MultiWriter<'a> {
     ops: Vec<WriteOp<'a>>,
     writer_id: u64,
+}
+
+impl Clone for MultiWriter<'_> {
+    /// Copies the queued operations with a fresh writer ID so that operation handles from one
+    /// clone, the original included, do not resolve against the results of another (see
+    /// [`MultiResults::get`]).
+    fn clone(&self) -> Self {
+        Self {
+            ops: self.ops.clone(),
+            writer_id: next_writer_id(),
+        }
+    }
 }
 
 impl Default for MultiWriter<'_> {
@@ -838,6 +855,27 @@ mod tests {
         // Verifies that out-of-bounds indices return None.
         let past: OpHandle<()> = OpHandle::new(9, w.writer_id());
         assert!(res.get(past).is_none());
+    }
+
+    #[test]
+    fn a_clone_has_its_own_writer_id() {
+        let mut a = MultiWriter::new();
+        a.create("/a", b"", CreateMode::Persistent, OPEN_ACL_UNSAFE)
+            .unwrap();
+        let mut b = a.clone();
+        assert_ne!(a.writer_id(), b.writer_id());
+        assert_eq!(b.len(), 1);
+        // The two clones enqueue different operations at the same index.
+        let ha = a
+            .create("/x", b"", CreateMode::Persistent, OPEN_ACL_UNSAFE)
+            .unwrap();
+        let hb = b
+            .create("/b", b"", CreateMode::Persistent, OPEN_ACL_UNSAFE)
+            .unwrap();
+        assert_eq!(ha.index(), hb.index());
+        let res = decode_multi(result(0, Some(committed())), b.writer_id()).unwrap();
+        assert!(res.get(hb).is_some());
+        assert!(res.get(ha).is_none());
     }
 
     #[test]

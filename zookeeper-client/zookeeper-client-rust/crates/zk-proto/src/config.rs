@@ -30,7 +30,10 @@ use crate::legacy::addrvec::EndpointAddr;
 use crate::legacy::connect::{HostSpec as LegacyHostSpec, NativeHost};
 
 /// Session credential tuple consisting of the 64-bit session identifier and secret password.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
+///
+/// Does not implement `Copy` because it holds the session password, ensuring that every copy of
+/// the password is an explicit `clone`.
+#[derive(Clone, PartialEq, Eq, Hash, Default)]
 pub struct ClientId {
     /// ZooKeeper cluster-assigned 64-bit session identifier. A value of `0` requests initiation of
     /// a new session.

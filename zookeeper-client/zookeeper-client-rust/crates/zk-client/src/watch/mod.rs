@@ -42,6 +42,7 @@ use crate::types::Zxid;
 
 /// Notification event emitted when a monitored znode undergoes a state transition.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct WatchedEvent {
     /// Specific category of mutation that occurred on the monitored node.
     pub kind: EventKind,
@@ -70,6 +71,7 @@ pub enum EventKind {
 
 /// Registration mode governing persistent watch scope and event triggers (ZooKeeper 3.6+).
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum AddWatchMode {
     /// Monitors mutations occurring strictly on the registered znode path itself.
     Persistent,
@@ -101,6 +103,7 @@ impl AddWatchMode {
 /// Watcher category selector used when selectively deregistering active watchers via
 /// `remove_watches`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum WatcherKind {
     /// One-shot child watchers registered via `get_children` queries.
     Children,
@@ -131,7 +134,7 @@ impl WatcherKind {
 ///
 /// Maps event types 1 through 4 into [`EventKind`]. Ignores session state transitions and
 /// deregistration events, which are delivered out-of-band via specialized state channels. Returns
-/// `None` if the event path is null or invalid UTF-8.
+/// `None` when the event path is null, is not valid UTF-8, or fails path validation.
 pub(crate) fn event_from_proto(ev: &zk_proto::WatchedEvent) -> Option<WatchedEvent> {
     let kind = match ev.event_type {
         1 => EventKind::NodeCreated,
@@ -212,6 +215,7 @@ mod tests {
         assert!(event_from_proto(&proto_event(1, zk_jute::JString::Null, 1)).is_none());
         let bad = zk_jute::JString::from(vec![b'/', 0xff, 0xfe]);
         assert!(event_from_proto(&proto_event(1, bad, 1)).is_none());
+        assert!(event_from_proto(&proto_event(1, "/a/../b".into(), 1)).is_none());
     }
 
     #[test]

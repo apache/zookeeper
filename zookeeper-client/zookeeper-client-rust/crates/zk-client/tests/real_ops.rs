@@ -465,6 +465,7 @@ async fn multi_commits_and_aborts(ctx: Ctx) {
             index,
             error,
             per_op,
+            ..
         }) => {
             assert_eq!((index, error), (1, Error::BadVersion));
             assert_eq!(

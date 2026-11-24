@@ -44,7 +44,10 @@ use core::fmt;
 use zeroize::Zeroize;
 
 /// Shared protocol state context accessible across multiple sub-state machines.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// Does not implement `Copy` because it holds the session password through its [`ClientId`],
+/// ensuring that every copy is an explicit `clone`.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Core {
     /// Externally visible session state as reported through C APIs (`zoo_state`).
     pub(crate) state: State,
@@ -159,7 +162,7 @@ impl<T: Tokens> Connection<T> {
         let core = Core {
             state: State::NotConnected,
             phase: Phase::Idle,
-            client_id: cfg.client_id,
+            client_id: cfg.client_id.clone(),
             recv_timeout: cfg.timeout_ms,
             last_zxid: 0,
             seen_rw_before: cfg.client_id.session_id != 0,
@@ -249,7 +252,7 @@ impl<T: Tokens> Connection<T> {
     /// Returns the current session identity tuple (session ID and password).
     #[must_use]
     pub fn client_id(&self) -> ClientId {
-        self.core.client_id
+        self.core.client_id.clone()
     }
 
     /// Returns the highest ZooKeeper transaction ID (`zxid`) acknowledged by the cluster.

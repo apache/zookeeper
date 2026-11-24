@@ -73,6 +73,7 @@ async fn abort_of(c: &Client, txn: &MultiWriter<'_>) -> (usize, Error, Vec<Optio
             index,
             error,
             per_op,
+            ..
         }) => (index, error, per_op),
         other => panic!("expected an abort: {other:?}"),
     }
@@ -424,6 +425,7 @@ async fn sequential_node_create_in_async_multi(ctx: Ctx) {
                 index,
                 error,
                 per_op,
+                ..
             }) => {
                 assert_eq!((index, error), (1, Error::NodeExists));
                 assert_eq!(per_op, vec![None, Some(Error::NodeExists)]);

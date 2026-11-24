@@ -31,7 +31,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use apache_zookeeper::{
-    Client, ClientBuilder, Error, Resolve, ServerOrder, SessionState, StateWatcher,
+    Client, ClientBuilder, DnsRefresh, Error, Resolve, ServerOrder, SessionState, StateWatcher,
 };
 use zk_fakeserver::{Action, Cluster, ClusterConfig, Rule, ServerOptions};
 use zk_jute::opcode;
@@ -217,5 +217,32 @@ fn a_zero_timeout_is_refused() {
     assert!(!refused(
         b().session_timeout(Duration::from_millis(2))
             .connect_timeout(Duration::from_millis(1))
+    ));
+}
+
+/// Asserts that `build()` fails with [`Error::InvalidArgument`] for a `max_pending_requests`,
+/// `dispatch_queue_capacity`, or `persistent_watch_buffer` of 0 and for a DNS refresh interval of
+/// 0 or 10 microseconds, and that it accepts limits of 1 with a 1 ms interval.
+#[test]
+fn zero_limits_are_refused() {
+    let refused = |b: ClientBuilder| match b.build() {
+        Err(e) => matches!(e.error(), Error::InvalidArgument(_)),
+        Ok(_) => false,
+    };
+    let b = || Client::builder("127.0.0.1:1");
+    assert!(refused(b().max_pending_requests(0)));
+    assert!(refused(b().dispatch_queue_capacity(0)));
+    assert!(refused(b().persistent_watch_buffer(0)));
+    assert!(refused(
+        b().dns_refresh(DnsRefresh::Interval(Duration::ZERO))
+    ));
+    assert!(refused(
+        b().dns_refresh(DnsRefresh::Interval(Duration::from_micros(10)))
+    ));
+    assert!(!refused(
+        b().max_pending_requests(1)
+            .dispatch_queue_capacity(1)
+            .persistent_watch_buffer(1)
+            .dns_refresh(DnsRefresh::Interval(Duration::from_millis(1)))
     ));
 }

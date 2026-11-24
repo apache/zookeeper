@@ -80,6 +80,7 @@ impl SessionState {
 
 /// Immutable snapshot capturing the current state and connection history of a ZooKeeper session.
 #[derive(Clone)]
+#[non_exhaustive]
 pub struct SessionInfo {
     /// Current connection lifecycle state.
     pub state: SessionState,

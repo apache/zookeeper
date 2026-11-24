@@ -381,6 +381,7 @@ impl std::error::Error for DisconnectCause {}
 #[non_exhaustive]
 pub enum MultiError {
     /// Ensemble rejected and atomically rolled back the transaction batch.
+    #[non_exhaustive]
     Aborted {
         /// Zero-based position index of the first operation in the batch that triggered the
         /// failure.
@@ -609,6 +610,22 @@ fn sasl_teardown(_probed: Option<LastError>) -> LastErrorUpdate {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Verifies the `Display` text and [`Error`] conversion of [`MultiError::Aborted`], which is
+    /// `#[non_exhaustive]` and can only be constructed within this crate.
+    #[test]
+    fn aborted_text_and_error() {
+        let e = MultiError::Aborted {
+            index: 2,
+            error: Error::BadVersion,
+            per_op: vec![None, None, Some(Error::BadVersion)],
+        };
+        assert_eq!(
+            e.to_string(),
+            "transaction rolled back: operation 2 failed: KeeperErrorCode = BadVersion"
+        );
+        assert_eq!(Error::from(e), Error::BadVersion);
+    }
 
     #[test]
     fn submit_errors() {

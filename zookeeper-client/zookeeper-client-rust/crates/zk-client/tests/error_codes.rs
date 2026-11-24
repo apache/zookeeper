@@ -203,15 +203,6 @@ fn other_display_texts() {
         "the server closed the connection"
     );
 
-    let aborted = MultiError::Aborted {
-        index: 1,
-        error: Error::NoNode,
-        per_op: vec![None, Some(Error::NoNode)],
-    };
-    assert_eq!(
-        aborted.to_string(),
-        "transaction rolled back: operation 1 failed: KeeperErrorCode = NoNode"
-    );
     assert_eq!(
         MultiError::Request(Error::ConnectionLoss).to_string(),
         "KeeperErrorCode = ConnectionLoss"

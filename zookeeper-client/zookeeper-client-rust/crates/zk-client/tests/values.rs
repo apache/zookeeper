@@ -213,16 +213,6 @@ fn error_predicates() {
 
 #[test]
 fn multi_watch_and_disconnect_texts() {
-    let e = MultiError::Aborted {
-        index: 2,
-        error: Error::BadVersion,
-        per_op: vec![None, None, Some(Error::BadVersion)],
-    };
-    assert_eq!(
-        e.to_string(),
-        "transaction rolled back: operation 2 failed: KeeperErrorCode = BadVersion"
-    );
-    assert_eq!(Error::from(e), Error::BadVersion);
     let e = MultiError::from(Error::ConnectionLoss);
     assert_eq!(e.to_string(), "KeeperErrorCode = ConnectionLoss");
 

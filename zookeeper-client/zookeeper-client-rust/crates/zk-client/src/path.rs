@@ -47,6 +47,7 @@ pub struct ZPathBuf(String);
 
 /// Detailed diagnostic information explaining why a path failed validation.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub struct PathError {
     /// The invalid path string that was evaluated.
     pub path: String,
@@ -434,16 +435,18 @@ impl ZPathBuf {
 
     /// Decodes a server-returned byte payload into a validated path buffer.
     ///
-    /// Validates UTF-8 encoding integrity while relying on the server's canonical string semantics
-    /// and the lower-level protocol handler's chroot strip logic.
+    /// Verifies that the payload is valid UTF-8 and passes the same non-sequential path validation
+    /// rules as [`ZPathBuf::new`], ensuring a faulty server cannot produce a `ZPathBuf` that
+    /// breaks the type invariant [`PathArg`] relies on when skipping validation for `ZPathBuf`.
+    /// The payload is the path after the lower-level protocol layer has stripped the chroot.
     ///
     /// # Errors
     ///
-    /// Returns [`Error::MarshallingError`] if the incoming byte payload is not valid UTF-8.
+    /// Returns [`Error::MarshallingError`] if the payload is not valid UTF-8 or not a valid path.
     pub(crate) fn from_server(bytes: Vec<u8>) -> Result<ZPathBuf, Error> {
-        String::from_utf8(bytes)
-            .map(ZPathBuf)
-            .map_err(|_| Error::MarshallingError)
+        let s = String::from_utf8(bytes).map_err(|_| Error::MarshallingError)?;
+        check(&s, false).map_err(|_| Error::MarshallingError)?;
+        Ok(ZPathBuf(s))
     }
 
     /// Borrows this path buffer as an immutable [`ZPath`] reference.
@@ -607,12 +610,23 @@ mod tests {
     }
 
     #[test]
-    fn server_paths_check_utf8_only() {
+    fn server_paths_are_validated() {
         assert!(ZPathBuf::from_server(b"/a".to_vec()).is_ok());
-        assert_eq!(
-            ZPathBuf::from_server(vec![0x2f, 0xff]).unwrap_err(),
-            Error::MarshallingError
-        );
+        assert!(ZPathBuf::from_server(b"/".to_vec()).is_ok());
+        for bad in [
+            vec![0x2f, 0xff],
+            b"a".to_vec(),
+            b"/a/".to_vec(),
+            b"/a//b".to_vec(),
+            b"/a/../b".to_vec(),
+            b"/a\0b".to_vec(),
+        ] {
+            assert_eq!(
+                ZPathBuf::from_server(bad.clone()).unwrap_err(),
+                Error::MarshallingError,
+                "{bad:?}"
+            );
+        }
     }
 
     /// Asserts equivalence of acceptance verdicts between the compile-time const validator and the
