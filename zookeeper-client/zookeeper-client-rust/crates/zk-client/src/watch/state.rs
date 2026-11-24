@@ -455,15 +455,27 @@ impl StateWatcher {
     /// driver. In Tokio contexts, use `Handle::block_on` on [`StateWatcher::changed`] instead.
     #[cfg(feature = "blocking")]
     pub fn wait_changed(&mut self) -> Result<SessionInfo, Error> {
-        if blocking_refused(self.cell.tokio_driver) {
-            return Err(Error::InvalidState);
-        }
         loop {
             // Block indefinitely until a state revision update is produced.
-            if let Some(info) = self.cell.wait_changed(&mut self.seen, None) {
+            if let Some(info) = self.wait_changed_until(None)? {
                 return Ok(info);
             }
         }
+    }
+
+    /// Synchronously blocks like [`StateWatcher::wait_changed`] until the session state changes or
+    /// `deadline` passes (`None` indicates no deadline). Returns `Ok(None)` when the deadline
+    /// elapses first, and returns `Err(Error::InvalidState)` immediately in the same contexts as
+    /// `wait_changed` (see that method's `# Errors` section).
+    #[cfg(feature = "blocking")]
+    pub(crate) fn wait_changed_until(
+        &mut self,
+        deadline: Option<Instant>,
+    ) -> Result<Option<SessionInfo>, Error> {
+        if blocking_refused(self.cell.tokio_driver) {
+            return Err(Error::InvalidState);
+        }
+        Ok(self.cell.wait_changed(&mut self.seen, deadline))
     }
 }
 

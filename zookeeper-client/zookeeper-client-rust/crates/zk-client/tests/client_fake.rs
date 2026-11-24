@@ -745,6 +745,60 @@ async fn connect_survives_a_loss_before_the_auth_reply() {
     within(c.close()).await.unwrap();
 }
 
+/// Verifies that `connect()` succeeds when the server drops the connection upon receiving the
+/// authentication request before replying and the client reconnects to a read-only server (which
+/// replies to a `sync` with `NOTREADONLY`). Asserts that `connect()` completes in the read-only
+/// state, the client connected at least twice, and the server reports the `digest` identity.
+#[tokio::test]
+async fn connect_survives_an_auth_loss_on_a_read_only_server() {
+    let fs = FakeServer::start_with(
+        ClusterConfig::default(),
+        ServerOptions {
+            read_only: true,
+            ..ServerOptions::default()
+        },
+    )
+    .expect("fake server bind");
+    fs.add_rule(Rule::on_request().op(OP_AUTH).once().then(Action::Close));
+    let c = within(
+        builder(&fs.connect_string())
+            .allow_read_only(true)
+            .auth("digest", b"a:b".to_vec())
+            .connect(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(c.state().state, SessionState::ConnectedReadOnly);
+    assert!(fs.accepted() >= 2, "the client must connect again");
+    let ids = within(c.who_am_i()).await.unwrap();
+    assert!(ids.iter().any(|i| i.auth_scheme == "digest"), "{ids:?}");
+    within(c.close()).await.unwrap();
+}
+
+/// Synchronous blocking (`wait()`) form of [`connect_survives_an_auth_loss_on_a_read_only_server`].
+#[cfg(feature = "blocking")]
+#[test]
+fn blocking_connect_survives_an_auth_loss_on_a_read_only_server() {
+    let fs = FakeServer::start_with(
+        ClusterConfig::default(),
+        ServerOptions {
+            read_only: true,
+            ..ServerOptions::default()
+        },
+    )
+    .expect("fake server bind");
+    fs.add_rule(Rule::on_request().op(OP_AUTH).once().then(Action::Close));
+    let c = builder(&fs.connect_string())
+        .allow_read_only(true)
+        .auth("digest", b"a:b".to_vec())
+        .connect()
+        .wait()
+        .unwrap();
+    assert_eq!(c.state().state, SessionState::ConnectedReadOnly);
+    assert!(fs.accepted() >= 2, "the client must connect again");
+    c.close().wait().unwrap();
+}
+
 /// Confirms that authentication rejection on a subsequent reconnection attempt correctly
 /// terminates the pending connection future with `Error::AuthFailed`.
 #[tokio::test]
@@ -1096,6 +1150,99 @@ mod blocking {
     use super::*;
     #[cfg(feature = "tokio")]
     use apache_zookeeper::{Runtime, ThreadOptions};
+
+    /// Binds a listener on an ephemeral loopback port and drops it, returning a port on which
+    /// connections are refused.
+    fn refused_port() -> u16 {
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        l.local_addr().unwrap().port()
+    }
+
+    /// Polls the state watcher until the session state is `SessionState::Closed`, failing the test
+    /// if that takes longer than `WAIT`.
+    fn wait_closed(w: &mut apache_zookeeper::StateWatcher) {
+        let end = std::time::Instant::now().checked_add(WAIT).unwrap();
+        while w.current().state != SessionState::Closed {
+            assert!(std::time::Instant::now() < end, "the client must close");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    /// Asserts that against an unreachable ensemble, a 300 ms `wait_timeout` returns
+    /// `Error::OperationTimeout` after at least 300 ms and in under 2 s, and that the client is
+    /// closed.
+    #[test]
+    fn connect_wait_timeout_ends_against_no_server() {
+        let f = builder(&format!("127.0.0.1:{}", refused_port()))
+            .connect_timeout(Duration::from_millis(100))
+            .connect();
+        let mut w = f.state_watcher();
+        let start = std::time::Instant::now();
+        let e = f.wait_timeout(Duration::from_millis(300)).unwrap_err();
+        let took = start.elapsed();
+        assert_eq!(e.error(), &Error::OperationTimeout);
+        assert!(took >= Duration::from_millis(300), "{took:?}");
+        assert!(took < Duration::from_secs(2), "{took:?}");
+        wait_closed(&mut w);
+    }
+
+    /// Verifies that the timeout bound also covers awaiting authentication replies: when the
+    /// server delays the auth reply by 3 s, a 300 ms `wait_timeout` still returns
+    /// `Error::OperationTimeout` in under 2 s and closes the client.
+    #[test]
+    fn connect_wait_timeout_covers_the_auth_reply() {
+        let fs = common::fake();
+        fs.add_rule(
+            Rule::on_request()
+                .op(OP_AUTH)
+                .then(Action::Delay(Duration::from_secs(3)))
+                .then(Action::Model),
+        );
+        let f = builder(&fs.connect_string())
+            .auth("digest", b"a:b".to_vec())
+            .connect();
+        let mut w = f.state_watcher();
+        let start = std::time::Instant::now();
+        let e = f.wait_timeout(Duration::from_millis(300)).unwrap_err();
+        assert_eq!(e.error(), &Error::OperationTimeout);
+        assert!(
+            start.elapsed() < Duration::from_secs(2),
+            "{:?}",
+            start.elapsed()
+        );
+        wait_closed(&mut w);
+    }
+
+    /// Asserts that a bounded wait returns a connected client when connection establishment
+    /// completes within the bound.
+    #[test]
+    fn connect_wait_timeout_returns_the_client() {
+        let fs = common::fake();
+        let c = builder(&fs.connect_string())
+            .auth("digest", b"a:b".to_vec())
+            .connect()
+            .wait_timeout(WAIT)
+            .unwrap();
+        assert!(c.state().state.is_connected());
+        c.close().wait().unwrap();
+    }
+
+    /// Asserts that `blocking::Client::connect_timeout` against an unreachable ensemble returns
+    /// `Error::OperationTimeout` in under 2 s.
+    #[test]
+    fn blocking_connect_timeout_ends_against_no_server() {
+        let b = builder(&format!("127.0.0.1:{}", refused_port()))
+            .connect_timeout(Duration::from_millis(100));
+        let start = std::time::Instant::now();
+        let e = apache_zookeeper::blocking::Client::connect_timeout(b, Duration::from_millis(300))
+            .unwrap_err();
+        assert_eq!(e.error(), &Error::OperationTimeout);
+        assert!(
+            start.elapsed() < Duration::from_secs(2),
+            "{:?}",
+            start.elapsed()
+        );
+    }
 
     /// Asserts that synchronous blocking connection tolerates link loss during credential exchange
     /// and resumes upon reconnection.

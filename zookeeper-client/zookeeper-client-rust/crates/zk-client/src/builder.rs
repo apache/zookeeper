@@ -29,6 +29,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::time::Duration;
+#[cfg(feature = "blocking")]
+use std::time::Instant;
 
 #[cfg(not(feature = "tls-rustls"))]
 use zk_driver::net::tls::TlsConnector;
@@ -707,7 +709,29 @@ impl ConnectFuture {
     /// Also returns it in any Tokio runtime context, `spawn_blocking` included, when the client
     /// uses the Tokio driver. In that context, use `Handle::block_on` instead.
     #[cfg(feature = "blocking")]
-    pub fn wait(mut self) -> Result<Client, ConnectError> {
+    pub fn wait(self) -> Result<Client, ConnectError> {
+        self.wait_until(None)
+    }
+
+    /// Synchronously blocks the calling thread like [`ConnectFuture::wait`], but for at most `d`.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same errors as [`ConnectFuture::wait`]. If `d` elapses before connection
+    /// establishment completes, closes the client created for the connection and returns a
+    /// [`ConnectError`] holding [`Error::OperationTimeout`] with the root cause of the most recent
+    /// connection loss, if any, as its cause.
+    #[cfg(feature = "blocking")]
+    pub fn wait_timeout(self, d: Duration) -> Result<Client, ConnectError> {
+        // When `Instant::now() + d` overflows the range of `Instant`, waits without a deadline,
+        // matching `ResponseFuture::wait_timeout`.
+        self.wait_until(Instant::now().checked_add(d))
+    }
+
+    /// Synchronously blocks until connection establishment completes or `deadline` passes (`None`
+    /// indicates no deadline); used by both `wait` and `wait_timeout`.
+    #[cfg(feature = "blocking")]
+    fn wait_until(mut self, deadline: Option<Instant>) -> Result<Client, ConnectError> {
         if blocking_refused(self.watcher.tokio_driver()) {
             return Err(Error::InvalidState.into());
         }
@@ -723,11 +747,20 @@ impl ConnectFuture {
                 if info.state.is_connected() {
                     break;
                 }
-                self.watcher.wait_changed()?;
+                if self.watcher.wait_changed_until(deadline)?.is_none() {
+                    return Err(self.timed_out());
+                }
             }
             while !self.auth.is_empty() {
                 let f = self.auth.remove(0);
-                match f.wait() {
+                let r = match deadline {
+                    None => f.wait(),
+                    Some(d) => match f.wait_timeout(d.saturating_duration_since(Instant::now())) {
+                        Ok(r) => r,
+                        Err(_pending) => return Err(self.timed_out()),
+                    },
+                };
+                match r {
                     Ok(()) => {}
                     Err(e) if e.is_connection_loss() => {
                         self.after_auth_loss();
@@ -744,11 +777,14 @@ impl ConnectFuture {
     ///
     /// Incomplete authentication requests fail upon disconnection, but credentials remain
     /// registered in the protocol core. Dispatches a `sync` barrier to confirm that the server
-    /// successfully reauthenticated the session upon reconnection.
+    /// successfully reauthenticated the session upon reconnection. The barrier, a `sync` of `/`,
+    /// also treats the `NOTREADONLY` error code returned by a read-only server as success, because
+    /// the server sends that reply only after processing the authentication sent before the `sync`
+    /// on the same connection.
     fn after_auth_loss(&mut self) {
         self.auth.clear();
         if let Some(c) = &self.client {
-            self.auth.push(c.sync("/"));
+            self.auth.push(c.auth_barrier());
         }
     }
 }
@@ -806,6 +842,16 @@ impl Future for ConnectFuture {
 }
 
 impl ConnectFuture {
+    /// Constructs the timeout error for [`ConnectFuture::wait_timeout`], combining
+    /// [`Error::OperationTimeout`] and the last connection-loss cause from the state watcher into
+    /// a [`ConnectError`], and drops the client handle, closing the client.
+    #[cfg(feature = "blocking")]
+    fn timed_out(&mut self) -> ConnectError {
+        let cause = self.watcher.last_error();
+        self.client = None;
+        ConnectError::new(Error::OperationTimeout, cause)
+    }
+
     /// Constructs a terminal connection error from session status and releases the client handle
     /// to terminate background drivers.
     fn terminal(&mut self, info: SessionInfo) -> ConnectError {

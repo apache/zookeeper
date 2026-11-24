@@ -523,6 +523,24 @@ impl Client {
         )
     }
 
+    /// Dispatches a `sync` request for the root path `/` to confirm replayed authentication
+    /// following reconnection.
+    ///
+    /// Because a server processes requests on a single connection in order, a successful reply to
+    /// this request confirms that the server has processed the authentication requests replayed
+    /// earlier on the same connection. A read-only server replies to the `sync` with `NOTREADONLY`
+    /// only after processing the replayed authentication, which likewise confirms it; the returned
+    /// future resolves to `Ok(())` in both cases.
+    pub(crate) fn auth_barrier(&self) -> ResponseFuture<()> {
+        self.request_at(
+            &"/",
+            false,
+            OpKind::Sync,
+            ops::sync,
+            decode::boxed(decode::auth_barrier),
+        )
+    }
+
     // ---- Atomic Transactions ----
 
     /// Executes a batch of mutating operations as an atomic transaction.

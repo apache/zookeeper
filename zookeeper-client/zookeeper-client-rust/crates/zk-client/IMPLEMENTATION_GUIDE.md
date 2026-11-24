@@ -90,7 +90,7 @@ These files hold the infrastructure of all packages.
 | `src/route.rs` | `Router`: the `RouteSink` of the client. |
 | `src/driver.rs` | `DriverHandle`, `CloseWait`, `ExitSignal`, `ClientSpawner`, `driver::start`. |
 | `src/shared.rs` | `Shared`, `ClientConfig`, `OneshotReg`, `PersistentReg`: the submit path and the watch detach rule. |
-| `src/blocking.rs` | `blocking::Client`. Each method calls the async method and `wait()`. |
+| `src/blocking.rs` | `blocking::Client`. Each method calls the async method and `wait()`, except `connect_timeout`, which calls `wait_timeout(d)`. |
 | `src/follow.rs` | The config follower of `update_servers_from_config` (section 6). |
 | `src/serde_impls.rs` | The `serde` rules of `Perms` and `Ttl` (feature `serde`). |
 | `tests/common/mod.rs` | `RealServer`, `real_port`, `fake`, `builder`, `WAIT`, and the helpers that several test files share, among them `within`, `connect`, `setup`, `fixture`, `wait_info`, `thread` and `ca_only`. |
@@ -323,7 +323,7 @@ Main functions:
 |---|---|
 | Every request method of `Client` | client.rs |
 | `ClientBuilder::{connect, build}` | builder.rs |
-| `ConnectFuture::wait`, `Future::poll` | builder.rs |
+| `ConnectFuture::{wait, wait_timeout}`, `Future::poll` | builder.rs |
 
 Calls made: section 2.5, rows "client".
 

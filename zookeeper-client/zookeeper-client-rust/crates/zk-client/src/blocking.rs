@@ -85,11 +85,30 @@ impl Client {
     ///
     /// Returns connection errors documented on[`ConnectFuture`](crate::ConnectFuture).
     pub fn connect(builder: ClientBuilder) -> std::result::Result<Client, ConnectError> {
-        let builder = match builder.runtime {
-            Some(Runtime::Thread(_)) => builder,
-            _ => builder.runtime(Runtime::Thread(ThreadOptions::default())),
-        };
-        builder.connect().wait().map(|inner| Client { inner })
+        thread_runtime(builder)
+            .connect()
+            .wait()
+            .map(|inner| Client { inner })
+    }
+
+    /// Establishes a client session like [`Client::connect`], running on a dedicated I/O thread
+    /// and blocking the calling thread for at most `d`.
+    ///
+    /// The bound `d` covers the entire connection process, including awaiting replies to
+    /// configured authentication credential requests, whereas [`ClientBuilder::connect_timeout`]
+    /// bounds each individual connection attempt only.
+    ///
+    /// # Errors
+    ///
+    /// Returns the errors of [`ConnectFuture::wait_timeout`](crate::ConnectFuture::wait_timeout).
+    pub fn connect_timeout(
+        builder: ClientBuilder,
+        d: Duration,
+    ) -> std::result::Result<Client, ConnectError> {
+        thread_runtime(builder)
+            .connect()
+            .wait_timeout(d)
+            .map(|inner| Client { inner })
     }
 
     /// Borrows the underlying asynchronous [`Client`] handle, enabling request pipelining across
@@ -410,5 +429,15 @@ impl Client {
     #[must_use = "the session lives on; use the credentials or close it"]
     pub fn detach(self) -> (SessionId, SessionPassword) {
         self.inner.detach()
+    }
+}
+
+/// Returns the builder unchanged when its runtime is already a [`Runtime::Thread`] configuration,
+/// and otherwise configures `Runtime::Thread` with default `ThreadOptions` so that the blocking
+/// client always runs on a dedicated I/O thread.
+fn thread_runtime(builder: ClientBuilder) -> ClientBuilder {
+    match builder.runtime {
+        Some(Runtime::Thread(_)) => builder,
+        _ => builder.runtime(Runtime::Thread(ThreadOptions::default())),
     }
 }

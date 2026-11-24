@@ -100,6 +100,17 @@ pub(crate) fn void(r: RawResult) -> Result<(), Error> {
     }
 }
 
+/// Decodes the `sync` reply to the connect authentication barrier. Maps a `NOTREADONLY`
+/// (`rc::ZNOTREADONLY`) reply code to success because a read-only server sends it only after
+/// processing the authentication sent before the `sync`, and decodes every other reply via
+/// [`void`].
+pub(crate) fn auth_barrier(r: RawResult) -> Result<(), Error> {
+    if r.rc == rc::ZNOTREADONLY {
+        return Ok(());
+    }
+    void(r)
+}
+
 /// Decodes node creation responses, returning the created path along with node metadata.
 pub(crate) fn create(r: RawResult) -> Result<(ZPathBuf, Stat), Error> {
     match reply_of(r)? {
