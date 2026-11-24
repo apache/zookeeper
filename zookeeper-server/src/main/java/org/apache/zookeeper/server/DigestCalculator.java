@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.CRC32;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.StatPersisted;
@@ -30,7 +31,7 @@ public class DigestCalculator {
 
     // The hardcoded digest version, should bump up this version whenever
     // we changed the digest method or fields.
-    private static final int DIGEST_VERSION = 2;
+    private static final int DIGEST_VERSION = 3;
 
 
     /**
@@ -95,7 +96,7 @@ public class DigestCalculator {
         bb.putLong(stat.getEphemeralOwner());
 
         CRC32 crc = new CRC32();
-        crc.update(path.getBytes());
+        crc.update(path.getBytes(StandardCharsets.UTF_8));
         if (data != null) {
             crc.update(data);
         }
