@@ -135,19 +135,20 @@ fn strip(text: &str) -> Result<String, usize> {
             prev = Some(' ');
             continue;
         }
-        if !prev.is_some_and(ident)
-            && let Some((hashes, body)) = raw_open(rest)
-        {
-            let close = format!("\"{}", "#".repeat(hashes));
-            let Some(end) = body.find(&close) else {
-                return Err(start);
-            };
-            out.push('"');
-            keep_newlines(body.get(..end).unwrap_or(""), &mut out, &mut line);
-            out.push('"');
-            rest = body.get(end.saturating_add(close.len())..).unwrap_or("");
-            prev = Some('"');
-            continue;
+        // Nested ifs keep the MSRV of 1.85, which has no let chains.
+        if !prev.is_some_and(ident) {
+            if let Some((hashes, body)) = raw_open(rest) {
+                let close = format!("\"{}", "#".repeat(hashes));
+                let Some(end) = body.find(&close) else {
+                    return Err(start);
+                };
+                out.push('"');
+                keep_newlines(body.get(..end).unwrap_or(""), &mut out, &mut line);
+                out.push('"');
+                rest = body.get(end.saturating_add(close.len())..).unwrap_or("");
+                prev = Some('"');
+                continue;
+            }
         }
         if let Some(body) = rest.strip_prefix('"') {
             let Some((skipped, after)) = skip_cooked(body, '"') else {

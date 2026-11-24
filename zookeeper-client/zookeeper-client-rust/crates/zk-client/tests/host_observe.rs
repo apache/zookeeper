@@ -17,7 +17,12 @@
 //! Host resolution and observability tests: custom address resolvers, resolver panic fault
 //! tolerance, structured tracing log attributes, and the telemetry `Metrics` hook.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 #![allow(clippy::disallowed_macros)]
 
 mod common;

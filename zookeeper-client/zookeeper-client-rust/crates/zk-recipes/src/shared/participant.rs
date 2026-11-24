@@ -96,6 +96,9 @@ impl ParticipantNode {
     ///
     /// If connection loss occurs during deletion, the method waits for reconnection and retries.
     /// Receiving `NoNode` on a retry confirms that the earlier deletion succeeded on the ensemble.
+    /// A server `ThrottledOp` reply causes an immediate retry on the same connection. The server
+    /// sends this reply only after it held the request for its throttle wait time, so the retry
+    /// does not spin.
     /// If deletion encounters an unexpected non-retryable error, the node remains armed for
     /// background guaranteed cleanup before surfacing the error to the caller.
     ///
@@ -112,6 +115,10 @@ impl ParticipantNode {
             let sent = (sent.state, sent.epoch);
             match self.client.delete(&self.path, None::<Version>).await {
                 Err(Error::NoNode) if maybe_applied => break Ok(()),
+                // The server did not apply a throttled request, so `maybe_applied` is unchanged.
+                // `is_retryable` excludes this error, because a wait for a new epoch would not
+                // end on a live connection.
+                Err(Error::ThrottledOp) => {}
                 Err(e) if is_retryable(&e) => {
                     maybe_applied |= e.is_connection_loss() && !read_only_epoch(&state, sent);
                     if let Err(t) = connected_after(&mut state, sent.1).await {

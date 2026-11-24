@@ -885,7 +885,11 @@ fn requests_fail_run<T: Tokens, F: FnMut(Pending<T>)>(
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    clippy::large_stack_frames
+)]
 mod tests {
     use super::*;
     use crate::compat::Compat;

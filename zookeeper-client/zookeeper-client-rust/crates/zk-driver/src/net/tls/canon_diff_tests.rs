@@ -32,7 +32,8 @@
     clippy::panic,
     clippy::indexing_slicing,
     clippy::arithmetic_side_effects,
-    clippy::cast_possible_truncation
+    clippy::cast_possible_truncation,
+    clippy::large_stack_frames
 )]
 
 use std::fs;

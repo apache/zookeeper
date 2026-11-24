@@ -219,7 +219,7 @@ pub(crate) fn ssl_server_purpose(leaf: &LegacyCert<'_>, ext_key_usage: bool) -> 
         return false;
     }
     let server_usage = KU_DIGITAL_SIGNATURE | KU_KEY_ENCIPHERMENT | KU_KEY_AGREEMENT;
-    !leaf.key_usage().is_some_and(|ku| ku & server_usage == 0)
+    leaf.key_usage().is_none_or(|ku| ku & server_usage != 0)
 }
 
 /// Checks whether a certificate includes critical extensions outside the handled set.

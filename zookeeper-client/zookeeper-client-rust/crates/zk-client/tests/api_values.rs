@@ -21,7 +21,12 @@
 //! discipline for sequential node creation, asserts create mode classification predicates, and
 //! validates wire encoding of extended znode modes.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 #![allow(clippy::disallowed_macros)]
 
 mod common;

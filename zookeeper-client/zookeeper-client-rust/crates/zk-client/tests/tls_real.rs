@@ -26,7 +26,8 @@
     clippy::unwrap_used,
     clippy::expect_used,
     clippy::panic,
-    clippy::print_stderr
+    clippy::print_stderr,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 

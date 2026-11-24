@@ -28,7 +28,8 @@
     clippy::expect_used,
     clippy::panic,
     clippy::indexing_slicing,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 
@@ -539,11 +540,10 @@ async fn dropped_start_with_create_in_flight_is_deleted_in_the_background() {
     common::within(client.close()).await.unwrap();
 }
 
-/// Verifies that if `Latch::close` receives a non-connection-loss error (such as
-/// `ThrottledOp`) on `delete`, it returns that error to the caller while handing
-/// the node to the background guaranteed-delete task for cleanup.
+/// Verifies that if `Latch::close` receives a server `ThrottledOp` reply on `delete`, it
+/// retries the delete and returns success, so the next candidate takes leadership.
 #[tokio::test]
-async fn close_with_a_failed_delete_hands_the_node_over() {
+async fn close_retries_a_throttled_delete() {
     const PATH: &str = "/close-throttled/latch";
     const ERR_THROTTLED: i32 = -127;
     let server = common::fake();
@@ -561,10 +561,7 @@ async fn close_with_a_failed_delete_hands_the_node_over() {
             .then(Action::Reply { err: ERR_THROTTLED }),
     );
     server.cluster().clear_transcript();
-    assert_eq!(
-        common::within(leader.close()).await,
-        Err(Error::ThrottledOp)
-    );
+    common::within(leader.close()).await.unwrap();
     common::within(next.await_leadership()).await.unwrap();
     assert_eq!(deletes_of(&server, &node), 2);
     common::within(next.close()).await.unwrap();

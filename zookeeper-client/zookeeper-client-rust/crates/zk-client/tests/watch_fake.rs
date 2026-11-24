@@ -19,7 +19,12 @@
 //! backpressure buffering overflow, session state tracking, and post-reconnection watch
 //! restoration.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 #![allow(clippy::disallowed_macros)]
 
 mod common;

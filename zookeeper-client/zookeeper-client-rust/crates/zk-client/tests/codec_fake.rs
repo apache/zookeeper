@@ -21,7 +21,12 @@
 //! representations, transactional multi-operation encoding (`MultiWriter`), atomic multi-read
 //! operations (`MultiReader`), and namespace chroot prefix stripping.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 #![allow(clippy::disallowed_macros)]
 
 mod common;

@@ -777,7 +777,10 @@ impl<T: DriverTokens> NativeShared<T> {
     /// Performs interruptible reactor polling across the self-pipe waker descriptor and the
     /// network socket.
     ///
-    /// When a waker interrupt fires while an active data-phase transport is registered and no
+    /// The socket joins the poll set only when the interest step requests events on it. With no
+    /// requested events, the reactor polls the waker alone with the same timeout.
+    ///
+    /// When a waker interrupt fires while an active data-phase transport has a socket and no
     /// close is pending, `WRITE` readiness is synthesized immediately so newly submitted requests
     /// flush during the current reactor pass.
     fn poll_io(&self, proof: &mut Unlocked, io: &mut NativeIo, out: &InterestOut) -> PollEvents {
@@ -790,8 +793,13 @@ impl<T: DriverTokens> NativeShared<T> {
         } else {
             self.idle_ms(proof)
         };
-        let flags =
-            (out.written && out.fd >= 0).then(|| request_flags(PollEvents::from_bits(out.bits)));
+        let has_fd = out.written && out.fd >= 0;
+        // Linux poll reports hangup and error on a socket even when it requests no events. After
+        // a reset, those reports persist. While the read gate holds reads, no pass can act on
+        // them, so a socket with no interest bits must stay out of the poll set.
+        let flags = has_fd
+            .then(|| request_flags(PollEvents::from_bits(out.bits)))
+            .filter(|f| !f.is_empty());
         let (woke, mut events) = match (io.io.conn.sock(), flags) {
             (Some(sock), Some(flags)) => {
                 let mut fds = [
@@ -812,10 +820,7 @@ impl<T: DriverTokens> NativeShared<T> {
             io.wake_rx.reset(&self.waker);
             // Synthesize write readiness on wakeup so newly queued outbound frames flush within
             // the current pass without requiring an extra interest evaluation and poll cycle.
-            if flags.is_some()
-                && io.io.conn.data_phase()
-                && !self.close_requested.load(Ordering::Acquire)
-            {
+            if has_fd && io.io.conn.data_phase() && !self.close_requested.load(Ordering::Acquire) {
                 events.write = true;
             }
         }

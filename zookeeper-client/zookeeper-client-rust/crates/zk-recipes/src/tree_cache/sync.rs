@@ -42,14 +42,31 @@
 //!
 //! # Per-Node Read Errors
 //!
-//! If a znode's data or children query fails with an error that is neither a connection-loss
-//! error nor a terminal session error (such as `Error::NoAuth` or a transient
-//! `Error::ThrottledOp`), the engine skips that znode and its descendants without queuing its
-//! children, records the path and error, and continues traversing the remaining tree so that a
-//! single unreadable znode does not fail the entire traversal. The owning cache surfaces the
-//! recorded errors and, during resynchronization, retains the cached state of each skipped znode
-//! and its subtree because a failed read does not indicate that the znode is gone.
-//! Connection-loss and terminal session errors abort the traversal with that error.
+//! A znode's data or children query can fail with an error that is neither a connection-loss
+//! error nor a terminal session error. The engine then sets that znode and its descendants
+//! aside without queuing its children, and continues to traverse the remaining tree. Thus a
+//! single unreadable znode does not fail the entire traversal. Connection-loss and terminal
+//! session errors abort the traversal with that error.
+//!
+//! The engine sorts these errors into two classes:
+//!
+//! - **Transient** errors are `Error::ThrottledOp` from the server and
+//!   `Error::TooManyPendingRequests` from the local request queue. They report load, not the
+//!   state of the znode, so the engine reads the znode again. When the queue of a round is
+//!   empty and its requests are complete, the engine starts a new round. That round traverses
+//!   again from each znode that a transient error set aside, so the znode and its whole subtree
+//!   enter the snapshot. The engine waits for room in the client request queue before a round
+//!   that follows `TooManyPendingRequests`. The server sends `ThrottledOp` only after its
+//!   throttle wait, so each round has a natural delay. At most `ROUNDS` retry rounds occur in
+//!   one traversal. After the last round, the engine skips each znode that is still unread.
+//! - **Authoritative** errors are all other errors, such as `Error::NoAuth`. A new read gives
+//!   the same result, so the engine skips the znode immediately.
+//!
+//! The engine records the path and error of each skipped znode. The traversal completes only
+//! after the retry rounds stop, so the snapshot is as complete as the server permits. A
+//! transient error that a later round clears is not recorded. The owning cache surfaces the
+//! recorded errors. During resynchronization, the cache keeps the cached state of each skipped
+//! znode and its subtree, because a failed read does not indicate that the znode is gone.
 
 use std::collections::VecDeque;
 use std::future::Future;
@@ -57,13 +74,24 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 
-use apache_zookeeper::{Client, Error, ResponseFuture, Stat, ZPath, ZPathBuf};
+use apache_zookeeper::{Client, Error, ReadyFuture, ResponseFuture, Stat, ZPath, ZPathBuf};
 
 use super::CachedNode;
 use super::tree::Tree;
 
 /// Maximum number of znodes evaluated concurrently in the sliding window pipeline.
 const WINDOW: usize = 256;
+
+/// Maximum number of retry rounds for znodes that a transient error set aside in one traversal.
+///
+/// The bound is small because each round re-reads only the znodes that failed. It stops a
+/// traversal under persistent throttling from re-reading the same znodes without end.
+const ROUNDS: usize = 3;
+
+/// Returns whether a per-node read error reports load and not the state of the znode.
+fn is_transient(e: &Error) -> bool {
+    matches!(e, Error::ThrottledOp | Error::TooManyPendingRequests)
+}
 
 /// Container caching an in-flight asynchronous response or its resolved value.
 #[derive(Debug)]
@@ -202,8 +230,15 @@ pub(super) struct Read {
     /// Sliding window pipeline of currently active node queries.
     flight: VecDeque<InFlight>,
     tree: Tree,
-    /// Paths and errors of znodes skipped during traversal, in breadth-first traversal order.
+    /// Paths and errors of znodes skipped during traversal. Authoritative skips come first in
+    /// breadth-first order, then the znodes that were still unread after the last retry round.
     skipped: Vec<(ZPathBuf, Error)>,
+    /// Paths, depths, and errors of znodes that a transient error set aside in this round.
+    retry: Vec<(ZPathBuf, usize, Error)>,
+    /// Number of retry rounds started.
+    rounds: usize,
+    /// Wait for room in the client request queue before the next round is dispatched.
+    ready: Option<ReadyFuture>,
 }
 
 impl Read {
@@ -224,6 +259,9 @@ impl Read {
             flight: VecDeque::new(),
             tree: Tree::new(root.clone()),
             skipped: Vec::new(),
+            retry: Vec::new(),
+            rounds: 0,
+            ready: None,
         };
         read.fill(client);
         read
@@ -260,6 +298,34 @@ impl Read {
         }
     }
 
+    /// Starts a retry round for the znodes that a transient error set aside, if one is due.
+    ///
+    /// Returns `false` when no retry is necessary or the round bound is reached. In the second
+    /// case, the unread znodes are recorded as skipped.
+    fn next_round(&mut self, client: &Client) -> bool {
+        if self.retry.is_empty() {
+            return false;
+        }
+        let retry = std::mem::take(&mut self.retry);
+        if self.rounds >= ROUNDS {
+            self.skipped
+                .extend(retry.into_iter().map(|(path, _, e)| (path, e)));
+            return false;
+        }
+        self.rounds = self.rounds.saturating_add(1);
+        // A local queue rejection fails at once. The wait for queue room prevents a round
+        // that the same full queue rejects again.
+        if retry
+            .iter()
+            .any(|(_, _, e)| matches!(e, Error::TooManyPendingRequests))
+        {
+            self.ready = Some(client.ready());
+        }
+        self.todo
+            .extend(retry.into_iter().map(|(path, depth, _)| (path, depth)));
+        true
+    }
+
     /// Progresses the traversal pipeline, returning the fully populated [`Tree`] snapshot upon
     /// completion.
     pub(super) fn poll(
@@ -268,8 +334,19 @@ impl Read {
         client: &Client,
     ) -> Poll<Result<Tree, Error>> {
         loop {
+            if let Some(ready) = self.ready.as_mut() {
+                // A session failure is not handled here. The reads of the round then fail
+                // with that error and abort the traversal.
+                if Pin::new(ready).poll(cx).is_pending() {
+                    return Poll::Pending;
+                }
+                self.ready = None;
+            }
             self.fill(client);
             let Some(front) = self.flight.front_mut() else {
+                if self.next_round(client) {
+                    continue;
+                }
                 let empty = Tree::new(self.tree.root().to_buf());
                 return Poll::Ready(Ok(std::mem::replace(&mut self.tree, empty)));
             };
@@ -282,7 +359,12 @@ impl Read {
             let (node, mut names) = match done.take() {
                 Ok(Some(found)) => found,
                 Ok(None) => continue,
-                // The znode and its subtree are skipped because its children are never queued.
+                // The znode and its subtree are set aside because its children are never
+                // queued. Its parent stays in the snapshot, so a retry round can insert it.
+                Err(e) if is_transient(&e) => {
+                    self.retry.push((done.path, done.depth, e));
+                    continue;
+                }
                 Err(e) if !e.is_connection_loss() && !e.is_session_terminal() => {
                     self.skipped.push((done.path, e));
                     continue;

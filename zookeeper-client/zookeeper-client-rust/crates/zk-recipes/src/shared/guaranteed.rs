@@ -32,10 +32,10 @@
 //!    non-retryable error (such as `NoNode`), cleanup concludes immediately without spawning a
 //!    background worker thread.
 //! 2. **Dedicated Background Retry Engine (`zk-recipes-delete`)**: If the initial deletion
-//!    fails due to transient connection loss, network partitions, or client queue saturation, the
-//!    task is promoted to a shared process-wide background worker thread. This background thread
-//!    spawns on demand when retries are required and automatically terminates when all pending
-//!    cleanup tasks are resolved.
+//!    fails due to transient connection loss, network partitions, client queue saturation, or
+//!    server throttling, the task is promoted to a shared process-wide background worker thread.
+//!    This background thread spawns on demand when retries are required and automatically
+//!    terminates when all pending cleanup tasks are resolved.
 //!
 //! # In-Flight Creation Reclamation
 //!
@@ -54,6 +54,10 @@
 //!   (`ConnectedReadOnly`) are ignored because read-only servers cannot commit deletion writes.
 //! - **Queue Saturation**: If deletion is rejected with `TooManyPendingRequests`, the task
 //!   suspends until the client's internal request pipeline drains before retrying.
+//! - **Server Throttling**: A server `ThrottledOp` reply follows the queue saturation rule. The
+//!   task does not spin, because the server sends this reply only after it held the request for
+//!   its throttle wait time. `ThrottledOp` is not a connection error: the session stays in the
+//!   same epoch, so a wait for a new epoch would never end.
 //! - **Reference Hygiene**: Pending tasks maintain [`WeakClient`] references rather than strong
 //!   references, ensuring that background retry loops never prevent idle ZooKeeper client sessions
 //!   from closing or garbage collecting cleanly.
@@ -188,7 +192,10 @@ enum Next {
 fn retry(e: &Error, epoch: u64, target: Target<'_>) -> Option<Next> {
     if is_retryable(e) {
         Some(Next::Epoch(epoch))
-    } else if matches!(e, Error::TooManyPendingRequests) {
+    } else if matches!(e, Error::TooManyPendingRequests | Error::ThrottledOp) {
+        // The local queue limit and the server throttle both refuse the request without
+        // applying it, on a live connection. A new epoch is not necessary, so the retry waits
+        // only for queue room and a writable connection.
         Some(Next::Room(epoch))
     } else {
         if may_strand(e) {
@@ -539,6 +546,7 @@ fn starts() -> usize {
 }
 
 #[cfg(test)]
+#[allow(clippy::large_stack_frames)]
 mod tests {
     //! Unit tests verifying background worker lifecycle, task retry loops, and session detachment.
 

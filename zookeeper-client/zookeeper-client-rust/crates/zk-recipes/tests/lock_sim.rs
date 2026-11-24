@@ -33,7 +33,8 @@
     clippy::expect_used,
     clippy::panic,
     clippy::indexing_slicing,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 
@@ -885,53 +886,54 @@ async fn dropped_lookup_after_connection_loss_is_deleted_in_the_background() {
     common::within(other.close()).await.unwrap();
 }
 
-/// Verifies that when `LockGuard::release` or `try_acquire` receives a non-connection-loss
-/// error (such as `ThrottledOp`) on `delete`, it surfaces that error to the caller while
-/// handing the node to the background guaranteed-delete task for immediate cleanup.
+/// Verifies that a server `ThrottledOp` reply to a `delete` is retried, not surfaced:
+/// `LockGuard::release` and `try_acquire` retry their own deletes, and the guaranteed delete of
+/// a dropped guard retries in the background, so that no lock znode remains to block the
+/// other contenders.
 #[tokio::test]
-async fn release_with_a_failed_delete_hands_the_node_over() {
+async fn a_throttled_delete_is_retried() {
     const PATH: &str = "/release-throttled";
     const ERR_THROTTLED: i32 = -127;
     let server = common::fake();
     let a = common::connect(&server.connect_string()).await;
     let b = common::connect(&server.connect_string()).await;
+    let throttle_once = |node: &str| {
+        Rule::on_request()
+            .op(OP_DELETE)
+            .path_prefix(node)
+            .once()
+            .then(Action::Reply { err: ERR_THROTTLED })
+    };
+
     let guard = common::within(DistributedLock::new(&a, PATH).unwrap().acquire())
         .await
         .unwrap();
-    let node = guard.node().as_str().to_owned();
-    server.add_rule(
-        Rule::on_request()
-            .op(OP_DELETE)
-            .path(&node)
-            .once()
-            .then(Action::Reply { err: ERR_THROTTLED }),
-    );
+    server.add_rule(throttle_once(guard.node().as_str()));
     server.cluster().clear_transcript();
-    assert_eq!(
-        common::within(guard.release()).await,
-        Err(Error::ThrottledOp)
-    );
+    common::within(guard.release()).await.unwrap();
+    assert_eq!(child_count(&server, PATH), 0);
+    assert_eq!(frames(&server, OP_DELETE).len(), 2);
+
+    // A dropped guard hands its node to the guaranteed delete, which retries the throttled
+    // delete in the background.
+    let guard = common::within(DistributedLock::new(&a, PATH).unwrap().acquire())
+        .await
+        .unwrap();
+    server.clear_rules();
+    server.add_rule(throttle_once(guard.node().as_str()));
+    server.cluster().clear_transcript();
+    drop(guard);
     until(&server, |s| child_count(s, PATH) == 0).await;
     assert_eq!(frames(&server, OP_DELETE).len(), 2);
 
-    // `try_acquire` behind an active holder similarly hands off its own node on delete failure.
+    // `try_acquire` behind an active holder similarly retries the delete of its own node.
     let held = common::within(DistributedLock::new(&b, PATH).unwrap().acquire())
         .await
         .unwrap();
     server.clear_rules();
-    server.add_rule(
-        Rule::on_request()
-            .op(OP_DELETE)
-            .path_prefix(&format!("{PATH}/_c_"))
-            .once()
-            .then(Action::Reply { err: ERR_THROTTLED }),
-    );
+    server.add_rule(throttle_once(&format!("{PATH}/_c_")));
     let lock = DistributedLock::new(&a, PATH).unwrap();
-    assert_eq!(
-        common::within(lock.try_acquire()).await.err(),
-        Some(Error::ThrottledOp)
-    );
-    until(&server, |s| child_count(s, PATH) == 1).await;
+    assert!(common::within(lock.try_acquire()).await.unwrap().is_none());
     assert_eq!(lock_order(&server, PATH), vec![held.node().name().unwrap()]);
     common::within(held.release()).await.unwrap();
     common::within(a.close()).await.unwrap();

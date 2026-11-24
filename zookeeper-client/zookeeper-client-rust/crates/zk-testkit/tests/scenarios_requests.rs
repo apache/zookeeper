@@ -23,7 +23,8 @@
     clippy::expect_used,
     clippy::panic,
     clippy::indexing_slicing,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 
@@ -33,7 +34,7 @@ use common::{Profile, connected};
 use zk_jute::multi::MultiBody;
 use zk_jute::rc;
 use zk_proto::{InputDefect, Reply, Route, Stage};
-use zk_testkit::server::InboundKind;
+use zk_testkit::server::{InboundKind, Rule, RuleAction};
 
 fn text(s: &zk_jute::JString) -> String {
     String::from_utf8(s.as_bytes().unwrap().to_vec()).unwrap()
@@ -160,8 +161,10 @@ fn read_and_write_ops_give_their_reply_shapes() {
     }
 }
 
-// A successful `multi` transaction returns per-op results with `ZOK`; a failed
-// check aborts the entire transaction atomically with the failing op's error code.
+// A successful `multi` transaction returns per-op results with `ZOK`. A failed check aborts the
+// entire transaction atomically. The Java server then sends header error `ZOK` and one error
+// result per op: `ZOK` before the failing op, its code at it, and `ZRUNTIMEINCONSISTENCY` after.
+// The completion code is the first non-zero per-op code.
 #[test]
 fn multi_commits_or_fails_as_one() {
     for p in Profile::ALL {
@@ -187,13 +190,46 @@ fn multi_commits_or_fails_as_one() {
             other => panic!("{p:?}: {other:?}"),
         }
         let r = h
-            .call(ops.multi(vec![ops.m_create("/m/b", b"", 0), ops.m_check("/m", 7)]))
+            .call(ops.multi(vec![
+                ops.m_create("/m/b", b"", 0),
+                ops.m_check("/m", 7),
+                ops.m_delete("/m/a", -1),
+            ]))
             .unwrap();
         assert_eq!(r.rc, rc::ZBADVERSION, "{p:?}");
-        // C `cleanup_failed_multi` omits per-op results for queued async `multi` calls.
-        assert!(r.reply.is_none(), "{p:?}");
+        match &r.reply {
+            Some(Reply::Multi(items)) => {
+                let errs: Vec<i32> = items.iter().map(|i| i.err).collect();
+                let want = [rc::ZOK, rc::ZBADVERSION, rc::ZRUNTIMEINCONSISTENCY];
+                assert_eq!(errs, want, "{p:?}");
+            }
+            other => panic!("{p:?}: {other:?}"),
+        }
         let r = h.call(ops.exists("/m/b", None)).unwrap();
         assert_eq!(r.rc, rc::ZNONODE, "the failed multi changed the tree");
+        h.expect_exactly_once().unwrap();
+    }
+}
+
+// C reference: `cleanup_failed_multi`. A reply header error rejects the whole `multi` request,
+// for example a request the server cannot decode. A sub-operation failure never causes it. The
+// rule injects this header error. A queued async `multi` call then gets no per-op results.
+#[test]
+fn header_error_multi_has_no_results() {
+    for p in Profile::ALL {
+        let mut h = connected(p, 28);
+        let ops = h.ops();
+        h.server_mut().add_rule(
+            Rule::on_request()
+                .op(zk_jute::opcode::MULTI)
+                .once()
+                .then(RuleAction::Error(rc::ZMARSHALLINGERROR)),
+        );
+        let r = h.call(ops.multi(vec![ops.m_create("/m", b"", 0)])).unwrap();
+        assert_eq!(r.rc, rc::ZMARSHALLINGERROR, "{p:?}");
+        assert!(r.reply.is_none(), "{p:?}");
+        let r = h.call(ops.exists("/m", None)).unwrap();
+        assert_eq!(r.rc, rc::ZNONODE, "the rejected multi changed the tree");
         h.expect_exactly_once().unwrap();
     }
 }

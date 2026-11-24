@@ -43,6 +43,17 @@
 //! watch notifications missed during disconnected periods, this full reconciliation ensures that
 //! intermediate changes committed during the disconnection gap are accurately reconciled into
 //! the local cache and surfaced as granular update events.
+//!
+//! # Unreadable Znodes
+//!
+//! A traversal reads again each znode that a transient error (`Error::ThrottledOp` or
+//! `Error::TooManyPendingRequests`) set aside, in a small bounded number of retry rounds. The
+//! [`sync`] module describes the rounds and their pacing. [`TreeEvent::Initialized`] and
+//! [`TreeEvent::Resynced`] come only after the retry rounds stop. Thus a consumer that waits for
+//! one of these events sees the most complete view that the server permits. The cache skips a
+//! znode that an authoritative error (such as `Error::NoAuth`) prevents it from reading. It also
+//! skips a znode that is still unread after the last retry round. It yields the error of each
+//! skipped znode before the events of that traversal.
 
 mod sync;
 mod tree;
@@ -157,9 +168,11 @@ impl TreeCache {
     /// I/O state.
     ///
     /// Terminal session failures yield `Some(Err(..))` once before subsequent invocations yield
-    /// `None`. Transient read errors (such as `NoAuth`) are surfaced as errors while allowing
-    /// cache progression to continue. During initial synchronization or resynchronization, any
-    /// znode that cannot be read is skipped along with its subtree, and its error is yielded
+    /// `None`. Non-terminal read errors (such as `NoAuth`) are surfaced as errors while allowing
+    /// cache progression to continue. During initial synchronization or resynchronization, the
+    /// traversal reads again a znode that a transient error (such as `ThrottledOp`) set aside,
+    /// in a bounded number of retry rounds, before it emits `Initialized` or `Resynced`. A znode
+    /// that still cannot be read is skipped along with its subtree, and its error is yielded
     /// before that traversal's events; during resynchronization, the cached state of a skipped
     /// znode and its subtree is retained without emitting removal events.
     pub async fn next(&mut self) -> Option<Result<TreeEvent, Error>> {
@@ -347,9 +360,9 @@ impl TreeCache {
             Ok(mut new) => {
                 self.epoch = epoch;
                 self.owed = false;
-                // A failed read (such as `ThrottledOp` under load) does not indicate that the
-                // znode was deleted; carry its cached subtree forward so reconciliation emits no
-                // removal events for it.
+                // A failed read (such as `NoAuth`, or `ThrottledOp` after the last retry round)
+                // does not indicate that the znode was deleted; carry its cached subtree forward
+                // so reconciliation emits no removal events for it.
                 for (path, e) in skipped {
                     new.carry(&self.tree, path.as_path());
                     self.errors.push_back(e);
@@ -471,6 +484,8 @@ impl TreeCacheBuilder {
     /// on ZooKeeper servers prior to version 3.6.0. Returns a terminal error if the session
     /// expires. A znode that cannot be read (such as [`Error::NoAuth`]) does not fail `start`;
     /// the cache skips that znode and its subtree and yields its error via [`TreeCache::next`].
+    /// A transient read error (such as [`Error::ThrottledOp`]) causes a bounded number of new
+    /// reads of that znode before the cache skips it.
     pub async fn start(self) -> Result<TreeCache, Error> {
         let root = self.root?;
         let client = self.client;

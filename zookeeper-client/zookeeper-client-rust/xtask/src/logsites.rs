@@ -60,9 +60,13 @@ fn library_sources(c_dir: &Path) -> Result<Vec<String>, Error> {
     let mut out = Vec::new();
     for dir in ["src", "src/hashtable"] {
         let mut names = Vec::new();
-        for e in std::fs::read_dir(c_dir.join(dir)).map_err(|e| Error::io(&c_dir.join(dir), &e))? {
-            let e = e.map_err(|e| Error::io(&c_dir.join(dir), &e))?;
-            let name = e.file_name().to_string_lossy().into_owned();
+        let entries =
+            std::fs::read_dir(c_dir.join(dir)).map_err(|e| Error::io(&c_dir.join(dir), &e))?;
+        // A directory entry can hold a large name buffer. The closure takes only the name, so the
+        // entry stays out of the stack frame of this function.
+        for name in entries.map(|e| e.map(|e| e.file_name())) {
+            let name = name.map_err(|e| Error::io(&c_dir.join(dir), &e))?;
+            let name = name.to_string_lossy().into_owned();
             let is_src = name.ends_with(".c") || name.ends_with(".h");
             // Exclude standalone CLI binaries (`cli.c`, `load_gen.c`) not linked into the library.
             if is_src && name != "cli.c" && name != "load_gen.c" {

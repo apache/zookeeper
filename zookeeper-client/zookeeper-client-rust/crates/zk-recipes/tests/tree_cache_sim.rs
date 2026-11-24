@@ -30,7 +30,8 @@
     clippy::expect_used,
     clippy::panic,
     clippy::indexing_slicing,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 
@@ -463,10 +464,10 @@ async fn failed_resync_is_retried() {
     assert_eq!(lists, 3);
 }
 
-/// Verifies that when a post-`Lagged` resync receives `ZTHROTTLEDOP` once on `get_data`
-/// of a cached znode, `next()` surfaces `Error::ThrottledOp`, emits no removal events,
-/// retains the cached znode and its subtree, and matches the server state after
-/// `Resynced`.
+/// Verifies that when a post-`Lagged` resync receives `ZTHROTTLEDOP` on every `get_data`
+/// of a cached znode, `next()` surfaces `Error::ThrottledOp` after the retry rounds,
+/// emits no removal events, retains the cached znode and its subtree, and matches the
+/// server state after `Resynced`.
 #[tokio::test]
 async fn throttled_read_in_resync_keeps_cached_subtree() {
     let server = common::fake();
@@ -485,7 +486,6 @@ async fn throttled_read_in_resync_keeps_cached_subtree() {
         Rule::on_request()
             .op(GET_DATA)
             .path("/r/a")
-            .once()
             .then(Action::Reply { err: ZTHROTTLEDOP }),
     );
     // Overflow the 1-slot watch buffer while `cache` is not being polled.
@@ -514,6 +514,126 @@ async fn throttled_read_in_resync_keeps_cached_subtree() {
     assert!(cache.get("/r/a/k").is_some());
     assert_quiet(&mut cache).await;
     assert_same(&cache, c, "/r", true, None);
+}
+
+/// Number of `get_data` frames that the cache sends for a znode under persistent
+/// throttling in one traversal: the first read and three retry rounds.
+const THROTTLED_READS: usize = 4;
+
+/// Counts the transcript frames with opcode `op` on `path`.
+fn frames_on(c: &Cluster, op: i32, path: &str) -> usize {
+    c.transcript()
+        .iter()
+        .filter(|f| f.op == Some(op) && f.path.as_deref() == Some(path))
+        .count()
+}
+
+/// Verifies that when the resync after a reconnect receives `ZTHROTTLEDOP` once on
+/// `get_data` of a cached znode whose subtree changed during the disconnection, a retry
+/// round reads that subtree again: `next()` yields no error, the differential events
+/// for the changed subtree precede `Resynced`, and the cache matches the server state.
+#[tokio::test]
+async fn throttled_read_in_resync_reads_changed_subtree() {
+    let mut server = common::fake();
+    build(&server, &["/r/a", "/r/a/k", "/r/b"]);
+    let client = common::connect(&server.connect_string()).await;
+    let mut state = client.state_watcher();
+    let mut cache = start(&client, &["/r", "/r/a", "/r/b", "/r/a/k"]).await;
+    let epoch = client.state().epoch;
+
+    // The next `get_data` on `/r/a` is the resync read after the reconnect.
+    server.add_rule(
+        Rule::on_request()
+            .op(GET_DATA)
+            .path("/r/a")
+            .once()
+            .then(Action::Reply { err: ZTHROTTLEDOP }),
+    );
+    server.stop();
+    common::wait_state(&mut state, |i| !i.state.is_connected()).await;
+    {
+        let c = server.cluster();
+        set(c, "/r/a/k", b"k1");
+        create(c, "/r/a/new", b"new");
+    }
+    server.resume().expect("resume");
+    common::wait_state(&mut state, |i| i.state.is_connected() && i.epoch > epoch).await;
+
+    assert_eq!(
+        until_mark(&mut cache).await,
+        ["~/r/a/k", "+/r/a/new", "Resynced"]
+    );
+    assert_quiet(&mut cache).await;
+    let c = server.cluster();
+    assert_same(&cache, c, "/r", true, None);
+    // The reads of `/r/a`: initial `start`, the throttled resync read, and the retry.
+    assert_eq!(frames_on(c, GET_DATA, "/r/a"), 3);
+}
+
+/// Verifies that when `start` receives `ZTHROTTLEDOP` once on `get_data` of a child, a
+/// retry round reads that child and its subtree before `Initialized`, `next()` yields no
+/// error, and later events below that child are applied.
+#[tokio::test]
+async fn throttled_read_at_start_reads_subtree() {
+    let server = common::fake();
+    let c = server.cluster();
+    build(&server, &["/r/a", "/r/b", "/r/b/x"]);
+    server.add_rule(
+        Rule::on_request()
+            .op(GET_DATA)
+            .path("/r/b")
+            .once()
+            .then(Action::Reply { err: ZTHROTTLEDOP }),
+    );
+    let client = common::connect(&server.connect_string()).await;
+    let mut cache = start(&client, &["/r", "/r/a", "/r/b", "/r/b/x"]).await;
+    assert_eq!(cache.children("/r/b").unwrap(), ["x"]);
+
+    // Events below the retried child need its cached entry as their parent.
+    create(c, "/r/b/x/y", b"y");
+    assert_eq!(label(&next(&mut cache).await), "+/r/b/x/y");
+    set(c, "/r/b/x", b"x1");
+    assert_eq!(label(&next(&mut cache).await), "~/r/b/x");
+    assert_quiet(&mut cache).await;
+    assert_same(&cache, c, "/r", true, None);
+}
+
+/// Verifies that when every `get_data` on a child receives `ZTHROTTLEDOP`, `start` reads
+/// the child a bounded number of times, then skips it: `next()` yields
+/// `Error::ThrottledOp` once before the events of the readable nodes and `Initialized`,
+/// and the cache sends no further reads of the child.
+#[tokio::test]
+async fn persistent_throttling_stops_after_the_round_bound() {
+    let server = common::fake();
+    let c = server.cluster();
+    build(&server, &["/r/a", "/r/b", "/r/b/x"]);
+    server.add_rule(
+        Rule::on_request()
+            .op(GET_DATA)
+            .path("/r/b")
+            .then(Action::Reply { err: ZTHROTTLEDOP }),
+    );
+    let client = common::connect(&server.connect_string()).await;
+    let mut cache = common::within(TreeCache::builder(&client, "/r").start())
+        .await
+        .expect("start");
+    assert_eq!(
+        common::within(cache.next()).await,
+        Some(Err(Error::ThrottledOp))
+    );
+    assert_eq!(
+        until_mark(&mut cache).await,
+        ["+/r", "+/r/a", "Initialized"]
+    );
+    assert_eq!(cache.get("/r/b"), None);
+    assert_eq!(cache.children("/r").unwrap(), ["a"]);
+    assert_eq!(frames_on(c, GET_DATA, "/r/b"), THROTTLED_READS);
+    assert_eq!(frames_on(c, GET_CHILDREN, "/r/b"), THROTTLED_READS);
+    // No retry continues after `start` returns.
+    assert_quiet(&mut cache).await;
+    assert_eq!(frames_on(c, GET_DATA, "/r/b"), THROTTLED_READS);
+    set(c, "/r/a", b"a1");
+    assert_eq!(label(&next(&mut cache).await), "~/r/a");
 }
 
 /// Verifies that when `restore_watches(false)` causes the persistent watcher to

@@ -298,6 +298,9 @@ pub fn spawn<T: DriverTokens>(
 ///
 /// Concurrently, background DNS resolution jobs dispatched across connection reconnects run on the
 /// blocking thread pool and are integrated into the wait phase.
+// Clippy counts the awaited step futures as stack locals. They live in the task state, which the
+// runtime keeps on the heap. Boxing each step would add an allocation to each loop pass.
+#[allow(clippy::large_stack_frames)]
 pub(crate) async fn run<T: DriverTokens>(shared: Arc<TaskShared<T>>) {
     let mut ob: Outbox<T> = Outbox::new();
     let mut bg: Option<BgTask> = None;

@@ -395,6 +395,12 @@ run_tests() {
 lint() {
   load_state
   cd "$ws"
+  # A missing component also makes its check fail. Probe each one first, so that the message
+  # names the missing component and not the code.
+  cargo fmt --version >/dev/null 2>&1 ||
+    fail "rustfmt is not installed: the rust-lint profile needs it (rustup component add rustfmt)"
+  cargo clippy --version >/dev/null 2>&1 ||
+    fail "clippy is not installed: the rust-lint profile needs it (rustup component add clippy)"
   cargo fmt --all --check || fail "cargo fmt --check found unformatted code: run cargo fmt --all"
   run_cargo clippy --workspace --exclude zk-ffi --all-targets -- -D warnings
   # shellcheck disable=SC2086
@@ -488,10 +494,37 @@ dropin_install() {
 # abi-check compares the exports of each shared library with the
 # goldens. check-abi runs the runtime ABI tests on the installed
 # libraries.
+#
+# The server tests of check-abi use the in-tree fake server. Thus the
+# reply paths of the shim run by default without a ZooKeeper server.
+# The fake server reads its standard input from a FIFO, and only this
+# shell holds the write end, on fd 9. The server stops at the end of
+# that input, so it stops when this shell exits for any reason. The
+# server writes its address to a second FIFO. If the server fails before
+# it writes the address, the read gets no line and the task fails.
 dropin_abi_check() {
   dropin_enabled || return 0
   dropin_make abi-check
-  dropin_make check-abi
+  (cd "$ws" && run_cargo build -p zk-fakeserver --release --bin zk-fakeserver)
+  fake_bin=${CARGO_TARGET_DIR:-$ws/target}/release/zk-fakeserver
+  fake_dir=$build_dir/fake-server
+  rm -rf "$fake_dir"
+  mkdir -p "$fake_dir"
+  mkfifo "$fake_dir/in" "$fake_dir/out"
+  "$fake_bin" <"$fake_dir/in" >"$fake_dir/out" &
+  fake_pid=$!
+  exec 9>"$fake_dir/in"
+  fake_host=
+  read -r fake_host <"$fake_dir/out" || true
+  rm -rf "$fake_dir"
+  case "$fake_host" in
+    127.0.0.1:[0-9]*) ;;
+    *) fail "the fake server $fake_bin did not start" ;;
+  esac
+  note "check-abi server tests on the fake server $fake_host"
+  dropin_make check-abi "ZK_ABI_TEST_HOST=$fake_host" 9>&-
+  exec 9>&-
+  wait "$fake_pid" || fail "the fake server $fake_bin failed"
 }
 
 # The link tests and the public-API suites. The suites start a test

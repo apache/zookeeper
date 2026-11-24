@@ -211,16 +211,21 @@ impl Shared {
         }
     }
 
-    /// Submits an untracked `/zookeeper/config` query on behalf of the dynamic ensemble follower,
-    /// returning `false` if rejected.
-    pub(crate) fn submit_follow(&self, op: NativeOp) -> bool {
-        self.terminal_error().is_none() && self.submit_untracked(op, NativeCompletion::Follow)
-    }
-
-    /// Dispatches an untracked request frame bearing the specified completion token without
-    /// allocating response receiver resources.
-    fn submit_untracked(&self, op: NativeOp, token: NativeCompletion) -> bool {
-        self.driver.submit(queued(op, token)).is_ok()
+    /// Submits an untracked `/zookeeper/config` query on behalf of the dynamic ensemble follower.
+    ///
+    /// The request allocates no response receiver resources. A refusal returns the latched
+    /// terminal error if one exists, and otherwise the mapped submission error. The follower
+    /// uses the error to tell a full request queue from the end of the session.
+    pub(crate) fn submit_follow(&self, op: NativeOp) -> Result<(), Error> {
+        if let Some(e) = self.terminal_error() {
+            return Err(e);
+        }
+        match self.driver.submit(queued(op, NativeCompletion::Follow)) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(self
+                .terminal_error()
+                .unwrap_or_else(|| map_submit_error(e.stage, e.code))),
+        }
     }
 
     /// Submits session authentication credentials via `add_auth` and returns a future resolving

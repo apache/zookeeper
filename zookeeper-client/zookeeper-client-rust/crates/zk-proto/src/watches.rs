@@ -1036,7 +1036,8 @@ impl<T: Tokens> Connection<T> {
     clippy::unwrap_used,
     clippy::expect_used,
     clippy::indexing_slicing,
-    clippy::panic
+    clippy::panic,
+    clippy::large_stack_frames
 )]
 mod tests {
     use super::*;

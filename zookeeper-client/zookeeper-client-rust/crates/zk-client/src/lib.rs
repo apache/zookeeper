@@ -201,6 +201,9 @@
         clippy::disallowed_macros
     )
 )]
+// The generated test harness main has a large frame with no source span.
+// Test builds allow it. Library builds keep the workspace deny.
+#![cfg_attr(test, allow(clippy::large_stack_frames))]
 
 #[cfg(all(
     feature = "tls-rustls",

@@ -26,10 +26,22 @@
 //! triggers schedule subsequent configuration reads, keeping the watch armed. Transient connection
 //! drops schedule fresh reads upon reconnect, while terminal errors deactivate the follower.
 //!
+//! The follower stays active when a read cannot go to the server for a transient reason:
+//!
+//! - A server `ThrottledOp` reply causes an immediate re-read. The server sends this reply only
+//!   after it held the request for its throttle wait time, so the re-read does not spin.
+//! - A full request queue (`max_pending_requests`) refuses the read with `TooManyPendingRequests`.
+//!   The follower then waits for the next request completion and submits the read again. Only
+//!   completions free queue places, and each completion wakes the waiters of `Client::ready`.
+//!
+//! The follower logs a warning when it defers a read and when it stops on an error that does not
+//! end the session.
+//!
 //! Internal requests submitted by the follower bypass user-facing read gates because they do not
 //! allocate response channels.
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, Weak};
+use std::task::{Wake, Waker};
 
 use zk_proto::TerminateReason;
 
@@ -57,6 +69,11 @@ struct Inner {
     applied: Option<String>,
     /// Terminal flag indicating whether the follower has been permanently deactivated.
     stopped: bool,
+    /// Set when a full request queue refused a read and no later read has been submitted.
+    deferred: bool,
+    /// Set from the first deferral until a read is submitted, so that a long queue saturation
+    /// logs only one warning.
+    saturated: bool,
 }
 
 impl ConfigFollow {
@@ -69,6 +86,31 @@ impl ConfigFollow {
         }
         s.watch = Some(id);
         true
+    }
+
+    /// Records that a read was submitted, which ends any queue saturation episode.
+    fn sent(&self) {
+        let mut s = self.inner.lock_unpoisoned();
+        s.saturated = false;
+    }
+
+    /// Records a read that the full request queue refused. Returns `true` at the start of a
+    /// saturation episode, when the caller must log a warning.
+    fn defer(&self) -> bool {
+        let mut s = self.inner.lock_unpoisoned();
+        // The refused read registered no watch, so no event can carry its identifier.
+        s.watch = None;
+        s.deferred = true;
+        !std::mem::replace(&mut s.saturated, true)
+    }
+
+    /// Claims a deferred read. Returns `true` to exactly one caller per deferral, and `false`
+    /// if the follower stopped.
+    fn take_deferred(&self) -> bool {
+        let mut s = self.inner.lock_unpoisoned();
+        let take = s.deferred && !s.stopped;
+        s.deferred = false;
+        take
     }
 
     /// Permanently deactivates the configuration follower and returns the current watch
@@ -99,14 +141,79 @@ impl ConfigFollow {
 }
 
 /// Initiates an asynchronous configuration query and arms a watch on `/zookeeper/config`.
-/// Deactivates the follower if submission is rejected.
-pub(crate) fn read(shared: &Shared) {
-    let id = shared.new_watch_id();
-    if !shared.router.follow.arm(id) {
-        return;
+///
+/// A full request queue defers the read until a later request completion. Any other refusal
+/// deactivates the follower.
+pub(crate) fn read(shared: &Arc<Shared>) {
+    // The loop repeats only when queue room appeared while the refused read was deferred.
+    loop {
+        let id = shared.new_watch_id();
+        if !shared.router.follow.arm(id) {
+            return;
+        }
+        match shared.submit_follow(ops::get_config(Some(id))) {
+            Ok(()) => {
+                shared.router.follow.sent();
+                return;
+            }
+            Err(Error::TooManyPendingRequests) => {
+                if !defer(shared) {
+                    return;
+                }
+            }
+            Err(e) => {
+                // Session-terminal errors end the entire session, which the application
+                // observes, so only stops on other errors are logged.
+                if !e.is_session_terminal() {
+                    warn_stopped(&e);
+                }
+                stop(shared);
+                return;
+            }
+        }
     }
-    if !shared.submit_follow(ops::get_config(Some(id))) {
-        stop(shared);
+}
+
+/// Parks a read that the full request queue refused until the next request completion.
+///
+/// Returns `true` when queue room appeared before the wake registration and this caller claimed
+/// the read, so the caller must submit it again.
+fn defer(shared: &Arc<Shared>) -> bool {
+    if shared.router.follow.defer() {
+        warn_deferred();
+    }
+    // The router wakes the `Client::ready` waiters after each request completion, and only
+    // completions free queue places. The engine has no internal request path past the
+    // `max_pending_requests` gate, so the follower uses this wake to submit the read again.
+    let resume = Arc::new(Resume(Arc::downgrade(shared)));
+    shared.router.ready.register(&Waker::from(resume));
+    // A completion can wake the waiters before the registration above. This second check
+    // prevents a lost wake. `take_deferred` lets only one of the two paths submit the read.
+    has_room(shared) && shared.router.follow.take_deferred()
+}
+
+/// Returns whether the request queue has a free place for the follower read.
+fn has_room(shared: &Shared) -> bool {
+    match shared.config.max_pending {
+        None => true,
+        Some(max) => shared.pending_len().is_some_and(|n| n < max),
+    }
+}
+
+/// Wake handler that submits a deferred follower read.
+///
+/// It holds a weak reference, so a registered wake does not keep the client alive. The router
+/// runs it on the thread that routes the completion, where the follower reads also run.
+struct Resume(Weak<Shared>);
+
+impl Wake for Resume {
+    fn wake(self: Arc<Self>) {
+        let Some(shared) = self.0.upgrade() else {
+            return;
+        };
+        if shared.router.follow.take_deferred() {
+            read(&shared);
+        }
     }
 }
 
@@ -123,10 +230,11 @@ fn stop(shared: &Shared) {
 /// Decodes the returned configuration payload and propagates novel client endpoints to the
 /// connection driver. Transient transport errors schedule immediate rereads, unparseable
 /// configuration payloads leave the watch armed awaiting future updates, and protocol errors
-/// terminate the follower. Emits a diagnostic warning when a derived client connection string
-/// cannot be parsed into a server list, leaving the server list unchanged, or when the follower
-/// stops on an error that is not session-terminal.
-pub(crate) fn on_result(shared: &Shared, r: RawResult) {
+/// terminate the follower. A server `ThrottledOp` reply also schedules an immediate reread.
+/// Emits a diagnostic warning when a derived client connection string cannot be parsed into a
+/// server list, leaving the server list unchanged, or when the follower stops on an error that
+/// is not session-terminal.
+pub(crate) fn on_result(shared: &Arc<Shared>, r: RawResult) {
     match decode::config(r) {
         Ok((cfg, _stat)) => {
             let Some(next) = cfg.client_connect_string() else {
@@ -149,7 +257,14 @@ pub(crate) fn on_result(shared: &Shared, r: RawResult) {
                 Err(e) => warn_not_applied(&next, &e),
             }
         }
-        Err(Error::ConnectionLoss | Error::OperationTimeout | Error::RequestTimeout) => {
+        // The server sends `ThrottledOp` only after it held the request for its throttle wait
+        // time, so an immediate reread does not spin.
+        Err(
+            Error::ConnectionLoss
+            | Error::OperationTimeout
+            | Error::RequestTimeout
+            | Error::ThrottledOp,
+        ) => {
             read(shared);
         }
         // The read completed successfully and armed its watch, but payload decoding failed (e.g.
@@ -184,6 +299,22 @@ fn warn_not_applied(hosts: &str, e: &Error) {
     let _ = (hosts, e);
 }
 
+/// Emits a diagnostic warning when the full request queue defers a configuration read.
+fn warn_deferred() {
+    #[cfg(feature = "tracing")]
+    tracing::warn!(
+        target: "apache_zookeeper::session",
+        "the ensemble configuration follower deferred a read: the request queue is full \
+         (max_pending_requests)"
+    );
+    #[cfg(all(feature = "log", not(feature = "tracing")))]
+    log::warn!(
+        target: "apache_zookeeper::session",
+        "the ensemble configuration follower deferred a read: the request queue is full \
+         (max_pending_requests)"
+    );
+}
+
 /// Emits a diagnostic warning when the configuration follower stops on an error.
 fn warn_stopped(e: &Error) {
     #[cfg(feature = "tracing")]
@@ -202,7 +333,7 @@ fn warn_stopped(e: &Error) {
 
 /// Processes node mutation watch triggers, scheduling a configuration re-read if the event targets
 /// the follower's watch.
-pub(crate) fn on_watch(shared: &Shared, watchers: &[WatchId]) -> bool {
+pub(crate) fn on_watch(shared: &Arc<Shared>, watchers: &[WatchId]) -> bool {
     if !shared.router.follow.owns_any(watchers) {
         return false;
     }
@@ -212,7 +343,7 @@ pub(crate) fn on_watch(shared: &Shared, watchers: &[WatchId]) -> bool {
 
 /// Handles watcher termination events, scheduling re-reads on transient connection drops and
 /// deactivating on terminal sessions.
-pub(crate) fn on_terminated(shared: &Shared, watchers: &[WatchId], reason: TerminateReason) {
+pub(crate) fn on_terminated(shared: &Arc<Shared>, watchers: &[WatchId], reason: TerminateReason) {
     if !shared.router.follow.owns_any(watchers) {
         return;
     }
@@ -239,6 +370,23 @@ mod tests {
         assert!(!f.arm(WatchId(3)));
         assert!(!f.owns_any(&[WatchId(3)]));
         assert!(!f.take_change("a:1"));
+    }
+
+    #[test]
+    fn one_caller_claims_a_deferred_read() {
+        let f = ConfigFollow::default();
+        assert!(f.arm(WatchId(1)));
+        assert!(!f.take_deferred());
+        // The first deferral of an episode asks for a warning, and a repeated one does not.
+        assert!(f.defer());
+        assert!(!f.owns_any(&[WatchId(1)]));
+        assert!(f.take_deferred());
+        assert!(!f.take_deferred());
+        assert!(!f.defer());
+        f.sent();
+        assert!(f.defer());
+        let _ = f.stop();
+        assert!(!f.take_deferred());
     }
 
     #[test]

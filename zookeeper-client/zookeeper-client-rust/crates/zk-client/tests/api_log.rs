@@ -25,7 +25,8 @@
     clippy::unwrap_used,
     clippy::expect_used,
     clippy::panic,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 

@@ -32,7 +32,8 @@
     clippy::indexing_slicing,
     clippy::arithmetic_side_effects,
     clippy::print_stderr,
-    clippy::await_holding_lock
+    clippy::await_holding_lock,
+    clippy::large_stack_frames
 )]
 #![allow(clippy::disallowed_macros)]
 

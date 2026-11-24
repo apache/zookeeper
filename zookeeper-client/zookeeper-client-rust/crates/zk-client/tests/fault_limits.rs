@@ -18,7 +18,12 @@
 //! bounded pending queue enforcement, close operation timeouts, queued request draining,
 //! and automated RAII session termination upon drop of the final client handle.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 #![allow(clippy::disallowed_macros)]
 
 mod common;

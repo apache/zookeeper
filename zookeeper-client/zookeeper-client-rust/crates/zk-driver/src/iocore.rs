@@ -2391,11 +2391,16 @@ impl IoCore {
                 Transport::Tls(t) => t.has_unsent() || !self.tx_copy.is_empty(),
                 Transport::None | Transport::Parked(_) => false,
             };
+            // A latched TLS read failure waits behind held frames, and the flush sends nothing
+            // until the driver reports it. Write readiness then gives no progress, and the loop
+            // would spin on it. The gate reopen wakes the reactor, which then delivers the held
+            // frames and reports the failure.
+            let latched = matches!(&self.conn, Transport::Tls(t) if t.pending.is_some());
             let mut bits = 0;
             if i.read && !self.rx_stalled && gate {
                 bits |= ZOOKEEPER_READ;
             }
-            if i.write || (fd >= 0 && unsent) {
+            if !latched && (i.write || (fd >= 0 && unsent)) {
                 bits |= ZOOKEEPER_WRITE;
             }
             let timeout_ms = if self.buffered_ready(suspended, gate) {

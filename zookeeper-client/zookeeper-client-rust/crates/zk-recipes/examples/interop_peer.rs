@@ -64,6 +64,8 @@
 //! See `interop/curator/README.md` for protocol details and test scenarios.
 
 #![allow(clippy::disallowed_macros)]
+// This test peer awaits many recipe futures in one command loop. Its stack size does not matter.
+#![allow(clippy::large_stack_frames)]
 
 use std::io::{BufRead, Write};
 use std::time::Duration;

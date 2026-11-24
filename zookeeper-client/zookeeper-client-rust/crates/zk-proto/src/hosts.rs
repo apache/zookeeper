@@ -717,7 +717,8 @@ impl<T: Tokens> Connection<T> {
     clippy::expect_used,
     clippy::indexing_slicing,
     clippy::panic,
-    clippy::arithmetic_side_effects
+    clippy::arithmetic_side_effects,
+    clippy::large_stack_frames
 )]
 mod tests {
     use super::*;

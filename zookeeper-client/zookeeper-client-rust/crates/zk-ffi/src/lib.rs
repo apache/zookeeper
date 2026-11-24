@@ -37,6 +37,9 @@
 
 #![deny(unsafe_code)]
 #![cfg_attr(test, allow(clippy::disallowed_macros))]
+// The generated test harness main has a large frame with no source span.
+// Test builds allow it. Library builds keep the workspace deny.
+#![cfg_attr(test, allow(clippy::large_stack_frames))]
 
 // This compile-time guard rejects `tls` without a provider feature, mirroring the matching guard
 // in `zk-driver`. `zk-ffi` has no guard against more than one provider: each provider feature

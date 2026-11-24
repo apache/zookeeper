@@ -1621,7 +1621,12 @@ fn path_arg(path: &PathIn) -> LogArg {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::indexing_slicing, clippy::panic)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 mod tests {
     use super::*;
     use crate::compat::Compat;

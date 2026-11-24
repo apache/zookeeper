@@ -158,6 +158,9 @@ impl DistributedLock {
     ///
     /// Returns an error if the underlying ZooKeeper session terminates (e.g. `SessionExpired`,
     /// `AuthFailed`), or if an authoritative server error occurs (e.g. `NoAuth`).
+    // Clippy counts the awaited request futures as stack locals. They live in the state of this
+    // future, which the caller owns. Boxing them would add an allocation to each acquire.
+    #[allow(clippy::large_stack_frames)]
     pub async fn acquire(&self) -> Result<LockGuard, Error> {
         let mut state = self.client.state_watcher();
         let mut node = self.create_node().await?;
@@ -220,6 +223,8 @@ impl DistributedLock {
     /// Returns an error if ZooKeeper communication fails or the session terminates. If deletion
     /// encounters an unexpected server error, that error is returned and the node is handed off
     /// to the guaranteed deletion subsystem.
+    // The reason is the same as for `acquire`.
+    #[allow(clippy::large_stack_frames)]
     pub async fn try_acquire(&self) -> Result<Option<LockGuard>, Error> {
         let mut state = self.client.state_watcher();
         let mut node = self.create_node().await?;

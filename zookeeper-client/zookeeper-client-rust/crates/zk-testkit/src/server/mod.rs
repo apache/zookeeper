@@ -1904,8 +1904,10 @@ impl ServerSim {
                 }
             }
         }
+        // The reply header error stays ZOK when a sub-operation fails. The Java server sends the
+        // failure only in the per-operation error results, so the client decodes the body.
         let mut out = Vec::new();
-        let header_err = match failed {
+        match failed {
             Some((fi, frc)) => {
                 for i in 0..ops.len() {
                     let err = match i.cmp(&fi) {
@@ -1921,7 +1923,6 @@ impl ServerSim {
                     .encode(&mut out);
                     ErrorResponse { err }.encode(&mut out);
                 }
-                frc
             }
             None => {
                 self.tree = scratch;
@@ -1935,11 +1936,10 @@ impl ServerSim {
                     .encode(&mut out);
                     out.extend_from_slice(&b);
                 }
-                rc::ZOK
             }
-        };
+        }
         zk_jute::multi::encode_end(&mut out);
-        self.reply(link, x, z, header_err, &out);
+        self.reply(link, x, z, rc::ZOK, &out);
         Answer::None
     }
 

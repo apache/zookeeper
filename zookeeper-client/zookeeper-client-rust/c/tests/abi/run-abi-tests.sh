@@ -278,6 +278,19 @@ if [ -n "$REF" ]; then
     done
 fi
 
+# ---- Reply delivery ----
+# `reply_path.c` checks the values that replies deliver: data and stat, a watch event, multi
+# results in place, and a completion that calls the API again. It needs a server.
+if [ -n "$HOST" ]; then
+    if build_app "$OUT/reply-path" "$LIB" reply_path.c; then
+        check reply-path "$OUT/reply-path" "$HOST"
+    else
+        fail "build reply_path"
+    fi
+else
+    skip "reply-path (no --host)"
+fi
+
 # ---- Close-on-exec flag of the session socket ----
 if [ -n "$CLOEXEC" ]; then
     if build_app "$OUT/sock-cloexec" "$LIB" sock_cloexec.c; then

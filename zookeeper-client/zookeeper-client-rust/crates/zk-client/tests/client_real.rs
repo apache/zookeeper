@@ -21,7 +21,12 @@
 //! `common::real_port`. Execute with:
 //! `ZK_TEST_PORT_BASE=<base> cargo test --test client_real -- --ignored`.
 
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::large_stack_frames
+)]
 #![allow(clippy::disallowed_macros)]
 
 mod common;
