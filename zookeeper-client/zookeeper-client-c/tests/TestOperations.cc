@@ -21,8 +21,93 @@
 
 #include "ZKMocks.h"
 #include <proto.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 using namespace std;
+
+// A mock server that also answers the read-only probe of the client. The
+// test arms the probe. The server on rwPort replies with probeReply, which
+// is "rw" by default. If rwPort is 0, every server replies with probeReply.
+// The other servers reply "ro". A "rw" reply disarms the probe. The test can
+// make the probe connect fail, or change the server list during the probe.
+// The server can also accept handshakes as a read-only server.
+class ReadWriteProbeServer: public ZookeeperServer{
+public:
+    ReadWriteProbeServer():probeEnabled(false),probeConnectFails(false),
+        probeReply("rw"),rwPort(0),probeCount(0),probeCloseCount(0),
+        readOnlyHandshake(false),reconfigHandle(0),reconfigHosts(0),
+        probeInProgress(false),probePort(0),replyPending(false){}
+    virtual int callConnect(int s,const struct sockaddr *addr,socklen_t len){
+        if(probeEnabled && !probeInProgress){
+            probeInProgress=true;
+            probePort=ntohs(((const struct sockaddr_in*)addr)->sin_port);
+            ++probeCount;
+            if(probeConnectFails){
+                errno=ECONNREFUSED;
+                return -1;
+            }
+            return 0;
+        }
+        return ZookeeperServer::callConnect(s,addr,len);
+    }
+    virtual ssize_t callSend(int s,const void *buf,size_t len,int flags){
+        if(probeInProgress && len==4 && memcmp(buf,"isro",4)==0){
+            // Change the server list while the probe runs.
+            if(reconfigHandle!=0)
+                zoo_set_servers(reconfigHandle,reconfigHosts);
+            replyPending=true;
+            return len;
+        }
+        return ZookeeperServer::callSend(s,buf,len,flags);
+    }
+    virtual ssize_t callRecv(int s,void *buf,size_t len,int flags){
+        if(replyPending){
+            replyPending=false;
+            std::string reply=
+                (rwPort==0 || rwPort==probePort) ? probeReply : "ro";
+            if(reply=="rw")
+                probeEnabled=false;
+            memcpy(buf,reply.data(),reply.size());
+            return reply.size();
+        }
+        return ZookeeperServer::callRecv(s,buf,len,flags);
+    }
+    virtual int callClose(int fd){
+        if(probeInProgress && fd==FD){
+            // The probe socket is not the session socket. Keep the queues.
+            probeInProgress=false;
+            ++probeCloseCount;
+            return 0;
+        }
+        return ZookeeperServer::callClose(fd);
+    }
+    virtual void notifyBufferSent(const std::string& buffer){
+        if(readOnlyHandshake && HandshakeRequest::isValid(buffer)){
+            unique_ptr<HandshakeRequest> req(HandshakeRequest::parse(buffer));
+            if(req.get()!=0){
+                HandshakeResponse* resp=new HandshakeResponse(req->sessionId);
+                resp->readOnly=1;
+                addRecvResponse(resp);
+                return;
+            }
+        }
+        ZookeeperServer::notifyBufferSent(buffer);
+    }
+    volatile bool probeEnabled;
+    volatile bool probeConnectFails;
+    std::string probeReply;
+    volatile int rwPort;
+    AtomicInt probeCount;
+    AtomicInt probeCloseCount;
+    volatile bool readOnlyHandshake;
+    zhandle_t* reconfigHandle;
+    const char* reconfigHosts;
+private:
+    volatile bool probeInProgress;
+    volatile int probePort;
+    volatile bool replyPending;
+};
 
 class Zookeeper_operations : public CPPUNIT_NS::TestFixture
 {
@@ -40,7 +125,14 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testConnectResponseNoReadOnlyFlag);
     CPPUNIT_TEST(testConnectResponseSplitAtReadOnlyFlag);
     CPPUNIT_TEST(testConnectResponseNoReadOnlyFlagSplit);
+    CPPUNIT_TEST(testReadOnlyToReadWriteTransition);
+    CPPUNIT_TEST(testReadOnlyHintDroppedByServerListChange);
+    CPPUNIT_TEST(testReadOnlyProbeDroppedByServerListChange);
+    CPPUNIT_TEST(testReadOnlyProbeFindsReadOnlyServer);
+    CPPUNIT_TEST(testReadOnlyProbeConnectFailureClosesSocket);
+    CPPUNIT_TEST(testReceiveTimeoutReturnsNoSocket);
 #else    
+    CPPUNIT_TEST(testReadOnlyToReadWriteFailsSyncCall);
     CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
 #endif
@@ -118,6 +210,42 @@ public:
         bool called_;
         int rc_;
     };
+
+    // Records the status of any completion type.
+    class StatusCompletion: public AsyncCompletion{
+    public:
+        StatusCompletion():called_(false),rc_(ZAPIERROR){}
+        virtual void dataCompl(int rc, const char *value, int len, const Stat *stat){
+            record(rc);
+        }
+        virtual void statCompl(int rc, const Stat *stat){ record(rc); }
+        virtual void stringCompl(int rc, const char *value){ record(rc); }
+        virtual void voidCompl(int rc){ record(rc); }
+        void record(int rc){ called_=true; rc_=rc; }
+        bool called_;
+        int rc_;
+    };
+
+    static int portOf(const struct sockaddr_storage& addr){
+        return ntohs(((const struct sockaddr_in*)&addr)->sin_port);
+    }
+
+#ifdef THREADED
+    // Closes the handle and then joins the job, also when an assertion
+    // fails. The close makes a waiting synchronous call return ZCLOSING,
+    // so the join cannot hang. The join also occurs before the job destroys
+    // its own members. Declare the guard after the job.
+    struct CloseThenJoin{
+        CloseThenJoin(CloseFinally& close,TestJob& job):
+            close_(close),job_(job){}
+        ~CloseThenJoin(){
+            close_.execute();
+            job_.join();
+        }
+        CloseFinally& close_;
+        TestJob& job_;
+    };
+#endif
 #ifndef THREADED
     // send two get data requests; verify that the corresponding completions called
     void testConcurrentOperations1()
@@ -834,7 +962,342 @@ public:
         CPPUNIT_ASSERT_EQUAL(ZOO_CONNECTED_STATE, static_cast<int>(zh->state));
     }
 
+    // Starts a read-only session on 127.0.0.1:2121. The next server in the
+    // list is 127.0.0.1:2122, so the probe goes to that server.
+    void startReadOnlySession(Mock_gettimeofday& timeMock, const char* hosts)
+    {
+        zoo_deterministic_conn_order(1);
+        zh=zookeeper_init(hosts,watcher,10000,TEST_CLIENT_ID,0,ZOO_READONLY);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+        // A real connect ends the reconfig pass. Thus a reconnect follows
+        // the cursor, not the first new address.
+        zh->reconfig=0;
+        zh->state=ZOO_READONLY_STATE;
+        zh->last_ping_rw=timeMock.tv;
+        zh->ping_rw_timeout=200;
+        CPPUNIT_ASSERT_EQUAL(2121,portOf(zh->addr_cur));
+        CPPUNIT_ASSERT_EQUAL(2122,portOf(zh->addrs.data[zh->addrs.next]));
+    }
+
+    // Makes the read-only probe due and runs one zookeeper_interest() call.
+    int runProbe(Mock_gettimeofday& timeMock, ReadWriteProbeServer& zkServer,
+            int& fd, int& interest, timeval& tv)
+    {
+        timeMock.tick(1);
+        zkServer.probeEnabled=true;
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        zkServer.probeEnabled=false;
+        return rc;
+    }
+
+    // A read-only session that finds a read/write server must fail all
+    // pending requests with ZCONNECTIONLOSS. zookeeper_interest() must not
+    // return the closed socket. Only this handle can use the read/write
+    // server hint.
+    void testReadOnlyToReadWriteTransition()
+    {
+        Mock_gettimeofday timeMock;
+        ReadWriteProbeServer zkServer;
+        CloseFinally guard(&zh);
+        startReadOnlySession(timeMock,"127.0.0.1:2121,127.0.0.1:2122");
+
+        // The server does not reply to these requests.
+        StatusCompletion delRes, setRes, getRes, createRes, multiRes;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_adelete(zh,"/a",-1,asyncCompletion,&delRes));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aset(zh,"/a","x",1,-1,asyncCompletion,&setRes));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/a",0,asyncCompletion,&getRes));
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_acreate(zh,"/a","x",1,&ZOO_OPEN_ACL_UNSAFE,0,
+                        asyncCompletion,&createRes));
+        zoo_op_t ops[1];
+        zoo_op_result_t results[1];
+        zoo_create_op_init(&ops[0],"/b",0,-1,&ZOO_OPEN_ACL_UNSAFE,0,0,0);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_amulti(zh,1,ops,results,asyncCompletion,&multiRes));
+
+        // The probe finds a read/write server.
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=runProbe(timeMock,zkServer,fd,interest,tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCount);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCloseCount);
+        CPPUNIT_ASSERT_EQUAL(1,zh->has_addr_rw_server);
+
+        CPPUNIT_ASSERT_EQUAL(-1,fd);
+        CPPUNIT_ASSERT_EQUAL(0,interest);
+        CPPUNIT_ASSERT_EQUAL(0L,(long)tv.tv_sec);
+        CPPUNIT_ASSERT_EQUAL(0L,(long)tv.tv_usec);
+
+        StatusCompletion* all[]={&delRes,&setRes,&getRes,&createRes,&multiRes};
+        for(size_t i=0;i<sizeof(all)/sizeof(all[0]);i++){
+            CPPUNIT_ASSERT(all[i]->called_);
+            CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,all[i]->rc_);
+        }
+
+        // Another handle must not use the hint of this handle.
+        zhandle_t* other=zookeeper_init("127.0.0.1:2181",watcher,10000,0,0,0);
+        CPPUNIT_ASSERT(other!=0);
+        CloseFinally otherGuard(&other);
+        rc=zookeeper_interest(other,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(2181,portOf(other->addr_cur));
+
+        // Move the cursor past the probed server. Only the hint can then
+        // select it for the reconnect.
+        zh->addrs.next++;
+
+        // This handle reconnects to the read/write server.
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(2122,portOf(zh->addr_cur));
+        CPPUNIT_ASSERT_EQUAL(0,zh->has_addr_rw_server);
+    }
+
+    // A server list change after the probe drops the read/write server
+    // hint. The reconnect then uses the new list.
+    void testReadOnlyHintDroppedByServerListChange()
+    {
+        Mock_gettimeofday timeMock;
+        ReadWriteProbeServer zkServer;
+        CloseFinally guard(&zh);
+        startReadOnlySession(timeMock,"127.0.0.1:2121,127.0.0.1:2122");
+
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=runProbe(timeMock,zkServer,fd,interest,tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(-1,fd);
+        CPPUNIT_ASSERT_EQUAL(1,zh->has_addr_rw_server);
+
+        // The address comparison ignores ports, so change the number of
+        // servers to make the new list differ from the old list.
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,zoo_set_servers(zh,"127.0.0.1:2123"));
+        CPPUNIT_ASSERT_EQUAL(0,zh->has_addr_rw_server);
+
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(2123,portOf(zh->addr_cur));
+    }
+
+    // A server list change while the probe runs makes the probe result
+    // stale. The client must not switch to the probed server.
+    void testReadOnlyProbeDroppedByServerListChange()
+    {
+        Mock_gettimeofday timeMock;
+        ReadWriteProbeServer zkServer;
+        CloseFinally guard(&zh);
+        startReadOnlySession(timeMock,"127.0.0.1:2121,127.0.0.1:2122");
+
+        StatusCompletion getRes;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/a",0,asyncCompletion,&getRes));
+
+        // The new list keeps the current server, so the client stays
+        // connected. The probed server 127.0.0.1:2122 is not in the list.
+        zkServer.reconfigHandle=zh;
+        zkServer.reconfigHosts="127.0.0.1:2121";
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=runProbe(timeMock,zkServer,fd,interest,tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCount);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zh->addrs.count);
+
+        CPPUNIT_ASSERT_EQUAL(0,zh->has_addr_rw_server);
+        CPPUNIT_ASSERT_EQUAL((int)ZOO_READONLY_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,fd);
+        CPPUNIT_ASSERT(!getRes.called_);
+    }
+
+    // A probe that finds another read-only server does not switch. The
+    // next probe goes to the next server in the list.
+    void testReadOnlyProbeFindsReadOnlyServer()
+    {
+        Mock_gettimeofday timeMock;
+        ReadWriteProbeServer zkServer;
+        CloseFinally guard(&zh);
+        startReadOnlySession(timeMock,
+                "127.0.0.1:2121,127.0.0.1:2122,127.0.0.1:2123");
+
+        StatusCompletion getRes;
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,
+                zoo_aget(zh,"/a",0,asyncCompletion,&getRes));
+
+        zkServer.probeReply="ro";
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=runProbe(timeMock,zkServer,fd,interest,tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCount);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCloseCount);
+
+        CPPUNIT_ASSERT_EQUAL(0,zh->has_addr_rw_server);
+        CPPUNIT_ASSERT_EQUAL((int)ZOO_READONLY_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,fd);
+        CPPUNIT_ASSERT(!getRes.called_);
+        CPPUNIT_ASSERT_EQUAL(2123,portOf(zh->addrs.data[zh->addrs.next]));
+    }
+
+    // A probe that cannot connect must close its socket.
+    void testReadOnlyProbeConnectFailureClosesSocket()
+    {
+        Mock_gettimeofday timeMock;
+        ReadWriteProbeServer zkServer;
+        CloseFinally guard(&zh);
+        startReadOnlySession(timeMock,
+                "127.0.0.1:2121,127.0.0.1:2122,127.0.0.1:2123");
+
+        zkServer.probeConnectFails=true;
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=runProbe(timeMock,zkServer,fd,interest,tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCount);
+        CPPUNIT_ASSERT_EQUAL(1,(int)zkServer.probeCloseCount);
+
+        CPPUNIT_ASSERT_EQUAL(0,zh->has_addr_rw_server);
+        CPPUNIT_ASSERT_EQUAL((int)ZOO_READONLY_STATE,zoo_state(zh));
+        CPPUNIT_ASSERT_EQUAL((int)ZookeeperServer::FD,fd);
+        CPPUNIT_ASSERT_EQUAL(2123,portOf(zh->addrs.data[zh->addrs.next]));
+    }
+
+    // A receive timeout closes the socket, so zookeeper_interest() must
+    // not return it.
+    void testReceiveTimeoutReturnsNoSocket()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("127.0.0.1:2121",watcher,10000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh, &timeMock.tv);
+
+        // Exceed two thirds of the session timeout with no reply.
+        timeMock.tick(7);
+        int fd=0;
+        int interest=0;
+        timeval tv;
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOPERATIONTIMEOUT,rc);
+        CPPUNIT_ASSERT_EQUAL(-1,fd);
+        CPPUNIT_ASSERT_EQUAL(0,interest);
+        CPPUNIT_ASSERT_EQUAL(-1,zh->fd->sock);
+    }
 #else   
+    // Checks for a read-only session with the given server.
+    struct ReadOnlySessionWith{
+        ReadOnlySessionWith(zhandle_t* zh,const char* server):
+            zh_(zh),server_(server){}
+        bool operator()() const{
+            return zoo_state(zh_)==ZOO_READONLY_STATE &&
+                server_==zoo_get_current_server(zh_);
+        }
+        zhandle_t* zh_;
+        string server_;
+    };
+
+    // Runs one synchronous get request.
+    class SyncGetJob: public TestJob{
+    public:
+        SyncGetJob(zhandle_t* zh):zh_(zh),done_(false),rc_(ZAPIERROR){}
+        virtual TestJob* clone() const { return new SyncGetJob(zh_); }
+        virtual void run(){
+            char buf[1];
+            int size=sizeof(buf);
+            int rc=zoo_get(zh_,"/a",0,buf,&size,0);
+            synchronized(mx_);
+            rc_=rc;
+            done_=true;
+        }
+        virtual void validate(const char* file, int line) const{}
+        bool operator()() const{
+            synchronized(mx_);
+            return done_;
+        }
+        int rc() const{
+            synchronized(mx_);
+            return rc_;
+        }
+        zhandle_t* zh_;
+        mutable Mutex mx_;
+        bool done_;
+        int rc_;
+    };
+
+    // Counts the get requests that reach the server.
+    class CountingProbeServer: public ReadWriteProbeServer{
+    public:
+        virtual void onMessageReceived(const RequestHeader& rh, iarchive* ia){
+            if(rh.type==ZOO_GETDATA_OP)
+                ++getRequests;
+        }
+        AtomicInt getRequests;
+    };
+
+    // Checks that a counter reaches a value.
+    struct CountReaches{
+        CountReaches(const AtomicInt& n,int value):n_(n),value_(value){}
+        bool operator()() const{ return n_.get()>=value_; }
+        const AtomicInt& n_;
+        int value_;
+    };
+
+    // A synchronous call that waits during the switch to a read/write
+    // server must return ZCONNECTIONLOSS. The client then connects to the
+    // read/write server.
+    void testReadOnlyToReadWriteFailsSyncCall()
+    {
+        // The clock is frozen, so the probe runs only when the test moves it.
+        Mock_gettimeofday timeMock;
+        CountingProbeServer zkServer;
+        zkServer.readOnlyHandshake=true;
+        Mock_poll pollMock(&zkServer,ZookeeperServer::FD);
+        CloseFinally guard(&zh);
+
+        zoo_deterministic_conn_order(1);
+        zh=zookeeper_init("127.0.0.1:2121,127.0.0.1:2122",watcher,10000,
+                TEST_CLIENT_ID,0,ZOO_READONLY);
+        CPPUNIT_ASSERT(zh!=0);
+        CPPUNIT_ASSERT(ensureCondition(
+                ReadOnlySessionWith(zh,"127.0.0.1:2121"),1000)<1000);
+
+        // The server does not reply to the request.
+        SyncGetJob job(zh);
+        CloseThenJoin closeThenJoin(guard,job);
+        job.start();
+        CPPUNIT_ASSERT(ensureCondition(
+                CountReaches(zkServer.getRequests,1),1000)<1000);
+        CPPUNIT_ASSERT(!job());
+
+        // The first probe of a new session goes to the current server,
+        // which is read-only. The next probe finds the read/write server.
+        zkServer.rwPort=2122;
+        zkServer.probeEnabled=true;
+        timeMock.tick(1);
+        CPPUNIT_ASSERT(ensureCondition(
+                CountReaches(zkServer.probeCloseCount,1),1000)<1000);
+        CPPUNIT_ASSERT(!job());
+        timeMock.tick(1);
+        CPPUNIT_ASSERT(ensureCondition(job,1000)<1000);
+        job.join();
+        CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS,job.rc());
+        CPPUNIT_ASSERT_EQUAL(2,(int)zkServer.probeCount);
+
+        CPPUNIT_ASSERT(ensureCondition(
+                ReadOnlySessionWith(zh,"127.0.0.1:2122"),1000)<1000);
+    }
+
     class TestGetDataJob: public TestJob{
     public:
         TestGetDataJob(ZookeeperServer* svr,zhandle_t* zh, int reps=500)
