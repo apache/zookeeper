@@ -289,6 +289,38 @@ else
     skip "sock-cloexec (no --sock-cloexec)"
 fi
 
+# ---- SASL callback list copy failures (drop-in) ----
+# `sasl_cb_fail.c` serves its own connect reply without requiring a ZooKeeper server.
+# Both cases run with the `malloc` interposer library, built here from the same
+# source, preloaded; only the `oom` case arms it. `SASLCF` holds multiple compiler
+# flags and is therefore left unquoted.
+if [ "$CONFIG" = sasl ] || [ "$CONFIG" = full ]; then
+    SASLCF="$(pkg-config --cflags libsasl2 2>/dev/null || true)"
+    CBPRE=()
+    CBLIBS=()
+    if [ "$OS" = Darwin ]; then
+        "$CC" -std=c99 "${WARN[@]}" -dynamiclib "$HERE/sasl_cb_fail.c" \
+            -o "$OUT/sasl-cb-fail.$SOEXT" &&
+            CBPRE=(DYLD_INSERT_LIBRARIES="$OUT/sasl-cb-fail.$SOEXT")
+    elif [ "$OS" = Linux ]; then
+        "$CC" -std=c99 "${WARN[@]}" -shared -fPIC "$HERE/sasl_cb_fail.c" \
+            -o "$OUT/sasl-cb-fail.$SOEXT" && CBPRE=(LD_PRELOAD="$OUT/sasl-cb-fail.$SOEXT")
+        CBLIBS=(-ldl)
+    fi
+    if [ ${#CBPRE[@]} -eq 0 ]; then
+        skip "sasl-cb (the malloc interposer needs a Darwin or Linux host)"
+    elif build_app "$OUT/sasl-cb-fail" "$LIB" sasl_cb_fail.c -DZK_SASL_CB_APP \
+        -DHAVE_CYRUS_SASL_H $SASLCF ${CBLIBS[@]+"${CBLIBS[@]}"}; then
+        for m in oom long; do
+            check "sasl-cb-$m" env "${CBPRE[@]}" "$OUT/sasl-cb-fail" "$m"
+        done
+    else
+        fail "build sasl_cb_fail"
+    fi
+else
+    skip "sasl-cb (config $CONFIG has no SASL)"
+fi
+
 # ---- Exported function interposition ----
 if [ -n "$HOST" ]; then
     for core in "${CORES[@]}"; do

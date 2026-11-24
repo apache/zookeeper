@@ -698,6 +698,70 @@ static void count_stat(int rc, const struct Stat *stat, const void *data)
 }
 
 /*
+ * Buffers holding the header times of the first `Using next from NEW` log line
+ * and the subsequent `[zk] connect()` line; `zk-ffi` stamps both views in one
+ * step in both the `mt` and `st` flavors.
+ */
+static char stamp_first[32];
+static char stamp_second[32];
+
+/* Log callback that records the header time of both lines and sleeps 300 ms after the first. */
+static void stamp_log(const char *line)
+{
+    char *dst = NULL;
+
+    if (stamp_first[0] == '\0' && strstr(line, "Using next from NEW=") != NULL) {
+        dst = stamp_first;
+    } else if (stamp_first[0] != '\0' && stamp_second[0] == '\0' &&
+               strstr(line, "[zk] connect()") != NULL) {
+        dst = stamp_second;
+    }
+    if (dst == NULL) {
+        return;
+    }
+    /* "YYYY-MM-DD HH:MM:SS,mmm" */
+    snprintf(dst, sizeof(stamp_first), "%.23s", line);
+    if (dst == stamp_first) {
+        sleep_ms(300);
+    }
+}
+
+/*
+ * Verifies that the header timestamp of a core log line reflects when `zk-ffi`
+ * stamped the view rather than when the C shim formats the line. Because the
+ * log callback delays the second line of the step by 300 ms, reading the clock
+ * at format time would produce a later timestamp than the first line.
+ */
+static void dev_log_stamp(const char *host)
+{
+    zhandle_t *zh;
+    int i;
+
+    stamp_first[0] = '\0';
+    stamp_second[0] = '\0';
+    logLevel = ZOO_LOG_LEVEL_DEBUG;
+    zh = zookeeper_init2(host, noop_watcher, 10000, NULL, NULL, 0, stamp_log);
+    CHECK(zh != NULL, "zookeeper_init2(%s)", host);
+    if (zh == NULL) {
+        logLevel = ZOO_LOG_LEVEL_INFO;
+        return;
+    }
+    for (i = 0; i < 50; i++) {
+        drive(zh);
+    }
+    /*
+     * In mt, `zookeeper_close` joins the library threads; in st, the log
+     * callback runs inside drive(). Both stamps are thus recorded when
+     * `zookeeper_close` returns.
+     */
+    zookeeper_close(zh);
+    logLevel = ZOO_LOG_LEVEL_INFO;
+    printf("log stamp: first=%s second=%s\n", stamp_first, stamp_second);
+    CHECK(stamp_first[0] != '\0' && strcmp(stamp_first, stamp_second) == 0,
+          "the two lines of one step have the times %s and %s", stamp_first, stamp_second);
+}
+
+/*
  * Verifies documented Rust deviations: NULL-handle guards on entry points that
  * dereference NULL in legacy C, the `"ssl connection error"` string for
  * `ZSSLCONNECTIONERROR` (-15), and `ZMARSHALLINGERROR` validation for invalid
@@ -769,6 +833,7 @@ static int run_dev(const char *host)
         CHECK(completions == 2, "completions=%d", completions);
     }
     logLevel = ZOO_LOG_LEVEL_INFO;
+    dev_log_stamp(host);
     printf("dev: %d failures\n", failures);
     return 0;
 }

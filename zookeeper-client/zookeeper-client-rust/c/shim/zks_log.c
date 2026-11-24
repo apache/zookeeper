@@ -284,6 +284,19 @@ static void zks_log_now(time_t *sec, long *usec)
     *usec = (long)tv.tv_usec;
 }
 
+/*
+ * Holds the timestamp of a core log view for the header time of the next
+ * log_message call on the same thread. zks_log_emit calls log_message through
+ * the PLT so that applications interposing log_message observe core log lines
+ * as with the legacy client. Because the public log_message signature has no
+ * time argument, the stamp is passed through these thread-local variables.
+ * A log_message call with the stamp set uses the stamp and clears it; a call
+ * without a stamp reads the clock through zks_log_now.
+ */
+static ZKS_THREAD_LOCAL int zks_stamp_set;
+static ZKS_THREAD_LOCAL time_t zks_stamp_sec;
+static ZKS_THREAD_LOCAL long zks_stamp_usec;
+
 void log_message(log_callback_fn callback, ZooLogLevel curLevel, int line, const char *funcName,
                  const char *format, ...)
 {
@@ -293,7 +306,13 @@ void log_message(log_callback_fn callback, ZooLogLevel curLevel, int line, const
     int ofs;
     size_t room;
 
-    zks_log_now(&sec, &usec);
+    if (zks_stamp_set) {
+        sec = zks_stamp_sec;
+        usec = zks_stamp_usec;
+        zks_stamp_set = 0;
+    } else {
+        zks_log_now(&sec, &usec);
+    }
     ofs = zks_log_header(curLevel, funcName, line, sec, usec);
     room = zks_log_room(ofs);
     if (room > 0) {
@@ -526,8 +545,14 @@ ZKS_HIDDEN void zks_log_emit(zhandle_t *zh, const zkrs_log_view *v)
     o.cap = sizeof(zks_log_body) - 1;
     o.len = 0;
     zks_printf_driver(&o, s->fmt, v->args, v->nargs);
+    /* Ensure the log header shows the time at which zk-ffi stamped the view. */
+    zks_stamp_sec = (time_t)v->tv_sec;
+    zks_stamp_usec = (long)v->tv_usec;
+    zks_stamp_set = 1;
     log_message(zh != NULL ? ZKS_LOAD(&zh->log_callback) : NULL, (ZooLogLevel)v->level, s->line,
                 s->func, "%s", zks_log_body);
+    /* Clear the stamp in case an interposed log_message does not call the library log_message. */
+    zks_stamp_set = 0;
     errno = saved_errno;
 }
 

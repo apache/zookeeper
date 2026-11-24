@@ -53,7 +53,7 @@ zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn fn,
     int err;
 
     /* Ensures the linked Rust library was compiled with TLS feature support. */
-    if (cert == NULL || zkrs_feature_tls() != 1u) {
+    if (cert == NULL || ZKS_CALL_LEAF(zkrs_feature_tls()) != 1u) {
         errno = EINVAL;
         return NULL;
     }

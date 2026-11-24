@@ -207,6 +207,9 @@ static int zks_sasl_pass_trampoline(sasl_conn_t *conn, void *context, int id,
  * Because Cyrus inspects only the first entry matching a given callback identifier,
  * the first SASL_CB_PASS handler is intercepted and routed through an internal
  * trampoline that manages credential lifetime within the session context.
+ * Returns SASL_OK on success, SASL_BADPARAM if the list contains ZKS_SASL_MAX_CB
+ * or more entries before SASL_CB_LIST_END or the copy byte size overflows, or
+ * SASL_NOMEM if malloc fails to allocate the copy.
  */
 static int zks_cb_build(struct zks_sasl_sess *s, const struct zks_sasl_params *p)
 {
@@ -220,21 +223,21 @@ static int zks_cb_build(struct zks_sasl_sess *s, const struct zks_sasl_params *p
     s->pass.orig_ctx = NULL;
     s->pass.is_library = 0;
     if (app == NULL) {
-        return 0;
+        return SASL_OK;
     }
     while (app[n].id != SASL_CB_LIST_END) {
         n++;
         if (n >= ZKS_SASL_MAX_CB) {
-            return -1;
+            return SASL_BADPARAM;
         }
     }
     if (ZKS_ADD_OVF(n, (size_t)1, &bytes) || ZKS_MUL_OVF(bytes, sizeof *app, &bytes)) {
-        return -1;
+        return SASL_BADPARAM;
     }
+    /* Like legacy zoo_sasl_connect, allocation failure fails the SASL attempt without aborting. */
     s->cb = (sasl_callback_t *)malloc(bytes);
     if (s->cb == NULL) {
-        // Abort cleanly on internal callback table allocation failure.
-        abort();
+        return SASL_NOMEM;
     }
     memcpy(s->cb, app, bytes); /* also the SASL_CB_LIST_END entry */
     for (i = 0; i < n; i++) {
@@ -247,7 +250,7 @@ static int zks_cb_build(struct zks_sasl_sess *s, const struct zks_sasl_params *p
             break;
         }
     }
-    return 0;
+    return SASL_OK;
 }
 
 /*
@@ -458,9 +461,14 @@ ZKS_HIDDEN void zks_sasl_start(zks_sasl_sess *s, uint32_t gen, zks_bytes local, 
         return;
     }
     zks_log_site(s->log_zh, ZKS_SITE_SASL_HOST, lip, rip);
-    /* Treat excessive callback list lengths as allocation failure. */
-    if (zks_cb_build(s, p) != 0) {
-        zks_log_site(s->log_zh, ZKS_SITE_SASL_NEW, sasl_errstring(SASL_NOMEM, NULL, NULL));
+    /*
+     * A failed callback list copy is logged via the existing sasl_client_new failure site
+     * (ZKS_SITE_SASL_NEW, "allocating SASL connection state: %s") with the sasl_errstring
+     * text of the zks_cb_build result, ending the SASL attempt.
+     */
+    sr = zks_cb_build(s, p);
+    if (sr != SASL_OK) {
+        zks_log_site(s->log_zh, ZKS_SITE_SASL_NEW, sasl_errstring(sr, NULL, NULL));
         return;
     }
     sr = sasl_client_new(p->service, p->host != NULL ? p->host : host, lip, rip, s->cb, 0,
