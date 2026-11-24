@@ -1815,9 +1815,14 @@ ZOOAPI int zoo_aset_acl(zhandle_t *zh, const char *path, int version,
  * ops supported by a multi op (see \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset).
  * \param data the data that will be passed to the completion routine when
  * the function completes.
- * \return the return code for the function call. This can be any of the
- * values that can be returned by the ops supported by a multi op (see
- * \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset).
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ * ZUNIMPLEMENTED - an operation type is not supported in a multi
+ * ZSYSTEMERROR - out of memory
+ * If the call fails, every result slot holds the return code and the
+ * completion is not called.
  */
 ZOOAPI int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         zoo_op_result_t *results, void_completion_t, const void *data);
@@ -2583,7 +2588,9 @@ ZOOAPI int zoo_set_acl(zhandle_t *zh, const char *path, int version,
  * \param results an array to hold the results of the operations
  * \return the return code for the function call. This can be any of the
  * values that can be returned by the ops supported by a multi op (see
- * \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset).
+ * \ref zoo_acreate, \ref zoo_adelete, \ref zoo_aset), or one of the
+ * call errors of \ref zoo_amulti. If the multi fails as a whole, for
+ * example on connection loss, every result slot holds an error code.
  */
 ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_result_t *results);
 
