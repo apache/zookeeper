@@ -34,21 +34,23 @@ use crate::hosts::ConnectDecision;
 use crate::state::Phase;
 use crate::time::{Millis, clamp_timeout, until};
 
-/// Execution phase within an active network interest iteration.
+/// Execution phase within an active network interest iteration. An iteration runs `Resolve`,
+/// `Connect`, `Sasl`, `Timers`, and `Drain` in declaration order. A failed connect skips ahead to
+/// `Drain`, and a blocked connect ends the iteration.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub(crate) enum IterStep {
     /// Inactive iteration state; `poll_action` yields only pre-enqueued driver actions.
     #[default]
     Idle,
-    /// Step 1: Querying DNS address resolution for ensemble server endpoints.
+    /// Queries DNS address resolution for ensemble server endpoints.
     Resolve,
-    /// Step 2: Evaluating connection initiation and server selection decisions.
+    /// Evaluates connection initiation and server selection decisions.
     Connect,
-    /// Step 3: Dispatching SASL authentication negotiation interactions.
+    /// Dispatches SASL authentication negotiation interactions.
     Sasl,
-    /// Step 4: Evaluating heartbeat ping, timeout, and reconnect timer deadlines.
+    /// Evaluates heartbeat ping, timeout, and reconnect timer deadlines.
     Timers,
-    /// Step 5: Draining deferred actions, including pending transport closures.
+    /// Drains deferred actions, including pending transport closures.
     Drain,
     /// Terminal state of the active iteration following complete action polling.
     Done,

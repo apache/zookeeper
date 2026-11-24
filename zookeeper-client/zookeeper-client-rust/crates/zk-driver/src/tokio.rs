@@ -46,7 +46,7 @@
 //!      sequentially on `spawn_blocking` via `tokio_job`, and feeds the `JobDone` result back
 //!      into `IoCore::complete_job`.
 //!   2. *Background DNS Resolution (`BgTask`)*: When `set_servers` is called while a connection is
-//!      already active, `IoCore::interest_step` stages the lookup in `IoCore::bg_job` and
+//!      already active, `IoCore::interest_step` stages the lookup in `IoCore::bg_start` and
 //!      continues servicing the live socket. `tokio_start_bg` launches a `BgTask` on
 //!      `spawn_blocking`, and `tokio_wait_with` polls `task.handle` alongside `AsyncFd`,
 //!      `Notify`, and the interest timer inside a single zero-allocation [`poll_fn`].
@@ -337,11 +337,11 @@ pub(crate) async fn run<T: DriverTokens>(shared: Arc<TaskShared<T>>) {
 /// 2. If `p == Progress::More`, resumes the suspended [`IoCore`] continuation via
 ///    `shared.tokio_resume(ob, out)`.
 /// 3. If `p` is [`Progress::Wait`] or [`Progress::Done`]:
-///    - Drains any foreground [`Job`]s staged in `IoCore::job` (`shared.tokio_take_jobs()`),
+///    - Drains any foreground [`Job`]s staged in `IoCore::deferred` (`shared.tokio_take_jobs()`),
 ///      executes the next job on `spawn_blocking` via [`tokio_job`], and feeds its [`JobDone`]
 ///      back into [`IoCore::complete_job`] (`shared.tokio_complete`).
 ///    - Once all foreground jobs are drained, launches any newly queued background DNS job
-///      (`IoCore::bg_job`) into `bg` via [`tokio_start_bg`].
+///      (`IoCore::bg_start`) into `bg` via [`tokio_start_bg`].
 ///    - If `p == Progress::Wait` remains active (which occurs when a connection dropped while a
 ///      background DNS resolution `bg` was already in flight, promoting that lookup to a foreground
 ///      dependency), awaits `bg.take()` directly and feeds its result into

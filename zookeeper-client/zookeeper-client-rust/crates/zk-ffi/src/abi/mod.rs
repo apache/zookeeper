@@ -36,8 +36,8 @@
 //! - `tls`: Transport Layer Security context initialization and configuration (active only in
 //!   TLS-enabled builds).
 //! - Driver adapters: Internal integration modules converting driver-level primitives to ABI
-//!   representations, specifically [`tokens`], [`host`] connection string parsing, and [`logging`]
-//!   integration.
+//!   representations, specifically [`tokens`], [`host`] adaptation of the C host virtual method
+//!   table to the driver host interface, and [`logging`] integration.
 //!
 //! Because `cbindgen` requires `pub` visibility to discover and generate C symbol declarations,
 //! this module explicitly permits `unreachable_pub`.

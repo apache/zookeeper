@@ -245,7 +245,7 @@ Invariants:
 
 Files: `src/iocore.rs`, `src/iocore_tls.rs`, `src/iocore_tests.rs`.
 
-Sources: spec "Shared driver execution pipeline" and "Outbox management and synchronization barriers"; zookeeper.c:2618-2824 (`zookeeper_interest`), 3530-3667 (`zookeeper_process`, `check_events`), `flush_send_queue`, `recv_buffer`.
+Sources: spec "Shared driver execution pipeline" and "Outbox management and synchronization barriers"; zookeeper.c `zookeeper_interest`, `zookeeper_process`, `check_events`, `flush_send_queue`, `recv_buffer`.
 
 Main functions:
 
@@ -267,11 +267,11 @@ Invariants:
 - Check `has_transport` after every relock of `core`.
 - No `core` lock is held across a blocking call.
 - The read gate is checked before each read and each `handle_read`.
-- The st flavor reads `first_read_hint()` bytes for plaintext. When that read completes a frame length, the same call reads the frame body, as `recv_buffer` does. One call never reads past the end of one frame.
+- The st flavor reads `first_read_hint()` bytes for plaintext. When that read completes a frame length, the same call reads the frame body, as `recv_buffer` does. Outside the handshake reply, one call never reads past the end of one frame. After a 40-byte legacy reply, the 41-byte handshake read holds the first byte of the next frame, and the next call parses it.
 - While the handshake reply is due, `first_read_hint()` is the whole 41-byte `ConnectResponse` frame. The st flavor then reads the reply in one `recv`, as the C primer read does. In all other states it is `read_hint()`.
 - In every plaintext flavor, a read that fills its request and leaves the frame open gives a read of the rest of that frame in the same call. After one of those reads blocks, the later calls for that frame make no more of them (`rx_more_blocked`).
 - A plaintext read that is wholly inside the current frame body goes straight into the body (`body_room`, `recv`, `handle_body_read`) under one `core` lock. This occurs only when no received bytes wait. Other reads go to `rx`.
-- `IoCore::new` does not zero `rx` (`RxBuf`). A read of the full capacity goes into the spare capacity (`recv_spare`). A smaller read zeroes only the bytes above the high-water mark. The read size does not depend on the initialized part of the buffer. The parser sees only the bytes of the last read (`rx_fresh`) or `rx_pending`.
+- `IoCore::new` does not zero `rx` (`RxBuf`). A read of the full capacity clears the buffer and goes into the spare capacity (`recv_spare`), so the length becomes the read count. A smaller read zeroes only the bytes above the current length. The read size does not depend on the initialized part of the buffer. The parser sees only the bytes of the last read (`rx_fresh`) or `rx_pending`.
 - `close_flush` returns `ZOK`, `ZOPERATIONTIMEOUT`, `ZCONNECTIONLOSS` or `ZSYSTEMERROR` and never exceeds its budgets.
 
 ### mt

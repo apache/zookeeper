@@ -45,9 +45,9 @@
 //!      `NativeShared::drive` spawns `zk-dns` via `NativeShared::start_dns` and `pass` waits on
 //!      the self-pipe waker until `dns_thread` stores the `JobDone::Resolved` outcome in
 //!      `DnsSlot::done` and wakes `zk-io`.
-//!   2. *Background resolution* (`IoCore::bg_job`): When [`NativeHandle::set_servers`] triggers an
-//!      ensemble update while a live connection is already active, `IoCore::interest_step`
-//!      stages the lookup in `IoCore::bg_job` and continues computing socket read/write/heartbeat
+//!   2. *Background resolution* (`IoCore::bg_start`): When [`NativeHandle::set_servers`] triggers
+//!      an ensemble update while a live connection is already active, `IoCore::interest_step`
+//!      stages the lookup in `IoCore::bg_start` and continues computing socket read/write/heartbeat
 //!      interest for the active connection! `NativeShared::start_background` spawns `zk-dns` in
 //!      parallel so the active connection continues servicing traffic without interruption while
 //!      DNS resolves in the background.
@@ -536,7 +536,7 @@ impl<T: DriverTokens> NativeShared<T> {
     /// 3. **Step Driving and Background DNS Launch**: Drives the initial [`Progress`] through
     ///    [`NativeShared::drive`] (which routes outbox items and spawns foreground `zk-dns` jobs
     ///    on [`Progress::Wait`]), then calls [`NativeShared::start_background`] to launch any
-    ///    newly staged background DNS job (`IoCore::bg_job`).
+    ///    newly staged background DNS job (`IoCore::bg_start`).
     /// 4. **Socket Poll and Process Step**: If `drive` completed (`ready == true`), polls socket
     ///    and waker via [`NativeShared::poll_io`] and—if a socket is open or events fired—runs
     ///    [`IoCore::process_step`] through [`NativeShared::drive`]. If `drive` yielded on a
@@ -664,7 +664,7 @@ impl<T: DriverTokens> NativeShared<T> {
         }
     }
 
-    /// Dispatches deferred foreground jobs (`IoCore::job`) yielded via [`Progress::Wait`].
+    /// Dispatches deferred foreground jobs (`IoCore::deferred`) yielded via [`Progress::Wait`].
     ///
     /// Under [`DeferPolicy::DNS_THREAD`], `Job::Resolve` is offloaded to a detached `zk-dns`
     /// worker thread via [`NativeShared::start_dns`], returning `None` so `pass` yields to
@@ -699,7 +699,7 @@ impl<T: DriverTokens> NativeShared<T> {
     }
 
     /// Launches a background `zk-dns` worker thread for any pending background resolution job
-    /// (`IoCore::bg_job`, produced when `set_servers` is called while a connection is active),
+    /// (`IoCore::bg_start`, produced when `set_servers` is called while a connection is active),
     /// falling back to inline execution if thread creation fails.
     fn start_background(&self, proof: &mut Unlocked, ob: &mut Outbox<T>, io: &mut NativeIo) {
         while let Some(job) = io.io.take_bg_job() {

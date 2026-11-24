@@ -39,7 +39,7 @@
       </modules>
     </profile>
     <profile>
-      <!-- With full-build, -Prust also builds the optional Rust client -->
+      <!-- -Prust builds the optional Rust client module -->
       <id>rust</id>
       <modules>
         <module>zookeeper-client-rust</module>

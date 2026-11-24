@@ -461,7 +461,7 @@ Existing applications compiled against the canonical ZooKeeper C client run agai
 - The `zhandle_t` opaque type retains its historical `struct _zhandle` tag, preserving C++ name-mangling compatibility.
 - Public structure layouts and alignments match upstream C definitions across supported ABIs (including ILP32 and LP64 differences in `struct Stat`).
 
-Symbol interposition works as expected: where one exported C routine invokes another, calls resolve through the Procedure Linkage Table (PLT). For example, `zoo_aget` routes through `zoo_awget`, and `zoo_get` routes through `zoo_wget` to `zoo_awget`. In contrast, purely internal C helper calls that have migrated into Rust (such as internal `is_unrecoverable` checks, record deallocators, or internal `zookeeper_interest` invocations) no longer traverse PLT stubs, as their logic is encapsulated within the Rust driver layer.
+Symbol interposition works as expected: where one exported C routine invokes another, calls resolve through the Procedure Linkage Table (PLT). For example, `zoo_aget` routes through `zoo_awget`, and `zoo_get` routes through `zoo_wget` to `zoo_awget`. In contrast, the legacy C client's internal helper calls (such as internal `is_unrecoverable` checks, record deallocators, or internal `zookeeper_interest` invocations) are implemented in the Rust driver layer, so they do not traverse PLT stubs.
 
 ### Shim architecture and module structure
 

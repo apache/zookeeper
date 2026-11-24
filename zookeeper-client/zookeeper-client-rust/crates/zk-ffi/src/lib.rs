@@ -38,9 +38,10 @@
 #![deny(unsafe_code)]
 #![cfg_attr(test, allow(clippy::disallowed_macros))]
 
-// When TLS support is enabled, a single cryptographic provider feature must be chosen explicitly.
-// This compile-time guard mirrors the equivalent constraint in `zk-driver`, mapped to the
-// corresponding feature flags exposed by `zk-ffi`.
+// This compile-time guard rejects `tls` without a provider feature, mirroring the matching guard
+// in `zk-driver`. `zk-ffi` has no guard against more than one provider: each provider feature
+// here enables the `zk-driver` feature of the same name, and the `zk-driver` guard rejects more
+// than one provider.
 #[cfg(all(
     feature = "tls",
     not(any(

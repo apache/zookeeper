@@ -239,8 +239,8 @@ impl Cause {
         )
     }
 
-    /// Indicates whether teardown processing executes the legacy stage T5 (`handle_error`)
-    /// completion callbacks.
+    /// Indicates whether teardown processing runs the host cursor and backoff update of legacy
+    /// `handle_error` in the `Finish` stage.
     #[must_use]
     pub const fn runs_handle_error(self) -> bool {
         !matches!(self, Self::RwServerFound | Self::ForcedClose)

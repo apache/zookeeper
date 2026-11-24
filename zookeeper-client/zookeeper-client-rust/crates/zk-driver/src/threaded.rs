@@ -330,8 +330,9 @@ impl<T: DriverTokens> Shared<T> {
     /// core.
     ///
     /// The self-pipe waker is deliberately created without `FD_CLOEXEC` to mirror upstream
-    /// `mt_adaptor.c:244`, where pipes are created via standard `pipe()` and the `sock_cloexec`
-    /// configuration option restricts cloexec behavior exclusively to network sockets.
+    /// `adaptor_init` in `mt_adaptor.c`, where pipes are created via standard `pipe()` and the
+    /// `sock_cloexec` configuration option restricts cloexec behavior exclusively to network
+    /// sockets.
     ///
     /// # Errors
     ///

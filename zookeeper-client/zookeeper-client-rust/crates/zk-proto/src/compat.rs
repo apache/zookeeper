@@ -21,9 +21,8 @@
 //! [`Compat::LEGACY_C`] to ensure strict binary and behavioral parity, whereas modern asynchronous
 //! runtimes initialize from [`Compat::NATIVE`] with customizable policy extensions.
 //!
-//! Single-variant enums represent verified bug fixes (DV-FIX) where legacy C behavior was
-//! demonstrably erroneous or undefined; these fixes are permanently enabled across all operational
-//! profiles.
+//! Single-variant enums mark legacy C defects where historical behavior was demonstrably erroneous
+//! or undefined; both profiles fix these defects, so no profile can select the legacy behavior.
 
 pub use crate::legacy::addrvec::AddrEq;
 

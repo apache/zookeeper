@@ -610,8 +610,8 @@ impl<T: Tokens> Connection<T> {
         ConnectDecision::Connect(Action::Connect { endpoint, tls })
     }
 
-    /// Executes teardown stage T5 following connection failures to update cursor state and backoff
-    /// timers.
+    /// Runs in the teardown `Finish` stage following connection failures to update cursor state and
+    /// backoff timers.
     pub(crate) fn hosts_on_handle_error(&mut self, now: Millis) {
         let addrs = &self.hosts.servers.addrs;
         let delay = addrs.at_end() || addrs.is_empty();
@@ -649,7 +649,8 @@ impl<T: Tokens> Connection<T> {
         }
     }
 
-    /// Executes teardown stage T5 upon loss of an established session.
+    /// Executes the host backoff update of the teardown `Finish` stage upon loss of an established
+    /// session.
     ///
     /// Session loss initiates a counted host pass beginning at the current cursor without immediate
     /// delay, scheduling an `EachPass` DNS resolution cycle ahead of subsequent reconnection.

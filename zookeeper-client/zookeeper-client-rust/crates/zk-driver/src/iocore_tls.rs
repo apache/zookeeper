@@ -598,7 +598,7 @@ pub(crate) fn tls_flush<T: Tokens>(
 ///    of outbound plaintext into `io.tx_copy`. If zero bytes are available, the flush is complete.
 ///    Otherwise, encrypts `io.tx_copy` into the TLS session via [`TlsConn::write_frame`], clears
 ///    `io.tx_copy`, transfers the resulting ciphertext into `t.ct_out`, records `t.unacked = n`,
-///    and loops back to step 2 to transmit the new flight.
+///    and loops back to step 1 to transmit the new flight.
 pub(crate) fn tls_flush_with<T: Tokens>(
     io: &mut IoCore,
     cx: &StepCtx<'_, T>,
@@ -617,7 +617,7 @@ pub(crate) fn tls_flush_with<T: Tokens>(
         if t.pending.is_some() {
             return stop;
         }
-        // Step 1: Drain any in-flight ciphertext before crediting `unacked` or staging new chunks.
+        // Step 2: Drain any in-flight ciphertext before crediting `unacked` or staging new chunks.
         if t.has_unsent() {
             let all_sent = match deadline {
                 None => pump_out(t).map_err(FlushError::Send)?,
@@ -628,7 +628,7 @@ pub(crate) fn tls_flush_with<T: Tokens>(
                 return Ok(());
             }
         }
-        // Step 2: All ciphertext from the previous chunk is now in the kernel. Credit the protocol
+        // Step 3: All ciphertext from the previous chunk is now in the kernel. Credit the protocol
         // engine for the corresponding plaintext bytes.
         if t.unacked > 0 {
             let n = std::mem::take(&mut t.unacked);
@@ -642,7 +642,7 @@ pub(crate) fn tls_flush_with<T: Tokens>(
             }
             conn.handle_transmitted(n, now);
         }
-        // Step 3: Stage the next plaintext chunk (up to 256 KiB) from the protocol transmit queue.
+        // Step 4: Stage the next plaintext chunk (up to 256 KiB) from the protocol transmit queue.
         let n = stage_chunk(io, cx, proof);
         if n == 0 {
             return Ok(());
@@ -651,7 +651,7 @@ pub(crate) fn tls_flush_with<T: Tokens>(
             io.tx_copy.clear();
             return Ok(());
         };
-        // Step 4: Encrypt the staged plaintext into TLS records and move them into `t.ct_out`.
+        // Encrypt the staged plaintext into TLS records and move them into `t.ct_out`.
         let taken = t.tls.write_frame(&io.tx_copy);
         io.tx_copy.clear();
         if taken.is_err() {

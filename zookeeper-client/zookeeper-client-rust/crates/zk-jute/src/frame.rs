@@ -109,9 +109,10 @@ enum State {
 /// - **Direct Socket Ingestion**: Network runtimes can query [`FrameDecoder::body_room`] to obtain
 ///   a mutable slice pointing directly into the frame payload buffer, allowing kernel reads to
 ///   write directly without intermediate bounce buffers, followed by [`FrameDecoder::commit`].
-/// - **Zero-Trust Cleansing**: All buffer storage, including recycled and grown buffers, is
-///   explicitly sanitized with zeroization passes to prevent lingering session credentials or SASL
-///   tokens from leaking across heap allocations.
+/// - **Zero-Trust Cleansing**: The decoder zeroizes storage that it relinquishes itself: old
+///   storage replaced during growth, and its body buffer in [`FrameDecoder::stall`],
+///   [`FrameDecoder::reset`], and `Drop`. Completed frame bodies and buffers passed to
+///   [`FrameDecoder::recycle`] are not wiped by the decoder and must be cleansed by the caller.
 #[derive(Debug, Clone)]
 pub struct FrameDecoder {
     max_len: Option<u32>,

@@ -134,7 +134,8 @@ pub struct Config {
     /// Initial transaction identifier (xid) seed value; values non-positive default to 1.
     pub xid_seed: i32,
     /// Target architecture platform signedness flag for C `char`, preserving C hash table bucket
-    /// ordering in legacy mode.
+    /// ordering in legacy mode. Defaults to [`TARGET_C_CHAR_SIGNED`], the signedness of C `char`
+    /// on the build target.
     ///
     /// [`TARGET_C_CHAR_SIGNED`]: crate::legacy::hashtable::TARGET_C_CHAR_SIGNED
     pub c_char_signed: bool,

@@ -110,9 +110,9 @@ impl<T: Tokens> AuthState<T> {
 /// token delivery, diagnostic logging, barrier emission, and error teardown.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum AuthReplyStep {
-    /// Resumes after releasing thread synchronization locks at step 2.
+    /// Resumes after the `AuthLockpoint` barrier that `on_auth_reply` parks on.
     AfterLockpoint,
-    /// Resumes after delivering the authentication barrier notification at step 6.
+    /// Resumes after the `Auth` output barrier that `continue_auth_reply` parks on.
     AfterAuth,
 }
 

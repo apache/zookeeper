@@ -125,8 +125,9 @@ impl<T: Tokens> Connection<T> {
     /// Under `CloseMode::Drain`, sets the closing flag and calculates the drain deadline
     /// (`now + close_timeout_ms`), allowing pending in-flight requests to complete normally.
     ///
-    /// If an active teardown pipeline is currently suspended at stage T3, the close operation is
-    /// deferred until the teardown sequence concludes, preserving chronological completion order.
+    /// If an active teardown pipeline is currently suspended between the `Snapshot` stage and the
+    /// end of the `Finish` stage, the close operation is deferred until the teardown sequence
+    /// concludes, preserving chronological completion order.
     pub fn begin_close(&mut self, now: Millis) {
         match self.compat.close_mode {
             CloseMode::Drain => {

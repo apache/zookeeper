@@ -23,11 +23,11 @@
 //!    rules (`zk_proto::legacy::connect::parse_init`). Chroot validation failures fail fast before
 //!    initiating any network resolution.
 //! 2. **Initial host resolution**: Coordinates DNS resolution across configured server
-//!    specifications through the `resolve` leaf (`zookeeper.c:1450`) using
-//!    `crate::resolve::ResolveRun`. Log buffers are flushed before each leaf invocation and
-//!    before PRNG reseeding. If host entry `k` contains a port syntax error, preceding entries
-//!    `0..k-1` are resolved first; the driver then logs the port diagnostic and fails with
-//!    `EINVAL` without reseeding the PRNG.
+//!    specifications through the `resolve` leaf (`update_addrs` in `zookeeper_init_internal`,
+//!    `zookeeper.c`) using `crate::resolve::ResolveRun`. Log buffers are flushed before each leaf
+//!    invocation and before PRNG reseeding. If host entry `k` contains a port syntax error,
+//!    preceding entries `0..k-1` are resolved first; the driver then logs the port diagnostic and
+//!    fails with `EINVAL` without reseeding the PRNG.
 //! 3. **SASL initialization point** ([`InitStep::SaslPoint`]): If SASL parameters are supplied,
 //!    pauses to allow the C host harness to instantiate its SASL authentication session.
 //! 4. **Readiness transition** ([`InitStep::Ready`]): Signals that connection bootstrap is

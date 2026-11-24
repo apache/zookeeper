@@ -41,7 +41,7 @@ read it, so a release can omit it:
 |---|---|---|
 | `absent.tsv` | The names that a shared library must not export. | `abi golden` |
 | `log-sites.tsv` | The `LOG_*` call sites of the C core, with level and format. | `log-sites` |
-| `layout/probe.c` | The L1 layout probe of the public types. | `layout gen` |
+| `layout/probe.c` | The compile-time layout probe of the public types. | `layout gen` |
 | `layout/<target>.expect` | The measured layout facts for one target. | `layout expect` |
 
 The column descriptions below cover the files of both directories.
@@ -56,7 +56,7 @@ The column descriptions below cover the files of both directories.
 - `rw` is `ro` or `rw` for data, and `-` for functions.
 - `size_lp64` and `size_ilp32` are the data object sizes in bytes, and `-` for functions.
 - `decl` is the declaring installed header and line, or `-`.
-- `note` records the ABI-01 facts, for example an export that no installed header declares.
+- `note` records how the declaration of an export differs from a normal public declaration, for example when no installed header declares it, when it is declared without `ZOOAPI` or when it is declared only without `THREADED`. The notes carry the ledger row id `ABI-01`.
 
 The export totals for mt/st are: plain 201/178, ssl 202/179, sasl 210/187,
 full 211/188. In every configuration, 36 exports are data. Of these, 30 are
@@ -69,7 +69,7 @@ apply to both flavors and to every configuration.
 has one of these values:
 
 - `archive-only`: the name is in `static-symbols.tsv`.
-- `internal`: an undeclared legacy global that DV-ABI-1 removes.
+- `internal`: an undeclared legacy global that the drop-in libraries do not define (`DV-ABI-1`).
 - `undefined`: no library defines the name.
 - `mt-only`: a sync function that only mt defines, so st must not export it.
 
@@ -125,13 +125,7 @@ cargo xtask abi check <libzookeeper_mt.dylib> --flavor mt --config plain
 cargo xtask abi static <libzookeeper_mt.a> --flavor mt --config plain
 ```
 
-`abi check` fails when the names, kinds or data sizes differ from
-`symbols.tsv`. It also checks the identity of the library, such as the
-Mach-O install name and versions. The `--reference` option accepts the
-known legacy deviations: DV-TLS-4 for the OpenSSL references and DV-ABI-1
-for the archive globals. The checks read `absent.tsv` from the golden
-directory when it is there, and otherwise from `../tests/abi`. A tree
-without that directory skips check E1.
+`abi check` fails when the names, kinds or data sizes differ from `symbols.tsv`. It also checks the identity of the library, such as the Mach-O install name and versions. The `--reference` option is for checking the legacy reference build. With it, `abi check` reports the undefined OpenSSL references of the legacy library as information instead of a failure (`DV-TLS-4`), and `abi static` reports the legacy archive globals that are in neither golden file as information (`DV-ABI-1`). The checks read `absent.tsv` from the golden directory when it is there, and otherwise from `../tests/abi`. A tree without that directory skips the `absent.tsv` part of the export name check (`E1`).
 
 The `--check` option of `log-sites`, `layout gen` and `layout expect`
 compares the output with the file and fails when the file is out of date.

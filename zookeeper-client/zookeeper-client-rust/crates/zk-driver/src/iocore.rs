@@ -95,10 +95,14 @@
 //!   so `IoCore::frame_steps` can parse frames directly from `rx` without copying. Only trailing
 //!   partial-frame remnants that survive the turn are spilled into `rx_pending` via
 //!   `IoCore::spill_fresh`.
-//! - In single threaded mode (`Flavor::St`), plaintext reads request `Connection::read_hint` bytes
-//!   to mirror legacy C `recv_buffer` semantics (reading the 4-byte length prefix and then the
-//!   single frame body in one turn, never reading past the end of one frame). In multithreaded and
-//!   native modes, reads batch up to `DriverConfig::max_read` (64 KiB) per syscall.
+//! - In single threaded mode (`Flavor::St`), the first plaintext read requests
+//!   `Connection::first_read_hint` bytes: while the handshake reply is due, the 41-byte
+//!   `ConnectResponse` frame is read in one `recv`, as the C primer read does; after a 40-byte
+//!   legacy reply, that read can hold bytes of the next frame, which are kept for the next turn.
+//!   In other states it requests `Connection::read_hint` bytes (reading the 4-byte length prefix
+//!   and then the single frame body in one turn, without reading past the end of the current
+//!   frame). In multithreaded and native modes, reads batch up to `DriverConfig::max_read` (64 KiB)
+//!   per syscall.
 //!
 //! # Outbound Staging and Zero-Copy Frame Lending
 //!
@@ -155,11 +159,11 @@ pub const READ_BUFFER_LEN: usize = 64 * 1024;
 /// Fixed-capacity (`READ_BUFFER_LEN`) receive buffer for plaintext and TLS ciphertext reads.
 ///
 /// Allocated with uninitialized spare capacity (`Vec::with_capacity`) to avoid a 64 KiB zeroing
-/// pass on handle initialization. The underlying vector's `len` tracks the high-water mark of
-/// initialized bytes while its capacity remains fixed at `READ_BUFFER_LEN`. Full-capacity reads
-/// write directly into uninitialized spare capacity via [`TcpSock::recv_spare`], whereas smaller
-/// reads zero-initialize only the slice beyond the current high-water mark so syscall read lengths
-/// remain identical to `want`.
+/// pass on handle initialization. The underlying vector's `len` counts the initialized bytes while
+/// its capacity remains fixed at `READ_BUFFER_LEN`. Full-capacity reads clear the vector and
+/// write directly into spare capacity via [`TcpSock::recv_spare`], so `len` becomes the read count,
+/// whereas smaller reads zero-initialize only the bytes above `len` so syscall read lengths remain
+/// identical to `want`.
 pub(crate) struct RxBuf {
     buf: Vec<u8>,
 }
@@ -2724,9 +2728,12 @@ impl IoCore {
     ///
     /// Sizing policy (`want`):
     /// - **single threaded (`Flavor::St`)**: Requests `hint.min(cap)` bytes, where `hint` is
-    ///   `Connection::read_hint` (4 bytes when awaiting a frame length header, or the remaining
-    ///   body deficit when a frame is open). This mirrors C `recv_buffer`, which never reads past
-    ///   the end of a single frame in one `zookeeper_process` call.
+    ///   `Connection::first_read_hint` (the 41-byte `ConnectResponse` frame size while the
+    ///   handshake reply is due, else `Connection::read_hint`: 4 bytes when awaiting a frame length
+    ///   header, or the remaining body deficit when a frame is open). Outside the handshake this
+    ///   mirrors C `recv_buffer`, which never reads past the end of a single frame in one
+    ///   `zookeeper_process` call; the handshake read can leave bytes of the next frame for the
+    ///   next turn.
     /// - **multithreaded & Native (`Flavor::Mt` / `Flavor::Native`)**: Requests `cap` (up to
     ///   `cfg.max_read` = 64 KiB) to batch multiple small frames in a single `recv` syscall.
     ///

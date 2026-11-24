@@ -266,7 +266,8 @@ pub(crate) enum Shape {
     WhoAmI,
 }
 
-/// Legacy C client completion type constants matching zookeeper.c:203-212.
+/// Legacy C client completion type constants matching the `COMPLETION_*` definitions in
+/// `zookeeper.c`.
 pub(crate) mod completion {
     /// Watcher event callback completion type (`COMPLETION_WATCH`).
     pub(crate) const WATCH: i32 = -1;

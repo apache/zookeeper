@@ -235,7 +235,7 @@ Calls received:
 - `handle_read`, `read_hint`, `first_read_hint`, `body_room`, `handle_body_read`: driver.
 - `strip_path`: watches.
 - `teardown_completion`: requests.
-- `Recv::reset`: teardown T1 (session).
+- `Recv::reset`: `teardown_t1` (session).
 
 Invariants:
 
@@ -335,7 +335,7 @@ Calls received:
 - `queue_auth_resend`: `continue_finalize` (session).
 - `begin_sasl`: `on_connect_response` (session).
 - `poll_sasl_action`: `poll_action` (hosts).
-- `sasl_on_teardown`: teardown T1 (session). `sasl_on_destroy`: destroy (session).
+- `sasl_on_teardown`: `teardown_t1` (session). `sasl_on_destroy`: destroy (session).
 - `AuthState::take_tokens`: teardown, close, `into_leftovers`.
 
 Invariants:
@@ -392,7 +392,7 @@ Calls made:
 Calls received:
 
 - The `pub` functions: driver.
-- `hosts_on_handle_error`, `hosts_on_session_lost`: teardown T5 (session).
+- `hosts_on_handle_error`, `hosts_on_session_lost`: `teardown_finish` (session).
 - `queue_close_transport`: teardown, close, sasl.
 - `Timers::on_recv`: recv. `Timers::on_send`: requests. `reset_for_connect`: session.
 
@@ -459,8 +459,8 @@ Calls received:
 
 Invariants:
 
-- A teardown changes the transport epoch in T1. A stopped job with an old epoch stops when it continues.
-- Teardown stages run in order T0 to T6. A barrier parks the job with its next stage.
+- A teardown changes the transport epoch in `teardown_t1`. A stopped job with an old epoch stops when it continues.
+- A teardown runs the socket error log and the transport reset, and then the `TeardownStage` stages in declaration order. A barrier parks the job with its next stage.
 - A forced close takes a snapshot at the trigger. The remaining stages run in `run_pending_teardown`. The visible state is 999 between them.
 - After `destroy`, `resume` does nothing, and every token left in the core fails with `ZCLOSING` or goes to `into_leftovers`.
 - `close.closing` never goes back to false.

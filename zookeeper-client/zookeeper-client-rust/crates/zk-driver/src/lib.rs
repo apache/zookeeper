@@ -39,8 +39,8 @@
 //! - **Native Asynchronous Tokio Driver** (`tokio`, Unix-only): Powers the async task mode of the
 //!   native Rust client (`tokio::TaskHandle`), multiplexing readiness via `AsyncFd`, wakeups via
 //!   `tokio::sync::Notify`, and protocol deadlines via `tokio::time::sleep` while offloading all
-//!   blocking DNS, TLS setup, probing, and SASL work to `spawn_blocking`
-//!   ([`iocore::DeferPolicy::ALL`]).
+//!   blocking DNS, TLS setup, and probing work to `spawn_blocking` ([`iocore::DeferPolicy::ALL`])
+//!   and running SASL steps on `spawn_blocking` separately.
 //!
 //! # Outbox Barriers and Callback Decoupling
 //!

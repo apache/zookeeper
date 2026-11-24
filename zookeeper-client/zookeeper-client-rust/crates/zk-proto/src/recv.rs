@@ -295,8 +295,8 @@ struct Decoded {
 }
 
 /// Maps a transaction sub-operation opcode to its corresponding legacy C client completion log site
-/// (`zookeeper.c:3298-3336`). Node creation operations map to string completions, `setData` maps
-/// to stat completions, while `delete` and `check` map to void completions.
+/// (`deserialize_response` in `zookeeper.c`). Node creation operations map to string completions,
+/// `setData` maps to stat completions, while `delete` and `check` map to void completions.
 fn sub_op_site(op_type: i32) -> Option<LogSite> {
     match op_type {
         opcode::CREATE | opcode::CREATE2 | opcode::CREATE_CONTAINER | opcode::CREATE_TTL => {
@@ -936,10 +936,10 @@ impl<T: Tokens> Connection<T> {
     /// Deserializes multi-transaction responses, stripping chroot prefixes and computing the
     /// aggregate return code.
     ///
-    /// Under ZooKeeper transaction semantics (`zookeeper.c:3319-3328`), the aggregate transaction
-    /// return code is defined by the first encountered sub-operation error other than `ZOK` or
-    /// `ZRUNTIMEINCONSISTENCY`. Read-only multi-transactions (`MultiKind::MultiRead`) do not fail
-    /// atomically and return `ZOK`.
+    /// Under ZooKeeper transaction semantics (`deserialize_multi` in `zookeeper.c`), the aggregate
+    /// transaction return code is defined by the first encountered sub-operation error other than
+    /// `ZOK` or `ZRUNTIMEINCONSISTENCY`. Read-only multi-transactions (`MultiKind::MultiRead`) do
+    /// not fail atomically and return `ZOK`.
     fn recv_decode_multi(
         &self,
         r: &mut Reader<'_>,
@@ -1110,7 +1110,7 @@ impl<T: Tokens> Connection<T> {
                 },
                 _,
             ) => {
-                // Mirrors legacy C cleanup_failed_multi behavior (zookeeper.c:3298-3306),
+                // Mirrors legacy C cleanup_failed_multi behavior in zookeeper.c,
                 // emitting synthetic failure logs for each sub-operation when the transaction
                 // fails.
                 for op in op_types {

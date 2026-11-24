@@ -34,7 +34,7 @@ Rust client. These properties configure the build.
 
 | Property | Default | Description |
 |---|---|---|
-| `rust-client` | `no` | `yes` builds Rust client and C shim; `no` skips. |
+| `rust-dropin` | `yes` | `yes` builds the drop-in C client libraries; `no` builds only the crates. |
 | `rust-tls` | `no` | `yes` enables TLS support in the Rust core. |
 | `rust-tls-provider` | `ring` | `rustls` provider: `ring`, `aws-lc-rs`, or `aws-lc-rs-fips`. |
 | `rust-target-cpu` | `auto` | `-C target-cpu` of the `zk-ffi` staticlib: `auto` follows the C compiler (`$CC` with `$CFLAGS`), `no` adds no flag, else a CPU name. |
@@ -46,14 +46,14 @@ Rust client. These properties configure the build.
 `rust-cargo-vendor` and `rust-system-crates` are mutually exclusive. All Cargo
 build artifacts are placed under `target/cargo` within this module.
 
-The Maven Enforcer plugin validates `rust-client` during the `validate` phase of
+The Maven Enforcer plugin validates `rust-dropin` during the `validate` phase of
 this module (rejecting values other than `yes` or `no`).
 
 ## Maven Lifecycle Mapping
 
 | Phase | Execution ID | Action |
 |---|---|---|
-| `validate` | `rust-client-value` | Validates `rust-client` via `maven-enforcer-plugin`. |
+| `validate` | `rust-dropin-value` | Validates `rust-dropin` via `maven-enforcer-plugin`. |
 | `process-sources` | `rust-prepare` | Checks MSRV/versions, probes TLS/SASL, runs `cargo fetch`. |
 | `compile` | `rust-build` | Builds `zk-ffi` (`capi` profile) and workspace crates (`--release`). |
 | `test` | `rust-test` | Runs unit and integration tests for workspace and FFI crates. |

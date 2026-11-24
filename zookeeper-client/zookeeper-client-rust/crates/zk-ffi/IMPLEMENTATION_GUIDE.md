@@ -75,7 +75,7 @@ cargo xtask layout gen --check
 cargo test --manifest-path crates/zk-ffi-layout/Cargo.toml
 ```
 
-Run clippy and the tests also for each feature set of the drop-in. The shim README lists the feature sets ("Checks").
+Run clippy and the tests also for each feature set of the drop-in. The shim README lists the feature sets ("Rust Workspace Test Matrix").
 
 The layout check needs a C compiler and the OpenSSL and Cyrus SASL headers. It finds them in the default paths or through pkg-config. `ZK_LAYOUT_SSL_CFLAGS` and `ZK_LAYOUT_SASL_CFLAGS` give other flags. `ZK_LAYOUT_CONFIGS` selects fewer configurations, for example `plain,sasl`. A configuration that does not build fails the test.
 
@@ -569,7 +569,7 @@ The parts depend on the signatures of section 2.5, not on the bodies.
 - `c/tests/abi/layout/probe.c` and `<target>.expect`: `cargo xtask layout gen` and `cargo xtask layout expect` write them. `zookeeper-client-rust/c/tests/abi/layout_check.c` checks the public headers against the expect file. `SH/zks_layout_check.c` pins the `zkrs.h` layouts at compile time.
 - The `zk-ffi-layout` crate (`zookeeper-client-rust/crates/zk-ffi-layout`) is the cross-language check. It compiles a C probe against the public headers and `SH/zkrs.h` in the `plain`, `ssl`, `sasl` and `full` configurations. It compares the size, the alignment and each field of the legacy mirrors and of the `zkrs.h` types with rustc. It also compares the enum values and the constants of `zkrs.h`, the result codes and the operation codes. It reads the member lists of the public types from `probe.c`, so run `cargo xtask layout gen --check` first.
 
-Before you finish a change, run the ABI checks of the shim README ("Checks") on the built libraries.
+Before you finish a change, run the ABI checks of the shim README ("ABI Conformance Verification") on the built libraries.
 
 ## 6. The st flavor and the static archives
 

@@ -25,7 +25,7 @@
 //! - **Drop-In Legacy Mode (`ConfigSource::Legacy`)**: To maintain strict diagnostic and behavioral
 //!   compatibility with the legacy C OpenSSL client (`zookeeper.c`), [`RustlsConnector::new_conn`]
 //!   re-evaluates certificate files on each connection attempt in the exact procedural order of
-//!   C `init_ssl_for_socket` (`zookeeper.c:2847-2935`), halting at the first failure and reporting
+//!   C `init_ssl_for_socket` in `zookeeper.c`, halting at the first failure and reporting
 //!   the corresponding [`TlsSetupError`]:
 //!   1. *Context Initialization* (`TlsResourceAt::ContextNew`, `"error creating ssl context"`):
 //!      Initializes the `ClientConfig` builder with TLS 1.3 and TLS 1.2 support.

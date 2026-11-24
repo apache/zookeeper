@@ -245,7 +245,7 @@ impl ClientBuilder {
         }
     }
 
-    /// Configures the requested session heartbeat timeout (default is 30 seconds).
+    /// Configures the requested session timeout (default is 30 seconds).
     ///
     /// The final negotiated timeout is constrained by server side tick limits.
     /// Must be at least 1 millisecond.

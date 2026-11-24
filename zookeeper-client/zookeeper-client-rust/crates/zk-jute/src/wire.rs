@@ -210,8 +210,9 @@ impl<'a> Reader<'a> {
         if len == -1 {
             return Ok(None);
         }
-        // Mirror C client deserialization ordering: evaluate buffer availability prior to sign
-        // validation.
+        // Validate sign before checking buffer availability; this yields the same error codes as
+        // `recordio.c` for both negative and truncated lengths, as C's availability test cannot
+        // fire for a negative length.
         match usize::try_from(len) {
             Ok(n) => self.read_bytes(n).map(Some),
             Err(_) => Err(negative(len)),

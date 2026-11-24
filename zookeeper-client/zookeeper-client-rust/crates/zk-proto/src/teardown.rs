@@ -17,11 +17,11 @@
 //! Staged connection teardown and forced termination state machine.
 //!
 //! This module manages [`TeardownState`] and orchestrates the orderly dismantling of a ZooKeeper
-//! connection across distinct lifecycle stages (T0 through T6). Each stage can pause at
-//! cooperative scheduling barriers (such as yielding to allow user callbacks or driver
-//! processing). In the event of a forced close, an atomic snapshot of in-flight and queued
-//! operations is captured immediately, deferring subsequent failure dispatching to background
-//! stages without blocking callers.
+//! connection across distinct lifecycle stages (the socket error log, the transport reset, then
+//! the `TeardownStage` stages in order). Each stage can pause at cooperative scheduling barriers
+//! (such as yielding to allow user callbacks or driver processing). In the event of a forced
+//! close, an atomic snapshot of in-flight and queued operations is captured immediately, deferring
+//! subsequent failure dispatching to background stages without blocking callers.
 
 use std::collections::VecDeque;
 
@@ -37,26 +37,25 @@ use crate::state::{Cause, Phase, State};
 use crate::time::{Millis, until};
 use zk_jute::JString;
 
-/// Discrete execution stages of the connection teardown state machine.
+/// Discrete execution stages of the connection teardown state machine. The teardown job runs the
+/// stages in declaration order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum TeardownStage {
-    /// Stage T2: Emits state change notifications (such as `Connecting` or terminal states) to
-    /// registered session watchers.
+    /// Emits state change notifications (such as `Connecting` or terminal states) to registered
+    /// session watchers.
     Session,
-    /// Stage T3: Captures a point-in-time snapshot of outbound transmission frames and pending
-    /// FIFO requests. Standard teardown captures the active queue state; forced close utilizes the
+    /// Captures a point-in-time snapshot of outbound transmission frames and pending FIFO
+    /// requests. Standard teardown captures the active queue state; forced close utilizes the
     /// pre-captured snapshot.
     Snapshot,
-    /// Stage T3: Systematically fails captured pending requests with appropriate error codes,
-    /// yielding across direct-completion boundaries.
+    /// Systematically fails captured pending requests with appropriate error codes, yielding
+    /// across direct-completion boundaries.
     FailFifo,
-    /// Stage T3: Emits authentication lock-point synchronization barriers for single threaded
-    /// drivers.
+    /// Emits authentication lock-point synchronization barriers for single threaded drivers.
     Lockpoint,
-    /// Stage T3: Completes authentication callbacks with terminal error status.
+    /// Completes authentication callbacks with terminal error status.
     Auth,
-    /// Stages T4 through T6: Finalizes host selection backoff, unregisters watchers, and completes
-    /// cleanup.
+    /// Finalizes host selection backoff, unregisters watchers, and completes cleanup.
     Finish,
 }
 
@@ -69,7 +68,7 @@ pub(crate) struct TeardownJob<T: Tokens> {
     pub(crate) stage: TeardownStage,
     /// Indicates whether the connection was actively established when teardown was initiated.
     pub(crate) connected: bool,
-    /// Pending operations remaining to be failed and notified following the T3 queue snapshot.
+    /// Pending operations remaining to be failed and notified following the `Snapshot` stage.
     pub(crate) entries: VecDeque<Pending<T>>,
     /// Authentication credentials awaiting failure notification, preserved from the teardown
     /// snapshot.
@@ -120,12 +119,12 @@ pub(crate) struct TeardownState<T: Tokens> {
     /// Operating system error number associated with the most recent transport failure, if
     /// available.
     pub(crate) last_errno: Option<i32>,
-    /// Tracks whether a forced close teardown job has started but has not yet reached stage T3.
-    /// The snapshot remains in `forced` until T3 so re-entrant close calls during T2 callbacks can
-    /// access it.
+    /// Tracks whether a forced close teardown job has started but has not yet reached the
+    /// `Snapshot` stage. The snapshot remains in `forced` until the `Snapshot` stage so re-entrant
+    /// close calls during `Session` stage callbacks can access it.
     forced_started: bool,
-    /// Indicates that stage T3 is actively executing; concurrent close requests in this window
-    /// defer until T3 finishes.
+    /// Indicates that the `Snapshot` through `Finish` stages are actively executing; concurrent
+    /// close requests in this window defer until the `Finish` stage completes.
     t3_started: bool,
     /// Unit test interception seam recording inter-module peer invocations.
     #[cfg(test)]
@@ -173,7 +172,8 @@ pub(crate) enum PeerCall {
     RequestFrame(i32, i32),
 }
 
-/// Structured log entry emitted during Stage T0 following C client socket error formatting.
+/// Structured log entry emitted during the socket error log step following C client socket error
+/// formatting.
 pub(crate) struct T0Line {
     /// Logging call site identifier.
     site: LogSite,
@@ -184,7 +184,7 @@ pub(crate) struct T0Line {
 }
 
 impl T0Line {
-    /// Constructs a basic T0 error log specification without additional contextual parameters.
+    /// Constructs a basic socket error log specification without additional contextual parameters.
     pub(crate) fn new(site: LogSite, errno: i32) -> Self {
         Self {
             site,
@@ -193,7 +193,8 @@ impl T0Line {
         }
     }
 
-    /// Constructs a T0 error log specification populated with supplementary contextual arguments.
+    /// Constructs a socket error log specification populated with supplementary contextual
+    /// arguments.
     pub(crate) fn with(site: LogSite, errno: i32, extra: Vec<LogArg>) -> Self {
         Self { site, errno, extra }
     }
@@ -221,13 +222,13 @@ impl<T: Tokens> Connection<T> {
     ///   function returns `ZOK` as a no-op, since destroyed instances have already discharged
     ///   pending requests.
     /// - Socket creation and initial TCP connection refusal failures are handled even before
-    ///   transport initialization, mirroring legacy C client error reporting behavior
-    ///   (`zookeeper.c:2681-2711`).
+    ///   transport initialization, mirroring legacy C client error reporting behavior (the
+    ///   socket() and connect() failure handling in `zookeeper_interest` in `zookeeper.c`).
     pub fn handle_transport_failed(&mut self, f: TransportFailure, now: Millis) -> i32 {
         if self.close.destroyed {
             return rc::ZOK;
         }
-        // Initiate teardown using default T0 error log templates for standard failures,
+        // Initiate teardown using default socket error log templates for standard failures,
         // or specialized log sites for TLS resource initialization failures.
         match f {
             TransportFailure::SocketCreate { errno } => {
@@ -296,12 +297,12 @@ impl<T: Tokens> Connection<T> {
     /// - If the output stream is suspended, an explicit close is already underway, or a forced
     ///   teardown job has already started, this function returns `false` without performing work.
     /// - Otherwise, it extracts the captured snapshot, launches a background teardown job under
-    ///   [`Cause::ForcedClose`] omitting initial T0 error logs, and returns `true`. Captured
+    ///   [`Cause::ForcedClose`] omitting initial socket error logs, and returns `true`. Captured
     ///   outbound transmission frames are dropped.
     /// - If `begin_close` was invoked previously, the explicit close discharges snapshot entries
     ///   directly, making this invocation a no-op. The teardown job delays consuming the snapshot
-    ///   until Stage T3 so that re-entrant close requests triggered from Stage T2 watcher callbacks
-    ///   can discover and process it.
+    ///   until the `Snapshot` stage so that re-entrant close requests triggered from `Session`
+    ///   stage watcher callbacks can discover and process it.
     pub fn run_pending_teardown(&mut self, now: Millis) -> bool {
         if self.out.is_suspended() || self.close.closing || self.teardown.forced_started {
             return false;
@@ -336,12 +337,14 @@ impl<T: Tokens> Connection<T> {
     /// return code.
     ///
     /// # Staged Teardown Architecture
-    /// - **Stage T0**: Emits a socket error log line matching legacy `handle_socket_error_msg`
-    ///   formatting, carrying the underlying OS errno. Exempt failure causes suppress log emission.
-    /// - **Stage T1**: Disarms active network transport, closes the socket, resets SASL and
+    /// - **Socket Error Log**: Emits a socket error log line matching legacy
+    ///   `handle_socket_error_msg` formatting, carrying the underlying OS errno. Exempt failure
+    ///   causes suppress log emission.
+    /// - **Transport Reset**: Disarms active network transport, closes the socket, resets SASL and
     ///   receive state machines, clears request pinned buffers, reverts connection phase to `Idle`,
     ///   and advances the connection epoch.
-    /// - **Subsequent Stages**: Advances through stages T2 to T6 via [`continue_teardown`].
+    /// - **Subsequent Stages**: Advances through the `TeardownStage` stages (`Session`, `Snapshot`,
+    ///   `FailFifo`, `Lockpoint`, `Auth`, and `Finish`) via [`continue_teardown`].
     /// - **State Accounting**: Records the failure cause and returns the derived protocol return
     ///   code (such as `ZCONNECTIONLOSS` or specialized codes like `ZSSLCONNECTIONERROR`).
     pub(crate) fn teardown(&mut self, cause: Cause, errno: i32, now: Millis) -> i32 {
@@ -353,23 +356,21 @@ impl<T: Tokens> Connection<T> {
     /// barrier is encountered.
     ///
     /// # Stage Execution Lifecycle
-    /// - **Stage T2 (Session)**: Notifies session state watchers. If the connection state is
-    ///   unrecoverable (e.g. expired or auth failed), it emits the terminal state; if connected, it
-    ///   emits `Connecting`. In native mode, connection attempt failures also emit `Connecting` to
-    ///   allow client side error observation during retries. If the notification constitutes a
-    ///   barrier, the job parks.
-    /// - **Stage T3 (Snapshot & FailFifo)**: Captures pending outbound and queued requests (or
-    ///   consumes the forced close snapshot), discards unsent frames, and fails queued requests via
-    ///   `fail_pending_run`, parking at direct execution boundaries. Subsequently emits
-    ///   authentication lock-point barriers and completes authentication tokens with failure
+    /// - **`Session`**: Notifies session state watchers. If the connection state is unrecoverable
+    ///   (e.g. expired or auth failed), it emits the terminal state; if connected, it emits
+    ///   `Connecting`. In native mode, connection attempt failures also emit `Connecting` to allow
+    ///   client side error observation during retries. If the notification constitutes a barrier,
+    ///   the job parks.
+    /// - **`Snapshot`, `FailFifo`, `Lockpoint`, `Auth`**: Captures pending outbound and queued
+    ///   requests (or consumes the forced close snapshot), discards unsent frames, and fails queued
+    ///   requests via `fail_pending_run`, parking at direct execution boundaries. Subsequently
+    ///   emits authentication lock-point barriers and completes authentication tokens with failure
     ///   status.
-    /// - **Stage T4 (Finish & Drain)**: Emits diagnostic disconnect logs, transitions state to
-    ///   `Closed` (while forced jobs preserve specialized terminal codes), and queues a
-    ///   `DrainPoint` barrier.
-    /// - **Stage T5 (Hosts)**: Updates ensemble backoff timers via `hosts_on_handle_error` or
-    ///   `hosts_on_session_lost`.
-    /// - **Stage T6 (Watches)**: Terminates or retains registered watchers in accordance with
-    ///   configured compatibility policies.
+    /// - **`Finish`**: Emits diagnostic disconnect logs, transitions state to `Closed` (while
+    ///   forced jobs preserve specialized terminal codes), and queues a `DrainPoint` barrier.
+    ///   Updates ensemble backoff timers via `hosts_on_handle_error` or `hosts_on_session_lost`.
+    ///   Terminates or retains registered watchers in accordance with configured compatibility
+    ///   policies.
     pub(crate) fn continue_teardown(&mut self, mut job: TeardownJob<T>, now: Millis) {
         loop {
             match job.stage {
@@ -437,8 +438,8 @@ impl<T: Tokens> Connection<T> {
                 TeardownStage::Finish => {
                     self.teardown_finish(&job, now);
                     self.teardown.t3_started = false;
-                    // Execute any deferred close requests that arrived while Stage T3 snapshot
-                    // processing was in flight.
+                    // Execute any deferred close requests that arrived while the `Snapshot`
+                    // through `Finish` stages were in flight.
                     self.close_run_deferred(now);
                     return;
                 }
@@ -452,7 +453,7 @@ impl<T: Tokens> Connection<T> {
     /// # Invariants
     /// If no network transport is active, this trigger is a no-op. Otherwise, it records
     /// connection status, sets the connection state to `NotConnected`, resets phase to `Idle`,
-    /// executes Stage T1 cleanup, and moves outbound frames, FIFO requests, and pending
+    /// executes the transport reset step, and moves outbound frames, FIFO requests, and pending
     /// authentication tokens into `teardown.forced` for deferred teardown.
     pub(crate) fn forced_close_trigger(&mut self, _now: Millis) {
         if !self.core.has_transport {
@@ -483,12 +484,12 @@ impl<T: Tokens> Connection<T> {
         }
     }
 
-    /// Initiates connection teardown with a pre-configured Stage T0 log entry and returns the
+    /// Initiates connection teardown with a pre-configured socket error log entry and returns the
     /// derived protocol return code.
     ///
-    /// Executes Stage T0 logging and Stage T1 transport reset before launching the multi-stage
-    /// teardown job. If the connection has already been destroyed, it returns the return code
-    /// immediately without spawning a job.
+    /// Executes the socket error log step and the transport reset step before launching the
+    /// multi-stage teardown job. If the connection has already been destroyed, it returns the
+    /// return code immediately without spawning a job.
     pub(crate) fn teardown_with_line(
         &mut self,
         cause: Cause,
@@ -512,7 +513,7 @@ impl<T: Tokens> Connection<T> {
     }
 
     /// Records the root cause and operating system error number for a new teardown and dispatches
-    /// execution starting at Stage T2.
+    /// execution starting at the `Session` stage.
     fn teardown_start_job(
         &mut self,
         cause: Cause,
@@ -556,8 +557,8 @@ impl<T: Tokens> Connection<T> {
         self.teardown_with_line(Cause::XidMismatch, Some(line), now)
     }
 
-    /// Indicates whether a paused teardown sequence is actively executing within Stage T3 or later
-    /// stages.
+    /// Indicates whether a paused teardown sequence is actively executing within the `Snapshot`
+    /// stage or later stages.
     pub(crate) fn teardown_t3_in_flight(&self) -> bool {
         self.teardown.t3_started && !self.close.destroyed
     }
@@ -567,9 +568,9 @@ impl<T: Tokens> Connection<T> {
         self.teardown.forced.take()
     }
 
-    /// Executes Stage T1: closes underlying network transport, resets SASL and packet decoder
-    /// state, clears buffer pins, reverts connection phase to `Idle`, and re-initializes session
-    /// parameters.
+    /// Executes the transport reset step: closes underlying network transport, resets SASL and
+    /// packet decoder state, clears buffer pins, reverts connection phase to `Idle`, and
+    /// re-initializes session parameters.
     pub(crate) fn teardown_t1(&mut self) {
         if self.core.has_transport {
             self.queue_close_transport();
@@ -582,8 +583,8 @@ impl<T: Tokens> Connection<T> {
         self.session = crate::session::SessionState::default();
     }
 
-    /// Emits the Stage T0 socket error log entry adhering to legacy C client
-    /// `handle_socket_error_msg` formatting.
+    /// Emits the socket error log entry adhering to legacy C client `handle_socket_error_msg`
+    /// formatting.
     fn teardown_t0(&mut self, line: T0Line, rc: i32) {
         let server = self.current_server();
         let T0Line { site, errno, extra } = line;
@@ -599,8 +600,8 @@ impl<T: Tokens> Connection<T> {
         });
     }
 
-    /// Constructs the standard Stage T0 log descriptor corresponding to a specific failure cause
-    /// and OS error code.
+    /// Constructs the standard socket error log descriptor corresponding to a specific failure
+    /// cause and OS error code.
     ///
     /// Causes without standard socket error logging representations (such as `AuthFailed` or
     /// `ForcedClose`) yield `None`.
@@ -661,7 +662,7 @@ impl<T: Tokens> Connection<T> {
         }
     }
 
-    /// Determines the appropriate Stage T0 log descriptor for network I/O failures based on
+    /// Determines the appropriate socket error log descriptor for network I/O failures based on
     /// connection state.
     ///
     /// Distinguishes handshake transmission errors, pending transmit flush failures, and general
@@ -680,8 +681,8 @@ impl<T: Tokens> Connection<T> {
         }
     }
 
-    /// Executes Stage T2: dispatches session state transition events to registered watchers and
-    /// indicates if execution paused at a barrier.
+    /// Executes the `Session` stage: dispatches session state transition events to registered
+    /// watchers and indicates if execution paused at a barrier.
     fn teardown_session_event(&mut self, connected: bool, forced: bool) -> bool {
         let state = self.core.state;
         if state.is_unrecoverable() {
@@ -704,8 +705,8 @@ impl<T: Tokens> Connection<T> {
         }
     }
 
-    /// Executes Stages T4 through T6: logs previous connection metrics, transitions state,
-    /// triggers backoff, and clears watchers.
+    /// Executes the `Finish` stage: logs previous connection metrics, transitions state, triggers
+    /// backoff, and clears watchers.
     fn teardown_finish(&mut self, job: &TeardownJob<T>, now: Millis) {
         let server = self.current_server();
         let delay = self.hosts.delay;
@@ -719,8 +720,8 @@ impl<T: Tokens> Connection<T> {
         if job.cause.runs_handle_error() {
             self.teardown_peer_hosts_on_handle_error(job.connected, now);
         }
-        // Stage T6: Determine watch termination reason and apply watcher clearing policies based
-        // on failure cause. Session expiry and authentication failures terminate watches when
+        // Determine watch termination reason and apply watcher clearing policies based on failure
+        // cause. Session expiry and authentication failures terminate watches when
         // clear_watches_on_expiry is active; transient network disconnects preserve watches unless
         // automatic re-registration is explicitly disabled.
         let reason = match job.cause {
