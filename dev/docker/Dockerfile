@@ -17,7 +17,7 @@
 # under the License.
 #
 
-FROM maven:3.8.8-eclipse-temurin-17
+FROM maven:3.8.8-eclipse-temurin-17-focal
 
 RUN apt-get update
 RUN apt-get install -y \
@@ -32,4 +32,6 @@ RUN apt-get install -y \
   libsasl2-modules-gssapi-mit \
   libsasl2-modules \
   libsasl2-dev \
-  gnupg
+  gnupg \
+  subversion
+
