@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -1213,7 +1214,7 @@ public class Commands {
                 response.put("last_zxid", "0x" + ZxidUtils.zxidToString(lastProcessedZxid));
                 response.put("zab_epoch", ZxidUtils.getEpochFromZxid(lastProcessedZxid));
                 response.put("zab_counter", ZxidUtils.getCounterFromZxid(lastProcessedZxid));
-                response.put("zabstate", zabState.name().toLowerCase());
+                response.put("zabstate", zabState.name().toLowerCase(Locale.ROOT));
             } else {
                 response.put("voting", false);
                 response.put("zabstate", "");
