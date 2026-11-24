@@ -15,7 +15,10 @@
  * the License.
  */
 #include <algorithm>
+#include <cstring>
+#include <mutex>
 #include <sstream>
+#include <string>
 #include <vector>
 #include <utility>
 #include <cppunit/extensions/HelperMacros.h>
@@ -33,6 +36,7 @@ class TestReconfigServer : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST(testRemoveFollower);
     CPPUNIT_TEST(testReconfigFailureWithoutAuth);
     CPPUNIT_TEST(testReconfigFailureWithoutServerSuperuserPasswordConfigured);
+    CPPUNIT_TEST(testChrootConfigWatch);
     CPPUNIT_TEST_SUITE_END();
 
   public:
@@ -45,6 +49,7 @@ class TestReconfigServer : public CPPUNIT_NS::TestFixture {
     void testRemoveFollower();
     void testReconfigFailureWithoutAuth();
     void testReconfigFailureWithoutServerSuperuserPasswordConfigured();
+    void testChrootConfigWatch();
   private:
     static const uint32_t NUM_SERVERS;
     FILE* logfile_;
@@ -58,6 +63,31 @@ class TestReconfigServer : public CPPUNIT_NS::TestFixture {
 };
 
 const uint32_t TestReconfigServer::NUM_SERVERS = 3;
+
+// The client threads write these and the test thread reads them.
+static std::mutex configWatchMx;
+static bool configWatchFired;
+static int configWatchType;
+static std::string configWatchPath;
+static bool chrootPathError;
+
+static void configWatcher(zhandle_t*, int type, int, const char* path,
+                          void*) {
+    std::lock_guard<std::mutex> lock(configWatchMx);
+    if (type == ZOO_SESSION_EVENT || configWatchFired) {
+        return;
+    }
+    configWatchFired = true;
+    configWatchType = type;
+    configWatchPath = path ? path : "";
+}
+
+static void chrootLogCallback(const char* message) {
+    if (strstr(message, "does not include chroot path") != NULL) {
+        std::lock_guard<std::mutex> lock(configWatchMx);
+        chrootPathError = true;
+    }
+}
 
 TestReconfigServer::
 TestReconfigServer() :
@@ -138,6 +168,67 @@ waitForConnected(zhandle_t* zh, uint32_t timeout_sec) {
         sleep(1);
     }
     return false;
+}
+
+/**
+ * 1. Set a configuration watch on a handle with a chroot.
+ * 2. Remove a follower using incremental reconfig.
+ * 3. The watch event has the configuration path, because that node is not
+ *    in the chroot namespace. The client logs no chroot path error.
+ */
+void TestReconfigServer::
+testChrootConfigWatch() {
+    struct Stat stat;
+    int len = 1024;
+    char buf[len];
+
+    {
+        std::lock_guard<std::mutex> lock(configWatchMx);
+        configWatchFired = false;
+        configWatchType = 0;
+        configWatchPath.clear();
+        chrootPathError = false;
+    }
+    std::size_t leader = getLeader();
+    CPPUNIT_ASSERT(leader >= 0);
+    std::string host = cluster_[leader]->getHostPort();
+    zhandle_t* zk = zookeeper_init(host.c_str(), NULL, 10000, NULL, NULL, 0);
+    CPPUNIT_ASSERT_EQUAL(true, waitForConnected(zk, 10));
+    std::string chrootHost = host + "/app";
+    zhandle_t* zk_ch = zookeeper_init2(chrootHost.c_str(), NULL, 10000, NULL,
+                                       NULL, 0, chrootLogCallback);
+    CPPUNIT_ASSERT_EQUAL(true, waitForConnected(zk_ch, 10));
+    CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_wgetconfig(zk_ch, configWatcher, NULL,
+                                                  buf, &len, &stat));
+
+    CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_add_auth(zk, "digest", "super:test", 10, NULL,(void*)ZOK));
+    std::vector<std::size_t> followers = getFollowers();
+    CPPUNIT_ASSERT(!followers.empty());
+    std::stringstream ss;
+    ss << followers[0];
+    len = 1024;
+    CPPUNIT_ASSERT_EQUAL((int)ZOK, zoo_reconfig(zk, NULL, ss.str().c_str(),
+                                                NULL, -1, buf, &len, &stat));
+
+    bool fired = false;
+    for (int i = 0; i < 100 && !fired; i++) {
+        {
+            std::lock_guard<std::mutex> lock(configWatchMx);
+            fired = configWatchFired;
+        }
+        if (!fired) {
+            usleep(100000);
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lock(configWatchMx);
+        CPPUNIT_ASSERT(configWatchFired);
+        CPPUNIT_ASSERT_EQUAL((int)ZOO_CHANGED_EVENT, configWatchType);
+        CPPUNIT_ASSERT_EQUAL(std::string(ZOO_CONFIG_NODE), configWatchPath);
+        CPPUNIT_ASSERT(!chrootPathError);
+    }
+    zookeeper_close(zk_ch);
+    zookeeper_close(zk);
 }
 
 /**
