@@ -278,6 +278,43 @@ fn a_slow_resolve_does_not_stop_requests_or_the_close() {
     });
 }
 
+/// Asserts that an idle connected session with the legacy resolution delay of 0 does not loop.
+/// The completion of a background resolve wakes the driver task. That wake must not start a new
+/// routine resolve, because the next completion then wakes the task again without end.
+#[test]
+fn an_idle_session_with_a_zero_resolve_delay_does_not_loop() {
+    let rt = runtime();
+    let server = FakeServer::start().unwrap();
+    let sink = Arc::new(Collect::default());
+    let host = Arc::new(SlowHost {
+        inner: IpHost::new(),
+        slow_ms: AtomicU64::new(0),
+        resolves: AtomicUsize::new(0),
+    });
+    let mut e = env(IpHost::new(), true);
+    e.host = host.clone();
+    assert_eq!(common::legacy_config("127.0.0.1:1").resolve_delay_ms, 0);
+    let h = zk_driver::tokio::spawn(
+        native_connection(&server.connect_string()),
+        e,
+        sink.clone(),
+        None,
+        rt.handle(),
+    );
+    rt.block_on(async {
+        connected(&h).await;
+        // The session timeout is 10 s, so no ping is due in this window and the session is idle.
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let before = host.resolves.load(Ordering::SeqCst);
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        let during = host.resolves.load(Ordering::SeqCst) - before;
+        assert!(during <= 1, "{during} resolves while idle");
+        h.close();
+        let rc = tokio::time::timeout(WAIT, h.closed()).await.unwrap();
+        assert_eq!(rc, zk_proto::rc::ZOK);
+    });
+}
+
 /// Verifies that an unhandled panic in the asynchronous driver task terminates the session,
 /// discards pending tokens, and publishes the terminal close status.
 #[test]

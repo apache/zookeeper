@@ -100,9 +100,13 @@ pub(crate) struct Hosts {
     /// Indicates whether at least one host in the current generation successfully yielded
     /// addresses.
     pub(crate) any_resolved: bool,
-    /// Configured resolution refresh interval: -1 disables background refresh, 0 refreshes
-    /// constantly, >0 specifies millisecond interval.
+    /// Configured resolution refresh interval: -1 disables background refresh, 0 refreshes on
+    /// each interest pass, >0 specifies millisecond interval.
     pub(crate) resolve_delay_ms: i32,
+    /// Indicates that a routine refresh ended between interest passes, which occurs only when the
+    /// driver runs the lookup in the background. The next connected pass uses that refresh and
+    /// does not start a new one.
+    refreshed_between_passes: bool,
     /// Timestamp marking the most recent successful DNS resolution.
     pub(crate) last_resolved_at: Option<Millis>,
     /// Indicates whether a DNS resolution error inhibits connection attempts under legacy error
@@ -145,6 +149,7 @@ impl Hosts {
             spare: Vec::new(),
             any_resolved: false,
             resolve_delay_ms,
+            refreshed_between_passes: false,
             last_resolved_at: None,
             block_connect: false,
             delay: false,
@@ -306,6 +311,13 @@ impl<T: Tokens> Connection<T> {
         }
         self.hosts.in_flight = None;
         let origin = self.hosts.origin;
+        // A background routine refresh ends between interest passes and wakes the driver for a
+        // new pass. If that pass starts a new refresh, each refresh wakes the driver for the next
+        // one and an idle session never sleeps. An inline refresh ends inside its own pass, so the
+        // drop-in client keeps the C behavior of one refresh for each pass.
+        self.hosts.refreshed_between_passes = origin == ResolveOrigin::Iteration
+            && self.interest.step == IterStep::Idle
+            && self.core.has_transport;
         if origin == ResolveOrigin::SetServers {
             // Explicit ensemble reconfiguration satisfies any pending pass-based resolution
             // cadence.
@@ -395,7 +407,7 @@ impl<T: Tokens> Connection<T> {
     /// Configures the background DNS resolution refresh interval in milliseconds.
     ///
     /// Values < -1 are rejected with `ZBADARGUMENTS`. Value -1 disables periodic refresh,
-    /// 0 performs continuous resolution, and values > 0 enforce the specified interval.
+    /// 0 refreshes on each interest pass, and values > 0 enforce the specified interval.
     pub fn set_resolve_delay(&mut self, ms: i32) -> i32 {
         if ms < -1 {
             self.emit_log(LogSite::ResolveDelayInvalid, || {
@@ -501,7 +513,11 @@ impl<T: Tokens> Connection<T> {
         if self.hosts.in_flight.is_some() && self.hosts.origin == ResolveOrigin::SetServers {
             return None;
         }
-        if !self.hosts.resolve_due && !self.hosts_resolve_by_cadence(now) {
+        // The flag is cleared on each pass so it applies to one pass only. A disconnected pass
+        // ignores it, because the cadence rules for reconnection do not count refreshes.
+        let refreshed =
+            core::mem::take(&mut self.hosts.refreshed_between_passes) && self.core.has_transport;
+        if !self.hosts.resolve_due && (refreshed || !self.hosts_resolve_by_cadence(now)) {
             return None;
         }
         let initial = self.hosts.initial;
@@ -1046,6 +1062,33 @@ mod tests {
         c.hosts.resolve_delay_ms = 500;
         assert!(c.resolve_action(Millis(1500)).is_none());
         assert!(c.resolve_action(Millis(1501)).is_some());
+    }
+
+    /// A background refresh that ends between passes serves the next connected pass only, also
+    /// when no host resolves. A refresh that ends inside a pass, as in the drop-in client, does
+    /// not skip a pass.
+    #[test]
+    fn a_refresh_between_passes_serves_the_next_pass() {
+        let mut c = conn();
+        init_two(&mut c);
+        c.core.has_transport = true;
+        c.hosts.resolve_delay_ms = 0;
+        let two = [Some("10.0.0.1:2181"), Some("10.0.0.2:2181")];
+        for per_host in [&two[..], &[None, None]] {
+            let Some(Action::Resolve { generation, .. }) = c.resolve_action(Millis(1)) else {
+                panic!("expected Resolve");
+            };
+            assert_eq!(c.interest.step, IterStep::Idle);
+            let _ = answer(&mut c, generation, per_host, Millis(2));
+            assert!(c.resolve_action(Millis(3)).is_none());
+        }
+        let Some(Action::Resolve { generation, .. }) = c.resolve_action(Millis(4)) else {
+            panic!("expected Resolve");
+        };
+        c.interest.step = IterStep::Connect;
+        assert_eq!(answer(&mut c, generation, &two, Millis(5)), rc::ZOK);
+        c.interest.step = IterStep::Idle;
+        assert!(c.resolve_action(Millis(6)).is_some());
     }
 
     #[test]

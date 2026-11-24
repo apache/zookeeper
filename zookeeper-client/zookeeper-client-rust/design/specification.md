@@ -240,7 +240,7 @@ Calculated timeout values reported to external callers match legacy C formulas, 
 
 ### Host resolution, DNS, and failover mechanics
 
-Host management coordinates the primary server list, active cursor positions, rebalancing lists (`old` and `new`), and reconnect passes. Host string resolution executes at initialization, during `zoo_set_servers`, upon connection loss, and periodically while connected according to the configured resolution delay.
+Host management coordinates the primary server list, active cursor positions, rebalancing lists (`old` and `new`), and reconnect passes. Host string resolution executes at initialization, during `zoo_set_servers`, upon connection loss, and periodically while connected according to the configured resolution delay. A resolution delay of 0 refreshes once per interest pass, as in the C client. Drivers that resolve in the background apply the result between passes and wake for a new pass; that refresh serves the next pass, so the completion wake does not start another refresh and an idle connected session sleeps.
 
 Drivers perform `getaddrinfo` lookups without holding session locks, streaming resolved endpoints into `handle_host_resolved` to preserve log order. Each resolution cycle tracks a generation counter representing the active server configuration string; results matching stale configuration strings are discarded. If resolution yields no valid endpoints and an existing server list is available, the client retains the existing list, allowing connection retries and keepalive timers to proceed uninterrupted.
 

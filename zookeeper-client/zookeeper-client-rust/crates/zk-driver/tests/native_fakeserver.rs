@@ -118,6 +118,44 @@ fn a_slow_resolve_does_not_stop_requests_or_the_close() {
     assert!(t1.elapsed() < Duration::from_millis(1_000));
 }
 
+/// Asserts that an idle connected session with the legacy resolution delay of 0 does not loop.
+/// The completion of a background resolve wakes the reactor. That wake must not start a new
+/// routine resolve, because the next completion then wakes the reactor again without end.
+#[test]
+#[cfg_attr(
+    miri,
+    ignore = "Miri has no fcntl(F_SETFD), which sets CLOEXEC on the waker pipe"
+)]
+fn an_idle_session_with_a_zero_resolve_delay_does_not_loop() {
+    let server = FakeServer::start().unwrap();
+    let sink = Arc::new(Collect::default());
+    let host = Arc::new(SlowHost {
+        inner: IpHost::new(),
+        slow_ms: AtomicU64::new(0),
+        resolves: AtomicUsize::new(0),
+    });
+    let mut e = env(IpHost::new(), true);
+    e.host = host.clone();
+    assert_eq!(common::legacy_config("127.0.0.1:1").resolve_delay_ms, 0);
+    let h = start(
+        native_connection(&server.connect_string()),
+        e,
+        sink.clone(),
+        None,
+        Arc::new(TestSpawner),
+    )
+    .unwrap();
+    assert!(common::wait_until(WAIT, || h.state() == State::Connected.code()));
+    // The session timeout is 10 s, so no ping is due in this window and the session is idle.
+    std::thread::sleep(Duration::from_millis(100));
+    let before = host.resolves.load(Ordering::SeqCst);
+    std::thread::sleep(Duration::from_millis(500));
+    let during = host.resolves.load(Ordering::SeqCst) - before;
+    assert!(during <= 1, "{during} resolves while idle");
+    h.close();
+    assert_eq!(h.wait_closed(WAIT), Some(zk_proto::rc::ZOK));
+}
+
 #[test]
 #[cfg_attr(
     miri,

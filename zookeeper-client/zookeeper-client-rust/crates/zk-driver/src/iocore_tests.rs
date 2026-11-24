@@ -1586,8 +1586,10 @@ fn a_resolve_with_an_open_socket_runs_in_the_background() {
     assert!(matches!(p, Progress::Done(_)));
     assert!(has_gai_line(&mut ob));
     assert!(r.io.dns.is_none());
-    // A subsequent resolution request initiates a fresh background job after the prior task
-    // completes.
+    // The pass that follows the completion uses that refresh and starts no job, so the wake that
+    // delivers a result does not cause a new lookup. The pass after it starts a fresh job.
+    let (_out, _p) = r.interest();
+    assert!(r.io.take_bg_job().is_none());
     let (_out, _p) = r.interest();
     assert!(r.io.take_bg_job().is_some());
 }
