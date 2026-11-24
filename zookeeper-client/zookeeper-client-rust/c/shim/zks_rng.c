@@ -19,9 +19,11 @@
 /*
  * Pseudorandom number generation hooks and server connection ordering controls.
  *
- * Preserves legacy side effects on process libc PRNG state (reseeding from /dev/urandom,
- * random() and drand48() distributions) and exposes zoo_deterministic_conn_order to disable
- * randomized server address permutation during connection establishment.
+ * Preserves legacy side effects on process libc PRNG state, reseeding from kernel entropy and
+ * drawing from random() and drand48() distributions, and exposes zoo_deterministic_conn_order to
+ * disable randomized server address permutation during connection establishment. On Linux, seeds
+ * are obtained directly via SYS_getrandom to avoid per-reseed descriptor allocation, falling back
+ * to /dev/urandom when getrandom is unavailable or blocked.
  */
 
 #ifndef _GNU_SOURCE
@@ -31,6 +33,9 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#if defined(__linux__)
+#include <sys/syscall.h>
+#endif
 
 /* Disables random permutation of the server address list when non-zero. */
 static int zks_conn_permute_disabled = 0;
@@ -68,18 +73,67 @@ ZKS_HIDDEN double zks_vt_rng_drand48(void)
     return d;
 }
 
+#if defined(__linux__) && defined(SYS_getrandom)
+#define ZKS_HAVE_GETRANDOM 1
+#ifndef GRND_NONBLOCK
+#define GRND_NONBLOCK 0x0001
+#endif
+
+/* Latched non-zero if the kernel or seccomp policy permanently rejects SYS_getrandom. */
+static int zks_getrandom_off = 0;
+
 /*
- * Reads an initial PRNG seed from /dev/urandom using O_CLOEXEC to prevent
- * descriptor inheritance across concurrent fork/exec calls, retrying on short
- * reads or EINTR and falling back to getpid() if the entropy device is
- * unavailable.
+ * Populates a PRNG seed directly from the Linux kernel CRNG via SYS_getrandom(GRND_NONBLOCK),
+ * retrying on short reads or EINTR and latching zks_getrandom_off on permanent syscall rejection
+ * (ENOSYS or EPERM).
+ */
+static int zks_kernel_seed(int *seed)
+{
+    size_t got = 0;
+
+    if (ZKS_LOAD(&zks_getrandom_off)) {
+        return 0;
+    }
+    while (got < sizeof(*seed)) {
+        long rc = syscall(SYS_getrandom, (char *)seed + got, sizeof(*seed) - got,
+                          (unsigned)GRND_NONBLOCK);
+        if (rc > 0) {
+            got += (size_t)rc;
+        } else if (rc == -1 && errno == EINTR) {
+            continue;
+        } else {
+            if (rc == -1 && (errno == ENOSYS || errno == EPERM)) {
+                ZKS_STORE(&zks_getrandom_off, 1);
+            }
+            return 0;
+        }
+    }
+    return 1;
+}
+#endif
+
+/*
+ * Obtains an initial PRNG seed from kernel entropy. On Linux, queries SYS_getrandom first while
+ * preserving the caller's errno so errno is modified only if the fallback /dev/urandom open or
+ * read fails. When falling back to /dev/urandom, opens the device with O_CLOEXEC to prevent
+ * descriptor leakage across concurrent fork/exec calls, retries on short reads or EINTR, and
+ * falls back to getpid() if entropy cannot be read.
  */
 static int zks_urandom_seed(void)
 {
     int seed = 0;
     size_t seed_len = 0;
-    int fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+    int fd;
+#ifdef ZKS_HAVE_GETRANDOM
+    int saved_errno = errno;
+    int have_seed = zks_kernel_seed(&seed);
 
+    errno = saved_errno;
+    if (have_seed) {
+        return seed;
+    }
+#endif
+    fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
     if (fd == -1) {
         return (int)getpid();
     }

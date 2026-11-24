@@ -422,7 +422,7 @@ pub(crate) fn vt_rng_reseed(vt: &zkrs_host_vtable, _u: &Unlocked) {
     let Some(f) = vt.rng_reseed else {
         missing("rng_reseed")
     };
-    // SAFETY: The host function reads `/dev/urandom` and seeds libc state; the `Unlocked`
+    // SAFETY: The host function reads kernel entropy and seeds libc state; the `Unlocked`
     // witness confirms that no internal Rust mutexes are held during execution.
     unsafe { f() };
 }

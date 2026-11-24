@@ -209,7 +209,7 @@ WIRE-13	RE	-	-
 SRV-01	DV	compat.server_cursor=SingleAdvance|SingleAdvance	rust:crates/zk-driver/tests/drv_session.rs::failover_abab,rust:crates/zk-proto/src/interest.rs::tests::single_advance_reports_the_peeked_server_after_a_failure,rust:crates/zk-driver/tests/drv_session.rs::failover_refused_first
 SRV-02	DV	compat.addr_eq=IpAndPort|IpAndPort	conf:dev_servers,conf:servers
 SRV-03	RE	-	-
-SRV-04	FU	-	conf:ldg_d_prng,rust:crates/zk-proto/src/hosts.rs::tests::shuffle_reseeds_and_draws,rust:crates/zk-driver/src/resolve.rs::tests::hosts_resolve_in_order_then_the_reseed_runs,rust:crates/zk-driver/src/resolve.rs::tests::no_reseed_without_the_shuffle
+SRV-04	FU	-	conf:ldg_d_prng,conf:ldg_d_prng_each,script:zookeeper-client-rust/c/tests/abi/seed_source.c,rust:crates/zk-proto/src/hosts.rs::tests::shuffle_reseeds_and_draws,rust:crates/zk-driver/src/resolve.rs::tests::hosts_resolve_in_order_then_the_reseed_runs,rust:crates/zk-driver/src/resolve.rs::tests::no_reseed_without_the_shuffle
 SRV-05	RE	compat.resolve_cadence=EveryIterationWhileDisconnected|EachPass	-
 SRV-06	FU	compat.dns_failure=LegacyRcPreserved|UseLastGood	rust:crates/zk-proto/src/interest.rs::tests::whole_list_failure_legacy_rc_preserved_blocks_and_hides_outputs,rust:crates/zk-proto/src/interest.rs::tests::whole_list_failure_with_transport_keeps_rc_and_writes_outputs,rust:crates/zk-testkit/tests/scenarios_hosts.rs::dns_failure_follows_the_profile
 SRV-07	FU	-	conf:dev_servers

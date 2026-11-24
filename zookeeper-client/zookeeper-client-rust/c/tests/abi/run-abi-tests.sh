@@ -304,6 +304,29 @@ else
     skip "interpose (no --host)"
 fi
 
+# ---- Reseed entropy source (Linux) ----
+# The drop-in gets the reseed entropy from getrandom and the legacy library reads
+# /dev/urandom. The expected counts differ by design, so the two outputs are not
+# compared. The forced-failure modes check the /dev/urandom fallback of the drop-in.
+if [ -n "$HOST" ] && [ "$OS" = Linux ]; then
+    if build_app "$OUT/seed-source-lib" "$LIB" seed_source.c -ldl -Wl,--export-dynamic; then
+        for m in none enosys eagain; do
+            check "seed-source-$m-lib" "$OUT/seed-source-lib" "$m" dropin "$HOST"
+        done
+    else
+        fail "build seed_source"
+    fi
+    if [ -n "$REF" ]; then
+        if build_app "$OUT/seed-source-ref" "$REF" seed_source.c -ldl -Wl,--export-dynamic; then
+            check seed-source-none-ref "$OUT/seed-source-ref" none legacy "$HOST"
+        else
+            fail "build seed_source (ref)"
+        fi
+    fi
+else
+    skip "seed source (needs --host and a Linux host)"
+fi
+
 # ---- Debug handle-registry verification ----
 if [ -n "$DBG" ]; then
     build_app "$OUT/use-after-close" "$DBG" use_after_close.c || fail "build use_after_close"

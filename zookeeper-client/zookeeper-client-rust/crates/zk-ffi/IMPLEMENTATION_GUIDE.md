@@ -513,7 +513,7 @@ Functions:
 | `zks_vt_conn_permute_disabled`, `zks_vt_rng_random`, `zks_vt_rng_drand48`, `zks_vt_rng_reseed`, `zoo_deterministic_conn_order` | zks_rng.c |
 | the size and offset checks of every `zkrs.h` type | zks_layout_check.c |
 
-Calls made: `zkrs_state` (`is_unrecoverable`), `zkrs_peer_addr` (`zookeeper_get_connected_host`), libc (`getaddrinfo`, `random`, `drand48`, `srandom`, `srand48`, `gettimeofday`, `uname`, `getpwuid`).
+Calls made: `zkrs_state` (`is_unrecoverable`), `zkrs_peer_addr` (`zookeeper_get_connected_host`), libc (`getaddrinfo`, `random`, `drand48`, `srandom`, `srand48`, `syscall` for `getrandom`, `gettimeofday`, `uname`, `getpwuid`).
 
 Calls received: Rust through the vtable (`log_enabled`, `resolve`, the RNG entries); `zks_drain` for `zks_log_emit`; `zks_init_common` for `zks_log_env` and `ZKS_LOG`; `zoo_get_current_server` for `zks_format_endpoint`; the application.
 
@@ -525,7 +525,7 @@ Invariants:
 - The C sites use the `func`, `line` and format of their `zookeeper-client-rust/c/tests/abi/log-sites.tsv` rows. The `C_SITES` list of `xtask/src/logsites.rs` names the row of each `enum zks_c_site` key.
 - The vtable entries run under `zks_in_vtable` and call no `zkrs_*` function. `zks_vt_resolve` keeps the address order of `getaddrinfo` and reports each skipped family.
 - `zks_format_endpoint` returns a per-thread buffer, as legacy.
-- `zks_vt_rng_reseed` seeds `srandom` and `srand48` as legacy does.
+- `zks_vt_rng_reseed` seeds `srandom` and `srand48` as legacy does. On Linux, one `getrandom` call supplies the 4-byte seed, so a reseed opens no descriptor. The shim reads `/dev/urandom` only when `getrandom` fails, and then `getpid()` when that read fails. The `getrandom` attempt never changes `errno`.
 
 ### TLS and SASL
 

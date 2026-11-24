@@ -21,7 +21,7 @@
  * Mode: EXACT.
  *
  * Unless deterministic connection order is enabled, address resolution reseeds
- * process-global srandom() and srand48() state from /dev/urandom, and draws
+ * process-global srandom() and srand48() state from kernel entropy, and draws
  * from drand48() for server selection weight calculation. Both libraries
  * perform identical libc PRNG operations:
  * - When address shuffling is enabled, both random() and drand48() diverge from
