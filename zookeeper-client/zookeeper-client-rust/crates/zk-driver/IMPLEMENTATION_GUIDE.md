@@ -273,6 +273,7 @@ Invariants:
 - A plaintext read that is wholly inside the current frame body goes straight into the body (`body_room`, `recv`, `handle_body_read`) under one `core` lock. This occurs only when no received bytes wait. Other reads go to `rx`.
 - `IoCore::new` does not zero `rx` (`RxBuf`). A read of the full capacity clears the buffer and goes into the spare capacity (`recv_spare`), so the length becomes the read count. A smaller read zeroes only the bytes above the current length. The read size does not depend on the initialized part of the buffer. The parser sees only the bytes of the last read (`rx_fresh`) or `rx_pending`.
 - `close_flush` returns `ZOK`, `ZOPERATIONTIMEOUT`, `ZCONNECTIONLOSS` or `ZSYSTEMERROR` and never exceeds its budgets.
+- The TLS flush credits a window (`TlsTransport::unacked`) only when the kernel has all of its ciphertext. The credit releases frames, but it does not control reply matching. Proto marks a TLS request for reply matching when the flush takes the last byte of its frame. Thus a reply to a complete request in a partly sent window matches.
 
 ### mt
 

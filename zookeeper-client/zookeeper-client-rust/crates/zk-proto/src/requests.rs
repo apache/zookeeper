@@ -370,7 +370,9 @@ pub(crate) struct Pending<T: Tokens> {
     pub(crate) watch: Option<WatchReg<T::Watcher>>,
     /// Optional local watcher removal to perform upon successful server reply.
     pub(crate) unwatch: Option<Unwatch<T::Watcher>>,
-    /// Indicates whether the terminal byte of the outbound frame has been transmitted.
+    /// Indicates whether the request can match a server reply. Plaintext connections set this
+    /// flag when the kernel has accepted the last byte of the frame; TLS connections set it when
+    /// the driver copies that byte.
     pub(crate) written: bool,
 }
 
@@ -382,7 +384,7 @@ pub(crate) struct Requests<T: Tokens> {
     /// Sequential queue of in-flight requests awaiting server responses, ordered strictly by
     /// transaction identifier.
     pub(crate) fifo: VecDeque<Pending<T>>,
-    /// The expected `fifo` index of the next request that the transport sends completely.
+    /// Expected `fifo` index of the next in-flight request that the connection marks as written.
     /// Request frames go out in submit order, so this index usually points to the match. A stale
     /// value causes only a scan, because each xid in `fifo` is unique.
     sent_hint: usize,
@@ -534,10 +536,14 @@ impl<T: Tokens> Requests<T> {
         self.sent_hint = self.sent_hint.saturating_add(1);
     }
 
-    /// Marks the in-flight record corresponding to a completed outbound request frame as written.
+    /// Marks the in-flight record corresponding to an outbound request frame as written so that
+    /// it can match an incoming server reply.
+    ///
+    /// Plaintext connections invoke this once the kernel has accepted the last byte of the frame,
+    /// whereas TLS connections invoke it when `poll_transmit` copies that byte.
     ///
     /// Probes the tracked `sent_hint` index first and falls back to a linear scan only when frames
-    /// complete out of order, maintaining amortized constant time updates across deep in-flight
+    /// are marked out of order, maintaining amortized constant time updates across deep in-flight
     /// pipelines.
     fn mark_written(&mut self, xid: i32) {
         let hit = match self.fifo.get(self.sent_hint) {
@@ -600,6 +606,8 @@ impl<T: Tokens> Connection<T> {
     ///   remnants in caller supplied copy buffers are zeroized on subsequent invocations.
     /// - On plaintext transports, large unpinned frames exceeding `LEND_MIN` are transferred via
     ///   zero-copy buffer lending.
+    /// - On TLS transports, marks a request as written upon copying its last byte into `out`
+    ///   (see `mark_taken`).
     pub fn poll_transmit(&mut self, out: &mut Vec<u8>, max: usize) -> usize {
         if self.requests.secret_end > 0 {
             self.requests.secret_end = erase_stale(out, self.requests.secret_end);
@@ -644,6 +652,7 @@ impl<T: Tokens> Connection<T> {
                 break;
             };
             let take = chunk.len();
+            let ends = take >= left;
             if guard {
                 reserve_erased(out, chunk.len());
             }
@@ -656,13 +665,32 @@ impl<T: Tokens> Connection<T> {
             copied = copied.saturating_add(take);
             // Writing the first byte of an authentication packet establishes its sequence on
             // the wire.
-            if let (0, FrameKind::Auth { entry }) = (start, frame.kind) {
+            let kind = frame.kind;
+            if let (0, FrameKind::Auth { entry }) = (start, kind) {
                 self.auth_record_sent(entry);
+            }
+            if ends {
+                self.mark_taken(kind);
             }
         }
         self.requests.unacked = self.requests.unacked.saturating_add(copied);
         self.requests.secret_end = secret_end;
         copied
+    }
+
+    /// Marks a request on a TLS connection as written when the driver takes the last byte of its
+    /// frame.
+    ///
+    /// The driver transmits TLS data in windows and credits a window only once the kernel has
+    /// accepted all of its records. The server can reply to a complete request before the remainder
+    /// of its window is sent. Because the legacy C client queues each request for reply matching
+    /// prior to writing it, such a reply matches there, and this early mark produces the same
+    /// result. Plaintext connections instead mark a request when the kernel accepts its last byte,
+    /// as their transmission credits are exact per byte.
+    fn mark_taken(&mut self, kind: FrameKind) {
+        if let (true, FrameKind::Request { xid }) = (self.cfg.tls, kind) {
+            self.requests.mark_written(xid);
+        }
     }
 
     /// Evaluates transmission budget constraints for a single polling iteration.
@@ -686,7 +714,8 @@ impl<T: Tokens> Connection<T> {
     /// - Upon fully acknowledging a frame, pops it from `tx` (zeroizing secret bytes) and
     ///   notifies ping timers.
     /// - Fully transmitted application requests mark their matching FIFO pending record as
-    ///   `written`.
+    ///   `written`. On TLS transports, `poll_transmit` records this mark earlier when copying the
+    ///   last byte.
     /// - Fully transmitted connection requests notify the session state machine
     ///   (`on_connect_sent`).
     pub fn handle_transmitted(&mut self, n: usize, now: crate::time::Millis) {
@@ -711,7 +740,12 @@ impl<T: Tokens> Connection<T> {
             self.timers.on_send(now);
             match done.kind {
                 FrameKind::Request { xid } => {
-                    self.requests.mark_written(xid);
+                    // On TLS connections, `poll_transmit` marks each request when it takes the
+                    // last byte; because TLS connections never lend frames and always copy,
+                    // `poll_transmit` copies every last byte and the mark is never missed.
+                    if !self.cfg.tls {
+                        self.requests.mark_written(xid);
+                    }
                     self.requests.keep_tx_spare(done);
                 }
                 FrameKind::Connect => self.on_connect_sent(),
@@ -1051,6 +1085,64 @@ mod tests {
         c.handle_transmitted(8, Millis(5));
         assert!(c.requests.tx.is_empty());
         assert!(c.requests.fifo.iter().all(|p| p.written));
+    }
+
+    /// Validates that a TLS connection marks a request as written upon taking the last byte of
+    /// its frame before the driver credits the window, while partially taken frames remain
+    /// unmarked and plaintext connections mark requests only upon transmission credit.
+    #[test]
+    fn a_tls_connection_marks_requests_when_it_takes_them() {
+        for tls in [true, false] {
+            let mut c = conn(Phase::Established);
+            c.cfg.tls = tls;
+            for xid in 1..=3 {
+                c.requests
+                    .push_tail(frame(FrameKind::Request { xid }, &[1; 100]));
+                c.requests.push_pending(pending(xid, Route::Queued));
+            }
+            let mut out = Vec::new();
+            assert_eq!(c.poll_transmit(&mut out, 250), 250);
+            let marks: Vec<bool> = c.requests.fifo.iter().map(|p| p.written).collect();
+            assert_eq!(marks, [tls, tls, false], "tls={tls}");
+
+            // Crediting the first window never marks a request twice and preserves FIFO order.
+            c.handle_transmitted(250, Millis(1));
+            let marks: Vec<bool> = c.requests.fifo.iter().map(|p| p.written).collect();
+            assert_eq!(marks, [true, true, false], "tls={tls}");
+            out.clear();
+            assert_eq!(c.poll_transmit(&mut out, 250), 50);
+            assert_eq!(c.requests.fifo[2].written, tls, "tls={tls}");
+            c.handle_transmitted(50, Millis(2));
+            assert!(c.requests.fifo.iter().all(|p| p.written));
+            assert_eq!(c.requests.sent_hint, 3);
+        }
+    }
+
+    /// Validates that a TLS connection copies a large request frame without lending it and marks
+    /// the request as written only upon taking the final chunk.
+    #[test]
+    fn a_tls_connection_marks_a_large_request_at_its_last_chunk() {
+        let mut c = conn(Phase::Established);
+        c.cfg.tls = true;
+        let len = 2 * LEND_MIN;
+        let chunk = 256 * 1024;
+        c.requests
+            .push_tail(frame(FrameKind::Request { xid: 4 }, &vec![5; len]));
+        c.requests.push_pending(pending(4, Route::Queued));
+        let mut out = Vec::new();
+        let mut taken = 0;
+        while taken + chunk < len {
+            out.clear();
+            assert_eq!(c.poll_transmit(&mut out, chunk), chunk);
+            taken += chunk;
+            assert!(!c.requests.tx[0].is_lent());
+            assert!(!c.requests.fifo[0].written, "{taken} of {len} bytes");
+        }
+        out.clear();
+        assert_eq!(c.poll_transmit(&mut out, chunk), len - taken);
+        assert!(!c.requests.tx[0].is_lent() && c.requests.fifo[0].written);
+        c.handle_transmitted(len, Millis(1));
+        assert!(c.requests.tx.is_empty() && c.requests.fifo[0].written);
     }
 
     #[test]

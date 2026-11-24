@@ -50,7 +50,11 @@
 //!   [`TlsConn::write_frame`] only stages ciphertext inside the TLS engine. This module tracks the
 //!   originating plaintext byte count in [`TlsTransport::unacked`] and defers notifying
 //!   `Connection::handle_transmitted` until all resulting ciphertext bytes have been accepted by
-//!   the operating system kernel socket buffer.
+//!   the operating system kernel socket buffer. This credit releases the frames but does not
+//!   govern reply matching: because a single window can hold multiple requests and the server can
+//!   reply to a complete request before the remainder of the window is transmitted, the protocol
+//!   core marks a TLS request as written when `Connection::poll_transmit` takes the last byte of
+//!   its frame.
 //! - **Adaptive High-Watermark Memory Reclamation**: Transmitting multi-megabyte ZooKeeper requests
 //!   expands staging and ciphertext buffers up to [`MAX_CHUNK`]. Through [`WriteBursts`], the
 //!   driver monitors outbound burst sizes and automatically deallocates oversized plaintext and
@@ -591,9 +595,11 @@ pub(crate) fn tls_flush<T: Tokens>(
 ///    until the next write-readiness event.
 /// 3. **Transmission Acknowledgment**: Once `!t.has_unsent()` is confirmed, any nonzero
 ///    `t.unacked` plaintext byte count is taken and reported to `Connection::handle_transmitted`
-///    under the `core` lock. This ensures the protocol core only marks a request frame as `written`
-///    (and thus eligible for `xid` response matching) after the kernel has accepted every byte of
-///    its encrypted TLS record flight.
+///    under the `core` lock. Consequently, the protocol core releases a frame only after the
+///    kernel has accepted every byte of its encrypted TLS record flight. This credit does not
+///    govern `xid` reply matching: the protocol core marks a request for reply matching when
+///    [`stage_chunk`] takes the last byte of its frame, because the server can reply before the
+///    remainder of the window is transmitted.
 /// 4. **Next Chunk Staging and Encryption**: Calls [`stage_chunk`] to pull up to [`MAX_CHUNK`]
 ///    of outbound plaintext into `io.tx_copy`. If zero bytes are available, the flush is complete.
 ///    Otherwise, encrypts `io.tx_copy` into the TLS session via [`TlsConn::write_frame`], clears

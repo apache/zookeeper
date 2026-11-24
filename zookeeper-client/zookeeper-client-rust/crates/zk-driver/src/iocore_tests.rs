@@ -304,7 +304,7 @@ use zk_jute::JBuffer;
 use zk_jute::handshake::CONNECT_RESPONSE_FRAME_LEN;
 use zk_jute::proto::ConnectResponse;
 use zk_proto::rc::{
-    ZCONNECTIONLOSS, ZINVALIDSTATE, ZNOTHING, ZOK, ZOPERATIONTIMEOUT, ZSYSTEMERROR,
+    ZCONNECTIONLOSS, ZINVALIDSTATE, ZNONODE, ZNOTHING, ZOK, ZOPERATIONTIMEOUT, ZSYSTEMERROR,
 };
 use zk_proto::{Action, ConnectStart, HostResolution, TlsResourceAt};
 use zk_testkit::server::codec::connect_response_frame;
@@ -3001,8 +3001,19 @@ impl Rig {
     /// Reads available bytes currently buffered at the peer endpoint, waiting up to 200 ms for the
     /// initial byte.
     fn peer_drain(&self, into: &mut Vec<u8>) {
+        self.peer_drain_within(into, 200);
+    }
+
+    /// Reads the bytes currently buffered at the peer endpoint without waiting.
+    fn peer_drain_now(&self, into: &mut Vec<u8>) {
+        self.peer_drain_within(into, 0);
+    }
+
+    /// Reads available bytes currently buffered at the peer endpoint, waiting up to `ms`
+    /// milliseconds for the initial byte.
+    fn peer_drain_within(&self, into: &mut Vec<u8>, ms: i32) {
         let mut fds = [PollFd::new(&self.peer, PollFlags::IN)];
-        let _ = RealPoll.poll(&mut fds, 200);
+        let _ = RealPoll.poll(&mut fds, ms);
         let mut buf = vec![0u8; 64 * 1024];
         loop {
             match self.peer.recv(&mut buf) {
@@ -3198,6 +3209,375 @@ fn tls_large_frames_are_copied_in_chunks() {
     let got = r.tls_send_all(set_frame_len(data.len()), |_| {});
     assert_eq!(got[got.len() - 4 - data.len()..got.len() - 4], data[..]);
     assert_eq!((r.io.tx_copy.as_ptr(), r.io.tx_copy.capacity()), (at, cap));
+}
+
+// Reply matching for complete requests within partially transmitted batches: a single TLS window
+// can hold multiple requests while the driver credits the window only once the kernel has
+// accepted all of its records.
+
+/// Payload size of each set request in a partially transmitted batch; four such sets fit within a
+/// single TLS window.
+const BATCH_SET: usize = 50_000;
+
+impl Rig {
+    /// Connects a rig in the specified mode and shrinks both the client send buffer and the peer
+    /// receive buffer to 16 KiB so that a batch of medium-sized requests blocks.
+    fn small_buffers(tls: bool, compat: Compat, mode: DriverMode, flavor: Flavor) -> Self {
+        let mut r = Rig::with_mode(tls, vec![], compat, mode);
+        r.flavor = flavor;
+        if tls {
+            r.tls_connected();
+        } else {
+            r.plain_connected();
+        }
+        let sock = r.io.conn.sock().unwrap();
+        rustix::net::sockopt::set_socket_send_buffer_size(sock, 16 * 1024).unwrap();
+        rustix::net::sockopt::set_socket_recv_buffer_size(&r.peer, 16 * 1024).unwrap();
+        r
+    }
+
+    /// Returns the count of pending requests currently awaiting a reply.
+    fn pending_len(&self) -> usize {
+        let mut proof = Unlocked::new_at_entry();
+        self.core
+            .lock(&mut proof)
+            .conn
+            .as_deref()
+            .map_or(0, Connection::pending_len)
+    }
+
+    /// Enqueues four set requests and drives transmission until the peer has received the first
+    /// request but not the entire batch, returning the bytes received by the peer.
+    fn first_set_out(&mut self, at: &str) -> Vec<u8> {
+        let flen = set_frame_len(BATCH_SET);
+        for _ in 0..4 {
+            self.add_set_data(vec![0x5a; BATCH_SET]);
+        }
+        let mut got = Vec::new();
+        for _ in 0..2000 {
+            let _ = self.process(write_ev());
+            self.peer_drain(&mut got);
+            if got.len() >= flen {
+                break;
+            }
+        }
+        assert!(got.len() >= flen, "{at}: the peer has the first request");
+        assert!(got.len() < 4 * flen, "{at}: the batch is partly unsent");
+        assert_eq!(self.pending_len(), 4, "{at}");
+        got
+    }
+}
+
+/// Returns the `xid` of set request `k` within the accumulated wire bytes of a batch.
+fn batch_xid(got: &[u8], k: usize) -> i32 {
+    frame_xid(got, k * set_frame_len(BATCH_SET))
+}
+
+/// Returns the `xid` of the request frame starting at offset `at` in the bytes received by the
+/// peer.
+fn frame_xid(got: &[u8], at: usize) -> i32 {
+    i32::from_be_bytes(got[at + 4..at + 8].try_into().unwrap())
+}
+
+/// Driver execution modes exercised across partially transmitted batch test cases.
+const BATCH_MODES: [(&str, Compat, DriverMode, Flavor); 3] = [
+    ("mt", Compat::LEGACY_C, DriverMode::MT, Flavor::Mt),
+    ("st", Compat::LEGACY_C, DriverMode::ST, Flavor::St),
+    ("native", Compat::NATIVE, DriverMode::NATIVE, Flavor::Native),
+];
+
+/// Returns the poll events for a turn with both `READ` and `WRITE` readiness.
+fn read_write_ev() -> PollEvents {
+    PollEvents::from_bits(ZOOKEEPER_READ | ZOOKEEPER_WRITE)
+}
+
+/// Transmits a reply to the first set request of a partially sent batch, executes a single turn,
+/// and verifies that the reply completes the first request on an active connection. Under TLS, the
+/// window holds no credit when the reply arrives, and a turn including `WRITE` must block again so
+/// that the window remains uncredited. Exercises every driver mode and reports all failing modes.
+fn first_reply_matches(tls: bool, events: PollEvents) {
+    let mut failed = Vec::new();
+    for (name, compat, mode, flavor) in BATCH_MODES {
+        let at = format!("tls={tls} {name}");
+        let mut r = Rig::small_buffers(tls, compat, mode, flavor);
+        let got = r.first_set_out(&at);
+        if tls {
+            assert!(r.tls().unacked > 0, "{at}: the window has no credit");
+        }
+        r.peer_send(&encode_reply(batch_xid(&got, 0), 5, ZNONODE, &[]));
+        let _ = r.process(events);
+        if !r.has_transport() || r.pending_len() != 3 {
+            failed.push(at);
+            continue;
+        }
+        if tls && events.write {
+            assert!(r.tls().unacked > 0, "{at}: the write blocks again");
+            assert!(r.tls().has_unsent(), "{at}: the window is partly unsent");
+        }
+    }
+    assert!(failed.is_empty(), "the reply did not match: {failed:?}");
+}
+
+/// Verifies that a `READ` turn matches a reply to a complete request within a partially
+/// transmitted TLS window.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn tls_reply_in_a_partly_sent_window_matches_in_a_read_turn() {
+    first_reply_matches(true, read_ev());
+}
+
+/// Verifies that a combined `READ` and `WRITE` turn whose write phase blocks again matches a reply
+/// to a complete request within a partially transmitted TLS window.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn tls_reply_in_a_partly_sent_window_matches_in_a_read_write_turn() {
+    first_reply_matches(true, read_write_ev());
+}
+
+/// Verifies that a plaintext connection matches a reply to a complete request within a partially
+/// transmitted batch.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn plain_reply_in_a_partly_sent_batch_matches() {
+    first_reply_matches(false, read_ev());
+    first_reply_matches(false, read_write_ev());
+}
+
+/// Verifies that a reply to a complete request matches while the remainder of its batch remains
+/// unsent, and that subsequent replies match in order. The legacy C client matches such a reply
+/// because it queues each request for its reply prior to writing it. Exercises `READ` and
+/// `READ|WRITE` turns across every driver mode with a plaintext control.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn reply_inside_a_partly_sent_batch_matches() {
+    let flen = set_frame_len(BATCH_SET);
+    for tls in [true, false] {
+        for (name, compat, mode, flavor) in BATCH_MODES {
+            for (turn, events) in [("read", read_ev()), ("read|write", read_write_ev())] {
+                let at = format!("tls={tls} {name} {turn}");
+                let mut r = Rig::small_buffers(tls, compat, mode, flavor);
+                let mut got = r.first_set_out(&at);
+                r.peer_send(&encode_reply(batch_xid(&got, 0), 5, ZNONODE, &[]));
+                let _ = r.process(events);
+                assert!(r.has_transport(), "{at}: the reply matched");
+                assert_eq!(r.pending_len(), 3, "{at}: the reply completed the request");
+
+                // The remainder of the batch is transmitted, and each subsequent reply matches in
+                // order.
+                for _ in 0..2000 {
+                    if got.len() >= 4 * flen {
+                        break;
+                    }
+                    let _ = r.process(write_ev());
+                    r.peer_drain(&mut got);
+                }
+                assert_eq!(got.len(), 4 * flen, "{at}: the peer has the batch");
+                for k in 1..4 {
+                    r.peer_send(&encode_reply(batch_xid(&got, k), 6, ZNONODE, &[]));
+                }
+                for _ in 0..10 {
+                    if r.pending_len() == 0 {
+                        break;
+                    }
+                    let _ = r.process(read_ev());
+                }
+                assert!(r.has_transport(), "{at}: the later replies matched");
+                assert_eq!(r.state(), State::Connected, "{at}");
+                assert_eq!(r.pending_len(), 0, "{at}");
+            }
+        }
+    }
+}
+
+/// Emulates a server that replies to each request as soon as its complete frame arrives, verifying
+/// that every reply matches and returning a diagnostic message for each failing mode.
+fn replies_match_as_frames_complete(tls: bool, sizes: &[usize], events: PollEvents) -> Vec<String> {
+    let mut starts = Vec::new();
+    let mut total = 0;
+    for size in sizes {
+        starts.push(total);
+        total += set_frame_len(*size);
+    }
+    let mut failed = Vec::new();
+    for (name, compat, mode, flavor) in BATCH_MODES {
+        let at = format!("tls={tls} {name} {sizes:?}");
+        let mut r = Rig::small_buffers(tls, compat, mode, flavor);
+        // A 64 KiB peer receive buffer keeps the peer's TCP window open over loopback so that
+        // sends do not stall awaiting a window probe, while the combined buffers still hold less
+        // than a single TLS window.
+        rustix::net::sockopt::set_socket_recv_buffer_size(&r.peer, 64 * 1024).unwrap();
+        for size in sizes {
+            r.add_set_data(vec![0x5a; *size]);
+        }
+        let mut got = Vec::new();
+        let mut replied = 0;
+        // Count of replies sent while a TLS window holds no credit.
+        let mut early = 0;
+        // Because the loop moves data by invoking `process`, a turn that delivers no additional
+        // bytes to the peer requires no wait.
+        for _ in 0..2000 {
+            if replied == sizes.len() {
+                break;
+            }
+            let _ = r.process(write_ev());
+            r.peer_drain_now(&mut got);
+            let before = replied;
+            while replied < sizes.len()
+                && got.len() >= starts[replied] + set_frame_len(sizes[replied])
+            {
+                if tls && r.tls().unacked > 0 {
+                    early += 1;
+                }
+                r.peer_send(&encode_reply(
+                    frame_xid(&got, starts[replied]),
+                    7,
+                    ZNONODE,
+                    &[],
+                ));
+                replied += 1;
+            }
+            if replied > before {
+                let _ = r.process(events);
+                if !r.has_transport() {
+                    break;
+                }
+            }
+        }
+        for _ in 0..10 {
+            if !r.has_transport() || r.pending_len() == 0 {
+                break;
+            }
+            let _ = r.process(read_ev());
+        }
+        if !r.has_transport() || r.pending_len() != 0 || got.len() != total {
+            failed.push(format!(
+                "{at}: transport={} replies={replied} pending={} got={} of {total}",
+                r.has_transport(),
+                r.pending_len(),
+                got.len()
+            ));
+        } else if tls && early == 0 {
+            failed.push(format!(
+                "{at}: no reply arrived inside a partly sent window"
+            ));
+        }
+    }
+    failed
+}
+
+/// Verifies that replies match both when TLS windows end inside a frame and when a single frame
+/// spans multiple windows, with the server replying to each request as soon as it receives the
+/// complete frame.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn replies_match_when_windows_end_inside_frames() {
+    let mut failed = Vec::new();
+    for tls in [true, false] {
+        for events in [read_ev(), read_write_ev()] {
+            // First window ends inside the sixth frame.
+            failed.extend(replies_match_as_frames_complete(tls, &[50_000; 6], events));
+            // First window ends inside the fourth frame.
+            failed.extend(replies_match_as_frames_complete(tls, &[70_000; 7], events));
+            // First frame spans three windows, followed by small and medium frames.
+            let sizes = [600_000, 10, 30_000, 10, 200_000];
+            failed.extend(replies_match_as_frames_complete(tls, &sizes, events));
+        }
+    }
+    assert!(failed.is_empty(), "{failed:#?}");
+}
+
+/// Verifies that a reply to a request whose frame the driver has not taken completely does not
+/// match, treating it as an unexpected `xid` and dropping the transport. The frame spans three TLS
+/// windows, and the reply arrives while the peer holds only part of the first window.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn tls_reply_to_a_partly_taken_frame_is_a_mismatch() {
+    for (name, compat, mode, flavor) in BATCH_MODES {
+        let mut r = Rig::small_buffers(true, compat, mode, flavor);
+        r.add_set_data(vec![0x5a; 600_000]);
+        let mut got = Vec::new();
+        for _ in 0..2000 {
+            let _ = r.process(write_ev());
+            r.peer_drain(&mut got);
+            if got.len() >= 8 {
+                break;
+            }
+        }
+        assert!(
+            got.len() < 256 * 1024,
+            "{name}: the peer has part of the first window"
+        );
+        r.peer_send(&encode_reply(frame_xid(&got, 0), 5, ZNONODE, &[]));
+        let (_, sites) = r.process_sites(read_ev());
+        assert!(
+            sites.contains(&LogSite::SockUnexpectedXid),
+            "{name}: {sites:?}"
+        );
+        assert!(!r.has_transport(), "{name}");
+    }
+}
+
+/// Verifies that connection closure handles a reply arriving within a partially transmitted window
+/// identically across TLS and plaintext connections. Closure proceeds in driver order
+/// (`begin_close` followed by `CLOSE_OP`): a native drain close retains pending requests so the
+/// reply to a written head matches, whereas a legacy close fails pending requests at
+/// `begin_close` so the reply finds no head.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn a_close_handles_a_reply_in_a_partly_sent_window_as_on_plain() {
+    for (name, compat, mode, flavor) in BATCH_MODES {
+        let drain = compat.close_mode == zk_proto::compat::CloseMode::Drain;
+        let mut seen = Vec::new();
+        for tls in [false, true] {
+            let at = format!("tls={tls} {name}");
+            let mut r = Rig::small_buffers(tls, compat, mode, flavor);
+            let got = r.first_set_out(&at);
+            {
+                let mut proof = Unlocked::new_at_entry();
+                let mut g = r.core.lock(&mut proof);
+                g.conn.as_deref_mut().unwrap().begin_close(Millis(0));
+            }
+            assert_eq!(r.pending_len(), if drain { 4 } else { 0 }, "{at}");
+            assert!(r.queue_close_op(), "{at}");
+            r.peer_send(&encode_reply(batch_xid(&got, 0), 5, ZNONODE, &[]));
+            let (_, sites) = r.process_sites(read_ev());
+            let mismatch = sites.contains(&LogSite::SockUnexpectedXid);
+            let cleared = sites.contains(&LogSite::ClearedByClose);
+            seen.push((r.pending_len(), r.has_transport(), mismatch, cleared));
+        }
+        let want = if drain {
+            (3, true, false, false)
+        } else {
+            (0, true, false, true)
+        };
+        assert_eq!(seen[0], want, "{name}: plain");
+        assert_eq!(seen[1], seen[0], "{name}: tls");
+    }
+}
+
+/// Verifies that connection loss fails every request in a partially transmitted batch, including
+/// requests that the transport took but did not send completely.
+#[test]
+#[cfg_attr(miri, ignore = "Miri has no SO_SNDBUF, which forces the partial sends")]
+fn a_lost_connection_fails_a_partly_sent_batch() {
+    for tls in [true, false] {
+        for (name, compat, mode, flavor) in BATCH_MODES {
+            let at = format!("tls={tls} {name}");
+            let mut r = Rig::small_buffers(tls, compat, mode, flavor);
+            let _got = r.first_set_out(&at);
+            let before = r.host.discarded().len();
+            rustix::net::shutdown(&r.peer, rustix::net::Shutdown::Write).unwrap();
+            let (p, _) = r.process(read_ev());
+            assert_eq!(p, Progress::Done(ZCONNECTIONLOSS), "{at}");
+            assert!(!r.has_transport(), "{at}");
+            assert_eq!(r.pending_len(), 0, "{at}: no request waits");
+            let failed = r.host.discarded()[before..]
+                .iter()
+                .filter(|k| **k == "completion")
+                .count();
+            assert_eq!(failed, 4, "{at}: each request fails once");
+        }
+    }
 }
 
 // Plaintext transmission paths: cursor-based partial writes via `tx_copy`, zero-copy lending

@@ -196,6 +196,7 @@ Invariants:
 - A failed `submit` draws no xid and changes no queue.
 - `submit_early` runs the same admission gates and checks as `submit_with_data`, in the same order. It uses the early body only when the body holds the checked server path and has the expected length; otherwise it encodes the body again. A rejected early request draws no xid and changes no queue.
 - `unacked` is the count of copied bytes that `handle_transmitted` did not acknowledge yet. A transport loss clears it (`clear_pins`).
+- `Pending::written` allows reply matching. On a plaintext transport, `handle_transmitted` sets it when the kernel accepts the last byte of the frame. On a TLS transport, `poll_transmit` sets it when it copies that byte (`mark_taken`), because the driver credits a whole TLS window at once. Teardown fails every pending request regardless of its `written` value.
 - Secret frames (`FrameBytes::Secret`) never leave as a plain `Vec` outside `poll_transmit`.
 - `secret_end` is the end of the secret bytes in the driver's copy buffer. A secret copy sets it, and a plain copy leaves it. Each `poll_transmit` first erases the old copies past the buffer length up to `secret_end`, also with no transport. Other frames cause no erase.
 - When `out` holds bytes on entry or after a secret copy, a growth of `out` erases the old buffer before it is freed.

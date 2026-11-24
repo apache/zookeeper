@@ -1679,6 +1679,40 @@ mod tests {
         assert_eq!(r.remaining(), 0);
     }
 
+    /// Verifies that transport loss fails requests taken by the transport but not completely
+    /// transmitted: a TLS connection marks such a request as written upon taking its last byte
+    /// whereas a plaintext connection marks it later, yet teardown output is identical on both.
+    #[test]
+    fn a_teardown_fails_taken_requests_as_on_a_plain_connection() {
+        for mode in [DriverMode::ST, DriverMode::MT] {
+            let mut evs = Vec::new();
+            for tls in [false, true] {
+                let now = Millis(10);
+                let mut c = conn(Compat::LEGACY_C, mode);
+                open_and_send_connect(&mut c, now);
+                c.cfg.tls = tls;
+                for _ in 0..3 {
+                    let _ = queue_set(&mut c, 100);
+                }
+                let flen = c.requests.tx[0].len();
+                let mut out = Vec::new();
+                assert_eq!(c.poll_transmit(&mut out, 2 * flen + 1), 2 * flen + 1);
+                c.handle_transmitted(flen + 1, now);
+                let marks: Vec<bool> = c.requests.fifo.iter().map(|p| p.written).collect();
+                assert_eq!(marks, [true, tls, false], "{mode:?} tls={tls}");
+
+                let rc = c.handle_transport_failed(TransportFailure::Eof, now);
+                assert_eq!(rc, CL, "{mode:?} tls={tls}");
+                let got = drain(&mut c, now);
+                assert!(c.requests.fifo.is_empty() && c.requests.tx.is_empty());
+                let failed = got.iter().filter(|e| **e == Ev::Done(5, CL, false)).count();
+                assert_eq!(failed, 3, "{mode:?} tls={tls}: {got:?}");
+                evs.push(got);
+            }
+            assert_eq!(evs[0], evs[1], "{mode:?}");
+        }
+    }
+
     #[test]
     fn forced_close_with_no_transport_does_nothing() {
         let mut c = conn(Compat::LEGACY_C, DriverMode::ST);
