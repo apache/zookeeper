@@ -18,15 +18,23 @@
 package org.apache.zookeeper.recipes.leader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.recipes.leader.LeaderElectionSupport.EventType;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.jupiter.api.AfterEach;
@@ -224,6 +232,337 @@ public class LeaderElectionSupportTest extends ClientBase {
         assertEquals(expectedevents, events, "Events has failed to executed in the order");
 
         electionSupport2.stop();
+    }
+
+    @Test
+    public void testCompetingOfferDeletedWhileReadingOffers() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        // a competing offer that is withdrawn after the election lists the offers but before it reads them
+        String competingOffer = zooKeeper.create(rootNodeName + "/n_", "otherhost".getBytes(),
+            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        AtomicBoolean withdrawn = new AtomicBoolean();
+        ZooKeeper electionZooKeeper = createZooKeeper(new ZooKeeperOverrides() {
+            @Override
+            public void beforeGetData(String path) throws Exception {
+                if (path.equals(competingOffer) && !withdrawn.getAndSet(true)) {
+                    zooKeeper.delete(competingOffer, -1);
+                }
+            }
+        });
+        try {
+            LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+            electionSupport.setZooKeeper(electionZooKeeper);
+            List<EventType> events = recordEvents(electionSupport);
+
+            electionSupport.start();
+
+            assertTrue(withdrawn.get(), "The competing offer was not withdrawn while reading the offers");
+            assertFalse(events.contains(EventType.FAILED), "Election failed: " + events);
+            assertTrue(events.contains(EventType.ELECTED_COMPLETE), "Not elected: " + events);
+            electionSupport.stop();
+            assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size());
+        } finally {
+            electionZooKeeper.close();
+        }
+    }
+
+    @Test
+    public void testFailedStartRemovesItsOffer() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        ZooKeeper electionZooKeeper = createZooKeeper(new ZooKeeperOverrides() {
+            @Override
+            public void beforeGetChildren(String path) throws Exception {
+                throw new KeeperException.ConnectionLossException();
+            }
+        });
+        try {
+            LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+            electionSupport.setZooKeeper(electionZooKeeper);
+            List<EventType> events = recordEvents(electionSupport);
+
+            electionSupport.start();
+
+            assertTrue(events.contains(EventType.FAILED), "Election did not fail: " + events);
+            assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size(),
+                "The failed election left its offer behind");
+        } finally {
+            electionZooKeeper.close();
+        }
+    }
+
+    @Test
+    public void testRestartFromFailedListenerKeepsNewOffer() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        AtomicBoolean failOnce = new AtomicBoolean(true);
+        ZooKeeper electionZooKeeper = createZooKeeper(new ZooKeeperOverrides() {
+            @Override
+            public void beforeGetChildren(String path) throws Exception {
+                if (failOnce.getAndSet(false)) {
+                    throw new KeeperException.ConnectionLossException();
+                }
+            }
+        });
+        try {
+            LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+            electionSupport.setZooKeeper(electionZooKeeper);
+            List<EventType> events = recordEvents(electionSupport);
+            AtomicBoolean restarted = new AtomicBoolean();
+            // a listener that starts the election again when it fails
+            electionSupport.addListener(eventType -> {
+                if (eventType == EventType.FAILED && !restarted.getAndSet(true)) {
+                    electionSupport.start();
+                }
+            });
+
+            electionSupport.start();
+
+            assertTrue(events.contains(EventType.ELECTED_COMPLETE), "Restarted election not elected: " + events);
+            List<String> offers = zooKeeper.getChildren(rootNodeName, false);
+            assertEquals(1, offers.size(), "Expected only the restarted election's offer: " + offers);
+            assertNotNull(zooKeeper.exists(rootNodeName + "/" + offers.get(0), false));
+            electionSupport.stop();
+            assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size());
+        } finally {
+            electionZooKeeper.close();
+        }
+    }
+
+    @Test
+    public void testOwnOfferMissingFailsElection() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        ZooKeeper electionZooKeeper = createZooKeeper(new ZooKeeperOverrides() {
+            @Override
+            public void beforeGetChildren(String path) throws Exception {
+                // our offer is removed by someone else before the offers are listed
+                for (String child : zooKeeper.getChildren(rootNodeName, false)) {
+                    zooKeeper.delete(rootNodeName + "/" + child, -1);
+                }
+            }
+        });
+        try {
+            LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+            electionSupport.setZooKeeper(electionZooKeeper);
+            List<EventType> events = recordEvents(electionSupport);
+
+            electionSupport.start();
+
+            assertTrue(events.contains(EventType.FAILED), "Election did not report a failure: " + events);
+            assertFalse(events.contains(EventType.ELECTED_COMPLETE), "Elected without an offer: " + events);
+        } finally {
+            electionZooKeeper.close();
+        }
+    }
+
+    @Test
+    public void testFailureAfterWatchRemovesOffer() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        String competingOffer = zooKeeper.create(rootNodeName + "/n_", "otherhost".getBytes(),
+            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        AtomicBoolean failGetChildren = new AtomicBoolean();
+        ZooKeeper electionZooKeeper = createZooKeeper(new ZooKeeperOverrides() {
+            @Override
+            public void beforeGetChildren(String path) throws Exception {
+                if (failGetChildren.get()) {
+                    throw new KeeperException.ConnectionLossException();
+                }
+            }
+        });
+        try {
+            LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+            electionSupport.setZooKeeper(electionZooKeeper);
+            List<EventType> events = recordEvents(electionSupport);
+            CountDownLatch failed = new CountDownLatch(1);
+            electionSupport.addListener(eventType -> {
+                if (eventType == EventType.FAILED) {
+                    failed.countDown();
+                }
+            });
+
+            electionSupport.start();
+            assertTrue(events.contains(EventType.READY_COMPLETE), "Not waiting behind the competing offer: " + events);
+
+            // the competing offer goes away and running the election again fails
+            failGetChildren.set(true);
+            zooKeeper.delete(competingOffer, -1);
+
+            assertTrue(failed.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Election did not fail: " + events);
+            assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size(),
+                "The failed election left its offer behind");
+        } finally {
+            electionZooKeeper.close();
+        }
+    }
+
+    @Test
+    public void testStopDuringElectionAfterWatchSendsNoFailure() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        String firstOffer = zooKeeper.create(rootNodeName + "/n_", "otherhost".getBytes(),
+            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        String secondOffer = zooKeeper.create(rootNodeName + "/n_", "otherhost".getBytes(),
+            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        AtomicReference<LeaderElectionSupport> electionRef = new AtomicReference<>();
+        AtomicReference<Thread> stopThread = new AtomicReference<>();
+        AtomicBoolean stopWasBlocked = new AtomicBoolean();
+        AtomicBoolean armed = new AtomicBoolean();
+        ZooKeeper electionZooKeeper = createZooKeeper(new ZooKeeperOverrides() {
+            @Override
+            public void beforeExists(String path) throws Exception {
+                if (path.equals(firstOffer) && armed.getAndSet(false)) {
+                    // while the election runs after the watch, the first offer goes away
+                    // and the election is stopped from another thread
+                    zooKeeper.delete(firstOffer, -1);
+                    Thread t = new Thread(() -> electionRef.get().stop());
+                    stopThread.set(t);
+                    t.start();
+                    t.join(500);
+                    stopWasBlocked.set(t.isAlive());
+                }
+            }
+        });
+        try {
+            LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+            electionSupport.setZooKeeper(electionZooKeeper);
+            electionRef.set(electionSupport);
+            List<EventType> events = recordEvents(electionSupport);
+            CountDownLatch stopped = new CountDownLatch(1);
+            electionSupport.addListener(eventType -> {
+                if (eventType == EventType.STOP_COMPLETE) {
+                    stopped.countDown();
+                }
+            });
+
+            electionSupport.start();
+            assertTrue(events.contains(EventType.READY_COMPLETE), "Not waiting behind the second offer: " + events);
+
+            armed.set(true);
+            zooKeeper.delete(secondOffer, -1);
+
+            assertTrue(stopped.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS), "Election was not stopped: " + events);
+            assertNotNull(stopThread.get(), "The election did not run after the watch");
+            stopThread.get().join(CONNECTION_TIMEOUT);
+            assertTrue(stopWasBlocked.get(), "stop() ran while the election was running");
+            assertFalse(eventsAfterStop(events).contains(EventType.FAILED), "Failure reported after stop: " + events);
+            assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size());
+        } finally {
+            electionZooKeeper.close();
+        }
+    }
+
+    @Test
+    public void testStopFromReadyListenerSendsNoFailure() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        String competingOffer = zooKeeper.create(rootNodeName + "/n_", "otherhost".getBytes(),
+            ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+        List<EventType> events = recordEvents(electionSupport);
+        // a listener that stops the election as soon as it has to wait behind another offer
+        electionSupport.addListener(eventType -> {
+            if (eventType == EventType.READY_START) {
+                electionSupport.stop();
+            }
+        });
+
+        electionSupport.start();
+        assertTrue(events.contains(EventType.STOP_COMPLETE), "Election was not stopped: " + events);
+
+        zooKeeper.delete(competingOffer, -1);
+        // the watch event for the delete is queued before this callback, on the same event thread
+        CountDownLatch watchDelivered = new CountDownLatch(1);
+        zooKeeper.sync(rootNodeName, (rc, path, ctx) -> watchDelivered.countDown(), null);
+        assertTrue(watchDelivered.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        assertFalse(eventsAfterStop(events).contains(EventType.FAILED), "Failure reported after stop: " + events);
+        assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size());
+    }
+
+    @Test
+    public void testStopAfterOfferSendsNoFailure() throws Exception {
+        String rootNodeName = TEST_ROOT_NODE + Thread.currentThread().getId();
+        LeaderElectionSupport electionSupport = createLeaderElectionSupport();
+        List<EventType> events = recordEvents(electionSupport);
+        // a listener that stops the election as soon as its offer is made
+        electionSupport.addListener(eventType -> {
+            if (eventType == EventType.OFFER_COMPLETE) {
+                electionSupport.stop();
+            }
+        });
+
+        electionSupport.start();
+
+        assertTrue(events.contains(EventType.STOP_COMPLETE), "Election was not stopped: " + events);
+        assertFalse(eventsAfterStop(events).contains(EventType.FAILED), "Failure reported after stop: " + events);
+        assertEquals(0, zooKeeper.getChildren(rootNodeName, false).size());
+    }
+
+    private static List<EventType> eventsAfterStop(List<EventType> events) {
+        synchronized (events) {
+            return new ArrayList<>(events.subList(events.indexOf(EventType.STOP_COMPLETE) + 1, events.size()));
+        }
+    }
+
+    private interface ZooKeeperOverrides {
+        default void beforeGetData(String path) throws Exception {
+        }
+
+        default void beforeGetChildren(String path) throws Exception {
+        }
+
+        default void beforeExists(String path) throws Exception {
+        }
+    }
+
+    private ZooKeeper createZooKeeper(ZooKeeperOverrides overrides) throws Exception {
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher) {
+            @Override
+            public byte[] getData(String path, boolean watch, Stat stat) throws KeeperException, InterruptedException {
+                try {
+                    overrides.beforeGetData(path);
+                } catch (KeeperException | InterruptedException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+                return super.getData(path, watch, stat);
+            }
+
+            @Override
+            public Stat exists(String path, Watcher watcher) throws KeeperException, InterruptedException {
+                try {
+                    overrides.beforeExists(path);
+                } catch (KeeperException | InterruptedException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+                return super.exists(path, watcher);
+            }
+
+            @Override
+            public List<String> getChildren(String path, boolean watch) throws KeeperException, InterruptedException {
+                try {
+                    overrides.beforeGetChildren(path);
+                } catch (KeeperException | InterruptedException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+                return super.getChildren(path, watch);
+            }
+        };
+        try {
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
+        } catch (Exception e) {
+            zk.close();
+            throw e;
+        }
+        return zk;
+    }
+
+    private static List<EventType> recordEvents(LeaderElectionSupport electionSupport) {
+        List<EventType> events = Collections.synchronizedList(new ArrayList<>());
+        electionSupport.addListener(events::add);
+        return events;
     }
 
     private LeaderElectionSupport createLeaderElectionSupport() {
