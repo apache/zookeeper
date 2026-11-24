@@ -1351,7 +1351,7 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
 {
     int errnosave = 0;
     zhandle_t *zh = NULL;
-    char *index_chroot = NULL;
+    const char *index_chroot = NULL;
 
     /*
      * Transfer certstr ownership to handle on success (released by destroy()),

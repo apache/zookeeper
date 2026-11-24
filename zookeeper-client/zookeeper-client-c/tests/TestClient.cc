@@ -979,18 +979,18 @@ public:
     }
 
     void testSSL() {
-        CPPUNIT_ASSERT_EQUAL((int) ZOK, checkSSL("/ssl", "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password"));
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, checkSSL("/ssl", "/tmp/certs/root.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password"));
     }
 
     void testSSLNoClientCert() {
-        CPPUNIT_ASSERT(ZOK != checkSSL("/ssl-no-client-cert", "/tmp/certs/server.crt"));
+        CPPUNIT_ASSERT(ZOK != checkSSL("/ssl-no-client-cert", "/tmp/certs/root.crt"));
     }
 
     void testSSLServerOnly() {
         stopServer();
         startServer("CLIENT_AUTH=none");
 
-        CPPUNIT_ASSERT_EQUAL((int) ZOK, checkSSL("/ssl-server-only", "/tmp/certs/server.crt"));
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, checkSSL("/ssl-server-only", "/tmp/certs/root.crt"));
     }
 #endif
 
