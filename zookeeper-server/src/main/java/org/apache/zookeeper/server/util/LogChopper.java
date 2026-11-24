@@ -68,7 +68,17 @@ public class LogChopper {
         ServiceUtils.requestSystemExit(rc.getValue());
     }
 
+    /**
+     * Chops with legacy-layout gap diagnostics. Callers that know the log
+     * spans a wide-counter layout switch should use
+     * {@link #chop(InputStream, OutputStream, long, ZxidLayoutState)} so the
+     * diagnostics decompose zxids with the correct layout.
+     */
     public static boolean chop(InputStream is, OutputStream os, long zxid) throws IOException {
+        return chop(is, os, zxid, ZxidLayoutState.legacyOnly());
+    }
+
+    public static boolean chop(InputStream is, OutputStream os, long zxid, ZxidLayoutState layoutState) throws IOException {
         BinaryInputArchive logStream = BinaryInputArchive.getArchive(is);
         BinaryOutputArchive choppedStream = BinaryOutputArchive.getArchive(os);
         FileHeader fhdr = new FileHeader();
@@ -127,9 +137,10 @@ public class LogChopper {
 
             // logging the gap to make the inconsistency investigation easier
             if (previousZxid != -1 && txnZxid != previousZxid + 1) {
-                long txnEpoch = ZxidUtils.getEpochFromZxid(txnZxid);
-                long txnCounter = ZxidUtils.getCounterFromZxid(txnZxid);
-                long previousEpoch = ZxidUtils.getEpochFromZxid(previousZxid);
+                ZxidLayout txnLayout = layoutState.layoutFor(txnZxid);
+                long txnEpoch = txnLayout.getEpochFromZxid(txnZxid);
+                long txnCounter = txnLayout.getCounterFromZxid(txnZxid);
+                long previousEpoch = layoutState.layoutFor(previousZxid).getEpochFromZxid(previousZxid);
                 if (txnEpoch == previousEpoch) {
                     System.out.println(String.format("There is intra-epoch gap between %x and %x", previousZxid, txnZxid));
                 } else if (txnCounter != 1) {
