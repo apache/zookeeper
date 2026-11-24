@@ -2671,7 +2671,7 @@ impl IoCore {
     /// and drives protocol frame deserialization.
     ///
     /// Read progression rules:
-    /// - Queries `is_suspended()`, [`gate_open`], and `read_hint()` under the `core` lock.
+    /// - Queries `is_suspended()`, [`gate_open`], and `first_read_hint()` under the `core` lock.
     /// - Proceeds if either the OS socket reported read readiness (`events.read`) *or* unconsumed
     ///   plaintext is already waiting in `rx_pending` ([`Self::buffered_ready`]), provided the
     ///   decoder has not stalled on a negative frame length (`!self.rx_stalled`).
@@ -2690,7 +2690,11 @@ impl IoCore {
         let (suspended, gate, hint) = {
             let g = cx.core.lock(proof);
             match g.conn.as_deref() {
-                Some(c) => (c.is_suspended(), gate_open(cx, c.state()), c.read_hint()),
+                Some(c) => (
+                    c.is_suspended(),
+                    gate_open(cx, c.state()),
+                    c.first_read_hint(),
+                ),
                 None => return self.done(ZINVALIDSTATE),
             }
         };

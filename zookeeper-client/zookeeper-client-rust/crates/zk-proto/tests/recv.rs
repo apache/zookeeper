@@ -31,11 +31,12 @@ mod common;
 
 use common::{Tk, conn_with};
 use zk_jute::data::Stat;
+use zk_jute::handshake::CONNECT_RESPONSE_FRAME_LEN;
 use zk_jute::proto::{GetDataResponse, ReplyHeader};
 use zk_jute::{JBuffer, Record, encode_frame};
 use zk_proto::{
-    Connection, Output, Reply,
-    action::ConnectStart,
+    Connection, Output, Reply, State,
+    action::{ConnectStart, TransportFailure},
     compat::Compat,
     config::Config,
     request::{InputDefect, Op, PathIn, Request, Route, Submitted},
@@ -329,4 +330,97 @@ fn has_output_tells_when_poll_output_gives_more() {
     assert!(c.poll_output().is_none());
     assert!(c.take_stopped().is_none());
     assert_eq!(tokens, [7, 8]);
+}
+
+/// Establishes an active transport on `c` and flushes the initial `ConnectRequest`.
+fn start_handshake(c: &mut Connection<Tk>) {
+    c.handle_connect_started(ConnectStart::InProgress, Millis(0));
+    c.handle_tcp_connected(Millis(0));
+    c.handle_transport_ready(Millis(0));
+    send_all(c);
+}
+
+/// Verifies that `first_read_hint` requests the full 41-byte framed `ConnectResponse` only while
+/// awaiting the handshake response with an idle decoder.
+#[test]
+fn first_read_hint_asks_for_the_whole_connect_response() {
+    assert_eq!(CONNECT_RESPONSE_FRAME_LEN, 41);
+    let mut c = conn_with(Config::legacy(30_000), Compat::LEGACY_C);
+    assert_eq!(c.first_read_hint(), 4, "no transport");
+    c.handle_connect_started(ConnectStart::InProgress, Millis(0));
+    assert_eq!(c.first_read_hint(), 4, "no ConnectRequest yet");
+    c.handle_tcp_connected(Millis(0));
+    c.handle_transport_ready(Millis(0));
+    assert_eq!(
+        c.first_read_hint(),
+        CONNECT_RESPONSE_FRAME_LEN,
+        "request queued"
+    );
+    send_all(&mut c);
+    assert_eq!(
+        c.first_read_hint(),
+        CONNECT_RESPONSE_FRAME_LEN,
+        "request sent"
+    );
+    assert_eq!(c.read_hint(), 4, "read_hint does not change");
+
+    let frame = connect_response();
+    assert_eq!(frame.len(), CONNECT_RESPONSE_FRAME_LEN);
+    // Once part of the 4-byte length prefix arrives, the hint reflects the remaining header
+    // deficit.
+    assert_eq!(c.handle_read(&frame[..1], Millis(0)).frames, 0);
+    assert_eq!(c.first_read_hint(), 3);
+    // While reading the frame body, the hint reflects the remaining payload deficit.
+    assert_eq!(c.handle_read(&frame[1..20], Millis(0)).frames, 0);
+    assert_eq!(c.first_read_hint(), 21);
+    assert_eq!(c.first_read_hint(), c.read_hint());
+    assert_eq!(c.handle_read(&frame[20..], Millis(0)).frames, 1);
+    let _ = drain(&mut c);
+    assert_eq!(c.state(), State::Connected);
+    assert_eq!(c.first_read_hint(), 4, "the session is open");
+
+    // Reentering handshake negotiation after a transport failure restores the 41-byte hint.
+    let _ = c.handle_transport_failed(TransportFailure::Eof, Millis(0));
+    let _ = drain(&mut c);
+    assert!(!c.has_transport());
+    assert_eq!(c.first_read_hint(), 4, "no transport");
+    start_handshake(&mut c);
+    assert_eq!(c.first_read_hint(), CONNECT_RESPONSE_FRAME_LEN, "reconnect");
+}
+
+/// Verifies that a stalled decoder reports a zero read hint during handshake negotiation.
+#[test]
+fn first_read_hint_is_zero_while_stalled() {
+    let mut c = conn_with(Config::legacy(30_000), Compat::LEGACY_C);
+    start_handshake(&mut c);
+    let mut bytes = (-5i32).to_be_bytes().to_vec();
+    bytes.extend_from_slice(&connect_response()[4..]);
+    let r = c.handle_read(&bytes, Millis(0));
+    assert_eq!((r.frames, r.consumed), (0, 4));
+    assert_eq!(c.first_read_hint(), 0);
+    assert_eq!(c.read_hint(), 0);
+    assert!(c.has_transport());
+}
+
+/// Verifies that a legacy 36-byte `ConnectResponse` payload ingested inside a 41-byte read
+/// completes at byte 40 and leaves the 41st byte for the subsequent frame's length prefix.
+#[test]
+fn an_old_connect_response_in_a_whole_read_leaves_the_next_byte() {
+    let mut c = conn_with(Config::legacy(30_000), Compat::LEGACY_C);
+    start_handshake(&mut c);
+    let mut frame = connect_response();
+    frame.pop();
+    frame[3] = 36;
+    frame.extend_from_slice(&[0]);
+    assert_eq!(frame.len(), CONNECT_RESPONSE_FRAME_LEN);
+    let r = c.handle_read(&frame, Millis(0));
+    assert_eq!(r.frames, 1);
+    // Any trailing byte beyond the 40-byte legacy frame is preserved for the next frame's header.
+    let left = frame.len() - r.consumed;
+    let _ = drain(&mut c);
+    assert_eq!(c.state(), State::Connected);
+    let r2 = c.handle_read(&frame[r.consumed..], Millis(0));
+    assert_eq!(r2.frames, 0);
+    assert_eq!(r2.consumed, left);
+    assert_eq!(c.first_read_hint(), 3);
 }

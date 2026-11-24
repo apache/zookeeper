@@ -301,6 +301,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use rustix::io::Errno;
 use zk_jute::JBuffer;
+use zk_jute::handshake::CONNECT_RESPONSE_FRAME_LEN;
 use zk_jute::proto::ConnectResponse;
 use zk_proto::rc::{
     ZCONNECTIONLOSS, ZINVALIDSTATE, ZNOTHING, ZOK, ZOPERATIONTIMEOUT, ZSYSTEMERROR,
@@ -859,17 +860,125 @@ fn st_reads_the_body_after_a_blocked_read() {
 #[test]
 fn st_reads_the_body_straight_into_the_frame() {
     let mut r = Rig::new(false, vec![]);
-    let _req = r.plain_established();
+    r.plain_connected();
     r.io.rx.fill(0xA5);
-    r.peer_send(&accept_frame());
+    let ping = encode_reply(-2, 0, 0, &[]);
+    r.peer_send(&ping);
     let (p, _) = r.process(read_ev());
     assert_eq!(p, Progress::Done(ZOK));
     assert_eq!(r.state(), State::Connected);
+    assert_eq!(&r.io.rx.data()[..4], &ping[..4]);
     assert!(r.io.rx.data()[4..].iter().all(|b| *b == 0xA5));
     assert!(r.io.rx_pending.is_empty());
 }
 
-/// multithreaded mode reads subsequent frame chunks directly into the frame body following an
+/// Queries the number of unread bytes currently queued in the client socket's kernel receive
+/// buffer.
+fn unread(r: &Rig) -> u64 {
+    let sock = r.io.conn.sock().unwrap();
+    rustix::io::ioctl_fionread(sock).unwrap()
+}
+
+/// Verifies that single threaded mode ingests the full 41-byte `ConnectResponse` wire frame in a
+/// single `recv` syscall without reading past the handshake frame boundary.
+#[test]
+fn st_reads_the_whole_connect_response_in_one_recv() {
+    let mut r = Rig::new(false, vec![]);
+    let _req = r.plain_established();
+    r.io.rx.fill(0xA5);
+    let frame = accept_frame();
+    assert_eq!(frame.len(), CONNECT_RESPONSE_FRAME_LEN);
+    let mut bytes = frame.clone();
+    bytes.extend_from_slice(&encode_reply(-2, 0, 0, &[])[..9]);
+    r.peer_send(&bytes);
+    let (p, _) = r.process(read_ev());
+    assert_eq!(p, Progress::Done(ZOK));
+    assert_eq!(r.state(), State::Connected);
+    assert_eq!(unread(&r), 9, "the call reads exactly 41 bytes");
+    assert_eq!(
+        &r.io.rx.data()[..frame.len()],
+        frame.as_slice(),
+        "one read into rx"
+    );
+    assert!(r.io.rx.data()[frame.len()..].iter().all(|b| *b == 0xA5));
+    assert!(r.io.rx_pending.is_empty());
+}
+
+/// Verifies that when a legacy 40-byte `ConnectResponse` is read alongside the first byte of a
+/// subsequent frame in a 41-byte handshake read, the handshake turn completes only the
+/// `ConnectResponse` and preserves the trailing byte for the next frame.
+#[test]
+fn st_old_connect_response_keeps_the_next_frame() {
+    let mut r = Rig::new(false, vec![]);
+    let _req = r.plain_established();
+    let resp = ConnectResponse {
+        protocol_version: 0,
+        time_out: 10_000,
+        session_id: 0x1234,
+        passwd: JBuffer::Bytes(vec![7; 16]),
+        read_only: false,
+    };
+    let old = connect_response_frame(&resp, true);
+    assert_eq!(old.len(), CONNECT_RESPONSE_FRAME_LEN - 1);
+    let ping = encode_reply(-2, 0, 0, &[]);
+    let mut bytes = old;
+    bytes.extend_from_slice(&ping);
+    r.peer_send(&bytes);
+    let (p, sites) = r.process_sites(read_ev());
+    assert_eq!(p, Progress::Done(ZOK));
+    assert_eq!(r.state(), State::Connected);
+    assert!(!sites.contains(&LogSite::PingResponse), "{sites:?}");
+    assert_eq!(unread(&r), u64::try_from(ping.len() - 1).unwrap());
+    let mut pings = 0;
+    for _ in 0..3 {
+        let ev = if r.io.rx_pending.is_empty() {
+            read_ev()
+        } else {
+            PollEvents::NONE
+        };
+        let (_, sites) = r.process_sites(ev);
+        pings += sites
+            .iter()
+            .filter(|s| **s == LogSite::PingResponse)
+            .count();
+        if pings > 0 {
+            break;
+        }
+    }
+    assert_eq!(pings, 1);
+    assert_eq!(unread(&r), 0);
+    assert!(r.io.rx_pending.is_empty());
+    assert_eq!(r.state(), State::Connected);
+}
+
+/// Verifies that a negative `ConnectResponse` frame length received within a 41-byte handshake
+/// read stalls the frame decoder, retains the trailing 37 bytes in `rx_pending`, and suppresses
+/// read readiness polling to prevent a busy loop.
+#[test]
+fn st_negative_connect_response_length_in_a_whole_read_stalls() {
+    let mut r = Rig::new(false, vec![]);
+    let _req = r.plain_established();
+    let mut bytes = vec![0xff, 0xff, 0xff, 0xfe];
+    bytes.extend_from_slice(&accept_frame()[4..]);
+    assert_eq!(bytes.len(), CONNECT_RESPONSE_FRAME_LEN);
+    r.peer_send(&bytes);
+    let (p, _) = r.process(read_ev());
+    assert_eq!(p, Progress::Done(ZNOTHING));
+    assert!(r.io.rx_stalled);
+    assert!(r.has_transport());
+    assert_eq!(r.io.rx_pending.len(), CONNECT_RESPONSE_FRAME_LEN - 4);
+    assert!(!r.io.buffered_ready(false, true));
+    let (out, p) = r.interest();
+    assert_eq!(p, Progress::Done(ZOK));
+    assert!(out.written);
+    assert_eq!(out.bits & ZOOKEEPER_READ, 0);
+    assert!(out.timeout_ms > 0, "a stalled reader does not busy poll");
+    let (p, _) = r.process(read_ev());
+    assert_eq!(p, Progress::Done(ZOK));
+    assert_ne!(r.state(), State::Connected);
+}
+
+/// Multithreaded mode reads subsequent frame chunks directly into the frame body following an
 /// initial read into `rx`.
 #[test]
 fn mt_reads_the_rest_straight_into_the_frame() {

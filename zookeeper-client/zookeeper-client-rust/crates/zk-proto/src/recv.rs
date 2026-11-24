@@ -28,6 +28,7 @@ use core::ops::Range;
 
 use zeroize::Zeroize;
 use zk_jute::data::Stat;
+use zk_jute::handshake::CONNECT_RESPONSE_FRAME_LEN;
 use zk_jute::multi::{self, MultiBody, MultiKind};
 use zk_jute::proto::{
     Create2Response, CreateResponse, GetACLResponse, GetAllChildrenNumberResponse,
@@ -281,6 +282,25 @@ impl<T: Tokens> Connection<T> {
     #[must_use]
     pub fn read_hint(&self) -> usize {
         self.recv.decoder.want()
+    }
+
+    /// Computes the target byte count for the initial socket read of a single threaded event loop
+    /// turn.
+    ///
+    /// When an active transport is awaiting its initial `ConnectResponse` and no handshake bytes
+    /// have been buffered yet, returns [`CONNECT_RESPONSE_FRAME_LEN`] so the framed handshake reply
+    /// can be ingested in a single `recv` syscall. Otherwise delegates to [`Self::read_hint`].
+    /// Frame boundaries remain governed by the decoded 4-byte length prefix regardless of the read
+    /// hint size.
+    #[must_use]
+    pub fn first_read_hint(&self) -> usize {
+        let reply_due = self.core.has_transport
+            && frame_route(self.core.phase, self.session.handshake_pending) == FrameRoute::Connect;
+        if reply_due && self.recv.decoder.is_idle() && !self.recv.stalled {
+            CONNECT_RESPONSE_FRAME_LEN
+        } else {
+            self.read_hint()
+        }
     }
 
     /// Ingests an incoming slice of transport bytes into the frame decoder.

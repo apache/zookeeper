@@ -45,6 +45,11 @@ pub const CONNECT_RESPONSE_LEN: usize = 37;
 /// read-only mode support.
 pub const CONNECT_RESPONSE_OLD_LEN: usize = 36;
 
+/// Total wire frame length of a standard [`ConnectResponse`] in bytes, comprising the 4-byte
+/// length prefix and the 37-byte payload (the initial single-syscall read size requested while
+/// awaiting the handshake reply).
+pub const CONNECT_RESPONSE_FRAME_LEN: usize = 41;
+
 /// Big-endian integer value written into the 4-byte wire frame prefix of a [`ConnectRequest`].
 const CONNECT_REQUEST_WIRE_LEN: i32 = 45;
 

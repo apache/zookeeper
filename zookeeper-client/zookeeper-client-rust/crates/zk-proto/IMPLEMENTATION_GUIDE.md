@@ -201,7 +201,7 @@ Sources: the doc comments of `recv.rs` and the legacy C read loop.
 
 Owns: `Recv` (`decoder`, `stalled`), `Flow`.
 
-Also in the package: `Recv::{new, reset}`, `read_hint`.
+Also in the package: `Recv::{new, reset}`, `read_hint`, `first_read_hint`.
 
 Main functions:
 
@@ -230,7 +230,7 @@ Calls made:
 
 Calls received:
 
-- `handle_read`, `read_hint`, `body_room`, `handle_body_read`: driver.
+- `handle_read`, `read_hint`, `first_read_hint`, `body_room`, `handle_body_read`: driver.
 - `strip_path`: watches.
 - `teardown_completion`: requests.
 - `Recv::reset`: teardown T1 (session).

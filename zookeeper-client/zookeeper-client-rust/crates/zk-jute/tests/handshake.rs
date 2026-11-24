@@ -30,8 +30,9 @@
 
 use zk_jute::Record;
 use zk_jute::handshake::{
-    CONNECT_REQUEST_FRAME_LEN, CONNECT_REQUEST_LEN, CONNECT_RESPONSE_LEN, CONNECT_RESPONSE_OLD_LEN,
-    ConnectRequest, ConnectResponse, HandshakeError, PASSWD_LEN, decode_connect_response,
+    CONNECT_REQUEST_FRAME_LEN, CONNECT_REQUEST_LEN, CONNECT_RESPONSE_FRAME_LEN,
+    CONNECT_RESPONSE_LEN, CONNECT_RESPONSE_OLD_LEN, ConnectRequest, ConnectResponse,
+    HandshakeError, PASSWD_LEN, decode_connect_response,
 };
 use zk_jute::proto;
 
@@ -113,6 +114,7 @@ fn response_bytes(read_only: Option<u8>) -> Vec<u8> {
 fn connect_response_37_bytes() {
     let body = response_bytes(Some(1));
     assert_eq!(body.len(), CONNECT_RESPONSE_LEN);
+    assert_eq!(CONNECT_RESPONSE_FRAME_LEN, 4 + CONNECT_RESPONSE_LEN);
     let resp = decode_connect_response(&body).unwrap();
     assert_eq!(
         resp,

@@ -40,8 +40,11 @@ use common::{IpHost, WAIT, env, exists};
 use zk_driver::net::poll::ZOOKEEPER_READ;
 use zk_driver::outbox::{Flavor, Item};
 use zk_driver::{Init, InitArgs, InitStep, InterestOut, Outbox, Polled, Step, Unlocked};
-use zk_fakeserver::FakeServer;
-use zk_proto::rc::{ZCLOSING, ZNOTHING};
+use zk_fakeserver::{
+    Action, ClusterConfig, FakeServer, HandshakeStyle, Malformed, Rule, Script, ServerOptions,
+    event,
+};
+use zk_proto::rc::{ZCLOSING, ZNOTHING, ZOK};
 use zk_proto::{Compat, Config, DriverMode, LogSite, State};
 use zk_testkit::tokens::TestTokens;
 
@@ -51,8 +54,13 @@ fn handle(server: &FakeServer) -> Polled<TestTokens> {
 
 /// Initializes a [`Polled`] handle configured for the specified ensemble connection string.
 fn handle_hosts(host_string: Vec<u8>) -> Polled<TestTokens> {
+    handle_timeout(host_string, 10_000)
+}
+
+/// Initializes a [`Polled`] handle with the specified session timeout in milliseconds.
+fn handle_timeout(host_string: Vec<u8>, timeout_ms: i32) -> Polled<TestTokens> {
     let args = InitArgs {
-        cfg: Config::legacy(10_000),
+        cfg: Config::legacy(timeout_ms),
         host_string,
         compat: Compat::LEGACY_C,
         mode: DriverMode::ST,
@@ -450,4 +458,366 @@ fn large_and_small_frames_interleaved_arrive_in_order() {
     for (k, (item, w)) in got.iter().zip(&want).enumerate() {
         common::check_result(item, k as u64 + 1, w.as_deref());
     }
+}
+
+/// Starts a [`FakeServer`] configured with the specified listener options.
+fn server_with(opts: ServerOptions) -> FakeServer {
+    FakeServer::start_with(ClusterConfig::default(), opts).unwrap()
+}
+
+/// Starts a [`FakeServer`] that responds to each `ConnectRequest` according to `rule` with the
+/// given inter-chunk delay `gap`.
+fn server_on_connect(rule: Rule, gap: Duration) -> FakeServer {
+    server_with(ServerOptions {
+        script: Script::default().rule(rule),
+        chunk_gap: gap,
+        ..ServerOptions::default()
+    })
+}
+
+/// Captured telemetry from a single threaded event loop iteration (`interest`, `poll`, and
+/// `process`).
+struct Pass {
+    /// Readiness interest bitmask returned by `interest`.
+    bits: u32,
+    /// Poll timeout in milliseconds returned by `interest`.
+    timeout_ms: i64,
+    /// Readiness events observed by `poll` and passed to `process`.
+    events: u32,
+    /// Return code produced by `process`.
+    rc: i32,
+    /// Client session state code immediately prior to `process`.
+    before: i32,
+    /// Client session state code immediately following `process`.
+    after: i32,
+    /// Outbox items emitted during the `interest` call.
+    interest_items: Vec<Item<TestTokens>>,
+    /// Outbox items emitted during the `process` call.
+    items: Vec<Item<TestTokens>>,
+}
+
+impl Pass {
+    fn sessions(&self) -> usize {
+        self.items
+            .iter()
+            .filter(|i| matches!(i, Item::Session { .. }))
+            .count()
+    }
+
+    fn watches(&self) -> usize {
+        self.items
+            .iter()
+            .filter(|i| matches!(i, Item::Watch { .. }))
+            .count()
+    }
+
+    fn connected_events(&self) -> usize {
+        self.items
+            .iter()
+            .filter(|i| {
+                matches!(
+                    i,
+                    Item::Session {
+                        state: State::Connected,
+                        ..
+                    }
+                )
+            })
+            .count()
+    }
+
+    fn has_log(&self, site: LogSite) -> bool {
+        log_pos(&self.interest_items, site).is_some() || log_pos(&self.items, site).is_some()
+    }
+}
+
+/// Executes one single-threaded event loop pass, pausing for `settle` after a readable poll wakeup
+/// so multi-write server flights coalesce in the socket buffer prior to `process`.
+fn pass(h: &Polled<TestTokens>, settle: Duration) -> Option<Pass> {
+    let mut ob = h.outbox();
+    let mut out = InterestOut::UNWRITTEN;
+    let mut rc = 0;
+    let first = h.interest(&mut ob, &mut out, &mut rc);
+    let mut interest_items = Vec::new();
+    finish(h, first, &mut ob, &mut out, &mut rc, &mut |i| {
+        interest_items.push(i)
+    });
+    if out.fd < 0 {
+        return None;
+    }
+    let (bits, timeout_ms) = (out.bits, out.timeout_ms);
+    let events = h.wait_events(&out, 50);
+    if events & ZOOKEEPER_READ != 0 && !settle.is_zero() {
+        std::thread::sleep(settle);
+    }
+    let before = h.state();
+    let mut ob = h.outbox();
+    let mut items = Vec::new();
+    let first = h.process(events, &mut ob, &mut rc);
+    finish(h, first, &mut ob, &mut out, &mut rc, &mut |i| items.push(i));
+    Some(Pass {
+        bits,
+        timeout_ms,
+        events,
+        rc,
+        before,
+        after: h.state(),
+        interest_items,
+        items,
+    })
+}
+
+/// Repeatedly executes event loop passes until `done` is satisfied, returning the recorded passes.
+fn passes_until(
+    h: &Polled<TestTokens>,
+    settle: Duration,
+    done: &dyn Fn(&[Pass]) -> bool,
+) -> Vec<Pass> {
+    let start = Instant::now();
+    let mut passes = Vec::new();
+    while !done(&passes) && start.elapsed() < WAIT {
+        if let Some(p) = pass(h, settle) {
+            passes.push(p);
+        }
+    }
+    assert!(done(&passes), "no end in {} passes", passes.len());
+    passes
+}
+
+fn connected_pass(passes: &[Pass]) -> Option<usize> {
+    passes
+        .iter()
+        .position(|p| p.after == State::Connected.code())
+}
+
+/// Verifies handshake event ordering: no `Connected` session event is emitted prior to the
+/// `process` pass that completes `ConnectResponse` ingestion, and that pass emits exactly one
+/// `Connected` session event.
+fn assert_handshake_order(passes: &[Pass]) -> usize {
+    let at = connected_pass(passes).expect("a connected pass");
+    assert!(passes[..at].iter().all(|p| p.connected_events() == 0));
+    let p = &passes[at];
+    assert_eq!(p.before, State::Associating.code());
+    assert_ne!(p.events & ZOOKEEPER_READ, 0);
+    assert_eq!(p.rc, ZOK);
+    let states: Vec<State> = p
+        .items
+        .iter()
+        .filter_map(|i| match i {
+            Item::Session { state, .. } => Some(*state),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(states, [State::Connected]);
+    at
+}
+
+/// Initiates handle closure on `h` and drives teardown to `Step::Release`.
+fn close(h: &Polled<TestTokens>) {
+    let mut rc = 0;
+    let mut ob = h.outbox();
+    let mut out = InterestOut::UNWRITTEN;
+    let first = h.close(&mut ob, &mut rc);
+    let step = finish(h, first, &mut ob, &mut out, &mut rc, &mut |_| {});
+    assert_eq!(step, Step::Release);
+}
+
+/// Submits an `exists` request and awaits its completion to verify post-handshake frame alignment.
+fn assert_request_completes(h: &Polled<TestTokens>) {
+    let mut ob = h.outbox();
+    h.submit(exists(1), &mut ob).ok().unwrap();
+    let mut seen = Vec::new();
+    assert!(common::wait_until(WAIT, || {
+        seen.extend(round(h));
+        seen.iter().any(|i| matches!(i, Item::Result { .. }))
+    }));
+}
+
+#[test]
+fn a_whole_connect_response_connects_in_the_first_read() {
+    let server = FakeServer::start().unwrap();
+    let h = handle(&server);
+    let passes = passes_until(&h, Duration::ZERO, &|p| connected_pass(p).is_some());
+    let at = assert_handshake_order(&passes);
+    let first_read = passes
+        .iter()
+        .position(|p| p.events & ZOOKEEPER_READ != 0)
+        .unwrap();
+    assert_eq!(at, first_read, "the first READ call reads the whole reply");
+    assert_request_completes(&h);
+    close(&h);
+}
+
+#[test]
+fn an_old_server_reply_of_40_bytes_connects_read_write() {
+    let server = server_with(ServerOptions {
+        handshake: HandshakeStyle::Legacy36,
+        ..ServerOptions::default()
+    });
+    let h = handle(&server);
+    let passes = passes_until(&h, Duration::ZERO, &|p| connected_pass(p).is_some());
+    let at = assert_handshake_order(&passes);
+    assert_eq!(passes[at].after, State::Connected.code(), "not read-only");
+    assert_request_completes(&h);
+    close(&h);
+}
+
+#[test]
+fn a_split_connect_response_connects_in_the_same_order() {
+    for split in [1usize, 4, 20] {
+        let rule = Rule::on_connect().then(Action::Handshake {
+            style: HandshakeStyle::Modern,
+            split_at: Some(split),
+        });
+        let server = server_on_connect(rule, Duration::from_millis(30));
+        let h = handle(&server);
+        let passes = passes_until(&h, Duration::ZERO, &|p| connected_pass(p).is_some());
+        let at = assert_handshake_order(&passes);
+        let reads = passes[..at]
+            .iter()
+            .filter(|p| p.events & ZOOKEEPER_READ != 0)
+            .count();
+        assert!(
+            reads >= 1,
+            "split {split}: the first part is a separate read"
+        );
+        assert!(
+            passes[..at]
+                .iter()
+                .filter(|p| p.events & ZOOKEEPER_READ != 0)
+                .all(|p| p.rc == ZNOTHING),
+            "split {split}"
+        );
+        assert_request_completes(&h);
+        close(&h);
+    }
+}
+
+#[test]
+fn an_old_reply_and_a_notification_in_one_write_give_one_frame_per_call() {
+    let rule = Rule::on_connect()
+        .then(Action::Handshake {
+            style: HandshakeStyle::Legacy36,
+            split_at: None,
+        })
+        .then(Action::Notify {
+            event_type: event::NODE_DATA_CHANGED,
+            state: event::SYNC_CONNECTED,
+            path: "/a".to_string(),
+        });
+    let server = server_on_connect(rule, Duration::ZERO);
+    let h = handle(&server);
+    let passes = passes_until(&h, Duration::from_millis(50), &|p| {
+        p.iter().any(|x| x.watches() > 0)
+    });
+    let at = assert_handshake_order(&passes);
+    assert_eq!(
+        passes[at].watches(),
+        0,
+        "the connect call gives only the session event"
+    );
+    let watch = passes.iter().position(|p| p.watches() > 0).unwrap();
+    assert!(watch > at);
+    assert!(
+        watch - at <= 2,
+        "the notification waits {} calls",
+        watch - at
+    );
+    for p in &passes {
+        assert!(p.sessions() + p.watches() <= 1, "two frames in one call");
+    }
+    close(&h);
+}
+
+#[test]
+fn a_negative_connect_response_length_stalls_without_a_busy_poll() {
+    // Transmit a negative frame length prefix followed by 37 trailing bytes without a valid
+    // handshake response.
+    let rule = Rule::on_connect()
+        .then(Action::Malformed(Malformed::NegativeLength(-2)))
+        .then(Action::SendRaw(vec![0; 37]))
+        .then(Action::Ignore);
+    let server = server_on_connect(rule, Duration::ZERO);
+    let h = handle_timeout(server.connect_string().into_bytes(), 3_000);
+    let start = Instant::now();
+    let window = Duration::from_millis(1_200);
+    let passes = passes_until(&h, Duration::from_millis(20), &|_| {
+        start.elapsed() >= window
+    });
+    let stall = passes
+        .iter()
+        .position(|p| p.events & ZOOKEEPER_READ != 0)
+        .expect("a read of the bad length");
+    assert_eq!(passes[stall].rc, ZNOTHING);
+    assert_eq!(passes[stall].after, State::Associating.code());
+    assert!(
+        passes.len() > stall + 1,
+        "the window holds passes after the stall"
+    );
+    // Once stalled on a negative frame length, the reader remains in Associating without polling
+    // for further socket reads.
+    for p in &passes[stall + 1..] {
+        assert_eq!(p.before, State::Associating.code());
+        assert_eq!(p.after, State::Associating.code());
+        assert_eq!(
+            p.bits & ZOOKEEPER_READ,
+            0,
+            "a stalled reader asks for no READ"
+        );
+        assert!(p.timeout_ms > 0, "a stalled reader does not busy poll");
+        assert_eq!(p.events, 0);
+        assert_eq!(p.items.len(), 0);
+    }
+    assert!(passes.iter().all(|p| p.sessions() == 0));
+    close(&h);
+    drop(server);
+}
+
+#[test]
+fn a_bad_connect_response_length_is_a_protocol_error() {
+    // Reply to the initial ConnectRequest with a malformed 38-byte body before succeeding on the
+    // reconnect attempt.
+    let rule = Rule::on_connect()
+        .once()
+        .then(Action::SendFrame(vec![0; 38]))
+        .then(Action::Ignore);
+    let server = server_on_connect(rule, Duration::ZERO);
+    let h = handle(&server);
+    let passes = passes_until(&h, Duration::ZERO, &|p| connected_pass(p).is_some());
+    let failed = passes
+        .iter()
+        .position(|p| p.has_log(LogSite::SockRecvFailed))
+        .expect("the protocol error line");
+    assert_eq!(passes[failed].before, State::Associating.code());
+    assert_ne!(passes[failed].after, State::Associating.code());
+    assert_ne!(passes[failed].after, State::Connected.code());
+    assert_eq!(passes[failed].sessions(), 0);
+    let at = assert_handshake_order(&passes);
+    assert!(at > failed);
+    assert_eq!(server.accepted(), 2);
+    assert_request_completes(&h);
+    close(&h);
+}
+
+#[test]
+fn a_reconnect_reads_the_connect_response_again() {
+    let server = FakeServer::start().unwrap();
+    let h = handle(&server);
+    let passes = passes_until(&h, Duration::ZERO, &|p| connected_pass(p).is_some());
+    let _ = assert_handshake_order(&passes);
+    let id = h.client_id();
+    server.drop_connections();
+    let passes = passes_until(&h, Duration::ZERO, &|p| {
+        p.iter().any(|x| x.after != State::Connected.code())
+            && p.last().is_some_and(|x| x.after == State::Connected.code())
+    });
+    let lost = passes
+        .iter()
+        .position(|p| p.after != State::Connected.code())
+        .unwrap();
+    let _ = assert_handshake_order(&passes[lost..]);
+    assert_eq!(h.client_id().session_id, id.session_id);
+    assert_eq!(server.accepted(), 2);
+    assert_request_completes(&h);
+    close(&h);
 }
