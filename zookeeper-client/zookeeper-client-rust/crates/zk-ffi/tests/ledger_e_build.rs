@@ -621,7 +621,7 @@ const LEGACY_REPLACED: [&str; 3] = [
 
 /// The lines of `c/configure.ac` that are not in the legacy `configure.ac`, other than
 /// comments and blank lines. Each line occurs once.
-const DROPIN_OWN: [&str; 15] = [
+const DROPIN_OWN: [&str; 17] = [
     "AC_PREREQ([2.64])",
     r#"m4_define([zk_c_version], m4_esyscmd_s([sed -n 's/^.define ZOO_VERSION "\(.*\)"/\1/p' ../../zookeeper-client-c/include/zookeeper_version.h]))"#,
     "m4_if(zk_c_version, [],",
@@ -637,6 +637,8 @@ const DROPIN_OWN: [&str; 15] = [
     r#"AS_IF([test ! -f "$zk_c_dir/include/zookeeper.h"],"#,
     "  [AC_MSG_ERROR([the legacy C client tree is missing: no $zk_c_dir/include/zookeeper.h])])",
     "ZK_RUST_CLIENT",
+    r#"AS_IF([test "x$with_sock_cloexec" != xno],"#,
+    r#"  [ZKS_CONFIG_CPPFLAGS="$ZKS_CONFIG_CPPFLAGS -DSOCK_CLOEXEC_ENABLED"])"#,
 ];
 
 /// Returns true for a comment line of `c/configure.ac` that the drop-in adds. The C

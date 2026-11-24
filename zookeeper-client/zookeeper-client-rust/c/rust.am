@@ -244,8 +244,14 @@ abi-static: $(ZKRS_LAS)
 # CC can hold options such as -std=gnu23. The link tests get -lsasl2 with
 # the native libraries, because a SASL archive needs it. The link tests
 # also get ZKRS_CARGO_SOURCE_CONFIG, so their cargo calls use the crate
-# sources of configure.
+# sources of configure. check-abi passes --sock-cloexec yes or no to the
+# runner from the SOCK_CLOEXEC_ENABLED conditional of configure.
 if ZKRS_TESTS
+if SOCK_CLOEXEC_ENABLED
+ZK_ABI_TEST_CLOEXEC = yes
+else
+ZK_ABI_TEST_CLOEXEC = no
+endif
 ZK_ABI_TEST_HOST =
 ZK_ABI_TEST_DEAD_HOST =
 ZK_ABI_TEST_REF =
@@ -258,7 +264,7 @@ check-abi:
 	  fl=`basename $$la .la | sed 's/^libzookeeper_//'`; \
 	  echo "check-abi: $$lib (flavor $$fl, config $(ZKRS_ABI_CONFIG))"; \
 	  $(ZKRS_SRCDIR)/tests/abi/run-abi-tests.sh --flavor $$fl --config $(ZKRS_ABI_CONFIG) \
-	    --lib "$$lib" --no-xtask \
+	    --lib "$$lib" --no-xtask --sock-cloexec $(ZK_ABI_TEST_CLOEXEC) \
 	    --out $(abs_builddir)/abi-tests-$$fl $${host:+--host "$$host"} \
 	    $${dead:+--dead-host "$$dead"} $${ref:+--ref "$$ref"}; \
 	done

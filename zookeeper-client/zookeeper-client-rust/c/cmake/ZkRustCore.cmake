@@ -44,6 +44,11 @@ if(zks_fl STREQUAL "mt")
 else()
   set(zks_flavor_defs "")
 endif()
+# Propagate SOCK_CLOEXEC_ENABLED from ZkCProbes.cmake as a compile definition in ZKS_CONFIG_DEFS,
+# as the shim units do not include cmake_config.h.
+if(SOCK_CLOEXEC_ENABLED)
+  list(APPEND ZKS_CONFIG_DEFS SOCK_CLOEXEC_ENABLED)
+endif()
 set(zks_sources "")
 foreach(f ${zks_shim_units})
   list(APPEND zks_sources "${ZKRS_DIR}/shim/${f}")
@@ -370,6 +375,11 @@ if(TARGET zookeeper_${zks_fl})
   endif()
   # Specify target configuration variant governing golden symbol expectations.
   list(APPEND zks_abi_args --config "${ZKRS_ABI_CONFIG}")
+  if(SOCK_CLOEXEC_ENABLED)
+    list(APPEND zks_abi_args --sock-cloexec yes)
+  else()
+    list(APPEND zks_abi_args --sock-cloexec no)
+  endif()
   if(EXISTS "${ZKRS_DIR}/tests/abi/run-abi-tests.sh")
     add_test(NAME zk_abi_tests
       COMMAND "${CMAKE_COMMAND}" -E env "CC=${CMAKE_C_COMPILER}"

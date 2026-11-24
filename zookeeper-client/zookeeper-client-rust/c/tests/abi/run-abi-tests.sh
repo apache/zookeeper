@@ -37,6 +37,9 @@
 #   --out DIR        build and transcript output directory (default:
 #                    ${TMPDIR:-/tmp}/zk-abi-tests, or zk-abi-tests-st for st)
 #   --no-xtask       skip `cargo xtask abi check`
+#   --sock-cloexec yes|no
+#                    whether the library was built with the `SOCK_CLOEXEC`
+#                    option; the session socket check is skipped if omitted
 #
 # This script does not manage ZooKeeper server lifecycles. ELF-specific checks
 # (PLT interposition and copy relocations) require a Linux host and are skipped
@@ -63,6 +66,7 @@ OUT=""
 FL=mt
 CONFIG=plain
 XTASK=1
+CLOEXEC=""
 while [ $# -gt 0 ]; do
     case "$1" in
     --flavor) FL="$2"; shift 2 ;;
@@ -74,6 +78,7 @@ while [ $# -gt 0 ]; do
     --dead-host) DEAD="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
     --no-xtask) XTASK=0; shift ;;
+    --sock-cloexec) CLOEXEC="$2"; shift 2 ;;
     *) echo "run-abi-tests.sh: unknown option $1" >&2; exit 2 ;;
     esac
 done
@@ -97,6 +102,10 @@ ssl) FEATRE='^(-|ssl)$'; SASLDEP=0 ;;
 sasl) FEATRE='^(-|sasl)$'; SASLDEP=1 ;;
 full) FEATRE='^(-|ssl|sasl)$'; SASLDEP=1 ;;
 *) echo "run-abi-tests.sh: unknown config $CONFIG (use plain, ssl, sasl or full)" >&2; exit 2 ;;
+esac
+case "$CLOEXEC" in
+"" | yes | no) ;;
+*) echo "run-abi-tests.sh: unknown --sock-cloexec $CLOEXEC (use yes or no)" >&2; exit 2 ;;
 esac
 if [ -z "$OUT" ]; then
     OUT="${TMPDIR:-/tmp}/zk-abi-tests"
@@ -267,6 +276,17 @@ if [ -n "$REF" ]; then
     for m in "${MODES[@]}"; do
         check "differential-$m" diff "$OUT/$m-ref.txt" "$OUT/$m-lib.txt"
     done
+fi
+
+# ---- Close-on-exec flag of the session socket ----
+if [ -n "$CLOEXEC" ]; then
+    if build_app "$OUT/sock-cloexec" "$LIB" sock_cloexec.c; then
+        check "sock-cloexec-$CLOEXEC" "$OUT/sock-cloexec" "$CLOEXEC"
+    else
+        fail "build sock_cloexec"
+    fi
+else
+    skip "sock-cloexec (no --sock-cloexec)"
 fi
 
 # ---- Exported function interposition ----

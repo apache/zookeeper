@@ -288,6 +288,11 @@ fi
 
 AS_IF([test x"$with_sock_cloexec" != xno], [AC_DEFINE([SOCK_CLOEXEC_ENABLED], [1], [Define to 1, if SOCK_CLOEXEC is defined and wanted])])
 AM_CONDITIONAL([SOCK_CLOEXEC_ENABLED],[test "x$with_sock_cloexec" != xno])
+dnl The shim units do not include config.h, so they get -DSOCK_CLOEXEC_ENABLED
+dnl through ZKS_CONFIG_CPPFLAGS. The ZK_RUST_CLIENT macro runs earlier than
+dnl this probe, so the flag is appended here, after the probe.
+AS_IF([test "x$with_sock_cloexec" != xno],
+  [ZKS_CONFIG_CPPFLAGS="$ZKS_CONFIG_CPPFLAGS -DSOCK_CLOEXEC_ENABLED"])
 
 # Determine which libraries we need to use clock_gettime
 saved_LIBS="$LIBS"
