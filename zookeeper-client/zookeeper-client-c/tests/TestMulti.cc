@@ -167,6 +167,7 @@ class Zookeeper_multi : public CPPUNIT_NS::TestFixture
 //flaw in the test suite setup.
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testCreateDelete);
+    CPPUNIT_TEST(testCreateContainer);
     CPPUNIT_TEST(testInvalidVersion);
     CPPUNIT_TEST(testNestedCreate);
     CPPUNIT_TEST(testSetData);
@@ -327,6 +328,48 @@ public:
         // '/multi2' should have been deleted
         rc = zoo_exists(zk, "/multi2", 0, NULL);
         CPPUNIT_ASSERT_EQUAL((int)ZNONODE, rc);
+    }
+
+    /**
+     * Test container create followed by other operations. The server
+     * answers a container create with a path and a stat. The client must
+     * decode the sub-results that follow it correctly.
+     */
+    void testCreateContainer() {
+        int rc;
+        watchctx_t ctx;
+        zhandle_t *zk = createClient(&ctx);
+        int sz = 512;
+        char p1[sz];
+        char p2[sz];
+        p1[0] = p2[0] = '\0';
+        struct Stat s1;
+        memset(&s1, 0, sizeof(s1));
+        int nops = 4;
+        zoo_op_t ops[nops];
+        zoo_op_result_t results[nops];
+
+        zoo_create_op_init(&ops[0], "/multiContainer", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, ZOO_CONTAINER, p1, sz);
+        zoo_create_op_init(&ops[1], "/multiContainer/a", "", 0,
+                &ZOO_OPEN_ACL_UNSAFE, 0, p2, sz);
+        zoo_set_op_init(&ops[2], "/multiContainer/a", "x", 1, 0, &s1);
+        zoo_check_op_init(&ops[3], "/multiContainer", 0);
+
+        rc = zoo_multi(zk, nops, ops, results);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+        for (int i = 0; i < nops; i++) {
+            CPPUNIT_ASSERT_EQUAL((int)ZOK, results[i].err);
+        }
+        CPPUNIT_ASSERT(strcmp(p1, "/multiContainer") == 0);
+        CPPUNIT_ASSERT(strcmp(p2, "/multiContainer/a") == 0);
+        CPPUNIT_ASSERT_EQUAL(1, s1.version);
+        CPPUNIT_ASSERT_EQUAL(1, s1.dataLength);
+
+        zoo_delete_op_init(&ops[0], "/multiContainer/a", -1);
+        zoo_delete_op_init(&ops[1], "/multiContainer", -1);
+        rc = zoo_multi(zk, 2, ops, results);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     }
 
     /** 
