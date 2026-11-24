@@ -1573,6 +1573,9 @@ mod tests {
 
     /// Environment variable specifying the base port allocation for live ZooKeeper server tests.
     const PORT_BASE_ENV: &str = "ZK_TEST_PORT_BASE";
+    /// Environment variable that, when set to a non-empty value, makes a missing live server a test
+    /// failure instead of a skip; also honored by `zk-client` and `zk-recipes` real-server tests.
+    const REQUIRE_SERVER_ENV: &str = "ZK_TEST_REQUIRE_SERVER";
     /// Port offset within the allocated range dedicated to shared single threaded server testing.
     const SERVER_OFFSET: u16 = 0;
 
@@ -1619,9 +1622,13 @@ mod tests {
         }
     }
 
-    /// Emits a skip message to stderr when optional integration requirements are absent.
+    /// Writes a skip message to stderr when an optional integration requirement (such as the live
+    /// server) is absent; when `ZK_TEST_REQUIRE_SERVER` is set to a non-empty value, panics with
+    /// the reason instead, so a run that must reach a server cannot pass without one.
     #[allow(clippy::print_stderr, reason = "the test harness shows the skip note")]
     fn skip(why: &str) {
+        let required = std::env::var(REQUIRE_SERVER_ENV).is_ok_and(|v| !v.trim().is_empty());
+        assert!(!required, "{why} ({REQUIRE_SERVER_ENV} is set)");
         eprintln!("skip: {why}");
     }
 

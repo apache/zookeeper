@@ -81,6 +81,24 @@ impl Profile {
             .seed(seed)
     }
 
+    /// Returns a [`HarnessBuilder`] configured like [`Self::builder`], but with the profile's
+    /// [`Compat`] customized by `f`.
+    pub(crate) fn builder_with_compat(
+        self,
+        seed: u64,
+        f: impl FnOnce(&mut Compat),
+    ) -> HarnessBuilder {
+        let mut cfg = Config::legacy(10_000);
+        if self.is_native() {
+            cfg.close_timeout_ms = 2_000;
+        }
+        let mut compat = self.compat();
+        f(&mut compat);
+        HarnessBuilder::new(cfg, compat)
+            .mode(self.mode())
+            .seed(seed)
+    }
+
     pub(crate) fn harness(self, seed: u64) -> Harness {
         self.builder(seed).build()
     }

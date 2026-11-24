@@ -389,6 +389,124 @@ async fn watches_are_restored_after_a_reconnect() {
     assert_event(&ev, EventKind::NodeDataChanged, "/a");
 }
 
+/// Returns `n` paths directly under `/` starting with `prefix`, each about 1000 bytes long.
+fn long_paths(prefix: &str, n: usize) -> Vec<String> {
+    let pad = "x".repeat(1000);
+    (0..n).map(|i| format!("/{prefix}{i:03}{pad}")).collect()
+}
+
+/// Verifies that reconnecting with 50 one-shot data watches, 50 persistent watches, and 50
+/// recursive watches on paths of about 1000 bytes (about 150 KB total, exceeding the 128 KiB
+/// `SetWatches` batch) restores them across several `SetWatches2` frames. The client consumes
+/// every out-of-band reply without an `xid` mismatch and dispatches a request queued while
+/// disconnected after the final frame, the frames together hold every watch path, and the client
+/// delivers events for every watch after the reconnect.
+#[tokio::test(flavor = "multi_thread")]
+async fn watches_are_restored_in_several_set_watches2_frames() {
+    let srv = common::fake();
+    let (data, persistent, recursive) = (
+        long_paths("d", 50),
+        long_paths("p", 50),
+        long_paths("r", 50),
+    );
+    for path in &data {
+        srv.cluster().create(path, b"", 0).unwrap();
+    }
+    let c = connect(common::builder(&srv.connect_string())).await;
+    let mut sw = c.state_watcher();
+    let epoch = wait_state(&mut sw, SessionState::Connected).await;
+    let mut oneshots = Vec::new();
+    for path in &data {
+        let (_, _, w) = within(c.get_data_watched(path.as_str())).await.unwrap();
+        oneshots.push(w);
+    }
+    let mut streams = Vec::new();
+    for path in &persistent {
+        let w = within(c.add_watch(path.as_str(), AddWatchMode::Persistent));
+        streams.push(w.await.unwrap());
+    }
+    for path in &recursive {
+        let w = within(c.add_watch(path.as_str(), AddWatchMode::PersistentRecursive));
+        streams.push(w.await.unwrap());
+    }
+
+    // Delay server writes on the second connection to hold back its handshake reply, keeping a
+    // request submitted after the drop queued until the session is re-established.
+    srv.add_rule(
+        Rule::on_connect()
+            .conn(2)
+            .once()
+            .then(Action::Delay(Duration::from_millis(300))),
+    );
+    srv.drop_connections();
+    within(async {
+        while sw.current().state == SessionState::Connected {
+            let _ = sw.changed().await;
+        }
+    })
+    .await;
+    let queued = c.exists("/");
+    within(queued).await.expect("queued request");
+    let info = sw.current();
+    assert_eq!(info.state, SessionState::Connected);
+    assert!(info.epoch > epoch, "{info:?}");
+    round_trip(&c).await;
+    // An `xid` mismatch on a `SetWatches2` reply would terminate the connection; an unchanged
+    // session epoch confirms none occurred.
+    assert_eq!(sw.current().epoch, info.epoch);
+
+    let frames: Vec<_> = srv
+        .transcript()
+        .into_iter()
+        .filter(|r| r.conn_ordinal == 2 && r.op.is_some())
+        .collect();
+    let ops: Vec<_> = frames.iter().filter_map(|r| r.op).collect();
+    let n = ops
+        .iter()
+        .take_while(|op| **op == opcode::SET_WATCHES2)
+        .count();
+    assert!(n >= 2, "{ops:?}");
+    assert_eq!(ops.get(n), Some(&opcode::EXISTS), "{ops:?}");
+    assert!(
+        !ops.iter().skip(n).any(|op| *op == opcode::SET_WATCHES2),
+        "{ops:?}"
+    );
+    let mut set = zk_fakeserver::WatchSet::default();
+    for r in frames.iter().take(n) {
+        match &r.detail {
+            zk_fakeserver::Detail::SetWatches(s) => {
+                set.data.extend(s.data.iter().cloned());
+                set.persistent.extend(s.persistent.iter().cloned());
+                set.persistent_recursive
+                    .extend(s.persistent_recursive.iter().cloned());
+            }
+            other => panic!("unexpected detail {other:?}"),
+        }
+    }
+    let sorted = |mut v: Vec<String>| {
+        v.sort();
+        v
+    };
+    assert_eq!(sorted(set.data), data);
+    assert_eq!(sorted(set.persistent), persistent);
+    assert_eq!(sorted(set.persistent_recursive), recursive);
+
+    for path in &data {
+        srv.cluster().set_data(path, b"1").unwrap();
+    }
+    for path in persistent.iter().chain(&recursive) {
+        srv.cluster().create(path, b"", 0).unwrap();
+    }
+    for (w, path) in oneshots.into_iter().zip(&data) {
+        let ev = within(w).await.unwrap();
+        assert_event(&ev, EventKind::NodeDataChanged, path);
+    }
+    for (w, path) in streams.iter_mut().zip(persistent.iter().chain(&recursive)) {
+        let ev = within(w.next()).await.unwrap().unwrap();
+        assert_event(&ev, EventKind::NodeCreated, path);
+    }
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn without_restore_a_reconnect_ends_the_watchers() {
     let srv = common::fake();

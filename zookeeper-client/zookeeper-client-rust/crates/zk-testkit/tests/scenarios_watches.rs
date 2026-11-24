@@ -34,8 +34,8 @@ use common::{Profile, connected, run_to_state};
 use zk_jute::{JString, opcode, rc};
 use zk_proto::{Output, State, TerminateReason};
 use zk_testkit::server::{
-    ADD_WATCH_PERSISTENT, ADD_WATCH_PERSISTENT_RECURSIVE, InboundKind, WATCHER_CHILDREN,
-    WATCHER_DATA,
+    ADD_WATCH_PERSISTENT, ADD_WATCH_PERSISTENT_RECURSIVE, InboundKind, LinkId, LinkStatus,
+    OutboundKind, Rule, RuleAction, WATCHER_CHILDREN, WATCHER_DATA,
 };
 use zk_testkit::{Harness, WatcherId};
 
@@ -329,6 +329,225 @@ fn set_watches_replay_after_reconnect_with_chroot() {
             ev.contains(&(CHILD, "/".to_string(), vec![wc])),
             "{p:?}: {ev:?}"
         );
+    }
+}
+
+/// Per-frame `SetWatches` byte budget for the multi-frame scenarios: the 50 four-byte watch paths
+/// split across five frames of ten paths each.
+const SMALL_SET_WATCHES_BATCH: u32 = 40;
+
+/// Returns the multi-frame watch paths grouped in the order of the `SetWatches` data, exist, and
+/// child fields: 20 data watch paths on existing nodes, 15 exist watch paths on absent nodes, and
+/// 15 child watch paths on existing nodes.
+fn multi_frame_paths() -> (Vec<String>, Vec<String>, Vec<String>) {
+    let data = (0..20).map(|i| format!("/d{i:02}")).collect();
+    let exist = (0..15).map(|i| format!("/e{i:02}")).collect();
+    let child = (0..15).map(|i| format!("/c{i:02}")).collect();
+    (data, exist, child)
+}
+
+/// Builds and connects a [`Harness`] for profile `p` with [`SMALL_SET_WATCHES_BATCH`], creates the
+/// data and child watch nodes (the exist watch nodes stay absent) and then arms every watch in
+/// [`multi_frame_paths`], and returns each `(path, watcher)` pair in the same order.
+fn multi_frame_harness(p: Profile, seed: u64) -> (Harness, Vec<(String, WatcherId)>) {
+    let mut h = p
+        .builder_with_compat(seed, |c| {
+            c.set_watches_batch = Some(SMALL_SET_WATCHES_BATCH)
+        })
+        .build();
+    h.connect().unwrap();
+    let ops = h.ops();
+    let (data, exist, child) = multi_frame_paths();
+    let mut watched = Vec::new();
+    for (i, path) in data.iter().chain(&exist).chain(&child).enumerate() {
+        let w = WatcherId::new(8, u32::try_from(i).unwrap());
+        if path.starts_with("/e") {
+            let r = h.call(ops.exists(path, Some(w))).unwrap();
+            assert_eq!(r.rc, rc::ZNONODE, "{p:?}: {path}");
+        } else {
+            h.call(ops.create(path, b"", 0)).unwrap();
+            if path.starts_with("/d") {
+                h.call(ops.get_data(path, Some(w))).unwrap();
+            } else {
+                h.call(ops.get_children(path, Some(w))).unwrap();
+            }
+        }
+        watched.push((path.clone(), w));
+    }
+    (h, watched)
+}
+
+/// Returns the opcode of each request the server received on `link`, in wire order.
+fn request_ops(h: &Harness, link: LinkId) -> Vec<i32> {
+    h.server()
+        .inbound()
+        .iter()
+        .filter(|f| f.link == link)
+        .filter_map(|f| match f.kind {
+            InboundKind::Request { op, .. } => Some(op),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Returns the error code of each `SetWatches` reply (xid -8) the server sent on `link`, in wire
+/// order.
+fn set_watches_replies(h: &Harness, link: LinkId) -> Vec<i32> {
+    h.server()
+        .outbound()
+        .iter()
+        .filter(|f| f.link == link)
+        .filter_map(|f| match f.kind {
+            OutboundKind::Reply { xid: -8, err, .. } => Some(err),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Returns the server watch class for a [`multi_frame_paths`] path ([`WATCHER_CHILDREN`] for child
+/// watches, [`WATCHER_DATA`] otherwise); the client watch table check takes the same integer codes
+/// (`1` for child watches, `2` for data and exist watches).
+fn multi_frame_wtype(path: &str) -> i32 {
+    if path.starts_with("/c") {
+        WATCHER_CHILDREN
+    } else {
+        WATCHER_DATA
+    }
+}
+
+/// On the server, sets data on each data watch node, creates each exist watch node, and creates a
+/// child under each child watch node in [`multi_frame_paths`] so that each armed watch fires once.
+fn trigger_multi_frame_watches(h: &mut Harness) {
+    let (data, exist, child) = multi_frame_paths();
+    for path in &data {
+        h.server_mut().set_data(path, b"1").unwrap();
+    }
+    for path in &exist {
+        h.server_mut().create(path, b"", 0).unwrap();
+    }
+    for path in &child {
+        h.server_mut().create(&format!("{path}/k"), b"", 0).unwrap();
+    }
+}
+
+/// Returns the `(event_type, path, watchers)` tuple delivered for `path` and `w` after
+/// [`trigger_multi_frame_watches`].
+fn multi_frame_event(path: &str, w: WatcherId) -> (i32, String, Vec<WatcherId>) {
+    let kind = match path.as_bytes().get(1) {
+        Some(b'd') => CHANGED,
+        Some(b'e') => CREATED,
+        _ => CHILD,
+    };
+    (kind, path.to_string(), vec![w])
+}
+
+// Across all profiles, reconnecting with more watches than fit in a single
+// `SetWatches` batch splits the replay across several frames (five here). The
+// client consumes each xid -8 reply out of band without an xid mismatch,
+// transmits requests queued while disconnected after the final frame, re-arms
+// every watch on the server, and delivers every watch event after reconnect.
+#[test]
+fn set_watches_replay_in_several_frames() {
+    for p in Profile::ALL {
+        let (mut h, watched) = multi_frame_harness(p, 40);
+        h.reset_current();
+        h.run_until(|h| !h.state().is_connected(), 10_000).unwrap();
+        let cause_before = h.conn().last_teardown_cause();
+        let t = h.submit(h.ops().exists("/d00", None)).unwrap();
+        h.connect().unwrap();
+        let r = h.wait_for(t).unwrap();
+        assert_eq!(r.rc, rc::ZOK, "{p:?}");
+        h.run_for(500).unwrap();
+
+        let link = h.link().unwrap();
+        let ops_on_link = request_ops(&h, link);
+        assert_eq!(set_watches_frames(&h), 5, "{p:?}: {ops_on_link:?}");
+        let mut want = vec![opcode::SET_WATCHES; 5];
+        want.push(opcode::EXISTS);
+        assert_eq!(ops_on_link[..6], want[..], "{p:?}: {ops_on_link:?}");
+        assert_eq!(set_watches_replies(&h, link), vec![rc::ZOK; 5], "{p:?}");
+        // An xid mismatch would tear down the transport and close this link, so an unchanged
+        // teardown cause and an open link confirm none occurred.
+        assert_eq!(h.conn().last_teardown_cause(), cause_before, "{p:?}");
+        assert_eq!(h.server().status(link), LinkStatus::Open, "{p:?}");
+        assert!(h.state().is_connected(), "{p:?}");
+        for (path, _) in &watched {
+            let wtype = multi_frame_wtype(path);
+            assert!(h.server().has_watch(link, path, wtype), "{p:?}: {path}");
+        }
+
+        let mark = events(&h).len();
+        trigger_multi_frame_watches(&mut h);
+        h.run_for(500).unwrap();
+        let ev = events(&h).split_off(mark);
+        for (path, w) in &watched {
+            let want = multi_frame_event(path, *w);
+            assert!(ev.contains(&want), "{p:?}: {want:?} not in {ev:?}");
+        }
+        assert_eq!(ev.len(), watched.len(), "{p:?}: {ev:?}");
+    }
+}
+
+// C reference: `zookeeper_process`. The C client logs a `SET_WATCHES_XID`
+// reply and frees its buffer without reading its error code. An error reply to
+// a middle `SetWatches` frame is therefore discarded: the connection stays up,
+// subsequent frames and the queued request complete, the client retains the
+// watches from the rejected frame in its table, and only the watches armed on
+// the server fire.
+#[test]
+fn set_watches_error_reply_to_a_middle_frame_is_discarded() {
+    for p in Profile::ALL {
+        let (mut h, watched) = multi_frame_harness(p, 41);
+        // Reject the third of the five `SetWatches` frames with `ZMARSHALLINGERROR`.
+        h.server_mut().add_rule(
+            Rule::on_request()
+                .op(opcode::SET_WATCHES)
+                .skip(2)
+                .once()
+                .then(RuleAction::Error(rc::ZMARSHALLINGERROR)),
+        );
+        h.reset_current();
+        h.run_until(|h| !h.state().is_connected(), 10_000).unwrap();
+        let cause_before = h.conn().last_teardown_cause();
+        let t = h.submit(h.ops().exists("/d00", None)).unwrap();
+        h.connect().unwrap();
+        let r = h.wait_for(t).unwrap();
+        assert_eq!(r.rc, rc::ZOK, "{p:?}");
+        h.run_for(500).unwrap();
+
+        let link = h.link().unwrap();
+        let want = vec![rc::ZOK, rc::ZOK, rc::ZMARSHALLINGERROR, rc::ZOK, rc::ZOK];
+        assert_eq!(set_watches_replies(&h, link), want, "{p:?}");
+        assert_eq!(h.conn().last_teardown_cause(), cause_before, "{p:?}");
+        assert_eq!(h.server().status(link), LinkStatus::Open, "{p:?}");
+        assert!(h.state().is_connected(), "{p:?}");
+        // Legacy profiles gather watch paths in hash table order, so the test cannot know in
+        // advance which ten paths the rejected frame carried; query the server for which watches
+        // are armed and treat the remainder as rejected.
+        let (armed, rejected): (Vec<_>, Vec<_>) = watched
+            .iter()
+            .partition(|(path, _)| h.server().has_watch(link, path, multi_frame_wtype(path)));
+        assert_eq!(rejected.len(), 10, "{p:?}: {rejected:?}");
+        for (path, w) in &rejected {
+            let wtype = multi_frame_wtype(path);
+            assert!(
+                h.conn().has_watcher(path.as_bytes(), wtype, Some(w)),
+                "{p:?}: {path}"
+            );
+        }
+
+        let mark = events(&h).len();
+        trigger_multi_frame_watches(&mut h);
+        h.run_for(500).unwrap();
+        let ev = events(&h).split_off(mark);
+        let fired: Vec<_> = armed
+            .iter()
+            .map(|(path, w)| multi_frame_event(path, *w))
+            .collect();
+        for want in &fired {
+            assert!(ev.contains(want), "{p:?}: {want:?} not in {ev:?}");
+        }
+        assert_eq!(ev.len(), fired.len(), "{p:?}: {ev:?}");
     }
 }
 
