@@ -659,6 +659,21 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     @Test
+    public void testAddWatchWithoutModeUsesDefaultMode() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+
+        zkMain.cl.parseCommand("addWatch -m PERSISTENT /a");
+        zkMain.processZKCmd(zkMain.cl);
+        // the command instance is shared, so the mode of the previous invocation must not leak
+        zkMain.cl.parseCommand("addWatch /b");
+        zkMain.processZKCmd(zkMain.cl);
+
+        assertEquals(Arrays.asList("/a"), zk.getPersistentWatches());
+        assertEquals(Arrays.asList("/b"), zk.getPersistentRecursiveWatches());
+    }
+
+    @Test
     public void testClientReconnectWithZKClientConfig() throws Exception {
         ZooKeeper zk = null;
         ZooKeeper newZKClient = null;
