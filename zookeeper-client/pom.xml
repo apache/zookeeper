@@ -38,6 +38,13 @@
         <module>zookeeper-client-c</module>
       </modules>
     </profile>
+    <profile>
+      <!-- -Prust builds the optional Rust client module -->
+      <id>rust</id>
+      <modules>
+        <module>zookeeper-client-rust</module>
+      </modules>
+    </profile>
   </profiles>
   <build>
     <plugins>

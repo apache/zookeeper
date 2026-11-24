@@ -1,0 +1,91 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[package]
+name = "apache-zookeeper"
+description = "Native Rust client for Apache ZooKeeper."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "apache_zookeeper"
+
+[dependencies]
+zk-jute.workspace = true
+zk-proto.workspace = true
+zk-driver = { workspace = true, features = ["std-thread"] }
+bitflags.workspace = true
+zeroize = { workspace = true, features = ["alloc"] }
+# Safe uid and gid reads for the TLS environment rule.
+rustix = { workspace = true, features = ["std", "process", "use-libc"] }
+# The public TLS API names rustls types.
+rustls = { workspace = true, optional = true, features = ["std", "tls12"] }
+tracing = { workspace = true, optional = true, features = ["std"] }
+log = { workspace = true, optional = true, features = ["std"] }
+futures-core = { workspace = true, optional = true }
+# Serialize and Deserialize for the value types.
+serde = { workspace = true, optional = true, features = ["std", "derive"] }
+# Native DIGEST-MD5: the response digest and the client nonce.
+md-5 = { workspace = true, optional = true }
+getrandom = { workspace = true, optional = true, features = ["std"] }
+# Native GSSAPI. It links the system libgssapi_krb5.
+libgssapi = { workspace = true, optional = true }
+# The OS trust store and the OS verification policy.
+rustls-platform-verifier = { workspace = true, optional = true }
+
+# The tokio driver exists only on Unix. On other targets the `tokio`
+# feature compiles to nothing.
+[target.'cfg(unix)'.dependencies]
+tokio = { workspace = true, optional = true, features = ["rt", "net", "time", "sync", "io-util"] }
+
+[dev-dependencies]
+# Enables `TlsAcceptor` in zk-fakeserver for TLS integration testing, configured via the active
+# cryptographic provider.
+zk-fakeserver = { workspace = true, features = ["tls"] }
+zk-testkit.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time", "sync"] }
+proptest = { workspace = true, features = ["std"] }
+
+# Builds never use --all-features: exactly one TLS provider feature is
+# allowed.
+[features]
+default = ["tokio", "tracing", "stream"]
+tokio = ["dep:tokio", "zk-driver/tokio"]
+tracing = ["dep:tracing"]
+stream = ["dep:futures-core"]
+blocking = []
+log = ["dep:log"]
+tls-rustls = ["dep:rustls", "zk-driver/tls"]
+tls-ring = ["tls-rustls", "zk-driver/tls-ring"]
+tls-aws-lc-rs = ["tls-rustls", "zk-driver/tls-aws-lc-rs"]
+tls-aws-lc-rs-fips = ["tls-rustls", "zk-driver/tls-aws-lc-rs-fips"]
+# Configures system trust store validation via `rustls-platform-verifier`. Requires
+# either `tls-ring` or `tls-aws-lc-rs`; mutually incompatible with `tls-aws-lc-rs-fips`.
+tls-platform-verifier = ["tls-rustls", "dep:rustls-platform-verifier"]
+# Serialize and Deserialize implementations for Stat, Acl, Id, Perms, Zxid, SessionId, and
+# CreateMode.
+serde = ["dep:serde"]
+# Native SASL client support, providing DIGEST-MD5 and extensible SASL mechanism abstractions.
+# `sasl-gssapi` integrates Kerberos GSSAPI authentication backed by the platform GSSAPI runtime.
+sasl = ["dep:md-5", "dep:getrandom"]
+sasl-gssapi = ["sasl", "dep:libgssapi"]

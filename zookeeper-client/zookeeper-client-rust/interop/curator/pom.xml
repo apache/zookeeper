@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+Apache Curator interoperability test project for `apache-zookeeper-recipes`.
+
+Exercises Apache Curator `InterProcessMutex` and `LeaderLatch` concurrently with
+the Rust `interop_peer` example binary against shared ZooKeeper paths. See
+`README.md` for protocol details and usage instructions. When `zk.connect` or
+`rust.peer.bin` is omitted, tests skip automatically via JUnit assumptions.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.apache.zookeeper</groupId>
+  <artifactId>zookeeper-rust-recipes-interop</artifactId>
+  <version>3.10.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>Apache ZooKeeper - Rust recipes Curator interop</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>11</maven.compiler.release>
+    <curator.version>5.7.1</curator.version>
+    <!-- ZooKeeper client version targeted by Curator 5.7.1. -->
+    <zookeeper.version>3.9.2</zookeeper.version>
+    <junit.version>5.12.2</junit.version>
+    <surefire.version>3.5.3</surefire.version>
+    <!-- Path to the compiled Rust `interop_peer` example binary. -->
+    <rust.peer.bin>${project.basedir}/../../target/debug/examples/interop_peer</rust.peer.bin>
+    <!-- Target ZooKeeper connection string (empty skips live tests). -->
+    <zk.connect></zk.connect>
+    <!-- Base TCP port for `CutProxy` listeners (0 binds an ephemeral port). -->
+    <interop.proxy.port>0</interop.proxy.port>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-recipes</artifactId>
+      <version>${curator.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.zookeeper</groupId>
+          <artifactId>zookeeper</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <version>${zookeeper.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <systemPropertyVariables>
+            <rust.peer.bin>${rust.peer.bin}</rust.peer.bin>
+            <zk.connect>${zk.connect}</zk.connect>
+            <interop.proxy.port>${interop.proxy.port}</interop.proxy.port>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

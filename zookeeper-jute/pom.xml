@@ -122,6 +122,25 @@
               </arguments>
             </configuration>
           </execution>
+          <execution>
+            <id>generate-Rust-Jute</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.basedir}/../zookeeper-client/zookeeper-client-rust/crates/zk-jute/src/generated/</workingDirectory>
+              <executable>java</executable>
+              <arguments>
+                <argument>-classpath</argument>
+                <classpath />
+                <argument>org.apache.jute.compiler.generated.Rcc</argument>
+                <argument>-l</argument>
+                <argument>rust</argument>
+                <argument>${project.basedir}/src/main/resources/zookeeper.jute</argument>
+              </arguments>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>

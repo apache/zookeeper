@@ -1,0 +1,126 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# cbindgen configuration of the private ABI header.
+#
+# The output is zookeeper-client-rust/c/shim/zkrs.h. It includes only
+# <stdint.h> and <stddef.h> and names no public ZooKeeper type, so the
+# shim includes it next to include/zookeeper.h. The output is
+# deterministic: the same sources give the same bytes.
+#
+# Regenerate (from zookeeper-client-rust/crates/zk-ffi):
+#   cbindgen --config cbindgen.toml --crate zk-ffi \
+#     --output ../../c/shim/zkrs.h
+# Drift check (exit status 1 when the header is stale):
+#   cbindgen --config cbindgen.toml --crate zk-ffi --verify \
+#     --output ../../c/shim/zkrs.h
+
+language = "C"
+include_guard = "ZKRS_H"
+no_includes = true
+sys_includes = ["stdint.h", "stddef.h"]
+style = "both"
+cpp_compat = true
+documentation = true
+documentation_style = "doxy"
+usize_is_size_t = false
+line_length = 100
+tab_width = 4
+
+header = """
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */"""
+
+autogen_warning = """
+/*
+ * The private ABI between the C shim and zk-ffi.
+ * cbindgen generates this file from zookeeper-client-rust/crates/zk-ffi.
+ * Do not edit it. Drift check, from that crate directory:
+ *   cbindgen --config cbindgen.toml --crate zk-ffi --verify \\
+ *     --output ../../c/shim/zkrs.h
+ */"""
+
+trailer = """
+/* Initializers. Every field that the macro does not name is zero. */
+#define ZKRS_OUTBOX_INIT {NULL}
+#define ZKRS_REQUEST_INIT(o) {.op = (o)}
+#define ZKRS_RESULT_DST_INIT {0}
+#define ZKRS_SYNC_DST_INIT {0}"""
+
+[parse]
+parse_deps = false
+
+[export]
+# The types that no export names directly still go into the header.
+include = [
+    "zkrs_step",
+    "zkrs_item_type",
+    "zkrs_thread_op",
+    "zkrs_status",
+    "zkrs_outbox",
+    "zkrs_item",
+    "zkrs_log_view",
+    "zkrs_log_arg",
+    "zkrs_result_view",
+    "zkrs_multi_op",
+    "zkrs_acl_view",
+    "zkrs_watch_event_view",
+    "zkrs_watcher",
+    "zkrs_request",
+    "zkrs_init_args",
+    "zkrs_host_vtable",
+    "zkrs_interest_out",
+    "zkrs_sockaddr_view",
+    "zkrs_result_dst",
+    "zkrs_multi_copy",
+    "zkrs_sync_src",
+    "zkrs_sync_dst",
+    "zkrs_stat",
+    "zkrs_str",
+    "zkrs_buf",
+    "zkrs_sasl_call",
+    "zkrs_sasl_kind",
+    "zkrs_sasl_status",
+    "zkrs_sasl_out",
+    "zkrs_bytes",
+]
+
+[enum]
+prefix_with_name = false
+rename_variants = "None"
+
+[fn]
+args = "auto"
+
+# The TLS feature probe exists only in a TLS build. The shim compiles
+# with ZKS_WITH_TLS exactly when the core has the feature.
+[defines]
+"feature = tls" = "ZKS_WITH_TLS"

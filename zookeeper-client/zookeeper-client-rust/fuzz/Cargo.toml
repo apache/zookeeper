@@ -1,0 +1,146 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Cargo-fuzz targets for the Rust client. This crate resides outside the main workspace
+# because it requires a nightly toolchain and the libFuzzer runtime, and maintains an
+# independent lockfile.
+
+[package]
+name = "zk-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[lib]
+path = "src/lib.rs"
+test = false
+doc = false
+
+[dependencies]
+libfuzzer-sys = "0.4"
+libc = { version = "0.2", default-features = false }
+zk-jute = { path = "../crates/zk-jute" }
+zk-proto = { path = "../crates/zk-proto" }
+zk-driver = { path = "../crates/zk-driver", features = ["tls-ring"] }
+apache-zookeeper = { path = "../crates/zk-client", default-features = false, features = ["sasl"] }
+rustls = { version = "0.23.31", default-features = false, features = ["std", "tls12", "ring"] }
+rustls-pki-types = { version = "1.12", default-features = false, features = ["std"] }
+# Used by the key target to inspect PBES2 parameters directly and bypass high-cost derivations.
+pkcs8 = { version = "0.10.2", default-features = false, features = ["alloc", "pkcs5"] }
+pkcs5 = { version = "0.7", default-features = false, features = ["alloc"] }
+# Used by the DIGEST-MD5 target to compute expected rspauth values for generated responses.
+md-5 = { version = "0.10.6", default-features = false }
+# Used by the TLS stream target and seed generator to provision cached OpenSSL test certificates.
+zk-testkit = { path = "../crates/zk-testkit" }
+
+[[example]]
+name = "gen_seeds"
+path = "examples/gen_seeds.rs"
+
+[[bin]]
+name = "jute_records"
+path = "fuzz_targets/jute_records.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "frame_decoder"
+path = "fuzz_targets/frame_decoder.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "connect_response"
+path = "fuzz_targets/connect_response.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "multi_response"
+path = "fuzz_targets/multi_response.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "session_stream"
+path = "fuzz_targets/session_stream.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "connect_string"
+path = "fuzz_targets/connect_string.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "zpath"
+path = "fuzz_targets/zpath.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sasl_frames"
+path = "fuzz_targets/sasl_frames.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sasl_digest_md5"
+path = "fuzz_targets/sasl_digest_md5.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tls_trust"
+path = "fuzz_targets/tls_trust.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tls_keys"
+path = "fuzz_targets/tls_keys.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tls_stream"
+path = "fuzz_targets/tls_stream.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "ffi_writers"
+path = "fuzz_targets/ffi_writers.rs"
+test = false
+doc = false
+bench = false

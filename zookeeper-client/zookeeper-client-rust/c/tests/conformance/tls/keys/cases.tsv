@@ -1,0 +1,97 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Client-identity corpus specification.
+#
+# Tab-separated columns:
+#   case | cert_string (`ca,cert,key,passwd`) | legacy_step |
+#   rust_ring_step | rust_awslc_step | tag | rule
+#
+# Substitutions:
+#   `@F`       `zk-testkit` TLS fixture directory
+#   `@X`       generated supplementary fixture directory (`$OUT/extra`)
+#   `@LONG`    1500-byte passphrase (`@LONG1023` is its 1023-byte prefix)
+#
+# Step tokens: `CA`, `CERT`, `KEY`, `CHECK` (failing initialization stage), or
+# `CONNECT` (all client-identity validation steps succeeded). `tag` is `EXACT`
+# when the legacy and Rust outcomes match, or the registered deviation tag when
+# they differ.
+pkcs8	@F/ca.pem,@F/client.pem,@F/client.key,x	CONNECT	CONNECT	CONNECT	EXACT	PKCS#8, passwd ignored
+sec1	@F/ca.pem,@F/client.pem,@F/keys/client-sec1.pem,x	CONNECT	CONNECT	CONNECT	EXACT	SEC1
+pkcs1	@F/ca.pem,@F/keys/rsa.pem,@F/keys/rsa-pkcs1.pem,x	CONNECT	CONNECT	CONNECT	EXACT	PKCS#1
+ed25519	@F/ca.pem,@F/keys/ed25519.pem,@F/keys/ed25519.key,x	CONNECT	CONNECT	CONNECT	EXACT	Ed25519 PKCS#8
+p8-sha256-aes256	@F/ca.pem,@F/client.pem,@F/keys/p8-sha256-aes256.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	PBKDF2-HMAC-SHA256, AES-256-CBC
+p8-sha1-aes128	@F/ca.pem,@F/client.pem,@F/keys/p8-sha1-aes128.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	PBKDF2-HMAC-SHA1, AES-128-CBC
+p8-sha224-aes192	@F/ca.pem,@F/client.pem,@F/keys/p8-sha224-aes192.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	PBKDF2-HMAC-SHA224, AES-192-CBC
+p8-sha384-aes256	@F/ca.pem,@F/client.pem,@F/keys/p8-sha384-aes256.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	PBKDF2-HMAC-SHA384
+p8-sha512-aes128	@F/ca.pem,@F/client.pem,@F/keys/p8-sha512-aes128.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	PBKDF2-HMAC-SHA512
+p8-des3	@F/ca.pem,@F/client.pem,@F/keys/p8-des3.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	PBES2 DES-EDE3-CBC
+p8-scrypt	@F/ca.pem,@F/client.pem,@F/keys/p8-scrypt.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	scrypt N=1024
+p8-sha512-256	@F/ca.pem,@F/client.pem,@F/keys/p8-sha512-256.pem,zk-test-pass	CONNECT	KEY	KEY	DV-TLS-5	PRF HMAC-SHA512/256
+p8-pkcs12	@F/ca.pem,@F/client.pem,@F/keys/p8-pkcs12.pem,zk-test-pass	CONNECT	KEY	KEY	DV-TLS-5	PKCS#12 PBE
+p8-camellia	@F/ca.pem,@F/client.pem,@F/keys/p8-camellia.pem,zk-test-pass	CONNECT	KEY	KEY	DV-TLS-5	PBES2 CAMELLIA-256-CBC
+p8-pbes1	@F/ca.pem,@F/client.pem,@X/p8-pbes1.pem,zk-test-pass	KEY	KEY	KEY	EXACT	PBES1 MD5-DES, no legacy provider
+scrypt-same	@F/ca.pem,@F/client.pem,@X/scrypt-same.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	control: genconf scrypt key equal to p8-scrypt
+scrypt-n	@F/ca.pem,@F/client.pem,@X/scrypt-n.pem,zk-test-pass	KEY	KEY	KEY	EXACT	scrypt N=65536 r=8 above 32 MiB
+scrypt-pr	@F/ca.pem,@F/client.pem,@X/scrypt-pr.pem,zk-test-pass	KEY	KEY	KEY	EXACT	scrypt p*r >= 2^30
+scrypt-keylen	@F/ca.pem,@F/client.pem,@X/scrypt-keylen.pem,zk-test-pass	KEY	KEY	KEY	EXACT	scrypt keyLength 16 for AES-256
+trad-aes128	@F/ca.pem,@F/client.pem,@F/keys/trad-aes128.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	Proc-Type AES-128-CBC
+trad-aes192	@F/ca.pem,@F/client.pem,@F/keys/trad-aes192.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	Proc-Type AES-192-CBC
+trad-aes256	@F/ca.pem,@F/client.pem,@F/keys/trad-aes256.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	Proc-Type AES-256-CBC
+trad-des3	@F/ca.pem,@F/client.pem,@F/keys/trad-des3.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	Proc-Type DES-EDE3-CBC
+rsa-trad-aes256	@F/ca.pem,@F/keys/rsa.pem,@F/keys/rsa-trad-aes256.pem,zk-test-pass	CONNECT	CONNECT	CONNECT	EXACT	RSA Proc-Type AES-256-CBC
+trad-des	@F/ca.pem,@F/client.pem,@F/keys/trad-des.pem,zk-test-pass	KEY	CONNECT	CONNECT	DV-TLS-2	Proc-Type DES-CBC, no legacy provider
+trad-cfb	@F/ca.pem,@F/client.pem,@F/keys/trad-cfb.pem,zk-test-pass	CONNECT	KEY	KEY	DV-TLS-5	Proc-Type AES-128-CFB
+trad-camellia	@F/ca.pem,@F/client.pem,@F/keys/trad-camellia.pem,zk-test-pass	CONNECT	KEY	KEY	DV-TLS-5	Proc-Type CAMELLIA-256-CBC
+wrongpass-p8-sha256-aes256	@F/ca.pem,@F/client.pem,@F/keys/p8-sha256-aes256.pem,zk-test-pas	KEY	KEY	KEY	EXACT	wrong passphrase
+wrongpass-p8-scrypt	@F/ca.pem,@F/client.pem,@F/keys/p8-scrypt.pem,zk-test-pas	KEY	KEY	KEY	EXACT	wrong passphrase
+wrongpass-trad-aes256	@F/ca.pem,@F/client.pem,@F/keys/trad-aes256.pem,zk-test-pas	KEY	KEY	KEY	EXACT	wrong passphrase
+wrongpass-trad-des3	@F/ca.pem,@F/client.pem,@F/keys/trad-des3.pem,zk-test-pas	KEY	KEY	KEY	EXACT	wrong passphrase
+long-pass	@F/ca.pem,@F/client.pem,@X/p8-long.pem,@LONG	CONNECT	CONNECT	CONNECT	EXACT	passphrase cut to 1024 bytes
+long-pass-1023	@F/ca.pem,@F/client.pem,@X/p8-long.pem,@LONG1023	KEY	KEY	KEY	EXACT	1023 bytes of a 1024-byte passphrase
+p521	@F/ca.pem,@F/keys/p521.pem,@F/keys/p521.key,x	CONNECT	KEY	CONNECT	DV-TLS-5	P-521 key in ring
+ed448	@F/ca.pem,@X/ed448.pem,@F/keys/ed448.key,x	CONNECT	KEY	KEY	DV-TLS-5	Ed448 key
+rsa1024	@F/ca.pem,@X/rsa1024.pem,@F/keys/rsa1024.key,x	CERT	KEY	KEY	DV-TLS-5	RSA-1024 key; legacy refuses the RSA-1024 leaf at the chain step
+rsa-pss	@F/ca.pem,@F/keys/rsa-pss.pem,@F/keys/rsa-pss.key,x	CONNECT	KEY	KEY	DV-TLS-5	id-RSASSA-PSS key
+dsa	@F/ca.pem,@X/dsa.pem,@F/keys/dsa.key,x	CONNECT	KEY	KEY	DV-TLS-5	DSA PKCS#8 key
+dsa-trad	@F/ca.pem,@X/dsa.pem,@F/keys/dsa-trad.pem,x	CONNECT	KEY	KEY	DV-TLS-5	DSA PRIVATE KEY
+ec-explicit	@F/ca.pem,@F/client.pem,@F/keys/client-explicit.pem,x	CONNECT	KEY	CONNECT	DV-TLS-5	EC key with explicit curve parameters, ring; aws-lc-rs loads it (tls_identity.rs)
+compressed	@F/ca.pem,@F/keys/compressed.pem,@F/client.key,x	CONNECT	KEY	KEY	DV-TLS-5	leaf with compressed EC point
+rsa6144	@F/ca.pem,@F/keys/rsa6144.pem,@F/keys/rsa6144.key,x	CONNECT	KEY	CONNECT	DV-TLS-5	RSA-6144 key, ring limit 4096
+rsa-e3	@F/ca.pem,@F/keys/rsa-e3.pem,@F/keys/rsa-e3.key,x	CONNECT	KEY	CONNECT	DV-TLS-5	RSA e=3, ring limit
+sec1-nopub	@F/ca.pem,@F/client.pem,@F/keys/client-sec1-nopub.pem,x	CONNECT	KEY	CONNECT	DV-TLS-5	SEC1 without public key, ring
+mismatch-same-type	@F/ca.pem,@F/client.pem,@F/server.key,x	KEY	KEY	KEY	EXACT	same-slot mismatch fails ClientKey
+mismatch-other-type	@F/ca.pem,@F/client.pem,@F/keys/rsa.key,x	CHECK	CHECK	CHECK	EXACT	other-slot key fails CheckPrivateKey
+cert-then-key	@F/ca.pem,@F/keys/cert-then-key.pem,@F/keys/cert-then-key.pem,x	CONNECT	CONNECT	CONNECT	EXACT	key file with a certificate first
+key-is-cert	@F/ca.pem,@F/client.pem,@F/client.pem,x	KEY	KEY	KEY	EXACT	key file without a key block
+trusted-leaf	@F/ca.pem,@F/keys/trusted.pem,@F/client.key,x	CONNECT	CONNECT	CONNECT	EXACT	TRUSTED CERTIFICATE leaf, aux dropped
+trusted-chain	@F/ca.pem,@F/keys/trusted-chain.pem,@F/client.key,x	CONNECT	CONNECT	CONNECT	EXACT	TRUSTED leaf and chain
+chain-trusted-later	@F/ca.pem,@F/keys/chain-trusted-later.pem,@F/client.key,x	CONNECT	CONNECT	CONNECT	EXACT	later TRUSTED block skipped
+chain	@F/ca.pem,@F/keys/chain.pem,@F/client.key,x	CONNECT	CONNECT	CONNECT	EXACT	leaf and CA in the chain file
+sha1-rsa1024-chain	@F/ca.pem,@X/sha1-chain.pem,@F/client.key,x	CERT	CONNECT	CONNECT	DV-TLS-2	SHA-1 leaf, RSA-1024 intermediate
+cert-only	@F/ca.pem,@F/client.pem	CONNECT	CONNECT	CONNECT	EXACT	no key, no identity
+no-passwd	@F/ca.pem,@F/client.pem,@F/client.key	CONNECT	CONNECT	CONNECT	DV-FIX-10	no passwd: legacy skips the identity, Rust loads it
+no-passwd-encrypted	@F/ca.pem,@F/client.pem,@F/keys/p8-sha256-aes256.pem	CONNECT	KEY	KEY	DV-FIX-10	no passwd, encrypted key: empty passphrase
+no-passwd-no-cert	@F/ca.pem,@X/absent.pem,@F/client.key	CONNECT	CERT	CERT	DV-FIX-10	no passwd, missing chain file
+key-bad-base64	@F/ca.pem,@F/client.pem,@X/bad-base64.key,x	KEY	KEY	KEY	EXACT	key PEM with bad base64
+key-no-end	@F/ca.pem,@F/client.pem,@X/no-end.key,x	KEY	KEY	KEY	EXACT	key PEM without END line
+key-empty	@F/ca.pem,@F/client.pem,@X/empty.key,x	KEY	KEY	KEY	EXACT	empty key file
+key-missing	@F/ca.pem,@F/client.pem,@X/absent.key,x	KEY	KEY	KEY	EXACT	missing key file
+cert-bad-base64	@F/ca.pem,@X/bad-base64.pem,@F/client.key,x	CERT	CERT	CERT	EXACT	chain PEM with bad base64
+cert-garbage	@F/ca.pem,@X/garbage.pem,@F/client.key,x	CERT	CERT	CERT	EXACT	chain file without a certificate
+cert-missing	@F/ca.pem,@X/absent.pem,@F/client.key,x	CERT	CERT	CERT	EXACT	missing chain file
+ca-missing	@X/absent-ca.pem,@F/client.pem,@F/client.key,x	CA	CA	CA	EXACT	missing CA file
+ca-garbage	@X/garbage.pem,@F/client.pem,@F/client.key,x	CA	CA	CA	EXACT	CA file without a certificate or CRL

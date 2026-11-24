@@ -573,6 +573,12 @@
     <c-client-openssl>yes</c-client-openssl>
     <c-client-sasl>yes</c-client-sasl>
 
+    <!-- parameters to pass to the Rust client build (see zookeeper-client-rust/maven/README.md) -->
+    <rust-tls>no</rust-tls>
+    <rust-tls-provider>ring</rust-tls-provider>
+    <rust-cargo-vendor></rust-cargo-vendor>
+    <rust-system-crates></rust-system-crates>
+
   </properties>
 
   <dependencyManagement>
@@ -1000,6 +1006,56 @@
               </target>
             </configuration>
           </execution>
+          <execution>
+            <!--
+            Sets the release version in the Rust client files and in the C
+            version header. It runs on the top level project only, so the files
+            change before any module compiles, also without the rust profile.
+            Only the parent version of the Rust module pom keeps -SNAPSHOT. The
+            drop-in projects of the Rust module read the version from
+            zookeeper_version.h. The execution replace-cclient-files-during-release
+            of zookeeper-client-c writes the other C client files.
+            -->
+            <id>replace-rustclient-files-during-release</id>
+            <phase>none</phase>
+            <inherited>false</inherited>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <property name="zkrs.c" location="${project.basedir}/zookeeper-client/zookeeper-client-c" />
+                <property name="zkrs.ws" location="${project.basedir}/zookeeper-client/zookeeper-client-rust" />
+                <loadresource property="zkrs.new">
+                  <string value="${project.version}" />
+                  <filterchain>
+                    <replacestring from="-SNAPSHOT" to="" />
+                  </filterchain>
+                </loadresource>
+                <!-- the [workspace.package] version is the only version line at the start of a line -->
+                <loadfile property="zkrs.old" srcFile="${zkrs.ws}/Cargo.toml">
+                  <filterchain>
+                    <linecontainsregexp>
+                      <regexp pattern="^version = &quot;" />
+                    </linecontainsregexp>
+                    <tokenfilter>
+                      <replaceregex pattern="^version = &quot;([^&quot;]*)&quot;.*" replace="\1" />
+                    </tokenfilter>
+                    <striplinebreaks />
+                  </filterchain>
+                </loadfile>
+                <fail unless="zkrs.old" message="${zkrs.ws}/Cargo.toml has no [workspace.package] version" />
+                <replaceregexp file="${zkrs.c}/include/zookeeper_version.h" match="\#define ZOO_VERSION.*" replace="#define ZOO_VERSION &quot;${zkrs.new}&quot;" byline="true" />
+                <replaceregexp file="${zkrs.ws}/pom.xml" match="(&lt;artifactId&gt;zookeeper-client&lt;/artifactId&gt;\s*&lt;version&gt;)[^&lt;]*" replace="\1${project.version}" flags="s" />
+                <replaceregexp file="${zkrs.ws}/Cargo.toml" match="^version = &quot;[^&quot;]*&quot;" replace="version = &quot;${zkrs.new}&quot;" byline="true" />
+                <replaceregexp file="${zkrs.ws}/Cargo.toml" match="version = &quot;=\Q${zkrs.old}\E&quot;" replace="version = &quot;=${zkrs.new}&quot;" flags="g" byline="true" />
+                <!-- the workspace packages are the lock file entries with the old version and no source -->
+                <replaceregexp match="(\nname = &quot;[^&quot;]+&quot;\nversion = &quot;)\Q${zkrs.old}\E(&quot;\n)(?!source = )" replace="\1${zkrs.new}\2" flags="g">
+                  <fileset dir="${zkrs.ws}" includes="Cargo.lock,fuzz/Cargo.lock,crates/zk-ffi-layout/Cargo.lock" />
+                </replaceregexp>
+              </target>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -1127,6 +1183,22 @@
             <exclude>**/tests/zoo.cfg</exclude>
             <exclude>**/tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
+            <!-- Cargo writes the lockfiles. The lockfile format has no comments. -->
+            <exclude>**/zookeeper-client-rust/**/Cargo.lock</exclude>
+            <!-- The build output and the fuzz inputs of the Rust client. git ignores them. -->
+            <exclude>**/zookeeper-client-rust/**/target/**</exclude>
+            <exclude>**/zookeeper-client-rust/fuzz/corpus/**</exclude>
+            <exclude>**/zookeeper-client-rust/fuzz/artifacts/**</exclude>
+            <!-- autoreconf writes these files into the drop-in project. git ignores them. -->
+            <exclude>**/zookeeper-client-rust/c/build-aux/**</exclude>
+            <exclude>**/zookeeper-client-rust/c/autom4te.cache/**</exclude>
+            <exclude>**/zookeeper-client-rust/c/configure</exclude>
+            <exclude>**/zookeeper-client-rust/c/configure~</exclude>
+            <exclude>**/zookeeper-client-rust/c/Makefile.in</exclude>
+            <exclude>**/zookeeper-client-rust/c/aclocal.m4</exclude>
+            <exclude>**/zookeeper-client-rust/c/config.h.in</exclude>
+            <exclude>**/zookeeper-client-rust/c/config.h.in~</exclude>
+            <exclude>**/zookeeper-client-rust/c/libtool</exclude>
           </excludes>
           <consoleOutput>true</consoleOutput>
         </configuration>
@@ -1137,8 +1209,8 @@
           <inherited>false</inherited>
           <configuration>
             <!-- update the version inside the C sources -->
-            <preparationGoals>clean verify -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</preparationGoals>
-            <completionGoals>clean verify -DskipTests antrun:run@replace-cclient-files-during-release scm:add@add-cclient-files-during-release scm:checkin@commit-cclient-files-during-release</completionGoals>
+            <preparationGoals>clean verify -DskipTests antrun:run@replace-cclient-files-during-release antrun:run@replace-rustclient-files-during-release scm:add@add-cclient-files-during-release scm:add@add-rustclient-files-during-release scm:checkin@commit-cclient-files-during-release</preparationGoals>
+            <completionGoals>clean verify -DskipTests antrun:run@replace-cclient-files-during-release antrun:run@replace-rustclient-files-during-release scm:add@add-cclient-files-during-release scm:add@add-rustclient-files-during-release scm:checkin@commit-cclient-files-during-release</completionGoals>
             <pushChanges>false</pushChanges>
             <localCheckout>true</localCheckout>
             <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -1159,6 +1231,17 @@
                <configuration>
                  <pushChanges>false</pushChanges>
                  <includes>zookeeper-client/zookeeper-client-c/CMakeLists.txt,zookeeper-client/zookeeper-client-c/configure.ac,zookeeper-client/zookeeper-client-c/include/zookeeper_version.h</includes>
+               </configuration>
+            </execution>
+            <execution>
+               <id>add-rustclient-files-during-release</id>
+               <phase>none</phase>
+               <goals>
+                 <goal>add</goal>
+               </goals>
+               <configuration>
+                 <pushChanges>false</pushChanges>
+                 <includes>zookeeper-client/zookeeper-client-c/include/zookeeper_version.h,zookeeper-client/zookeeper-client-rust/pom.xml,zookeeper-client/zookeeper-client-rust/Cargo.toml,zookeeper-client/zookeeper-client-rust/Cargo.lock,zookeeper-client/zookeeper-client-rust/fuzz/Cargo.lock,zookeeper-client/zookeeper-client-rust/crates/zk-ffi-layout/Cargo.lock</includes>
                </configuration>
             </execution>
             <execution>
