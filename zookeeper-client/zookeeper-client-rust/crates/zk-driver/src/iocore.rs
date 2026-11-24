@@ -939,6 +939,10 @@ pub struct IoCore {
     /// Cached monotonic timestamp for the active turn, invalidated across potentially blocking
     /// operations.
     turn_at: Cell<Option<Millis>>,
+    /// Socket unread byte count recorded by the most recent interest pass, when that pass ran in
+    /// the data phase with the read gate closed; `None` when the most recent pass saw no gate, an
+    /// open gate, or no data phase, and after `drop_transport`. See [`Self::gated_unread`].
+    gated_sock_unread: Option<u64>,
 }
 
 impl std::fmt::Debug for IoCore {
@@ -985,6 +989,7 @@ impl IoCore {
             errno: None,
             in_turn: false,
             turn_at: Cell::new(None),
+            gated_sock_unread: None,
         }
     }
 
@@ -1074,6 +1079,7 @@ impl IoCore {
         self.tx_sent = 0;
         self.rx_more_blocked = false;
         self.rx_stalled = false;
+        self.gated_sock_unread = None;
     }
 
     /// Closes socket descriptors immediately in forked child processes, deliberately leaking the
@@ -1806,6 +1812,7 @@ impl IoCore {
         out: &mut InterestOut,
     ) -> Progress {
         let now = self.turn_now(cx.clock);
+        let unread = self.gated_unread(cx);
         let barrier = {
             let mut g = cx.core.lock(proof);
             let Some(conn) = g.conn.as_deref_mut() else {
@@ -1818,6 +1825,13 @@ impl IoCore {
                 out.written = false;
                 return self.done(rc);
             }
+            // When the read gate is closed, socket reads are suspended and no inbound frames
+            // refresh the receive timer. Any bytes that arrived from the server since the previous
+            // interest pass demonstrate that the server is alive and are counted as a receive so
+            // the subsequent timer evaluation does not tear down a live session.
+            if unread && !gate_open(cx, conn.state()) {
+                conn.note_recv_alive(now);
+            }
             // If an asynchronous forced close (e.g., from a failed single threaded submit flush)
             // captured a teardown snapshot, begin failing its pending requests now.
             conn.run_pending_teardown(now);
@@ -1828,6 +1842,36 @@ impl IoCore {
             return Progress::More;
         }
         self.interest_actions(cx, proof, ob, out)
+    }
+
+    /// Evaluates whether the read gate is closed during the transport data phase and new bytes
+    /// from the server have arrived since the previous interest pass.
+    ///
+    /// On the first interest pass with the gate closed in the data phase, any bytes already staged
+    /// in the driver buffers (`rx_fresh`, `rx_pending`) or waiting unread in the socket
+    /// (`FIONREAD`, via `TcpSock::unread_len`) count once as a receive. On subsequent gated
+    /// passes, only positive growth in the socket's unread byte count since the preceding pass
+    /// counts. Bytes that merely remain unread do not count again: nothing consumes them while the
+    /// gate is closed and the driver buffers cannot grow, so recounting waiting bytes would keep a
+    /// dead server's session alive indefinitely. For TLS connections, plaintext already extracted
+    /// from the TLS engine resides in `rx_pending`, whereas the socket holds unread ciphertext
+    /// whose count grows the same way.
+    ///
+    /// Once the kernel socket receive buffer is full, no further unread byte growth is observable
+    /// and even a live server incurs the receive timeout.
+    ///
+    /// When no gate is present, the gate is open, or the transport is not in its data phase, this
+    /// clears `gated_sock_unread`, returns `false`, and makes no syscall.
+    fn gated_unread<T: Tokens>(&mut self, cx: &StepCtx<'_, T>) -> bool {
+        if cx.gate.is_none_or(ReadGate::is_open) || !self.conn.data_phase() {
+            self.gated_sock_unread = None;
+            return false;
+        }
+        let sock = self.conn.sock().map_or(0, TcpSock::unread_len);
+        match self.gated_sock_unread.replace(sock) {
+            None => self.rx_fresh > 0 || !self.rx_pending.is_empty() || sock > 0,
+            Some(before) => sock > before,
+        }
     }
 
     /// Drives the iterative protocol action loop during an interest evaluation turn, then

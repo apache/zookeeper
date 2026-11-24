@@ -26,6 +26,23 @@
 //! while in the `Established` session phase. Request transmission, heartbeat pings, and
 //! session expiration timers continue uninterrupted during read suspension.
 //!
+//! Receive liveness while the gate is closed: because no frames are read during read suspension,
+//! on each interest pass in the connection's data phase the driver queries the socket's unread
+//! byte count (`FIONREAD`) and refreshes the protocol receive timer
+//! (`Connection::note_recv_alive`) when new bytes have arrived. On the first gated pass, bytes
+//! already buffered by the driver (`rx_fresh`, `rx_pending`) or waiting in the socket count once
+//! as a receive; on subsequent passes, only growth of the socket's unread count since the previous
+//! pass counts. Bytes that merely wait unread do not count again because nothing consumes them
+//! while the gate is closed and the driver buffers cannot grow, so counting them repeatedly would
+//! keep a dead server's session alive indefinitely. Because heartbeat pings continue to go out, a
+//! live server's ping replies keep arriving, keep the socket's unread count growing, and keep the
+//! session connected however long the backlog persists, whereas a server that stops sending adds
+//! no bytes and still incurs the receive timeout. Checking the unread count reads no frames, so
+//! the driver does not buffer more data and the backlog does not grow; however, once the socket
+//! receive buffer is full no further growth is visible, and even a live server incurs the receive
+//! timeout. Only the native threaded and Tokio drivers pass a read gate; the threaded and polled
+//! drivers behind the C drop-in libraries pass no gate and never take this path.
+//!
 //! Backpressure protocol rules:
 //! - The sink indicates whether an item consumes capacity: RPC results, authentication
 //!   outcomes with active receivers, and one-shot watch triggers account for capacity,

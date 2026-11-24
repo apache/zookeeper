@@ -164,6 +164,19 @@ impl<T: Tokens> Connection<T> {
         None
     }
 
+    /// Records external evidence of server receive liveness, refreshing the idle receive timer in
+    /// the same manner as `on_recv` when a driver suspends socket frame reads.
+    ///
+    /// While a driver's read gate is closed, no inbound frames are decoded and `on_recv` does not
+    /// run; whenever the driver observes new bytes arriving from the server, it invokes this
+    /// method so the receive timeout does not tear down a live session. Has no effect unless the
+    /// connection has an active transport and the session state is connected.
+    pub fn note_recv_alive(&mut self, now: Millis) {
+        if self.core.has_transport && self.core.state.is_connected() {
+            self.timers.on_recv(now);
+        }
+    }
+
     /// Sets the `ETIMEDOUT` error hint and initiates transport teardown due to timer expiration.
     fn timers_expire(&mut self, cause: Cause, now: Millis) {
         self.set_errno_hint(ETIMEDOUT);
@@ -300,6 +313,21 @@ mod tests {
         // Reaching the 20 s threshold reduces the remaining receive window to zero.
         assert_eq!(c.timers_recv_left_ms(Millis(20_000)), 0);
         assert_eq!(c.timers_recv_overdue_ms(Millis(20_250)), 250);
+    }
+
+    #[test]
+    fn recv_alive_refreshes_the_receive_deadline_only_when_connected() {
+        let mut c = connected();
+        c.note_recv_alive(Millis(15_000));
+        assert_eq!(c.timers.last_recv, Millis(15_000));
+        assert_eq!(c.timers_recv_left_ms(Millis(20_000)), 15_000);
+        for (state, has_transport) in [(State::Connected, false), (State::Associating, true)] {
+            let mut c = connected();
+            c.core.state = state;
+            c.core.has_transport = has_transport;
+            c.note_recv_alive(Millis(15_000));
+            assert_eq!(c.timers.last_recv, Millis(0), "{state:?}");
+        }
     }
 
     /// Verifies that `SslConnecting` (state 7) receives no receive deadline exemption, whereas

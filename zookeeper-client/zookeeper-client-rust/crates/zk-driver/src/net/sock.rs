@@ -359,6 +359,14 @@ impl TcpSock {
         }
     }
 
+    /// Queries the number of received bytes currently waiting unread in the socket receive buffer
+    /// (`FIONREAD`) without reading or consuming any data.
+    ///
+    /// Returns `0` if the underlying `ioctl` query fails.
+    pub(crate) fn unread_len(&self) -> u64 {
+        rustix::io::ioctl_fionread(&self.fd).unwrap_or(0)
+    }
+
     /// Queries and clears the socket's pending asynchronous error status (`SO_ERROR`).
     ///
     /// # Errors
