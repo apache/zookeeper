@@ -42,14 +42,27 @@ github:
     issues: false
     projects: false
   enabled_merge_buttons:
-    squash:  true
-    merge:   false
-    rebase:  false
+    squash: true
+    merge: false
+    rebase: false
   autolink_jira:
     - ZOOKEEPER
-  dependabot_alerts:  true
+  dependabot_alerts: true
   dependabot_updates: false
 
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "release/*"
+          - "rel/*"
+        excludes: []
+      bypass_teams:
+        - root
+      restrict_deletion: true
+      restrict_force_push: true
 notifications:
   jira_options: link label worklog
   commits: commits@zookeeper.apache.org
