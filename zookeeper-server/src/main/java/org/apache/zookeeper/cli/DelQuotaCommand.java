@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -26,6 +27,7 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooKeeper;
@@ -132,13 +134,14 @@ public class DelQuotaCommand extends CliCommand {
         StatsTrack strack = new StatsTrack(data);
 
         if (quota == null) {
-            // delete till you can find a node with more than
-            // one child
-            List<String> children = zk.getChildren(parentPath, false);
-            /// delete the direct children first
-            for (String child : children) {
-                zk.delete(parentPath + "/" + child, -1);
+            // delete the limit and stat nodes together, so a failure can't leave only one of them
+            List<Op> ops = new ArrayList<>();
+            ops.add(Op.delete(quotaPath, -1));
+            String statPath = Quotas.statPath(path);
+            if (zk.exists(statPath, false) != null) {
+                ops.add(Op.delete(statPath, -1));
             }
+            SetQuotaCommand.multi(zk, ops);
             // cut the tree till their is more than one child
             trimProcQuotas(zk, parentPath);
         } else {
