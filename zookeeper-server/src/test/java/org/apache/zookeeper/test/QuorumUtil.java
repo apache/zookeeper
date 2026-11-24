@@ -120,7 +120,7 @@ public class QuorumUtil {
             for (int i = 1; i <= ALL; ++i) {
                 PeerStruct ps = peers.get(i);
                 LOG.info("Creating QuorumPeer {}; public port {}", i, ps.clientPort);
-                ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+                ps.peer = newQuorumPeer(ps);
                 assertEquals(ps.clientPort, ps.peer.getClientPort());
             }
         } catch (Exception e) {
@@ -141,6 +141,10 @@ public class QuorumUtil {
 
     public void enableLocalSession(boolean localSessionEnabled) {
         this.localSessionEnabled = localSessionEnabled;
+    }
+
+    protected QuorumPeer newQuorumPeer(PeerStruct ps) throws IOException {
+        return new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
     }
 
     public void startAll() throws IOException {
@@ -206,7 +210,7 @@ public class QuorumUtil {
     public void start(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer {}; public port {}", ps.id, ps.clientPort);
-        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        ps.peer = newQuorumPeer(ps);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
@@ -225,7 +229,7 @@ public class QuorumUtil {
     public void startThenShutdown(int id) throws IOException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer {}; public port {}", ps.id, ps.clientPort);
-        ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
+        ps.peer = newQuorumPeer(ps);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
