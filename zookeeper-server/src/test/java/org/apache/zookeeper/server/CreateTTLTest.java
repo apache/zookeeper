@@ -102,6 +102,20 @@ public class CreateTTLTest extends ClientBase {
     }
 
     @Test
+    public void testCreateTTLOpcodeWithNonTTLMode() throws InterruptedException, KeeperException {
+        RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
+        String path = "/opcode_mode_mismatch";
+        CreateTTLRequest request = new CreateTTLRequest(
+                path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag(), -1);
+        CreateResponse response = new CreateResponse();
+        ReplyHeader r = zk.submitRequest(h, request, response, null);
+
+        assertEquals(Code.BADARGUMENTS.intValue(), r.getErr(),
+                "createTTL with a non-TTL mode should be rejected with BADARGUMENTS, not applied");
+        assertNull(zk.exists(path, false), "no znode should be created");
+    }
+
+    @Test
     public void testBadTTLs() throws InterruptedException, KeeperException {
         RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
 
