@@ -1137,7 +1137,10 @@ public class ZooKeeper implements AutoCloseable {
         }
 
         ZKClientConfig clientConfig = options.getClientConfig();
-        this.clientConfig = clientConfig != null ? clientConfig : new ZKClientConfig();
+        if (clientConfig == null) {
+            clientConfig = new ZKClientConfig();
+        }
+        this.clientConfig = clientConfig;
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
         HostProvider hostProvider;
         if (options.getHostProvider() != null) {
