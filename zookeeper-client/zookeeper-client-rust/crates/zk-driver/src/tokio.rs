@@ -312,7 +312,11 @@ pub(crate) async fn run<T: DriverTokens>(shared: Arc<TaskShared<T>>) {
         }
         let mut out = InterestOut::UNWRITTEN;
         let p = shared.tokio_interest(&mut ob, &mut out);
-        tokio_settle(&shared, p, &mut ob, &mut out, &mut bg).await;
+        // `Settle::Ended` leaves `IoCore` suspended on an abandoned job whose result will never
+        // arrive; return directly to the loop top so only the detach or close exit path runs next.
+        if tokio_settle(&shared, p, &mut ob, &mut out, &mut bg).await == Settle::Ended {
+            continue;
+        }
         let plan = shared.tokio_wait_plan(&out);
         let (events, wake, finished) = tokio_wait_with(&shared, plan, &mut bg).await;
         // The process step produces no new interest outputs.
@@ -320,10 +324,14 @@ pub(crate) async fn run<T: DriverTokens>(shared: Arc<TaskShared<T>>) {
         let mut scratch = InterestOut::UNWRITTEN;
         if let Some(done) = finished {
             let p = shared.tokio_complete_resolve(done, &mut ob, &mut scratch);
-            tokio_settle(&shared, p, &mut ob, &mut scratch, &mut bg).await;
+            if tokio_settle(&shared, p, &mut ob, &mut scratch, &mut bg).await == Settle::Ended {
+                continue;
+            }
         }
         let p = shared.tokio_process(events, wake, &mut ob);
-        tokio_settle(&shared, p, &mut ob, &mut scratch, &mut bg).await;
+        // The settle outcome is ignored because execution proceeds to the loop top whether
+        // settlement completed or ended.
+        let _settled = tokio_settle(&shared, p, &mut ob, &mut scratch, &mut bg).await;
     };
     shared.tokio_finish(rc);
 }
@@ -346,13 +354,17 @@ pub(crate) async fn run<T: DriverTokens>(shared: Arc<TaskShared<T>>) {
 ///      background DNS resolution `bg` was already in flight, promoting that lookup to a foreground
 ///      dependency), awaits `bg.take()` directly and feeds its result into
 ///      `shared.tokio_complete_resolve`.
+///
+/// Each blocking job is awaited concurrently with task wakeup notifications (`shared.notify`). If
+/// handle detachment or a completable close arrives first, the in-flight job is abandoned and
+/// [`Settle::Ended`] is returned (see [`tokio_await_job`]); otherwise [`Settle::Done`] is returned.
 async fn tokio_settle<T: DriverTokens>(
     shared: &Arc<TaskShared<T>>,
     first: Progress,
     ob: &mut Outbox<T>,
     out: &mut InterestOut,
     bg: &mut Option<BgTask>,
-) {
+) -> Settle {
     let mut p = first;
     let mut jobs: VecDeque<Job> = VecDeque::new();
     loop {
@@ -364,22 +376,38 @@ async fn tokio_settle<T: DriverTokens>(
                 // Process any remaining deferred jobs queued by the completed step to prevent
                 // dropping deferred work.
                 if let Some(job) = jobs.pop_front() {
-                    let done = tokio_job(shared, job).await;
+                    let Some(done) = tokio_job(shared, job).await else {
+                        return Settle::Ended;
+                    };
                     p = shared.tokio_complete(done, ob, out);
                     continue;
                 }
                 tokio_start_bg(shared, bg);
                 if p != Progress::Wait {
-                    return;
+                    return Settle::Done;
                 }
                 let Some(task) = bg.take() else {
-                    return;
+                    return Settle::Done;
                 };
-                let done = task.join().await;
+                let Some(done) = tokio_await_job(shared, task).await else {
+                    return Settle::Ended;
+                };
                 p = shared.tokio_complete_resolve(done, ob, out);
             }
         }
     }
+}
+
+/// Settlement outcome returned by [`tokio_settle`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[must_use]
+enum Settle {
+    /// The driving step settled to completion and the current pass of the driver loop may
+    /// continue.
+    Done,
+    /// Handle detachment or a completable close abandoned an in-flight job, requiring the task to
+    /// proceed directly to its exit path at the loop top.
+    Ended,
 }
 
 /// Handle tracking a background resolver or offloaded task executing on Tokio's blocking thread
@@ -474,8 +502,57 @@ impl JobKind {
 
 /// Dispatches a deferred blocking job to Tokio's blocking thread pool and awaits its completion
 /// without blocking runtime worker threads.
-async fn tokio_job<T: DriverTokens>(shared: &Arc<TaskShared<T>>, job: Job) -> JobDone {
-    BgTask::launch(shared, job).join().await
+///
+/// Returns `None` when the task must exit before the job completes (see [`tokio_await_job`]).
+async fn tokio_job<T: DriverTokens>(shared: &Arc<TaskShared<T>>, job: Job) -> Option<JobDone> {
+    tokio_await_job(shared, BgTask::launch(shared, job)).await
+}
+
+/// Awaits a blocking job on Tokio's blocking thread pool while concurrently monitoring task
+/// notifications for handle detachment or session closure.
+///
+/// Because a DNS lookup can block for the full resolver timeout on each host, session closure must
+/// not wait for an in-flight lookup to finish (the native threaded driver remains responsive in
+/// the same scenario because its lookups execute on a separate `zk-dns` thread). When the task
+/// must exit (`shared.tokio_must_exit()` observes detachment or a completable close), this
+/// function drops the join handle and returns `None`; the abandoned job runs to completion on the
+/// blocking pool (with the resolve loop and connectivity probe stopping at the close flag) and its
+/// outcome is never delivered to [`IoCore`]. Any wakeup notification that does not terminate the
+/// task is re-posted via `notify.notify_one()` once the job finishes so the subsequent wait cycle
+/// in the driver loop still observes the submission or other event that triggered it.
+async fn tokio_await_job<T: DriverTokens>(
+    shared: &Arc<TaskShared<T>>,
+    mut task: BgTask,
+) -> Option<JobDone> {
+    let mut woken = false;
+    loop {
+        let mut notified = pin!(shared.notify.notified());
+        // Register the notification listener before checking `tokio_must_exit` so a close that
+        // sets its flag and notifies after the check still wakes this wait without a lost wakeup.
+        notified.as_mut().enable();
+        if shared.tokio_must_exit() {
+            return None;
+        }
+        let r = poll_fn(|cx| {
+            if let TaskPoll::Ready(r) = Pin::new(&mut task.handle).poll(cx) {
+                return TaskPoll::Ready(Some(r));
+            }
+            match notified.as_mut().poll(cx) {
+                TaskPoll::Ready(()) => TaskPoll::Ready(None),
+                TaskPoll::Pending => TaskPoll::Pending,
+            }
+        })
+        .await;
+        match r {
+            Some(r) => {
+                if woken {
+                    shared.notify.notify_one();
+                }
+                return Some(task.result(r));
+            }
+            None => woken = true,
+        }
+    }
 }
 
 /// Drains and routes outbox events in strict sequential order.
@@ -1230,6 +1307,13 @@ impl<T: DriverTokens> TaskShared<T> {
             }
         };
         WaitPlan { fd: None, timeout }
+    }
+
+    /// Returns `true` when the loop top of `run` would exit: upon handle detachment, or upon a
+    /// requested close whose close step can complete (`tokio_close_rc` returns `Some`).
+    fn tokio_must_exit(&self) -> bool {
+        self.detached.load(Ordering::Acquire)
+            || (self.close_requested.load(Ordering::Acquire) && self.tokio_close_rc().is_some())
     }
 
     /// Evaluates whether session closure has completed, returning the final status code or `None`
@@ -2010,6 +2094,126 @@ mod tests {
         assert_eq!(tokio_events(Ready::ERROR), tokio_error_events());
         assert_eq!(tokio_merge(read, write), tokio_error_events());
         assert_eq!(tokio_interest_of(PollEvents::NONE), Interest::READABLE);
+    }
+
+    /// Test host whose `resolve` blocks until `release` is called (or 30 seconds elapse), standing
+    /// in for a resolver waiting for its timeout and counting started lookups in `entered`.
+    struct StallDns {
+        inner: TestHost,
+        entered: std::sync::atomic::AtomicUsize,
+        open: std::sync::Mutex<bool>,
+        cv: std::sync::Condvar,
+    }
+
+    impl StallDns {
+        fn new() -> Self {
+            Self {
+                inner: TestHost::new(),
+                entered: std::sync::atomic::AtomicUsize::new(0),
+                open: std::sync::Mutex::new(false),
+                cv: std::sync::Condvar::new(),
+            }
+        }
+
+        fn release(&self) {
+            *self.open.lock().unwrap() = true;
+            self.cv.notify_all();
+        }
+    }
+
+    impl HostLeaves<TestTokens> for StallDns {
+        fn discard_token(&self, token: crate::host::Discarded<TestTokens>) {
+            self.inner.discard_token(token);
+        }
+        fn snapshot_default_watcher(&self) -> Option<zk_testkit::tokens::WatcherId> {
+            self.inner.snapshot_default_watcher()
+        }
+        fn store_client_id(&self, id: &ClientId) {
+            self.inner.store_client_id(id);
+        }
+        fn log_enabled(&self, level: zk_proto::LogLevel) -> bool {
+            self.inner.log_enabled(level)
+        }
+        fn conn_permute_disabled(&self) -> bool {
+            self.inner.conn_permute_disabled()
+        }
+        fn rng_random(&self) -> i64 {
+            self.inner.rng_random()
+        }
+        fn rng_drand48(&self) -> f64 {
+            self.inner.rng_drand48()
+        }
+        fn rng_reseed(&self, proof: &Unlocked) {
+            self.inner.rng_reseed(proof);
+        }
+        fn resolve(&self, proof: &Unlocked, host: usize, spec: &HostSpec) -> HostResolution {
+            self.entered.fetch_add(1, Ordering::AcqRel);
+            let open = self.open.lock().unwrap();
+            let (open, _) = self
+                .cv
+                .wait_timeout_while(open, Duration::from_secs(30), |o| !*o)
+                .unwrap();
+            drop(open);
+            self.inner.resolve(proof, host, spec)
+        }
+    }
+
+    fn three_host_connection() -> Box<Connection<TestTokens>> {
+        Box::new(Connection::new(
+            crate::testutil::test_config(b"zk1.example:2181,zk2.example:2181,zk3.example:2181"),
+            zk_proto::Compat::NATIVE,
+            zk_proto::DriverMode::NATIVE,
+            Box::new(zk_testkit::rng::SeededRng::new(1)),
+            Box::new(zk_testkit::hooks::LevelFilter::up_to(
+                zk_proto::LogLevel::Debug,
+            )),
+            Box::new(zk_testkit::hooks::SharedDefaultWatcher::new(None)),
+            zk_proto::Millis(0),
+        ))
+    }
+
+    /// Verifies that with three configured hosts, a close or detach arriving while the foreground
+    /// resolve of the first host is blocked terminates the task promptly (within 2 seconds) with
+    /// `ZOK`, and that once released the abandoned job starts no lookups for the remaining hosts.
+    #[test]
+    fn close_and_detach_end_the_task_while_a_resolve_blocks() {
+        for detach in [false, true] {
+            let rt = rt();
+            let dns = Arc::new(StallDns::new());
+            let leaves: Arc<dyn HostLeaves<TestTokens>> = dns.clone();
+            let h = spawn(
+                three_host_connection(),
+                Env::new(leaves),
+                Arc::new(Keep::default()),
+                None,
+                rt.handle(),
+            );
+            let rc = rt.block_on(async {
+                let start = Instant::now();
+                while dns.entered.load(Ordering::Acquire) == 0 {
+                    assert!(
+                        start.elapsed() < Duration::from_secs(5),
+                        "no resolve started"
+                    );
+                    ::tokio::time::sleep(Duration::from_millis(5)).await;
+                }
+                if detach {
+                    h.detach();
+                } else {
+                    h.close();
+                }
+                ::tokio::time::timeout(Duration::from_secs(2), h.closed()).await
+            });
+            dns.release();
+            assert_eq!(rc, Ok(ZOK), "detach={detach}");
+            // Once released, the abandoned job observes the close flag before the next host,
+            // leaving the started lookup count at one.
+            let start = Instant::now();
+            while start.elapsed() < Duration::from_millis(200) {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            assert_eq!(dns.entered.load(Ordering::Acquire), 1, "detach={detach}");
+        }
     }
 
     #[test]

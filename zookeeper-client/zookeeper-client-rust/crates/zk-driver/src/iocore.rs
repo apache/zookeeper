@@ -686,6 +686,12 @@ pub(crate) fn run_job<T: Tokens>(cx: &JobCtx<'_, T>, proof: &Unlocked, job: Job)
             let mut results = Vec::with_capacity(hosts.len());
             let mut any = false;
             for (i, spec) in hosts.iter().enumerate() {
+                // Handle closure or detachment asserts abort to stop resolution without waiting
+                // for remaining host lookups; the partial result list is consumed only by a
+                // closing connection, or by nothing if the driver abandoned the job.
+                if cx.probe.abort.is_some_and(|a| a.load(Ordering::Acquire)) {
+                    break;
+                }
                 let r = cx.host.resolve(proof, i, spec);
                 any = any || r.result.as_ref().is_ok_and(|a| !a.is_empty());
                 results.push(r);
