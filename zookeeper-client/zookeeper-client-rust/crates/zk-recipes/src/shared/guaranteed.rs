@@ -94,7 +94,11 @@ pub(crate) fn delete(client: &Client, path: ZPathBuf) {
 /// Awaits a single deletion response, escalating to the background retry worker only if the
 /// deletion fails with a retryable error.
 async fn unlink(session: Session, path: ZPathBuf, sent: u64, reply: ResponseFuture<()>) {
-    if let Some(next) = reply.await.err().and_then(|e| retry(&e, sent)) {
+    if let Some(next) = reply
+        .await
+        .err()
+        .and_then(|e| retry(&e, sent, Target::Node(path.as_path())))
+    {
         submit(delete_task(session, path, next));
     }
 }
@@ -179,15 +183,88 @@ enum Next {
 /// the next retry prerequisite.
 ///
 /// Returns `None` if the error is non-retryable (e.g. authoritative server errors or node
-/// absence), terminating the task.
-fn retry(e: &Error, epoch: u64) -> Option<Next> {
+/// absence), terminating the task. When a non-retryable error can leave the znode behind (see
+/// `may_strand`), logs a warning naming `target`.
+fn retry(e: &Error, epoch: u64, target: Target<'_>) -> Option<Next> {
     if is_retryable(e) {
         Some(Next::Epoch(epoch))
     } else if matches!(e, Error::TooManyPendingRequests) {
         Some(Next::Room(epoch))
     } else {
+        if may_strand(e) {
+            warn_stopped(target, e);
+        }
         None
     }
+}
+
+/// Returns whether a non-retryable error can leave the znode in place.
+///
+/// Returns `false` for `NoNode`, because the znode is already gone, and for terminal session
+/// errors (`SessionExpired`, `AuthFailed`, `Closing`), because the session ends and the server
+/// removes its ephemeral znodes. Returns `true` for any other error (such as `NoAuth`,
+/// `NotEmpty`, or `BadVersion`).
+fn may_strand(e: &Error) -> bool {
+    !matches!(e, Error::NoNode) && !e.is_session_terminal()
+}
+
+/// Znode target that a cleanup task was operating on when it stopped, named in the diagnostic
+/// stop warning.
+#[derive(Clone, Copy)]
+enum Target<'a> {
+    /// Znode being deleted directly by the cleanup task.
+    Node(ZPath<'a>),
+    /// Parent znode listed to locate a protected znode whose full name is unknown after an
+    /// ambiguous sequential create; the znode that may remain is an unknown child of this parent,
+    /// not the parent itself.
+    Parent(ZPath<'a>),
+}
+
+/// Emits a diagnostic warning when a cleanup task terminates on a non-retryable error.
+fn warn_stopped(target: Target<'_>, e: &Error) {
+    #[cfg(any(feature = "tracing", feature = "log"))]
+    let msg = match target {
+        Target::Node(path) => format!(
+            "guaranteed delete of {path} stopped on {e}; the znode remains until its session ends"
+        ),
+        Target::Parent(path) => format!(
+            "cannot list {path} to find the abandoned protected znode ({e}); that znode remains \
+             until its session ends"
+        ),
+    };
+    #[cfg(feature = "tracing")]
+    tracing::warn!(target: "apache_zookeeper_recipes::guaranteed", "{msg}");
+    #[cfg(all(feature = "log", not(feature = "tracing")))]
+    log::warn!(target: "apache_zookeeper_recipes::guaranteed", "{msg}");
+    // When neither the `tracing` nor the `log` feature is enabled, the warning message is not
+    // built, so the `match` reads the path field of either variant (along with `e`) to suppress
+    // unused-variable and dead-code warnings.
+    #[cfg(not(any(feature = "tracing", feature = "log")))]
+    let _ = (
+        match target {
+            Target::Node(path) | Target::Parent(path) => path,
+        },
+        e,
+    );
+}
+
+/// Emits a diagnostic warning when the background cleanup thread cannot be spawned, dropping the
+/// queued cleanup tasks (`dropped` is the number of dropped tasks).
+fn warn_no_worker(e: &std::io::Error, dropped: usize) {
+    #[cfg(feature = "tracing")]
+    tracing::warn!(
+        target: "apache_zookeeper_recipes::guaranteed",
+        "cannot start the {THREAD_NAME} thread ({e}); dropped {dropped} cleanup tasks, their \
+         znodes remain until their sessions end"
+    );
+    #[cfg(all(feature = "log", not(feature = "tracing")))]
+    log::warn!(
+        target: "apache_zookeeper_recipes::guaranteed",
+        "cannot start the {THREAD_NAME} thread ({e}); dropped {dropped} cleanup tasks, their \
+         znodes remain until their sessions end"
+    );
+    #[cfg(not(any(feature = "tracing", feature = "log")))]
+    let _ = (e, dropped);
 }
 
 /// Suspends execution until the scheduling condition defined by `next` is satisfied.
@@ -214,7 +291,11 @@ async fn delete_task(mut session: Session, path: ZPathBuf, mut next: Next) {
         let Some(reply) = session.send(|c| c.delete(&path, None::<Version>)) else {
             return;
         };
-        let Some(later) = reply.await.err().and_then(|e| retry(&e, sent)) else {
+        let Some(later) = reply
+            .await
+            .err()
+            .and_then(|e| retry(&e, sent, Target::Node(path.as_path())))
+        else {
             return;
         };
         next = later;
@@ -251,7 +332,7 @@ async fn lookup_pass(
         Ok(children) => children,
         // Absence of the parent directory implies no children exist; terminal errors abort the
         // task.
-        Err(e) => return retry(&e, epoch),
+        Err(e) => return retry(&e, epoch, Target::Parent(parent)),
     };
     let paths: Vec<ZPathBuf> = children
         .iter()
@@ -275,8 +356,12 @@ async fn delete_owned(session: &Session, paths: &[ZPathBuf], epoch: u64) -> Opti
     // Connection losses require epoch advancement; epoch retries supersede queue saturation
     // retries as the subsequent pass re-enumerates.
     let (mut lost, mut refused) = (false, false);
-    for reply in deletes {
-        match reply.await.err().and_then(|e| retry(&e, epoch)) {
+    for (path, reply) in paths.iter().zip(deletes) {
+        match reply
+            .await
+            .err()
+            .and_then(|e| retry(&e, epoch, Target::Node(path.as_path())))
+        {
             Some(Next::Epoch(_)) => lost = true,
             Some(_) => refused = true,
             None => {}
@@ -373,11 +458,12 @@ fn submit(job: impl Future<Output = ()> + Send + 'static) {
                 w.starts = w.starts.saturating_add(1);
             }
         }
-        Err(_) => {
+        Err(e) => {
             // If thread creation fails, queued tasks are dropped; orphaned nodes will expire
             // alongside the session.
             let lost = std::mem::take(&mut w.queue);
             drop(w);
+            warn_no_worker(&e, lost.len());
             drop(lost);
         }
     }
@@ -468,6 +554,20 @@ mod tests {
     const OP_DELETE: i32 = 2;
     const OP_CREATE2: i32 = 15;
     const ERR_NOT_READ_ONLY: i32 = -119;
+
+    /// Verifies that `may_strand` returns `true` for `NoAuth`, `NotEmpty`, and `BadVersion` and
+    /// `false` for `NoNode`, `SessionExpired`, and `Closing`, ensuring that a non-retryable error
+    /// warns only when it can leave the znode behind.
+    #[test]
+    fn only_a_lost_cleanup_warns() {
+        use apache_zookeeper::Error;
+        for e in [Error::NoAuth, Error::NotEmpty, Error::BadVersion] {
+            assert!(super::may_strand(&e), "{e}");
+        }
+        for e in [Error::NoNode, Error::SessionExpired, Error::Closing] {
+            assert!(!super::may_strand(&e), "{e}");
+        }
+    }
 
     /// Serializes execution across test cases to isolate the shared singleton worker.
     static SERIAL: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());

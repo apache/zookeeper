@@ -123,7 +123,9 @@ fn stop(shared: &Shared) {
 /// Decodes the returned configuration payload and propagates novel client endpoints to the
 /// connection driver. Transient transport errors schedule immediate rereads, unparseable
 /// configuration payloads leave the watch armed awaiting future updates, and protocol errors
-/// terminate the follower.
+/// terminate the follower. Emits a diagnostic warning when a derived client connection string
+/// cannot be parsed into a server list, leaving the server list unchanged, or when the follower
+/// stops on an error that is not session-terminal.
 pub(crate) fn on_result(shared: &Shared, r: RawResult) {
     match decode::config(r) {
         Ok((cfg, _stat)) => {
@@ -133,10 +135,18 @@ pub(crate) fn on_result(shared: &Shared, r: RawResult) {
             if !shared.router.follow.take_change(&next) {
                 return;
             }
-            if let Ok(hosts) = connect_string::parse_update(&next) {
-                // A return generation of zero indicates that the driver event loop has terminated.
-                // The subsequent read will fail, cleanly shutting down the follower state machine.
-                let _generation = shared.driver.set_servers(hosts);
+            match connect_string::parse_update(&next) {
+                Ok(hosts) => {
+                    // A return generation of zero indicates that the driver event loop has
+                    // terminated. The subsequent read will fail, cleanly shutting down the
+                    // follower state machine.
+                    let _generation = shared.driver.set_servers(hosts);
+                }
+                // The server list is left unchanged, while the watch armed by this read remains
+                // active so subsequent configuration changes trigger a re-read. Because
+                // `take_change` recorded the connection string, the same string does not emit
+                // a redundant warning.
+                Err(e) => warn_not_applied(&next, &e),
             }
         }
         Err(Error::ConnectionLoss | Error::OperationTimeout | Error::RequestTimeout) => {
@@ -146,8 +156,48 @@ pub(crate) fn on_result(shared: &Shared, r: RawResult) {
         // standalone servers presenting empty configuration data). The watch remains active to
         // catch future valid updates.
         Err(Error::MarshallingError) => {}
-        Err(_) => stop(shared),
+        Err(e) => {
+            // Session-terminal errors end the entire session, which the application observes,
+            // so only stops on other errors are logged.
+            if !e.is_session_terminal() {
+                warn_stopped(&e);
+            }
+            stop(shared);
+        }
     }
+}
+
+/// Emits a diagnostic warning when a fetched ensemble configuration cannot be applied to the
+/// server list.
+fn warn_not_applied(hosts: &str, e: &Error) {
+    #[cfg(feature = "tracing")]
+    tracing::warn!(
+        target: "apache_zookeeper::session",
+        "ignoring the ensemble configuration {hosts:?}: {e}"
+    );
+    #[cfg(all(feature = "log", not(feature = "tracing")))]
+    log::warn!(
+        target: "apache_zookeeper::session",
+        "ignoring the ensemble configuration {hosts:?}: {e}"
+    );
+    #[cfg(not(any(feature = "tracing", feature = "log")))]
+    let _ = (hosts, e);
+}
+
+/// Emits a diagnostic warning when the configuration follower stops on an error.
+fn warn_stopped(e: &Error) {
+    #[cfg(feature = "tracing")]
+    tracing::warn!(
+        target: "apache_zookeeper::session",
+        "the ensemble configuration follower stopped: {e}"
+    );
+    #[cfg(all(feature = "log", not(feature = "tracing")))]
+    log::warn!(
+        target: "apache_zookeeper::session",
+        "the ensemble configuration follower stopped: {e}"
+    );
+    #[cfg(not(any(feature = "tracing", feature = "log")))]
+    let _ = e;
 }
 
 /// Processes node mutation watch triggers, scheduling a configuration re-read if the event targets

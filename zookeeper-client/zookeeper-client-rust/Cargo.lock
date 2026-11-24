@@ -52,7 +52,9 @@ name = "apache-zookeeper-recipes"
 version = "3.10.0"
 dependencies = [
  "apache-zookeeper",
+ "log",
  "tokio",
+ "tracing",
  "zk-fakeserver",
 ]
 

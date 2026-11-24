@@ -30,10 +30,14 @@ workspace = true
 [lib]
 name = "apache_zookeeper_recipes"
 
-# The only normal dependency is the client, with no features.
+# The only required dependency is the client crate, with no features enabled.
 # The crate has no runtime, timer or UUID dependency of its own.
+# tracing and log are optional dependencies used only to emit diagnostic
+# warnings.
 [dependencies]
 apache-zookeeper.workspace = true
+tracing = { workspace = true, optional = true, features = ["std"] }
+log = { workspace = true, optional = true, features = ["std"] }
 
 # The tests run the client on its own IO thread (`Runtime::Thread`), so
 # they need no client feature. tokio gives the test executor and its
@@ -42,6 +46,14 @@ apache-zookeeper.workspace = true
 [dev-dependencies]
 zk-fakeserver.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "time", "sync"] }
+
+# The default logging feature matches the client crate's: warnings go to tracing.
+# When the tracing feature is off and the log feature is on, warnings go
+# to log instead. With neither feature, no warning is emitted.
+[features]
+default = ["tracing"]
+tracing = ["dep:tracing"]
+log = ["dep:log"]
 
 # The Curator interop peer. The JUnit test in `interop/curator` starts
 # it as a process.
