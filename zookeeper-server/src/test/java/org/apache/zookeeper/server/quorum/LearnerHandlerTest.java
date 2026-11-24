@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
@@ -331,7 +330,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         db = new MockZKDatabase(null) {
             @Override
             public Iterator<Proposal> getProposalsFromTxnLog(long peerZxid, long limit) {
-                return TxnLogProposalIterator.EMPTY_ITERATOR;
+                return Collections.emptyIterator();
             }
         };
         db.lastProcessedZxid = 7;
