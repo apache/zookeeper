@@ -29,7 +29,7 @@ class GetSetTest(zktestbase.TestBase):
             zookeeper.create(self.handle, "/zk-python-getsettest", "on",[ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
             zookeeper.create(self.handle, "/zk-python-agetsettest",
                              "on",[ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
-        except:
+        except Exception:
             pass
 
     def test_empty_node(self):
