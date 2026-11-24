@@ -918,6 +918,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         if (acceptThread != null) {
             acceptThread.join();
         }
+        if (expirerThread != null) {
+            expirerThread.join();
+        }
         for (SelectorThread thread : selectorThreads) {
             thread.join();
         }
