@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.InetSocketAddress;
+import java.util.Locale;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -38,6 +39,23 @@ public class QuorumServerTest extends ZKTestCase {
     @AfterEach
     public void tearDown() {
         System.clearProperty(QuorumPeer.CONFIG_KEY_MULTI_ADDRESS_ENABLED);
+    }
+
+    @Test
+    public void testToStringIsLocaleIndependent() throws ConfigException {
+        // ZOOKEEPER-5139: under a locale with non-ASCII digits (e.g. Assamese),
+        // the quorum and election ports must still be written as ASCII digits.
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("as-IN"));
+            String provided = ipv4config + ":participant;0.0.0.0:1237";
+            QuorumServer qs = new QuorumServer(0, provided);
+            assertEquals(provided, qs.toString());
+            // the output must also round-trip through the parser
+            assertEquals(provided, new QuorumServer(0, qs.toString()).toString());
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     @Test

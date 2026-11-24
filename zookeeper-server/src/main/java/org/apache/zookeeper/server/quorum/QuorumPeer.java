@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -474,7 +475,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (addrList.size() > 0 && electionAddrList.size() > 0) {
                 addrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
                 electionAddrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
-                sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
+                sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format(Locale.ROOT, "%s:%d:%d",
                         delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
                         .collect(Collectors.joining("|")));
             }
