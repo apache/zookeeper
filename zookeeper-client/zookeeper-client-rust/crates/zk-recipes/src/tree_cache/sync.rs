@@ -39,6 +39,17 @@
 //! `Error::NoNode`. The engine gracefully prunes the vanished node and its descendants from the
 //! synchronized snapshot. Concurrent watch notifications registered during synchronization
 //! subsequently reconcile any transient discrepancies.
+//!
+//! # Per-Node Read Errors
+//!
+//! If a znode's data or children query fails with an error that is neither a connection-loss
+//! error nor a terminal session error (such as `Error::NoAuth` or a transient
+//! `Error::ThrottledOp`), the engine skips that znode and its descendants without queuing its
+//! children, records the path and error, and continues traversing the remaining tree so that a
+//! single unreadable znode does not fail the entire traversal. The owning cache surfaces the
+//! recorded errors and, during resynchronization, retains the cached state of each skipped znode
+//! and its subtree because a failed read does not indicate that the znode is gone.
+//! Connection-loss and terminal session errors abort the traversal with that error.
 
 use std::collections::VecDeque;
 use std::future::Future;
@@ -191,6 +202,8 @@ pub(super) struct Read {
     /// Sliding window pipeline of currently active node queries.
     flight: VecDeque<InFlight>,
     tree: Tree,
+    /// Paths and errors of znodes skipped during traversal, in breadth-first traversal order.
+    skipped: Vec<(ZPathBuf, Error)>,
 }
 
 impl Read {
@@ -210,6 +223,7 @@ impl Read {
             todo: VecDeque::from([(root.clone(), 0)]),
             flight: VecDeque::new(),
             tree: Tree::new(root.clone()),
+            skipped: Vec::new(),
         };
         read.fill(client);
         read
@@ -218,6 +232,11 @@ impl Read {
     /// Returns the session connection epoch recorded at the start of traversal.
     pub(super) fn epoch(&self) -> u64 {
         self.epoch
+    }
+
+    /// Removes and returns the recorded paths and errors of znodes skipped during traversal.
+    pub(super) fn take_skipped(&mut self) -> Vec<(ZPathBuf, Error)> {
+        std::mem::take(&mut self.skipped)
     }
 
     /// Dispatches additional node queries until the active pipeline reaches the `WINDOW` limit.
@@ -263,6 +282,11 @@ impl Read {
             let (node, mut names) = match done.take() {
                 Ok(Some(found)) => found,
                 Ok(None) => continue,
+                // The znode and its subtree are skipped because its children are never queued.
+                Err(e) if !e.is_connection_loss() && !e.is_session_terminal() => {
+                    self.skipped.push((done.path, e));
+                    continue;
+                }
                 Err(e) => return Poll::Ready(Err(e)),
             };
             // Breadth-first traversal guarantees ancestors are inserted before their descendants.

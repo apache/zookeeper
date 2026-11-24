@@ -84,6 +84,12 @@ pub struct TreeCache {
     tree: Tree,
     /// FIFO queue of pending change events awaiting delivery via [`next`](Self::next).
     events: VecDeque<TreeEvent>,
+    /// Read errors from znodes skipped by the most recently applied traversal, awaiting delivery
+    /// via [`next`](Self::next) before that traversal's events.
+    errors: VecDeque<Error>,
+    /// Whether a resync failed on connection loss or was discarded due to an epoch change and
+    /// must be retried once connected.
+    owed: bool,
     step: Step,
 }
 
@@ -152,9 +158,15 @@ impl TreeCache {
     ///
     /// Terminal session failures yield `Some(Err(..))` once before subsequent invocations yield
     /// `None`. Transient read errors (such as `NoAuth`) are surfaced as errors while allowing
-    /// cache progression to continue.
+    /// cache progression to continue. During initial synchronization or resynchronization, any
+    /// znode that cannot be read is skipped along with its subtree, and its error is yielded
+    /// before that traversal's events; during resynchronization, the cached state of a skipped
+    /// znode and its subtree is retained without emitting removal events.
     pub async fn next(&mut self) -> Option<Result<TreeEvent, Error>> {
         loop {
+            if let Some(e) = self.errors.pop_front() {
+                return Some(Err(e));
+            }
             if let Some(ev) = self.events.pop_front() {
                 return Some(Ok(ev));
             }
@@ -179,6 +191,7 @@ impl TreeCache {
         };
         let client = &self.client;
         let last = self.epoch;
+        let owed = self.owed;
         let mut next = watcher.next();
         let mut changed = self.state.changed();
         let wake = poll_fn(|cx| {
@@ -186,7 +199,8 @@ impl TreeCache {
                 return Poll::Ready(Wake::Watch(o));
             }
             let info = client.state();
-            if info.state.is_terminal() || (info.state.is_connected() && info.epoch > last) {
+            let stale = info.epoch > last || owed;
+            if info.state.is_terminal() || (info.state.is_connected() && stale) {
                 return Poll::Ready(Wake::State(info));
             }
             if Pin::new(&mut changed).poll(cx).is_ready() {
@@ -318,18 +332,36 @@ impl TreeCache {
         let client = &self.client;
         let out = poll_fn(|cx| read.poll(cx, client)).await;
         let epoch = read.epoch();
+        let skipped = read.take_skipped();
         self.step = Step::Live;
-        self.epoch = epoch;
+        // Advance `self.epoch` only when a resync result is applied. A failed or discarded resync
+        // sets `owed` so `live` retries it once connected, as epoch comparison alone would not
+        // retry a resync triggered by `Lagged` where the connection epoch is unchanged.
         match out {
             // If a reconnection occurred during the synchronization traversal, discard results to
             // force a clean resync.
-            Ok(_) if self.client.state().epoch != epoch => None,
-            Ok(new) => {
+            Ok(_) if self.client.state().epoch != epoch => {
+                self.owed = true;
+                None
+            }
+            Ok(mut new) => {
+                self.epoch = epoch;
+                self.owed = false;
+                // A failed read (such as `ThrottledOp` under load) does not indicate that the
+                // znode was deleted; carry its cached subtree forward so reconciliation emits no
+                // removal events for it.
+                for (path, e) in skipped {
+                    new.carry(&self.tree, path.as_path());
+                    self.errors.push_back(e);
+                }
                 self.tree.resync(new, &mut self.events);
                 self.events.push_back(TreeEvent::Resynced);
                 None
             }
-            Err(e) => self.on_error(e),
+            Err(e) => {
+                self.owed = true;
+                self.on_error(e)
+            }
         }
     }
 
@@ -437,7 +469,8 @@ impl TreeCacheBuilder {
     ///
     /// Returns [`Error::InvalidPath`] if `root` is invalid. Returns [`Error::Unimplemented`]
     /// on ZooKeeper servers prior to version 3.6.0. Returns a terminal error if the session
-    /// expires.
+    /// expires. A znode that cannot be read (such as [`Error::NoAuth`]) does not fail `start`;
+    /// the cache skips that znode and its subtree and yields its error via [`TreeCache::next`].
     pub async fn start(self) -> Result<TreeCache, Error> {
         let root = self.root?;
         let client = self.client;
@@ -463,6 +496,7 @@ impl TreeCacheBuilder {
             let Some(tree) = fresh.filter(|_| client.state().epoch == epoch) else {
                 continue;
             };
+            let errors = read.take_skipped().into_iter().map(|(_, e)| e).collect();
             let mut events = VecDeque::new();
             tree.added_events(&mut events);
             events.push_back(TreeEvent::Initialized);
@@ -477,6 +511,8 @@ impl TreeCacheBuilder {
                 armed,
                 tree,
                 events,
+                errors,
+                owed: false,
                 step: Step::Live,
             });
         }

@@ -50,6 +50,11 @@ const GET_DATA: i32 = 4;
 const GET_CHILDREN: i32 = 12;
 const ADD_WATCH: i32 = 106;
 
+/// Protocol reply error codes injected in fake-server rules.
+const ZNOAUTH: i32 = -102;
+const ZOPERATIONTIMEOUT: i32 = -7;
+const ZTHROTTLEDOP: i32 = -127;
+
 /// Timeout window used to assert that `cache.next()` emits no further events.
 const QUIET: Duration = Duration::from_millis(300);
 
@@ -373,6 +378,140 @@ async fn re11_resync_after_lag() {
     added.sort();
     assert_eq!(added, names);
     assert_eq!(events.len(), names.len() + 1, "{events:?}");
+    assert_quiet(&mut cache).await;
+    assert_same(&cache, c, "/r", true, None);
+}
+
+/// Verifies that `ZNOAUTH` on a child's `get_data` and `get_children` does not fail
+/// `start`: `next()` yields `Some(Err(Error::NoAuth))` once before the `NodeAdded`
+/// events for the readable nodes and `Initialized`, omits the unreadable child and its
+/// subtree from the cache, and continues delivering live updates for the remaining tree.
+#[tokio::test]
+async fn unreadable_child_does_not_fail_start() {
+    let server = common::fake();
+    let c = server.cluster();
+    build(&server, &["/r/a", "/r/b", "/r/b/x", "/r/c"]);
+    for op in [GET_DATA, GET_CHILDREN] {
+        server.add_rule(
+            Rule::on_request()
+                .op(op)
+                .path("/r/b")
+                .then(Action::Reply { err: ZNOAUTH }),
+        );
+    }
+    let client = common::connect(&server.connect_string()).await;
+    let mut cache = common::within(TreeCache::builder(&client, "/r").start())
+        .await
+        .expect("start");
+    assert_eq!(common::within(cache.next()).await, Some(Err(Error::NoAuth)));
+    assert_eq!(
+        until_mark(&mut cache).await,
+        ["+/r", "+/r/a", "+/r/c", "Initialized"]
+    );
+    assert_eq!(cache.get("/r/b"), None);
+    assert_eq!(cache.get("/r/b/x"), None);
+    assert_eq!(cache.children("/r").unwrap(), ["a", "c"]);
+    set(c, "/r/a", b"a1");
+    assert_eq!(label(&next(&mut cache).await), "~/r/a");
+}
+
+/// Verifies that when a post-`Lagged` resync fails with `ZOPERATIONTIMEOUT` (a
+/// connection-loss error) on the root's `get_children` while the session remains
+/// connected, the cache retries the resync, emits the differential events followed by
+/// `Resynced`, and reconciles with the server state.
+#[tokio::test]
+async fn failed_resync_is_retried() {
+    let server = common::fake();
+    let c = server.cluster();
+    build(&server, &[]);
+    let client = common::within(
+        common::builder(&server.connect_string())
+            .persistent_watch_buffer(1)
+            .connect(),
+    )
+    .await
+    .expect("connect");
+    let mut cache = start(&client, &["/r"]).await;
+
+    // Reject the first resync `get_children` on the root with `ZOPERATIONTIMEOUT`.
+    server.add_rule(
+        Rule::on_request()
+            .op(GET_CHILDREN)
+            .path("/r")
+            .once()
+            .then(Action::Reply {
+                err: ZOPERATIONTIMEOUT,
+            }),
+    );
+    // Overflow the 1-slot watch buffer while `cache` is not being polled.
+    let names = ["/r/n1", "/r/n2", "/r/n3", "/r/n4", "/r/n5"];
+    for n in names {
+        create(c, n, b"x");
+    }
+    tokio::time::sleep(QUIET).await;
+
+    let events = until_mark(&mut cache).await;
+    assert_eq!(events.last().map(String::as_str), Some("Resynced"));
+    assert_quiet(&mut cache).await;
+    assert_same(&cache, c, "/r", true, None);
+    let lists = c
+        .transcript()
+        .iter()
+        .filter(|f| f.op == Some(GET_CHILDREN) && f.path.as_deref() == Some("/r"))
+        .count();
+    // Three `get_children` calls on `/r`: initial `start`, failed resync, and retry.
+    assert_eq!(lists, 3);
+}
+
+/// Verifies that when a post-`Lagged` resync receives `ZTHROTTLEDOP` once on `get_data`
+/// of a cached znode, `next()` surfaces `Error::ThrottledOp`, emits no removal events,
+/// retains the cached znode and its subtree, and matches the server state after
+/// `Resynced`.
+#[tokio::test]
+async fn throttled_read_in_resync_keeps_cached_subtree() {
+    let server = common::fake();
+    let c = server.cluster();
+    build(&server, &["/r/a", "/r/a/k"]);
+    let client = common::within(
+        common::builder(&server.connect_string())
+            .persistent_watch_buffer(1)
+            .connect(),
+    )
+    .await
+    .expect("connect");
+    let mut cache = start(&client, &["/r", "/r/a", "/r/a/k"]).await;
+
+    server.add_rule(
+        Rule::on_request()
+            .op(GET_DATA)
+            .path("/r/a")
+            .once()
+            .then(Action::Reply { err: ZTHROTTLEDOP }),
+    );
+    // Overflow the 1-slot watch buffer while `cache` is not being polled.
+    for n in ["/r/n1", "/r/n2", "/r/n3"] {
+        create(c, n, b"x");
+    }
+    tokio::time::sleep(QUIET).await;
+
+    let mut seen = Vec::new();
+    loop {
+        match common::within(cache.next()).await {
+            Some(Ok(ev)) => {
+                let mark = matches!(ev, TreeEvent::Resynced);
+                seen.push(label(&ev));
+                if mark {
+                    break;
+                }
+            }
+            Some(Err(e)) => seen.push(format!("{e:?}")),
+            None => panic!("cache ended: {seen:?}"),
+        }
+    }
+    assert!(seen.iter().any(|s| s == "ThrottledOp"), "{seen:?}");
+    assert!(!seen.iter().any(|s| s.starts_with('-')), "{seen:?}");
+    assert!(cache.get("/r/a").is_some());
+    assert!(cache.get("/r/a/k").is_some());
     assert_quiet(&mut cache).await;
     assert_same(&cache, c, "/r", true, None);
 }

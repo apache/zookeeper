@@ -45,7 +45,7 @@ use apache_zookeeper::{ZPath, ZPathBuf};
 use super::{CachedNode, TreeEvent};
 
 /// Internal representation of a cached znode along with its set of immediate child names.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Entry {
     /// Absolute ZooKeeper path matching the map key.
     path: ZPathBuf,
@@ -261,6 +261,34 @@ impl Tree {
                 path: e.path.clone(),
                 node: e.node.clone(),
             });
+        }
+    }
+
+    /// Copies the entry at `path` and its entire subtree from `old` into this tree, linking
+    /// `path`'s name into its parent's child set unless `path` is this tree's root.
+    ///
+    /// Does nothing if `path` is absent from `old` or if its parent is absent from this tree, and
+    /// does not overwrite existing entries in this tree. Called during resynchronization for each
+    /// znode the traversal could not read so differential reconciliation retains their cached
+    /// state instead of reporting them as removed.
+    pub(super) fn carry(&mut self, old: &Tree, path: ZPath<'_>) {
+        let keys = old.subtree_keys(path);
+        if keys.is_empty() {
+            return;
+        }
+        if path != self.root.as_path() {
+            let (Some(parent), Some(name)) = (path.parent(), path.name()) else {
+                return;
+            };
+            let Some(p) = self.nodes.get_mut(parent.as_str()) else {
+                return;
+            };
+            p.children.insert(name.to_owned());
+        }
+        for k in keys {
+            if let Some(e) = old.nodes.get(&k) {
+                self.nodes.entry(k).or_insert_with(|| e.clone());
+            }
         }
     }
 
@@ -484,6 +512,37 @@ mod tests {
             t.children(p("/r")).unwrap(),
             vec!["again", "changed", "new", "same"]
         );
+    }
+
+    #[test]
+    fn carry_keeps_an_unread_subtree() {
+        let old = tree(
+            "/r",
+            &[
+                ("/r", 1, 1),
+                ("/r/a", 2, 2),
+                ("/r/a/k", 3, 3),
+                ("/r/b", 4, 4),
+            ],
+        );
+        // Traversal read `/r` and `/r/b`, while `/r/a` and `/r/missing` were unread.
+        let mut new = tree("/r", &[("/r", 1, 1), ("/r/b", 4, 5)]);
+        new.carry(&old, p("/r/a"));
+        new.carry(&old, p("/r/missing"));
+        let mut t = old;
+        let mut ev = VecDeque::new();
+        t.resync(new, &mut ev);
+        assert_eq!(names(&ev), ["~/r/b"]);
+        assert_eq!(t.children(p("/r")).unwrap(), vec!["a", "b"]);
+        assert_eq!(t.children(p("/r/a")).unwrap(), vec!["k"]);
+
+        // Carrying an unread root retains the entire cached tree.
+        let mut new = Tree::new(p("/r").to_buf());
+        new.carry(&t, p("/r"));
+        let mut ev = VecDeque::new();
+        t.resync(new, &mut ev);
+        assert!(ev.is_empty());
+        assert_eq!(t.nodes.len(), 4);
     }
 
     #[test]
