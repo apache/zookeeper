@@ -1,0 +1,1 @@
+function i(o,t=!1){const n=o;for(const r in n){if(n[r]===void 0&&delete n[r],!t)continue;const e=n[r];if(c(e)){i(e,t);continue}if(Array.isArray(e))for(const f of e)c(f)&&i(f,t)}return o}function c(o){if(typeof o!="object"||o===null)return!1;const t=Object.getPrototypeOf(o);return t===null||t===Object.prototype||Object.getPrototypeOf(t)===null}export{i as r};

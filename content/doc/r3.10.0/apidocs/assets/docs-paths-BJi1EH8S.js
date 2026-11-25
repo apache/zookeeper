@@ -1,0 +1,1 @@
+const s="3.10.0";function n(t){return`/doc/r${t}`}const a=n(s);function e(){return""}function r(t){return/^(?:https?:|mailto:|#)/i.test(t)}function o(t){return!t.startsWith("/")||r(t),t}function c(t){return t.startsWith("/apidocs/")?o(t):t}export{a as C,s as a,o as b,e as g,c as r};

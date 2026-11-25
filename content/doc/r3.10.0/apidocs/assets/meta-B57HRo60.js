@@ -1,0 +1,1 @@
+const o="Admin & Ops",t=["administrators-guide","quota-guide","snapshot-and-restore-guide","jmx","quorums","observers-guide","dynamic-reconfiguration","cli","tools","monitor-and-audit-logs"],s={title:o,pages:t};export{s as default,t as pages,o as title};
