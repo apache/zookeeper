@@ -1768,7 +1768,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 if (ap == null) {
                     LOG.warn(
                         "No authentication provider for scheme: {} has {}",
-                        scheme,
+                        StringUtils.sanitizeForLog(scheme),
                         ProviderRegistry.listProviders());
                 } else {
                     LOG.warn("Authentication failed for scheme: {}", scheme);
