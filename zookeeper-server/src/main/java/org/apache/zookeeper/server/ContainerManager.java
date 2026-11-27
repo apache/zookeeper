@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -139,10 +139,13 @@ public class ContainerManager {
      */
     public void checkContainers() throws InterruptedException {
         long minIntervalMs = getMinIntervalMs();
-        for (String containerPath : getCandidates()) {
+        for (Map.Entry<String, Long> candidate : getCandidates().entrySet()) {
+            String containerPath = candidate.getKey();
             long startMs = Time.currentElapsedTime();
 
-            DeleteContainerRequest record = new DeleteContainerRequest(containerPath);
+            // the node is only deleted if it still has the mzxid it had when it was picked, so not if
+            // it was modified, or deleted and created again at the same path, since then
+            DeleteContainerRequest record = new DeleteContainerRequest(containerPath, candidate.getValue());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
             try {
                 LOG.info("Attempting to delete candidate container: {}", containerPath);
@@ -181,12 +184,22 @@ public class ContainerManager {
         return maxNeverUsedIntervalMs;
     }
 
+    /**
+     * @return the paths of the nodes to delete, each with the mzxid the node had when it was picked.
+     *         The mzxid is read before the node is checked, so a later change to the node's data,
+     *         which restarts its TTL, also changes the mzxid. Children added later are caught when
+     *         the request is processed, which only deletes an empty node.
+     */
     // VisibleForTesting
-    protected Collection<String> getCandidates() {
-        Set<String> candidates = new HashSet<>();
+    protected Map<String, Long> getCandidates() {
+        Map<String, Long> candidates = new HashMap<>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
-            if ((node != null) && node.getChildren().isEmpty()) {
+            if (node == null) {
+                continue;
+            }
+            long mzxid = getMzxid(node);
+            if (node.getChildren().isEmpty()) {
                 /*
                     cversion > 0: keep newly created containers from being deleted
                     before any children have been added. If you were to create the
@@ -194,7 +207,7 @@ public class ContainerManager {
                     would be immediately be deleted.
                  */
                 if (node.stat.getCversion() > 0) {
-                    candidates.add(containerPath);
+                    candidates.put(containerPath, mzxid);
                 } else {
                     /*
                         Users may not want unused containers to live indefinitely. Allow a system
@@ -202,7 +215,7 @@ public class ContainerManager {
                         to stay before being deleted
                      */
                     if ((maxNeverUsedIntervalMs != 0) && (getElapsed(node) > maxNeverUsedIntervalMs)) {
-                        candidates.add(containerPath);
+                        candidates.put(containerPath, mzxid);
                     }
                 }
             }
@@ -210,18 +223,25 @@ public class ContainerManager {
         for (String ttlPath : zkDb.getDataTree().getTtls()) {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
             if (node != null) {
+                long mzxid = getMzxid(node);
                 Set<String> children = node.getChildren();
                 if (children.isEmpty()) {
                     if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
                         long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
                         if ((ttl != 0) && (getElapsed(node) > ttl)) {
-                            candidates.add(ttlPath);
+                            candidates.put(ttlPath, mzxid);
                         }
                     }
                 }
             }
         }
         return candidates;
+    }
+
+    private static long getMzxid(DataNode node) {
+        synchronized (node) {
+            return node.stat.getMzxid();
+        }
     }
 
     // VisibleForTesting
