@@ -333,15 +333,19 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (nodeRecord.childCount > 0) {
                 throw new KeeperException.NotEmptyException(path);
             }
-            // the node may have been replaced or modified after it was checked for deletion,
-            // so only delete a container or TTL node that is unchanged since then
+            // ContainerManager sends the mzxid the node had when it was picked for deletion. A node
+            // that was modified, or deleted and created again at the same path, since then has a
+            // different mzxid.
+            if (txn.getMzxid() != DeleteContainerRequest.ANY_MZXID && txn.getMzxid() != nodeRecord.stat.getMzxid()) {
+                LOG.info("Not deleting {}: it was modified or replaced after it was picked for deletion", path);
+                throw new KeeperException.BadVersionException(path);
+            }
+            // Fallback for a request without mzxid, which can't tell whether the node was replaced,
+            // and for a node replaced within the same multi, which has the same mzxid: at least
+            // don't delete a node that is not a container or TTL node.
             EphemeralType ephemeralType = EphemeralType.get(nodeRecord.stat.getEphemeralOwner());
             if (ephemeralType != EphemeralType.CONTAINER && ephemeralType != EphemeralType.TTL) {
                 LOG.info("Not deleting {}: it is not a container or TTL node", path);
-                throw new KeeperException.BadVersionException(path);
-            }
-            if (txn.getMzxid() != DeleteContainerRequest.ANY_MZXID && txn.getMzxid() != nodeRecord.stat.getMzxid()) {
-                LOG.info("Not deleting {}: it was replaced or modified after it was checked", path);
                 throw new KeeperException.BadVersionException(path);
             }
             ChangeRecord parentRecord = getRecordForPath(parentPath);

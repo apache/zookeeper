@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -139,28 +139,13 @@ public class ContainerManager {
      */
     public void checkContainers() throws InterruptedException {
         long minIntervalMs = getMinIntervalMs();
-        for (String containerPath : getCandidates()) {
-            // deleting earlier candidates takes time, so check the node again: it may have been
-            // deleted, replaced or modified. The request carries the node's mzxid, so the node isn't
-            // deleted if that happens after this check either.
-            DataNode node = zkDb.getDataTree().getNode(containerPath);
-            if (node == null) {
-                LOG.info("Not deleting candidate {}: it no longer exists", containerPath);
-                continue;
-            }
-            long mzxid;
-            boolean eligible;
-            synchronized (node) {
-                mzxid = node.stat.getMzxid();
-                eligible = isPastGracePeriod(node);
-            }
-            if (!eligible) {
-                LOG.info("Not deleting candidate {}: it is no longer eligible for deletion", containerPath);
-                continue;
-            }
+        for (Map.Entry<String, Long> candidate : getCandidates().entrySet()) {
+            String containerPath = candidate.getKey();
             long startMs = Time.currentElapsedTime();
 
-            DeleteContainerRequest record = new DeleteContainerRequest(containerPath, mzxid);
+            // the node is only deleted if it still has the mzxid it had when it was picked, so not if
+            // it was modified, or deleted and created again at the same path, since then
+            DeleteContainerRequest record = new DeleteContainerRequest(containerPath, candidate.getValue());
             Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, RequestRecord.fromRecord(record), null);
             try {
                 LOG.info("Attempting to delete candidate container: {}", containerPath);
@@ -199,25 +184,52 @@ public class ContainerManager {
         return maxNeverUsedIntervalMs;
     }
 
+    /**
+     * @return the paths of the nodes to delete, each with the mzxid the node had when it was picked.
+     *         The mzxid is read before the node is checked, so a later change to the node's data,
+     *         which restarts its TTL, also changes the mzxid. Children added later are caught when
+     *         the request is processed, which only deletes an empty node.
+     */
     // VisibleForTesting
-    protected Collection<String> getCandidates() {
-        Set<String> candidates = new HashSet<>();
+    protected Map<String, Long> getCandidates() {
+        Map<String, Long> candidates = new HashMap<>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
-            if ((node != null) && node.getChildren().isEmpty()) {
-                if (isPastGracePeriod(node)) {
-                    candidates.add(containerPath);
+            if (node == null) {
+                continue;
+            }
+            long mzxid = getMzxid(node);
+            if (node.getChildren().isEmpty()) {
+                /*
+                    cversion > 0: keep newly created containers from being deleted
+                    before any children have been added. If you were to create the
+                    container just before a container cleaning period the container
+                    would be immediately be deleted.
+                 */
+                if (node.stat.getCversion() > 0) {
+                    candidates.put(containerPath, mzxid);
+                } else {
+                    /*
+                        Users may not want unused containers to live indefinitely. Allow a system
+                        property to be set that sets the max time for a cversion-0 container
+                        to stay before being deleted
+                     */
+                    if ((maxNeverUsedIntervalMs != 0) && (getElapsed(node) > maxNeverUsedIntervalMs)) {
+                        candidates.put(containerPath, mzxid);
+                    }
                 }
             }
         }
         for (String ttlPath : zkDb.getDataTree().getTtls()) {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
             if (node != null) {
+                long mzxid = getMzxid(node);
                 Set<String> children = node.getChildren();
                 if (children.isEmpty()) {
                     if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL) {
-                        if (isPastGracePeriod(node)) {
-                            candidates.add(ttlPath);
+                        long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
+                        if ((ttl != 0) && (getElapsed(node) > ttl)) {
+                            candidates.put(ttlPath, mzxid);
                         }
                     }
                 }
@@ -226,34 +238,10 @@ public class ContainerManager {
         return candidates;
     }
 
-    /**
-     * Whether a container or TTL node is old enough to be deleted, not counting its children.
-     * Other nodes are never deleted by this manager.
-     */
-    private boolean isPastGracePeriod(DataNode node) {
-        EphemeralType ephemeralType = EphemeralType.get(node.stat.getEphemeralOwner());
-        if (ephemeralType == EphemeralType.CONTAINER) {
-            /*
-                cversion > 0: keep newly created containers from being deleted
-                before any children have been added. If you were to create the
-                container just before a container cleaning period the container
-                would be immediately be deleted.
-             */
-            if (node.stat.getCversion() > 0) {
-                return true;
-            }
-            /*
-                Users may not want unused containers to live indefinitely. Allow a system
-                property to be set that sets the max time for a cversion-0 container
-                to stay before being deleted
-             */
-            return (maxNeverUsedIntervalMs != 0) && (getElapsed(node) > maxNeverUsedIntervalMs);
+    private static long getMzxid(DataNode node) {
+        synchronized (node) {
+            return node.stat.getMzxid();
         }
-        if (ephemeralType == EphemeralType.TTL) {
-            long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
-            return (ttl != 0) && (getElapsed(node) > ttl);
-        }
-        return false;
     }
 
     // VisibleForTesting

@@ -18,17 +18,22 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -37,6 +42,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DeleteContainerRequest;
@@ -234,8 +240,8 @@ public class CreateContainerTest extends ClientBase {
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
-            @Override protected Collection<String> getCandidates() {
-                return Collections.singletonList("/foo");
+            @Override protected Map<String, Long> getCandidates() {
+                return Collections.singletonMap("/foo", DeleteContainerRequest.ANY_MZXID);
             }
         };
         containerManager.checkContainers();
@@ -272,8 +278,12 @@ public class CreateContainerTest extends ClientBase {
             }
 
             @Override
-            protected Collection<String> getCandidates() {
-                return Arrays.asList("/one", "/two", "/three", "/four");
+            protected Map<String, Long> getCandidates() {
+                Map<String, Long> candidates = new LinkedHashMap<>();
+                for (String path : Arrays.asList("/one", "/two", "/three", "/four")) {
+                    candidates.put(path, DeleteContainerRequest.ANY_MZXID);
+                }
+                return candidates;
             }
         };
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -333,62 +343,6 @@ public class CreateContainerTest extends ClientBase {
 
     @Test
     @Timeout(value = 30)
-    public void testReplacementContainerIsCheckedAgainBeforeDeletion() throws KeeperException, InterruptedException {
-        createEmptiedContainer("/foo");
-
-        AtomicInteger deletesQty = new AtomicInteger(0);
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
-            @Override protected Collection<String> getCandidates() {
-                Collection<String> candidates = super.getCandidates();
-                assertTrue(candidates.contains("/foo"));
-                // the container is replaced by a new container before its delete request is sent
-                replace("/foo", new byte[0], CreateMode.CONTAINER);
-                return candidates;
-            }
-
-            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
-                deletesQty.incrementAndGet();
-                super.postDeleteRequest(request);
-            }
-        };
-        containerManager.checkContainers();
-
-        assertEquals(0, deletesQty.get());
-        assertNotNull(zk.exists("/foo", false), "New container should not have been deleted");
-    }
-
-    @Test
-    @Timeout(value = 30)
-    public void testDeletedCandidateIsNotSentForDeletion() throws KeeperException, InterruptedException {
-        createEmptiedContainer("/foo");
-
-        AtomicInteger deletesQty = new AtomicInteger(0);
-        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
-            @Override protected Collection<String> getCandidates() {
-                Collection<String> candidates = super.getCandidates();
-                assertTrue(candidates.contains("/foo"));
-                // the container is deleted before its delete request is sent
-                try {
-                    zk.delete("/foo", -1);
-                } catch (KeeperException | InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                return candidates;
-            }
-
-            @Override protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
-                deletesQty.incrementAndGet();
-                super.postDeleteRequest(request);
-            }
-        };
-        containerManager.checkContainers();
-
-        // there is no mzxid to send, and a request for any node at the path could delete a new one
-        assertEquals(0, deletesQty.get());
-    }
-
-    @Test
-    @Timeout(value = 30)
     public void testDeleteContainerRequestDoesNotDeletePersistentNode() throws Exception {
         zk.create("/foo", "data".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
@@ -398,6 +352,42 @@ public class CreateContainerTest extends ClientBase {
 
         assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
         assertNotNull(zk.exists("/foo", false), "Persistent node should not have been deleted");
+    }
+
+    @Test
+    @Timeout(value = 30)
+    public void testDeleteContainerRequestWithoutMzxidStillDeletesContainer() throws Exception {
+        createEmptiedContainer("/foo");
+
+        // a request in the format of servers before mzxid was added, as in a rolling upgrade
+        Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer,
+                RequestRecord.fromBytes(ByteBuffer.wrap(serializePathOnly("/foo"))), null);
+        assertEquals(DeleteContainerRequest.ANY_MZXID, request.readRequestRecord(DeleteContainerRequest::new).getMzxid());
+        serverFactory.getZooKeeperServer().firstProcessor.processRequest(request);
+
+        assertTrue(completedContainerDeletions.tryAcquire(1, TimeUnit.SECONDS));
+        assertNull(zk.exists("/foo", false), "Container should have been deleted");
+    }
+
+    @Test
+    public void testDeleteContainerRequestSerialization() throws Exception {
+        // without mzxid, the request is written as servers before mzxid was added write it
+        ByteArrayOutputStream withoutMzxid = new ByteArrayOutputStream();
+        new DeleteContainerRequest("/foo").serialize(BinaryOutputArchive.getArchive(withoutMzxid), "request");
+        assertArrayEquals(serializePathOnly("/foo"), withoutMzxid.toByteArray());
+
+        ByteArrayOutputStream withMzxid = new ByteArrayOutputStream();
+        new DeleteContainerRequest("/foo", 42).serialize(BinaryOutputArchive.getArchive(withMzxid), "request");
+        DeleteContainerRequest read = new DeleteContainerRequest();
+        ByteBufferInputStream.byteBuffer2Record(ByteBuffer.wrap(withMzxid.toByteArray()), read);
+        assertEquals("/foo", read.getPath());
+        assertEquals(42, read.getMzxid());
+    }
+
+    private static byte[] serializePathOnly(String path) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive.getArchive(baos).writeBuffer(path.getBytes(StandardCharsets.UTF_8), "path");
+        return baos.toByteArray();
     }
 
     private void createEmptiedContainer(String path) throws KeeperException, InterruptedException {

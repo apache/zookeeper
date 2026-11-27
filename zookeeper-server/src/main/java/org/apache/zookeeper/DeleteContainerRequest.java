@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.apache.jute.InputArchive;
@@ -26,7 +27,8 @@ import org.apache.jute.Record;
 
 public class DeleteContainerRequest implements Record {
     /**
-     * Delete the node at the path whatever its mzxid.
+     * Don't check the mzxid of the node at the path. It is still only deleted if it is an empty
+     * container or TTL node.
      */
     public static final long ANY_MZXID = -1;
 
@@ -42,7 +44,7 @@ public class DeleteContainerRequest implements Record {
 
     /**
      * @param mzxid only delete the node if it still has this mzxid, so not if it was modified, or
-     *              replaced by a node created at the same path, after it was checked for deletion
+     *              replaced by a node created at the same path, after it was picked for deletion
      */
     public DeleteContainerRequest(String path, long mzxid) {
         this.path = path;
@@ -60,13 +62,20 @@ public class DeleteContainerRequest implements Record {
     @Override
     public void serialize(OutputArchive archive, String tag) throws IOException {
         archive.writeBuffer(path.getBytes(StandardCharsets.UTF_8), "path");
-        archive.writeLong(mzxid, "mzxid");
+        if (mzxid != ANY_MZXID) {
+            archive.writeLong(mzxid, "mzxid");
+        }
     }
 
     @Override
     public void deserialize(InputArchive archive, String tag) throws IOException {
         byte[] bytes = archive.readBuffer("path");
         path = new String(bytes, StandardCharsets.UTF_8);
-        mzxid = archive.readLong("mzxid");
+        try {
+            mzxid = archive.readLong("mzxid");
+        } catch (EOFException e) {
+            // a request without mzxid, in the format from before mzxid was added
+            mzxid = ANY_MZXID;
+        }
     }
 }

@@ -29,7 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
@@ -191,29 +191,20 @@ public class CreateTTLTest extends ClientBase {
     }
 
     @Test
-    public void testReplacementIsCheckedAgainBeforeDeletion() throws KeeperException, InterruptedException {
+    public void testReplacementIsNotDeleted() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
 
         final AtomicLong fakeElapsed = new AtomicLong(200);
-        final AtomicInteger deletesQty = new AtomicInteger(0);
         ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
-            protected Collection<String> getCandidates() {
-                Collection<String> candidates = super.getCandidates();
-                assertTrue(candidates.contains("/foo"));
-                // the expired node is replaced by a node with a longer TTL before its delete request is sent
+            protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
+                // the expired node is replaced by a node with a longer TTL after it was picked for deletion
                 try {
                     zk.delete("/foo", -1);
                     zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 1000);
                 } catch (KeeperException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                return candidates;
-            }
-
-            @Override
-            protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
-                deletesQty.incrementAndGet();
                 super.postDeleteRequest(request);
             }
 
@@ -223,19 +214,48 @@ public class CreateTTLTest extends ClientBase {
             }
         };
         containerManager.checkContainers();
-        assertEquals(0, deletesQty.get());
+        // this write is processed after the delete request
+        zk.create("/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         assertNotNull(zk.exists("/foo", false), "New ttl node should not have been deleted");
     }
 
     @Test
-    public void testModifiedAfterCheckIsNotDeleted() throws KeeperException, InterruptedException {
+    public void testModifiedWhilePickedIsNotDeleted() throws KeeperException, InterruptedException {
+        zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
+
+        final AtomicLong fakeElapsed = new AtomicLong(200);
+        final AtomicBoolean modified = new AtomicBoolean(false);
+        ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
+            @Override
+            protected long getElapsed(DataNode node) {
+                // the node is modified, which restarts its TTL, between reading its mzxid and checking its TTL
+                if (modified.compareAndSet(false, true)) {
+                    try {
+                        zk.setData("/foo", new byte[1], -1);
+                    } catch (KeeperException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return fakeElapsed.get();
+            }
+        };
+        containerManager.checkContainers();
+        // this write is processed after the delete request
+        zk.create("/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        Stat stat = zk.exists("/foo", false);
+        assertNotNull(stat, "Modified ttl node should not have been deleted");
+        assertEquals(1, stat.getDataLength());
+    }
+
+    @Test
+    public void testModifiedAfterPickedIsNotDeleted() throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
 
         final AtomicLong fakeElapsed = new AtomicLong(200);
         ContainerManager containerManager = new ContainerManager(serverFactory.getZooKeeperServer().getZKDatabase(), serverFactory.getZooKeeperServer().firstProcessor, 1, 100) {
             @Override
             protected void postDeleteRequest(Request request) throws RequestProcessor.RequestProcessorException {
-                // the node is modified, which restarts its TTL, after it was checked for deletion
+                // the node is modified, which restarts its TTL, after it was picked for deletion
                 try {
                     zk.setData("/foo", new byte[1], -1);
                 } catch (KeeperException | InterruptedException e) {
