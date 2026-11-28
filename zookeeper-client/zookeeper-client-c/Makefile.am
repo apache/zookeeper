@@ -16,7 +16,7 @@ endif
 if WANT_SASL
   SASL_CPPFLAGS = -DHAVE_CYRUS_SASL_H
   SASL_LIB_LDFLAGS = -lsasl2
-  SASL_SRC = src/zk_sasl.c
+  SASL_SRC = src/zk_sasl.h src/zk_sasl.c
 endif
 
 AM_CPPFLAGS = -I${srcdir}/include -I${srcdir}/tests -I${srcdir}/generated $(SOLARIS_CPPFLAGS) $(OPENSSL_CPPFLAGS) $(SASL_CPPFLAGS)
